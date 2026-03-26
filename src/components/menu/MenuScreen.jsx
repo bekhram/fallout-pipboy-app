@@ -14,7 +14,7 @@ export default function MenuScreen({
     <section className="pip-screen-grid">
       <section className="pip-panel pip-block pip-hero">
         <div className="pip-bootline">{t("menuScreen.bootline")}</div>
-        <h1 className="pip-title">PIP 2D20 MK IV</h1>
+        <h1 className="pip-title">PIP 2D20 MK IV 123456</h1>
         <p className="pip-subtitle">{t("menuScreen.subtitle")}</p>
 
         <div className="pip-actions-inline push-top">
