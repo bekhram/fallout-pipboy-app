@@ -1842,7 +1842,7 @@ select.pip-input {
   }
 
   .pip-portrait-card {
-    max-width: 120px;
+    max-width: 150px;
     margin: 0;
   }
 
@@ -2193,5 +2193,421 @@ select.pip-input {
 
   .pip-panel {
     padding: 14px 16px;
+  }
+}
+
+.pip-injuries-card {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.pip-injuries-visual {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.pip-injuries-vaultboy-wrap {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.pip-injuries-vaultboy {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pip-injuries-vaultboy img,
+.pip-injuries-vaultboy-base,
+.pip-injuries-vaultboy-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pip-injuries-vaultboy-base {
+  z-index: 1;
+}
+
+.pip-injuries-vaultboy-overlay {
+  z-index: 2;
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+.pip-injuries-vaultboy-overlay.is-head {
+  z-index: 6;
+}
+
+.pip-injuries-vaultboy-overlay.is-torso {
+  z-index: 5;
+}
+
+.pip-injuries-vaultboy-overlay.is-leftArm,
+.pip-injuries-vaultboy-overlay.is-rightArm {
+  z-index: 4;
+}
+
+.pip-injuries-vaultboy-overlay.is-leftLeg,
+.pip-injuries-vaultboy-overlay.is-rightLeg {
+  z-index: 3;
+}
+
+.pip-injuries-side {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding-left: 8px;
+}
+
+.pip-injuries-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pip-text-soft);
+}
+
+.pip-injury-effects,
+.pip-injury-conditions {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.pip-injury-effects-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pip-injury-conditions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pip-injury-effect-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  background: rgba(0, 0, 0, 0.18);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.pip-injury-effect-row strong {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pip-injury-effect-row span {
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pip-injury-effect-row.is-crippled {
+  border-color: rgba(255, 140, 120, 0.45);
+}
+
+.pip-injury-effect-row.is-crippled strong {
+  color: var(--pip-danger);
+}
+
+.pip-injury-effect-row.is-treated {
+  border-color: rgba(255, 210, 120, 0.4);
+}
+
+.pip-injury-effect-row.is-treated strong {
+  color: var(--pip-warning);
+}
+
+.pip-injury-condition-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.pip-injury-condition-chip span {
+  color: var(--pip-accent);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.pip-injury-condition-chip small {
+  color: var(--pip-text-dim);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.pip-injury-condition-chip.is-negative {
+  border-color: rgba(255, 120, 120, 0.28);
+}
+
+.pip-injury-condition-chip.is-negative span {
+  color: var(--pip-danger);
+}
+
+.pip-injury-condition-chip.is-positive {
+  border-color: rgba(140, 255, 152, 0.28);
+}
+
+.pip-armor-badge {
+  position: absolute;
+  z-index: 12;
+  min-width: 96px;
+  padding: 8px 10px;
+  border: 1px solid rgba(140, 255, 152, 0.28);
+  background: rgba(0, 0, 0, 0.78);
+  box-shadow: 0 0 10px rgba(80, 255, 120, 0.12);
+  pointer-events: auto;
+}
+
+.pip-armor-badge-code {
+  color: var(--pip-accent);
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.pip-armor-badge-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pip-armor-badge-values span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.pip-injury-hitbox {
+  position: absolute;
+  z-index: 10;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  outline: none;
+}
+
+.pip-injury-hitbox:hover {
+  background: rgba(180, 255, 160, 0.06);
+}
+
+.pip-injury-hitbox.is-crippled:hover {
+  background: rgba(255, 120, 120, 0.08);
+}
+
+.pip-injury-hitbox.is-treated:hover {
+  background: rgba(255, 220, 120, 0.08);
+}
+
+.pip-injury-hitbox:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(207, 255, 159, 0.55);
+}
+
+@media (max-width: 900px) {
+  .pip-injuries-card {
+    grid-template-columns: 1fr;
+  }
+
+  .pip-injuries-visual {
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .pip-injuries-side {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .pip-injuries-card {
+    gap: 12px;
+  }
+
+  .pip-injuries-vaultboy-wrap {
+    max-width: 280px;
+  }
+
+  .pip-armor-badge {
+    min-width: 64px;
+    padding: 5px 6px;
+  }
+
+  .pip-armor-badge-code {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .pip-armor-badge-values {
+    gap: 4px;
+  }
+
+  .pip-armor-badge-values span {
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pip-injuries-vaultboy-wrap {
+    max-width: 300px;
+  }
+
+  .pip-armor-badge {
+    min-width: 56px;
+    padding: 4px 5px;
+  }
+
+  .pip-armor-badge-code {
+    font-size: 12px;
+  }
+
+  .pip-armor-badge-values span {
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pip-hero-grid {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .pip-hero-left {
+    width: 150px;
+    min-width: 150px;
+  }
+
+  .pip-hero-left .pip-portrait-card,
+  .pip-hero-left .pip-portrait-frame {
+    width: 100%;
+  }
+
+  .pip-hero-meta {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .pip-hero-meta .pip-input,
+  .pip-hero-meta input,
+  .pip-hero-meta select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .pip-portrait-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pip-portrait-actions .pip-action-btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 6px;
+  }
+
+  .pip-hero-left {
+    display: grid;
+    gap: 10px;
+    align-self: start;
+  }
+}
+
+@media (max-width: 768px) {
+  .pip-portrait-actions .pip-action-btn {
+    min-height: 38px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+}
+
+@media (max-width: 768px) {
+  .pip-hero-grid {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .pip-hero-left {
+    width: 150px;
+    min-width: 150px;
+    display: grid;
+    gap: 10px;
+    justify-items: stretch;
+  }
+
+  .pip-hero-left .pip-portrait-card,
+  .pip-hero-left .pip-portrait-frame,
+  .pip-hero-left .pip-portrait-actions {
+    width: 100%;
+  }
+
+  .pip-portrait-actions {
+    display: flex !important;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .pip-portrait-actions .pip-action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto !important;
+    min-height: 38px;
+    padding: 8px 4px;
   }
 }
