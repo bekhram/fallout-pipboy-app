@@ -16,6 +16,7 @@ import FloatingDiceButton from "./components/dice/FloatingDiceButton";
 import DiceRollModal from "./components/dice/DiceRollModal";
 import MapScreen from "./components/map/MapScreen.jsx";
 import GamesScreen from "./components/minigames/GamesScreen.jsx";
+import PwaInstallButton from "./components/shared/PwaInstallButton.jsx";
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 
@@ -854,14 +855,19 @@ const openContextDiceRoll = (rollConfig) => {
         onChange={handleImport}
       />
 
-      {screen === "menu" ? (
-        <div className="pip-app">
-          <div className="pip-vignette" />
-          <div className="pip-container">
-            <main className="pip-main">{content}</main>
-          </div>
+{screen === "menu" ? (
+  <div className="pip-app">
+    <div className="pip-vignette" />
+    <div className="pip-container">
+      <main className="pip-main">
+        {content}
+        <div className="pip-actions-inline push-top">
+          <PwaInstallButton />
         </div>
-      ) : (
+      </main>
+    </div>
+  </div>
+) : (
         <PipboyShell
           activeTab={activeTab}
           onTabChange={setActiveTab}
