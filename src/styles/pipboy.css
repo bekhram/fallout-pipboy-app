@@ -23,6 +23,25 @@
 
 html,
 body,
+.pip-app,
+.pip-container,
+.pip-panel,
+.pip-btn,
+.pip-logbox,
+.pip-title,
+.pip-subtitle,
+.pip-head,
+.pip-head h2,
+.pip-head span,
+.pip-input,
+.pip-textarea,
+.pip-inline-input {
+  forced-color-adjust: none;
+}
+
+
+html,
+body,
 #root {
   min-height: 100%;
   margin: 0;
