@@ -1,36 +1,42 @@
 .lockpick-screen {
   padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .lockpick-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .lockpick-title {
-  font-size: 24px;
+  font-size: clamp(22px, 3vw, 36px);
   font-weight: 700;
   letter-spacing: 1px;
+  line-height: 1;
 }
 
 .lockpick-subtitle {
-  font-size: 12px;
+  font-size: clamp(12px, 1.6vw, 18px);
   opacity: 0.8;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .lockpick-header-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .lockpick-layout {
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(320px, 1.1fr) minmax(260px, 0.9fr);
+  gap: 16px;
+  align-items: start;
 }
 
 .lockpick-visual,
@@ -41,16 +47,35 @@
   background: rgba(10, 24, 12, 0.85);
 }
 
+.lockpick-visual,
+.lockpick-controls {
+  min-width: 0;
+}
+
 .lockpick-visual {
-  min-height: 300px;
+  min-height: 540px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 12px;
 }
 
-.lockpick-visual.is-shaking {
-  transform: translateX(2px);
+.lockpick-log {
+  margin-top: 12px;
+  padding: 12px;
+}
+
+.lockpick-log-title {
+  font-size: 14px;
+  margin-bottom: 8px;
+  opacity: 0.85;
+}
+
+.lockpick-log-line {
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(140, 255, 154, 0.08);
 }
 
 .lockpick-lock-body {
@@ -114,18 +139,26 @@
 }
 
 .lockpick-controls {
-  padding: 12px;
+  min-height: 540px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+}
+
+.lockpick-readout,
+.lockpick-hint {
+  border: 1px solid rgba(140, 255, 154, 0.15);
+  border-radius: 10px;
+  padding: 12px;
 }
 
 .lockpick-readout {
-  border: 1px solid rgba(140, 255, 154, 0.15);
-  border-radius: 8px;
-  padding: 10px;
   line-height: 1.7;
   font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .lockpick-slider {
@@ -162,56 +195,38 @@
 }
 
 .lockpick-hint {
-  min-height: 56px;
-  border: 1px solid rgba(140, 255, 154, 0.15);
-  border-radius: 8px;
-  padding: 10px;
+  min-height: 64px;
   font-size: 13px;
   line-height: 1.45;
 }
 
-.lockpick-log {
-  margin-top: 12px;
-  padding: 12px;
-}
-
-.lockpick-log-title {
-  font-size: 14px;
-  margin-bottom: 8px;
-  opacity: 0.85;
-}
-
-.lockpick-log-line {
-  font-size: 12px;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(140, 255, 154, 0.08);
-}
-
 .pip-action-btn {
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 40px;
+  padding: 8px 14px;
   border-radius: 8px;
   border: 1px solid rgba(140, 255, 154, 0.25);
   background: rgba(16, 41, 21, 0.95);
   color: #8cff9a;
+  white-space: nowrap;
 }
 
 .lockpick-stage {
   position: relative;
   width: 520px;
   height: 520px;
+  max-width: 100%;
+  max-height: 100%;
   margin: 0 auto;
   overflow: hidden;
+  transform-origin: center center;
 }
 
 .lockpick-layer {
   position: absolute;
-  pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 }
 
-/* 1. Фон замка */
 .lockpick-bg {
   left: 0;
   top: 0;
@@ -225,18 +240,15 @@
   top: 50%;
   width: 500px;
   height: auto;
-
   transform-origin: 47% 41%;
 }
 
-/* 3. Отмычка */
 .lockpick-pick-img {
   left: 52%;
   top: 5px;
   width: 500px;
   height: auto;
   transform-origin: 45% 41%;
-
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
@@ -248,33 +260,10 @@
   cursor: grabbing;
 }
 
-/* 4. Отвертка */
-.lockpick-screwdriver-img {
-  left: 25px;
-  top: 25px;
-  width: 500px;
-  height: auto;
-  transform-origin: 41% 40%;
-}
-
 .lockpick-pick-draggable {
   pointer-events: auto;
   cursor: grab;
   touch-action: none;
-}
-
-.lockpick-screwdriver-img.is-active {
-  filter: brightness(1.08);
-}
-
-.lockpick-pick-img {
-  pointer-events: auto;
-  cursor: grab;
-  touch-action: none;
-}
-
-.lockpick-pick-img:active {
-  cursor: grabbing;
 }
 
 .lockpick-screwdriver-hitbox {
@@ -302,108 +291,83 @@
   filter: brightness(1.08);
 }
 
-.lockpick-screen {
-  padding: 12px;
-  width: 100%;
-  box-sizing: border-box;
+.lockpick-pressure-row {
+  margin-top: 4px;
 }
 
-.lockpick-header {
+.lockpick-pressure-label {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
+  font-size: 12px;
+  opacity: 0.9;
+  margin-bottom: 6px;
 }
 
-.lockpick-header-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.lockpick-layout {
-  display: grid;
-  grid-template-columns: minmax(320px, 1.1fr) minmax(260px, 0.9fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.lockpick-visual,
-.lockpick-controls {
-  min-width: 0;
-}
-
-.lockpick-visual {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  min-height: 540px;
-  padding: 12px;
-  border: 1px solid rgba(140, 255, 154, 0.2);
-  border-radius: 12px;
-  background: rgba(10, 24, 12, 0.85);
-}
-
-.lockpick-stage {
+.lockpick-pressure-bar {
   position: relative;
-  width: 520px;
-  height: 520px;
-  max-width: 100%;
-  max-height: 100%;
-  margin: 0 auto;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
   overflow: hidden;
-  transform-origin: center center;
+  border: 1px solid rgba(140, 255, 154, 0.18);
+  background: rgba(10, 24, 12, 0.75);
 }
 
-.lockpick-layer {
-  position: absolute;
-  user-select: none;
-  -webkit-user-drag: none;
+.lockpick-pressure-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(140, 255, 154, 0.35) 0%,
+    rgba(180, 255, 120, 0.55) 45%,
+    rgba(255, 190, 90, 0.75) 75%,
+    rgba(255, 110, 110, 0.9) 100%
+  );
+  box-shadow: 0 0 10px rgba(255, 160, 90, 0.25);
+  transition: width 0.12s linear;
 }
 
-.lockpick-controls {
-  min-height: 540px;
-  padding: 16px;
-  border: 1px solid rgba(140, 255, 154, 0.2);
-  border-radius: 12px;
-  background: rgba(10, 24, 12, 0.85);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.lockpick-visual.is-shaking {
+  animation: lockpickShake 0.12s linear;
 }
 
-.lockpick-readout,
-.lockpick-hint {
-  border: 1px solid rgba(140, 255, 154, 0.15);
-  border-radius: 10px;
-  padding: 12px;
+@keyframes lockpickShake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+  75% {
+    transform: translateX(-1px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
-.lockpick-readout {
-  line-height: 1.7;
+.lockpick-pick-img.is-stressed {
+  filter: brightness(1.08);
 }
 
-.lockpick-hint {
-  min-height: 64px;
+.lockpick-pick-img.is-sweetspot {
+  filter: drop-shadow(0 0 6px rgba(180, 255, 140, 0.35));
 }
 
-.lockpick-title {
-  font-size: clamp(22px, 3vw, 36px);
-  line-height: 1;
+.lockpick-hint.is-good {
+  border-color: rgba(140, 255, 154, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(140, 255, 154, 0.08);
 }
 
-.lockpick-subtitle {
-  font-size: clamp(12px, 1.6vw, 18px);
-  margin-top: 6px;
+.lockpick-hint.is-warn {
+  border-color: rgba(255, 190, 90, 0.26);
 }
 
-.pip-action-btn {
-  min-height: 40px;
-  padding: 8px 14px;
-  white-space: nowrap;
+.lockpick-hint.is-bad {
+  border-color: rgba(255, 110, 110, 0.24);
 }
 
 /* desktop medium */
@@ -511,27 +475,6 @@
     flex: 1 1 0;
   }
 
-@media (max-width: 640px) {
-  .lockpick-screen {
-    padding: 6px;
-  }
-
-  .lockpick-title {
-    font-size: 18px;
-  }
-
-  .lockpick-subtitle {
-    font-size: 12px;
-  }
-
-  .lockpick-header-actions {
-    justify-content: stretch;
-  }
-
-  .lockpick-header-actions .pip-action-btn {
-    flex: 1 1 0;
-  }
-
   .lockpick-visual {
     min-height: 430px;
     padding: 0;
@@ -552,12 +495,28 @@
     font-size: 13px;
     border-radius: 8px;
   }
-}
 
+  .games-header-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .games-result-badge {
+    width: 100%;
+  }
+
+  .lockpick-pressure-label {
+    font-size: 11px;
+  }
+
+  .lockpick-pressure-bar {
+    height: 8px;
+  }
+}
 
 /* very small phone */
 @media (max-width: 420px) {
-.lockpick-visual {
+  .lockpick-visual {
     min-height: 360px;
   }
 
@@ -574,123 +533,5 @@
     min-height: 36px;
     padding: 6px 10px;
     font-size: 13px;
-  }
-}
-
-@media (max-width: 640px) {
-  .games-header-inline {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .games-result-badge {
-    width: 100%;
-  }
-}
-
-/* ===== Lockpick advanced feedback ===== */
-
-.lockpick-readout {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.lockpick-pressure-row {
-  margin-top: 4px;
-}
-
-.lockpick-pressure-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  opacity: 0.9;
-  margin-bottom: 6px;
-}
-
-.lockpick-pressure-bar {
-  position: relative;
-  width: 100%;
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  border: 1px solid rgba(140, 255, 154, 0.18);
-  background: rgba(10, 24, 12, 0.75);
-}
-
-.lockpick-pressure-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    rgba(140, 255, 154, 0.35) 0%,
-    rgba(180, 255, 120, 0.55) 45%,
-    rgba(255, 190, 90, 0.75) 75%,
-    rgba(255, 110, 110, 0.9) 100%
-  );
-  box-shadow: 0 0 10px rgba(255, 160, 90, 0.25);
-  transition: width 0.12s linear;
-}
-
-/* stronger whole-lock shake on bad jams */
-.lockpick-visual.is-shaking {
-  animation: lockpickShake 0.12s linear;
-}
-
-@keyframes lockpickShake {
-  0% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-2px);
-  }
-  50% {
-    transform: translateX(2px);
-  }
-  75% {
-    transform: translateX(-1px);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-/* subtle pick stress when turning */
-.lockpick-pick-img.is-stressed {
-  filter: brightness(1.08);
-}
-
-/* optional sweet spot glow */
-.lockpick-pick-img.is-sweetspot {
-  filter: drop-shadow(0 0 6px rgba(180, 255, 140, 0.35));
-}
-
-/* screwdriver feedback */
-.lockpick-screwdriver-img.is-active {
-  filter: brightness(1.08);
-}
-
-/* hint state colors */
-.lockpick-hint.is-good {
-  border-color: rgba(140, 255, 154, 0.28);
-  box-shadow: inset 0 0 0 1px rgba(140, 255, 154, 0.08);
-}
-
-.lockpick-hint.is-warn {
-  border-color: rgba(255, 190, 90, 0.26);
-}
-
-.lockpick-hint.is-bad {
-  border-color: rgba(255, 110, 110, 0.24);
-}
-
-/* mobile polish */
-@media (max-width: 640px) {
-  .lockpick-pressure-label {
-    font-size: 11px;
-  }
-
-  .lockpick-pressure-bar {
-    height: 8px;
   }
 }
