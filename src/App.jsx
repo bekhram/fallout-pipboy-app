@@ -16,6 +16,7 @@ import FloatingDiceButton from "./components/dice/FloatingDiceButton";
 import DiceRollModal from "./components/dice/DiceRollModal";
 import MapScreen from "./components/map/MapScreen.jsx";
 import GamesScreen from "./components/minigames/GamesScreen.jsx";
+import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 
 import {
