@@ -1122,6 +1122,20 @@ select.pip-input {
   padding-left: 200px;
 }
 
+.pip-injury-effects {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  margin-left: 0;
+}
+
+.pip-injury-conditions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  margin-left: 0;
+}
+
 .pip-injuries-label {
   font-size: 11px;
   letter-spacing: 0.18em;
@@ -2335,26 +2349,6 @@ select.pip-input {
   white-space: nowrap;
 }
 
-@media (min-width: 1024px) {
-  .pip-app {
-    overflow: visible;
-  }
-
-  .pip-container {
-    max-width: none;
-    width: 100%;
-    margin: 0;
-    padding: 16px 24px 40px;
-  }
-
-  .pip-shell,
-  .pip-main,
-  main {
-    width: 100%;
-    max-width: none;
-  }
-}
-
 .pip-skill-row-roll {
   width: 100%;
   border: 1px solid rgba(120, 255, 140, 0.18);
@@ -2507,5 +2501,22 @@ select.pip-input {
     text-align: right;
     font-size: 10px;
     line-height: 1.1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .pip-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 24px 48px;
+  }
+
+  .pip-screen-grid,
+  .pip-stack {
+    gap: 16px;
+  }
+
+  .pip-panel {
+    padding: 14px 16px;
   }
 }
