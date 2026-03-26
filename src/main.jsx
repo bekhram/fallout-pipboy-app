@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
-import "./pipboy.css";
+import "./styles/pipboy.css";
 import "./i18n";
 import "./styles/dice.css";
 
