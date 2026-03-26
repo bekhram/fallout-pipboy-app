@@ -1,0 +1,673 @@
+{
+  "tabs": {
+    "status": "STATUS",
+    "special": "SPECIAL",
+    "weapons": "WEAPONS",
+    "inventory": "INV",
+    "armor": "ARMOR",
+    "perks": "PERKS",
+    "notes": "NOTES",
+    "map": "MAP",
+    "games": "GAMES"
+  },
+  "brand": {
+    "title": "ROBCO INDUSTRIES (TM)",
+    "status": "SYSTEM ONLINE"
+  },
+  "menu": {
+    "title": "SYSTEM MENU",
+    "language": "LANGUAGE",
+    "export": "EXPORT JSON",
+    "saveToDevice": "SAVE TO DEVICE",
+    "import": "IMPORT JSON",
+    "return": "RETURN TO MENU"
+  },
+  "common": {
+    "edit": "EDIT",
+    "copy": "COPY",
+    "save": "SAVE",
+    "cancel": "CANCEL",
+    "add": "ADD",
+    "delete": "X"
+  },
+  "weapons": {
+    "unnamedWeapon": "Unnamed Weapon",
+    "damageShort": "DMG",
+    "rateShort": "RATE",
+    "ammoShort": "AMMO",
+    "editorTitle": "WEAPON EDITOR",
+    "configMode": "CONFIG MODE",
+    "weaponName": "Weapon name",
+    "damage": "Damage",
+    "rate": "Rate",
+    "ammo": "Ammo",
+    "customQualities": "Custom qualities",
+    "customEffect": "Custom effect",
+    "qualities": "Qualities",
+    "effects": "Effects"
+  },
+  "status": {
+    "positive": "Positive",
+    "negative": "Negative",
+    "duration": "Duration"
+  },
+  "statuses": {
+        "starving": {
+  "name": "Starving",
+  "description": "Severe hunger weakens the character and reduces effectiveness."
+},
+"dehydrated": {
+  "name": "Dehydrated",
+  "description": "Lack of water causes weakness and slower recovery."
+},
+"exhausted": {
+  "name": "Exhausted",
+  "description": "Lack of sleep reduces concentration and performance."
+},
+    "prone": {
+      "name": "Prone",
+      "description": "Reduced mobility until standing up."
+    },
+    "hidden": {
+      "name": "Hidden",
+      "description": "Harder to detect by enemies."
+    },
+    "persistentDamage": {
+      "name": "Persistent Damage",
+      "description": "Deals damage repeatedly over time."
+    },
+    "addiction": {
+      "name": "Addiction",
+      "description": "Character suffers penalties without substance use."
+    },
+    "disease": {
+      "name": "Disease",
+      "description": "Causes fatigue and ongoing penalties."
+    },
+    "chemEffect": {
+      "name": "Chem Effect",
+      "description": "Temporary bonuses or penalties from substances."
+    },
+    "wellRested": {
+      "name": "Well Rested",
+      "description": "Improves performance after proper sleep."
+    },
+    "fatigue": {
+      "name": "Fatigue",
+      "description": "Reduces effectiveness due to exhaustion."
+    },
+    "wellFed": {
+      "name": "Well Fed",
+      "description": "Provides bonuses from proper nutrition and hydration."
+    },
+    "exposure": {
+      "name": "Exposure",
+      "description": "Causes fatigue due to environmental conditions."
+    },
+    "unconscious": {
+      "name": "Unconscious",
+      "description": "Unable to act until stabilized or healed."
+    },
+    "dying": {
+      "name": "Dying",
+      "description": "Requires immediate stabilization to avoid death."
+    },
+    "invisible": {
+      "name": "Invisible",
+      "description": "Harder to detect and increases defense."
+    },
+    "cover": {
+      "name": "Cover",
+      "description": "Improves defense against attacks."
+    },
+    "blind": {
+      "name": "Blind",
+      "description": "Cannot see, affecting accuracy and perception."
+    },
+    "deaf": {
+      "name": "Deaf",
+      "description": "Cannot hear, affecting awareness."
+    },
+    "fear": {
+      "name": "Fear",
+      "description": "Attempts to flee or loses control under stress."
+    },
+    "grappled": {
+      "name": "Grappled",
+      "description": "Cannot move freely."
+    },
+    "stunned": {
+      "name": "Stunned",
+      "description": "Cannot perform normal actions."
+    },
+    "paralyzed": {
+      "name": "Paralyzed",
+      "description": "Cannot perform any actions."
+    },
+    "rage": {
+      "name": "Rage",
+      "description": "Loss of control, aggressive behavior."
+    },
+    "resistance": {
+      "name": "Resistance",
+      "description": "Reduces damage of a specific type."
+    },
+    "customState": {
+      "name": "Custom State",
+      "description": "User-defined condition with custom effects."
+    },
+    "duration": {
+      "whileZero": "While value is 0",
+      "untilRemoved": "Until removed",
+      "untilBroken": "Until broken",
+      "ongoing": "Ongoing",
+      "untilCured": "Until cured",
+      "timeBased": "Time-based",
+      "untilNextSleep": "Until next sleep",
+      "untilSheltered": "Until sheltered",
+      "untilRecovered": "Until recovered",
+      "critical": "Critical",
+      "whileActive": "While active",
+      "untilFreed": "Until freed",
+      "short": "Short",
+      "custom": "Custom"
+    }
+  },
+  "main": {
+    "title": "MAIN",
+    "dataReady": "DATA READY",
+    "addPortrait": "ADD PORTRAIT",
+    "origin": "Origin",
+    "level": "Level",
+    "defense": "Defense",
+    "initiative": "Initiative",
+    "melee": "Melee",
+    "luck": "Luck"
+  },
+  "hp": {
+    "title": "HP / RAD",
+    "baseMax": "Base Max",
+    "usableMax": "Usable Max",
+    "radiation": "Radiation"
+  },
+  "vitals": {
+    "title": "VITALS",
+    "status": "SURVIVAL STATUS",
+    "hunger": "Hunger",
+    "thirst": "Thirst",
+    "sleep": "Sleep"
+  },
+  "injuries": {
+    "vaultBoyAlt": "Vault Boy injury display",
+    "title": "INJURIES",
+    "selectBodyPart": "SELECT BODY PART",
+    "crippled": "CRIPPLED",
+    "treated": "TREATED",
+    "conditions": "Conditions",
+    "activeEffects": "Active effects",
+    "head": "Head",
+    "leftArm": "Left Arm",
+    "rightArm": "Right Arm",
+    "torso": "Torso",
+    "leftLeg": "Left Leg",
+    "rightLeg": "Right Leg",
+    "state": {
+      "normal": "normal",
+      "crippled": "crippled",
+      "treated": "treated"
+    }
+  },
+  "specialPanel": {
+    "title": "SPECIAL",
+    "primaryStats": "PRIMARY STATS"
+  },
+  "skills": {
+    "title": "SKILLS",
+    "edit": "EDIT",
+    "attr": "Attr",
+    "test": "Test"
+  },
+ "inventory": {
+  "title": "INVENTORY",
+  "caps": "CAPS",
+  "currentWeight": "Current Weight",
+  "maxCarry": "Max Carry",
+  "addItem": "+ ADD ITEM",
+  "itemEditor": "ITEM EDITOR",
+  "logEntry": "LOG ENTRY",
+  "itemName": "Item name",
+  "quantity": "Quantity",
+  "cost": "Cost",
+  "weight": "Weight",
+  "unnamedItem": "Unnamed Item",
+  "qtyShort": "Qty",
+  "wtShort": "Wt",
+  "valShort": "Val",
+  "categories": {
+    "all": "All",
+    "weapons": "Weapons",
+    "ammo": "Ammo",
+    "aid": "Aid",
+    "food": "Food",
+    "misc": "Misc",
+    "junk": "Junk"
+  }
+},
+  "armorPanel": {
+    "title": "ARMOR",
+    "locationDr": "LOCATION DR",
+    "physical": "Physical",
+    "energy": "Energy",
+    "radiation": "Radiation",
+    "hp": "HP"
+  },
+  "perksPanel": {
+    "title": "PERKS / TRAITS",
+    "perkEditor": "PERK EDITOR",
+    "entryMode": "ENTRY MODE",
+    "perkName": "Perk name",
+    "rank": "Rank",
+    "description": "Description",
+    "unnamedPerk": "Unnamed Perk",
+    "noDescription": "No description"
+  },
+  "notesPanel": {
+    "backstory": "BACKSTORY",
+    "questNotes": "QUEST NOTES",
+    "activeObjectives": "ACTIVE OBJECTIVES",
+    "close": "CLOSE",
+    "noBackstory": "No backstory added.",
+    "backstoryPlaceholder": "Enter character backstory"
+  },
+  "dataPanel": {
+    "title": "DATA / EXPORT",
+    "archiveAccess": "ARCHIVE ACCESS",
+    "exportJson": "EXPORT JSON",
+    "saveToDevice": "SAVE TO DEVICE",
+    "importJson": "IMPORT JSON",
+    "noRecentExport": "No recent export action",
+    "noRecentImport": "No recent import action"
+  },
+  "menuScreen": {
+    "bootline": "ROBCO INDUSTRIES (TM) TERMLINK",
+    "subtitle": "FALLOUT 2D20 CHARACTER MANAGER",
+    "newCharacter": "NEW CHARACTER",
+    "importJson": "IMPORT JSON",
+    "lastRecord": "LAST RECORD",
+    "localMemory": "LOCAL MEMORY",
+    "name": "Name",
+    "origin": "Origin",
+    "level": "Level",
+    "updated": "Updated",
+    "unnamed": "Unnamed",
+    "unknown": "Unknown",
+    "continue": "CONTINUE",
+    "noSavedCharacter": "No saved character found in local storage."
+  },
+  "injuryEffects": {
+    "head": {
+      "crippled": "Lose next normal actions. Vision tests are +2 difficulty.",
+      "treated": "Head stabilized. Vision and focus may still be impaired."
+    },
+    "torso": {
+      "crippled": "Heavy bleeding. Take ongoing damage each turn.",
+      "treated": "Bleeding controlled, but the wound is still serious."
+    },
+    "leftArm": {
+      "crippled": "Drop held item. That arm cannot be used.",
+      "treated": "Arm stabilized, but use remains limited."
+    },
+    "rightArm": {
+      "crippled": "Drop held item. That arm cannot be used.",
+      "treated": "Arm stabilized, but use remains limited."
+    },
+    "leftLeg": {
+      "crippled": "Fall prone. No sprint. Moving is slower.",
+      "treated": "Leg stabilized, but mobility is still reduced."
+    },
+    "rightLeg": {
+      "crippled": "Fall prone. No sprint. Moving is slower.",
+      "treated": "Leg stabilized, but mobility is still reduced."
+    }
+  },
+  "unsavedChanges": {
+    "title": "UNSAVED CHANGES",
+    "warning": "WARNING",
+    "message": "You have unsaved changes. Export the current record before leaving this screen.",
+    "saveAndLeave": "SAVE AND LEAVE",
+    "leaveWithoutSaving": "LEAVE WITHOUT SAVING"
+  },
+  "derived": {
+    "title": "DERIVED",
+    "defense": "Defense",
+    "initiative": "Initiative",
+    "meleeDr": "Melee DR",
+    "luckPoints": "Luck Points",
+    "maxHp": "Max HP",
+    "carryWeight": "Carry Weight"
+  },
+  "skillsEditor": {
+    "title": "SKILLS EDITOR",
+    "rank": "Rank",
+    "tag": "Tag",
+    "bonus": "Bonus"
+  },
+  "conditions": {
+    "title": "CONDITIONS"
+  },
+  "weaponEffects": {
+    "persistent": {
+      "name": "Persistent",
+      "description": "If effects are rolled, the target takes the weapon’s damage again at the end of future turns for several rounds. They can use an action to try to stop it early."
+    },
+    "piercing1": {
+      "name": "Piercing 1",
+      "description": "Each effect ignores part of the target’s DR. The ignored amount depends on the weapon’s Piercing rating."
+    },
+    "piercing2": {
+      "name": "Piercing 2",
+      "description": "Each effect ignores part of the target’s DR. The ignored amount depends on the weapon’s Piercing rating."
+    },
+    "piercing3": {
+      "name": "Piercing 3",
+      "description": "Each effect ignores part of the target’s DR. The ignored amount depends on the weapon’s Piercing rating."
+    },
+    "piercing4": {
+      "name": "Piercing 4",
+      "description": "Each effect ignores part of the target’s DR. The ignored amount depends on the weapon’s Piercing rating."
+    },
+    "radioactive": {
+      "name": "Radioactive",
+      "description": "Each effect also adds extra radiation damage, resolved separately after the main hit."
+    },
+    "spread": {
+      "name": "Spread",
+      "description": "Each effect creates an extra hit on the same target. Extra hits deal half damage and strike random locations."
+    },
+    "stun": {
+      "name": "Stun",
+      "description": "If at least one effect is rolled, the target loses their normal actions on their next turn."
+    },
+    "vicious": {
+      "name": "Vicious",
+      "description": "Each effect increases the total damage dealt."
+    },
+    "burst": {
+      "name": "Burst",
+      "description": "Each effect can hit another target near the main one, spending additional ammunition."
+    },
+    "breaking": {
+      "name": "Breaking",
+      "description": "Each effect weakens cover or, if there is no cover, reduces DR on the struck location for the weapon’s damage type."
+    }
+  },
+  "weaponQualities": {
+    "accurate": {
+      "name": "Accurate",
+      "description": "Works best when aimed carefully. You can spend AP after aiming to add extra damage dice."
+    },
+    "blast": {
+      "name": "Blast",
+      "description": "Targets a whole zone instead of one enemy. On failure, it still deals reduced area damage."
+    },
+    "closeQuarters": {
+      "name": "Close Quarters",
+      "description": "Does not suffer extra difficulty when used within reach of an enemy."
+    },
+    "concealed": {
+      "name": "Concealed",
+      "description": "Easy to hide unless openly carried or found during a proper search."
+    },
+    "debilitating": {
+      "name": "Debilitating",
+      "description": "Injuries caused by this weapon are harder to treat."
+    },
+    "gatling": {
+      "name": "Gatling",
+      "description": "Consumes ammo in large bursts and gains stronger bonus damage when extra ammo is spent."
+    },
+    "inaccurate": {
+      "name": "Inaccurate",
+      "description": "Gets no benefit from aiming."
+    },
+    "mine": {
+      "name": "Mine",
+      "description": "Can be placed and primed to damage creatures that move close to it."
+    },
+    "nightVision": {
+      "name": "Night Vision",
+      "description": "Aiming ignores darkness penalties."
+    },
+    "parry": {
+      "name": "Parry",
+      "description": "Can improve your Defense against incoming melee attacks by spending AP."
+    },
+    "recon": {
+      "name": "Recon",
+      "description": "After aiming, the next ally attacking that target gains a re-roll benefit."
+    },
+    "reliable": {
+      "name": "Reliable",
+      "description": "Ignores the first complication rolled with that weapon in each combat encounter."
+    },
+    "suppressed": {
+      "name": "Suppressed",
+      "description": "Harder for enemies to notice when fired from stealth."
+    },
+    "thrown": {
+      "name": "Thrown",
+      "description": "Can be used as a ranged attack with a listed throwing range."
+    },
+    "twoHanded": {
+      "name": "Two-Handed",
+      "description": "Needs both hands for normal use. One-handed attacks are much harder."
+    },
+    "unreliable": {
+      "name": "Unreliable",
+      "description": "Raises the chance of complications when used."
+    }
+  },
+  "skillNames": {
+    "athletics": "Athletics",
+    "barter": "Barter",
+    "bigGuns": "Big Guns",
+    "energyWeapons": "Energy Weapons",
+    "explosives": "Explosives",
+    "lockpick": "Lockpick",
+    "medicine": "Medicine",
+    "meleeWeapons": "Melee Weapons",
+    "pilot": "Pilot",
+    "repair": "Repair",
+    "science": "Science",
+    "smallGuns": "Small Guns",
+    "sneak": "Sneak",
+    "speech": "Speech",
+    "survival": "Survival",
+    "throwing": "Throwing",
+    "unarmed": "Unarmed"
+  },
+  "weaponDamageTypes": {
+    "physical": "Physical",
+    "energy": "Energy",
+    "radiation": "Radiation",
+    "poison": "Poison"
+  },
+  "weaponRanges": {
+    "Melee": "Melee",
+    "Close (C)": "Close (C)",
+    "Medium (M)": "Medium (M)",
+    "Long (L)": "Long (L)",
+    "Extreme (X)": "Extreme (X)"
+  },
+  "mapPanel": {
+  "title": "MAP",
+  "worldTime": "WORLD TIME",
+  "target": "TARGET",
+  "positionTarget": "POSITION / TARGET",
+  "sector": "Sector",
+  "pos": "Pos",
+  "world": "World",
+  "terrain": "Terrain",
+  "date": "Date",
+  "time": "Time",
+  "travel": "Travel",
+  "targetLabel": "Target",
+  "direction": "Dir",
+  "blocks": "Blocks",
+  "km": "Km",
+  "type": "Type",
+  "hazards": "Hazards",
+  "none": "None",
+  "travelButton": "TRAVEL",
+  "campButton": "CAMP",
+  "log": "LOG",
+  "north": "NORTH",
+  "south": "SOUTH",
+  "west": "WEST",
+  "east": "EAST",
+  "day": "Day",
+  "month": "Month",
+  "enteredWasteland": "Entered the Wasteland",
+  "campRest": "You set up camp to rest +8h",
+  "shiftedMap": "Shifted map {{direction}}.",
+  "movedTo": "Moved to {{x}},{{y}} - {{terrain}} - +{{cost}}h",
+  "locationFound": "Location found: {{name}}",
+  "unknown": "Unknown"
+},
+"terrain": {
+  "road": "Road",
+  "urban": "Urban",
+  "ruins": "Ruins",
+  "forest": "Forest",
+  "swamp": "Swamp",
+  "industrial": "Industrial",
+  "water": "Water",
+  "mountains": "Mountains",
+  "blocked_ruins": "Blocked Ruins"
+},
+"hazards": {
+  "difficult": "Difficult Terrain",
+  "radiation": "Radiation Zone",
+  "toxic": "Toxic Zone",
+  "danger": "Danger Zone",
+  "anomaly": "Anomalous Zone"
+},
+"hazardsDesc": {
+  "difficult": "Greatly slows movement.",
+  "radiation": "Deals periodic radiation damage.",
+  "toxic": "Deals periodic poison damage.",
+  "danger": "Deals periodic physical damage from hidden fire or hazards.",
+  "anomaly": "Deals periodic energy damage."
+},
+"encounters": {
+  "commonwealth": {
+    "ammo_crate": "Loot: You find an ammo crate. Gain 5 random rounds.",
+    "nuka_fridge": "Loot: An old Nuka-Cola fridge. There might be something useful inside.",
+
+    "metro_station": "Metro station. It might be worth exploring.",
+    "cave": "A dark and eerie cave. It might be worth exploring.",
+    "west_tek_building": "A West-Tek facility. Dangerous, but potentially valuable.",
+    "bus_station": "A bus station. There could be supplies or survivors here.",
+    "mine": "An abandoned mine. It's dark and silent inside.",
+    "super_duper_mart": "Super Duper Mart. Might be worth checking the shelves and storage.",
+    "raider_outpost": "A raider outpost. Someone is definitely here.",
+    "mutant_outpost": "A super mutant outpost. Stay alert.",
+    "bos_outpost": "Brotherhood of Steel outpost. Their reaction depends on your reputation.",
+    "ncr_outpost": "NCR outpost. Could be trade... or interrogation.",
+    "settlement": "A small settlement. You may find rest, rumors, or trade opportunities.",
+    "wasteland_nothing": "Empty wasteland. Nothing of interest.",
+
+    "ambush": "Ambush! You are attacked. Enemies strike first.",
+
+    "rad_waste_pit": "You fall into a pit of radioactive waste. Take radiation damage.",
+    "lost_supplies": "You lost some supplies during travel.",
+    "broken_backpack": "Your backpack is torn. Some of your gear is lost.",
+    "fatal_breakdown": "Critical failure. Your equipped weapon or armor breaks and becomes unusable.",
+    "food_poisoning": "You ate something bad and got poisoned.",
+    "hunger_crash": "Your hunger drops to 0. You also gain 1 level of exhaustion.",
+    "toxic_puddle": "Toxic puddle. You are exposed to poison or lose leg protection.",
+    "pickpocket": "Pickpocket. One unequipped item is stolen from your inventory.",
+    "building_collapse": "A collapsing building falls on you. Take physical damage.",
+    "radioactive_puddle": "Radioactive puddle. Take radiation damage.",
+    "grenade_tripwire": "Grenade tripwire! You and adjacent allies take physical damage.",
+    "stuck_in_textures": "You got stuck in the terrain. You cannot move until you take a long rest.",
+    "overload": "Over-encumbered. Drop items or gain 1 level of exhaustion."
+  },
+  "weird": {
+    "mr_gutsy_drill": "A group of Mister Gutsy robots mistakes you for training participants.",
+    "cult_preachers": "A strange cult tries to recruit you.",
+    "wasteland_convention": "Fans of pre-war culture are organizing a bizarre wasteland convention.",
+    "super_mutant_tech": "Super mutants are attempting to operate advanced pre-war technology.",
+    "rickshaw_taxi": "A makeshift taxi offers you a ride for caps.",
+    "vault_wanderer": "A vault dweller asks for help repairing their vault systems."
+  }
+},
+"locations": {
+  "bunker": "Bunker",
+  "cave": "Cave",
+  "diner": "Diner",
+  "factory": "Factory",
+  "farm": "Farm",
+  "hospital": "Hospital",
+  "junkyard": "Junkyard",
+  "metro_station": "Metro Station",
+  "military_base": "Military Base",
+  "museum": "Museum",
+  "office_tower": "Office Tower",
+  "park": "Park",
+  "pier": "Pier",
+  "plane_ruin": "Plane Ruin",
+  "police_station": "Police Station",
+  "power_plant": "Power Plant",
+  "radio_tower": "Radio Tower",
+  "red_rocket": "Red Rocket",
+  "ruins_site": "Ruins Site",
+  "satellite_station": "Satellite Station",
+  "settlement": "Settlement",
+  "sewer": "Sewer",
+
+  "sanctuary": "Sanctuary",
+  "vault_111": "Vault 111",
+  "red_rocket_sanctuary": "Red Rocket",
+  "abernathy_farm": "Abernathy Farm",
+  "sunshine_tidings": "Sunshine Tidings Co-op",
+  "starlight_drive_in": "Starlight Drive-In",
+  "concord": "Concord",
+  "museum_of_freedom": "Museum of Freedom",
+  "drumlin_diner": "Drumlin Diner",
+  "lexington": "Lexington",
+  "corvega": "Corvega Assembly Plant",
+  "covenant": "Covenant",
+  "tenpines_bluff": "Tenpines Bluff",
+  "cambridge_police_station": "Cambridge Police Station",
+  "cambridge": "Cambridge",
+  "college_square": "College Square",
+  "greygarden": "Graygarden",
+  "fort_hagen": "Fort Hagen",
+  "vault_81": "Vault 81",
+  "hangmans_alley": "Hangman's Alley",
+  "diamond_city": "Diamond City",
+  "the_institute": "The Institute",
+  "goodneighbor": "Goodneighbor",
+  "pickman_gallery": "Pickman Gallery",
+  "old_north_church": "Old North Church",
+  "bunker_hill": "Bunker Hill",
+  "mass_fusion": "Mass Fusion",
+  "custom_house_tower": "Custom House Tower",
+  "boston_airport": "Boston Airport",
+  "the_castle": "The Castle",
+  "saugus_ironworks": "Saugus Ironworks",
+  "revere_beach_station": "Revere Beach Station",
+  "salem": "Salem",
+  "spectacle_island": "Spectacle Island",
+  "nahant": "Nahant",
+  "parsons_state_insane_asylum": "Parsons State Insane Asylum",
+  "jamaica_plain": "Jamaica Plain",
+  "quincy": "Quincy",
+  "murkwater": "Murkwater Construction Site",
+  "egret_tours_marina": "Egret Tours Marina",
+  "glowing_sea": "The Glowing Sea",
+  "atom_crater": "Crater of Atom",
+  "virgil_cave": "Virgil's Cave"
+}
+}

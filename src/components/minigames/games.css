@@ -1,0 +1,133 @@
+.games-screen {
+  padding: 12px;
+}
+
+.games-header {
+  margin-bottom: 12px;
+}
+
+.games-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.games-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.games-card {
+  text-align: left;
+  min-height: 120px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 255, 154, 0.2);
+  background: rgba(10, 24, 12, 0.85);
+  color: #8cff9a;
+}
+
+.games-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.games-card-text {
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.games-result-panel {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(140, 255, 154, 0.16);
+  border-radius: 10px;
+  background: rgba(10, 24, 12, 0.85);
+  color: #b9ffc3;
+}
+
+.games-card-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.games-difficulty-panel {
+  padding: 10px 12px;
+  border: 1px solid rgba(140, 255, 154, 0.14);
+  border-radius: 10px;
+  background: rgba(10, 24, 12, 0.72);
+}
+
+.games-difficulty-title {
+  font-size: 12px;
+  margin-bottom: 8px;
+  opacity: 0.85;
+}
+
+.games-difficulty-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.games-difficulty-btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(140, 255, 154, 0.18);
+  background: rgba(10, 24, 12, 0.85);
+  color: #8cff9a;
+  font-size: 12px;
+}
+
+.games-difficulty-btn.is-active {
+  border-color: rgba(140, 255, 154, 0.45);
+  box-shadow: inset 0 0 0 1px rgba(140, 255, 154, 0.2);
+}
+
+.games-difficulty-panel {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(124, 255, 178, 0.2);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.games-difficulty-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #9effc8;
+  text-transform: uppercase;
+}
+
+.games-difficulty-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.games-difficulty-btn {
+  padding: 6px 10px;
+  border: 1px solid rgba(124, 255, 178, 0.3);
+  border-radius: 8px;
+  background: #0d2b1c;
+  color: #7cffb2;
+  cursor: pointer;
+}
+
+.games-difficulty-btn.is-active {
+  background: rgba(124, 255, 178, 0.18);
+  color: #d7ffe9;
+  border-color: rgba(124, 255, 178, 0.7);
+}

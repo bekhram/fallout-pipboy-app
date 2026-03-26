@@ -1,0 +1,672 @@
+{
+  "tabs": {
+    "status": "STATUS",
+    "special": "SPECIAL",
+    "weapons": "BROŃ",
+    "inventory": "EKW",
+    "armor": "PANCERZ",
+    "perks": "PERKI",
+    "notes": "NOTATKI",
+    "map": "MAP",
+    "games": "ZABAVKI"
+  },
+  "brand": {
+    "title": "ROBCO INDUSTRIES (TM)",
+    "status": "SYSTEM ONLINE"
+  },
+  "menu": {
+    "title": "MENU SYSTEMOWE",
+    "language": "JĘZYK",
+    "export": "EKSPORT JSON",
+    "saveToDevice": "ZAPISZ NA URZĄDZENIU",
+    "import": "IMPORT JSON",
+    "return": "POWRÓT DO MENU"
+  },
+  "common": {
+    "edit": "EDYTUJ",
+    "copy": "KOPIUJ",
+    "save": "ZAPISZ",
+    "cancel": "ANULUJ",
+    "add": "DODAJ",
+    "delete": "X"
+  },
+  "weapons": {
+    "unnamedWeapon": "Bez nazwy",
+    "damageShort": "OBR",
+    "rateShort": "TEMP",
+    "ammoShort": "AMMO",
+    "editorTitle": "EDYTOR BRONI",
+    "configMode": "TRYB KONFIGURACJI",
+    "weaponName": "Nazwa broni",
+    "damage": "Obrażenia",
+    "rate": "Tempo",
+    "ammo": "Amunicja",
+    "customQualities": "Własne właściwości",
+    "customEffect": "Własny efekt",
+    "qualities": "Właściwości",
+    "effects": "Efekty"
+  },
+  "status": {
+    "positive": "Pozytywne",
+    "negative": "Negatywne",
+    "duration": "Czas trwania"
+  },
+  "statuses": {
+        "starving": {
+  "name": "Głód",
+  "description": "Silny głód osłabia postać i zmniejsza skuteczność."
+},
+"dehydrated": {
+  "name": "Odwodnienie",
+  "description": "Brak wody powoduje osłabienie i wolniejszą regenerację."
+},
+"exhausted": {
+  "name": "Wyczerpanie",
+  "description": "Brak snu obniża koncentrację i skuteczność."
+},
+    "prone": {
+      "name": "Leży",
+      "description": "Ograniczona mobilność do momentu wstania."
+    },
+    "hidden": {
+      "name": "Ukryty",
+      "description": "Trudniejszy do wykrycia przez wrogów."
+    },
+    "persistentDamage": {
+      "name": "Ciągłe obrażenia",
+      "description": "Zadaje obrażenia w czasie."
+    },
+    "addiction": {
+      "name": "Uzależnienie",
+      "description": "Kary bez użycia substancji."
+    },
+    "disease": {
+      "name": "Choroba",
+      "description": "Powoduje zmęczenie i kary."
+    },
+    "chemEffect": {
+      "name": "Efekt chemii",
+      "description": "Tymczasowe bonusy lub kary."
+    },
+    "wellRested": {
+      "name": "Wypoczęty",
+      "description": "Zwiększa efektywność po śnie."
+    },
+    "fatigue": {
+      "name": "Zmęczenie",
+      "description": "Obniża efektywność."
+    },
+    "wellFed": {
+      "name": "Najedzony",
+      "description": "Bonusy z jedzenia i wody."
+    },
+    "exposure": {
+      "name": "Ekspozycja",
+      "description": "Wpływ środowiska powodujący zmęczenie."
+    },
+    "unconscious": {
+      "name": "Nieprzytomny",
+      "description": "Nie może działać."
+    },
+    "dying": {
+      "name": "Umiera",
+      "description": "Wymaga natychmiastowej stabilizacji."
+    },
+    "invisible": {
+      "name": "Niewidzialny",
+      "description": "Trudniejszy do wykrycia i lepsza obrona."
+    },
+    "cover": {
+      "name": "Osłona",
+      "description": "Zwiększa ochronę przed atakami."
+    },
+    "blind": {
+      "name": "Ślepota",
+      "description": "Brak widzenia, gorsza celność."
+    },
+    "deaf": {
+      "name": "Głuchota",
+      "description": "Brak słuchu, gorsza percepcja."
+    },
+    "fear": {
+      "name": "Strach",
+      "description": "Może powodować ucieczkę."
+    },
+    "grappled": {
+      "name": "Unieruchomiony",
+      "description": "Ograniczony ruch."
+    },
+    "stunned": {
+      "name": "Ogłuszony",
+      "description": "Nie może normalnie działać."
+    },
+    "paralyzed": {
+      "name": "Sparaliżowany",
+      "description": "Brak możliwości działania."
+    },
+    "rage": {
+      "name": "Furia",
+      "description": "Utrata kontroli, agresja."
+    },
+    "resistance": {
+      "name": "Odporność",
+      "description": "Zmniejsza obrażenia."
+    },
+    "customState": {
+      "name": "Stan własny",
+      "description": "Stan z własnymi efektami."
+    },
+    "duration": {
+      "whileZero": "Dopóki wartość wynosi 0",
+      "untilRemoved": "Do usunięcia",
+      "untilBroken": "Do przerwania",
+      "ongoing": "Ciągły",
+      "untilCured": "Do wyleczenia",
+      "timeBased": "Czasowy",
+      "untilNextSleep": "Do następnego snu",
+      "untilSheltered": "Do schronienia",
+      "untilRecovered": "Do odzyskania",
+      "critical": "Krytyczny",
+      "whileActive": "Podczas działania",
+      "untilFreed": "Do uwolnienia",
+      "short": "Krótki",
+      "custom": "Niestandardowy"
+    }
+  },
+  "main": {
+    "title": "GŁÓWNE",
+    "dataReady": "DANE GOTOWE",
+    "addPortrait": "DODAJ PORTRET",
+    "origin": "Pochodzenie",
+    "level": "Poziom",
+    "defense": "Obrona",
+    "initiative": "Inicjatywa",
+    "melee": "Walka wręcz",
+    "luck": "Szczęście"
+  },
+  "hp": {
+    "title": "HP / RAD",
+    "baseMax": "Bazowe maksimum",
+    "usableMax": "Dostępne maksimum",
+    "radiation": "Promieniowanie"
+  },
+  "vitals": {
+    "title": "PARAMETRY",
+    "status": "STAN PRZETRWANIA",
+    "hunger": "Głód",
+    "thirst": "Pragnienie",
+    "sleep": "Sen"
+  },
+  "injuries": {
+    "vaultBoyAlt": "Schemat obrażeń Vault Boya",
+    "title": "OBRAŻENIA",
+    "selectBodyPart": "WYBIERZ CZĘŚĆ CIAŁA",
+    "crippled": "KRYTYCZNE",
+    "treated": "OPATRZONE",
+    "conditions": "Stany",
+    "activeEffects": "Aktywne efekty",
+    "head": "Głowa",
+    "leftArm": "Lewa ręka",
+    "rightArm": "Prawa ręka",
+    "torso": "Tułów",
+    "leftLeg": "Lewa noga",
+    "rightLeg": "Prawa noga",
+    "state": {
+      "normal": "normalny",
+      "crippled": "uszkodzony",
+      "treated": "opatrzony"
+    }
+  },
+  "specialPanel": {
+    "title": "SPECIAL",
+    "primaryStats": "GŁÓWNE STATYSTYKI"
+  },
+  "skills": {
+    "title": "UMIEJĘTNOŚCI",
+    "edit": "ED",
+    "attr": "Atr",
+    "test": "Test"
+  },
+"inventory": {
+  "title": "EKWIPUNEK",
+  "caps": "KAPSY",
+  "currentWeight": "Aktualna waga",
+  "maxCarry": "Maks. udźwig",
+  "addItem": "+ DODAJ",
+  "itemEditor": "EDYTOR PRZEDMIOTU",
+  "logEntry": "WPIS",
+  "itemName": "Nazwa",
+  "quantity": "Ilość",
+  "cost": "Wartość",
+  "weight": "Waga",
+  "unnamedItem": "Bez nazwy",
+  "qtyShort": "Ilo",
+  "wtShort": "Waga",
+  "valShort": "Wart",
+  "categories": {
+    "all": "Wszystko",
+    "weapons": "Broń",
+    "ammo": "Amunicja",
+    "aid": "Pomoc",
+    "food": "Jedzenie",
+    "misc": "Różne",
+    "junk": "Złom"
+  }},
+  "armorPanel": {
+    "title": "PANCERZ",
+    "locationDr": "OCHRONA CZĘŚCI",
+    "physical": "Fiz.",
+    "energy": "Ener.",
+    "radiation": "Rad.",
+    "hp": "HP"
+  },
+  "perksPanel": {
+    "title": "PERKI / CECHY",
+    "perkEditor": "EDYTOR PERKA",
+    "entryMode": "TRYB WPROWADZANIA",
+    "perkName": "Nazwa perka",
+    "rank": "Ranga",
+    "description": "Opis",
+    "unnamedPerk": "Bez nazwy",
+    "noDescription": "Brak opisu"
+  },
+  "notesPanel": {
+    "backstory": "HISTORIA",
+    "questNotes": "NOTATKI",
+    "activeObjectives": "AKTYWNE CELE",
+    "close": "ZAMKNIJ",
+    "noBackstory": "Brak historii.",
+    "backstoryPlaceholder": "Wpisz historię postaci"
+  },
+  "dataPanel": {
+    "title": "DANE / EKSPORT",
+    "archiveAccess": "DOSTĘP DO ARCHIWUM",
+    "exportJson": "EKSPORT JSON",
+    "saveToDevice": "ZAPISZ NA URZĄDZENIU",
+    "importJson": "IMPORT JSON",
+    "noRecentExport": "Brak eksportu",
+    "noRecentImport": "Brak importu"
+  },
+  "menuScreen": {
+    "bootline": "ROBCO INDUSTRIES (TM) TERMLINK",
+    "subtitle": "MENEDŻER POSTACI FALLOUT 2D20",
+    "newCharacter": "NOWA POSTAĆ",
+    "importJson": "IMPORT JSON",
+    "lastRecord": "OSTATNI ZAPIS",
+    "localMemory": "PAMIĘĆ LOKALNA",
+    "name": "Imię",
+    "origin": "Pochodzenie",
+    "level": "Poziom",
+    "updated": "Zaktualizowano",
+    "unnamed": "Bez nazwy",
+    "unknown": "Nieznane",
+    "continue": "KONTYNUUJ",
+    "noSavedCharacter": "Brak zapisanej postaci."
+  },
+  "injuryEffects": {
+    "head": {
+      "crippled": "Traci następne zwykłe akcje. Testy wzroku mają +2 do trudności.",
+      "treated": "Uraz głowy został ustabilizowany. Wzrok i koncentracja nadal mogą być osłabione."
+    },
+    "torso": {
+      "crippled": "Silne krwawienie. Otrzymuje ciągłe obrażenia w każdej turze.",
+      "treated": "Krwawienie zostało opanowane, ale rana nadal jest poważna."
+    },
+    "leftArm": {
+      "crippled": "Upuszcza trzymany przedmiot. Tej ręki nie można używać.",
+      "treated": "Ręka została ustabilizowana, ale jej użycie nadal jest ograniczone."
+    },
+    "rightArm": {
+      "crippled": "Upuszcza trzymany przedmiot. Tej ręki nie można używać.",
+      "treated": "Ręka została ustabilizowana, ale jej użycie nadal jest ograniczone."
+    },
+    "leftLeg": {
+      "crippled": "Upada na ziemię. Nie może sprintować. Ruch jest spowolniony.",
+      "treated": "Noga została ustabilizowana, ale mobilność nadal jest ograniczona."
+    },
+    "rightLeg": {
+      "crippled": "Upada na ziemię. Nie może sprintować. Ruch jest spowolniony.",
+      "treated": "Noga została ustabilizowana, ale mobilność nadal jest ograniczona."
+    }
+  },
+  "unsavedChanges": {
+    "title": "NIEZAPISANE ZMIANY",
+    "warning": "OSTRZEŻENIE",
+    "message": "Masz niezapisane zmiany. Wyeksportuj bieżący zapis przed opuszczeniem tego ekranu.",
+    "saveAndLeave": "ZAPISZ I WYJDŹ",
+    "leaveWithoutSaving": "WYJDŹ BEZ ZAPISU"
+  },
+  "derived": {
+    "title": "POCHODNE",
+    "defense": "Obrona",
+    "initiative": "Inicjatywa",
+    "meleeDr": "DR wręcz",
+    "luckPoints": "Punkty szczęścia",
+    "maxHp": "Maks. HP",
+    "carryWeight": "Udźwig"
+  },
+  "skillsEditor": {
+    "title": "EDYTOR UMIEJĘTNOŚCI",
+    "rank": "Ranga",
+    "tag": "Tag",
+    "bonus": "Bonus"
+  },
+  "conditions": {
+    "title": "STANY"
+  },
+  "weaponEffects": {
+    "persistent": {
+      "name": "Trwały",
+      "description": "Jeśli wypadną efekty, cel ponownie otrzymuje obrażenia od broni na końcu kolejnych tur przez kilka rund. Może wydać akcję, aby spróbować zatrzymać efekt wcześniej."
+    },
+    "piercing1": {
+      "name": "Przebicie 1",
+      "description": "Każdy efekt ignoruje część DR celu. Ignorowana wartość zależy od poziomu przebicia broni."
+    },
+    "piercing2": {
+      "name": "Przebicie 2",
+      "description": "Każdy efekt ignoruje część DR celu. Ignorowana wartość zależy od poziomu przebicia broni."
+    },
+    "piercing3": {
+      "name": "Przebicie 3",
+      "description": "Każdy efekt ignoruje część DR celu. Ignorowana wartość zależy od poziomu przebicia broni."
+    },
+    "piercing4": {
+      "name": "Przebicie 4",
+      "description": "Każdy efekt ignoruje część DR celu. Ignorowana wartość zależy od poziomu przebicia broni."
+    },
+    "radioactive": {
+      "name": "Radioaktywny",
+      "description": "Każdy efekt dodaje także dodatkowe obrażenia od promieniowania, rozpatrywane osobno po głównym trafieniu."
+    },
+    "spread": {
+      "name": "Rozrzut",
+      "description": "Każdy efekt tworzy dodatkowe trafienie w ten sam cel. Dodatkowe trafienia zadają połowę obrażeń i trafiają w losowe części ciała."
+    },
+    "stun": {
+      "name": "Ogłuszenie",
+      "description": "Jeśli wypadnie przynajmniej jeden efekt, cel traci swoje zwykłe akcje w następnej turze."
+    },
+    "vicious": {
+      "name": "Brutalny",
+      "description": "Każdy efekt zwiększa całkowite zadawane obrażenia."
+    },
+    "burst": {
+      "name": "Seria",
+      "description": "Każdy efekt może trafić inny cel w pobliżu głównego, zużywając dodatkową amunicję."
+    },
+    "breaking": {
+      "name": "Niszczący",
+      "description": "Każdy efekt osłabia osłonę lub, jeśli osłony nie ma, obniża DR trafionej strefy dla tego typu obrażeń."
+    }
+  },
+  "weaponQualities": {
+    "accurate": {
+      "name": "Celna",
+      "description": "Działa najlepiej przy starannym celowaniu. Po wycelowaniu można wydać AP, aby dodać dodatkowe kości obrażeń."
+    },
+    "blast": {
+      "name": "Wybuch",
+      "description": "Uderza w całą strefę zamiast jednego przeciwnika. W razie niepowodzenia nadal zadaje zmniejszone obrażenia obszarowe."
+    },
+    "closeQuarters": {
+      "name": "Walka w zwarciu",
+      "description": "Nie otrzymuje dodatkowej trudności podczas użycia w bezpośrednim kontakcie z przeciwnikiem."
+    },
+    "concealed": {
+      "name": "Ukryta",
+      "description": "Łatwa do ukrycia, jeśli nie jest noszona otwarcie i nie zostanie znaleziona podczas dokładnego przeszukania."
+    },
+    "debilitating": {
+      "name": "Okaleczająca",
+      "description": "Rany zadane tą bronią są trudniejsze do leczenia."
+    },
+    "gatling": {
+      "name": "Gatling",
+      "description": "Zużywa amunicję w dużych seriach i otrzymuje silniejszy bonus do obrażeń przy wydaniu dodatkowych nabojów."
+    },
+    "inaccurate": {
+      "name": "Niecelna",
+      "description": "Nie otrzymuje korzyści z celowania."
+    },
+    "mine": {
+      "name": "Mina",
+      "description": "Można ją rozstawić i uzbroić tak, aby zadawała obrażenia istotom, które podejdą zbyt blisko."
+    },
+    "nightVision": {
+      "name": "Widzenie nocne",
+      "description": "Celowanie ignoruje kary za ciemność."
+    },
+    "parry": {
+      "name": "Parowanie",
+      "description": "Można zwiększyć swoją obronę przeciwko nadchodzącym atakom wręcz, wydając AP."
+    },
+    "recon": {
+      "name": "Rozpoznanie",
+      "description": "Po wycelowaniu następny sojusznik atakujący ten cel otrzymuje przerzut."
+    },
+    "reliable": {
+      "name": "Niezawodna",
+      "description": "Ignoruje pierwszą complication wyrzuconą dla tej broni w każdej walce."
+    },
+    "suppressed": {
+      "name": "Z tłumikiem",
+      "description": "Przeciwnikom trudniej zauważyć strzał, jeśli broń została użyta ze skrytości."
+    },
+    "thrown": {
+      "name": "Miotana",
+      "description": "Można jej używać jako ataku dystansowego z podanym zasięgiem rzutu."
+    },
+    "twoHanded": {
+      "name": "Dwuręczna",
+      "description": "Do normalnego użycia potrzebne są obie ręce. Ataki jedną ręką stają się znacznie trudniejsze."
+    },
+    "unreliable": {
+      "name": "Zawodna",
+      "description": "Zwiększa szansę na complications podczas użycia."
+    }
+  },
+  "skillNames": {
+    "athletics": "Atletyka",
+    "barter": "Handel",
+    "bigGuns": "Broń ciężka",
+    "energyWeapons": "Broń energetyczna",
+    "explosives": "Materiały wybuchowe",
+    "lockpick": "Otwieranie zamków",
+    "medicine": "Medycyna",
+    "meleeWeapons": "Broń biała",
+    "pilot": "Pilotaż",
+    "repair": "Naprawa",
+    "science": "Nauka",
+    "smallGuns": "Broń lekka",
+    "sneak": "Skradanie",
+    "speech": "Perswazja",
+    "survival": "Przetrwanie",
+    "throwing": "Rzucanie",
+    "unarmed": "Walka bez broni"
+  },
+  "weaponDamageTypes": {
+    "physical": "Fizyczne",
+    "energy": "Energetyczne",
+    "radiation": "Promieniowanie",
+    "poison": "Trucizna"
+  },
+  "weaponRanges": {
+    "Melee": "Wręcz",
+    "Close (C)": "Bliski (C)",
+    "Medium (M)": "Średni (M)",
+    "Long (L)": "Daleki (L)",
+    "Extreme (X)": "Ekstremalny (X)"
+  },
+  "mapPanel": {
+  "worldTime": "CZAS ŚWIATA",
+  "hazards": "Zagrożenia",
+  "none": "brak",
+
+  "north": "PÓŁNOC",
+  "south": "POŁUDNIE",
+  "east": "WSCHÓD",
+  "west": "ZACHÓD",
+
+  "target": "Cel",
+  "targetLabel": "Cel",
+
+  "terrain": "Teren",
+  "time": "Czas",
+  "travel": "Podróż",
+
+  "direction": "Kierunek",
+  "blocks": "Bloki",
+  "km": "Km",
+
+  "travelButton": "PODRÓŻ",
+  "campButton": "OBÓZ",
+
+  "log": "DZIENNIK",
+
+  "day": "Dzień",
+  "month": "Miesiąc",
+
+  "enteredWasteland": "Wkroczyłeś na Pustkowia",
+  "locationFound": "Odnaleziono lokację: {{name}}",
+  "movedTo": "Przemieszczono do {{x}},{{y}} - {{terrain}} - +{{cost}}h",
+  "campRest": "Rozbiłeś obóz i odpocząłeś +8h",
+  "shiftedMap": "Przejście do sektora {{direction}}"
+},
+"terrain": {
+  "road": "Droga",
+  "urban": "Strefa miejska",
+  "ruins": "Ruiny",
+  "forest": "Las",
+  "swamp": "Bagno",
+  "industrial": "Strefa przemysłowa",
+  "water": "Woda",
+  "mountains": "Góry",
+  "blocked_ruins": "Zawalione ruiny"
+},
+"hazards": {
+  "difficult": "Trudny teren",
+  "radiation": "Strefa promieniowania",
+  "toxic": "Strefa toksyczna",
+  "danger": "Strefa zagrożenia",
+  "anomaly": "Strefa anomalii"
+},
+"hazardsDesc": {
+  "difficult": "Znacznie spowalnia ruch.",
+  "radiation": "Zadaje okresowe obrażenia od promieniowania.",
+  "toxic": "Zadaje okresowe obrażenia od trucizny.",
+  "danger": "Zadaje okresowe obrażenia fizyczne od ukrytych zagrożeń.",
+  "anomaly": "Zadaje okresowe obrażenia energetyczne."
+},
+"encounters": {
+  "commonwealth": {
+    "ammo_crate": "Łup: znajdujesz skrzynię z amunicją. Zyskaj 5 losowych nabojów.",
+    "nuka_fridge": "Łup: stara lodówka Nuka-Cola. W środku może być coś przydatnego.",
+
+    "metro_station": "Stacja metra. Może warto ją zbadać.",
+    "cave": "Mroczna i ponura jaskinia. Może warto ją zbadać.",
+    "west_tek_building": "Obiekt West-Tek. Niebezpieczny, ale potencjalnie cenny.",
+    "bus_station": "Dworzec autobusowy. Mogą tu być zapasy albo ocaleni.",
+    "mine": "Opuszczona kopalnia. W środku jest ciemno i cicho.",
+    "super_duper_mart": "Super Duper Mart. Warto sprawdzić półki i magazyn.",
+    "raider_outpost": "Posterunek rajderów. Ktoś na pewno tu jest.",
+    "mutant_outpost": "Posterunek supermutantów. Zachowaj czujność.",
+    "bos_outpost": "Posterunek Bractwa Stali. Ich reakcja zależy od twojej reputacji.",
+    "ncr_outpost": "Posterunek NCR. Może tu być handel... albo przesłuchanie.",
+    "settlement": "Mała osada. Możesz tu znaleźć odpoczynek, plotki albo handel.",
+    "wasteland_nothing": "Puste pustkowia. Nic ciekawego.",
+
+    "ambush": "Zasadzka! Zostajesz zaatakowany. Wrogowie uderzają pierwsi.",
+
+    "rad_waste_pit": "Wpadasz do dołu z radioaktywnymi odpadami. Otrzymujesz obrażenia od promieniowania.",
+    "lost_supplies": "Podczas podróży tracisz część zapasów.",
+    "broken_backpack": "Twój plecak się rozdarł. Część ekwipunku została utracona.",
+    "fatal_breakdown": "Krytyczna awaria. Twoja wyposażona broń lub pancerz psuje się i staje się bezużyteczna.",
+    "food_poisoning": "Zjadłeś coś zepsutego i zatrułeś się.",
+    "hunger_crash": "Twój głód spada do 0. Otrzymujesz też 1 poziom wyczerpania.",
+    "toxic_puddle": "Toksyczna kałuża. Ulegasz zatruciu albo tracisz ochronę nóg.",
+    "pickpocket": "Kieszonkowiec. Jeden niewyposażony przedmiot zostaje skradziony z twojego ekwipunku.",
+    "building_collapse": "Walący się budynek spada na ciebie. Otrzymujesz obrażenia fizyczne.",
+    "radioactive_puddle": "Radioaktywna kałuża. Otrzymujesz obrażenia od promieniowania.",
+    "grenade_tripwire": "Linka z granatem! Ty i sąsiedni sojusznicy otrzymujecie obrażenia fizyczne.",
+    "stuck_in_textures": "Utkwiłeś w terenie. Nie możesz się poruszać, dopóki nie odbędziesz długiego odpoczynku.",
+    "overload": "Przeciążenie. Upuść przedmioty albo zyskaj 1 poziom wyczerpania."
+  },
+  "weird": {
+    "mr_gutsy_drill": "Grupa robotów Mister Gutsy bierze cię za uczestnika ćwiczeń.",
+    "cult_preachers": "Dziwny kult próbuje cię zwerbować.",
+    "wasteland_convention": "Miłośnicy kultury sprzed wojny organizują osobliwy konwent na pustkowiach.",
+    "super_mutant_tech": "Supermutanci próbują obsługiwać zaawansowaną technologię sprzed wojny.",
+    "rickshaw_taxi": "Prowizoryczna taksówka oferuje ci przejazd za kapsle.",
+    "vault_wanderer": "Mieszkaniec Krypty prosi o pomoc przy naprawie systemów swojej Krypty."
+  }
+},
+"locations": {
+  "bunker": "Bunkier",
+  "cave": "Jaskinia",
+  "diner": "Bar",
+  "factory": "Fabryka",
+  "farm": "Farma",
+  "hospital": "Szpital",
+  "junkyard": "Złomowisko",
+  "metro_station": "Stacja metra",
+  "military_base": "Baza wojskowa",
+  "museum": "Muzeum",
+  "office_tower": "Biurowiec",
+  "park": "Park",
+  "pier": "Molo",
+  "plane_ruin": "Wrak samolotu",
+  "police_station": "Komisariat",
+  "power_plant": "Elektrownia",
+  "radio_tower": "Wieża radiowa",
+  "red_rocket": "Red Rocket",
+  "ruins_site": "Ruiny",
+  "satellite_station": "Stacja satelitarna",
+  "settlement": "Osada",
+  "sewer": "Kanały",
+
+  "sanctuary": "Sanctuary",
+  "vault_111": "Krypta 111",
+  "red_rocket_sanctuary": "Red Rocket",
+  "abernathy_farm": "Farma Abernathy",
+  "sunshine_tidings": "Sunshine Tidings Co-op",
+  "starlight_drive_in": "Starlight Drive-In",
+  "concord": "Concord",
+  "museum_of_freedom": "Muzeum Wolności",
+  "drumlin_diner": "Drumlin Diner",
+  "lexington": "Lexington",
+  "corvega": "Zakład Corvega",
+  "covenant": "Covenant",
+  "tenpines_bluff": "Tenpines Bluff",
+  "cambridge_police_station": "Komisariat w Cambridge",
+  "cambridge": "Cambridge",
+  "college_square": "College Square",
+  "greygarden": "Graygarden",
+  "fort_hagen": "Fort Hagen",
+  "vault_81": "Krypta 81",
+  "hangmans_alley": "Hangman's Alley",
+  "diamond_city": "Diamond City",
+  "the_institute": "Instytut",
+  "goodneighbor": "Goodneighbor",
+  "pickman_gallery": "Galeria Pickmana",
+  "old_north_church": "Old North Church",
+  "bunker_hill": "Bunker Hill",
+  "mass_fusion": "Mass Fusion",
+  "custom_house_tower": "Custom House Tower",
+  "boston_airport": "Lotnisko w Bostonie",
+  "the_castle": "Zamek",
+  "saugus_ironworks": "Saugus Ironworks",
+  "revere_beach_station": "Stacja Revere Beach",
+  "salem": "Salem",
+  "spectacle_island": "Spectacle Island",
+  "nahant": "Nahant",
+  "parsons_state_insane_asylum": "Szpital psychiatryczny Parsons",
+  "jamaica_plain": "Jamaica Plain",
+  "quincy": "Quincy",
+  "murkwater": "Murkwater Construction Site",
+  "egret_tours_marina": "Egret Tours Marina",
+  "glowing_sea": "Świecące Morze",
+  "atom_crater": "Krater Atomu",
+  "virgil_cave": "Jaskinia Virgila"
+}
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pip 2d20</string>
+    <string name="title_activity_main">Pip 2d20</string>
+    <string name="package_name">com.bahram.pip2d20</string>
+    <string name="custom_url_scheme">com.bahram.pip2d20</string>
+</resources>
