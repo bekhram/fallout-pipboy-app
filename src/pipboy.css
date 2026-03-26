@@ -1,3 +1,14 @@
+html, body {
+  background: #08100a !important;
+  color: #8cff98 !important;
+}
+
+.pip-btn {
+  background: #102915 !important;
+  color: #8cff98 !important;
+  border: 1px solid #8cff98 !important;
+}
+
 :root {
   --pip-bg: #050806;
   --pip-bg-2: #0a0f0a;
