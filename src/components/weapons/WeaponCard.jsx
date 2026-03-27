@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createWeaponRoll } from "../../utils/dice";
 import {
@@ -24,6 +24,7 @@ export default function WeaponCard({
   onRoll,
 }) {
   const { t } = useTranslation();
+  const [useRate, setUseRate] = useState(false);
 
   const qualities = [
     ...(Array.isArray(weapon.qualities) ? weapon.qualities : []),
@@ -77,6 +78,21 @@ export default function WeaponCard({
     ? t(`weaponRanges.${weapon.range}`, weapon.range)
     : "—";
 
+  const handleRoll = (e) => {
+    e.stopPropagation();
+
+    const baseRate = Number(weapon.rate) || 0;
+
+    onRoll?.(
+      createWeaponRoll({
+        weapon,
+        diceCount: 2,
+        difficulty: 1,
+        useRate,
+      })
+    );
+  };
+
   return (
     <article className="pip-panel pip-item-card pip-weapon-card">
       <div className="pip-weapon-card-actions">
@@ -117,16 +133,7 @@ export default function WeaponCard({
       <div className="pip-item-top">
         <div>
           <h3
-            onClick={(e) => {
-              e.stopPropagation();
-              onRoll?.(
-                createWeaponRoll({
-                  weapon,
-                  diceCount: 2,
-                  difficulty: 1,
-                })
-              );
-            }}
+            onClick={handleRoll}
             style={{ cursor: "pointer" }}
           >
             {weapon.name || t("weapons.unnamedWeapon")}
@@ -141,6 +148,27 @@ export default function WeaponCard({
             {t("weapons.rateShort")} {weapon.rate || "0"}{" "}
             {t("weapons.ammoShort")} {weapon.ammo || "—"}
           </p>
+
+          <div className="pip-weapon-rate-toggle push-top">
+            <button
+              type="button"
+              className={`pip-btn ${useRate ? "is-primary" : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                setUseRate((prev) => !prev);
+              }}
+            >
+              {useRate
+                ? `${t("weapons.rateShort")} ON`
+                : `${t("weapons.rateShort")} OFF`}
+            </button>
+
+            {useRate && (
+              <span className="pip-weapon-rate-value">
+                {t("weapons.rateShort")}: {weapon.rate || 0}
+              </span>
+            )}
+          </div>
 
           {allTags.length > 0 && (
             <div className="pip-tagrow push-top">

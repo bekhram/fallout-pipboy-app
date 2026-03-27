@@ -202,22 +202,24 @@ export default function FalloutD6Roller({
     });
   };
 
-  useEffect(() => {
-    if (!autoRollRequest?.diceCount) return;
-    if (isRolling) return;
+useEffect(() => {
+  if (!autoRollRequest?.diceCount) return;
+  if (isRolling) return;
 
-    const count = Number(autoRollRequest.diceCount) || 1;
+  const baseCount = Number(autoRollRequest.diceCount) || 1;
+  const weaponRate = Number(autoRollRequest.weaponRate) || 0;
+  const totalCount = Math.max(1, Math.min(50, baseCount + weaponRate));
 
-    setDiceCount(count);
-    playSound("diceRoll");
-    setIsRolling(true);
+  setDiceCount(totalCount);
+  playSound("diceRoll");
+  setIsRolling(true);
 
-    animateDice(600, () => {
-      performRoll(count);
-      setIsRolling(false);
-      onAutoRollHandled?.();
-    });
-  }, [autoRollRequest?.id]);
+  animateDice(600, () => {
+    performRoll(totalCount);
+    setIsRolling(false);
+    onAutoRollHandled?.();
+  });
+}, [autoRollRequest?.id]);
 
   const placeholderDice = Array.from(
     { length: Number(diceCount) || 1 },

@@ -326,6 +326,7 @@ export function createWeaponRoll({
   weapon,
   diceCount = 2,
   difficulty = 1,
+  useRate = false,
 }) {
   return {
     type: "weapon",
@@ -334,5 +335,8 @@ export function createWeaponRoll({
     weapon,
     diceCount,
     difficulty,
+    damage: Number(weapon?.damage) || 0,
+    rate: Number(weapon?.rate) || 0,
+    useRate,
   };
 }

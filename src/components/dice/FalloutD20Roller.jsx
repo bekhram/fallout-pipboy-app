@@ -188,16 +188,21 @@ export default function FalloutD20Roller({
   const difficulty = Number(rollConfig?.difficulty || 1);
 
   const autoRollWeaponDamage = (attackResult) => {
-    if (!isWeaponRoll) return;
+  if (!isWeaponRoll) return;
 
-    const didHit = (attackResult?.totalSuccesses || 0) >= difficulty;
-    if (!didHit) return;
+  const didHit = (attackResult?.totalSuccesses || 0) >= difficulty;
+  if (!didHit) return;
 
-    const damageDiceCount = getWeaponDamageDiceCount(rollConfig?.weapon);
-    if (damageDiceCount <= 0) return;
+  const baseDamageDiceCount = getWeaponDamageDiceCount(rollConfig?.weapon);
+  const extraRateDiceCount = rollConfig?.useRate
+    ? Number(rollConfig?.rate) || 0
+    : 0;
 
-    onAutoRollDamage?.(damageDiceCount);
-  };
+  const totalDamageDiceCount = baseDamageDiceCount + extraRateDiceCount;
+  if (totalDamageDiceCount <= 0) return;
+
+  onAutoRollDamage?.(totalDamageDiceCount);
+};
 
   const animateDice = (duration = 600, onFinish) => {
     const start = Date.now();
