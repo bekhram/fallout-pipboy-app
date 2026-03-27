@@ -2611,3 +2611,17 @@ select.pip-input {
     padding: 8px 4px;
   }
 }
+
+.pip-weapon-rate-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pip-weapon-rate-value {
+  font-size: 12px;
+  color: var(--pip-text-soft);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
