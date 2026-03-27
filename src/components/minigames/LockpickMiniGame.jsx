@@ -247,20 +247,19 @@ export default function LockpickMiniGame({
     setPressure(0);
     setPickVisualOffset(0);
 
-    setPicksLeft((prev) => {
-      const next = prev - 1;
+setPicksLeft((prev) => {
+  const next = prev - 1;
 
-      if (next <= 0) {
-        setStatus("FAILED");
-        setHintText("No bobby pins left.");
-        stopTurning();
-        onFail?.();
-        return 0;
-      }
+  if (next <= 0) {
+    setStatus("FAILED");
+    setHintText("No bobby pins left.");
+    stopTurning();
+    return 0;
+  }
 
-      setHintText("Bobby pin broke. Try another.");
-      return next;
-    });
+  setHintText("Bobby pin broke. Try another.");
+  return next;
+});
   }
 
   function applyLockDrift() {
@@ -430,25 +429,24 @@ export default function LockpickMiniGame({
             setHintText("The cylinder turns...");
           }
 
-          if (next >= MAX_CORE_ROTATION) {
-            if (
-              (difficulty === "hard" || difficulty === "veryHard") &&
-              remainingAngleShifts > 0
-            ) {
-              const shifted = shiftCorrectAngle();
-              if (shifted) {
-                stopTurning();
-                return 0;
-              }
-            }
+if (next >= MAX_CORE_ROTATION) {
+  if (
+    (difficulty === "hard" || difficulty === "veryHard") &&
+    remainingAngleShifts > 0
+  ) {
+    const shifted = shiftCorrectAngle();
+    if (shifted) {
+      stopTurning();
+      return 0;
+    }
+  }
 
-            setStatus("OPENED");
-            setHintText("Lock opened.");
-            playSound("lockpickOpen");
-            stopTurning();
-            onUnlock?.();
-            return MAX_CORE_ROTATION;
-          }
+  setStatus("OPENED");
+  setHintText("Lock opened.");
+  playSound("lockpickOpen");
+  stopTurning();
+  return MAX_CORE_ROTATION;
+}
 
           return next;
         });

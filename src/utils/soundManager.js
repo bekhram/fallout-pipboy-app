@@ -15,6 +15,10 @@ import sweetSpotSound from "../assets/sounds/lockpick/sweetspot.wav";
 import turnPressSound from "../assets/sounds/lockpick/turn_press.wav";
 import turnPressBadSound from "../assets/sounds/lockpick/turn_press_bad.wav";
 
+import terminalKeySound from "../assets/sounds/terminal/terminal-key.wav";
+import terminalSuccessSound from "../assets/sounds/terminal/terminal-success.wav";
+import terminalFailSound from "../assets/sounds/terminal/terminal-fail.wav";
+
 const sounds = {
   diceRoll: new Howl({
     src: [diceRollSound],
@@ -27,6 +31,24 @@ const sounds = {
     volume: 0.45,
     preload: true,
   }),
+
+  terminalKey: new Howl({
+    src: [terminalKeySound],
+    volume: 0.35,
+    preload: true,
+  }),
+
+terminalSuccess: new Howl({
+  src: [terminalSuccessSound],
+  volume: 0.5,
+  preload: true,
+}),
+
+terminalFail: new Howl({
+  src: [terminalFailSound],
+  volume: 0.5,
+  preload: true,
+}),
 
   lockpickBreak: new Howl({
     src: [breakSound],
@@ -81,12 +103,12 @@ const sounds = {
     volume: 0.45,
     preload: true,
   }),
-  
+
   lockpickTurnPressBad: new Howl({
-  src: [turnPressBadSound],
-  volume: 0.6,
-  preload: true,
-}),
+    src: [turnPressBadSound],
+    volume: 0.6,
+    preload: true,
+  }),
 
   lockpickJam6: new Howl({
     src: [jam6Sound],

@@ -360,10 +360,10 @@ export default function TerminalHackMiniGame({
   const [typedLog, setTypedLog] = useState([]);
   const logRef = useRef(null);
 
-const halfRows = useMemo(
-  () => Math.floor(game.board.left.length / game.board.cols),
-  [game.board.left.length, game.board.cols]
-);
+  const halfRows = useMemo(
+    () => Math.floor(game.board.left.length / game.board.cols),
+    [game.board.left.length, game.board.cols]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -419,39 +419,38 @@ const halfRows = useMemo(
     };
   }, []);
 
-  function resetGame(nextDifficulty = difficulty) {
-    playSound?.("uiTab");
-    setHoveredTokenId(null);
-    setHoveredCellKey(null);
-    setGame(makeGameState(nextDifficulty));
-  }
+function resetGame(nextDifficulty = difficulty) {
+  setHoveredTokenId(null);
+  setHoveredCellKey(null);
+  setGame(makeGameState(nextDifficulty));
+}
 
   function handleWin(word) {
-    playSound?.("uiOK");
-    setGame((prev) => ({
-      ...prev,
-      status: "won",
-      log: appendLog(prev.log, `> ${word}`, "ACCESS GRANTED"),
-    }));
-    onUnlock?.();
-  }
+  playSound?.("terminalSuccess");
+  setGame((prev) => ({
+    ...prev,
+    status: "won",
+    log: appendLog(prev.log, `> ${word}`, "ACCESS GRANTED"),
+  }));
+  onUnlock?.();
+}
 
-  function handleLose(word, likeness) {
-    playSound?.("uiError");
-    setGame((prev) => ({
-      ...prev,
-      attemptsLeft: 0,
-      status: "lost",
-      log: appendLog(
-        prev.log,
-        `> ${word}`,
-        "ENTRY DENIED",
-        `${likeness}/${prev.password.length} CORRECT`,
-        "LOCKED OUT"
-      ),
-    }));
-    onFail?.();
-  }
+function handleLose(word, likeness) {
+  playSound?.("terminalFail");
+  setGame((prev) => ({
+    ...prev,
+    attemptsLeft: 0,
+    status: "lost",
+    log: appendLog(
+      prev.log,
+      `> ${word}`,
+      "ENTRY DENIED",
+      `${likeness}/${prev.password.length} CORRECT`,
+      "LOCKED OUT"
+    ),
+  }));
+  onFail?.();
+}
 
   function handleWrongGuess(word) {
     const likeness = getLikeness(word, game.password);
@@ -479,6 +478,8 @@ const halfRows = useMemo(
     if (game.status !== "playing") return;
     if (game.removedWords.includes(word)) return;
 
+    playSound?.("terminalKey");
+
     if (word === game.password) {
       handleWin(word);
       return;
@@ -489,6 +490,8 @@ const halfRows = useMemo(
   function handleBracketClick(tokenId) {
     if (game.status !== "playing") return;
     if (game.usedBracketIds.includes(tokenId)) return;
+
+    playSound?.("terminalKey");
 
     const tokenText =
       findTokenText(game.board.left, tokenId) ||
@@ -539,7 +542,7 @@ const halfRows = useMemo(
 
   function handleGarbageClick(cell) {
     if (game.status !== "playing") return;
-    playSound?.("uiTab");
+    playSound?.("terminalKey");
     setGame((prev) => ({
       ...prev,
       log: appendLog(prev.log, `> ${cell.value}`),
@@ -654,13 +657,16 @@ const halfRows = useMemo(
       </div>
 
       <div className="terminal-actions">
-        <button
-          type="button"
-          className="terminal-btn"
-          onClick={() => resetGame(difficulty)}
-        >
-          RESTART
-        </button>
+<button
+  type="button"
+  className="terminal-btn"
+  onClick={() => {
+    playSound?.("uiTab");
+    resetGame(difficulty);
+  }}
+>
+  RESTART
+</button>
 
         <button
           type="button"

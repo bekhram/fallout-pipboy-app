@@ -2625,3 +2625,355 @@ select.pip-input {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
+.pip-head {
+  display: grid;
+  grid-template-columns: 1fr minmax(120px, 180px) minmax(120px, 180px);
+  gap: 10px;
+  align-items: end;
+}
+
+.pip-head h2 {
+  margin: 0;
+  line-height: 0.95;
+}
+
+.pip-head > span,
+.pip-inventory-bonus-top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+.pip-inline-input {
+  min-height: 42px;
+}
+
+.pip-tagrow {
+  gap: 8px;
+}
+
+.pip-tag,
+.pip-btn {
+  min-height: 42px;
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.pip-btn.is-primary {
+  min-width: 180px;
+}
+
+.pip-inline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.pip-inventory-toolbar {
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 8px;
+  align-items: center;
+  justify-content: start;
+}
+
+.pip-inventory-toolbar .pip-btn {
+  min-width: 0;
+}
+
+.pip-inventory-toolbar .pip-btn.is-primary {
+  min-width: 220px;
+}
+
+.pip-inventory-bonus-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 42px;
+  padding: 0 2px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.pip-bonus-input {
+  width: 72px;
+  min-width: 72px;
+  text-align: center;
+}
+
+.pip-inventory-sell-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 6px;
+  font-size: 13px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.pip-stack {
+  gap: 12px;
+}
+
+.pip-inventory-select-row {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.pip-inventory-card-wrap {
+  min-width: 0;
+}
+
+.pip-checkbox {
+  position: relative;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  margin-top: 14px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pip-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pip-checkbox-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(120, 255, 160, 0.75);
+  border-radius: 3px;
+  background: rgba(0, 18, 8, 0.65);
+  box-shadow: 0 0 8px rgba(120, 255, 160, 0.12);
+  transition: all 0.15s ease;
+}
+
+.pip-checkbox:hover .pip-checkbox-box {
+  box-shadow: 0 0 10px rgba(120, 255, 160, 0.2);
+  border-color: rgba(160, 255, 180, 0.95);
+}
+
+.pip-checkbox input:checked + .pip-checkbox-box {
+  background: rgba(120, 255, 160, 0.16);
+  box-shadow: 0 0 10px rgba(120, 255, 160, 0.24);
+}
+
+.pip-checkbox input:checked + .pip-checkbox-box::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid #a8ffad;
+  border-bottom: 2px solid #a8ffad;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 900px) {
+  .pip-head {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pip-head h2 {
+    grid-column: 1 / -1;
+  }
+
+  .pip-inventory-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .pip-inventory-toolbar .pip-btn,
+  .pip-inventory-toolbar .pip-btn.is-primary {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .pip-head {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pip-head > span,
+  .pip-inventory-bonus-top {
+    width: 100%;
+  }
+
+  .pip-inline-input {
+    width: 100%;
+  }
+
+  .pip-tagrow {
+    gap: 6px;
+  }
+
+  .pip-tag,
+  .pip-btn {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .pip-inventory-toolbar {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .pip-inventory-bonus-inline {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .pip-inventory-sell-meta {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .pip-checkbox {
+    margin-top: 12px;
+  }
+}
+
+.pip-head-inventory {
+  display: grid;
+  grid-template-columns: 1fr 170px 170px;
+  gap: 10px;
+  align-items: end;
+}
+
+.pip-head-inventory h2 {
+  margin: 0;
+  line-height: 0.95;
+}
+
+.pip-top-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pip-top-field span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.pip-inline-input {
+  min-height: 40px;
+}
+
+.pip-bonus-input {
+  text-align: center;
+}
+
+.pip-inventory-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, max-content));
+  gap: 8px;
+  align-items: center;
+}
+
+.pip-inventory-actions .pip-btn {
+  min-height: 40px;
+  padding: 8px 14px;
+}
+
+.pip-inventory-actions .pip-btn.is-primary {
+  min-width: 150px;
+}
+
+.pip-inline-stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+
+.pip-inventory-select-row {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.pip-checkbox {
+  position: relative;
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  margin-top: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pip-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pip-checkbox-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(120, 255, 160, 0.8);
+  border-radius: 3px;
+  background: rgba(0, 20, 10, 0.55);
+  box-shadow: 0 0 8px rgba(120, 255, 160, 0.12);
+}
+
+.pip-checkbox input:checked + .pip-checkbox-box {
+  background: rgba(120, 255, 160, 0.16);
+  box-shadow: 0 0 10px rgba(120, 255, 160, 0.24);
+}
+
+.pip-checkbox input:checked + .pip-checkbox-box::after {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 3px;
+  width: 5px;
+  height: 9px;
+  border-right: 2px solid #a8ffad;
+  border-bottom: 2px solid #a8ffad;
+  transform: rotate(45deg);
+}
+
+@media (max-width: 700px) {
+  .pip-head-inventory {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pip-head-inventory h2 {
+    grid-column: 1 / -1;
+  }
+
+  .pip-inventory-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pip-inventory-actions .pip-btn,
+  .pip-inventory-actions .pip-btn.is-primary {
+    min-width: 0;
+    width: 100%;
+  }
+}

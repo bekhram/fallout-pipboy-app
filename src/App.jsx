@@ -223,29 +223,46 @@ const openContextDiceRoll = (rollConfig) => {
   );
 
   const updateTopLevel = (key, value) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+  setForm((prev) => ({ ...prev, [key]: value }));
 
-  const updateDerivedOverride = (key, value) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
+const updateDerivedOverride = (key, value) =>
+  setForm((prev) => ({ ...prev, [key]: value }));
 
-  const updateSpecial = (key, value) =>
-    setForm((prev) => ({
-      ...prev,
-      special: { ...prev.special, [key]: value },
-    }));
+const clampNumberString = (value, min, max, fallback = "0") => {
+  const raw = String(value ?? "").trim();
 
-  const updateSkill = (skillName, field, value) =>
-    setForm((prev) => ({
-      ...prev,
-      skills: {
-        ...prev.skills,
-        [skillName]: {
-          ...prev.skills[skillName],
-          [field]: value,
-        },
+  if (raw === "") return fallback;
+
+  const parsed = Number(raw);
+  if (Number.isNaN(parsed)) return fallback;
+
+  return String(Math.max(min, Math.min(max, parsed)));
+};
+
+const updateSpecial = (key, value) =>
+  setForm((prev) => ({
+    ...prev,
+    special: {
+      ...prev.special,
+      [key]: clampNumberString(value, 0, 13),
+    },
+  }));
+
+const updateSkill = (skillName, field, value) =>
+  setForm((prev) => ({
+    ...prev,
+    skills: {
+      ...prev.skills,
+      [skillName]: {
+        ...prev.skills[skillName],
+        [field]:
+          field === "rank"
+            ? clampNumberString(value, 0, 6)
+            : value,
       },
-    }));
-
+    },
+  }));
+  
   const updateStatus = (status, checked) =>
     setForm((prev) => ({
       ...prev,
