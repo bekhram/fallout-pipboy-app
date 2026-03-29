@@ -1,0 +1,442 @@
+/* ===== BASIC METERS ===== */
+
+.pip-meter {
+  height: 22px;
+  border: 1px solid var(--pip-line-strong);
+  background: rgba(0, 0, 0, 0.55);
+  position: relative;
+  overflow: hidden;
+}
+
+.pip-meter__fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(90, 255, 120, 0.72), rgba(180, 255, 160, 0.92));
+}
+
+.pip-meter__rad {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 90, 90, 0.85);
+}
+
+.pip-meter__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e6ffe1;
+  font-size: 12px;
+}
+
+/* ===== DOTS ===== */
+
+.pip-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.pip-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(140, 255, 152, 0.26);
+  background: rgba(0, 0, 0, 0.34);
+  cursor: pointer;
+}
+
+.pip-dot.is-on,
+.pip-dot.is-active {
+  background: var(--pip-accent);
+  box-shadow: 0 0 10px rgba(140, 255, 152, 0.24);
+}
+
+/* ===== STATUS VITALS ===== */
+
+.pip-status-vitals-inline {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(140, 255, 152, 0.12);
+}
+
+.pip-vitals-icons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pip-vital-row {
+  display: grid;
+  grid-template-columns: 80px auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.pip-vital-label {
+  color: var(--pip-accent);
+  font-size: 14px;
+  letter-spacing: 0.05em;
+}
+
+.pip-vital-segments {
+  display: flex;
+  gap: 4px;
+}
+
+.pip-vital-segment {
+  width: 18px;
+  height: 8px;
+  border: 1px solid rgba(220, 255, 220, 0.8);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+}
+
+.pip-vital-segment.is-on {
+  background: var(--pip-accent);
+  border-color: var(--pip-accent);
+  box-shadow:
+    0 0 6px rgba(180, 255, 160, 0.4),
+    inset 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+/* ===== HP BAR ===== */
+
+.pip-hp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pip-hp-wrap {
+  position: relative;
+  height: 44px;
+  border: 2px solid rgba(140, 255, 152, 0.6);
+  background: rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.pip-hp-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, rgba(80, 255, 120, 0.75), rgba(180, 255, 160, 0.95));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pip-hp-rad {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 80, 80, 0.9);
+  border-left: 2px solid rgba(120, 20, 20, 0.95);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pip-hp-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.pip-hp-slider {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  z-index: 5;
+  cursor: pointer;
+}
+
+.pip-hp-slider::-webkit-slider-runnable-track,
+.pip-hp-slider::-moz-range-track {
+  height: 44px;
+  background: transparent;
+}
+
+.pip-hp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 44px;
+  border: 2px solid rgba(207, 255, 159, 0.95);
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 10px rgba(120, 255, 140, 0.28);
+  border-radius: 2px;
+  margin-top: 0;
+}
+
+.pip-hp-slider::-moz-range-thumb {
+  width: 14px;
+  height: 44px;
+  border: 2px solid rgba(207, 255, 159, 0.95);
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 10px rgba(120, 255, 140, 0.28);
+  border-radius: 2px;
+}
+
+.pip-hp-slider:focus,
+.pip-rad-slider:focus,
+.pip-flag-slider:focus {
+  outline: none;
+}
+
+/* ===== RADIATION BAR ===== */
+
+.pip-rad-wrap {
+  position: relative;
+  height: 24px;
+  border: 2px solid rgba(255, 120, 120, 0.55);
+  background: rgba(30, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.pip-rad-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ff9a9a;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pip-rad-slider {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  z-index: 4;
+  cursor: pointer;
+}
+
+.pip-rad-slider::-webkit-slider-runnable-track,
+.pip-rad-slider::-moz-range-track {
+  height: 24px;
+  background: linear-gradient(90deg, rgba(120, 20, 20, 0.55), rgba(255, 80, 80, 0.85));
+}
+
+.pip-rad-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 24px;
+  border: 2px solid rgba(255, 180, 180, 0.95);
+  background: rgba(20, 0, 0, 0.85);
+  box-shadow: 0 0 8px rgba(255, 100, 100, 0.3);
+  border-radius: 2px;
+  margin-top: 0;
+}
+
+.pip-rad-slider::-moz-range-thumb {
+  width: 12px;
+  height: 24px;
+  border: 2px solid rgba(255, 180, 180, 0.95);
+  background: rgba(20, 0, 0, 0.85);
+  box-shadow: 0 0 8px rgba(255, 100, 100, 0.3);
+  border-radius: 2px;
+}
+
+/* ===== FLAG BAR ===== */
+
+.pip-flagbar-wrap {
+  position: relative;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+.pip-flagbar-shell {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
+  align-items: stretch;
+  width: 100%;
+  position: relative;
+}
+
+.pip-flagbar-side {
+  border: 1px solid rgba(140, 255, 152, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--pip-accent);
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.pip-flagbar-btn:hover {
+  border-color: var(--pip-line-strong);
+  box-shadow: 0 0 10px rgba(110, 255, 120, 0.12);
+}
+
+.pip-flagbar-track {
+  position: relative;
+  height: 44px;
+  border: 2px solid rgba(140, 255, 152, 0.6);
+  background: rgba(0, 0, 0, 0.55);
+  overflow: visible;
+}
+
+.pip-flagbar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, rgba(80, 255, 120, 0.75), rgba(180, 255, 160, 0.95));
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pip-flagbar-rad {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 80, 80, 0.88);
+  border-left: 2px solid rgba(120, 20, 20, 0.95);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.pip-flagbar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.pip-flag-slider {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  z-index: 5;
+  cursor: pointer;
+}
+
+.pip-flag-slider-rad {
+  top: -2px;
+  height: 20px;
+}
+
+.pip-flag-slider-hp {
+  bottom: -2px;
+  height: 20px;
+}
+
+.pip-flag-slider::-webkit-slider-runnable-track,
+.pip-flag-slider::-moz-range-track {
+  height: 20px;
+  background: transparent;
+}
+
+.pip-flag-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+}
+
+.pip-flag-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  border: none;
+}
+
+/* ===== MARKERS ===== */
+
+.pip-marker {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 24px;
+  line-height: 1;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.pip-marker-rad {
+  top: -1px;
+  color: #ff4d4d;
+  text-shadow: 0 0 8px rgba(255, 80, 80, 0.45);
+}
+
+.pip-marker-hp {
+  bottom: -1px;
+  color: #55ff66;
+  text-shadow: 0 0 8px rgba(90, 255, 120, 0.45);
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 640px) {
+  .pip-status-vitals-inline,
+  .pip-vitals-icons,
+  .pip-vital-row {
+    min-width: 0;
+  }
+
+  .pip-status-vitals-inline {
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+
+  .pip-vital-row {
+    grid-template-columns: 60px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: center;
+  }
+
+  .pip-vital-label {
+    font-size: 12px;
+    line-height: 1.1;
+    min-width: 0;
+  }
+
+  .pip-vital-segments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .pip-vital-segment {
+    width: 14px;
+    height: 7px;
+    flex: 0 0 auto;
+  }
+}

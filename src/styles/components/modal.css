@@ -1,0 +1,129 @@
+.pip-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 30;
+}
+
+.pip-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 10, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.pip-modal {
+  width: min(760px, 100%);
+  max-width: 500px;
+  background: var(--pip-panel);
+  border: 1px solid var(--pip-line);
+  border-radius: var(--pip-radius);
+  padding: 16px;
+  box-shadow: 0 0 20px rgba(140, 255, 152, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.pip-modal::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(170, 255, 170, 0.08);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.pip-derived-modal {
+  width: min(720px, 100%);
+  max-width: 720px;
+}
+
+.pip-skills-editor-modal {
+  width: min(900px, 100%);
+  max-width: 900px;
+  max-height: 85vh;
+  overflow: auto;
+}
+
+.pip-logbox {
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--pip-text-soft);
+  display: grid;
+  gap: 8px;
+}
+
+.pip-logbox .pip-body-copy {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.pip-actions-inline {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pip-actions-inline .pip-btn,
+.pip-actions-inline .pip-btn.is-primary,
+.pip-actions-inline .pip-btn.is-danger {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .pip-modal-backdrop {
+    padding: 12px;
+  }
+
+  .pip-modal {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .pip-derived-modal,
+  .pip-skills-editor-modal {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .pip-skills-editor-modal {
+    max-height: 90vh;
+  }
+
+  .pip-actions-inline {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pip-actions-inline .pip-btn,
+  .pip-actions-inline .pip-btn.is-primary,
+  .pip-actions-inline .pip-btn.is-danger {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pip-modal-backdrop {
+    padding: 8px;
+  }
+
+  .pip-modal {
+    padding: 10px;
+  }
+
+  .pip-logbox {
+    padding: 10px;
+  }
+}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { STATUS_LIST } from "../../constants.js";
 import InjuriesVaultBoy from "./InjuriesVaultBoy";
@@ -22,10 +22,12 @@ export default function InjuryPanel({
   injuries,
   statuses,
   armor,
+  derived,
   onToggle,
   survivalConditions = [],
 }) {
   const { t } = useTranslation();
+  const [selectedStatusKey, setSelectedStatusKey] = useState(null);
 
   const values = Object.values(injuries || {});
   const crippledCount = values.filter((value) => value === "crippled").length;
@@ -46,16 +48,22 @@ export default function InjuryPanel({
     .filter(Boolean);
 
   const manualStatuses = STATUS_LIST.filter((item) => !!statuses?.[item.key]);
-
   const mergedStatuses = [...manualStatuses, ...survivalConditions];
 
   const uniqueStatuses = mergedStatuses.filter(
     (item, index, arr) => arr.findIndex((x) => x.key === item.key) === index
   );
 
+  const selectedStatus =
+    uniqueStatuses.find((item) => item.key === selectedStatusKey) || null;
+
   const handlePartClick = (part) => {
     const current = injuries?.[part] || "normal";
     onToggle(part, cycle[current]);
+  };
+
+  const handleStatusClick = (statusKey) => {
+    setSelectedStatusKey((prev) => (prev === statusKey ? null : statusKey));
   };
 
   return (
@@ -75,32 +83,56 @@ export default function InjuryPanel({
         <InjuriesVaultBoy
           injuries={injuries}
           armor={armor}
+          derived={derived}
           onPartClick={handlePartClick}
         />
 
         <div className="pip-injuries-side">
           {uniqueStatuses.length > 0 && (
             <div className="pip-injury-conditions">
-              <div className="pip-injuries-label">{t("injuries.conditions")}</div>
+              <div className="pip-injuries-label">
+                {t("injuries.conditions")}
+              </div>
 
               <div className="pip-injury-conditions-list">
                 {uniqueStatuses.map((status) => (
-                  <div
+                  <button
                     key={status.key}
-                    className={`pip-injury-condition-chip is-${status.group}`}
-                    title={`${t(status.nameKey)} • ${t(status.descriptionKey)} • ${t("status.duration")}: ${t(status.durationKey)}`}
+                    type="button"
+                    className={`pip-injury-condition-chip is-${status.group} ${
+                      selectedStatusKey === status.key ? "is-selected" : ""
+                    }`}
+                    onClick={() => handleStatusClick(status.key)}
+                    title={`${t(status.nameKey)} • ${t(
+                      status.descriptionKey
+                    )} • ${t("status.duration")}: ${t(status.durationKey)}`}
+                    aria-pressed={selectedStatusKey === status.key}
                   >
                     <span>{t(status.nameKey)}</span>
                     <small>{t(status.durationKey)}</small>
-                  </div>
+                  </button>
                 ))}
               </div>
+
+              {selectedStatus && (
+                <div
+                  className={`pip-injury-condition-details is-${selectedStatus.group}`}
+                >
+                  <strong>{t(selectedStatus.nameKey)}</strong>
+                  <small>
+                    {t("status.duration")}: {t(selectedStatus.durationKey)}
+                  </small>
+                  <p>{t(selectedStatus.descriptionKey)}</p>
+                </div>
+              )}
             </div>
           )}
 
           {activeEffects.length > 0 && (
             <div className="pip-injury-effects">
-              <div className="pip-injuries-label">{t("injuries.activeEffects")}</div>
+              <div className="pip-injuries-label">
+                {t("injuries.activeEffects")}
+              </div>
 
               <div className="pip-injury-effects-list">
                 {activeEffects.map((effect) => (

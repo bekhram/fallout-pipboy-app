@@ -1,0 +1,25 @@
+:root {
+  --pip-bg: #050806;
+  --pip-bg-2: #0a0f0a;
+
+  --pip-panel: rgba(7, 13, 8, 0.96);
+  --pip-panel-2: rgba(10, 18, 11, 0.98);
+
+  --pip-line: rgba(120, 255, 140, 0.22);
+  --pip-line-strong: rgba(170, 255, 170, 0.46);
+
+  --pip-text: #8cff98;
+  --pip-text-soft: rgba(140, 255, 152, 0.72);
+  --pip-text-dim: rgba(140, 255, 152, 0.42);
+
+  --pip-accent: #cfff9f;
+  --pip-warning: #ffe07a;
+  --pip-danger: #ff7f7f;
+
+  --pip-shadow: 0 0 18px rgba(80, 255, 120, 0.12);
+
+  --pip-radius: 8px;
+  --pip-radius-sm: 4px;
+
+  --pip-font: "Share Tech Mono", "Courier New", monospace;
+}

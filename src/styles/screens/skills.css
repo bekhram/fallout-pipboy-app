@@ -1,0 +1,215 @@
+/* ===== SKILLS LIST ===== */
+
+.pip-skills-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.pip-skill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(140, 255, 152, 0.08);
+}
+
+.pip-skill-row span {
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ===== SIMPLE SKILL ROW ===== */
+
+.pip-skill-row-simple {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 84px 74px;
+  gap: 10px;
+  align-items: end;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(140, 255, 152, 0.08);
+}
+
+.pip-skill-name,
+.pip-skill-name-simple,
+.pip-skill-editor-name {
+  color: var(--pip-accent);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pip-skill-name-roll-button {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+/* ===== SKILL CARD / EDITOR ===== */
+
+.pip-skill-card {
+  display: grid;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(140, 255, 152, 0.08);
+}
+
+.pip-skill-fields,
+.pip-skill-editor-fields {
+  display: grid;
+  grid-template-columns: 74px 84px 64px 84px 74px;
+  gap: 8px;
+  align-items: end;
+}
+
+.pip-skill-field,
+.pip-skill-attr-simple,
+.pip-skill-test-simple {
+  display: grid;
+  gap: 3px;
+}
+
+.pip-skill-field label,
+.pip-skill-attr-simple label,
+.pip-skill-test-simple label {
+  color: var(--pip-text-dim);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.pip-skill-field-test {
+  min-width: 64px;
+}
+
+.pip-skill-test-value {
+  min-height: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--pip-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  box-sizing: border-box;
+}
+
+/* ===== TAG BUTTON ===== */
+
+.pip-skill-tag-btn {
+  min-width: 36px;
+  height: 26px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--pip-text-soft);
+  cursor: pointer;
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+.pip-skill-tag-btn.is-on {
+  border-color: var(--pip-line-strong);
+  color: var(--pip-accent);
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 255, 159, 0.12),
+    0 0 8px rgba(110, 255, 120, 0.08);
+}
+
+/* ===== ROLL BUTTON ===== */
+
+.pip-skill-row-roll {
+  width: 100%;
+  border: 1px solid rgba(120, 255, 140, 0.18);
+  background: rgba(8, 18, 10, 0.7);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pip-skill-row-roll:hover {
+  border-color: rgba(120, 255, 140, 0.4);
+  box-shadow: 0 0 0 1px rgba(120, 255, 140, 0.1) inset;
+}
+
+.pip-skill-row-roll:active {
+  transform: scale(0.995);
+}
+
+/* ===== TABLET ===== */
+
+@media (max-width: 760px) {
+  .pip-skills-grid,
+  .pip-skills-editor-list {
+    gap: 8px;
+  }
+
+  .pip-skill-fields,
+  .pip-skill-editor-fields {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .pip-skill-field-test {
+    grid-column: span 2;
+  }
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 640px) {
+  .pip-skills-grid {
+    gap: 6px;
+  }
+
+  .pip-skill-row-simple {
+    display: grid;
+    grid-template-columns: 1fr 48px 48px;
+    gap: 6px;
+    align-items: center;
+    padding: 6px 6px;
+  }
+
+  .pip-skill-name-simple {
+    font-size: 12px;
+    line-height: 1.05;
+    padding: 4px 4px;
+    min-height: 26px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pip-skill-name-roll-button {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .pip-skill-attr-simple,
+  .pip-skill-test-simple {
+    gap: 2px;
+  }
+
+  .pip-skill-attr-simple label,
+  .pip-skill-test-simple label {
+    font-size: 8px;
+    opacity: 0.75;
+  }
+
+  .pip-skill-attr-simple .pip-inline-input,
+  .pip-skill-attr-simple select,
+  .pip-skill-test-value {
+    min-height: 24px;
+    height: 24px;
+    font-size: 11px;
+    padding: 0 4px;
+    line-height: 22px;
+    box-sizing: border-box;
+  }
+}

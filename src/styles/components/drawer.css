@@ -1,0 +1,41 @@
+.pip-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  z-index: 19;
+}
+
+.pip-drawer-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pip-drawer {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: min(320px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  transform: translateX(calc(100% + 24px));
+  transition: transform 0.2s ease;
+  z-index: 20;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.pip-drawer.is-open {
+  transform: translateX(0);
+}
+
+@media (max-width: 760px) {
+  .pip-drawer {
+    top: 12px;
+    right: 12px;
+    width: min(320px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+    padding: 12px;
+  }
+}

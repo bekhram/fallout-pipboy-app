@@ -7,8 +7,8 @@
     "armor": "PANCERZ",
     "perks": "PERKI",
     "notes": "NOTATKI",
-    "map": "MAP",
-    "games": "ZABAVKI"
+    "map": "MAPA",
+    "games": "GRY"
   },
   "brand": {
     "title": "ROBCO INDUSTRIES (TM)",
@@ -23,11 +23,11 @@
     "return": "POWRÓT DO MENU"
   },
   "common": {
-    "edit": "EDYTUJ",
-    "copy": "KOPIUJ",
-    "save": "ZAPISZ",
-    "cancel": "ANULUJ",
-    "add": "DODAJ",
+    "edit": "✎",
+    "copy": "⧉",
+    "save": "✓",
+    "cancel": "↶",
+    "add": "+",
     "delete": "X"
   },
   "weapons": {
@@ -49,21 +49,24 @@
   "status": {
     "positive": "Pozytywne",
     "negative": "Negatywne",
+    "chems": "Chemia",
+    "diseases": "Choroby",
+    "addictions": "Uzależnienia",
     "duration": "Czas trwania"
   },
   "statuses": {
-        "starving": {
-  "name": "Głód",
-  "description": "Silny głód osłabia postać i zmniejsza skuteczność."
-},
-"dehydrated": {
-  "name": "Odwodnienie",
-  "description": "Brak wody powoduje osłabienie i wolniejszą regenerację."
-},
-"exhausted": {
-  "name": "Wyczerpanie",
-  "description": "Brak snu obniża koncentrację i skuteczność."
-},
+    "starving": {
+      "name": "Głód",
+      "description": "Silny głód osłabia postać i zmniejsza skuteczność."
+    },
+    "dehydrated": {
+      "name": "Odwodnienie",
+      "description": "Brak wody powoduje osłabienie i wolniejszą regenerację."
+    },
+    "exhausted": {
+      "name": "Wyczerpanie",
+      "description": "Brak snu obniża koncentrację i skuteczność."
+    },
     "prone": {
       "name": "Leży",
       "description": "Ograniczona mobilność do momentu wstania."
@@ -94,11 +97,11 @@
     },
     "fatigue": {
       "name": "Zmęczenie",
-      "description": "Obniża efektywność."
+      "description": "Obniża efektywność z powodu wyczerpania."
     },
     "wellFed": {
       "name": "Najedzony",
-      "description": "Bonusy z jedzenia i wody."
+      "description": "Zapewnia premie wynikające z jedzenia i nawodnienia."
     },
     "exposure": {
       "name": "Ekspozycja",
@@ -114,7 +117,7 @@
     },
     "invisible": {
       "name": "Niewidzialny",
-      "description": "Trudniejszy do wykrycia i lepsza obrona."
+      "description": "Trudniejszy do wykrycia i ma lepszą obronę."
     },
     "cover": {
       "name": "Osłona",
@@ -122,7 +125,7 @@
     },
     "blind": {
       "name": "Ślepota",
-      "description": "Brak widzenia, gorsza celność."
+      "description": "Brak widzenia, gorsza celność i percepcja."
     },
     "deaf": {
       "name": "Głuchota",
@@ -130,7 +133,7 @@
     },
     "fear": {
       "name": "Strach",
-      "description": "Może powodować ucieczkę."
+      "description": "Może powodować ucieczkę lub utratę kontroli."
     },
     "grappled": {
       "name": "Unieruchomiony",
@@ -150,11 +153,235 @@
     },
     "resistance": {
       "name": "Odporność",
-      "description": "Zmniejsza obrażenia."
+      "description": "Zmniejsza otrzymywane obrażenia."
     },
     "customState": {
       "name": "Stan własny",
       "description": "Stan z własnymi efektami."
+    },
+    "berryMentats": {
+      "name": "Berry Mentats",
+      "description": "Zmniejszają trudność testów INT o 2."
+    },
+    "buffjet": {
+      "name": "Buffjet",
+      "description": "Zmniejsza trudność testów STR i END o 1, daje +4 do maks. HP, 3 AP natychmiast, a dodatkowe akcje kosztują o 1 AP mniej."
+    },
+    "buffout": {
+      "name": "Buffout",
+      "description": "Pozwala przerzucić 1d20 w testach STR i END oraz daje +3 do maks. HP."
+    },
+    "bufftats": {
+      "name": "Bufftats",
+      "description": "Zmniejsza trudność testów STR, PER i END o 1 oraz daje +4 do maks. HP."
+    },
+    "calmex": {
+      "name": "Calmex",
+      "description": "Pozwala przerzucić 1d20 w testach PER i AGI oraz daje +2 CD do obrażeń ataku z ukrycia."
+    },
+    "daddyO": {
+      "name": "Daddy-O",
+      "description": "Zmniejsza trudność testów PER i INT o 1, ale testy CHA stają się trudniejsze."
+    },
+    "dayTripper": {
+      "name": "Day Tripper",
+      "description": "Poprawia zdolności społeczne i testy szczęścia przez dłuższy czas."
+    },
+    "fury": {
+      "name": "Fury",
+      "description": "Wzmacnia agresję bojową przez dłuższy czas."
+    },
+    "grapeMentats": {
+      "name": "Grape Mentats",
+      "description": "Poprawiają zdolności społeczne i handel przez dłuższy czas."
+    },
+    "jet": {
+      "name": "Jet",
+      "description": "Daje krótki zastrzyk szybkości i przewagi w działaniu."
+    },
+    "jetFuel": {
+      "name": "Jet Fuel",
+      "description": "Silniejsza wersja Jeta z dłuższym efektem."
+    },
+    "medX": {
+      "name": "Med-X",
+      "description": "Zmniejsza otrzymywane obrażenia i pomaga dłużej wytrzymać walkę."
+    },
+    "mentats": {
+      "name": "Mentats",
+      "description": "Poprawiają zdolności umysłowe i koncentrację przez dłuższy czas."
+    },
+    "orangeMentats": {
+      "name": "Orange Mentats",
+      "description": "Poprawiają percepcję i skuteczność walki dystansowej przez dłuższy czas."
+    },
+    "overdrive": {
+      "name": "Overdrive",
+      "description": "Zwiększa ofensywny potencjał bojowy przez dłuższy czas."
+    },
+    "psycho": {
+      "name": "Psycho",
+      "description": "Zwiększa obrażenia i agresję przez dłuższy czas."
+    },
+    "psychoJet": {
+      "name": "Psycho Jet",
+      "description": "Łączy agresję Psycho z szybkością Jeta na krótki czas."
+    },
+    "psychobuff": {
+      "name": "Psychobuff",
+      "description": "Łączy efekty Psycho i Buffout przez dłuższy czas."
+    },
+    "psychotats": {
+      "name": "Psychotats",
+      "description": "Łączy efekty Psycho i Mentats przez dłuższy czas."
+    },
+    "radX": {
+      "name": "Rad-X",
+      "description": "Tymczasowo zwiększa odporność na promieniowanie."
+    },
+    "radXDiluted": {
+      "name": "Rozcieńczony Rad-X",
+      "description": "Słabsza wersja Rad-X, ale nadal zwiększa odporność na promieniowanie."
+    },
+    "skeetoSpit": {
+      "name": "Skeeto Spit",
+      "description": "Pustynny środek o długotrwałym działaniu chemicznym."
+    },
+    "ultraJet": {
+      "name": "Ultra Jet",
+      "description": "Zaawansowana wersja Jeta z bardzo silnym krótkim efektem."
+    },
+    "xCell": {
+      "name": "X-Cell",
+      "description": "Rzadki i potężny środek wzmacniający ogólną skuteczność."
+    },
+    "buffoutAddiction": {
+      "name": "Uzależnienie od Buffout",
+      "description": "Bez efektu środków typu Buffout testy STR i END mają +1 do trudności."
+    },
+    "mentatAddiction": {
+      "name": "Uzależnienie od Mentats",
+      "description": "Bez efektu środków typu Mentats testy CHA mają +1 do trudności."
+    },
+    "calmexAddiction": {
+      "name": "Uzależnienie od Calmex",
+      "description": "Bez Calmex testy AGI mają komplikacje przy wynikach 18+."
+    },
+    "daddyOAddiction": {
+      "name": "Uzależnienie od Daddy-O",
+      "description": "Bez Daddy-O testy PER i INT mają +1 do trudności."
+    },
+    "dayTripperAddiction": {
+      "name": "Uzależnienie od Day Tripper",
+      "description": "Bez Day Tripper testy CHA i LCK mają +1 do trudności."
+    },
+    "furyAddiction": {
+      "name": "Uzależnienie od Fury",
+      "description": "Bez Fury testy STR i PER mają +1 do trudności."
+    },
+    "jetAddiction": {
+      "name": "Uzależnienie od Jet",
+      "description": "Bez środków typu Jet testy AGI mają +1 do trudności."
+    },
+    "medXAddiction": {
+      "name": "Uzależnienie od Med-X",
+      "description": "Bez Med-X testy AGI mają +1 do trudności, a ataki fizyczne zadają ci +1 CD obrażeń."
+    },
+    "overdriveAddiction": {
+      "name": "Uzależnienie od Overdrive",
+      "description": "Bez Overdrive testy STR i AGI mają +1 do trudności."
+    },
+    "psychoAddiction": {
+      "name": "Uzależnienie od Psycho",
+      "description": "Bez środków typu Psycho testy STR mają +1 do trudności, a ataki fizyczne zadają ci +1 CD obrażeń."
+    },
+    "ultraJetAddiction": {
+      "name": "Uzależnienie od Ultra Jet",
+      "description": "Bez Ultra Jet testy AGI mają +1 do trudności, a przy udanych testach generujesz o 1 AP mniej."
+    },
+    "xCellAddiction": {
+      "name": "Uzależnienie od X-Cell",
+      "description": "Bez X-Cell wszystkie testy mają +1 do trudności."
+    },
+    "bloodWorms": {
+      "name": "Blood Worms",
+      "description": "Choroba stopniowo osłabiająca ciało."
+    },
+    "boneWorms": {
+      "name": "Bone Worms",
+      "description": "Choroba powodująca głęboki ból i osłabienie."
+    },
+    "buzzBrain": {
+      "name": "Buzz Brain",
+      "description": "Choroba zamglająca myślenie i koncentrację."
+    },
+    "dysentery": {
+      "name": "Dyzenteria",
+      "description": "Ciężka choroba osłabiająca ciało i wytrzymałość."
+    },
+    "feverClaw": {
+      "name": "Fever Claw",
+      "description": "Choroba powodująca gorączkę i fizyczne osłabienie."
+    },
+    "flapLimb": {
+      "name": "Flap Limb",
+      "description": "Choroba utrudniająca pewny ruch."
+    },
+    "glowingPustules": {
+      "name": "Glowing Pustules",
+      "description": "Choroba powiązana z promieniowaniem, powodująca bolesne wykwity."
+    },
+    "heatFlashes": {
+      "name": "Heat Flashes",
+      "description": "Choroba powodująca nagłe osłabienie i dyskomfort."
+    },
+    "jellyFingers": {
+      "name": "Jelly Fingers",
+      "description": "Choroba utrudniająca precyzyjne używanie dłoni."
+    },
+    "lockJoint": {
+      "name": "Lock Joint",
+      "description": "Choroba powodująca sztywność i problemy z ruchem."
+    },
+    "needleSpine": {
+      "name": "Needle Spine",
+      "description": "Bolesna choroba wpływająca na postawę i komfort."
+    },
+    "parasites": {
+      "name": "Parasites",
+      "description": "Przewlekła choroba osłabiająca siły i regenerację."
+    },
+    "radWorms": {
+      "name": "Rad Worms",
+      "description": "Pasożytnicza choroba związana z promieniowaniem."
+    },
+    "shellShock": {
+      "name": "Shell Shock",
+      "description": "Stan pourazowy wpływający na nerwy i stabilność."
+    },
+    "sludgeLung": {
+      "name": "Sludge Lung",
+      "description": "Choroba pogarszająca oddychanie i wytrzymałość."
+    },
+    "snotEar": {
+      "name": "Snot Ear",
+      "description": "Choroba wpływająca na komfort i czujność."
+    },
+    "swampGas": {
+      "name": "Swamp Gas",
+      "description": "Bagienna choroba powodująca osłabienie i złe samopoczucie."
+    },
+    "swampItch": {
+      "name": "Swamp Itch",
+      "description": "Natrętna choroba powodująca podrażnienie i rozproszenie."
+    },
+    "theWhoopsies": {
+      "name": "The Whoopsies",
+      "description": "Poważna pustynna choroba o wyniszczających objawach."
+    },
+    "weepingSores": {
+      "name": "Weeping Sores",
+      "description": "Choroba powodująca bolesne otwarte rany i osłabienie."
     },
     "duration": {
       "whileZero": "Dopóki wartość wynosi 0",
@@ -170,7 +397,13 @@
       "whileActive": "Podczas działania",
       "untilFreed": "Do uwolnienia",
       "short": "Krótki",
-      "custom": "Niestandardowy"
+      "custom": "Niestandardowy",
+      "lasting": "Długotrwały",
+      "brief": "Krótki",
+      "instant": "Natychmiastowy",
+      "days1": "1 dzień",
+      "days3": "3 dni",
+      "days4": "4 dni"
     }
   },
   "main": {
@@ -227,39 +460,41 @@
     "attr": "Atr",
     "test": "Test"
   },
-"inventory": {
-  "title": "EKWIPUNEK",
-  "caps": "KAPSY",
-  "currentWeight": "Aktualna waga",
-  "maxCarry": "Maks. udźwig",
-  "addItem": "+ DODAJ",
-  "itemEditor": "EDYTOR PRZEDMIOTU",
-  "logEntry": "WPIS",
-  "itemName": "Nazwa",
-  "quantity": "Ilość",
-  "cost": "Wartość",
-  "weight": "Waga",
-  "unnamedItem": "Bez nazwy",
-  "qtyShort": "Ilo",
-  "wtShort": "Waga",
-  "valShort": "Wart",
-  "categories": {
-    "all": "Wszystko",
-    "weapons": "Broń",
-    "ammo": "Amunicja",
-    "aid": "Pomoc",
-    "food": "Jedzenie",
-    "misc": "Różne",
-    "junk": "Złom"
-  }},
-  "armorPanel": {
-    "title": "PANCERZ",
-    "locationDr": "OCHRONA CZĘŚCI",
-    "physical": "Fiz.",
-    "energy": "Ener.",
-    "radiation": "Rad.",
-    "hp": "HP"
+  "inventory": {
+    "title": "EKWIPUNEK",
+    "caps": "KAPSY",
+    "currentWeight": "Aktualna waga",
+    "maxCarry": "Maks. udźwig",
+    "addItem": "+ DODAJ",
+    "itemEditor": "EDYTOR PRZEDMIOTU",
+    "logEntry": "WPIS",
+    "itemName": "Nazwa",
+    "quantity": "Ilość",
+    "cost": "Wartość",
+    "weight": "Waga",
+    "unnamedItem": "Bez nazwy",
+    "qtyShort": "Ilo",
+    "wtShort": "Waga",
+    "valShort": "Wart",
+    "categories": {
+      "all": "Wszystko",
+      "weapons": "Broń",
+      "ammo": "Amunicja",
+      "aid": "Pomoc",
+      "food": "Jedzenie",
+      "misc": "Różne",
+      "junk": "Złom"
+    }
   },
+"armorPanel": {
+  "title": "PANCERZ",
+  "locationDr": "OCHRONA CZĘŚCI",
+  "physical": "Fiz.",
+  "energy": "Ener.",
+  "radiation": "Rad.",
+  "poison": "Trucizna",
+  "hp": "HP"
+},
   "perksPanel": {
     "title": "PERKI / CECHY",
     "perkEditor": "EDYTOR PERKA",
@@ -447,7 +682,7 @@
     },
     "reliable": {
       "name": "Niezawodna",
-      "description": "Ignoruje pierwszą complication wyrzuconą dla tej broni w każdej walce."
+      "description": "Ignoruje pierwszą komplikację wyrzuconą dla tej broni w każdej walce."
     },
     "suppressed": {
       "name": "Z tłumikiem",
@@ -463,7 +698,7 @@
     },
     "unreliable": {
       "name": "Zawodna",
-      "description": "Zwiększa szansę na complications podczas użycia."
+      "description": "Zwiększa szansę na komplikacje podczas użycia."
     }
   },
   "skillNames": {
@@ -499,174 +734,170 @@
     "Extreme (X)": "Ekstremalny (X)"
   },
   "mapPanel": {
-  "worldTime": "CZAS ŚWIATA",
-  "hazards": "Zagrożenia",
-  "none": "brak",
-
-  "north": "PÓŁNOC",
-  "south": "POŁUDNIE",
-  "east": "WSCHÓD",
-  "west": "ZACHÓD",
-
-  "target": "Cel",
-  "targetLabel": "Cel",
-
-  "terrain": "Teren",
-  "time": "Czas",
-  "travel": "Podróż",
-
-  "direction": "Kierunek",
-  "blocks": "Bloki",
-  "km": "Km",
-
-  "travelButton": "PODRÓŻ",
-  "campButton": "OBÓZ",
-
-  "log": "DZIENNIK",
-
-  "day": "Dzień",
-  "month": "Miesiąc",
-
-  "enteredWasteland": "Wkroczyłeś na Pustkowia",
-  "locationFound": "Odnaleziono lokację: {{name}}",
-  "movedTo": "Przemieszczono do {{x}},{{y}} - {{terrain}} - +{{cost}}h",
-  "campRest": "Rozbiłeś obóz i odpocząłeś +8h",
-  "shiftedMap": "Przejście do sektora {{direction}}"
-},
-"terrain": {
-  "road": "Droga",
-  "urban": "Strefa miejska",
-  "ruins": "Ruiny",
-  "forest": "Las",
-  "swamp": "Bagno",
-  "industrial": "Strefa przemysłowa",
-  "water": "Woda",
-  "mountains": "Góry",
-  "blocked_ruins": "Zawalione ruiny"
-},
-"hazards": {
-  "difficult": "Trudny teren",
-  "radiation": "Strefa promieniowania",
-  "toxic": "Strefa toksyczna",
-  "danger": "Strefa zagrożenia",
-  "anomaly": "Strefa anomalii"
-},
-"hazardsDesc": {
-  "difficult": "Znacznie spowalnia ruch.",
-  "radiation": "Zadaje okresowe obrażenia od promieniowania.",
-  "toxic": "Zadaje okresowe obrażenia od trucizny.",
-  "danger": "Zadaje okresowe obrażenia fizyczne od ukrytych zagrożeń.",
-  "anomaly": "Zadaje okresowe obrażenia energetyczne."
-},
-"encounters": {
-  "commonwealth": {
-    "ammo_crate": "Łup: znajdujesz skrzynię z amunicją. Zyskaj 5 losowych nabojów.",
-    "nuka_fridge": "Łup: stara lodówka Nuka-Cola. W środku może być coś przydatnego.",
-
-    "metro_station": "Stacja metra. Może warto ją zbadać.",
-    "cave": "Mroczna i ponura jaskinia. Może warto ją zbadać.",
-    "west_tek_building": "Obiekt West-Tek. Niebezpieczny, ale potencjalnie cenny.",
-    "bus_station": "Dworzec autobusowy. Mogą tu być zapasy albo ocaleni.",
-    "mine": "Opuszczona kopalnia. W środku jest ciemno i cicho.",
-    "super_duper_mart": "Super Duper Mart. Warto sprawdzić półki i magazyn.",
-    "raider_outpost": "Posterunek rajderów. Ktoś na pewno tu jest.",
-    "mutant_outpost": "Posterunek supermutantów. Zachowaj czujność.",
-    "bos_outpost": "Posterunek Bractwa Stali. Ich reakcja zależy od twojej reputacji.",
-    "ncr_outpost": "Posterunek NCR. Może tu być handel... albo przesłuchanie.",
-    "settlement": "Mała osada. Możesz tu znaleźć odpoczynek, plotki albo handel.",
-    "wasteland_nothing": "Puste pustkowia. Nic ciekawego.",
-
-    "ambush": "Zasadzka! Zostajesz zaatakowany. Wrogowie uderzają pierwsi.",
-
-    "rad_waste_pit": "Wpadasz do dołu z radioaktywnymi odpadami. Otrzymujesz obrażenia od promieniowania.",
-    "lost_supplies": "Podczas podróży tracisz część zapasów.",
-    "broken_backpack": "Twój plecak się rozdarł. Część ekwipunku została utracona.",
-    "fatal_breakdown": "Krytyczna awaria. Twoja wyposażona broń lub pancerz psuje się i staje się bezużyteczna.",
-    "food_poisoning": "Zjadłeś coś zepsutego i zatrułeś się.",
-    "hunger_crash": "Twój głód spada do 0. Otrzymujesz też 1 poziom wyczerpania.",
-    "toxic_puddle": "Toksyczna kałuża. Ulegasz zatruciu albo tracisz ochronę nóg.",
-    "pickpocket": "Kieszonkowiec. Jeden niewyposażony przedmiot zostaje skradziony z twojego ekwipunku.",
-    "building_collapse": "Walący się budynek spada na ciebie. Otrzymujesz obrażenia fizyczne.",
-    "radioactive_puddle": "Radioaktywna kałuża. Otrzymujesz obrażenia od promieniowania.",
-    "grenade_tripwire": "Linka z granatem! Ty i sąsiedni sojusznicy otrzymujecie obrażenia fizyczne.",
-    "stuck_in_textures": "Utkwiłeś w terenie. Nie możesz się poruszać, dopóki nie odbędziesz długiego odpoczynku.",
-    "overload": "Przeciążenie. Upuść przedmioty albo zyskaj 1 poziom wyczerpania."
+    "title": "MAPA",
+    "worldTime": "CZAS ŚWIATA",
+    "target": "Cel",
+    "positionTarget": "POZYCJA / CEL",
+    "sector": "Sektor",
+    "pos": "Poz",
+    "world": "Świat",
+    "terrain": "Teren",
+    "date": "Data",
+    "time": "Czas",
+    "travel": "Podróż",
+    "targetLabel": "Cel",
+    "direction": "Kierunek",
+    "blocks": "Bloki",
+    "km": "Km",
+    "type": "Typ",
+    "hazards": "Zagrożenia",
+    "none": "brak",
+    "travelButton": "PODRÓŻ",
+    "campButton": "OBÓZ",
+    "log": "DZIENNIK",
+    "north": "PÓŁNOC",
+    "south": "POŁUDNIE",
+    "west": "ZACHÓD",
+    "east": "WSCHÓD",
+    "day": "Dzień",
+    "month": "Miesiąc",
+    "enteredWasteland": "Wkroczyłeś na Pustkowia",
+    "campRest": "Rozbiłeś obóz i odpocząłeś +8h",
+    "shiftedMap": "Przejście do sektora {{direction}}",
+    "movedTo": "Przemieszczono do {{x}},{{y}} - {{terrain}} - +{{cost}}h",
+    "locationFound": "Odnaleziono lokację: {{name}}",
+    "unknown": "Nieznane"
   },
-  "weird": {
-    "mr_gutsy_drill": "Grupa robotów Mister Gutsy bierze cię za uczestnika ćwiczeń.",
-    "cult_preachers": "Dziwny kult próbuje cię zwerbować.",
-    "wasteland_convention": "Miłośnicy kultury sprzed wojny organizują osobliwy konwent na pustkowiach.",
-    "super_mutant_tech": "Supermutanci próbują obsługiwać zaawansowaną technologię sprzed wojny.",
-    "rickshaw_taxi": "Prowizoryczna taksówka oferuje ci przejazd za kapsle.",
-    "vault_wanderer": "Mieszkaniec Krypty prosi o pomoc przy naprawie systemów swojej Krypty."
+  "terrain": {
+    "road": "Droga",
+    "urban": "Strefa miejska",
+    "ruins": "Ruiny",
+    "forest": "Las",
+    "swamp": "Bagno",
+    "industrial": "Strefa przemysłowa",
+    "water": "Woda",
+    "mountains": "Góry",
+    "blocked_ruins": "Zawalione ruiny"
+  },
+  "hazards": {
+    "difficult": "Trudny teren",
+    "radiation": "Strefa promieniowania",
+    "toxic": "Strefa toksyczna",
+    "danger": "Strefa zagrożenia",
+    "anomaly": "Strefa anomalii"
+  },
+  "hazardsDesc": {
+    "difficult": "Znacznie spowalnia ruch.",
+    "radiation": "Zadaje okresowe obrażenia od promieniowania.",
+    "toxic": "Zadaje okresowe obrażenia od trucizny.",
+    "danger": "Zadaje okresowe obrażenia fizyczne od ukrytych zagrożeń.",
+    "anomaly": "Zadaje okresowe obrażenia energetyczne."
+  },
+  "encounters": {
+    "commonwealth": {
+      "ammo_crate": "Łup: znajdujesz skrzynię z amunicją. Zyskaj 5 losowych nabojów.",
+      "nuka_fridge": "Łup: stara lodówka Nuka-Cola. W środku może być coś przydatnego.",
+      "metro_station": "Stacja metra. Może warto ją zbadać.",
+      "cave": "Mroczna i ponura jaskinia. Może warto ją zbadać.",
+      "west_tek_building": "Obiekt West-Tek. Niebezpieczny, ale potencjalnie cenny.",
+      "bus_station": "Dworzec autobusowy. Mogą tu być zapasy albo ocaleni.",
+      "mine": "Opuszczona kopalnia. W środku jest ciemno i cicho.",
+      "super_duper_mart": "Super Duper Mart. Warto sprawdzić półki i magazyn.",
+      "raider_outpost": "Posterunek rajderów. Ktoś na pewno tu jest.",
+      "mutant_outpost": "Posterunek supermutantów. Zachowaj czujność.",
+      "bos_outpost": "Posterunek Bractwa Stali. Ich reakcja zależy od twojej reputacji.",
+      "ncr_outpost": "Posterunek NCR. Może tu być handel... albo przesłuchanie.",
+      "settlement": "Mała osada. Możesz tu znaleźć odpoczynek, plotki albo handel.",
+      "wasteland_nothing": "Puste pustkowia. Nic ciekawego.",
+      "ambush": "Zasadzka! Zostajesz zaatakowany. Wrogowie uderzają pierwsi.",
+      "rad_waste_pit": "Wpadasz do dołu z radioaktywnymi odpadami. Otrzymujesz obrażenia od promieniowania.",
+      "lost_supplies": "Podczas podróży tracisz część zapasów.",
+      "broken_backpack": "Twój plecak się rozdarł. Część ekwipunku została utracona.",
+      "fatal_breakdown": "Krytyczna awaria. Twoja wyposażona broń lub pancerz psuje się i staje się bezużyteczna.",
+      "food_poisoning": "Zjadłeś coś zepsutego i zatrułeś się.",
+      "hunger_crash": "Twój głód spada do 0. Otrzymujesz też 1 poziom wyczerpania.",
+      "toxic_puddle": "Toksyczna kałuża. Ulegasz zatruciu albo tracisz ochronę nóg.",
+      "pickpocket": "Kieszonkowiec. Jeden niewyposażony przedmiot zostaje skradziony z twojego ekwipunku.",
+      "building_collapse": "Walący się budynek spada na ciebie. Otrzymujesz obrażenia fizyczne.",
+      "radioactive_puddle": "Radioaktywna kałuża. Otrzymujesz obrażenia od promieniowania.",
+      "grenade_tripwire": "Linka z granatem! Ty i sąsiedni sojusznicy otrzymujecie obrażenia fizyczne.",
+      "stuck_in_textures": "Utkwiłeś w terenie. Nie możesz się poruszać, dopóki nie odbędziesz długiego odpoczynku.",
+      "overload": "Przeciążenie. Upuść przedmioty albo zyskaj 1 poziom wyczerpania."
+    },
+    "weird": {
+      "mr_gutsy_drill": "Grupa robotów Mister Gutsy bierze cię za uczestnika ćwiczeń.",
+      "cult_preachers": "Dziwny kult próbuje cię zwerbować.",
+      "wasteland_convention": "Miłośnicy kultury sprzed wojny organizują osobliwy konwent na pustkowiach.",
+      "super_mutant_tech": "Supermutanci próbują obsługiwać zaawansowaną technologię sprzed wojny.",
+      "rickshaw_taxi": "Prowizoryczna taksówka oferuje ci przejazd za kapsle.",
+      "vault_wanderer": "Mieszkaniec Krypty prosi o pomoc przy naprawie systemów swojej Krypty."
+    }
+  },
+  "locations": {
+    "bunker": "Bunkier",
+    "cave": "Jaskinia",
+    "diner": "Bar",
+    "factory": "Fabryka",
+    "farm": "Farma",
+    "hospital": "Szpital",
+    "junkyard": "Złomowisko",
+    "metro_station": "Stacja metra",
+    "military_base": "Baza wojskowa",
+    "museum": "Muzeum",
+    "office_tower": "Biurowiec",
+    "park": "Park",
+    "pier": "Molo",
+    "plane_ruin": "Wrak samolotu",
+    "police_station": "Komisariat",
+    "power_plant": "Elektrownia",
+    "radio_tower": "Wieża radiowa",
+    "red_rocket": "Red Rocket",
+    "ruins_site": "Ruiny",
+    "satellite_station": "Stacja satelitarna",
+    "settlement": "Osada",
+    "sewer": "Kanały",
+    "sanctuary": "Sanctuary",
+    "vault_111": "Krypta 111",
+    "red_rocket_sanctuary": "Red Rocket",
+    "abernathy_farm": "Farma Abernathy",
+    "sunshine_tidings": "Sunshine Tidings Co-op",
+    "starlight_drive_in": "Starlight Drive-In",
+    "concord": "Concord",
+    "museum_of_freedom": "Muzeum Wolności",
+    "drumlin_diner": "Drumlin Diner",
+    "lexington": "Lexington",
+    "corvega": "Zakład Corvega",
+    "covenant": "Covenant",
+    "tenpines_bluff": "Tenpines Bluff",
+    "cambridge_police_station": "Komisariat w Cambridge",
+    "cambridge": "Cambridge",
+    "college_square": "College Square",
+    "greygarden": "Graygarden",
+    "fort_hagen": "Fort Hagen",
+    "vault_81": "Krypta 81",
+    "hangmans_alley": "Hangman's Alley",
+    "diamond_city": "Diamond City",
+    "the_institute": "Instytut",
+    "goodneighbor": "Goodneighbor",
+    "pickman_gallery": "Galeria Pickmana",
+    "old_north_church": "Old North Church",
+    "bunker_hill": "Bunker Hill",
+    "mass_fusion": "Mass Fusion",
+    "custom_house_tower": "Custom House Tower",
+    "boston_airport": "Lotnisko w Bostonie",
+    "the_castle": "Zamek",
+    "saugus_ironworks": "Saugus Ironworks",
+    "revere_beach_station": "Stacja Revere Beach",
+    "salem": "Salem",
+    "spectacle_island": "Spectacle Island",
+    "nahant": "Nahant",
+    "parsons_state_insane_asylum": "Szpital psychiatryczny Parsons",
+    "jamaica_plain": "Jamaica Plain",
+    "quincy": "Quincy",
+    "murkwater": "Murkwater Construction Site",
+    "egret_tours_marina": "Egret Tours Marina",
+    "glowing_sea": "Świecące Morze",
+    "atom_crater": "Krater Atomu",
+    "virgil_cave": "Jaskinia Virgila"
   }
-},
-"locations": {
-  "bunker": "Bunkier",
-  "cave": "Jaskinia",
-  "diner": "Bar",
-  "factory": "Fabryka",
-  "farm": "Farma",
-  "hospital": "Szpital",
-  "junkyard": "Złomowisko",
-  "metro_station": "Stacja metra",
-  "military_base": "Baza wojskowa",
-  "museum": "Muzeum",
-  "office_tower": "Biurowiec",
-  "park": "Park",
-  "pier": "Molo",
-  "plane_ruin": "Wrak samolotu",
-  "police_station": "Komisariat",
-  "power_plant": "Elektrownia",
-  "radio_tower": "Wieża radiowa",
-  "red_rocket": "Red Rocket",
-  "ruins_site": "Ruiny",
-  "satellite_station": "Stacja satelitarna",
-  "settlement": "Osada",
-  "sewer": "Kanały",
-
-  "sanctuary": "Sanctuary",
-  "vault_111": "Krypta 111",
-  "red_rocket_sanctuary": "Red Rocket",
-  "abernathy_farm": "Farma Abernathy",
-  "sunshine_tidings": "Sunshine Tidings Co-op",
-  "starlight_drive_in": "Starlight Drive-In",
-  "concord": "Concord",
-  "museum_of_freedom": "Muzeum Wolności",
-  "drumlin_diner": "Drumlin Diner",
-  "lexington": "Lexington",
-  "corvega": "Zakład Corvega",
-  "covenant": "Covenant",
-  "tenpines_bluff": "Tenpines Bluff",
-  "cambridge_police_station": "Komisariat w Cambridge",
-  "cambridge": "Cambridge",
-  "college_square": "College Square",
-  "greygarden": "Graygarden",
-  "fort_hagen": "Fort Hagen",
-  "vault_81": "Krypta 81",
-  "hangmans_alley": "Hangman's Alley",
-  "diamond_city": "Diamond City",
-  "the_institute": "Instytut",
-  "goodneighbor": "Goodneighbor",
-  "pickman_gallery": "Galeria Pickmana",
-  "old_north_church": "Old North Church",
-  "bunker_hill": "Bunker Hill",
-  "mass_fusion": "Mass Fusion",
-  "custom_house_tower": "Custom House Tower",
-  "boston_airport": "Lotnisko w Bostonie",
-  "the_castle": "Zamek",
-  "saugus_ironworks": "Saugus Ironworks",
-  "revere_beach_station": "Stacja Revere Beach",
-  "salem": "Salem",
-  "spectacle_island": "Spectacle Island",
-  "nahant": "Nahant",
-  "parsons_state_insane_asylum": "Szpital psychiatryczny Parsons",
-  "jamaica_plain": "Jamaica Plain",
-  "quincy": "Quincy",
-  "murkwater": "Murkwater Construction Site",
-  "egret_tours_marina": "Egret Tours Marina",
-  "glowing_sea": "Świecące Morze",
-  "atom_crater": "Krater Atomu",
-  "virgil_cave": "Jaskinia Virgila"
-}
 }

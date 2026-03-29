@@ -1,0 +1,76 @@
+.pip-special-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.pip-special-card {
+  min-height: 120px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.pip-special-letter {
+  font-size: 26px;
+  color: var(--pip-accent);
+  line-height: 1;
+}
+
+.pip-special-input {
+  width: 52px;
+  text-align: center;
+  background: transparent;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  color: var(--pip-text);
+  padding: 6px;
+}
+
+@media (max-width: 640px) {
+  .pip-special-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .pip-special-card {
+    min-height: 68px;
+    padding: 6px 4px;
+    border-radius: 8px;
+  }
+
+  .pip-special-letter {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .pip-special-input {
+    width: 100%;
+    min-height: 30px;
+    height: 30px;
+    padding: 2px 4px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .pip-special-card {
+    min-height: 64px;
+    padding: 5px 3px;
+  }
+
+  .pip-special-letter {
+    font-size: 16px;
+    margin-bottom: 3px;
+  }
+
+  .pip-special-input {
+    min-height: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+}

@@ -94,117 +94,155 @@ export default function InventoryScreen({
     clearSelected();
   };
 
- return (
-  <div className="pip-screen-grid">
-    <section className="pip-panel pip-block">
-      <div className="pip-head pip-head-inventory">
-        <h2>[ {t("inventory.title")} ]</h2>
+  return (
+    <div className="pip-screen-grid">
+      <section className="pip-panel pip-block">
+        <div className="pip-head pip-head-inventory">
+          <h2>[ {t("inventory.title")} ]</h2>
 
-        <label className="pip-top-field">
-          <span>Sell Bonus%</span>
-          <input
-            className="pip-inline-input pip-bonus-input"
-            value={sellBonusPercent}
-            onChange={(e) =>
-              setSellBonusPercent(e.target.value.replace(/[^\d]/g, ""))
-            }
-          />
-        </label>
+          <label className="pip-top-field" style={{ gap: "2px", alignSelf: "end" }}>
+            <span style={{ fontSize: "9px", lineHeight: 1 }}>Sell Bonus%</span>
+            <input
+              className="pip-inline-input pip-bonus-input"
+              style={{
+                width: "100%",
+                height: "26px",
+                minHeight: "26px",
+                maxHeight: "26px",
+                padding: "0 6px",
+                fontSize: "12px",
+                lineHeight: "26px",
+                boxSizing: "border-box",
+                textAlign: "center",
+              }}
+              value={sellBonusPercent}
+              onChange={(e) =>
+                setSellBonusPercent(e.target.value.replace(/[^\d]/g, ""))
+              }
+            />
+          </label>
 
-        <label className="pip-top-field">
-          <span>{t("inventory.caps")}</span>
-          <input
-            className="pip-inline-input"
-            value={caps}
-            onChange={(e) => onCapsChange(e.target.value)}
-          />
-        </label>
-      </div>
+          <label className="pip-top-field" style={{ gap: "2px", alignSelf: "end" }}>
+            <span style={{ fontSize: "9px", lineHeight: 1 }}>{t("inventory.caps")}</span>
+            <input
+              className="pip-inline-input"
+              style={{
+                width: "100%",
+                height: "26px",
+                minHeight: "26px",
+                maxHeight: "26px",
+                padding: "0 6px",
+                fontSize: "12px",
+                lineHeight: "26px",
+                boxSizing: "border-box",
+              }}
+              value={caps}
+              onChange={(e) => onCapsChange(e.target.value)}
+            />
+          </label>
+        </div>
 
-      <div className="pip-tagrow is-wrap push-bottom">
-        {INVENTORY_CATEGORIES.map((item) => (
+        <div className="pip-tagrow is-wrap push-bottom">
+          {INVENTORY_CATEGORIES.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              className={`pip-tag ${
+                activeCategory === item.value ? "is-selected" : ""
+              }`}
+              onClick={() => {
+                setActiveCategory(item.value);
+                clearSelected();
+              }}
+            >
+              {t(CATEGORY_LABEL_KEYS[item.value] || item.label)}
+            </button>
+          ))}
+        </div>
+
+        <div className="pip-inventory-actions push-bottom">
           <button
-            key={item.value}
             type="button"
-            className={`pip-tag ${
-              activeCategory === item.value ? "is-selected" : ""
-            }`}
-            onClick={() => {
-              setActiveCategory(item.value);
-              clearSelected();
-            }}
+            className="pip-btn"
+            onClick={selectAllFiltered}
+            disabled={!filteredItemsWithIndex.length}
           >
-            {t(CATEGORY_LABEL_KEYS[item.value] || item.label)}
+            Select all
           </button>
-        ))}
-      </div>
 
-      <div className="pip-inventory-actions push-bottom">
-
-        <button
-          type="button"
-          className="pip-btn is-primary"
-          onClick={() => onAdd(activeCategory === "all" ? "misc" : activeCategory)}
-        >
-          {t("inventory.addItem")}
-        </button>
-
-        <button
-          type="button"
-          className="pip-btn is-primary"
-          onClick={handleSellSelected}
-          disabled={!selectedIndices.length}
-        >
-          Sell ({selectedIndices.length})
-        </button>
-      </div>
-
-      <div className="pip-inline-stats push-bottom">
-        <span>
-          {t("inventory.currentWeight")}: {currentCarryWeight}
-        </span>
-        <span>
-          {t("inventory.maxCarry")}: {carryWeight}
-        </span>
-      </div>
-
-      <div className="pip-stack">
-        {filteredItemsWithIndex.map(({ item, originalIndex }) => (
-          <div
-            key={`${item.name}-${originalIndex}`}
-            className="pip-inventory-select-row"
+          <button
+            type="button"
+            className="pip-btn"
+            onClick={clearSelected}
+            disabled={!selectedIndices.length}
           >
-            <label className="pip-checkbox">
-              <input
-                type="checkbox"
-                checked={selectedIndices.includes(originalIndex)}
-                onChange={() => toggleSelected(originalIndex)}
-              />
-              <span className="pip-checkbox-box" />
-            </label>
+            Clear
+          </button>
 
-            <div className="pip-inventory-card-wrap">
-              <InventoryCard
-                item={item}
-                index={originalIndex}
-                onEdit={onEdit}
-                onCopy={onCopy}
-                onRemove={onRemove}
-              />
+          <button
+            type="button"
+            className="pip-btn is-primary"
+            onClick={() => onAdd(activeCategory === "all" ? "misc" : activeCategory)}
+          >
+            {t("inventory.addItem")}
+          </button>
+
+          <button
+            type="button"
+            className="pip-btn is-primary"
+            onClick={handleSellSelected}
+            disabled={!selectedIndices.length}
+          >
+            Sell ({selectedIndices.length})
+          </button>
+        </div>
+
+        <div className="pip-inline-stats push-bottom">
+          <span>
+            {t("inventory.currentWeight")}: {currentCarryWeight}
+          </span>
+          <span>
+            {t("inventory.maxCarry")}: {carryWeight}
+          </span>
+        </div>
+
+        <div className="pip-stack">
+          {filteredItemsWithIndex.map(({ item, originalIndex }) => (
+            <div
+              key={`${item.name}-${originalIndex}`}
+              className="pip-inventory-select-row"
+            >
+              <label className="pip-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedIndices.includes(originalIndex)}
+                  onChange={() => toggleSelected(originalIndex)}
+                />
+                <span className="pip-checkbox-box" />
+              </label>
+
+              <div className="pip-inventory-card-wrap">
+                <InventoryCard
+                  item={item}
+                  index={originalIndex}
+                  onEdit={onEdit}
+                  onCopy={onCopy}
+                  onRemove={onRemove}
+                />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-    </section>
+          ))}
+        </div>
+      </section>
 
-    {editingIndex !== null && (
-      <InventoryEditor
-        draft={itemDraft}
-        setDraft={setItemDraft}
-        onSave={() => onSaveEdit(editingIndex)}
-        onCancel={onCancelEdit}
-      />
-    )}
-  </div>
-);
+      {editingIndex !== null && (
+        <InventoryEditor
+          draft={itemDraft}
+          setDraft={setItemDraft}
+          onSave={() => onSaveEdit(editingIndex)}
+          onCancel={onCancelEdit}
+        />
+      )}
+    </div>
+  );
 }

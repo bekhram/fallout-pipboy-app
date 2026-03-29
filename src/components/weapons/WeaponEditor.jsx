@@ -119,72 +119,96 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel }) {
           value={draft.ammo || ""}
           onChange={(e) => setDraft({ ...draft, ammo: e.target.value })}
         />
-
-        <textarea
-          className="pip-textarea"
-          placeholder={t("weapons.customQualities")}
-          value={draft.qualitiesCustom || ""}
-          onChange={(e) =>
-            setDraft({ ...draft, qualitiesCustom: e.target.value })
-          }
-        />
-
-        <textarea
-          className="pip-textarea"
-          placeholder={t("weapons.customEffect")}
-          value={draft.customEffect || ""}
-          onChange={(e) =>
-            setDraft({ ...draft, customEffect: e.target.value })
-          }
-        />
       </div>
 
       <div className="push-top">
-        <div className="pip-head">
-          <h2>[ {t("weapons.qualities")} ]</h2>
-        </div>
-
-        <div className="pip-tagrow">
-          {WEAPON_QUALITY_OPTIONS.map((item) => {
-            const active = (draft.qualities || []).includes(item.key);
-
-            return (
-              <button
-                key={item.key}
-                type="button"
-                className={`pip-tag ${active ? "is-selected" : ""}`}
-                onClick={() => toggleQuality(item.key)}
-                title={t(item.descriptionKey || item.description)}
-              >
-                {t(item.nameKey || item.name)}
-              </button>
-            );
-          })}
-        </div>
+        <details className="pip-collapsible pip-collapsible--field">
+          <summary className="pip-collapsible__summary">
+            {t("weapons.customQualities")}
+          </summary>
+          <div className="pip-collapsible__body">
+            <textarea
+              className="pip-textarea"
+              placeholder={t("weapons.customQualities")}
+              value={draft.qualitiesCustom || ""}
+              onChange={(e) =>
+                setDraft({ ...draft, qualitiesCustom: e.target.value })
+              }
+            />
+          </div>
+        </details>
       </div>
 
       <div className="push-top">
-        <div className="pip-head">
-          <h2>[ {t("weapons.effects")} ]</h2>
-        </div>
+        <details className="pip-collapsible pip-collapsible--field">
+          <summary className="pip-collapsible__summary">
+            {t("weapons.customEffect")}
+          </summary>
+          <div className="pip-collapsible__body">
+            <textarea
+              className="pip-textarea"
+              placeholder={t("weapons.customEffect")}
+              value={draft.customEffect || ""}
+              onChange={(e) =>
+                setDraft({ ...draft, customEffect: e.target.value })
+              }
+            />
+          </div>
+        </details>
+      </div>
 
-        <div className="pip-tagrow">
-          {WEAPON_EFFECT_OPTIONS.map((item) => {
-            const active = (draft.effects || []).includes(item.key);
+      <div className="push-top">
+        <details className="pip-collapsible" open>
+          <summary className="pip-collapsible__summary">
+            [ {t("weapons.qualities")} ]
+          </summary>
+          <div className="pip-collapsible__body">
+            <div className="pip-tagrow">
+              {WEAPON_QUALITY_OPTIONS.map((item) => {
+                const active = (draft.qualities || []).includes(item.key);
 
-            return (
-              <button
-                key={item.key}
-                type="button"
-                className={`pip-tag ${active ? "is-selected" : ""}`}
-                onClick={() => toggleEffect(item.key)}
-                title={t(item.descriptionKey || item.description)}
-              >
-                {t(item.nameKey || item.name)}
-              </button>
-            );
-          })}
-        </div>
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`pip-tag ${active ? "is-selected" : ""}`}
+                    onClick={() => toggleQuality(item.key)}
+                    title={t(item.descriptionKey || item.description)}
+                  >
+                    {t(item.nameKey || item.name)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <div className="push-top">
+        <details className="pip-collapsible" open>
+          <summary className="pip-collapsible__summary">
+            [ {t("weapons.effects")} ]
+          </summary>
+          <div className="pip-collapsible__body">
+            <div className="pip-tagrow">
+              {WEAPON_EFFECT_OPTIONS.map((item) => {
+                const active = (draft.effects || []).includes(item.key);
+
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className={`pip-tag ${active ? "is-selected" : ""}`}
+                    onClick={() => toggleEffect(item.key)}
+                    title={t(item.descriptionKey || item.description)}
+                  >
+                    {t(item.nameKey || item.name)}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </details>
       </div>
 
       <div className="pip-actions-inline push-top">

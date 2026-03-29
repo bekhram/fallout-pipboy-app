@@ -1,0 +1,290 @@
+.pip-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.pip-chip {
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--pip-text-soft);
+  padding: 8px 10px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pip-chip strong {
+  color: var(--pip-accent);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.pip-chip small,
+.pip-chip span {
+  color: var(--pip-text-soft);
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pip-chip.is-active,
+.pip-chip.is-crippled {
+  border-color: var(--pip-line-strong);
+}
+
+.pip-chip.is-treated {
+  border-color: rgba(255, 224, 122, 0.4);
+  color: var(--pip-warning);
+}
+
+.pip-chip.is-crippled {
+  color: var(--pip-danger);
+}
+
+/* status groups */
+.pip-status-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.pip-status-group {
+  display: grid;
+  gap: 6px;
+}
+
+.pip-status-group-title {
+  color: var(--pip-accent);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pip-status-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pip-status-chip {
+  width: auto;
+  min-height: 0;
+  padding: 5px 8px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--pip-text-soft);
+  text-align: left;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+}
+
+.pip-status-chip:hover {
+  border-color: var(--pip-line-strong);
+}
+
+.pip-status-chip-name {
+  color: var(--pip-accent);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pip-status-chip-duration {
+  color: var(--pip-text-dim);
+  font-size: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pip-status-chip.is-positive.is-active {
+  border-color: rgba(140, 255, 152, 0.4);
+  box-shadow: 0 0 6px rgba(120, 255, 140, 0.08);
+}
+
+.pip-status-chip.is-negative.is-active {
+  border-color: rgba(255, 120, 120, 0.36);
+  box-shadow: 0 0 6px rgba(255, 120, 120, 0.08);
+}
+
+.pip-status-chip.is-negative.is-active .pip-status-chip-name {
+  color: var(--pip-danger);
+}
+
+.pip-status-chip.is-disease {
+  border-color: rgba(255, 210, 90, 0.45);
+  background: rgba(90, 70, 10, 0.18);
+}
+
+.pip-status-chip.is-disease.is-active {
+  border-color: rgba(255, 220, 120, 0.95);
+  box-shadow: 0 0 12px rgba(255, 210, 90, 0.2);
+  background: rgba(110, 80, 10, 0.3);
+}
+
+.pip-status-chip.is-chem {
+  border-color: rgba(120, 200, 255, 0.45);
+  background: rgba(20, 55, 90, 0.18);
+}
+
+.pip-status-chip.is-chem.is-active {
+  border-color: rgba(140, 220, 255, 0.95);
+  box-shadow: 0 0 12px rgba(120, 200, 255, 0.2);
+  background: rgba(20, 70, 110, 0.28);
+}
+
+/* collapsible status groups */
+.pip-status-group-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pip-status-group-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(120, 255, 160, 0.35);
+  border-radius: 6px;
+  font-size: 20px;
+  line-height: 1;
+  color: #9cff9c;
+  box-shadow: 0 0 8px rgba(120, 255, 160, 0.08);
+}
+
+/* injury condition chips */
+.pip-injury-conditions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pip-injury-condition-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.pip-injury-condition-chip span {
+  color: var(--pip-accent);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.pip-injury-condition-chip small {
+  color: var(--pip-text-dim);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.pip-injury-condition-chip.is-negative {
+  border-color: rgba(255, 120, 120, 0.28);
+}
+
+.pip-injury-condition-chip.is-negative span {
+  color: var(--pip-danger);
+}
+
+.pip-injury-condition-chip.is-positive {
+  border-color: rgba(140, 255, 152, 0.28);
+}
+
+/* weapon / item chips */
+.pip-weapon-card .pip-chip-grid,
+.pip-floating-actions-card .pip-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pip-weapon-card .pip-chip,
+.pip-floating-actions-card .pip-chip {
+  width: auto;
+  min-width: 120px;
+  max-width: 100%;
+  padding: 6px 10px;
+  gap: 2px;
+}
+
+@media (max-width: 900px) {
+  .pip-weapon-card .pip-chip,
+  .pip-floating-actions-card .pip-chip {
+    min-width: 110px;
+    padding: 6px 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pip-chip-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 6px;
+  }
+
+  .pip-chip {
+    padding: 5px 7px;
+    gap: 2px;
+  }
+
+  .pip-chip strong {
+    font-size: 9px;
+  }
+
+  .pip-chip small,
+  .pip-chip span {
+    font-size: 8px;
+  }
+
+  .pip-status-chip {
+    min-height: 34px;
+    padding: 6px 8px;
+  }
+
+  .pip-status-chip-name {
+    font-size: 12px;
+  }
+
+  .pip-status-chip-duration {
+    display: none;
+  }
+
+  .pip-weapon-card .pip-chip,
+  .pip-floating-actions-card .pip-chip {
+    min-width: 0;
+    flex: 1 1 calc(50% - 6px);
+    padding: 5px 7px;
+  }
+}

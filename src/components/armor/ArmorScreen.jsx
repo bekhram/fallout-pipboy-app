@@ -11,14 +11,22 @@ const ARMOR_PART_LABEL_KEYS = {
   "Right Leg": "injuries.rightLeg",
 };
 
-const PART_LABEL_KEYS = {
-  Head: "injuries.head",
-  Torso: "injuries.torso",
-  "Left Arm": "injuries.leftArm",
-  "Right Arm": "injuries.rightArm",
-  "Left Leg": "injuries.leftLeg",
-  "Right Leg": "injuries.rightLeg",
+const ARMOR_PART_CODES = {
+  Head: "H",
+  "Left Arm": "LA",
+  "Right Arm": "RA",
+  Torso: "T",
+  "Left Leg": "LL",
+  "Right Leg": "RL",
 };
+
+const ARMOR_FIELDS = [
+  { key: "physical", icon: "⌖", labelKey: "armorPanel.physical" },
+  { key: "energy", icon: "⚡", labelKey: "armorPanel.energy" },
+  { key: "radiation", icon: "☢", labelKey: "armorPanel.radiation" },
+  { key: "poison", icon: "☣", labelKey: "armorPanel.poison" },
+  { key: "hp", icon: "", labelKey: "armorPanel.hp" },
+];
 
 export default function ArmorScreen({ armor, onArmorChange }) {
   const { t } = useTranslation();
@@ -30,48 +38,52 @@ export default function ArmorScreen({ armor, onArmorChange }) {
         <span>{t("armorPanel.locationDr")}</span>
       </div>
 
-      <div className="pip-armor-grid">
-        {ARMOR_PARTS.map((part) => (
-          <div className="pip-panel pip-armor-card" key={part}>
-            <h3>{t(ARMOR_PART_LABEL_KEYS[part] || part)}</h3>
-
-            <div className="pip-form-grid">
-              <input
-                className="pip-input"
-                placeholder={`⌖ ${t("armorPanel.physical")}`}
-                value={armor[part]?.physical || ""}
-                onChange={(e) =>
-                  onArmorChange(part, "physical", e.target.value)
-                }
-              />
-
-              <input
-                className="pip-input"
-                placeholder={`⚡︎ ${t("armorPanel.energy")}`}
-                value={armor[part]?.energy || ""}
-                onChange={(e) =>
-                  onArmorChange(part, "energy", e.target.value)
-                }
-              />
-
-              <input
-                className="pip-input"
-                placeholder={`☢ ${t("armorPanel.radiation")}`}
-                value={armor[part]?.radiation || ""}
-                onChange={(e) =>
-                  onArmorChange(part, "radiation", e.target.value)
-                }
-              />
-
-              <input
-                className="pip-input"
-                placeholder={t("armorPanel.hp")}
-                value={armor[part]?.hp || ""}
-                onChange={(e) => onArmorChange(part, "hp", e.target.value)}
-              />
+      <div className="pip-armor-table">
+        <div className="pip-armor-table-head">
+          <div className="pip-armor-part-col" />
+          {ARMOR_FIELDS.map((field) => (
+            <div key={field.key} className="pip-armor-stat-col">
+              <span className="pip-armor-stat-icon">{field.icon}</span>
+              <span className="pip-armor-stat-text">{t(field.labelKey)}</span>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+
+        <div className="pip-armor-table-body">
+          {ARMOR_PARTS.map((part) => (
+            <div className="pip-armor-row" key={part}>
+              <div className="pip-armor-row-label">
+                <span className="pip-armor-row-code">
+                  {ARMOR_PART_CODES[part]}
+                </span>
+                <span className="pip-armor-row-name">
+                  {t(ARMOR_PART_LABEL_KEYS[part] || part)}
+                </span>
+              </div>
+
+              {ARMOR_FIELDS.map((field) => (
+                <label
+                  key={`${part}-${field.key}`}
+                  className="pip-armor-cell"
+                  title={`${t(ARMOR_PART_LABEL_KEYS[part] || part)} · ${t(field.labelKey)}`}
+                >
+                  <span className="pip-armor-cell-mobile-icon">
+                    {field.icon}
+                  </span>
+                  <input
+                    className="pip-input pip-armor-mini-input"
+                    value={armor?.[part]?.[field.key] || ""}
+                    placeholder={field.icon}
+                    inputMode="numeric"
+                    onChange={(e) =>
+                      onArmorChange(part, field.key, e.target.value)
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

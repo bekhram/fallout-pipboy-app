@@ -25,7 +25,7 @@ export default function PerksScreen({
             className="pip-btn is-primary"
             onClick={onAdd}
           >
-            + {t("common.add")}
+          {t("common.add")}
           </button>
         </div>
 

@@ -70,8 +70,7 @@ export const WEAPON_EFFECT_OPTIONS = [
     key: "vicious",
     name: "Vicious",
     nameKey: "weaponEffects.vicious.name",
-    description:
-      "Each effect increases the total damage dealt.",
+    description: "Each effect increases the total damage dealt.",
     descriptionKey: "weaponEffects.vicious.description",
   },
   {
@@ -129,8 +128,7 @@ export const WEAPON_QUALITY_OPTIONS = [
     key: "debilitating",
     name: "Debilitating",
     nameKey: "weaponQualities.debilitating.name",
-    description:
-      "Injuries caused by this weapon are harder to treat.",
+    description: "Injuries caused by this weapon are harder to treat.",
     descriptionKey: "weaponQualities.debilitating.description",
   },
   {
@@ -145,8 +143,7 @@ export const WEAPON_QUALITY_OPTIONS = [
     key: "inaccurate",
     name: "Inaccurate",
     nameKey: "weaponQualities.inaccurate.name",
-    description:
-      "Gets no benefit from aiming.",
+    description: "Gets no benefit from aiming.",
     descriptionKey: "weaponQualities.inaccurate.description",
   },
   {
@@ -161,8 +158,7 @@ export const WEAPON_QUALITY_OPTIONS = [
     key: "nightVision",
     name: "Night Vision",
     nameKey: "weaponQualities.nightVision.name",
-    description:
-      "Aiming ignores darkness penalties.",
+    description: "Aiming ignores darkness penalties.",
     descriptionKey: "weaponQualities.nightVision.description",
   },
   {
@@ -193,8 +189,7 @@ export const WEAPON_QUALITY_OPTIONS = [
     key: "suppressed",
     name: "Suppressed",
     nameKey: "weaponQualities.suppressed.name",
-    description:
-      "Harder for enemies to notice when fired from stealth.",
+    description: "Harder for enemies to notice when fired from stealth.",
     descriptionKey: "weaponQualities.suppressed.description",
   },
   {
@@ -217,8 +212,7 @@ export const WEAPON_QUALITY_OPTIONS = [
     key: "unreliable",
     name: "Unreliable",
     nameKey: "weaponQualities.unreliable.name",
-    description:
-      "Raises the chance of complications when used.",
+    description: "Raises the chance of complications when used.",
     descriptionKey: "weaponQualities.unreliable.description",
   },
 ];
@@ -283,6 +277,73 @@ export const SKILL_DEFAULT_ATTRIBUTES = {
   Unarmed: "S",
 };
 
+export const CHEM_ADDICTION_RULES = {
+  buffoutAddiction: {
+    suppressedBy: ["buffout", "buffjet", "bufftats"],
+    affectedTests: ["S", "E"],
+    effectText: "Increase difficulty of STR and END tests by +1 when not under a Buffout-type effect.",
+  },
+  mentatAddiction: {
+    suppressedBy: ["mentats", "berryMentats", "grapeMentats", "orangeMentats"],
+    affectedTests: ["C"],
+    effectText: "Increase difficulty of CHA tests by +1 when not under a Mentats-type effect.",
+  },
+  calmexAddiction: {
+    suppressedBy: ["calmex"],
+    affectedTests: ["A"],
+    effectText: "AGI tests suffer complications on 18+ when not under Calmex.",
+  },
+  daddyOAddiction: {
+    suppressedBy: ["daddyO"],
+    affectedTests: ["P", "I"],
+    effectText: "Increase difficulty of PER and INT tests by +1 when not under Daddy-O.",
+  },
+  dayTripperAddiction: {
+    suppressedBy: ["dayTripper"],
+    affectedTests: ["C", "L"],
+    effectText: "Increase difficulty of CHA and LCK tests by +1 when not under Day Tripper.",
+  },
+  furyAddiction: {
+    suppressedBy: ["fury"],
+    affectedTests: ["S", "P"],
+    effectText: "Increase difficulty of STR and PER tests by +1 when not under Fury.",
+  },
+  jetAddiction: {
+    suppressedBy: ["jet", "jetFuel"],
+    affectedTests: ["A"],
+    effectText: "Increase difficulty of AGI tests by +1 when not under a Jet-type effect.",
+  },
+  medXAddiction: {
+    suppressedBy: ["medX"],
+    affectedTests: ["A"],
+    extraEffects: ["plus1PhysicalDamageTaken"],
+    effectText: "Increase difficulty of AGI tests by +1 and take +1 CD physical damage when not under Med-X.",
+  },
+  overdriveAddiction: {
+    suppressedBy: ["overdrive"],
+    affectedTests: ["S", "A"],
+    effectText: "Increase difficulty of STR and AGI tests by +1 when not under Overdrive.",
+  },
+  psychoAddiction: {
+    suppressedBy: ["psycho", "psychoJet", "psychobuff", "psychotats"],
+    affectedTests: ["S"],
+    extraEffects: ["plus1PhysicalDamageTaken"],
+    effectText: "Increase difficulty of STR tests by +1 and take +1 CD physical damage when not under a Psycho-type effect.",
+  },
+  ultraJetAddiction: {
+    suppressedBy: ["ultraJet"],
+    affectedTests: ["A"],
+    extraEffects: ["minus1GeneratedAP"],
+    permanent: true,
+    effectText: "Increase difficulty of AGI tests by +1 and generate 1 fewer AP on successful tests when not under Ultra Jet.",
+  },
+  xCellAddiction: {
+    suppressedBy: ["xCell"],
+    affectedTests: ["ALL"],
+    effectText: "Increase difficulty of all tests by +1 when not under X-Cell.",
+  },
+};
+
 export const ARMOR_PARTS = [
   "Head",
   "Left Arm",
@@ -312,6 +373,174 @@ export const INVENTORY_CATEGORIES = [
 ];
 
 export const STATUS_LIST = [
+{
+  key: "berryMentats",
+  nameKey: "statuses.berryMentats.name",
+  descriptionKey: "statuses.berryMentats.description",
+  durationKey: "statuses.duration.lasting",
+  group: "chem",
+},
+{
+  key: "buffjet",
+  nameKey: "statuses.buffjet.name",
+  descriptionKey: "statuses.buffjet.description",
+  durationKey: "statuses.duration.brief",
+  group: "chem",
+},
+{
+  key: "buffout",
+  nameKey: "statuses.buffout.name",
+  descriptionKey: "statuses.buffout.description",
+  durationKey: "statuses.duration.lasting",
+  group: "chem",
+},
+{
+  key: "bufftats",
+  nameKey: "statuses.bufftats.name",
+  descriptionKey: "statuses.bufftats.description",
+  durationKey: "statuses.duration.lasting",
+  group: "chem",
+},
+{
+  key: "calmex",
+  nameKey: "statuses.calmex.name",
+  descriptionKey: "statuses.calmex.description",
+  durationKey: "statuses.duration.lasting",
+  group: "chem",
+},
+{
+  key: "daddyO",
+  nameKey: "statuses.daddyO.name",
+  descriptionKey: "statuses.daddyO.description",
+  durationKey: "statuses.duration.lasting",
+  group: "chem",
+},
+  {
+    key: "dayTripper",
+    nameKey: "statuses.dayTripper.name",
+    descriptionKey: "statuses.dayTripper.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "fury",
+    nameKey: "statuses.fury.name",
+    descriptionKey: "statuses.fury.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "grapeMentats",
+    nameKey: "statuses.grapeMentats.name",
+    descriptionKey: "statuses.grapeMentats.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "jet",
+    nameKey: "statuses.jet.name",
+    descriptionKey: "statuses.jet.description",
+    durationKey: "statuses.duration.brief",
+    group: "chem",
+  },
+  {
+    key: "jetFuel",
+    nameKey: "statuses.jetFuel.name",
+    descriptionKey: "statuses.jetFuel.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "medX",
+    nameKey: "statuses.medX.name",
+    descriptionKey: "statuses.medX.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "mentats",
+    nameKey: "statuses.mentats.name",
+    descriptionKey: "statuses.mentats.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "orangeMentats",
+    nameKey: "statuses.orangeMentats.name",
+    descriptionKey: "statuses.orangeMentats.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "overdrive",
+    nameKey: "statuses.overdrive.name",
+    descriptionKey: "statuses.overdrive.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "psycho",
+    nameKey: "statuses.psycho.name",
+    descriptionKey: "statuses.psycho.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "psychoJet",
+    nameKey: "statuses.psychoJet.name",
+    descriptionKey: "statuses.psychoJet.description",
+    durationKey: "statuses.duration.brief",
+    group: "chem",
+  },
+  {
+    key: "psychobuff",
+    nameKey: "statuses.psychobuff.name",
+    descriptionKey: "statuses.psychobuff.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "psychotats",
+    nameKey: "statuses.psychotats.name",
+    descriptionKey: "statuses.psychotats.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "radX",
+    nameKey: "statuses.radX.name",
+    descriptionKey: "statuses.radX.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "radXDiluted",
+    nameKey: "statuses.radXDiluted.name",
+    descriptionKey: "statuses.radXDiluted.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "skeetoSpit",
+    nameKey: "statuses.skeetoSpit.name",
+    descriptionKey: "statuses.skeetoSpit.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
+  {
+    key: "ultraJet",
+    nameKey: "statuses.ultraJet.name",
+    descriptionKey: "statuses.ultraJet.description",
+    durationKey: "statuses.duration.brief",
+    group: "chem",
+  },
+  {
+    key: "xCell",
+    nameKey: "statuses.xCell.name",
+    descriptionKey: "statuses.xCell.description",
+    durationKey: "statuses.duration.lasting",
+    group: "chem",
+  },
   {
     key: "prone",
     nameKey: "statuses.prone.name",
@@ -332,27 +561,6 @@ export const STATUS_LIST = [
     descriptionKey: "statuses.persistentDamage.description",
     durationKey: "statuses.duration.untilRemoved",
     group: "negative",
-  },
-  {
-    key: "addiction",
-    nameKey: "statuses.addiction.name",
-    descriptionKey: "statuses.addiction.description",
-    durationKey: "statuses.duration.ongoing",
-    group: "negative",
-  },
-  {
-    key: "disease",
-    nameKey: "statuses.disease.name",
-    descriptionKey: "statuses.disease.description",
-    durationKey: "statuses.duration.untilCured",
-    group: "negative",
-  },
-  {
-    key: "chemEffect",
-    nameKey: "statuses.chemEffect.name",
-    descriptionKey: "statuses.chemEffect.description",
-    durationKey: "statuses.duration.timeBased",
-    group: "positive",
   },
   {
     key: "wellRested",
@@ -460,6 +668,90 @@ export const STATUS_LIST = [
     group: "negative",
   },
   {
+  key: "buffoutAddiction",
+  nameKey: "statuses.buffoutAddiction.name",
+  descriptionKey: "statuses.buffoutAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "mentatAddiction",
+  nameKey: "statuses.mentatAddiction.name",
+  descriptionKey: "statuses.mentatAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "calmexAddiction",
+  nameKey: "statuses.calmexAddiction.name",
+  descriptionKey: "statuses.calmexAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "daddyOAddiction",
+  nameKey: "statuses.daddyOAddiction.name",
+  descriptionKey: "statuses.daddyOAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "dayTripperAddiction",
+  nameKey: "statuses.dayTripperAddiction.name",
+  descriptionKey: "statuses.dayTripperAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "furyAddiction",
+  nameKey: "statuses.furyAddiction.name",
+  descriptionKey: "statuses.furyAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "jetAddiction",
+  nameKey: "statuses.jetAddiction.name",
+  descriptionKey: "statuses.jetAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "medXAddiction",
+  nameKey: "statuses.medXAddiction.name",
+  descriptionKey: "statuses.medXAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "overdriveAddiction",
+  nameKey: "statuses.overdriveAddiction.name",
+  descriptionKey: "statuses.overdriveAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "psychoAddiction",
+  nameKey: "statuses.psychoAddiction.name",
+  descriptionKey: "statuses.psychoAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "ultraJetAddiction",
+  nameKey: "statuses.ultraJetAddiction.name",
+  descriptionKey: "statuses.ultraJetAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+{
+  key: "xCellAddiction",
+  nameKey: "statuses.xCellAddiction.name",
+  descriptionKey: "statuses.xCellAddiction.description",
+  durationKey: "statuses.duration.ongoing",
+  group: "addiction",
+},
+  {
     key: "resistance",
     nameKey: "statuses.resistance.name",
     descriptionKey: "statuses.resistance.description",
@@ -467,11 +759,144 @@ export const STATUS_LIST = [
     group: "positive",
   },
   {
-    key: "customState",
-    nameKey: "statuses.customState.name",
-    descriptionKey: "statuses.customState.description",
-    durationKey: "statuses.duration.custom",
-    group: "positive",
+    key: "bloodWorms",
+    nameKey: "statuses.bloodWorms.name",
+    descriptionKey: "statuses.bloodWorms.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "boneWorms",
+    nameKey: "statuses.boneWorms.name",
+    descriptionKey: "statuses.boneWorms.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "buzzBrain",
+    nameKey: "statuses.buzzBrain.name",
+    descriptionKey: "statuses.buzzBrain.description",
+    durationKey: "statuses.duration.days4",
+    group: "disease",
+  },
+  {
+    key: "dysentery",
+    nameKey: "statuses.dysentery.name",
+    descriptionKey: "statuses.dysentery.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "feverClaw",
+    nameKey: "statuses.feverClaw.name",
+    descriptionKey: "statuses.feverClaw.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "flapLimb",
+    nameKey: "statuses.flapLimb.name",
+    descriptionKey: "statuses.flapLimb.description",
+    durationKey: "statuses.duration.days4",
+    group: "disease",
+  },
+  {
+    key: "glowingPustules",
+    nameKey: "statuses.glowingPustules.name",
+    descriptionKey: "statuses.glowingPustules.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "heatFlashes",
+    nameKey: "statuses.heatFlashes.name",
+    descriptionKey: "statuses.heatFlashes.description",
+    durationKey: "statuses.duration.days3",
+    group: "disease",
+  },
+  {
+    key: "jellyFingers",
+    nameKey: "statuses.jellyFingers.name",
+    descriptionKey: "statuses.jellyFingers.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "lockJoint",
+    nameKey: "statuses.lockJoint.name",
+    descriptionKey: "statuses.lockJoint.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "needleSpine",
+    nameKey: "statuses.needleSpine.name",
+    descriptionKey: "statuses.needleSpine.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "parasites",
+    nameKey: "statuses.parasites.name",
+    descriptionKey: "statuses.parasites.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "radWorms",
+    nameKey: "statuses.radWorms.name",
+    descriptionKey: "statuses.radWorms.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "shellShock",
+    nameKey: "statuses.shellShock.name",
+    descriptionKey: "statuses.shellShock.description",
+    durationKey: "statuses.duration.days3",
+    group: "disease",
+  },
+  {
+    key: "sludgeLung",
+    nameKey: "statuses.sludgeLung.name",
+    descriptionKey: "statuses.sludgeLung.description",
+    durationKey: "statuses.duration.days4",
+    group: "disease",
+  },
+  {
+    key: "snotEar",
+    nameKey: "statuses.snotEar.name",
+    descriptionKey: "statuses.snotEar.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "swampGas",
+    nameKey: "statuses.swampGas.name",
+    descriptionKey: "statuses.swampGas.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "swampItch",
+    nameKey: "statuses.swampItch.name",
+    descriptionKey: "statuses.swampItch.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "theWhoopsies",
+    nameKey: "statuses.theWhoopsies.name",
+    descriptionKey: "statuses.theWhoopsies.description",
+    durationKey: "statuses.duration.days1",
+    group: "disease",
+  },
+  {
+    key: "weepingSores",
+    nameKey: "statuses.weepingSores.name",
+    descriptionKey: "statuses.weepingSores.description",
+    durationKey: "statuses.duration.days3",
+    group: "disease",
   },
 ];
 
@@ -511,6 +936,22 @@ export function createEmptyWeapon() {
     qualitiesCustom: "",
     ammo: "",
   };
+}
+
+export function isAddictionSuppressed(addictionKey, statuses = {}) {
+  const rule = CHEM_ADDICTION_RULES[addictionKey];
+  if (!rule) return false;
+
+  return rule.suppressedBy.some((statusKey) => Boolean(statuses[statusKey]));
+}
+
+export function getActiveWithdrawalEffects(statuses = {}) {
+  return Object.entries(CHEM_ADDICTION_RULES)
+    .filter(([addictionKey, rule]) => statuses[addictionKey] && !isAddictionSuppressed(addictionKey, statuses))
+    .map(([addictionKey, rule]) => ({
+      addictionKey,
+      ...rule,
+    }));
 }
 
 export function createEmptyItem(category = "misc") {
@@ -559,15 +1000,16 @@ export function buildDefaultForm() {
     };
   });
 
-  const armor = {};
-  ARMOR_PARTS.forEach((part) => {
-    armor[part] = {
-      physical: "",
-      energy: "",
-      radiation: "",
-      hp: "",
-    };
-  });
+const armor = {};
+ARMOR_PARTS.forEach((part) => {
+  armor[part] = {
+    physical: "",
+    energy: "",
+    radiation: "",
+    poison: "",
+    hp: "",
+  };
+});
 
   const statuses = {};
   STATUS_LIST.forEach((status) => {

@@ -1,0 +1,151 @@
+/* ===== HERO / MAIN SCREEN ===== */
+
+.pip-hero {
+  padding: 18px;
+}
+
+.pip-bootline {
+  color: var(--pip-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+
+.pip-title {
+  margin: 8px 0 4px;
+  font-size: 32px;
+  letter-spacing: 0.08em;
+  color: var(--pip-accent);
+}
+
+.pip-subtitle {
+  margin: 0;
+  color: var(--pip-text-soft);
+  letter-spacing: 0.12em;
+}
+
+.pip-hero-grid {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.pip-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: start;
+}
+
+.pip-hero-meta {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.pip-hero-meta label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--pip-text-dim);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.pip-hero-meta .pip-input,
+.pip-hero-meta input,
+.pip-hero-meta select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ===== DERIVED STATS ===== */
+
+.pip-derived-modal-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pip-derived-row {
+  display: grid;
+  grid-template-columns: 160px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(140, 255, 152, 0.08);
+}
+
+.pip-derived-row span {
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.pip-derived-luck-fields {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== TABLET ===== */
+
+@media (max-width: 820px) {
+  .pip-hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .pip-hero-grid {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .pip-hero-left {
+    width: 150px;
+    min-width: 150px;
+    display: grid;
+    gap: 10px;
+    justify-items: stretch;
+  }
+
+  .pip-hero-meta {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .pip-hero-meta .pip-input,
+  .pip-hero-meta input,
+  .pip-hero-meta select {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .pip-title {
+    font-size: 24px;
+  }
+
+  .pip-hero-grid,
+  .pip-derived-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pip-hero-meta {
+    min-width: 0;
+  }
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 640px) {
+  .pip-hero,
+  .pip-hero-grid,
+  .pip-hero-meta {
+    min-width: 0;
+  }
+}

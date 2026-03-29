@@ -31,7 +31,7 @@ export default function WeaponsScreen({
             className="pip-btn is-primary"
             onClick={onAdd}
           >
-            + {t("common.add")}
+             {t("common.add")}
           </button>
         </div>
 

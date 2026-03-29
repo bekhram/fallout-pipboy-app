@@ -23,11 +23,11 @@
     "return": "RETURN TO MENU"
   },
   "common": {
-    "edit": "EDIT",
-    "copy": "COPY",
-    "save": "SAVE",
-    "cancel": "CANCEL",
-    "add": "ADD",
+    "edit": "✎",
+    "copy": "⧉",
+    "save": "✓",
+    "cancel": "↶",
+    "add": "+",
     "delete": "X"
   },
   "weapons": {
@@ -49,21 +49,24 @@
   "status": {
     "positive": "Positive",
     "negative": "Negative",
+    "chems": "Chems",
+    "diseases": "Diseases",
+    "addictions": "Addictions",
     "duration": "Duration"
   },
   "statuses": {
-        "starving": {
-  "name": "Starving",
-  "description": "Severe hunger weakens the character and reduces effectiveness."
-},
-"dehydrated": {
-  "name": "Dehydrated",
-  "description": "Lack of water causes weakness and slower recovery."
-},
-"exhausted": {
-  "name": "Exhausted",
-  "description": "Lack of sleep reduces concentration and performance."
-},
+    "starving": {
+      "name": "Starving",
+      "description": "Severe hunger weakens the character and reduces effectiveness."
+    },
+    "dehydrated": {
+      "name": "Dehydrated",
+      "description": "Lack of water causes weakness and slower recovery."
+    },
+    "exhausted": {
+      "name": "Exhausted",
+      "description": "Lack of sleep reduces concentration and performance."
+    },
     "prone": {
       "name": "Prone",
       "description": "Reduced mobility until standing up."
@@ -156,6 +159,230 @@
       "name": "Custom State",
       "description": "User-defined condition with custom effects."
     },
+    "berryMentats": {
+      "name": "Berry Mentats",
+      "description": "Reduce the difficulty of INT tests by 2."
+    },
+    "buffjet": {
+      "name": "Buffjet",
+      "description": "Reduce STR and END test difficulty by 1, gain +4 Max HP, gain 3 AP immediately, and extra actions cost 1 less AP."
+    },
+    "buffout": {
+      "name": "Buffout",
+      "description": "Re-roll 1d20 on STR and END tests and gain +3 Max HP."
+    },
+    "bufftats": {
+      "name": "Bufftats",
+      "description": "Reduce STR, PER, and END test difficulty by 1 and gain +4 Max HP."
+    },
+    "calmex": {
+      "name": "Calmex",
+      "description": "Re-roll 1d20 on PER and AGI tests and gain +2 CD to sneak attack damage."
+    },
+    "daddyO": {
+      "name": "Daddy-O",
+      "description": "Reduce PER and INT test difficulty by 1, but CHA tests become harder."
+    },
+    "dayTripper": {
+      "name": "Day Tripper",
+      "description": "Improves social and luck-related performance for a lasting duration."
+    },
+    "fury": {
+      "name": "Fury",
+      "description": "Boosts aggressive combat performance for a lasting duration."
+    },
+    "grapeMentats": {
+      "name": "Grape Mentats",
+      "description": "Improves social ability and trading performance for a lasting duration."
+    },
+    "jet": {
+      "name": "Jet",
+      "description": "Grants a short burst of speed and action advantage."
+    },
+    "jetFuel": {
+      "name": "Jet Fuel",
+      "description": "A stronger Jet variant with a longer-lasting effect."
+    },
+    "medX": {
+      "name": "Med-X",
+      "description": "Reduces incoming harm and helps endure combat longer."
+    },
+    "mentats": {
+      "name": "Mentats",
+      "description": "Improves mental performance and concentration for a lasting duration."
+    },
+    "orangeMentats": {
+      "name": "Orange Mentats",
+      "description": "Improves perception and ranged combat awareness for a lasting duration."
+    },
+    "overdrive": {
+      "name": "Overdrive",
+      "description": "Improves aggressive combat output for a lasting duration."
+    },
+    "psycho": {
+      "name": "Psycho",
+      "description": "Boosts damage potential and aggression for a lasting duration."
+    },
+    "psychoJet": {
+      "name": "Psycho Jet",
+      "description": "Combines Psycho aggression with Jet speed for a brief duration."
+    },
+    "psychobuff": {
+      "name": "Psychobuff",
+      "description": "Combines Psycho and Buffout effects for a lasting duration."
+    },
+    "psychotats": {
+      "name": "Psychotats",
+      "description": "Combines Psycho and Mentats-style benefits for a lasting duration."
+    },
+    "radX": {
+      "name": "Rad-X",
+      "description": "Temporarily improves resistance to radiation."
+    },
+    "radXDiluted": {
+      "name": "Diluted Rad-X",
+      "description": "A weaker version of Rad-X that still improves radiation resistance."
+    },
+    "skeetoSpit": {
+      "name": "Skeeto Spit",
+      "description": "A wasteland remedy with a lasting chemical effect."
+    },
+    "ultraJet": {
+      "name": "Ultra Jet",
+      "description": "An advanced Jet variant with a powerful brief effect."
+    },
+    "xCell": {
+      "name": "X-Cell",
+      "description": "A rare and powerful chem that enhances overall performance."
+    },
+    "buffoutAddiction": {
+      "name": "Buffout Addiction",
+      "description": "While not under a Buffout-type effect, STR and END tests are +1 difficulty."
+    },
+    "mentatAddiction": {
+      "name": "Mentat Addiction",
+      "description": "While not under a Mentats-type effect, CHA tests are +1 difficulty."
+    },
+    "calmexAddiction": {
+      "name": "Calmex Addiction",
+      "description": "While not under Calmex, AGI tests suffer complications on rolls of 18 or higher."
+    },
+    "daddyOAddiction": {
+      "name": "Daddy-O Addiction",
+      "description": "While not under Daddy-O, PER and INT tests are +1 difficulty."
+    },
+    "dayTripperAddiction": {
+      "name": "Day Tripper Addiction",
+      "description": "While not under Day Tripper, CHA and LCK tests are +1 difficulty."
+    },
+    "furyAddiction": {
+      "name": "Fury Addiction",
+      "description": "While not under Fury, STR and PER tests are +1 difficulty."
+    },
+    "jetAddiction": {
+      "name": "Jet Addiction",
+      "description": "While not under a Jet-type effect, AGI tests are +1 difficulty."
+    },
+    "medXAddiction": {
+      "name": "Med-X Addiction",
+      "description": "While not under Med-X, AGI tests are +1 difficulty and physical attacks deal +1 CD damage to you."
+    },
+    "overdriveAddiction": {
+      "name": "Overdrive Addiction",
+      "description": "While not under Overdrive, STR and AGI tests are +1 difficulty."
+    },
+    "psychoAddiction": {
+      "name": "Psycho Addiction",
+      "description": "While not under a Psycho-type effect, STR tests are +1 difficulty and physical attacks deal +1 CD damage to you."
+    },
+    "ultraJetAddiction": {
+      "name": "Ultra Jet Addiction",
+      "description": "While not under Ultra Jet, AGI tests are +1 difficulty and you generate 1 fewer AP on successful tests."
+    },
+    "xCellAddiction": {
+      "name": "X-Cell Addiction",
+      "description": "While not under X-Cell, all tests are +1 difficulty."
+    },
+    "bloodWorms": {
+      "name": "Blood Worms",
+      "description": "A disease that weakens the body over time."
+    },
+    "boneWorms": {
+      "name": "Bone Worms",
+      "description": "A disease that causes deep internal pain and weakness."
+    },
+    "buzzBrain": {
+      "name": "Buzz Brain",
+      "description": "A disease that clouds thought and concentration."
+    },
+    "dysentery": {
+      "name": "Dysentery",
+      "description": "A severe illness that weakens the body and endurance."
+    },
+    "feverClaw": {
+      "name": "Fever Claw",
+      "description": "A disease that brings fever and physical stress."
+    },
+    "flapLimb": {
+      "name": "Flap Limb",
+      "description": "A disease that interferes with reliable movement."
+    },
+    "glowingPustules": {
+      "name": "Glowing Pustules",
+      "description": "A radiation-linked disease causing painful eruptions."
+    },
+    "heatFlashes": {
+      "name": "Heat Flashes",
+      "description": "A disease causing sudden weakness and discomfort."
+    },
+    "jellyFingers": {
+      "name": "Jelly Fingers",
+      "description": "A disease that makes precise hand use more difficult."
+    },
+    "lockJoint": {
+      "name": "Lock Joint",
+      "description": "A disease that causes stiffness and impaired movement."
+    },
+    "needleSpine": {
+      "name": "Needle Spine",
+      "description": "A painful disease affecting posture and comfort."
+    },
+    "parasites": {
+      "name": "Parasites",
+      "description": "A lingering illness that drains strength and recovery."
+    },
+    "radWorms": {
+      "name": "Rad Worms",
+      "description": "A radiation-linked parasitic disease."
+    },
+    "shellShock": {
+      "name": "Shell Shock",
+      "description": "A trauma-like condition affecting nerves and stability."
+    },
+    "sludgeLung": {
+      "name": "Sludge Lung",
+      "description": "A disease affecting breathing and endurance."
+    },
+    "snotEar": {
+      "name": "Snot Ear",
+      "description": "A disease that affects comfort and awareness."
+    },
+    "swampGas": {
+      "name": "Swamp Gas",
+      "description": "A swamp-borne disease causing weakness and discomfort."
+    },
+    "swampItch": {
+      "name": "Swamp Itch",
+      "description": "A persistent disease causing irritation and distraction."
+    },
+    "theWhoopsies": {
+      "name": "The Whoopsies",
+      "description": "A serious wasteland disease with debilitating symptoms."
+    },
+    "weepingSores": {
+      "name": "Weeping Sores",
+      "description": "A disease causing painful open sores and weakness."
+    },
     "duration": {
       "whileZero": "While value is 0",
       "untilRemoved": "Until removed",
@@ -170,7 +397,13 @@
       "whileActive": "While active",
       "untilFreed": "Until freed",
       "short": "Short",
-      "custom": "Custom"
+      "custom": "Custom",
+      "lasting": "Lasting",
+      "brief": "Brief",
+      "instant": "Instant",
+      "days1": "1 day",
+      "days3": "3 days",
+      "days4": "4 days"
     }
   },
   "main": {
@@ -227,38 +460,39 @@
     "attr": "Attr",
     "test": "Test"
   },
- "inventory": {
-  "title": "INVENTORY",
-  "caps": "CAPS",
-  "currentWeight": "Current Weight",
-  "maxCarry": "Max Carry",
-  "addItem": "+ ADD ITEM",
-  "itemEditor": "ITEM EDITOR",
-  "logEntry": "LOG ENTRY",
-  "itemName": "Item name",
-  "quantity": "Quantity",
-  "cost": "Cost",
-  "weight": "Weight",
-  "unnamedItem": "Unnamed Item",
-  "qtyShort": "Qty",
-  "wtShort": "Wt",
-  "valShort": "Val",
-  "categories": {
-    "all": "All",
-    "weapons": "Weapons",
-    "ammo": "Ammo",
-    "aid": "Aid",
-    "food": "Food",
-    "misc": "Misc",
-    "junk": "Junk"
-  }
-},
+  "inventory": {
+    "title": "INVENTORY",
+    "caps": "CAPS",
+    "currentWeight": "Current Weight",
+    "maxCarry": "Max Carry",
+    "addItem": "+ ITEM",
+    "itemEditor": "ITEM EDITOR",
+    "logEntry": "LOG ENTRY",
+    "itemName": "Item name",
+    "quantity": "Quantity",
+    "cost": "Cost",
+    "weight": "Weight",
+    "unnamedItem": "Unnamed Item",
+    "qtyShort": "Qty",
+    "wtShort": "Wt",
+    "valShort": "Val",
+    "categories": {
+      "all": "All",
+      "weapons": "Weapons",
+      "ammo": "Ammo",
+      "aid": "Aid",
+      "food": "Food",
+      "misc": "Misc",
+      "junk": "Junk"
+    }
+  },
   "armorPanel": {
     "title": "ARMOR",
     "locationDr": "LOCATION DR",
     "physical": "Physical",
     "energy": "Energy",
     "radiation": "Radiation",
+    "poison": "Poison",
     "hp": "HP"
   },
   "perksPanel": {
@@ -500,174 +734,170 @@
     "Extreme (X)": "Extreme (X)"
   },
   "mapPanel": {
-  "title": "MAP",
-  "worldTime": "WORLD TIME",
-  "target": "TARGET",
-  "positionTarget": "POSITION / TARGET",
-  "sector": "Sector",
-  "pos": "Pos",
-  "world": "World",
-  "terrain": "Terrain",
-  "date": "Date",
-  "time": "Time",
-  "travel": "Travel",
-  "targetLabel": "Target",
-  "direction": "Dir",
-  "blocks": "Blocks",
-  "km": "Km",
-  "type": "Type",
-  "hazards": "Hazards",
-  "none": "None",
-  "travelButton": "TRAVEL",
-  "campButton": "CAMP",
-  "log": "LOG",
-  "north": "NORTH",
-  "south": "SOUTH",
-  "west": "WEST",
-  "east": "EAST",
-  "day": "Day",
-  "month": "Month",
-  "enteredWasteland": "Entered the Wasteland",
-  "campRest": "You set up camp to rest +8h",
-  "shiftedMap": "Shifted map {{direction}}.",
-  "movedTo": "Moved to {{x}},{{y}} - {{terrain}} - +{{cost}}h",
-  "locationFound": "Location found: {{name}}",
-  "unknown": "Unknown"
-},
-"terrain": {
-  "road": "Road",
-  "urban": "Urban",
-  "ruins": "Ruins",
-  "forest": "Forest",
-  "swamp": "Swamp",
-  "industrial": "Industrial",
-  "water": "Water",
-  "mountains": "Mountains",
-  "blocked_ruins": "Blocked Ruins"
-},
-"hazards": {
-  "difficult": "Difficult Terrain",
-  "radiation": "Radiation Zone",
-  "toxic": "Toxic Zone",
-  "danger": "Danger Zone",
-  "anomaly": "Anomalous Zone"
-},
-"hazardsDesc": {
-  "difficult": "Greatly slows movement.",
-  "radiation": "Deals periodic radiation damage.",
-  "toxic": "Deals periodic poison damage.",
-  "danger": "Deals periodic physical damage from hidden fire or hazards.",
-  "anomaly": "Deals periodic energy damage."
-},
-"encounters": {
-  "commonwealth": {
-    "ammo_crate": "Loot: You find an ammo crate. Gain 5 random rounds.",
-    "nuka_fridge": "Loot: An old Nuka-Cola fridge. There might be something useful inside.",
-
-    "metro_station": "Metro station. It might be worth exploring.",
-    "cave": "A dark and eerie cave. It might be worth exploring.",
-    "west_tek_building": "A West-Tek facility. Dangerous, but potentially valuable.",
-    "bus_station": "A bus station. There could be supplies or survivors here.",
-    "mine": "An abandoned mine. It's dark and silent inside.",
-    "super_duper_mart": "Super Duper Mart. Might be worth checking the shelves and storage.",
-    "raider_outpost": "A raider outpost. Someone is definitely here.",
-    "mutant_outpost": "A super mutant outpost. Stay alert.",
-    "bos_outpost": "Brotherhood of Steel outpost. Their reaction depends on your reputation.",
-    "ncr_outpost": "NCR outpost. Could be trade... or interrogation.",
-    "settlement": "A small settlement. You may find rest, rumors, or trade opportunities.",
-    "wasteland_nothing": "Empty wasteland. Nothing of interest.",
-
-    "ambush": "Ambush! You are attacked. Enemies strike first.",
-
-    "rad_waste_pit": "You fall into a pit of radioactive waste. Take radiation damage.",
-    "lost_supplies": "You lost some supplies during travel.",
-    "broken_backpack": "Your backpack is torn. Some of your gear is lost.",
-    "fatal_breakdown": "Critical failure. Your equipped weapon or armor breaks and becomes unusable.",
-    "food_poisoning": "You ate something bad and got poisoned.",
-    "hunger_crash": "Your hunger drops to 0. You also gain 1 level of exhaustion.",
-    "toxic_puddle": "Toxic puddle. You are exposed to poison or lose leg protection.",
-    "pickpocket": "Pickpocket. One unequipped item is stolen from your inventory.",
-    "building_collapse": "A collapsing building falls on you. Take physical damage.",
-    "radioactive_puddle": "Radioactive puddle. Take radiation damage.",
-    "grenade_tripwire": "Grenade tripwire! You and adjacent allies take physical damage.",
-    "stuck_in_textures": "You got stuck in the terrain. You cannot move until you take a long rest.",
-    "overload": "Over-encumbered. Drop items or gain 1 level of exhaustion."
+    "title": "MAP",
+    "worldTime": "WORLD TIME",
+    "target": "TARGET",
+    "positionTarget": "POSITION / TARGET",
+    "sector": "Sector",
+    "pos": "Pos",
+    "world": "World",
+    "terrain": "Terrain",
+    "date": "Date",
+    "time": "Time",
+    "travel": "Travel",
+    "targetLabel": "Target",
+    "direction": "Dir",
+    "blocks": "Blocks",
+    "km": "Km",
+    "type": "Type",
+    "hazards": "Hazards",
+    "none": "None",
+    "travelButton": "TRAVEL",
+    "campButton": "CAMP",
+    "log": "LOG",
+    "north": "NORTH",
+    "south": "SOUTH",
+    "west": "WEST",
+    "east": "EAST",
+    "day": "Day",
+    "month": "Month",
+    "enteredWasteland": "Entered the Wasteland",
+    "campRest": "You set up camp to rest +8h",
+    "shiftedMap": "Shifted map {{direction}}.",
+    "movedTo": "Moved to {{x}},{{y}} - {{terrain}} - +{{cost}}h",
+    "locationFound": "Location found: {{name}}",
+    "unknown": "Unknown"
   },
-  "weird": {
-    "mr_gutsy_drill": "A group of Mister Gutsy robots mistakes you for training participants.",
-    "cult_preachers": "A strange cult tries to recruit you.",
-    "wasteland_convention": "Fans of pre-war culture are organizing a bizarre wasteland convention.",
-    "super_mutant_tech": "Super mutants are attempting to operate advanced pre-war technology.",
-    "rickshaw_taxi": "A makeshift taxi offers you a ride for caps.",
-    "vault_wanderer": "A vault dweller asks for help repairing their vault systems."
+  "terrain": {
+    "road": "Road",
+    "urban": "Urban",
+    "ruins": "Ruins",
+    "forest": "Forest",
+    "swamp": "Swamp",
+    "industrial": "Industrial",
+    "water": "Water",
+    "mountains": "Mountains",
+    "blocked_ruins": "Blocked Ruins"
+  },
+  "hazards": {
+    "difficult": "Difficult Terrain",
+    "radiation": "Radiation Zone",
+    "toxic": "Toxic Zone",
+    "danger": "Danger Zone",
+    "anomaly": "Anomalous Zone"
+  },
+  "hazardsDesc": {
+    "difficult": "Greatly slows movement.",
+    "radiation": "Deals periodic radiation damage.",
+    "toxic": "Deals periodic poison damage.",
+    "danger": "Deals periodic physical damage from hidden fire or hazards.",
+    "anomaly": "Deals periodic energy damage."
+  },
+  "encounters": {
+    "commonwealth": {
+      "ammo_crate": "Loot: You find an ammo crate. Gain 5 random rounds.",
+      "nuka_fridge": "Loot: An old Nuka-Cola fridge. There might be something useful inside.",
+      "metro_station": "Metro station. It might be worth exploring.",
+      "cave": "A dark and eerie cave. It might be worth exploring.",
+      "west_tek_building": "A West-Tek facility. Dangerous, but potentially valuable.",
+      "bus_station": "A bus station. There could be supplies or survivors here.",
+      "mine": "An abandoned mine. It's dark and silent inside.",
+      "super_duper_mart": "Super Duper Mart. Might be worth checking the shelves and storage.",
+      "raider_outpost": "A raider outpost. Someone is definitely here.",
+      "mutant_outpost": "A super mutant outpost. Stay alert.",
+      "bos_outpost": "Brotherhood of Steel outpost. Their reaction depends on your reputation.",
+      "ncr_outpost": "NCR outpost. Could be trade... or interrogation.",
+      "settlement": "A small settlement. You may find rest, rumors, or trade opportunities.",
+      "wasteland_nothing": "Empty wasteland. Nothing of interest.",
+      "ambush": "Ambush! You are attacked. Enemies strike first.",
+      "rad_waste_pit": "You fall into a pit of radioactive waste. Take radiation damage.",
+      "lost_supplies": "You lost some supplies during travel.",
+      "broken_backpack": "Your backpack is torn. Some of your gear is lost.",
+      "fatal_breakdown": "Critical failure. Your equipped weapon or armor breaks and becomes unusable.",
+      "food_poisoning": "You ate something bad and got poisoned.",
+      "hunger_crash": "Your hunger drops to 0. You also gain 1 level of exhaustion.",
+      "toxic_puddle": "Toxic puddle. You are exposed to poison or lose leg protection.",
+      "pickpocket": "Pickpocket. One unequipped item is stolen from your inventory.",
+      "building_collapse": "A collapsing building falls on you. Take physical damage.",
+      "radioactive_puddle": "Radioactive puddle. Take radiation damage.",
+      "grenade_tripwire": "Grenade tripwire! You and adjacent allies take physical damage.",
+      "stuck_in_textures": "You got stuck in the terrain. You cannot move until you take a long rest.",
+      "overload": "Over-encumbered. Drop items or gain 1 level of exhaustion."
+    },
+    "weird": {
+      "mr_gutsy_drill": "A group of Mister Gutsy robots mistakes you for training participants.",
+      "cult_preachers": "A strange cult tries to recruit you.",
+      "wasteland_convention": "Fans of pre-war culture are organizing a bizarre wasteland convention.",
+      "super_mutant_tech": "Super mutants are attempting to operate advanced pre-war technology.",
+      "rickshaw_taxi": "A makeshift taxi offers you a ride for caps.",
+      "vault_wanderer": "A vault dweller asks for help repairing their vault systems."
+    }
+  },
+  "locations": {
+    "bunker": "Bunker",
+    "cave": "Cave",
+    "diner": "Diner",
+    "factory": "Factory",
+    "farm": "Farm",
+    "hospital": "Hospital",
+    "junkyard": "Junkyard",
+    "metro_station": "Metro Station",
+    "military_base": "Military Base",
+    "museum": "Museum",
+    "office_tower": "Office Tower",
+    "park": "Park",
+    "pier": "Pier",
+    "plane_ruin": "Plane Ruin",
+    "police_station": "Police Station",
+    "power_plant": "Power Plant",
+    "radio_tower": "Radio Tower",
+    "red_rocket": "Red Rocket",
+    "ruins_site": "Ruins Site",
+    "satellite_station": "Satellite Station",
+    "settlement": "Settlement",
+    "sewer": "Sewer",
+    "sanctuary": "Sanctuary",
+    "vault_111": "Vault 111",
+    "red_rocket_sanctuary": "Red Rocket",
+    "abernathy_farm": "Abernathy Farm",
+    "sunshine_tidings": "Sunshine Tidings Co-op",
+    "starlight_drive_in": "Starlight Drive-In",
+    "concord": "Concord",
+    "museum_of_freedom": "Museum of Freedom",
+    "drumlin_diner": "Drumlin Diner",
+    "lexington": "Lexington",
+    "corvega": "Corvega Assembly Plant",
+    "covenant": "Covenant",
+    "tenpines_bluff": "Tenpines Bluff",
+    "cambridge_police_station": "Cambridge Police Station",
+    "cambridge": "Cambridge",
+    "college_square": "College Square",
+    "greygarden": "Graygarden",
+    "fort_hagen": "Fort Hagen",
+    "vault_81": "Vault 81",
+    "hangmans_alley": "Hangman's Alley",
+    "diamond_city": "Diamond City",
+    "the_institute": "The Institute",
+    "goodneighbor": "Goodneighbor",
+    "pickman_gallery": "Pickman Gallery",
+    "old_north_church": "Old North Church",
+    "bunker_hill": "Bunker Hill",
+    "mass_fusion": "Mass Fusion",
+    "custom_house_tower": "Custom House Tower",
+    "boston_airport": "Boston Airport",
+    "the_castle": "The Castle",
+    "saugus_ironworks": "Saugus Ironworks",
+    "revere_beach_station": "Revere Beach Station",
+    "salem": "Salem",
+    "spectacle_island": "Spectacle Island",
+    "nahant": "Nahant",
+    "parsons_state_insane_asylum": "Parsons State Insane Asylum",
+    "jamaica_plain": "Jamaica Plain",
+    "quincy": "Quincy",
+    "murkwater": "Murkwater Construction Site",
+    "egret_tours_marina": "Egret Tours Marina",
+    "glowing_sea": "The Glowing Sea",
+    "atom_crater": "Crater of Atom",
+    "virgil_cave": "Virgil's Cave"
   }
-},
-"locations": {
-  "bunker": "Bunker",
-  "cave": "Cave",
-  "diner": "Diner",
-  "factory": "Factory",
-  "farm": "Farm",
-  "hospital": "Hospital",
-  "junkyard": "Junkyard",
-  "metro_station": "Metro Station",
-  "military_base": "Military Base",
-  "museum": "Museum",
-  "office_tower": "Office Tower",
-  "park": "Park",
-  "pier": "Pier",
-  "plane_ruin": "Plane Ruin",
-  "police_station": "Police Station",
-  "power_plant": "Power Plant",
-  "radio_tower": "Radio Tower",
-  "red_rocket": "Red Rocket",
-  "ruins_site": "Ruins Site",
-  "satellite_station": "Satellite Station",
-  "settlement": "Settlement",
-  "sewer": "Sewer",
-
-  "sanctuary": "Sanctuary",
-  "vault_111": "Vault 111",
-  "red_rocket_sanctuary": "Red Rocket",
-  "abernathy_farm": "Abernathy Farm",
-  "sunshine_tidings": "Sunshine Tidings Co-op",
-  "starlight_drive_in": "Starlight Drive-In",
-  "concord": "Concord",
-  "museum_of_freedom": "Museum of Freedom",
-  "drumlin_diner": "Drumlin Diner",
-  "lexington": "Lexington",
-  "corvega": "Corvega Assembly Plant",
-  "covenant": "Covenant",
-  "tenpines_bluff": "Tenpines Bluff",
-  "cambridge_police_station": "Cambridge Police Station",
-  "cambridge": "Cambridge",
-  "college_square": "College Square",
-  "greygarden": "Graygarden",
-  "fort_hagen": "Fort Hagen",
-  "vault_81": "Vault 81",
-  "hangmans_alley": "Hangman's Alley",
-  "diamond_city": "Diamond City",
-  "the_institute": "The Institute",
-  "goodneighbor": "Goodneighbor",
-  "pickman_gallery": "Pickman Gallery",
-  "old_north_church": "Old North Church",
-  "bunker_hill": "Bunker Hill",
-  "mass_fusion": "Mass Fusion",
-  "custom_house_tower": "Custom House Tower",
-  "boston_airport": "Boston Airport",
-  "the_castle": "The Castle",
-  "saugus_ironworks": "Saugus Ironworks",
-  "revere_beach_station": "Revere Beach Station",
-  "salem": "Salem",
-  "spectacle_island": "Spectacle Island",
-  "nahant": "Nahant",
-  "parsons_state_insane_asylum": "Parsons State Insane Asylum",
-  "jamaica_plain": "Jamaica Plain",
-  "quincy": "Quincy",
-  "murkwater": "Murkwater Construction Site",
-  "egret_tours_marina": "Egret Tours Marina",
-  "glowing_sea": "The Glowing Sea",
-  "atom_crater": "Crater of Atom",
-  "virgil_cave": "Virgil's Cave"
-}
 }

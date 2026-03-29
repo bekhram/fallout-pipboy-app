@@ -1,0 +1,237 @@
+/* ===== ARMOR COMPACT TABLE ===== */
+
+.pip-armor-table {
+  display: grid;
+  gap: 8px;
+}
+
+.pip-armor-table-head,
+.pip-armor-row {
+  display: grid;
+  grid-template-columns: 160px repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  align-items: center;
+}
+
+.pip-armor-table-head {
+  padding: 0 2px 4px;
+  border-bottom: 1px solid rgba(140, 255, 152, 0.12);
+}
+
+.pip-armor-part-col {
+  min-width: 0;
+}
+
+.pip-armor-stat-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--pip-text-dim);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.pip-armor-stat-icon {
+  color: var(--pip-accent);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.pip-armor-stat-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pip-armor-table-body {
+  display: grid;
+  gap: 8px;
+}
+
+.pip-armor-row {
+  padding: 8px;
+  border: 1px solid rgba(140, 255, 152, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+}
+
+.pip-armor-row-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pip-armor-row-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 30px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  border-radius: 6px;
+  color: var(--pip-accent);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.22);
+  flex-shrink: 0;
+}
+
+.pip-armor-row-name {
+  color: var(--pip-accent);
+  font-size: 14px;
+  line-height: 1.15;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-break: break-word;
+}
+
+.pip-armor-cell {
+  display: block;
+  min-width: 0;
+}
+
+.pip-armor-cell-mobile-icon {
+  display: none;
+}
+
+.pip-armor-mini-input {
+  min-height: 34px;
+  padding: 4px 6px;
+  text-align: center;
+  font-size: 14px;
+}
+
+/* ===== TABLET ===== */
+
+@media (max-width: 1100px) {
+  .pip-armor-table-head,
+  .pip-armor-row {
+    grid-template-columns: 135px repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .pip-armor-row-name {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 900px) {
+  .pip-armor-table-head,
+  .pip-armor-row {
+    grid-template-columns: 120px repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .pip-armor-row {
+    padding: 7px;
+  }
+
+  .pip-armor-row-name {
+    font-size: 11px;
+  }
+
+  .pip-armor-row-code {
+    min-width: 30px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .pip-armor-mini-input {
+    min-height: 30px;
+    padding: 3px 5px;
+    font-size: 13px;
+  }
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 640px) {
+  .pip-armor-table {
+    gap: 6px;
+  }
+
+  .pip-armor-table-head {
+    display: none;
+  }
+
+  .pip-armor-table-body {
+    gap: 6px;
+  }
+
+  .pip-armor-row {
+    grid-template-columns: 44px repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px;
+    border-radius: 8px;
+  }
+
+  .pip-armor-row-label {
+    justify-content: center;
+  }
+
+  .pip-armor-row-code {
+    min-width: 28px;
+    width: 28px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .pip-armor-row-name {
+    display: none;
+  }
+
+  .pip-armor-cell {
+    display: grid;
+    gap: 3px;
+  }
+
+  .pip-armor-cell-mobile-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pip-text-dim);
+    font-size: 9px;
+    line-height: 1;
+    min-height: 10px;
+  }
+
+  .pip-armor-mini-input {
+    min-height: 26px;
+    padding: 2px 4px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+}
+
+/* ===== VERY SMALL MOBILE ===== */
+
+@media (max-width: 420px) {
+  .pip-armor-row {
+    grid-template-columns: 38px repeat(5, minmax(0, 1fr));
+    gap: 3px;
+    padding: 5px;
+  }
+
+  .pip-armor-row-code {
+    min-width: 24px;
+    width: 24px;
+    height: 22px;
+    font-size: 10px;
+  }
+
+  .pip-armor-cell-mobile-icon {
+    font-size: 8px;
+  }
+
+  .pip-armor-mini-input {
+    min-height: 22px;
+    padding: 1px 2px;
+    font-size: 11px;
+  }
+}

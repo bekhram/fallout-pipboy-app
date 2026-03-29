@@ -1,0 +1,163 @@
+/* ===== PORTRAIT CARD ===== */
+
+.pip-portrait-card {
+  position: relative;
+}
+
+.pip-portrait {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border: 1px dashed rgba(140, 255, 152, 0.28);
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at center, rgba(50, 255, 100, 0.08), transparent 68%),
+    rgba(0, 0, 0, 0.26);
+  color: var(--pip-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.pip-portrait-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.75) contrast(1.05) brightness(0.95) sepia(0.15) hue-rotate(35deg);
+}
+
+.pip-portrait small {
+  color: var(--pip-text-dim);
+}
+
+.pip-portrait-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 127, 127, 0.28);
+  background: rgba(0, 0, 0, 0.72);
+  color: var(--pip-danger);
+  cursor: pointer;
+}
+
+/* ===== HERO LEFT COLUMN ===== */
+
+.pip-hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: start;
+}
+
+/* ===== PORTRAIT ACTIONS ===== */
+
+.pip-portrait-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pip-portrait-actions .pip-action-btn {
+  width: 100%;
+  min-width: 0;
+}
+
+/* ===== CROPPER ===== */
+
+.pip-cropper-wrap {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* ===== TABLET ===== */
+
+@media (max-width: 768px) {
+  .pip-hero-grid {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .pip-hero-left {
+    width: 150px;
+    min-width: 150px;
+    display: grid;
+    gap: 10px;
+    justify-items: stretch;
+  }
+
+  .pip-hero-left .pip-portrait-card,
+  .pip-hero-left .pip-portrait-frame,
+  .pip-hero-left .pip-portrait-actions {
+    width: 100%;
+  }
+
+  .pip-hero-meta {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+  }
+
+  .pip-hero-meta .pip-input,
+  .pip-hero-meta input,
+  .pip-hero-meta select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pip-portrait-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+
+  .pip-portrait-actions .pip-action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+    min-height: 38px;
+    padding: 8px 4px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width: 760px) {
+  .pip-portrait-card {
+    max-width: 150px;
+    margin: 0;
+  }
+
+  .pip-portrait {
+    max-height: 160px;
+    aspect-ratio: 3 / 4;
+  }
+
+  .pip-hero-left {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .pip-cropper-wrap {
+    height: 300px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pip-panel,
+  .pip-block,
+  .pip-hero,
+  .pip-hero-grid,
+  .pip-hero-meta {
+    min-width: 0;
+  }
+}

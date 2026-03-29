@@ -38,29 +38,29 @@ import {
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
 
-
 export default function App() {
   const [pendingAutoD6, setPendingAutoD6] = useState(null);
   const { t } = useTranslation();
   const [screen, setScreen] = useState("menu");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
-    const openFreeDiceRoll = () => {
+
+  const openFreeDiceRoll = () => {
     setDiceRoll(null);
     setIsDiceOpen(true);
   };
 
-const openContextDiceRoll = (rollConfig) => {
-  setPendingAutoD6(null); // сброс
-  setDiceRoll(rollConfig);
-  setIsDiceOpen(true);
-};
+  const openContextDiceRoll = (rollConfig) => {
+    setPendingAutoD6(null);
+    setDiceRoll(rollConfig);
+    setIsDiceOpen(true);
+  };
 
   const closeDiceRoll = () => {
     setIsDiceOpen(false);
     setDiceRoll(null);
   };
-  
+
   const [activeTab, setActiveTab] = useState("status");
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
@@ -75,7 +75,6 @@ const openContextDiceRoll = (rollConfig) => {
   const [showConditions, setShowConditions] = useState(false);
   const [showDerived, setShowDerived] = useState(false);
   const [showSkillsEditor, setShowSkillsEditor] = useState(false);
-  
 
   const {
     form,
@@ -89,8 +88,8 @@ const openContextDiceRoll = (rollConfig) => {
     resetToNewCharacter,
     continueLastCharacter,
   } = useCharacterStorage(buildDefaultForm());
-  
-    const mapState = useMemo(
+
+  const mapState = useMemo(
     () => ({
       ...buildDefaultMapState(),
       ...(form.mapData || {}),
@@ -121,35 +120,7 @@ const openContextDiceRoll = (rollConfig) => {
     setForm((prev) => ({ ...prev, ...meta }));
   });
 
-  const computedDerived = getDerivedStats(form);
-
-  const derived = {
-    ...computedDerived,
-    defense:
-      form.defenseOverride !== ""
-        ? Number(form.defenseOverride)
-        : computedDerived.defense,
-    initiative:
-      form.initiativeOverride !== ""
-        ? Number(form.initiativeOverride)
-        : computedDerived.initiative,
-    md:
-      form.mdOverride !== ""
-        ? Number(form.mdOverride)
-        : computedDerived.md,
-    luckPoints:
-      form.luckPointsOverride !== ""
-        ? Number(form.luckPointsOverride)
-        : computedDerived.luckPoints,
-    maxHp:
-      form.maxHpOverride !== ""
-        ? Number(form.maxHpOverride)
-        : computedDerived.maxHp,
-    carryWeight:
-      form.carryWeightOverride !== ""
-        ? Number(form.carryWeightOverride)
-        : computedDerived.carryWeight,
-  };
+  const derived = getDerivedStats(form);
 
   const [currentLuckPoints, setCurrentLuckPoints] = useState(
     derived.luckPoints || 0
@@ -223,46 +194,43 @@ const openContextDiceRoll = (rollConfig) => {
   );
 
   const updateTopLevel = (key, value) =>
-  setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }));
 
-const updateDerivedOverride = (key, value) =>
-  setForm((prev) => ({ ...prev, [key]: value }));
+  const updateDerivedOverride = (key, value) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
 
-const clampNumberString = (value, min, max, fallback = "0") => {
-  const raw = String(value ?? "").trim();
+  const clampNumberString = (value, min, max, fallback = "0") => {
+    const raw = String(value ?? "").trim();
 
-  if (raw === "") return fallback;
+    if (raw === "") return fallback;
 
-  const parsed = Number(raw);
-  if (Number.isNaN(parsed)) return fallback;
+    const parsed = Number(raw);
+    if (Number.isNaN(parsed)) return fallback;
 
-  return String(Math.max(min, Math.min(max, parsed)));
-};
+    return String(Math.max(min, Math.min(max, parsed)));
+  };
 
-const updateSpecial = (key, value) =>
-  setForm((prev) => ({
-    ...prev,
-    special: {
-      ...prev.special,
-      [key]: clampNumberString(value, 0, 13),
-    },
-  }));
-
-const updateSkill = (skillName, field, value) =>
-  setForm((prev) => ({
-    ...prev,
-    skills: {
-      ...prev.skills,
-      [skillName]: {
-        ...prev.skills[skillName],
-        [field]:
-          field === "rank"
-            ? clampNumberString(value, 0, 6)
-            : value,
+  const updateSpecial = (key, value) =>
+    setForm((prev) => ({
+      ...prev,
+      special: {
+        ...prev.special,
+        [key]: clampNumberString(value, 0, 13),
       },
-    },
-  }));
-  
+    }));
+
+  const updateSkill = (skillName, field, value) =>
+    setForm((prev) => ({
+      ...prev,
+      skills: {
+        ...prev.skills,
+        [skillName]: {
+          ...prev.skills[skillName],
+          [field]: field === "rank" ? clampNumberString(value, 0, 6) : value,
+        },
+      },
+    }));
+
   const updateStatus = (status, checked) =>
     setForm((prev) => ({
       ...prev,
@@ -480,150 +448,151 @@ const updateSkill = (skillName, field, value) =>
       />
     );
   } else {
-  switch (activeTab) {
-    case "status":
-      content = (
-        <StatusScreen
-          form={form}
-          armor={form.armor}
-          currentLuckPoints={currentLuckPoints}
-          onSpendLuck={onSpendLuck}
-          derived={derived}
-          portraitPreview={portrait.portraitPreview}
-          onPickPortrait={portrait.openFileDialog}
-          onRemovePortrait={portrait.clearPortrait}
-          onTopLevelChange={updateTopLevel}
-          onStatusToggle={(status) =>
-            updateStatus(status, !form.statuses[status])
-          }
-          onInjuryToggle={updateInjury}
-          hpMax={baseMaxHp}
-          hpCurrent={currentHpValue}
-          radiationHp={radiationHp}
-          onHpSliderChange={handleHpSliderChange}
-          onRadiationSliderChange={handleRadiationSliderChange}
-          onHpDecrease={handleHpDecrease}
-          onHpIncrease={handleHpIncrease}
-          onOpenConditions={() => setShowConditions(true)}
-          onOpenDerived={() => setShowDerived(true)}
-          onRoll={openContextDiceRoll}
-        />
-      );
-      break;
+    switch (activeTab) {
+      case "status":
+        content = (
+          <StatusScreen
+            form={form}
+            armor={form.armor}
+            currentLuckPoints={currentLuckPoints}
+            onSpendLuck={onSpendLuck}
+            derived={derived}
+            portraitPreview={portrait.portraitPreview}
+            onPickPortrait={portrait.openFileDialog}
+            onRemovePortrait={portrait.clearPortrait}
+            onTopLevelChange={updateTopLevel}
+            onStatusToggle={(status) =>
+              updateStatus(status, !form.statuses[status])
+            }
+            onInjuryToggle={updateInjury}
+            hpMax={baseMaxHp}
+            hpCurrent={currentHpValue}
+            radiationHp={radiationHp}
+            onHpSliderChange={handleHpSliderChange}
+            onRadiationSliderChange={handleRadiationSliderChange}
+            onHpDecrease={handleHpDecrease}
+            onHpIncrease={handleHpIncrease}
+            onOpenConditions={() => setShowConditions(true)}
+            onOpenDerived={() => setShowDerived(true)}
+            onRoll={openContextDiceRoll}
+          />
+        );
+        break;
 
-    case "special":
-      content = (
-        <SpecialScreen
-          form={form}
-          derived={derived}
-          currentLuckPoints={currentLuckPoints}
-          onSpecialChange={updateSpecial}
-          onSkillChange={updateSkill}
-          onDerivedChange={updateDerivedOverride}
-          onCurrentLuckChange={setCurrentLuckPoints}
-          onOpenSkillsEditor={() => setShowSkillsEditor(true)}
-          onRoll={openContextDiceRoll}
-        />
-      );
-      break;
+      case "special":
+        content = (
+          <SpecialScreen
+            form={form}
+            derived={derived}
+            currentLuckPoints={currentLuckPoints}
+            onSpecialChange={updateSpecial}
+            onSkillChange={updateSkill}
+            onDerivedChange={updateDerivedOverride}
+            onCurrentLuckChange={setCurrentLuckPoints}
+            onOpenSkillsEditor={() => setShowSkillsEditor(true)}
+            onRoll={openContextDiceRoll}
+          />
+        );
+        break;
 
-    case "weapons":
-      content = (
-        <WeaponsScreen
-          weapons={form.weapons}
-          editingIndex={editingWeaponIndex}
-          weaponDraft={weaponDraft}
-          setWeaponDraft={setWeaponDraft}
-          onAdd={addWeapon}
-          onEdit={startEditWeapon}
-          onCopy={copyWeapon}
-          onRemove={removeWeapon}
-          onSaveEdit={saveEditWeapon}
-          onCancelEdit={() => setEditingWeaponIndex(null)}
-          onRoll={openContextDiceRoll}
-          form={form}
-        />
-      );
-      break;
+      case "weapons":
+        content = (
+          <WeaponsScreen
+            weapons={form.weapons}
+            editingIndex={editingWeaponIndex}
+            weaponDraft={weaponDraft}
+            setWeaponDraft={setWeaponDraft}
+            onAdd={addWeapon}
+            onEdit={startEditWeapon}
+            onCopy={copyWeapon}
+            onRemove={removeWeapon}
+            onSaveEdit={saveEditWeapon}
+            onCancelEdit={() => setEditingWeaponIndex(null)}
+            onRoll={openContextDiceRoll}
+            form={form}
+          />
+        );
+        break;
 
-    case "inventory":
-      content = (
-        <InventoryScreen
-          items={form.inventoryItems}
-          editingIndex={editingItemIndex}
-          itemDraft={itemDraft}
-          setItemDraft={setItemDraft}
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          carryWeight={derived.carryWeight}
-          currentCarryWeight={derived.currentCarryWeight}
-          caps={form.caps}
-          onCapsChange={(value) => updateTopLevel("caps", value)}
-          onAdd={addItem}
-          onEdit={startEditItem}
-          onCopy={copyItem}
-          onRemove={removeItem}
-          onSaveEdit={saveEditItem}
-          onCancelEdit={() => setEditingItemIndex(null)}
-        />
-      );
-      break;
+      case "inventory":
+        content = (
+          <InventoryScreen
+            items={form.inventoryItems}
+            editingIndex={editingItemIndex}
+            itemDraft={itemDraft}
+            setItemDraft={setItemDraft}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            carryWeight={derived.carryWeight}
+            currentCarryWeight={derived.currentCarryWeight}
+            caps={form.caps}
+            onCapsChange={(value) => updateTopLevel("caps", value)}
+            onAdd={addItem}
+            onEdit={startEditItem}
+            onCopy={copyItem}
+            onRemove={removeItem}
+            onSaveEdit={saveEditItem}
+            onCancelEdit={() => setEditingItemIndex(null)}
+          />
+        );
+        break;
 
-    case "armor":
-      content = (
-        <ArmorScreen armor={form.armor} onArmorChange={updateArmor} />
-      );
-      break;
+      case "armor":
+        content = (
+          <ArmorScreen
+            armor={form.armor}
+            onArmorChange={updateArmor}
+            derived={derived}
+          />
+        );
+        break;
 
-    case "perks":
-      content = (
-        <PerksScreen
-          perks={form.perksAndTraits}
-          editingIndex={editingPerkIndex}
-          perkDraft={perkDraft}
-          setPerkDraft={setPerkDraft}
-          onAdd={addPerk}
-          onEdit={startEditPerk}
-          onCopy={copyPerk}
-          onRemove={removePerk}
-          onSaveEdit={saveEditPerk}
-          onCancelEdit={() => setEditingPerkIndex(null)}
-        />
-      );
-      break;
-      
- case "map":
-  content = (
-    <MapScreen
-      mapState={mapState}
-      onMapChange={updateMapData}
-    />
-  );
-  break;
+      case "perks":
+        content = (
+          <PerksScreen
+            perks={form.perksAndTraits}
+            editingIndex={editingPerkIndex}
+            perkDraft={perkDraft}
+            setPerkDraft={setPerkDraft}
+            onAdd={addPerk}
+            onEdit={startEditPerk}
+            onCopy={copyPerk}
+            onRemove={removePerk}
+            onSaveEdit={saveEditPerk}
+            onCancelEdit={() => setEditingPerkIndex(null)}
+          />
+        );
+        break;
 
-    case "notes":
-      content = (
-        <NotesScreen form={form} onTopLevelChange={updateTopLevel} />
-      );
-      break;
-      
+      case "map":
+        content = (
+          <MapScreen
+            mapState={mapState}
+            onMapChange={updateMapData}
+          />
+        );
+        break;
+
+      case "notes":
+        content = <NotesScreen form={form} onTopLevelChange={updateTopLevel} />;
+        break;
+
       case "games":
-  content = <GamesScreen />;
-  break;
-      
+        content = <GamesScreen />;
+        break;
 
-    default:
-      content = (
-        <DataScreen
-          saveStatus={saveStatus}
-          loadStatus={loadStatus}
-          onExport={exportJson}
-          onImportClick={handleImportClick}
-          importInputRef={importInputRef}
-        />
-      );
+      default:
+        content = (
+          <DataScreen
+            saveStatus={saveStatus}
+            loadStatus={loadStatus}
+            onExport={exportJson}
+            onImportClick={handleImportClick}
+            importInputRef={importInputRef}
+          />
+        );
+    }
   }
-}
 
   const DerivedModal = () => {
     if (!showDerived) return null;
@@ -673,7 +642,9 @@ const updateSkill = (skillName, field, value) =>
                 className="pip-inline-input"
                 value={form.mdOverride || ""}
                 placeholder={String(derived.md)}
-                onChange={(e) => updateDerivedOverride("mdOverride", e.target.value)}
+                onChange={(e) =>
+                  updateDerivedOverride("mdOverride", e.target.value)
+                }
               />
             </div>
 
@@ -684,9 +655,7 @@ const updateSkill = (skillName, field, value) =>
                   className="pip-inline-input"
                   value={currentLuckPoints}
                   onChange={(e) =>
-                    setCurrentLuckPoints(
-                      Math.max(0, Number(e.target.value || 0))
-                    )
+                    setCurrentLuckPoints(Math.max(0, Number(e.target.value || 0)))
                   }
                 />
                 <span>/</span>
@@ -707,7 +676,9 @@ const updateSkill = (skillName, field, value) =>
                 className="pip-inline-input"
                 value={form.maxHpOverride || ""}
                 placeholder={String(derived.maxHp)}
-                onChange={(e) => updateDerivedOverride("maxHpOverride", e.target.value)}
+                onChange={(e) =>
+                  updateDerivedOverride("maxHpOverride", e.target.value)
+                }
               />
             </div>
 
@@ -872,19 +843,19 @@ const updateSkill = (skillName, field, value) =>
         onChange={handleImport}
       />
 
-{screen === "menu" ? (
-  <div className="pip-app">
-    <div className="pip-vignette" />
-    <div className="pip-container">
-      <main className="pip-main">
-        {content}
-        <div className="pip-actions-inline push-top">
-          <PwaInstallButton />
+      {screen === "menu" ? (
+        <div className="pip-app">
+          <div className="pip-vignette" />
+          <div className="pip-container">
+            <main className="pip-main">
+              {content}
+              <div className="pip-actions-inline push-top">
+                <PwaInstallButton />
+              </div>
+            </main>
+          </div>
         </div>
-      </main>
-    </div>
-  </div>
-) : (
+      ) : (
         <PipboyShell
           activeTab={activeTab}
           onTabChange={setActiveTab}
@@ -924,18 +895,18 @@ const updateSkill = (skillName, field, value) =>
       <DerivedModal />
       <SkillsEditorModal />
 
-{screen !== "menu" && !isDiceOpen && (
-  <FloatingDiceButton onOpen={openFreeDiceRoll} />
-)}
+      {screen !== "menu" && !isDiceOpen && (
+        <FloatingDiceButton onOpen={openFreeDiceRoll} />
+      )}
 
-<DiceRollModal
-  isOpen={isDiceOpen}
-  onClose={closeDiceRoll}
-  rollConfig={diceRoll}
-  form={form}
-  pendingAutoD6={pendingAutoD6}
-  setPendingAutoD6={setPendingAutoD6}
-/>
+      <DiceRollModal
+        isOpen={isDiceOpen}
+        onClose={closeDiceRoll}
+        rollConfig={diceRoll}
+        form={form}
+        pendingAutoD6={pendingAutoD6}
+        setPendingAutoD6={setPendingAutoD6}
+      />
 
       <input
         ref={portrait.inputRef}

@@ -1,0 +1,667 @@
+/* ===== INJURIES LAYOUT ===== */
+
+.pip-injuries-card {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.pip-injuries-visual {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.pip-injuries-side {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  padding-left: 8px;
+}
+
+.pip-injuries-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pip-text-soft);
+}
+
+.pip-chip-grid-injuries {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pip-injuries-note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--pip-text-dim);
+}
+
+/* ===== VAULT BOY ===== */
+
+.pip-injuries-vaultboy-wrap {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.pip-injuries-vaultboy {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pip-injuries-vaultboy img,
+.pip-injuries-vaultboy-base,
+.pip-injuries-vaultboy-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+  object-fit: contain;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pip-injuries-vaultboy-base {
+  z-index: 1;
+}
+
+.pip-injuries-vaultboy-overlay {
+  z-index: 2;
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+.pip-injuries-vaultboy-overlay.is-head {
+  z-index: 6;
+}
+
+.pip-injuries-vaultboy-overlay.is-torso {
+  z-index: 5;
+}
+
+.pip-injuries-vaultboy-overlay.is-leftArm,
+.pip-injuries-vaultboy-overlay.is-rightArm {
+  z-index: 4;
+}
+
+.pip-injuries-vaultboy-overlay.is-leftLeg,
+.pip-injuries-vaultboy-overlay.is-rightLeg {
+  z-index: 3;
+}
+
+/* ===== HITBOX ===== */
+
+.pip-injury-hitbox {
+  position: absolute;
+  z-index: 10;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  outline: none;
+}
+
+.pip-injury-hitbox:hover {
+  background: rgba(180, 255, 160, 0.06);
+}
+
+.pip-injury-hitbox.is-crippled:hover {
+  background: rgba(255, 120, 120, 0.08);
+}
+
+.pip-injury-hitbox.is-treated:hover {
+  background: rgba(255, 220, 120, 0.08);
+}
+
+.pip-injury-hitbox:focus-visible {
+  box-shadow: inset 0 0 0 1px rgba(207, 255, 159, 0.55);
+}
+
+/* ===== ARMOR BADGES ===== */
+
+.pip-armor-badge {
+  position: absolute;
+  z-index: 12;
+  min-width: 96px;
+  padding: 8px 10px;
+  border: 1px solid rgba(140, 255, 152, 0.28);
+  background: rgba(0, 0, 0, 0.78);
+  box-shadow: 0 0 10px rgba(80, 255, 120, 0.12);
+  pointer-events: auto;
+}
+
+.pip-armor-badge-code {
+  color: var(--pip-accent);
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.pip-armor-badge-values {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pip-armor-badge-values span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  line-height: 1;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* ===== SUMMARY ===== */
+
+.pip-injuries-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.pip-injuries-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(140, 255, 152, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pip-injuries-summary-row span {
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pip-injuries-summary-row strong {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pip-injuries-summary-row.is-normal strong {
+  color: var(--pip-text-dim);
+}
+
+.pip-injuries-summary-row.is-treated strong {
+  color: var(--pip-warning);
+}
+
+.pip-injuries-summary-row.is-crippled strong {
+  color: var(--pip-danger);
+}
+
+/* ===== EFFECTS ===== */
+
+.pip-injury-effects,
+.pip-injury-conditions {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.pip-injury-effects {
+  margin-top: 8px;
+}
+
+.pip-injury-conditions {
+  margin-top: 10px;
+}
+
+.pip-injury-effects-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pip-injury-effect-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  background: rgba(0, 0, 0, 0.18);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.pip-injury-effect-row strong {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pip-injury-effect-row span {
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pip-injury-effect-row.is-crippled {
+  border-color: rgba(255, 140, 120, 0.45);
+}
+
+.pip-injury-effect-row.is-crippled strong {
+  color: var(--pip-danger);
+}
+
+.pip-injury-effect-row.is-treated {
+  border-color: rgba(255, 210, 120, 0.4);
+}
+
+.pip-injury-effect-row.is-treated strong {
+  color: var(--pip-warning);
+}
+
+/* ===== CONDITION CHIPS ===== */
+
+.pip-injury-conditions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pip-injury-condition-chip {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow: 0 0 8px rgba(120, 255, 140, 0.05);
+}
+
+.pip-injury-condition-chip span {
+  color: var(--pip-accent);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.pip-injury-condition-chip small {
+  color: var(--pip-text-dim);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+/* POSITIVE */
+
+.pip-injury-condition-chip.is-positive {
+  border-color: rgba(140, 255, 152, 0.45);
+  background: rgba(25, 70, 25, 0.18);
+}
+
+.pip-injury-condition-chip.is-positive span {
+  color: var(--pip-accent);
+}
+
+.pip-injury-condition-chip.is-positive small {
+  color: rgba(170, 255, 170, 0.7);
+}
+
+/* NEGATIVE */
+
+.pip-injury-condition-chip.is-negative {
+  border-color: rgba(255, 120, 120, 0.45);
+  background: rgba(90, 20, 20, 0.18);
+}
+
+.pip-injury-condition-chip.is-negative span {
+  color: #ff9a9a;
+}
+
+.pip-injury-condition-chip.is-negative small {
+  color: rgba(255, 180, 180, 0.72);
+}
+
+/* DISEASE */
+
+.pip-injury-condition-chip.is-disease {
+  border-color: rgba(255, 210, 90, 0.45);
+  background: rgba(90, 70, 10, 0.18);
+}
+
+.pip-injury-condition-chip.is-disease span {
+  color: #ffd36e;
+}
+
+.pip-injury-condition-chip.is-disease small {
+  color: rgba(255, 220, 140, 0.72);
+}
+
+/* CHEM */
+
+.pip-injury-condition-chip.is-chem {
+  border-color: rgba(120, 200, 255, 0.45);
+  background: rgba(20, 55, 90, 0.18);
+}
+
+.pip-injury-condition-chip.is-chem span {
+  color: #8fdcff;
+}
+
+.pip-injury-condition-chip.is-chem small {
+  color: rgba(180, 230, 255, 0.72);
+}
+
+/* ADDICTION */
+
+.pip-injury-condition-chip.is-addiction {
+  border-color: rgba(210, 120, 255, 0.45);
+  background: rgba(70, 25, 95, 0.18);
+}
+
+.pip-injury-condition-chip.is-addiction span {
+  color: #d99cff;
+}
+
+.pip-injury-condition-chip.is-addiction small {
+  color: rgba(230, 190, 255, 0.72);
+}
+
+/* ===== TABLET / MOBILE ===== */
+
+@media (max-width: 900px) {
+  .pip-injuries-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .pip-injuries-side {
+    order: 1;
+    padding-left: 0;
+    gap: 10px;
+  }
+
+  .pip-injuries-visual {
+    order: 2;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .pip-chip-grid-injuries {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .pip-injuries-card {
+    gap: 10px;
+  }
+
+  .pip-injuries-side {
+    order: 1;
+    gap: 8px;
+  }
+
+  .pip-injuries-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .pip-injuries-note {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .pip-injury-effects {
+    margin-top: 4px;
+  }
+
+  .pip-injury-conditions {
+    margin-top: 6px;
+  }
+
+  .pip-injury-effects-list {
+    gap: 6px;
+  }
+
+  .pip-injury-effect-row {
+    padding: 8px 10px;
+    gap: 3px;
+  }
+
+  .pip-injury-effect-row strong {
+    font-size: 10px;
+  }
+
+  .pip-injury-effect-row span {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .pip-injury-conditions-list {
+    gap: 5px;
+  }
+
+  .pip-injury-condition-chip {
+    padding: 5px 7px;
+  }
+
+  .pip-injury-condition-chip span {
+    font-size: 9px;
+  }
+
+  .pip-injury-condition-chip small {
+    font-size: 7px;
+  }
+
+  .pip-injuries-vaultboy-wrap {
+    max-width: 280px;
+  }
+
+  .pip-armor-badge {
+    min-width: 64px;
+    padding: 5px 6px;
+  }
+
+  .pip-armor-badge-code {
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .pip-armor-badge-values {
+    gap: 4px;
+  }
+
+  .pip-armor-badge-values span {
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pip-injuries-side {
+    gap: 7px;
+  }
+
+  .pip-injuries-vaultboy-wrap {
+    max-width: 260px;
+  }
+
+  .pip-armor-badge {
+    min-width: 56px;
+    padding: 4px 5px;
+  }
+
+  .pip-armor-badge-code {
+    font-size: 12px;
+  }
+
+  .pip-armor-badge-values span {
+    min-width: 14px;
+    height: 14px;
+    font-size: 9px;
+  }
+}
+
+.pip-injury-condition-chip {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.pip-injury-condition-chip.is-selected {
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 255, 159, 0.12),
+    0 0 12px rgba(120, 255, 160, 0.14);
+}
+
+.pip-injury-condition-details {
+  display: none;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(140, 255, 152, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  gap: 6px;
+}
+
+.pip-injury-condition-details strong {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pip-injury-condition-details small {
+  display: block;
+  color: var(--pip-text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.pip-injury-condition-details p {
+  margin: 0;
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.pip-injury-condition-details.is-positive {
+  border-color: rgba(140, 255, 152, 0.35);
+}
+
+.pip-injury-condition-details.is-positive strong {
+  color: var(--pip-accent);
+}
+
+.pip-injury-condition-details.is-negative {
+  border-color: rgba(255, 120, 120, 0.35);
+}
+
+.pip-injury-condition-details.is-negative strong {
+  color: var(--pip-danger);
+}
+
+.pip-injury-condition-details.is-disease {
+  border-color: rgba(255, 210, 90, 0.45);
+}
+
+.pip-injury-condition-details.is-disease strong {
+  color: #ffd36b;
+}
+
+.pip-injury-condition-details.is-chem {
+  border-color: rgba(120, 200, 255, 0.45);
+}
+
+.pip-injury-condition-details.is-chem strong {
+  color: #9edcff;
+}
+
+.pip-injury-condition-details.is-addiction {
+  border-color: rgba(210, 120, 255, 0.45);
+}
+
+.pip-injury-condition-details.is-addiction strong {
+  color: #d79cff;
+}
+
+@media (max-width: 760px) {
+  .pip-injury-condition-details {
+    display: grid;
+  }
+}
+
+.pip-injury-effects-mods {
+  display: grid;
+  gap: 10px;
+}
+
+.pip-injury-mod-block {
+  display: grid;
+  gap: 8px;
+}
+
+.pip-injury-mod-list {
+  display: grid;
+  gap: 6px;
+}
+
+.pip-injury-mod-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pip-injury-mod-row span {
+  color: var(--pip-text-soft);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.pip-injury-mod-row strong {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.pip-injury-mod-row.is-positive {
+  border-color: rgba(140, 255, 152, 0.35);
+  box-shadow: 0 0 8px rgba(140, 255, 152, 0.08);
+}
+
+.pip-injury-mod-row.is-positive strong {
+  color: var(--pip-accent);
+}
+
+.pip-injury-mod-row.is-negative {
+  border-color: rgba(255, 120, 120, 0.35);
+  box-shadow: 0 0 8px rgba(255, 120, 120, 0.08);
+}
+
+.pip-injury-mod-row.is-negative strong {
+  color: var(--pip-danger);
+}

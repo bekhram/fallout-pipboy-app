@@ -1,0 +1,177 @@
+.pip-brandline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: var(--pip-text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.pip-brandline-nav {
+  display: grid;
+  grid-template-columns: 32px 1fr auto 32px;
+  align-items: center;
+  gap: 10px;
+}
+
+.pip-brandline-title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pip-brandline-status {
+  white-space: nowrap;
+  color: var(--pip-text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.pip-tabrow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.pip-tab {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(11, 18, 12, 0.98), rgba(4, 7, 4, 0.96));
+  color: var(--pip-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pip-tab.is-active {
+  border-color: var(--pip-line-strong);
+  color: var(--pip-accent);
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 255, 159, 0.14),
+    0 0 12px rgba(110, 255, 120, 0.08);
+}
+
+.pip-tab-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.pip-tab-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.pip-tabrow-nowrap {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: max-content;
+}
+
+.pip-tabrow-nowrap .pip-tab {
+  flex: 0 0 auto;
+}
+
+.pip-icon-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(140, 255, 152, 0.16);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--pip-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pip-icon-btn:hover {
+  border-color: var(--pip-line-strong);
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 255, 159, 0.12),
+    0 0 10px rgba(110, 255, 120, 0.08);
+}
+
+.pip-icon-btn-left .pip-icon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--pip-accent);
+  box-shadow: 0 0 8px rgba(207, 255, 159, 0.35);
+}
+
+.pip-icon-btn-menu {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pip-icon-btn-menu span {
+  display: block;
+  width: 14px;
+  height: 1px;
+  background: var(--pip-accent);
+}
+
+@media (max-width: 760px) {
+  .pip-brandline-nav {
+    grid-template-columns: 28px 1fr auto 28px;
+    gap: 8px;
+  }
+
+  .pip-icon-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pip-tabrow-nowrap .pip-tab {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .pip-brandline,
+  .pip-brandline-status {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (max-width: 480px) {
+  .pip-brandline-nav {
+    grid-template-columns: 26px 1fr auto 26px;
+    gap: 6px;
+  }
+
+  .pip-icon-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .pip-tabrow-nowrap {
+    gap: 6px;
+  }
+
+  .pip-tabrow-nowrap .pip-tab {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .pip-brandline-status {
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createWeaponRoll } from "../../utils/dice";
 import {
@@ -25,6 +25,13 @@ export default function WeaponCard({
 }) {
   const { t } = useTranslation();
   const [useRate, setUseRate] = useState(false);
+  const [selectedTagKey, setSelectedTagKey] = useState(null);
+
+  const translateSafe = (key, fallback = "") => {
+    if (!key) return fallback;
+    const value = t(key);
+    return value === key ? fallback : value;
+  };
 
   const qualities = [
     ...(Array.isArray(weapon.qualities) ? weapon.qualities : []),
@@ -48,40 +55,51 @@ export default function WeaponCard({
 
   const translatedQualityTags = qualities.map((tag) => {
     const option = qualityMap[tag];
+
     return {
       key: `quality-${tag}`,
-      label: option?.nameKey ? t(option.nameKey) : tag,
-      title: option?.descriptionKey ? t(option.descriptionKey) : tag,
+      type: "quality",
+      label: option?.nameKey ? translateSafe(option.nameKey, tag) : tag,
+      title: option?.descriptionKey
+        ? translateSafe(option.descriptionKey, tag)
+        : tag,
     };
   });
 
   const translatedEffectTags = effects.map((tag) => {
     const option = effectMap[tag];
+
     return {
       key: `effect-${tag}`,
-      label: option?.nameKey ? t(option.nameKey) : tag,
-      title: option?.descriptionKey ? t(option.descriptionKey) : tag,
+      type: "effect",
+      label: option?.nameKey ? translateSafe(option.nameKey, tag) : tag,
+      title: option?.descriptionKey
+        ? translateSafe(option.descriptionKey, tag)
+        : tag,
     };
   });
 
   const allTags = [...translatedQualityTags, ...translatedEffectTags];
 
+  const selectedTag = useMemo(
+    () => allTags.find((tag) => tag.key === selectedTagKey) || null,
+    [allTags, selectedTagKey]
+  );
+
   const skillLabel = weapon.skill
-    ? t(SKILL_LABEL_KEYS?.[weapon.skill] || weapon.skill)
+    ? translateSafe(SKILL_LABEL_KEYS?.[weapon.skill], weapon.skill)
     : "—";
 
   const damageTypeLabel = weapon.type
-    ? t(`weaponDamageTypes.${weapon.type}`, weapon.type)
+    ? translateSafe(`weaponDamageTypes.${weapon.type}`, weapon.type)
     : "—";
 
   const rangeLabel = weapon.range
-    ? t(`weaponRanges.${weapon.range}`, weapon.range)
+    ? translateSafe(`weaponRanges.${weapon.range}`, weapon.range)
     : "—";
 
   const handleRoll = (e) => {
     e.stopPropagation();
-
-    const baseRate = Number(weapon.rate) || 0;
 
     onRoll?.(
       createWeaponRoll({
@@ -91,6 +109,10 @@ export default function WeaponCard({
         useRate,
       })
     );
+  };
+
+  const handleTagClick = (tagKey) => {
+    setSelectedTagKey((prev) => (prev === tagKey ? null : tagKey));
   };
 
   return (
@@ -132,10 +154,7 @@ export default function WeaponCard({
 
       <div className="pip-item-top">
         <div>
-          <h3
-            onClick={handleRoll}
-            style={{ cursor: "pointer" }}
-          >
+          <h3 onClick={handleRoll} style={{ cursor: "pointer" }}>
             {weapon.name || t("weapons.unnamedWeapon")}
           </h3>
 
@@ -173,14 +192,32 @@ export default function WeaponCard({
           {allTags.length > 0 && (
             <div className="pip-tagrow push-top">
               {allTags.map((tag, i) => (
-                <span
+                <button
                   key={`weapon-tag-${index}-${i}-${tag.key}`}
-                  className="pip-tag"
+                  type="button"
+                  className={`pip-tag pip-weapon-tag ${
+                    selectedTagKey === tag.key ? "is-selected" : ""
+                  } ${tag.type === "effect" ? "is-effect" : "is-quality"}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTagClick(tag.key);
+                  }}
                   title={tag.title}
                 >
                   {tag.label}
-                </span>
+                </button>
               ))}
+            </div>
+          )}
+
+          {selectedTag && (
+            <div
+              className={`pip-weapon-tag-description push-top ${
+                selectedTag.type === "effect" ? "is-effect" : "is-quality"
+              }`}
+            >
+              <strong>{selectedTag.label}</strong>
+              <p>{selectedTag.title}</p>
             </div>
           )}
         </div>

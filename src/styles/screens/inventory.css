@@ -1,0 +1,499 @@
+/* ===== INVENTORY HEADER ===== */
+
+.pip-head.pip-head-inventory {
+  display: grid;
+  grid-template-columns: 1fr 96px 96px;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+}
+
+.pip-head.pip-head-inventory h2 {
+  margin: 0;
+  line-height: 1;
+}
+
+.pip-head-inventory .pip-top-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  align-self: end;
+}
+
+.pip-head-inventory .pip-top-field > span {
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pip-text-dim);
+}
+
+.pip-head-inventory .pip-top-field > .pip-inline-input {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  padding: 0 6px;
+  font-size: 12px;
+  line-height: 24px;
+  box-sizing: border-box;
+}
+
+.pip-head-inventory .pip-top-field > .pip-inline-input.pip-bonus-input {
+  text-align: center;
+}
+
+/* ===== INVENTORY ACTIONS ===== */
+
+.pip-inventory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.pip-inventory-actions .pip-btn,
+.pip-inventory-actions .pip-btn.is-primary {
+  width: auto;
+  min-width: 0;
+  flex: 0 0 auto;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+/* ===== INVENTORY STATS ===== */
+
+.pip-inline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.pip-inline-stats > * {
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+/* ===== INVENTORY LIST ===== */
+
+.pip-inventory-select-row {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.pip-inventory-card-wrap {
+  min-width: 0;
+}
+
+/* ===== CHECKBOX ===== */
+
+.pip-checkbox {
+  position: relative;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  margin-top: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.pip-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pip-checkbox-box {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(120, 255, 160, 0.8);
+  border-radius: 3px;
+  background: rgba(0, 20, 10, 0.55);
+  box-shadow: 0 0 8px rgba(120, 255, 160, 0.12);
+}
+
+.pip-checkbox input:checked + .pip-checkbox-box {
+  background: rgba(120, 255, 160, 0.16);
+  box-shadow: 0 0 10px rgba(120, 255, 160, 0.24);
+}
+
+.pip-checkbox input:checked + .pip-checkbox-box::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border-right: 2px solid #a8ffad;
+  border-bottom: 2px solid #a8ffad;
+  transform: rotate(45deg);
+}
+
+/* ===== FLOATING CARD ACTIONS IN INVENTORY ===== */
+
+.pip-floating-actions-card {
+  position: relative;
+  padding-top: 16px;
+}
+
+.pip-floating-card-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 6px;
+  z-index: 3;
+}
+
+.pip-floating-card-actions .pip-btn {
+  min-width: 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  border-radius: 8px;
+}
+
+.pip-floating-card-body {
+  padding-right: 126px;
+  min-width: 0;
+}
+
+/* ===== TABLET ===== */
+
+@media (max-width: 900px) {
+  .pip-head.pip-head-inventory {
+    grid-template-columns: 1fr 72px 72px;
+    gap: 6px;
+  }
+
+  .pip-head.pip-head-inventory h2 {
+    grid-column: 1 / 2;
+  }
+
+  .pip-head-inventory .pip-top-field > .pip-inline-input {
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    padding: 0 4px;
+    font-size: 11px;
+    line-height: 22px;
+  }
+
+  .pip-head-inventory .pip-top-field > span {
+    font-size: 8px;
+  }
+
+  .pip-inventory-actions .pip-btn,
+  .pip-inventory-actions .pip-btn.is-primary {
+    height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .pip-floating-card-actions {
+    position: static;
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .pip-floating-card-actions .pip-btn {
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .pip-floating-card-body {
+    padding-right: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .pip-head.pip-head-inventory {
+    grid-template-columns: 1fr 64px 64px;
+    gap: 6px;
+    align-items: end;
+  }
+
+  .pip-head.pip-head-inventory h2 {
+    grid-column: 1 / 2;
+  }
+
+  .pip-head-inventory .pip-top-field {
+    gap: 2px;
+  }
+
+  .pip-head-inventory .pip-top-field > span {
+    font-size: 7px;
+    line-height: 1;
+    text-align: right;
+  }
+
+  .pip-head-inventory .pip-top-field > .pip-inline-input {
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 20px;
+  }
+
+  .pip-inventory-actions {
+    gap: 6px;
+  }
+
+  .pip-inventory-actions .pip-btn,
+  .pip-inventory-actions .pip-btn.is-primary {
+    height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .pip-inline-stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .pip-inline-stats > * {
+    font-size: 12px;
+  }
+
+  .pip-inventory-select-row {
+    grid-template-columns: 20px 1fr;
+    gap: 6px;
+  }
+
+  .pip-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-top: 8px;
+  }
+
+  .pip-checkbox-box {
+    width: 15px;
+    height: 15px;
+  }
+
+  .pip-checkbox input:checked + .pip-checkbox-box::after {
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 7px;
+  }
+
+  .pip-floating-card-actions {
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .pip-floating-card-actions .pip-btn {
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+}
+
+/* ===== INVENTORY EDITOR MOBILE COMPACT ===== */
+
+@media (max-width: 640px) {
+  .pip-editor {
+    margin-top: 6px;
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .pip-editor .pip-form-grid,
+  .pip-editor .pip-form-grid--2 {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .pip-editor .pip-field,
+  .pip-editor .pip-editor__section {
+    gap: 4px;
+  }
+
+  .pip-editor .pip-field span,
+  .pip-editor .pip-field-label {
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .pip-editor .pip-input,
+  .pip-editor .pip-inline-input,
+  .pip-editor select,
+  .pip-editor textarea {
+    min-height: 24px;
+    height: 24px;
+    max-height: 24px;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 22px;
+    box-sizing: border-box;
+  }
+
+  .pip-editor textarea,
+  .pip-editor .pip-textarea,
+  .pip-editor .pip-textarea--large {
+    min-height: 72px;
+    height: auto;
+    line-height: 1.3;
+    padding: 6px;
+  }
+
+  .pip-editor .pip-action-row,
+  .pip-editor .pip-actions-inline {
+    gap: 6px;
+  }
+
+  .pip-editor .pip-btn,
+  .pip-editor .pip-btn.is-primary,
+  .pip-editor .pip-icon-btn {
+    min-height: 28px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .pip-editor .pip-action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+}
+
+/* ===== INVENTORY EDITOR MOBILE COMPACT ===== */
+
+@media (max-width: 640px) {
+  .pip-screen-grid > .pip-panel:last-child,
+  .pip-screen-grid > .pip-block:last-child,
+  .pip-screen-grid > section:last-child {
+    padding: 8px !important;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-head,
+  .pip-screen-grid > .pip-block:last-child .pip-head,
+  .pip-screen-grid > section:last-child .pip-head {
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-head h2,
+  .pip-screen-grid > .pip-block:last-child .pip-head h2,
+  .pip-screen-grid > section:last-child .pip-head h2 {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-head span,
+  .pip-screen-grid > .pip-block:last-child .pip-head span,
+  .pip-screen-grid > section:last-child .pip-head span {
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-form-grid,
+  .pip-screen-grid > .pip-panel:last-child .pip-form-grid--2,
+  .pip-screen-grid > .pip-block:last-child .pip-form-grid,
+  .pip-screen-grid > .pip-block:last-child .pip-form-grid--2,
+  .pip-screen-grid > section:last-child .pip-form-grid,
+  .pip-screen-grid > section:last-child .pip-form-grid--2 {
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-field,
+  .pip-screen-grid > .pip-panel:last-child .pip-editor__section,
+  .pip-screen-grid > .pip-block:last-child .pip-field,
+  .pip-screen-grid > .pip-block:last-child .pip-editor__section,
+  .pip-screen-grid > section:last-child .pip-field,
+  .pip-screen-grid > section:last-child .pip-editor__section {
+    gap: 4px;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-field span,
+  .pip-screen-grid > .pip-panel:last-child .pip-field-label,
+  .pip-screen-grid > .pip-block:last-child .pip-field span,
+  .pip-screen-grid > .pip-block:last-child .pip-field-label,
+  .pip-screen-grid > section:last-child .pip-field span,
+  .pip-screen-grid > section:last-child .pip-field-label {
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-input,
+  .pip-screen-grid > .pip-panel:last-child .pip-inline-input,
+  .pip-screen-grid > .pip-panel:last-child select,
+  .pip-screen-grid > .pip-block:last-child .pip-input,
+  .pip-screen-grid > .pip-block:last-child .pip-inline-input,
+  .pip-screen-grid > .pip-block:last-child select,
+  .pip-screen-grid > section:last-child .pip-input,
+  .pip-screen-grid > section:last-child .pip-inline-input,
+  .pip-screen-grid > section:last-child select {
+    min-height: 24px !important;
+    height: 24px !important;
+    max-height: 24px !important;
+    padding: 0 6px !important;
+    font-size: 11px !important;
+    line-height: 22px !important;
+    box-sizing: border-box;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child textarea,
+  .pip-screen-grid > .pip-panel:last-child .pip-textarea,
+  .pip-screen-grid > .pip-panel:last-child .pip-textarea--large,
+  .pip-screen-grid > .pip-block:last-child textarea,
+  .pip-screen-grid > .pip-block:last-child .pip-textarea,
+  .pip-screen-grid > .pip-block:last-child .pip-textarea--large,
+  .pip-screen-grid > section:last-child textarea,
+  .pip-screen-grid > section:last-child .pip-textarea,
+  .pip-screen-grid > section:last-child .pip-textarea--large {
+    min-height: 64px !important;
+    height: auto !important;
+    padding: 6px !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-btn,
+  .pip-screen-grid > .pip-panel:last-child .pip-icon-btn,
+  .pip-screen-grid > .pip-block:last-child .pip-btn,
+  .pip-screen-grid > .pip-block:last-child .pip-icon-btn,
+  .pip-screen-grid > section:last-child .pip-btn,
+  .pip-screen-grid > section:last-child .pip-icon-btn {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+  }
+
+  .pip-screen-grid > .pip-panel:last-child .pip-actions-inline,
+  .pip-screen-grid > .pip-panel:last-child .pip-action-row,
+  .pip-screen-grid > .pip-block:last-child .pip-actions-inline,
+  .pip-screen-grid > .pip-block:last-child .pip-action-row,
+  .pip-screen-grid > section:last-child .pip-actions-inline,
+  .pip-screen-grid > section:last-child .pip-action-row {
+    gap: 6px;
+  }
+}

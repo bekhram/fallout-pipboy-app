@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { getAdjustedArmorSnapshotForPart } from "../../utils/characterMath.js";
 
 import healthy from "../../assets/injuries/vaultboy_healthy.png";
 
@@ -60,7 +61,7 @@ const HITBOXES = {
 };
 
 const ARMOR_BADGES = {
-  head: { top: "4%", left: "36%", code: "|⊛|⚡|☣|" },
+  head: { top: "4%", left: "36%", code: "H" },
   torso: { top: "20%", left: "60%", code: "T" },
   leftArm: { top: "42%", left: "-3%", code: "LA" },
   rightArm: { top: "42%", left: "80%", code: "RA" },
@@ -86,9 +87,20 @@ const PART_LABEL_KEYS = {
   rightLeg: "injuries.rightLeg",
 };
 
+function toNumber(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+function formatSigned(value) {
+  if (value > 0) return `+${value}`;
+  return String(value);
+}
+
 export default function InjuriesVaultBoy({
   injuries = {},
   armor = {},
+  derived = {},
   onPartClick,
 }) {
   const { t } = useTranslation();
@@ -105,6 +117,33 @@ export default function InjuriesVaultBoy({
       };
     })
     .filter((item) => item?.src);
+
+  const combatModifiers = derived?.combatModifiers || {};
+  const incomingDamageFlat = combatModifiers?.incomingDamageFlat || {};
+
+  const resistValues = {
+    physical: toNumber(derived?.physicalResistBonus),
+    energy: toNumber(derived?.energyResistBonus),
+    radiation: toNumber(derived?.radiationResistBonus),
+  };
+
+  const incomingValues = {
+    physical:
+      toNumber(incomingDamageFlat?.physical) +
+      toNumber(combatModifiers?.physicalDamageTakenCdBonus),
+    energy: toNumber(incomingDamageFlat?.energy),
+    radiation: toNumber(incomingDamageFlat?.radiation),
+  };
+
+  const showResistBadge =
+    resistValues.physical !== 0 ||
+    resistValues.energy !== 0 ||
+    resistValues.radiation !== 0;
+
+  const showIncomingBadge =
+    incomingValues.physical !== 0 ||
+    incomingValues.energy !== 0 ||
+    incomingValues.radiation !== 0;
 
   return (
     <div className="pip-injuries-vaultboy-wrap">
@@ -154,12 +193,16 @@ export default function InjuriesVaultBoy({
         {PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];
           const armorKey = ARMOR_KEY_MAP[part];
-          const stats = armor?.[armorKey] || {};
           const partLabel = t(PART_LABEL_KEYS[part]);
+          const adjusted = getAdjustedArmorSnapshotForPart({
+  armor,
+  part,
+  derived,
+});
 
-          const physical = stats.physical || 0;
-          const energy = stats.energy || 0;
-          const radiation = stats.radiation || 0;
+const physical = adjusted.physical;
+const energy = adjusted.energy;
+const radiation = adjusted.radiation;
 
           return (
             <div
@@ -180,6 +223,48 @@ export default function InjuriesVaultBoy({
             </div>
           );
         })}
+
+        {showResistBadge && (
+          <div
+            className="pip-armor-badge is-modifiers is-resist"
+            style={{ top: "1%", left: "70%" }}
+            title={`${t("armorPanel.physical")} ${formatSigned(
+              resistValues.physical
+            )} / ${t("armorPanel.energy")} ${formatSigned(
+              resistValues.energy
+            )} / ${t("armorPanel.radiation")} ${formatSigned(
+              resistValues.radiation
+            )}`}
+          >
+            <div className="pip-armor-badge-code">|⌖|⚡|☢|</div>
+            <div className="pip-armor-badge-values">
+              <span>{formatSigned(resistValues.physical)}</span>
+              <span>{formatSigned(resistValues.energy)}</span>
+              <span>{formatSigned(resistValues.radiation)}</span>
+            </div>
+          </div>
+        )}
+
+        {showIncomingBadge && (
+          <div
+            className="pip-armor-badge is-modifiers is-damage"
+            style={{ top: "1%", left: "0%" }}
+            title={`${t("armorPanel.physical")} ${formatSigned(
+              incomingValues.physical
+            )} / ${t("armorPanel.energy")} ${formatSigned(
+              incomingValues.energy
+            )} / ${t("armorPanel.radiation")} ${formatSigned(
+              incomingValues.radiation
+            )}`}
+          >
+            <div className="pip-armor-badge-code">|⌖|⚡|☢|</div>
+            <div className="pip-armor-badge-values">
+              <span>{formatSigned(incomingValues.physical)}</span>
+              <span>{formatSigned(incomingValues.energy)}</span>
+              <span>{formatSigned(incomingValues.radiation)}</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,218 @@
+.pip-item-card,
+.pip-weapon-card,
+.pip-floating-actions-card {
+  position: relative;
+  padding: 12px;
+}
+
+.pip-item-top,
+.pip-weapon-card .pip-item-top,
+.pip-floating-actions-card .pip-item-top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.pip-item-top h3,
+.pip-item-title-row h3 {
+  margin: 0 0 4px;
+  color: var(--pip-accent);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.pip-item-top p,
+.pip-body-copy {
+  margin: 0;
+  color: var(--pip-text-soft);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.pip-item-title-row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.pip-item-category-inline {
+  color: rgba(140, 255, 140, 0.72);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.pip-item-stats-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.pip-item-stats-row span {
+  color: var(--pip-accent);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+/* floating / inventory card actions */
+.pip-floating-card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.pip-floating-card-actions .pip-btn {
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.pip-floating-card-body {
+  padding-right: 230px;
+  min-width: 0;
+}
+
+/* weapon card actions */
+.pip-weapon-card-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+
+.pip-weapon-card-actions .pip-btn {
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.pip-weapon-card .pip-item-top > div:first-child {
+  padding-right: 230px;
+  min-width: 0;
+}
+
+/* collapse cards */
+.pip-collapse {
+  border: 1px solid rgba(140, 255, 152, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pip-collapse-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 10px 12px;
+  color: var(--pip-accent);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.pip-collapse-summary::-webkit-details-marker {
+  display: none;
+}
+
+.pip-collapse-summary::after {
+  content: "+";
+  float: right;
+  color: var(--pip-text-dim);
+}
+
+.pip-collapse[open] .pip-collapse-summary::after {
+  content: "−";
+}
+
+.pip-collapse-content {
+  padding: 0 12px 12px;
+}
+
+/* tablet */
+@media (max-width: 900px) {
+  .pip-item-card,
+  .pip-weapon-card,
+  .pip-floating-actions-card {
+    padding: 10px;
+  }
+
+  .pip-item-top h3,
+  .pip-item-title-row h3 {
+    font-size: 16px;
+  }
+
+  .pip-item-top p,
+  .pip-body-copy,
+  .pip-item-stats-row span {
+    font-size: 12px;
+  }
+
+  .pip-floating-card-actions,
+  .pip-weapon-card-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 56px;
+    gap: 8px;
+    width: 100%;
+    position: static;
+    margin-bottom: 8px;
+  }
+
+  .pip-floating-card-actions .pip-btn,
+  .pip-weapon-card-actions .pip-btn {
+    width: 100%;
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .pip-floating-card-body,
+  .pip-weapon-card .pip-item-top > div:first-child {
+    padding-right: 0;
+  }
+}
+
+/* mobile */
+@media (max-width: 640px) {
+  .pip-item-card,
+  .pip-weapon-card,
+  .pip-floating-actions-card {
+    padding: 10px;
+  }
+
+  .pip-item-title-row {
+    gap: 8px;
+  }
+
+  .pip-item-top h3,
+  .pip-item-title-row h3 {
+    font-size: 16px;
+  }
+
+  .pip-item-category-inline,
+  .pip-item-top p,
+  .pip-body-copy,
+  .pip-item-stats-row span {
+    font-size: 12px;
+  }
+
+  .pip-item-stats-row {
+    gap: 10px;
+  }
+
+  .pip-floating-card-actions,
+  .pip-weapon-card-actions {
+    grid-template-columns: 1fr 1fr 46px;
+    gap: 6px;
+  }
+
+  .pip-floating-card-actions .pip-btn,
+  .pip-weapon-card-actions .pip-btn {
+    padding: 7px 4px;
+    font-size: 11px;
+  }
+}

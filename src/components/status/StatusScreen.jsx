@@ -2,8 +2,12 @@ import React from "react";
 import HpPanel from "./HpPanel.jsx";
 import VitalsPanel from "./VitalsPanel.jsx";
 import InjuryPanel from "./InjuryPanel.jsx";
-import StatusBadgeList from "./StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
+
+function formatSigned(value) {
+  const num = Number(value) || 0;
+  return num > 0 ? `+${num}` : `${num}`;
+}
 
 export default function StatusScreen({
   form,
@@ -28,35 +32,146 @@ export default function StatusScreen({
   onOpenDerived,
 }) {
   const { t } = useTranslation();
+
   const survivalConditions = [
-  Number(form.satiety || 0) === 0
-    ? {
-        key: "starving",
-        group: "negative",
-        nameKey: "statuses.starving.name",
-        descriptionKey: "statuses.starving.description",
-        durationKey: "statuses.duration.whileZero",
-      }
-    : null,
-  Number(form.thirst || 0) === 0
-    ? {
-        key: "dehydrated",
-        group: "negative",
-        nameKey: "statuses.dehydrated.name",
-        descriptionKey: "statuses.dehydrated.description",
-        durationKey: "statuses.duration.whileZero",
-      }
-    : null,
-  Number(form.vigor || 0) === 0
-    ? {
-        key: "exhausted",
-        group: "negative",
-        nameKey: "statuses.exhausted.name",
-        descriptionKey: "statuses.exhausted.description",
-        durationKey: "statuses.duration.whileZero",
-      }
-    : null,
-].filter(Boolean);
+    Number(form.satiety || 0) === 0
+      ? {
+          key: "starving",
+          group: "negative",
+          nameKey: "statuses.starving.name",
+          descriptionKey: "statuses.starving.description",
+          durationKey: "statuses.duration.whileZero",
+        }
+      : null,
+    Number(form.thirst || 0) === 0
+      ? {
+          key: "dehydrated",
+          group: "negative",
+          nameKey: "statuses.dehydrated.name",
+          descriptionKey: "statuses.dehydrated.description",
+          durationKey: "statuses.duration.whileZero",
+        }
+      : null,
+    Number(form.vigor || 0) === 0
+      ? {
+          key: "exhausted",
+          group: "negative",
+          nameKey: "statuses.exhausted.name",
+          descriptionKey: "statuses.exhausted.description",
+          durationKey: "statuses.duration.whileZero",
+        }
+      : null,
+  ].filter(Boolean);
+
+  const effectDerivedBonuses = derived?.effectDerivedBonuses || {};
+  const combatModifiers = derived?.combatModifiers || {};
+  const effectBadges = [];
+
+  if (Number(effectDerivedBonuses.defenseBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "defense",
+      tone: effectDerivedBonuses.defenseBonus > 0 ? "positive" : "negative",
+      label: `${t("main.defense")} ${formatSigned(
+        effectDerivedBonuses.defenseBonus
+      )}`,
+    });
+  }
+
+  if (Number(effectDerivedBonuses.maxHpBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "maxhp",
+      tone: effectDerivedBonuses.maxHpBonus > 0 ? "positive" : "negative",
+      label: `HP ${formatSigned(effectDerivedBonuses.maxHpBonus)}`,
+    });
+  }
+
+  if (Number(derived?.physicalResistBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "physres",
+      tone: derived.physicalResistBonus > 0 ? "positive" : "negative",
+      label: `${t("armorPanel.physical")} RES ${formatSigned(
+        derived.physicalResistBonus
+      )}`,
+    });
+  }
+
+  if (Number(derived?.energyResistBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "energyres",
+      tone: derived.energyResistBonus > 0 ? "positive" : "negative",
+      label: `${t("armorPanel.energy")} RES ${formatSigned(
+        derived.energyResistBonus
+      )}`,
+    });
+  }
+
+  if (Number(derived?.radiationResistBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "radres",
+      tone: derived.radiationResistBonus > 0 ? "positive" : "negative",
+      label: `${t("armorPanel.radiation")} RES ${formatSigned(
+        derived.radiationResistBonus
+      )}`,
+    });
+  }
+
+  if (Number(derived?.poisonResistBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "poisonres",
+      tone: derived.poisonResistBonus > 0 ? "positive" : "negative",
+      label: `${t("armorPanel.poison")} RES ${formatSigned(
+        derived.poisonResistBonus
+      )}`,
+    });
+  }
+
+  if (Number(combatModifiers.apNowBonus || 0) !== 0) {
+    effectBadges.push({
+      key: "apnow",
+      tone: combatModifiers.apNowBonus > 0 ? "positive" : "negative",
+      label: `AP ${formatSigned(combatModifiers.apNowBonus)}`,
+    });
+  }
+
+  if (Number(combatModifiers.bonusDamageCd || 0) !== 0) {
+    effectBadges.push({
+      key: "bonusdmg",
+      tone: combatModifiers.bonusDamageCd > 0 ? "positive" : "negative",
+      label: `${t("weapons.damageShort")} +${combatModifiers.bonusDamageCd}CD`,
+    });
+  }
+
+  if (Number(combatModifiers.sneakAttackBonusCd || 0) !== 0) {
+    effectBadges.push({
+      key: "sneakdmg",
+      tone: combatModifiers.sneakAttackBonusCd > 0 ? "positive" : "negative",
+      label: `SNEAK +${combatModifiers.sneakAttackBonusCd}CD`,
+    });
+  }
+
+  if (combatModifiers.loseNormalActions) {
+    effectBadges.push({
+      key: "loseactions",
+      tone: "negative",
+      label: "NO ACTIONS",
+    });
+  }
+
+  if (combatModifiers.movementBlocked) {
+    effectBadges.push({
+      key: "nomove",
+      tone: "negative",
+      label: "NO MOVE",
+    });
+  }
+
+  if (combatModifiers.canSprint === false) {
+    effectBadges.push({
+      key: "nosprint",
+      tone: "negative",
+      label: "NO SPRINT",
+    });
+  }
 
   return (
     <div className="pip-screen-grid">
@@ -127,7 +242,9 @@ export default function StatusScreen({
           <div className="pip-hero-meta">
             <input
               value={form.characterName}
-              onChange={(e) => onTopLevelChange("characterName", e.target.value)}
+              onChange={(e) =>
+                onTopLevelChange("characterName", e.target.value)
+              }
               className="pip-input"
             />
 
@@ -177,10 +294,11 @@ export default function StatusScreen({
         onHpIncrease={onHpIncrease}
       />
 
- <InjuryPanel
+<InjuryPanel
   injuries={form.injuries}
   statuses={form.statuses}
   armor={armor}
+  derived={derived}
   onToggle={onInjuryToggle}
   survivalConditions={survivalConditions}
 />

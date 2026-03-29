@@ -1,0 +1,98 @@
+.pip-input,
+.pip-textarea,
+.pip-inline-input,
+select.pip-input {
+  width: 100%;
+  border: 1px solid rgba(140, 255, 152, 0.18);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.42);
+  color: var(--pip-text);
+  padding: 10px 12px;
+  outline: none;
+}
+
+.pip-input::placeholder,
+.pip-textarea::placeholder,
+.pip-inline-input::placeholder {
+  color: var(--pip-text-dim);
+}
+
+.pip-input:focus,
+.pip-textarea:focus,
+.pip-inline-input:focus,
+select.pip-input:focus {
+  border-color: var(--pip-line-strong);
+  box-shadow:
+    inset 0 0 0 1px rgba(207, 255, 159, 0.08),
+    0 0 10px rgba(110, 255, 120, 0.08);
+}
+
+.pip-inline-input {
+  width: 72px;
+  height: 26px;
+  min-height: 26px;
+  max-height: 26px;
+  padding: 0 6px;
+  line-height: 24px;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+
+.pip-textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.pip-textarea--large {
+  min-height: 240px;
+}
+
+.pip-field {
+  display: grid;
+  gap: 6px;
+}
+
+.pip-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.pip-hero-meta label,
+.pip-vitals-grid label,
+.pip-skill-field label,
+.pip-skill-attr-simple label,
+.pip-skill-test-simple label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--pip-text-dim);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.pip-range {
+  width: 100%;
+}
+
+.pip-bonus-input {
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .pip-skill-tag-btn {
+    width: 100%;
+  }
+
+  .pip-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pip-inline-input {
+    height: 24px;
+    min-height: 24px;
+    max-height: 24px;
+    padding: 0 6px;
+    line-height: 22px;
+    font-size: 11px;
+  }
+}
