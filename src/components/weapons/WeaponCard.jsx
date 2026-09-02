@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createWeaponRoll } from "../../utils/dice";
 import {
@@ -34,6 +34,22 @@ export default function WeaponCard({
 }) {
   const { t } = useTranslation();
   const [useRate, setUseRate] = useState(false);
+
+  const weaponImageSlug = String(weapon.name || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/^\.+/, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const weaponImageSrc = weaponImageSlug
+    ? `/weapon-images/${weaponImageSlug}.webp`
+    : "";
+  const [imageAvailable, setImageAvailable] = useState(Boolean(weaponImageSlug));
+
+  useEffect(() => {
+    setImageAvailable(Boolean(weaponImageSlug));
+  }, [weaponImageSlug]);
 
   const translateSafe = (key, fallback = "") => {
     if (!key) return fallback;
@@ -137,6 +153,17 @@ export default function WeaponCard({
           </div>
         </div>
       </div>
+
+      {weaponImageSrc && imageAvailable && (
+        <div className="pip-weapon-visual">
+          <img
+            src={weaponImageSrc}
+            alt={weapon.name || t("weapons.unnamedWeapon")}
+            loading="lazy"
+            onError={() => setImageAvailable(false)}
+          />
+        </div>
+      )}
 
       {/* Центральна сітка статів */}
       <div className="pip-weapon-stats-grid">

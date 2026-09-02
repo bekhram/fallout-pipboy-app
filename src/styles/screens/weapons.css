@@ -243,3 +243,36 @@
     padding-bottom: 60px;
   }
 }
+
+/* ===== AUTOMATIC WEAPON VISUAL ===== */
+
+.pip-weapon-visual {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: clamp(180px, 30vw, 320px);
+  margin: 0 0 18px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 255, 0, 0.2);
+  border-radius: 4px;
+  background:
+    linear-gradient(rgba(20, 255, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 255, 0, 0.035) 1px, transparent 1px),
+    rgba(0, 0, 0, 0.3);
+  background-size: 18px 18px;
+}
+
+.pip-weapon-visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  object-fit: contain;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .pip-weapon-visual {
+    height: 190px;
+  }
+}
