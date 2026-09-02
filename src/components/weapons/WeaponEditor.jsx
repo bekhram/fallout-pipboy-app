@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   SPECIAL_KEYS,
@@ -13,79 +13,6 @@ import {
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
   const { t } = useTranslation();
-  const [isProcessingImage, setIsProcessingImage] = useState(false);
-  const [imageError, setImageError] = useState("");
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setImageError(t("weapons.imageInvalid"));
-      return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-      setImageError(t("weapons.imageTooLarge"));
-      return;
-    }
-
-    setIsProcessingImage(true);
-    setImageError("");
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const image = new Image();
-
-      image.onload = () => {
-        const maxWidth = 900;
-        const maxHeight = 520;
-        const scale = Math.min(
-          1,
-          maxWidth / image.naturalWidth,
-          maxHeight / image.naturalHeight
-        );
-        const width = Math.max(1, Math.round(image.naturalWidth * scale));
-        const height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-
-        canvas.width = width;
-        canvas.height = height;
-
-        if (!context) {
-          setImageError(t("weapons.imageProcessingError"));
-          setIsProcessingImage(false);
-          return;
-        }
-
-        context.imageSmoothingEnabled = true;
-        context.imageSmoothingQuality = "high";
-        context.drawImage(image, 0, 0, width, height);
-
-        const imageData = canvas.toDataURL("image/webp", 0.78);
-        setDraft((prev) => ({ ...prev, image: imageData }));
-        setIsProcessingImage(false);
-      };
-
-      image.onerror = () => {
-        setImageError(t("weapons.imageProcessingError"));
-        setIsProcessingImage(false);
-      };
-
-      image.src = String(reader.result || "");
-    };
-
-    reader.onerror = () => {
-      setImageError(t("weapons.imageProcessingError"));
-      setIsProcessingImage(false);
-    };
-
-    reader.readAsDataURL(file);
-  };
 
   const toggleQuality = (value) => {
     const current = Array.isArray(draft.qualities) ? draft.qualities : [];
@@ -194,50 +121,6 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
         </div>
       )}
       {/* ========================== */}
-
-      <div className="pip-weapon-image-editor">
-        <div className="pip-weapon-image-preview">
-          {draft.image ? (
-            <img src={draft.image} alt={draft.name || t("weapons.imageAlt")} />
-          ) : (
-            <span>{t("weapons.noImage")}</span>
-          )}
-        </div>
-
-        <div className="pip-weapon-image-actions">
-          <label className="pip-btn is-primary">
-            {isProcessingImage
-              ? t("weapons.imageProcessing")
-              : t("weapons.imageUpload")}
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              disabled={isProcessingImage}
-              onChange={handleImageUpload}
-            />
-          </label>
-
-          {draft.image && (
-            <button
-              type="button"
-              className="pip-btn is-danger"
-              onClick={() => {
-                setDraft((prev) => ({ ...prev, image: "" }));
-                setImageError("");
-              }}
-            >
-              {t("weapons.imageRemove")}
-            </button>
-          )}
-        </div>
-
-        {imageError && (
-          <div className="pip-weapon-image-error" role="alert">
-            {imageError}
-          </div>
-        )}
-      </div>
 
       <div className="pip-form-grid">
         <input
