@@ -6,6 +6,7 @@ import {
   WEAPON_QUALITY_OPTIONS,
   SKILL_LABEL_KEYS,
 } from "../../constants.js";
+import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
 
 const qualityMap = Object.fromEntries(
   WEAPON_QUALITY_OPTIONS.map((item) => [item.key, item])
@@ -31,6 +32,7 @@ export default function WeaponCard({
   onCopy,
   onRemove,
   onRoll,
+  globalWeapons,
 }) {
   const { t } = useTranslation();
   const [useRate, setUseRate] = useState(false);
@@ -98,6 +100,7 @@ export default function WeaponCard({
   const processedQualities = processTags(weapon.qualities, weapon.qualitiesCustom, qualityMap);
   const processedEffects = processTags(weapon.effects, weapon.customEffect, effectMap);
   const allTags = [...processedQualities, ...processedEffects];
+  const weaponMetadata = getWeaponMetadata(weapon, globalWeapons);
   const activeProperty = activePropertyIndex === null
     ? null
     : allTags[activePropertyIndex];
@@ -304,16 +307,16 @@ export default function WeaponCard({
       <footer className="pip-weapon-footer">
         <div className="pip-weapon-meta">
           <div className="pip-weapon-meta-item">
-            <span className="meta-label">Cost</span>
-            <span className="meta-value">{weapon.cost || "—"}</span>
+            <span className="meta-label">{t("weapons.cost")}</span>
+            <span className="meta-value">{weaponMetadata.cost === "" ? "—" : weaponMetadata.cost}</span>
           </div>
           <div className="pip-weapon-meta-item">
-            <span className="meta-label">Weight</span>
-            <span className="meta-value">{weapon.weight || "—"}</span>
+            <span className="meta-label">{t("weapons.weight")}</span>
+            <span className="meta-value">{weaponMetadata.weight === "" ? "—" : weaponMetadata.weight}</span>
           </div>
           <div className="pip-weapon-meta-item">
-            <span className="meta-label">Rarity</span>
-            <span className="meta-value">{weapon.rarity || "—"}</span>
+            <span className="meta-label">{t("weapons.rarity")}</span>
+            <span className="meta-value">{weaponMetadata.rarity === "" ? "—" : weaponMetadata.rarity}</span>
           </div>
         </div>
 

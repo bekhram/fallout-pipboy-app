@@ -82,6 +82,9 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
       damage: w['Damage Rating'] || "",
       rate: w['Rate of Fire'] || "",
       ammo: w['Ammo'] || "", 
+      cost: w.Cost || "",
+      weight: w.Weight || "",
+      rarity: w.Rarity || "",
       skill: mapSkill(w['Weapon type']),
       type: normalizeKey(w['Damage type']) || "physical",
       range: String(w['Range'] || "").trim().toUpperCase(),
@@ -204,6 +207,30 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
             </option>
           ))}
         </select>
+
+        <input
+          className="pip-input"
+          inputMode="decimal"
+          placeholder={t("weapons.cost")}
+          value={draft.cost || ""}
+          onChange={(e) => setDraft({ ...draft, cost: e.target.value })}
+        />
+
+        <input
+          className="pip-input"
+          inputMode="decimal"
+          placeholder={t("weapons.weight")}
+          value={draft.weight || ""}
+          onChange={(e) => setDraft({ ...draft, weight: e.target.value })}
+        />
+
+        <input
+          className="pip-input"
+          inputMode="numeric"
+          placeholder={t("weapons.rarity")}
+          value={draft.rarity || ""}
+          onChange={(e) => setDraft({ ...draft, rarity: e.target.value })}
+        />
       </div>
 
       {/* === БЛОК МОДИФІКАЦІЙ (WORKBENCH) === */}

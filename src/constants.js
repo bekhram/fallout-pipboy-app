@@ -958,6 +958,9 @@ export function createEmptyWeapon() {
     qualities: [],
     qualitiesCustom: "",
     ammo: "",
+    cost: "",
+    weight: "",
+    rarity: "",
   };
 }
 

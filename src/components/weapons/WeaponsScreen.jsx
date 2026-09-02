@@ -43,6 +43,7 @@ export default function WeaponsScreen({
               onCopy={onCopy}
               onRemove={onRemove}
               onRoll={onRoll}
+              globalWeapons={globalWeapons}
             />
           ))}
         </div>

@@ -39,6 +39,10 @@ import {
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
 import { ORIGINS } from "./components/data/origins.js";
+import {
+  hydrateWeaponMetadata,
+  needsWeaponMetadataHydration,
+} from "./utils/weaponDatabase.js";
 
 export default function App() {
   const [pendingAutoD6, setPendingAutoD6] = useState(null);
@@ -148,6 +152,24 @@ export default function App() {
     continueLastCharacter,
     changeOrigin,
   } = useCharacterStorage(buildDefaultForm());
+
+  useEffect(() => {
+    if (globalWeapons.length === 0) return;
+
+    setForm((prev) => {
+      let didChange = false;
+      const weapons = (prev.weapons || []).map((weapon) => {
+        if (!needsWeaponMetadataHydration(weapon, globalWeapons)) {
+          return weapon;
+        }
+
+        didChange = true;
+        return hydrateWeaponMetadata(weapon, globalWeapons);
+      });
+
+      return didChange ? { ...prev, weapons } : prev;
+    });
+  }, [globalWeapons, setForm]);
 
   const mapState = useMemo(
     () => ({
@@ -342,7 +364,7 @@ const updateSkill = (skillName, field, value) =>
 
   const startEditWeapon = (index) => {
     setEditingWeaponIndex(index);
-    setWeaponDraft({ ...form.weapons[index] });
+    setWeaponDraft(hydrateWeaponMetadata(form.weapons[index], globalWeapons));
   };
 
   const saveEditWeapon = (index) => {
@@ -352,6 +374,9 @@ const updateSkill = (skillName, field, value) =>
         ...weaponDraft,
         damage: normalizeNonNegative(weaponDraft.damage) || "",
         rate: normalizeNonNegative(weaponDraft.rate) || "",
+        cost: normalizeNonNegative(weaponDraft.cost) || "",
+        weight: normalizeWeightValue(weaponDraft.weight) || "",
+        rarity: normalizeNonNegative(weaponDraft.rarity) || "",
       };
       return { ...prev, weapons: next };
     });
@@ -362,9 +387,10 @@ const updateSkill = (skillName, field, value) =>
   const copyWeapon = (index) =>
     setForm((prev) => {
       const next = [...prev.weapons];
+      const sourceWeapon = hydrateWeaponMetadata(prev.weapons[index], globalWeapons);
       next.splice(index + 1, 0, {
-        ...prev.weapons[index],
-        name: `${prev.weapons[index].name || "Weapon"} Copy`,
+        ...sourceWeapon,
+        name: `${sourceWeapon.name || "Weapon"} Copy`,
       });
       return { ...prev, weapons: next };
     });
