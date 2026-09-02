@@ -276,3 +276,106 @@
     height: 190px;
   }
 }
+
+
+/* ===== COMPACT WEAPON CARD ===== */
+
+.pip-weapon-card {
+  gap: 8px;
+  padding: 14px 14px 48px;
+}
+
+.pip-weapon-header {
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.pip-weapon-header-left h3 {
+  margin: 0 0 2px;
+  line-height: 1;
+}
+
+.pip-weapon-meta {
+  padding: 6px 10px;
+  gap: 14px;
+}
+
+.pip-weapon-visual {
+  height: clamp(120px, 16vw, 190px);
+  margin-bottom: 8px;
+}
+
+.pip-weapon-visual img {
+  padding: 4px 12px;
+}
+
+.pip-weapon-stats-grid {
+  margin-bottom: 8px;
+  padding: 2px;
+}
+
+.pip-stat-box {
+  padding: 6px 4px;
+}
+
+.pip-stat-box .stat-label {
+  margin-bottom: 3px;
+  font-size: 0.72em;
+}
+
+.pip-stat-box .stat-value {
+  gap: 5px;
+  font-size: 1.55em;
+}
+
+.pip-stat-box .stat-sub {
+  margin-top: 3px;
+  font-size: 0.7em;
+}
+
+.pip-weapon-properties {
+  margin-bottom: 6px;
+  padding-top: 2px;
+}
+
+.pip-weapon-property-row {
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+.pip-weapon-mods-blueprint {
+  margin-top: 6px;
+  margin-bottom: 4px;
+  padding: 7px 9px;
+}
+
+.pip-weapon-mods-grid {
+  gap: 5px 10px;
+}
+
+.pip-weapon-card-actions {
+  bottom: 8px;
+}
+
+@media (max-width: 640px) {
+  .pip-weapon-card {
+    padding: 10px 10px 46px;
+  }
+
+  .pip-weapon-visual {
+    height: 135px;
+    margin-bottom: 6px;
+  }
+
+  .pip-stat-box {
+    padding: 5px 3px;
+  }
+
+  .pip-stat-box .stat-value {
+    font-size: 1.35em;
+  }
+
+  .pip-weapon-mods-grid {
+    grid-template-columns: 1fr;
+  }
+}
