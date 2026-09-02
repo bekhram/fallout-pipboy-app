@@ -44,7 +44,8 @@
     "customQualities": "Пользовательские свойства",
     "customEffect": "Пользовательский эффект",
     "qualities": "Свойства",
-    "effects": "Эффекты"
+    "effects": "Эффекты",
+    "closePropertyDescription": "Закрыть описание свойства"
   },
   "status": {
     "positive": "Позитивные",

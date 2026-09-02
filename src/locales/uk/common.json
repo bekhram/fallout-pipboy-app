@@ -44,7 +44,8 @@
     "customQualities": "Користувацькі властивості",
     "customEffect": "Користувацький ефект",
     "qualities": "Властивості",
-    "effects": "Ефекти"
+    "effects": "Ефекти",
+    "closePropertyDescription": "Закрити опис властивості"
   },
   "status": {
     "positive": "Позитивні",

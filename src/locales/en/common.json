@@ -44,7 +44,8 @@
     "customQualities": "Custom qualities",
     "customEffect": "Custom effect",
     "qualities": "Qualities",
-    "effects": "Effects"
+    "effects": "Effects",
+    "closePropertyDescription": "Close property description"
   },
   "status": {
     "positive": "Positive",

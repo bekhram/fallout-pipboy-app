@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createWeaponRoll } from "../../utils/dice";
 import {
@@ -34,6 +34,8 @@ export default function WeaponCard({
 }) {
   const { t } = useTranslation();
   const [useRate, setUseRate] = useState(false);
+  const [activePropertyIndex, setActivePropertyIndex] = useState(null);
+  const propertiesRef = useRef(null);
 
   const weaponImageSlug = String(weapon.name || "")
     .trim()
@@ -96,6 +98,37 @@ export default function WeaponCard({
   const processedQualities = processTags(weapon.qualities, weapon.qualitiesCustom, qualityMap);
   const processedEffects = processTags(weapon.effects, weapon.customEffect, effectMap);
   const allTags = [...processedQualities, ...processedEffects];
+  const activeProperty = activePropertyIndex === null
+    ? null
+    : allTags[activePropertyIndex];
+
+  useEffect(() => {
+    setActivePropertyIndex(null);
+  }, [weapon]);
+
+  useEffect(() => {
+    if (activePropertyIndex === null) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (!propertiesRef.current?.contains(event.target)) {
+        setActivePropertyIndex(null);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setActivePropertyIndex(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activePropertyIndex]);
 
   const skillLabel = weapon.skill
     ? translateSafe(SKILL_LABEL_KEYS?.[weapon.skill], weapon.skill)
@@ -137,20 +170,11 @@ export default function WeaponCard({
           <h3>{weapon.name || t("weapons.unnamedWeapon")}</h3>
           <span>{skillLabel}</span>
         </div>
-        
-        <div className="pip-weapon-meta">
-          <div className="pip-weapon-meta-item">
-            <span className="meta-label">Cost</span>
-            <span className="meta-value">{weapon.cost || "—"}</span>
-          </div>
-          <div className="pip-weapon-meta-item">
-            <span className="meta-label">Weight</span>
-            <span className="meta-value">{weapon.weight || "—"}</span>
-          </div>
-          <div className="pip-weapon-meta-item">
-            <span className="meta-label">Rarity</span>
-            <span className="meta-value">{weapon.rarity || "—"}</span>
-          </div>
+
+        <div className="pip-weapon-card-actions">
+          <button type="button" className="pip-btn" onClick={(e) => { e.stopPropagation(); onEdit(index); }}>✎</button>
+          <button type="button" className="pip-btn" onClick={(e) => { e.stopPropagation(); onCopy(index); }}>⎘</button>
+          <button type="button" className="pip-btn is-danger" onClick={(e) => { e.stopPropagation(); onRemove(index); }}>✕</button>
         </div>
       </div>
 
@@ -192,15 +216,65 @@ export default function WeaponCard({
 
       {/* Властивості (без дублікатів!) */}
       {allTags.length > 0 && (
-        <div className="pip-weapon-properties">
-          {allTags.map((tag, i) => (
-            <div key={`trait-${index}-${i}`} className="pip-weapon-property-row">
-              <strong style={{ textTransform: "uppercase", letterSpacing: "1px", color: "var(--pip-color-highlight, #fff)" }}>
-                {tag.label}{tag.title ? ": " : ""}
-              </strong> 
-              {tag.title && <span style={{ opacity: 0.85 }}>{tag.title}</span>}
+        <div className="pip-weapon-properties" ref={propertiesRef}>
+          <ul className="pip-weapon-property-list">
+            {allTags.map((tag, i) => {
+              const isActive = activePropertyIndex === i;
+              const tooltipId = `weapon-${index}-property-${i}-tooltip`;
+
+              return (
+                <li key={`trait-${index}-${i}`}>
+                  {tag.title ? (
+                    <button
+                      type="button"
+                      className={`pip-weapon-property-button ${isActive ? "is-active" : ""}`}
+                      aria-expanded={isActive}
+                      aria-controls={tooltipId}
+                      aria-describedby={isActive ? tooltipId : undefined}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setActivePropertyIndex(isActive ? null : i);
+                      }}
+                    >
+                      <span className="pip-weapon-property-indicator" aria-hidden="true">
+                        {isActive ? "−" : "+"}
+                      </span>
+                      <span>{tag.label}</span>
+                    </button>
+                  ) : (
+                    <span className="pip-weapon-property-button is-static">
+                      <span className="pip-weapon-property-indicator" aria-hidden="true">•</span>
+                      <span>{tag.label}</span>
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+
+          {activeProperty?.title && (
+            <div
+              id={`weapon-${index}-property-${activePropertyIndex}-tooltip`}
+              className="pip-weapon-property-tooltip"
+              role="tooltip"
+            >
+              <div className="pip-weapon-property-tooltip-head">
+                <strong>{activeProperty.label}</strong>
+                <button
+                  type="button"
+                  className="pip-weapon-property-tooltip-close"
+                  aria-label={t("weapons.closePropertyDescription")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setActivePropertyIndex(null);
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <p>{activeProperty.title}</p>
             </div>
-          ))}
+          )}
         </div>
       )}
 
@@ -227,17 +301,26 @@ export default function WeaponCard({
         </div>
       )}
 
-      {/* Кнопки керування внизу зліва */}
-      <div className="pip-weapon-card-actions">
-        <button type="button" className="pip-btn" onClick={(e) => { e.stopPropagation(); onEdit(index); }}>✎</button>
-        <button type="button" className="pip-btn" onClick={(e) => { e.stopPropagation(); onCopy(index); }}>⎘</button>
-        <button type="button" className="pip-btn is-danger" onClick={(e) => { e.stopPropagation(); onRemove(index); }}>✕</button>
-      </div>
+      <footer className="pip-weapon-footer">
+        <div className="pip-weapon-meta">
+          <div className="pip-weapon-meta-item">
+            <span className="meta-label">Cost</span>
+            <span className="meta-value">{weapon.cost || "—"}</span>
+          </div>
+          <div className="pip-weapon-meta-item">
+            <span className="meta-label">Weight</span>
+            <span className="meta-value">{weapon.weight || "—"}</span>
+          </div>
+          <div className="pip-weapon-meta-item">
+            <span className="meta-label">Rarity</span>
+            <span className="meta-value">{weapon.rarity || "—"}</span>
+          </div>
+        </div>
 
-      {/* Ярлик набоїв внизу справа */}
-      <div className="pip-ammo-tab">
-        {weapon.ammo || "NO AMMO"}
-      </div>
+        <div className="pip-ammo-tab">
+          {weapon.ammo || "NO AMMO"}
+        </div>
+      </footer>
     </article>
   );
 }

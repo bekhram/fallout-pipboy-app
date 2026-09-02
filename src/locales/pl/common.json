@@ -44,7 +44,8 @@
     "customQualities": "Własne właściwości",
     "customEffect": "Własny efekt",
     "qualities": "Właściwości",
-    "effects": "Efekty"
+    "effects": "Efekty",
+    "closePropertyDescription": "Zamknij opis właściwości"
   },
   "status": {
     "positive": "Pozytywne",
