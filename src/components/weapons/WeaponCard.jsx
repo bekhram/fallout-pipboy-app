@@ -138,6 +138,16 @@ export default function WeaponCard({
         </div>
       </div>
 
+      {weapon.image && (
+        <div className="pip-weapon-image">
+          <img
+            src={weapon.image}
+            alt={weapon.name || t("weapons.imageAlt")}
+            loading="lazy"
+          />
+        </div>
+      )}
+
       {/* Центральна сітка статів */}
       <div className="pip-weapon-stats-grid">
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">

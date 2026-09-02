@@ -26,9 +26,10 @@
     "edit": "✎",
     "copy": "⧉",
     "save": "✓",
-    "cancel": "↶",
+    "cancel": "Cancel",
     "add": "+",
-    "delete": "X"
+    "delete": "X",
+    "confirm": "Confirm"
   },
   "weapons": {
     "unnamedWeapon": "Unnamed Weapon",
@@ -44,7 +45,15 @@
     "customQualities": "Custom qualities",
     "customEffect": "Custom effect",
     "qualities": "Qualities",
-    "effects": "Effects"
+    "effects": "Effects",
+    "imageUpload": "Upload image",
+    "imageRemove": "Remove image",
+    "imageProcessing": "Processing…",
+    "noImage": "No weapon image",
+    "imageAlt": "Weapon image",
+    "imageInvalid": "Select an image file.",
+    "imageTooLarge": "The image must be smaller than 10 MB.",
+    "imageProcessingError": "Could not process the image."
   },
   "status": {
     "positive": "Positive",
@@ -916,106 +925,331 @@
       "mister_handy_robot": "Mister Handy Robot"
     }
   },
-"characterCreation": {
+  "characterCreation": {
     "selectOriginTitle": "SELECT ORIGIN",
     "selectOriginDescription": "Choose your character's origin to determine base traits, maximum skills, and special abilities.",
     "trait": "Trait",
     "selectTraits": "Select Traits",
     "chooseTwoTraits": "Choose two of the following traits, or one trait and one additional perk."
   },
-  "common": {
-    "edit": "✎",
-    "copy": "⧉",
-    "save": "✓",
-    "cancel": "Cancel",
-    "add": "+",
-    "delete": "X",
-    "confirm": "Confirm"
-  },
   "traitsInfo": {
-    "vault_kid": { "name": "Vault Kid", "desc": "Your healthier start to life at the hands of trained doctors..." },
-    "survivor": { "name": "Survivor", "desc": "You are the living legacy of the people who prepared for Armageddon on their own." },
-    "chain_that_binds": { "name": "The Chain That Binds", "desc": "You must obey the orders of those above you in the Brotherhood of Steel hierarchy." },
-    "necrotic_post_human": { "name": "Necrotic Post-Human", "desc": "Immune to radiation damage and hazards. Radiation heals you instead of harming you." },
-    "forced_evolution": { "name": "Forced Evolution", "desc": "Your initial Strength and Endurance attributes are increased by +2 each..." },
-    "mister_handy_robot": { "name": "Mister Handy Robot", "desc": "You have 360° vision and improved sensory systems..." },
-    "educated": { "name": "Educated (Trait)", "desc": "You have one additional tag skill." },
-    "fast_shot": { "name": "Fast Shot (Trait)", "desc": "If you take a second major action in combat, and use it to make a ranged attack..." },
-    "gifted": { "name": "Gifted (Trait)", "desc": "Choose two S.P.E.C.I.A.L. attributes and increase them by +1 each..." },
-    "heavy_handed": { "name": "Heavy Handed (Trait)", "desc": "Your Melee Damage bonus increases by +1..." },
-    "small_frame": { "name": "Small Frame (Trait)", "desc": "You may re-roll 1d20 on all AGI tests which rely on balance or contortion..." }
+    "vault_kid": {
+      "name": "Vault Kid",
+      "desc": "Your healthier start to life at the hands of trained doctors..."
+    },
+    "survivor": {
+      "name": "Survivor",
+      "desc": "You are the living legacy of the people who prepared for Armageddon on their own."
+    },
+    "chain_that_binds": {
+      "name": "The Chain That Binds",
+      "desc": "You must obey the orders of those above you in the Brotherhood of Steel hierarchy."
+    },
+    "necrotic_post_human": {
+      "name": "Necrotic Post-Human",
+      "desc": "Immune to radiation damage and hazards. Radiation heals you instead of harming you."
+    },
+    "forced_evolution": {
+      "name": "Forced Evolution",
+      "desc": "Your initial Strength and Endurance attributes are increased by +2 each..."
+    },
+    "mister_handy_robot": {
+      "name": "Mister Handy Robot",
+      "desc": "You have 360° vision and improved sensory systems..."
+    },
+    "educated": {
+      "name": "Educated (Trait)",
+      "desc": "You have one additional tag skill."
+    },
+    "fast_shot": {
+      "name": "Fast Shot (Trait)",
+      "desc": "If you take a second major action in combat, and use it to make a ranged attack..."
+    },
+    "gifted": {
+      "name": "Gifted (Trait)",
+      "desc": "Choose two S.P.E.C.I.A.L. attributes and increase them by +1 each..."
+    },
+    "heavy_handed": {
+      "name": "Heavy Handed (Trait)",
+      "desc": "Your Melee Damage bonus increases by +1..."
+    },
+    "small_frame": {
+      "name": "Small Frame (Trait)",
+      "desc": "You may re-roll 1d20 on all AGI tests which rely on balance or contortion..."
+    }
   },
   "perksInfo": {
-    "action_boy_girl": { "name": "Action Boy/Girl", "desc": "When you spend AP to take an additional major action, you do not suffer the increased skill test difficulty." },
-    "adamantium_skeleton": { "name": "Adamantium Skeleton", "desc": "The amount of damage needed to inflict a critical hit on you increases by your rank in this perk." },
-    "adrenalin_rush": { "name": "Adrenalin Rush", "desc": "When your health is below its maximum value, you count your STR score as 10 for STR-based tests or melee attacks." },
-    "animal_friend": { "name": "Animal Friend", "desc": "Animals may choose not to attack you. Higher ranks allow you to pacify them." },
-    "aquaboy_aquagirl": { "name": "Aquaboy/Aquagirl", "desc": "You no longer take radiation damage from swimming and can hold your breath twice as long." },
-    "armorer": { "name": "Armorer", "desc": "You can modify armor with armor mods up to your rank in this perk." },
-    "awareness": { "name": "Awareness", "desc": "When you take the Aim action, you spot weaknesses. The next attack gains Piercing 1." },
-    "barbarian": { "name": "Barbarian", "desc": "Your physical Damage Resistance increases on all hit locations based on your STR score." },
-    "basher": { "name": "Basher", "desc": "When you make a melee attack by bashing with your gun, your attack gains the Vicious damage effect." },
-    "better_criticals": { "name": "Better Criticals", "desc": "When you inflict damage, you may spend 1 Luck Point to automatically inflict a critical hit." },
-    "big_leagues": { "name": "Big Leagues", "desc": "When you make a melee attack with a two-handed melee weapon, the weapon gains the Vicious effect." },
-    "black_widow_lady_killer": { "name": "Black Widow / Lady Killer", "desc": "Re-roll 1d20 on CHA tests to influence specific genders. Attacks inflict +1 damage against them." },
-    "blacksmith": { "name": "Blacksmith", "desc": "You can modify melee weapons with weapon mods up to your rank in this perk." },
-    "blitz": { "name": "Blitz", "desc": "When you move into reach and attack in one turn, you may re-roll one d20 on your attack." },
-    "bloody_mess": { "name": "Bloody Mess", "desc": "When you inflict a critical hit, roll 1 CD; on an Effect, you inflict an additional injury." },
-    "can_do": { "name": "Can Do!", "desc": "When scavenging a location with food, you gain 1 additional random food item without spending AP." },
-    "cap_collector": { "name": "Cap Collector", "desc": "When you buy or sell items, you may increase or decrease the price by 10%." },
-    "cautious_nature": { "name": "Cautious Nature", "desc": "Whenever you buy d20s by spending AP, you may re-roll 1d20 on that test." },
-    "center_mass": { "name": "Center Mass", "desc": "Make ranged attacks against the Torso without increasing difficulty. Re-roll 1d20 on the test." },
-    "chem_resistant": { "name": "Chem Resistant", "desc": "Roll fewer CD when checking for addiction. At rank 2, you are immune to addiction." },
-    "paralyzing_palm": { "name": "Paralyzing Palm", "desc": "When you make an unarmed attack and target a specific location, your attack gains the Stun damage effect." },
-    "party_boy_girl": { "name": "Party Boy/Party Girl", "desc": "You cannot become addicted to alcoholic drinks, and whenever you drink an alcoholic drink, you heal +2 HP." },
-    "pathfinder": { "name": "Pathfinder", "desc": "When travelling over long distances, a successful PER + Survival test reduces the travel time by half." },
-    "pharma_farma": { "name": "Pharma Farma", "desc": "When scavenging a location with medicine or chems, you find one additional item randomly determined, without spending AP." },
-    "pickpocket": { "name": "Pickpocket", "desc": "Rank 1: Ignore first complication on pickpocketing. Rank 2: Re-roll 1d20. Rank 3: Reduce difficulty by 1." },
-    "piercing_strike": { "name": "Piercing Strike", "desc": "Your attacks using unarmed and bladed melee weapons gain the Piercing 1 damage effect (or add +1 to existing)." },
-    "pyromaniac": { "name": "Pyromaniac", "desc": "The damage you deal using fire-based weapons increases by +1 CD per rank." },
-    "quick_draw": { "name": "Quick Draw", "desc": "Each turn, you may draw a single weapon or item carried on your person without using a minor action." },
-    "quick_hands": { "name": "Quick Hands", "desc": "When you make a ranged attack, you may spend 2 AP to increase the Fire Rate of your gun by +2 for that attack." },
-    "rad_resistance": { "name": "Rad Resistance", "desc": "Your radiation Damage Resistance, to all hit locations, increases by +1 per rank in this perk." },
-    "refractor": { "name": "Refractor", "desc": "Your energy Damage Resistance to all hit locations increases by +1 per rank in this perk." },
-    "ricochet": { "name": "Ricochet", "desc": "If an enemy rolls a complication on a ranged attack against you, you may spend 1 Luck point to have it hit them instead." },
-    "rifleman": { "name": "Rifleman", "desc": "When you attack with a non-heavy two-handed ranged weapon with Fire Rate 2 or lower, add +1 CD damage per rank." },
-    "robotics_expert": { "name": "Robotics Expert", "desc": "You can modify robot armor and modules. Higher ranks unlock better mods and allow reprogramming robots." },
-    "science": { "name": "Science!", "desc": "You can modify energy weapons and craft advanced armor mods. Each rank unlocks an additional rank of mods." },
-    "scoundrel": { "name": "Scoundrel", "desc": "When you make a CHA + Speech test to convince someone of a lie, you may ignore the first complication you roll." },
-    "scrapper": { "name": "Scrapper", "desc": "When you scrap an item, you can salvage uncommon component materials. Rank 2 allows salvaging rare materials." },
-    "scrounger": { "name": "Scrounger", "desc": "Whenever you roll to determine how much ammunition you find, you find more (+3, +6, or +10 CD per rank)." },
-    "shotgun_surgeon": { "name": "Shotgun Surgeon", "desc": "Your ranged attacks using shotguns gain the Piercing 1 damage effect (or add +1 to existing)." },
-    "skilled": { "name": "Skilled", "desc": "Add +1 rank to two skills or add +2 ranks to one skill (maximum of 6 ranks per skill)." },
-    "size_matters": { "name": "Size Matters", "desc": "When you make a ranged attack with any heavy weapon, you add +1 CD to the weapon's damage, per rank." },
-    "slayer": { "name": "Slayer", "desc": "When you inflict any damage with a melee/unarmed attack, you may spend 1 Luck point to immediately inflict a critical hit." },
-    "smooth_talker": { "name": "Smooth Talker", "desc": "When you make a Barter or Speech test as part of an opposed test, you may re-roll 1d20." },
-    "snakeater": { "name": "Snakeater", "desc": "Your poison Damage Resistance increases by +2." },
-    "sniper": { "name": "Sniper", "desc": "When you take the Aim action and attack with an Accurate two-handed weapon, targeting a location doesn't increase difficulty." },
-    "solar_powered": { "name": "Solar Powered", "desc": "For every hour you spend in direct sunlight, you heal 1 radiation damage." },
-    "steady_aim": { "name": "Steady Aim", "desc": "When you take the Aim action, you may re-roll 2d20 on the first attack, or re-roll 1d20 on all attacks this turn." },
-    "strong_back": { "name": "Strong Back", "desc": "Your maximum carry weight is increased by +25 lbs. per rank." },
-    "tag": { "name": "Tag!", "desc": "Select one additional Tag skill. Increase its rank by 2 (max 6), allowing you to roll criticals on that skill." },
-    "terrifying_presence": { "name": "Terrifying Presence", "desc": "Rank 1: Re-roll 1d20 when threatening. Rank 2: Use an action to force an enemy to move away on a successful test." },
-    "toughness": { "name": "Toughness", "desc": "Your physical Damage Resistance to all hit locations increases by +1 per rank in this perk." }
+    "action_boy_girl": {
+      "name": "Action Boy/Girl",
+      "desc": "When you spend AP to take an additional major action, you do not suffer the increased skill test difficulty."
+    },
+    "adamantium_skeleton": {
+      "name": "Adamantium Skeleton",
+      "desc": "The amount of damage needed to inflict a critical hit on you increases by your rank in this perk."
+    },
+    "adrenalin_rush": {
+      "name": "Adrenalin Rush",
+      "desc": "When your health is below its maximum value, you count your STR score as 10 for STR-based tests or melee attacks."
+    },
+    "animal_friend": {
+      "name": "Animal Friend",
+      "desc": "Animals may choose not to attack you. Higher ranks allow you to pacify them."
+    },
+    "aquaboy_aquagirl": {
+      "name": "Aquaboy/Aquagirl",
+      "desc": "You no longer take radiation damage from swimming and can hold your breath twice as long."
+    },
+    "armorer": {
+      "name": "Armorer",
+      "desc": "You can modify armor with armor mods up to your rank in this perk."
+    },
+    "awareness": {
+      "name": "Awareness",
+      "desc": "When you take the Aim action, you spot weaknesses. The next attack gains Piercing 1."
+    },
+    "barbarian": {
+      "name": "Barbarian",
+      "desc": "Your physical Damage Resistance increases on all hit locations based on your STR score."
+    },
+    "basher": {
+      "name": "Basher",
+      "desc": "When you make a melee attack by bashing with your gun, your attack gains the Vicious damage effect."
+    },
+    "better_criticals": {
+      "name": "Better Criticals",
+      "desc": "When you inflict damage, you may spend 1 Luck Point to automatically inflict a critical hit."
+    },
+    "big_leagues": {
+      "name": "Big Leagues",
+      "desc": "When you make a melee attack with a two-handed melee weapon, the weapon gains the Vicious effect."
+    },
+    "black_widow_lady_killer": {
+      "name": "Black Widow / Lady Killer",
+      "desc": "Re-roll 1d20 on CHA tests to influence specific genders. Attacks inflict +1 damage against them."
+    },
+    "blacksmith": {
+      "name": "Blacksmith",
+      "desc": "You can modify melee weapons with weapon mods up to your rank in this perk."
+    },
+    "blitz": {
+      "name": "Blitz",
+      "desc": "When you move into reach and attack in one turn, you may re-roll one d20 on your attack."
+    },
+    "bloody_mess": {
+      "name": "Bloody Mess",
+      "desc": "When you inflict a critical hit, roll 1 CD; on an Effect, you inflict an additional injury."
+    },
+    "can_do": {
+      "name": "Can Do!",
+      "desc": "When scavenging a location with food, you gain 1 additional random food item without spending AP."
+    },
+    "cap_collector": {
+      "name": "Cap Collector",
+      "desc": "When you buy or sell items, you may increase or decrease the price by 10%."
+    },
+    "cautious_nature": {
+      "name": "Cautious Nature",
+      "desc": "Whenever you buy d20s by spending AP, you may re-roll 1d20 on that test."
+    },
+    "center_mass": {
+      "name": "Center Mass",
+      "desc": "Make ranged attacks against the Torso without increasing difficulty. Re-roll 1d20 on the test."
+    },
+    "chem_resistant": {
+      "name": "Chem Resistant",
+      "desc": "Roll fewer CD when checking for addiction. At rank 2, you are immune to addiction."
+    },
+    "paralyzing_palm": {
+      "name": "Paralyzing Palm",
+      "desc": "When you make an unarmed attack and target a specific location, your attack gains the Stun damage effect."
+    },
+    "party_boy_girl": {
+      "name": "Party Boy/Party Girl",
+      "desc": "You cannot become addicted to alcoholic drinks, and whenever you drink an alcoholic drink, you heal +2 HP."
+    },
+    "pathfinder": {
+      "name": "Pathfinder",
+      "desc": "When travelling over long distances, a successful PER + Survival test reduces the travel time by half."
+    },
+    "pharma_farma": {
+      "name": "Pharma Farma",
+      "desc": "When scavenging a location with medicine or chems, you find one additional item randomly determined, without spending AP."
+    },
+    "pickpocket": {
+      "name": "Pickpocket",
+      "desc": "Rank 1: Ignore first complication on pickpocketing. Rank 2: Re-roll 1d20. Rank 3: Reduce difficulty by 1."
+    },
+    "piercing_strike": {
+      "name": "Piercing Strike",
+      "desc": "Your attacks using unarmed and bladed melee weapons gain the Piercing 1 damage effect (or add +1 to existing)."
+    },
+    "pyromaniac": {
+      "name": "Pyromaniac",
+      "desc": "The damage you deal using fire-based weapons increases by +1 CD per rank."
+    },
+    "quick_draw": {
+      "name": "Quick Draw",
+      "desc": "Each turn, you may draw a single weapon or item carried on your person without using a minor action."
+    },
+    "quick_hands": {
+      "name": "Quick Hands",
+      "desc": "When you make a ranged attack, you may spend 2 AP to increase the Fire Rate of your gun by +2 for that attack."
+    },
+    "rad_resistance": {
+      "name": "Rad Resistance",
+      "desc": "Your radiation Damage Resistance, to all hit locations, increases by +1 per rank in this perk."
+    },
+    "refractor": {
+      "name": "Refractor",
+      "desc": "Your energy Damage Resistance to all hit locations increases by +1 per rank in this perk."
+    },
+    "ricochet": {
+      "name": "Ricochet",
+      "desc": "If an enemy rolls a complication on a ranged attack against you, you may spend 1 Luck point to have it hit them instead."
+    },
+    "rifleman": {
+      "name": "Rifleman",
+      "desc": "When you attack with a non-heavy two-handed ranged weapon with Fire Rate 2 or lower, add +1 CD damage per rank."
+    },
+    "robotics_expert": {
+      "name": "Robotics Expert",
+      "desc": "You can modify robot armor and modules. Higher ranks unlock better mods and allow reprogramming robots."
+    },
+    "science": {
+      "name": "Science!",
+      "desc": "You can modify energy weapons and craft advanced armor mods. Each rank unlocks an additional rank of mods."
+    },
+    "scoundrel": {
+      "name": "Scoundrel",
+      "desc": "When you make a CHA + Speech test to convince someone of a lie, you may ignore the first complication you roll."
+    },
+    "scrapper": {
+      "name": "Scrapper",
+      "desc": "When you scrap an item, you can salvage uncommon component materials. Rank 2 allows salvaging rare materials."
+    },
+    "scrounger": {
+      "name": "Scrounger",
+      "desc": "Whenever you roll to determine how much ammunition you find, you find more (+3, +6, or +10 CD per rank)."
+    },
+    "shotgun_surgeon": {
+      "name": "Shotgun Surgeon",
+      "desc": "Your ranged attacks using shotguns gain the Piercing 1 damage effect (or add +1 to existing)."
+    },
+    "skilled": {
+      "name": "Skilled",
+      "desc": "Add +1 rank to two skills or add +2 ranks to one skill (maximum of 6 ranks per skill)."
+    },
+    "size_matters": {
+      "name": "Size Matters",
+      "desc": "When you make a ranged attack with any heavy weapon, you add +1 CD to the weapon's damage, per rank."
+    },
+    "slayer": {
+      "name": "Slayer",
+      "desc": "When you inflict any damage with a melee/unarmed attack, you may spend 1 Luck point to immediately inflict a critical hit."
+    },
+    "smooth_talker": {
+      "name": "Smooth Talker",
+      "desc": "When you make a Barter or Speech test as part of an opposed test, you may re-roll 1d20."
+    },
+    "snakeater": {
+      "name": "Snakeater",
+      "desc": "Your poison Damage Resistance increases by +2."
+    },
+    "sniper": {
+      "name": "Sniper",
+      "desc": "When you take the Aim action and attack with an Accurate two-handed weapon, targeting a location doesn't increase difficulty."
+    },
+    "solar_powered": {
+      "name": "Solar Powered",
+      "desc": "For every hour you spend in direct sunlight, you heal 1 radiation damage."
+    },
+    "steady_aim": {
+      "name": "Steady Aim",
+      "desc": "When you take the Aim action, you may re-roll 2d20 on the first attack, or re-roll 1d20 on all attacks this turn."
+    },
+    "strong_back": {
+      "name": "Strong Back",
+      "desc": "Your maximum carry weight is increased by +25 lbs. per rank."
+    },
+    "tag": {
+      "name": "Tag!",
+      "desc": "Select one additional Tag skill. Increase its rank by 2 (max 6), allowing you to roll criticals on that skill."
+    },
+    "terrifying_presence": {
+      "name": "Terrifying Presence",
+      "desc": "Rank 1: Re-roll 1d20 when threatening. Rank 2: Use an action to force an enemy to move away on a successful test."
+    },
+    "toughness": {
+      "name": "Toughness",
+      "desc": "Your physical Damage Resistance to all hit locations increases by +1 per rank in this perk."
+    }
   },
   "equipmentPacks": {
     "title": "STARTING EQUIPMENT",
     "select": "-- Select Equipment Pack --",
-    "bos_initiate": { "name": "Brotherhood of Steel Initiate", "items": "• Brotherhood fatigues and hood\n• Combat knife\n• Laser pistol (10+5 shots) OR 10mm pistol (10+5 rounds)\n• Brotherhood holotags" },
-    "bos_scribe": { "name": "Brotherhood of Steel Scribe", "items": "• Field Scribe's armor and hat\n• Combat knife\n• Laser pistol (6+3 shots) OR 10mm pistol (6+3 rounds)\n• Brotherhood holotags" },
-    "miss_nanny": { "name": "Miss Nanny", "items": "• 10mm auto pistol arm, buzz-saw arm, laser emitter arm\n• Mister Gutsy plating\n• Recon sensors mod\n• 10 caps" },
-    "mister_farmhand": { "name": "Mister Farmhand", "items": "• Pincer arm, buzz-saw arm, laser emitter arm\n• Standard plating\n• Bag of fertilizer, 2 mutfruits\n• 25 caps" },
-    "mister_gutsy": { "name": "Mister Gutsy", "items": "• Pincer arm, flamer arm, and one arm of choice\n• Standard plating\n• Behavioral analysis mod, Hazard detection mod\n• 10 caps" },
-    "mister_handy_pack": { "name": "Mister Handy (Butler)", "items": "• Pincer arm, flamer arm, buzz-saw arm\n• Standard plating\n• Robot repair kit, Integral boiler mod\n• 10 caps" },
-    "nurse_handy": { "name": "Nurse Handy", "items": "• Pincer arm or buzz-saw arm, buzz-saw arm, one arm of choice\n• Standard plating\n• Stimpak, Diagnosis mod\n• 10 caps" },
-    "brute": { "name": "Brute", "items": "• Raider armor torso, + 1 arm or leg\n• Pipe rifle (6+3 rounds .38)\n• Baseball bat or machete\n• Personal trinket, 5 caps" },
-    "skirmisher": { "name": "Skirmisher", "items": "• Raider armor torso, + 1 arm or leg\n• Heavy bolt-action pipe rifle (8+4 rounds .308)\n• Board\n• Personal trinket, 5 caps" },
-    "vault_tec_resident": { "name": "Vault-Tec Resident", "items": "• Vault jumpsuit\n• Vault-Tec canteen (1 purified water)\n• Pip-Boy, Switchblade\n• 10mm pistol (6+3 rounds)\n• 2 stimpaks, 10 caps" },
-    "vault_tec_security": { "name": "Vault-Tec Security", "items": "• Vault jumpsuit, Security armor and helmet\n• Vault-Tec canteen (1 purified water)\n• Pip-Boy, Baton\n• 10mm pistol (8+4 rounds)\n• 1 stimpak" },
-    "mercenary": { "name": "Mercenary", "items": "• Tough clothing\n• Leather armor chest + 1 arm and 1 leg\n• Machete, baseball bat, or tire iron\n• Ranged weapon (10mm, .44, hunting rifle, or bolt-action pipe)\n• Ammo (10+5 rounds)\n• Job note (50 caps), 15 caps" },
-    "raider": { "name": "Raider", "items": "• Harness\n• Raider armor chest + 1 arm\n• Lead pipe, pool cue, or tire iron\n• Pipe gun (10+5 rounds .38)\n• 1 dose Jet or RadAway\n• Molotov or Stimpak, 15 caps" },
-    "settler": { "name": "Settler", "items": "• Tough clothing\n• Switchblade, pipe wrench, rolling pin, or knuckles\n• Pipe gun (6+3 rounds .38)\n• 2 rolls on random food table\n• Personal trinket, 45 caps" },
-    "trader": { "name": "Trader", "items": "• Tough clothing\n• Leather armor chest + 1 arm and 1 leg\n• Pipe gun (8+4 rounds .38)\n• Personal trinket, Pack brahmin\n• Random Wares (Ammo, Chem, Oddities tables)\n• 50 caps" },
-    "wanderer": { "name": "Wanderer", "items": "• Drifter outfit\n• Switchblade, pipe wrench, rolling pin, or knuckles\n• Pipe gun (8+4 rounds .38)\n• 1 dose Jet or RadAway\n• Personal trinket, 30 caps" }
+    "bos_initiate": {
+      "name": "Brotherhood of Steel Initiate",
+      "items": "• Brotherhood fatigues and hood\n• Combat knife\n• Laser pistol (10+5 shots) OR 10mm pistol (10+5 rounds)\n• Brotherhood holotags"
+    },
+    "bos_scribe": {
+      "name": "Brotherhood of Steel Scribe",
+      "items": "• Field Scribe's armor and hat\n• Combat knife\n• Laser pistol (6+3 shots) OR 10mm pistol (6+3 rounds)\n• Brotherhood holotags"
+    },
+    "miss_nanny": {
+      "name": "Miss Nanny",
+      "items": "• 10mm auto pistol arm, buzz-saw arm, laser emitter arm\n• Mister Gutsy plating\n• Recon sensors mod\n• 10 caps"
+    },
+    "mister_farmhand": {
+      "name": "Mister Farmhand",
+      "items": "• Pincer arm, buzz-saw arm, laser emitter arm\n• Standard plating\n• Bag of fertilizer, 2 mutfruits\n• 25 caps"
+    },
+    "mister_gutsy": {
+      "name": "Mister Gutsy",
+      "items": "• Pincer arm, flamer arm, and one arm of choice\n• Standard plating\n• Behavioral analysis mod, Hazard detection mod\n• 10 caps"
+    },
+    "mister_handy_pack": {
+      "name": "Mister Handy (Butler)",
+      "items": "• Pincer arm, flamer arm, buzz-saw arm\n• Standard plating\n• Robot repair kit, Integral boiler mod\n• 10 caps"
+    },
+    "nurse_handy": {
+      "name": "Nurse Handy",
+      "items": "• Pincer arm or buzz-saw arm, buzz-saw arm, one arm of choice\n• Standard plating\n• Stimpak, Diagnosis mod\n• 10 caps"
+    },
+    "brute": {
+      "name": "Brute",
+      "items": "• Raider armor torso, + 1 arm or leg\n• Pipe rifle (6+3 rounds .38)\n• Baseball bat or machete\n• Personal trinket, 5 caps"
+    },
+    "skirmisher": {
+      "name": "Skirmisher",
+      "items": "• Raider armor torso, + 1 arm or leg\n• Heavy bolt-action pipe rifle (8+4 rounds .308)\n• Board\n• Personal trinket, 5 caps"
+    },
+    "vault_tec_resident": {
+      "name": "Vault-Tec Resident",
+      "items": "• Vault jumpsuit\n• Vault-Tec canteen (1 purified water)\n• Pip-Boy, Switchblade\n• 10mm pistol (6+3 rounds)\n• 2 stimpaks, 10 caps"
+    },
+    "vault_tec_security": {
+      "name": "Vault-Tec Security",
+      "items": "• Vault jumpsuit, Security armor and helmet\n• Vault-Tec canteen (1 purified water)\n• Pip-Boy, Baton\n• 10mm pistol (8+4 rounds)\n• 1 stimpak"
+    },
+    "mercenary": {
+      "name": "Mercenary",
+      "items": "• Tough clothing\n• Leather armor chest + 1 arm and 1 leg\n• Machete, baseball bat, or tire iron\n• Ranged weapon (10mm, .44, hunting rifle, or bolt-action pipe)\n• Ammo (10+5 rounds)\n• Job note (50 caps), 15 caps"
+    },
+    "raider": {
+      "name": "Raider",
+      "items": "• Harness\n• Raider armor chest + 1 arm\n• Lead pipe, pool cue, or tire iron\n• Pipe gun (10+5 rounds .38)\n• 1 dose Jet or RadAway\n• Molotov or Stimpak, 15 caps"
+    },
+    "settler": {
+      "name": "Settler",
+      "items": "• Tough clothing\n• Switchblade, pipe wrench, rolling pin, or knuckles\n• Pipe gun (6+3 rounds .38)\n• 2 rolls on random food table\n• Personal trinket, 45 caps"
+    },
+    "trader": {
+      "name": "Trader",
+      "items": "• Tough clothing\n• Leather armor chest + 1 arm and 1 leg\n• Pipe gun (8+4 rounds .38)\n• Personal trinket, Pack brahmin\n• Random Wares (Ammo, Chem, Oddities tables)\n• 50 caps"
+    },
+    "wanderer": {
+      "name": "Wanderer",
+      "items": "• Drifter outfit\n• Switchblade, pipe wrench, rolling pin, or knuckles\n• Pipe gun (8+4 rounds .38)\n• 1 dose Jet or RadAway\n• Personal trinket, 30 caps"
+    }
   }
 }
