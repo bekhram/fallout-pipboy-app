@@ -2,6 +2,7 @@ import {
   getCharacterEffectModifiers,
   applyEffectModifiersToDerived,
 } from "./effects.js";
+import { ORIGINS } from "../components/data/origins.js"; 
 
 export function toNumber(value, fallback = 0) {
   const num = Number(value);
@@ -31,12 +32,45 @@ export function getDerivedStats(form) {
   const luck = toNumber(form.special?.L, 0);
   const level = Math.max(1, toNumber(form.level, 1));
 
+  const originData = form.origin ? ORIGINS[form.origin] : null;
+
   const calculatedDefense = agility >= 9 ? 2 : 1;
   const calculatedInitiative = perception + agility;
-  const calculatedMd = strength >= 11 ? 3 : strength >= 9 ? 2 : 1;
-  const calculatedLuckPoints = luck;
-  const calculatedMaxHp = Math.max(1, level - 1 + endurance + luck);
-  const calculatedCarryWeight = 150 + strength * 10;
+
+// Расчет базового урона в ближнем бою (MD) по правилам Fallout 2d20
+  let calculatedMd = 0;
+  if (strength >= 11) {
+    calculatedMd = 3;
+  } else if (strength >= 9) {
+    calculatedMd = 2;
+  } else if (strength >= 7) {
+    calculatedMd = 1;
+  }
+  
+  // Трейт Heavy Handed дает +1 к урону
+  if (form.originTraits?.includes("heavy_handed")) {
+    calculatedMd += 1;
+  }
+
+  // Расчет очков удачи (Gifted отнимает 1 очко)
+  let calculatedLuckPoints = luck;
+  if (form.originTraits?.includes("gifted")) {
+    calculatedLuckPoints = Math.max(0, luck - 1);
+  }
+
+  // Расчет HP с учетом возможных модификаторов из происхождения
+  let calculatedMaxHp = Math.max(1, level - 1 + endurance + luck);
+  if (originData?.maxHpModifier) {
+    calculatedMaxHp += originData.maxHpModifier;
+  }
+
+  // Расчет веса (Учитываем Мистера Помощника и трейт Small Frame)
+  let calculatedCarryWeight = 150 + strength * 10;
+  if (form.origin === "mister_handy") {
+    calculatedCarryWeight = 150;
+  } else if (form.originTraits?.includes("small_frame")) {
+    calculatedCarryWeight = 150 + strength * 5;
+  }
 
   const baseDerived = {
     defense:
@@ -112,6 +146,9 @@ export function getDerivedStats(form) {
     activeStatuses: effectMods.activeStatuses,
     activeAddictions: effectMods.activeAddictions,
     activeEffectNotes: effectMods.notes,
+    
+    // Передаем массив иммунитетов в финальный объект derived
+    immunities: originData?.immunities || [], 
   };
 }
 
@@ -162,6 +199,11 @@ export function getTotalResistanceForPart({
   damageType = "physical",
   derived,
 }) {
+  // Если у персонажа есть иммунитет к этому типу урона, возвращаем огромное число
+  if (derived?.immunities?.includes(damageType)) {
+    return 9999; 
+  }
+
   const baseArmor = getBaseArmorForPart(armor, part, damageType);
   const effectBonus = getEffectResistBonusByType(derived, damageType);
   return Math.max(0, baseArmor + effectBonus);
@@ -217,6 +259,18 @@ export function calculateFinalIncomingDamage({
   derived,
 }) {
   const safeRawDamage = Math.max(0, toNumber(rawDamage, 0));
+
+  // Если есть иммунитет, обнуляем финальный урон
+  if (derived?.immunities?.includes(damageType)) {
+    return {
+      rawDamage: safeRawDamage,
+      incomingModifier: 0,
+      modifiedIncoming: 0,
+      resistance: 9999,
+      finalDamage: 0,
+    };
+  }
+
   const incomingModifier = getIncomingDamageModifier(derived, damageType);
   const modifiedIncoming = Math.max(0, safeRawDamage + incomingModifier);
 

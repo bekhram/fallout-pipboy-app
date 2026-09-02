@@ -16,8 +16,25 @@ export default function InventoryEditor({
   setDraft,
   onSave,
   onCancel,
+  globalAmmo, // <--- ОТРИМУЄМО БАЗУ НАБОЇВ
 }) {
   const { t } = useTranslation();
+
+  // Функція автозаповнення патронів з бази
+  const handleLoadAmmo = (indexStr) => {
+    const idx = parseInt(indexStr, 10);
+    const ammoItem = globalAmmo[idx];
+    if (!ammoItem) return;
+
+    setDraft((prev) => ({
+      ...prev,
+      name: ammoItem['Ammo Type'] || "",
+      category: "ammo", // Автоматично ставимо категорію "Набої"
+      cost: ammoItem['Cost'] || "0",
+      weight: ammoItem['Weight'] || "0",
+      // Quantity не чіпаємо, нехай гравець вписує сам, скільки знайшов
+    }));
+  };
 
   return (
     <section className="pip-panel pip-block">
@@ -25,6 +42,28 @@ export default function InventoryEditor({
         <h2>[ {t("inventory.itemEditor")} ]</h2>
         <span>{t("inventory.logEntry")}</span>
       </div>
+
+      {/* === ВИПАДАЮЧИЙ СПИСОК БАЗИ НАБОЇВ === */}
+      {globalAmmo && globalAmmo.length > 0 && (
+        <div style={{ marginBottom: "15px", padding: "0 10px" }}>
+          <label style={{ opacity: 0.8, display: "block", marginBottom: "5px" }}>
+             [ TERMINAL ARCHIVE: AMMO ]
+          </label>
+          <select
+            className="pip-input"
+            onChange={(e) => handleLoadAmmo(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>-- Select ammo to autoload --</option>
+            {globalAmmo.map((ammo, idx) => (
+              <option key={idx} value={idx}>
+                {ammo['Ammo Type']} (Cost: {ammo['Cost']}¢, Wt: {ammo['Weight']})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {/* ======================================= */}
 
       <div className="pip-form-grid">
         <input

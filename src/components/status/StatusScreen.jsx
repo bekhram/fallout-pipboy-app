@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import HpPanel from "./HpPanel.jsx";
 import VitalsPanel from "./VitalsPanel.jsx";
 import InjuryPanel from "./InjuryPanel.jsx";
 import { useTranslation } from "react-i18next";
+import OriginSelectionModal from "../shared/OriginSelectionModal.jsx";
+import { ORIGINS } from "../data/origins.js";
 
 function formatSigned(value) {
   const num = Number(value) || 0;
@@ -19,6 +21,7 @@ export default function StatusScreen({
   onPickPortrait,
   onRemovePortrait,
   onTopLevelChange,
+  onChangeOrigin, // <-- Добавлен новый пропс
   onStatusToggle,
   onInjuryToggle,
   hpMax,
@@ -32,6 +35,7 @@ export default function StatusScreen({
   onOpenDerived,
 }) {
   const { t } = useTranslation();
+  const [isOriginModalOpen, setIsOriginModalOpen] = useState(false);
 
   const survivalConditions = [
     Number(form.satiety || 0) === 0
@@ -66,6 +70,22 @@ export default function StatusScreen({
   const effectDerivedBonuses = derived?.effectDerivedBonuses || {};
   const combatModifiers = derived?.combatModifiers || {};
   const effectBadges = [];
+
+if (derived?.immunities?.includes("radiation")) {
+    effectBadges.push({
+      key: "immune-rad",
+      tone: "positive", // Зеленый цвет
+      label: `☢ RADIATION IMMUNE`,
+    });
+  }
+
+  if (derived?.immunities?.includes("poison")) {
+    effectBadges.push({
+      key: "immune-poison",
+      tone: "positive",
+      label: `☠ POISON IMMUNE`,
+    });
+  }
 
   if (Number(effectDerivedBonuses.defenseBonus || 0) !== 0) {
     effectBadges.push({
@@ -250,11 +270,16 @@ export default function StatusScreen({
 
             <div>
               <label>{t("main.origin")}</label>
-              <input
-                value={form.origin}
-                onChange={(e) => onTopLevelChange("origin", e.target.value)}
-                className="pip-input"
-              />
+              <button
+                type="button"
+                className="pip-input" 
+                style={{ textAlign: 'left', cursor: 'pointer' }}
+                onClick={() => setIsOriginModalOpen(true)}
+              >
+                {form.origin && ORIGINS[form.origin] 
+                  ? t(ORIGINS[form.origin].translationKey) 
+                  : form.origin || t("characterCreation.selectOriginTitle")}
+              </button>
             </div>
 
             <div>
@@ -294,14 +319,23 @@ export default function StatusScreen({
         onHpIncrease={onHpIncrease}
       />
 
-<InjuryPanel
-  injuries={form.injuries}
-  statuses={form.statuses}
-  armor={armor}
-  derived={derived}
-  onToggle={onInjuryToggle}
-  survivalConditions={survivalConditions}
-/>
+      <InjuryPanel
+        injuries={form.injuries}
+        statuses={form.statuses}
+        armor={armor}
+        derived={derived}
+        onToggle={onInjuryToggle}
+        survivalConditions={survivalConditions}
+      />
+
+<OriginSelectionModal
+        open={isOriginModalOpen}
+        onSelectOrigin={(id, traits) => {
+          onChangeOrigin(id, traits, t); // <--- Добавили t
+          setIsOriginModalOpen(false);
+        }}
+        onCancel={() => setIsOriginModalOpen(false)}
+      />
     </div>
   );
 }

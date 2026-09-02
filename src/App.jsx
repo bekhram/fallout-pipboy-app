@@ -19,6 +19,7 @@ import GamesScreen from "./components/minigames/GamesScreen.jsx";
 import PwaInstallButton from "./components/shared/PwaInstallButton.jsx";
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
+import { parseCSV } from "./utils/csvParser.js"; 
 
 import {
   buildDefaultForm,
@@ -37,6 +38,7 @@ import {
 } from "./utils/characterMath.js";
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
+import { ORIGINS } from "./components/data/origins.js";
 
 export default function App() {
   const [pendingAutoD6, setPendingAutoD6] = useState(null);
@@ -44,6 +46,36 @@ export default function App() {
   const [screen, setScreen] = useState("menu");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
+
+  // === ГЛОБАЛЬНАЯ БАЗА ДАННЫХ ===
+  const [globalWeapons, setGlobalWeapons] = useState([]);
+  const [globalAmmo, setGlobalAmmo] = useState([]);
+
+  useEffect(() => {
+    // Завантаження зброї
+    fetch('/weapons.csv')
+      .then(response => {
+        if (!response.ok) throw new Error("Network response was not ok");
+        return response.text();
+      })
+      .then(csvText => {
+        const parsed = parseCSV(csvText);
+        setGlobalWeapons(parsed);
+        console.log(`Loaded ${parsed.length} weapons from global database.`);
+      })
+      .catch(err => console.error("Error loading weapons.csv:", err));
+
+    // Завантаження бази набоїв
+    fetch('/Ammo.csv')
+      .then(res => res.text())
+      .then(csv => {
+        const parsed = parseCSV(csv);
+        setGlobalAmmo(parsed);
+        console.log(`Loaded ${parsed.length} ammo types from global database.`);
+      })
+      .catch(err => console.error("Error loading ammo db:", err));
+  }, []);
+  // =============================
 
   const openFreeDiceRoll = () => {
     setDiceRoll(null);
@@ -54,6 +86,33 @@ export default function App() {
     setPendingAutoD6(null);
     setDiceRoll(rollConfig);
     setIsDiceOpen(true);
+
+    console.log("Rolling:", rollConfig.type, "Weapon ammo:", rollConfig.weapon?.ammo);
+
+    // === АВТОМАТИЧНА ВИТРАТА НАБОЇВ (Виправлено type === "weapon") ===
+    if (rollConfig.type === "weapon" && rollConfig.weapon && rollConfig.weapon.ammo) {
+      const ammoType = rollConfig.weapon.ammo;
+      
+      setForm((prev) => {
+        const nextItems = [...prev.inventoryItems];
+        const ammoIndex = nextItems.findIndex(item => item.name === ammoType);
+        
+        if (ammoIndex !== -1) {
+          let currentQty = parseInt(nextItems[ammoIndex].quantity, 10) || 0;
+          if (currentQty > 0) {
+            nextItems[ammoIndex] = {
+              ...nextItems[ammoIndex],
+              quantity: String(currentQty - 1)
+            };
+            console.log(`Fired! -1 ${ammoType}. Remaining: ${currentQty - 1}`);
+          } else {
+            console.warn(`Click! Out of ${ammoType} ammo!`);
+          }
+        }
+        return { ...prev, inventoryItems: nextItems };
+      });
+    }
+    // ===================================
   };
 
   const closeDiceRoll = () => {
@@ -87,6 +146,7 @@ export default function App() {
     loadLastCharacterMeta,
     resetToNewCharacter,
     continueLastCharacter,
+    changeOrigin,
   } = useCharacterStorage(buildDefaultForm());
 
   const mapState = useMemo(
@@ -201,35 +261,44 @@ export default function App() {
 
   const clampNumberString = (value, min, max, fallback = "0") => {
     const raw = String(value ?? "").trim();
-
     if (raw === "") return fallback;
-
     const parsed = Number(raw);
     if (Number.isNaN(parsed)) return fallback;
-
     return String(Math.max(min, Math.min(max, parsed)));
   };
 
-  const updateSpecial = (key, value) =>
-    setForm((prev) => ({
-      ...prev,
-      special: {
-        ...prev.special,
-        [key]: clampNumberString(value, 0, 13),
-      },
-    }));
+ const updateSpecial = (key, value) =>
+    setForm((prev) => {
+      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;
+      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
+      const minAllowed = limits.min !== undefined ? limits.min : 1;
+      const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);
 
-  const updateSkill = (skillName, field, value) =>
-    setForm((prev) => ({
-      ...prev,
-      skills: {
-        ...prev.skills,
-        [skillName]: {
-          ...prev.skills[skillName],
-          [field]: field === "rank" ? clampNumberString(value, 0, 6) : value,
+      return {
+        ...prev,
+        special: {
+          ...prev.special,
+          [key]: clampNumberString(value, minAllowed, maxAllowed),
         },
-      },
-    }));
+      };
+    });
+
+const updateSkill = (skillName, field, value) =>
+    setForm((prev) => {
+      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;
+      const maxRank = currentOrigin?.skillRankLimit !== undefined ? currentOrigin.skillRankLimit : 6;
+
+      return {
+        ...prev,
+        skills: {
+          ...prev.skills,
+          [skillName]: {
+            ...prev.skills[skillName],
+            [field]: field === "rank" ? clampNumberString(value, 0, maxRank) : value,
+          },
+        },
+      };
+    });
 
   const updateStatus = (status, checked) =>
     setForm((prev) => ({
@@ -461,6 +530,7 @@ export default function App() {
             onPickPortrait={portrait.openFileDialog}
             onRemovePortrait={portrait.clearPortrait}
             onTopLevelChange={updateTopLevel}
+            onChangeOrigin={changeOrigin}
             onStatusToggle={(status) =>
               updateStatus(status, !form.statuses[status])
             }
@@ -510,6 +580,7 @@ export default function App() {
             onCancelEdit={() => setEditingWeaponIndex(null)}
             onRoll={openContextDiceRoll}
             form={form}
+            globalWeapons={globalWeapons}
           />
         );
         break;
@@ -533,6 +604,7 @@ export default function App() {
             onRemove={removeItem}
             onSaveEdit={saveEditItem}
             onCancelEdit={() => setEditingItemIndex(null)}
+            globalAmmo={globalAmmo}
           />
         );
         break;
@@ -560,6 +632,7 @@ export default function App() {
             onRemove={removePerk}
             onSaveEdit={saveEditPerk}
             onCancelEdit={() => setEditingPerkIndex(null)}
+            form={form} 
           />
         );
         break;
@@ -582,13 +655,14 @@ export default function App() {
         break;
 
       default:
-        content = (
+      content = (
           <DataScreen
             saveStatus={saveStatus}
             loadStatus={loadStatus}
             onExport={exportJson}
             onImportClick={handleImportClick}
             importInputRef={importInputRef}
+            database={{ weapons: globalWeapons, ammo: globalAmmo }}
           />
         );
     }
@@ -699,8 +773,31 @@ export default function App() {
     );
   };
 
-  const SkillsEditorModal = () => {
+const SkillsEditorModal = () => {
     if (!showSkillsEditor) return null;
+
+    const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
+    let totalTagsAllowed = currentOrigin ? (currentOrigin.tagSkillCount || 3) : 3;
+    
+    if (form.originTraits?.includes("educated")) {
+      totalTagsAllowed += 1;
+    }
+
+    const requiredRestricted = currentOrigin ? (currentOrigin.restrictedTagCount || 0) : 0;
+    const maxFreeTags = Math.max(0, totalTagsAllowed - requiredRestricted);
+    const restrictedList = currentOrigin ? (currentOrigin.restrictedTagList || []) : [];
+
+    let taggedFree = 0;
+    let totalSelected = 0;
+
+    Object.keys(form.skills || {}).forEach((skillName) => {
+      if (form.skills[skillName]?.tagged) {
+        totalSelected++;
+        if (!restrictedList.includes(skillName)) {
+          taggedFree++;
+        }
+      }
+    });
 
     return (
       <div className="pip-modal-overlay">
@@ -714,6 +811,15 @@ export default function App() {
             >
               ✕
             </button>
+          </div>
+
+          <div className="pip-logbox" style={{ marginBottom: "10px", fontSize: "0.8em" }}>
+             <div>Tag Skills: {totalSelected} / {totalTagsAllowed}</div>
+             {requiredRestricted > 0 && (
+               <div style={{ color: 'var(--pip-color-alert, #ffcc00)', marginTop: '4px' }}>
+                 * At least {requiredRestricted} must be from the marked list
+               </div>
+             )}
           </div>
 
           <div className="pip-skills-editor-list">
@@ -732,10 +838,30 @@ export default function App() {
                 (skill.tagged ? 2 : 0) +
                 Number(skill.bonus || 0);
 
+              const isInRestrictedList = restrictedList.includes(skillName);
+              
+              let isTagDisabled = false;
+              let disableReason = "";
+
+              if (!skill.tagged) {
+                if (totalSelected >= totalTagsAllowed) {
+                  isTagDisabled = true;
+                  disableReason = "Max Tag Skills reached";
+                } else if (!isInRestrictedList && taggedFree >= maxFreeTags) {
+                  isTagDisabled = true;
+                  disableReason = requiredRestricted > 0 
+                    ? `You must pick at least ${requiredRestricted} from the restricted list (*)` 
+                    : "Max skills reached";
+                }
+              }
+
               return (
-                <div key={skillName} className="pip-skill-editor-row">
+                <div key={skillName} className="pip-skill-editor-row" style={{ opacity: isTagDisabled && !skill.tagged ? 0.4 : 1 }}>
                   <div className="pip-skill-editor-name">
                     {t(SKILL_LABEL_KEYS?.[skillName] || skillName)}
+                    {isInRestrictedList && requiredRestricted > 0 && (
+                      <span style={{color: 'var(--pip-color-alert, #ffcc00)', marginLeft: '5px'}} title="Restricted List">*</span>
+                    )}
                   </div>
 
                   <div className="pip-skill-editor-fields">
@@ -774,6 +900,8 @@ export default function App() {
                         className={`pip-skill-tag-btn ${
                           skill.tagged ? "is-on" : ""
                         }`}
+                        disabled={isTagDisabled}
+                        title={disableReason}
                         onClick={() =>
                           updateSkill(skillName, "tagged", !skill.tagged)
                         }
@@ -810,6 +938,8 @@ export default function App() {
   const ConditionsModal = () => {
     if (!showConditions) return null;
 
+    const immunities = derived?.immunities || [];
+
     return (
       <div className="pip-modal-overlay">
         <div className="pip-modal">
@@ -823,6 +953,32 @@ export default function App() {
               ✕
             </button>
           </div>
+
+          {immunities.length > 0 && (
+            <div className="pip-logbox" style={{ marginBottom: "15px" }}>
+              <div style={{ opacity: 0.8, marginBottom: "8px", textTransform: "uppercase" }}>
+                [ Immunities ]
+              </div>
+              
+              {immunities.includes("radiation") && (
+                <div style={{ color: 'var(--pip-color-positive, #14ff00)', marginBottom: '6px' }}>
+                  <strong>☢ RADIATION IMMUNE</strong>
+                  <div style={{ fontSize: '0.85em', opacity: 0.9, marginTop: '2px' }}>
+                    You are completely immune to radiation damage and hazards.
+                  </div>
+                </div>
+              )}
+              
+              {immunities.includes("poison") && (
+                <div style={{ color: 'var(--pip-color-positive, #14ff00)' }}>
+                  <strong>☠ POISON IMMUNE</strong>
+                  <div style={{ fontSize: '0.85em', opacity: 0.9, marginTop: '2px' }}>
+                    You are completely immune to poison damage and toxic effects.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <StatusBadgeList
             statuses={form.statuses}

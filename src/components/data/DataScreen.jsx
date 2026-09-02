@@ -6,6 +6,8 @@ export default function DataScreen({
   loadStatus,
   onExport,
   onImportClick,
+  onCsvImportClick, // <-- Добавили новый пропс
+  database          // <-- Добавили пропс базы данных
 }) {
   const { t } = useTranslation();
 
@@ -25,7 +27,6 @@ export default function DataScreen({
           {t("dataPanel.exportJson")}
         </button>
 
-
         <button
           type="button"
           className="pip-btn"
@@ -33,11 +34,29 @@ export default function DataScreen({
         >
           {t("dataPanel.importJson")}
         </button>
+        
+        {/* Новая кнопка для загрузки базы */}
+        <button
+          type="button"
+          className="pip-btn"
+          onClick={onCsvImportClick}
+        >
+          Upload Equipment (CSV)
+        </button>
       </div>
 
       <div className="pip-logbox push-top">
         <div>{saveStatus || t("dataPanel.noRecentExport")}</div>
         <div>{loadStatus || t("dataPanel.noRecentImport")}</div>
+      </div>
+
+      {/* Новый блок со статусом базы данных */}
+      <div className="pip-logbox push-top">
+        <strong>[ TERMINAL DATABASE STATUS ]</strong>
+        <br />
+        <span style={{ opacity: 0.8 }}>
+          Weapons Loaded: {database?.weapons?.length || 0}
+        </span>
       </div>
     </section>
   );

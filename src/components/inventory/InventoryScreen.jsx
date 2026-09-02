@@ -31,6 +31,7 @@ export default function InventoryScreen({
   onRemove,
   onSaveEdit,
   onCancelEdit,
+  globalAmmo, // <--- ДОДАЛИ БАЗУ НАБОЇВ СЮДИ
 }) {
   const { t } = useTranslation();
   const [selectedIndices, setSelectedIndices] = useState([]);
@@ -241,6 +242,7 @@ export default function InventoryScreen({
           setDraft={setItemDraft}
           onSave={() => onSaveEdit(editingIndex)}
           onCancel={onCancelEdit}
+          globalAmmo={globalAmmo} // <--- ПЕРЕДАЄМО БАЗУ В РЕДАКТОР
         />
       )}
     </div>

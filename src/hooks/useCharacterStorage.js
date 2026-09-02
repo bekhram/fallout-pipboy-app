@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { ORIGINS, TRAITS_DICTIONARY } from "../components/data/origins.js";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
+import { parseCSV } from "../utils/csvParser.js";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 
@@ -15,11 +17,18 @@ export function useCharacterStorage(initialForm) {
   const [form, setForm] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return initialForm;
+      
+      // Инициализируем новые поля по умолчанию, если их нет
+      const baseForm = { origin: "", originTraits: [], tagged_skills: [], ...initialForm };
+      
+      if (!raw) return baseForm;
+      
       const parsed = JSON.parse(raw);
-      return parsed?.data || initialForm;
+      const loadedData = parsed?.data || {};
+      
+      return { ...baseForm, ...loadedData };
     } catch {
-      return initialForm;
+      return { origin: "", originTraits: [], tagged_skills: [], ...initialForm };
     }
   });
 
@@ -96,6 +105,29 @@ export function useCharacterStorage(initialForm) {
     }
   };
 
+  const importEquipmentCsv = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target.result;
+      const parsedData = parseCSV(text);
+
+      setForm((prev) => ({
+        ...prev,
+        // Создаем или обновляем базу оружия в стейте персонажа
+        equipmentDatabase: {
+          ...(prev.equipmentDatabase || {}),
+          weapons: parsedData,
+        }
+      }));
+      alert(`Успешно загружено ${parsedData.length} видов оружия из CSV!`);
+    };
+    reader.readAsText(file);
+    event.target.value = null; // Сбрасываем инпут
+  };
+
   const importJson = (event, fallbackFactory) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -156,6 +188,40 @@ export function useCharacterStorage(initialForm) {
     }
   };
 
+// Принимаем третий параметр: t
+  const changeOrigin = (newOriginId, traits = [], t) => {
+    setForm((prev) => {
+      const filteredPerks = (prev.perksAndTraits || []).filter((p) => !p.isOriginTrait);
+      const originData = ORIGINS[newOriginId];
+      const newOriginTraits = [];
+
+      const addTrait = (traitKey) => {
+        const dictKey = TRAITS_DICTIONARY[traitKey];
+        if (dictKey && t) {
+          newOriginTraits.push({
+            name: t(`traitsInfo.${dictKey}.name`),
+            rank: "1",
+            description: t(`traitsInfo.${dictKey}.desc`),
+            isOriginTrait: true,
+          });
+        }
+      };
+
+      if (originData) {
+        (originData.traits || []).forEach(addTrait);
+        traits.forEach(addTrait);
+      }
+
+      return {
+        ...prev,
+        origin: newOriginId,
+        originTraits: traits,
+        tagged_skills: [], 
+        perksAndTraits: [...filteredPerks, ...newOriginTraits], 
+      };
+    });
+  };
+
   return {
     form,
     setForm,
@@ -167,5 +233,6 @@ export function useCharacterStorage(initialForm) {
     loadLastCharacterMeta,
     resetToNewCharacter,
     continueLastCharacter,
+    changeOrigin, 
   };
 }

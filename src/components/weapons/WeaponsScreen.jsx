@@ -2,7 +2,6 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import WeaponCard from "./WeaponCard.jsx";
 import WeaponEditor from "./WeaponEditor.jsx";
-import { createWeaponRoll } from "../../utils/dice";
 
 export default function WeaponsScreen({
   weapons,
@@ -16,10 +15,9 @@ export default function WeaponsScreen({
   onSaveEdit,
   onCancelEdit,
   onRoll,
+  globalWeapons // <-- 1. Приймаємо базу
 }) {
   const { t } = useTranslation();
-  
-  
 
   return (
     <div className="pip-screen-grid">
@@ -56,6 +54,7 @@ export default function WeaponsScreen({
           setDraft={setWeaponDraft}
           onSave={() => onSaveEdit(editingIndex)}
           onCancel={onCancelEdit}
+          globalWeapons={globalWeapons} // <-- 2. Передаємо базу в твій редактор
         />
       )}
     </div>

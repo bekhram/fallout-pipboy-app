@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import TrackedButton from "../shared/TrackedButton.jsx";
 
 export default function MenuScreen({
   hasCharacter,
@@ -18,21 +19,25 @@ export default function MenuScreen({
         <p className="pip-subtitle">{t("menuScreen.subtitle")}</p>
 
         <div className="pip-actions-inline push-top">
-          <button
+          {/* Заменили на TrackedButton */}
+          <TrackedButton
             type="button"
             className="pip-btn is-primary"
             onClick={onNewCharacter}
+            id="btn_new_character" // Добавили ID для большей точности в GTM
           >
             {t("menuScreen.newCharacter")}
-          </button>
+          </TrackedButton>
 
-          <button
+          {/* Заменили на TrackedButton */}
+          <TrackedButton
             type="button"
             className="pip-btn"
             onClick={onImportClick}
+            id="btn_import_json"
           >
             {t("menuScreen.importJson")}
-          </button>
+          </TrackedButton>
         </div>
       </section>
 
@@ -65,13 +70,15 @@ export default function MenuScreen({
             </div>
 
             <div className="pip-actions-inline push-top">
-              <button
+              {/* Заменили на TrackedButton */}
+              <TrackedButton
                 type="button"
                 className="pip-btn is-primary"
                 onClick={onContinue}
+                id="btn_continue_game"
               >
                 {t("menuScreen.continue")}
-              </button>
+              </TrackedButton>
             </div>
           </>
         ) : (

@@ -1,5 +1,55 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { PERKS_LIST } from "../data/perks";
+
+// Функция для проверки требований перка
+function getRequirementsWarnings(reqString, form) {
+  if (!reqString || reqString === "None") return [];
+  const warnings = [];
+  const parts = reqString.split(",").map((s) => s.trim());
+
+  const stats = {
+    STR: Number(form?.special?.S || 0),
+    PER: Number(form?.special?.P || 0),
+    END: Number(form?.special?.E || 0),
+    CHA: Number(form?.special?.C || 0),
+    INT: Number(form?.special?.I || 0),
+    AGI: Number(form?.special?.A || 0),
+    LCK: Number(form?.special?.L || 0),
+  };
+  const level = Number(form?.level || 1);
+  const isRobot = form?.origin === "mister_handy";
+
+  parts.forEach((part) => {
+    // Проверка уровня (например, "Level 2+")
+    const levelMatch = part.match(/Level\s*(\d+)\+/i);
+    if (levelMatch) {
+      const reqLevel = parseInt(levelMatch[1], 10);
+      if (level < reqLevel) {
+        warnings.push(`Requires Level ${reqLevel}+ (Current: ${level})`);
+      }
+      return;
+    }
+
+    // Проверка характеристик (например, "STR 6")
+    const statMatch = part.match(/(STR|PER|END|CHA|INT|AGI|LCK)\s*(\d+)/i);
+    if (statMatch) {
+      const statName = statMatch[1].toUpperCase();
+      const reqVal = parseInt(statMatch[2], 10);
+      if (stats[statName] < reqVal) {
+        warnings.push(`Requires ${statName} ${reqVal} (Current: ${stats[statName]})`);
+      }
+      return;
+    }
+
+    // Специфичные проверки
+    if (part.toLowerCase() === "not a robot" && isRobot) {
+      warnings.push(`Cannot be a robot`);
+    }
+  });
+
+  return warnings;
+}
 
 export default function PerksScreen({
   perks,
@@ -12,122 +62,189 @@ export default function PerksScreen({
   onRemove,
   onSaveEdit,
   onCancelEdit,
+  form, // <--- Получаем данные персонажа
 }) {
   const { t } = useTranslation();
+  const safeList = Array.isArray(perks) ? perks : [];
+  const isEditing = editingIndex !== null;
+
+  const handleChange = (field, value) => {
+    setPerkDraft((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSelectPerk = (e) => {
+    const perkId = e.target.value;
+    if (!perkId) return;
+
+    const perkData = PERKS_LIST.find((p) => p.id === perkId);
+    if (perkData) {
+      setPerkDraft((prev) => ({
+        ...prev,
+        name: t(`perksInfo.${perkId}.name`),
+        description: t(`perksInfo.${perkId}.desc`) + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
+      }));
+    }
+  };
+
+  // Ищем выбранный перк в базе по имени, чтобы динамически проверять требования
+  const matchedPerk = PERKS_LIST.find(
+    (p) => t(`perksInfo.${p.id}.name`) === perkDraft?.name
+  );
+  
+  // Получаем список предупреждений
+  const warnings = matchedPerk ? getRequirementsWarnings(matchedPerk.requirements, form) : [];
 
   return (
-    <div className="pip-screen-grid">
-      <section className="pip-panel pip-block">
-        <div className="pip-head">
-          <h2>[ {t("perksPanel.title")} ]</h2>
-          <button
-            type="button"
-            className="pip-btn is-primary"
-            onClick={onAdd}
-          >
-          {t("common.add")}
+    <section className="pip-panel pip-block">
+      <div className="pip-head">
+        <h2>[ {t("perksPanel.title")} ]</h2>
+        {!isEditing && (
+          <button type="button" className="pip-action-btn" onClick={onAdd}>
+            {t("common.add")}
           </button>
+        )}
+      </div>
+
+      <div className="pip-perks-layout">
+        <div className="pip-perks-list">
+          {safeList.map((item, index) => {
+            const currentlyEditing = editingIndex === index;
+            return (
+              <div
+                key={item.id || index}
+                className={`pip-perk-card ${
+                  currentlyEditing ? "is-editing" : ""
+                } ${item.isOriginTrait ? "is-origin" : ""}`}
+              >
+                  <div className="pip-perk-header" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
+                  <strong style={{ fontSize: '1.1em' }}>
+                    {item.name || t("perksPanel.unnamedPerk")}
+                  </strong>
+                  {item.rank && (
+                    <span className="pip-perk-rank" style={{ opacity: 0.7, fontSize: '0.9em' }}>
+                      | {t("perksPanel.rank")} {item.rank}
+                    </span>
+                  )}
+                </div>
+                <div className="pip-perk-desc">
+                  {item.description || t("perksPanel.noDescription")}
+                </div>
+
+                {!item.isOriginTrait && !isEditing && (
+                  <div className="pip-perk-actions">
+                    <button
+                      type="button"
+                      className="pip-btn"
+                      onClick={() => onEdit(index)}
+                    >
+                      {t("common.edit")}
+                    </button>
+                    <button
+                      type="button"
+                      className="pip-btn"
+                      onClick={() => onCopy(index)}
+                    >
+                      {t("common.copy")}
+                    </button>
+                    <button
+                      type="button"
+                      className="pip-btn is-danger"
+                      onClick={() => onRemove(index)}
+                    >
+                      {t("common.delete")}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {safeList.length === 0 && (
+            <div className="pip-empty-state">No perks or traits found.</div>
+          )}
         </div>
 
-        <div className="pip-stack">
-          {perks.map((perk, index) => (
-            <article
-              key={`${perk.name || "perk"}-${index}`}
-              className="pip-panel pip-item-card pip-floating-actions-card"
-            >
-              <div className="pip-floating-card-actions">
-                <button
-                  type="button"
-                  className="pip-btn"
-                  onClick={() => onEdit(index)}
-                >
-                  {t("common.edit")}
-                </button>
+        {isEditing && (
+          <div className="pip-perk-editor">
+            <div className="pip-head">
+              <h3>[ {t("perksPanel.perkEditor")} ]</h3>
+              <span className="pip-cursor">{t("perksPanel.entryMode")}</span>
+            </div>
 
-                <button
-                  type="button"
-                  className="pip-btn"
-                  onClick={() => onCopy(index)}
-                >
-                  {t("common.copy")}
-                </button>
-
-                <button
-                  type="button"
-                  className="pip-btn is-danger"
-                  onClick={() => onRemove(index)}
-                >
-                  {t("common.delete")}
-                </button>
+            <div className="pip-form-grid">
+              
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label>Select from Database</label>
+                <select className="pip-input" onChange={handleSelectPerk} defaultValue="">
+                  <option value="" disabled>-- Choose a Perk --</option>
+                  {PERKS_LIST.map(perk => (
+                    <option key={perk.id} value={perk.id}>
+                      {t(`perksInfo.${perk.id}.name`)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="pip-floating-card-body">
-                <h3>{perk.name || t("perksPanel.unnamedPerk")}</h3>
-                <p>
-                  {t("perksPanel.rank")} {perk.rank || "1"}
-                </p>
-                <p>{perk.description || t("perksPanel.noDescription")}</p>
+              {/* БЛОК ПРЕДУПРЕЖДЕНИЙ */}
+              {warnings.length > 0 && (
+                <div style={{ 
+                  gridColumn: "1 / -1", 
+                  border: "1px solid var(--pip-color-alert, #ffcc00)", 
+                  padding: "10px", 
+                  color: "var(--pip-color-alert, #ffcc00)",
+                  backgroundColor: "rgba(255, 204, 0, 0.05)"
+                }}>
+                  <strong style={{ display: "block", marginBottom: "5px" }}>[ WARNING: REQUIREMENTS NOT MET ]</strong>
+                  <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.9em" }}>
+                    {warnings.map((w, i) => <li key={i}>{w}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <label>{t("perksPanel.perkName")}</label>
+                <input
+                  className="pip-input"
+                  value={perkDraft.name || ""}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                />
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
 
-      {editingIndex !== null && (
-        <section className="pip-panel pip-block">
-          <div className="pip-head">
-            <h2>[ {t("perksPanel.perkEditor")} ]</h2>
-            <span>{t("perksPanel.entryMode")}</span>
+              <div>
+                <label>{t("perksPanel.rank")}</label>
+                <input
+                  className="pip-input"
+                  value={perkDraft.rank || ""}
+                  onChange={(e) => handleChange("rank", e.target.value)}
+                  inputMode="numeric"
+                />
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label>{t("perksPanel.description")}</label>
+                <textarea
+                  className="pip-input"
+                  rows={6}
+                  value={perkDraft.description || ""}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                />
+              </div>
+
+              <div className="pip-actions-inline push-top">
+                <button
+                  type="button"
+                  className="pip-btn is-primary"
+                  onClick={() => onSaveEdit(editingIndex)}
+                >
+                  {t("common.save")}
+                </button>
+                <button type="button" className="pip-btn" onClick={onCancelEdit}>
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </div>
           </div>
-
-          <div className="pip-form-grid">
-            <input
-              className="pip-input"
-              placeholder={t("perksPanel.perkName")}
-              value={perkDraft.name}
-              onChange={(e) =>
-                setPerkDraft({ ...perkDraft, name: e.target.value })
-              }
-            />
-
-            <input
-              className="pip-input"
-              placeholder={t("perksPanel.rank")}
-              value={perkDraft.rank}
-              onChange={(e) =>
-                setPerkDraft({ ...perkDraft, rank: e.target.value })
-              }
-            />
-
-            <textarea
-              className="pip-textarea"
-              placeholder={t("perksPanel.description")}
-              value={perkDraft.description}
-              onChange={(e) =>
-                setPerkDraft({ ...perkDraft, description: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="pip-actions-inline push-top">
-            <button
-              type="button"
-              className="pip-btn is-primary"
-              onClick={() => onSaveEdit(editingIndex)}
-            >
-              {t("common.save")}
-            </button>
-
-            <button
-              type="button"
-              className="pip-btn"
-              onClick={onCancelEdit}
-            >
-              {t("common.cancel")}
-            </button>
-          </div>
-        </section>
-      )}
-    </div>
+        )}
+      </div>
+    </section>
   );
 }

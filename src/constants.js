@@ -920,6 +920,29 @@ export const WEAPON_RANGE_OPTIONS = [
   "Extreme (X)",
 ];
 
+export const WEAPON_AMMO_OPTIONS = [
+  ".38",
+  "10mm",
+  ".308",
+  "Flare",
+  "Shotgun Shell",
+  ".45",
+  "Flamer Fuel",
+  "Fusion Cell",
+  "Gamma Round",
+  "Railway Spike",
+  "Syringer Ammo",
+  ".44 Magnum",
+  ".50",
+  "5.56mm",
+  "5mm",
+  "Fusion Core",
+  "Missile",
+  "Plasma Cartridge",
+  "2mm EC",
+  "Mini-Nuke"
+];
+
 export function createEmptyWeapon() {
   return {
     name: "",
@@ -1016,9 +1039,10 @@ ARMOR_PARTS.forEach((part) => {
     statuses[status.key] = false;
   });
 
-  return {
+return {
     characterName: "",
     origin: "",
+    originTraits: [], 
     level: "1",
     xp: "0",
     satiety: "3",

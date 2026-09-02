@@ -6,6 +6,8 @@ import {
   SKILL_ATTRIBUTE_OPTIONS,
   SKILL_LABEL_KEYS,
 } from "../../constants.js";
+// Импортируем данные происхождений
+import { ORIGINS } from "../data/origins.js";
 
 export default function SpecialScreen({
   form,
@@ -18,6 +20,10 @@ export default function SpecialScreen({
   onRoll,
 }) {
   const { t } = useTranslation();
+
+  // Достаем лимиты для текущего происхождения
+  const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
+  const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
 
   const handleSkillRoll = (skillName, skill, testValue) => {
     if (!onRoll) return;
@@ -42,16 +48,26 @@ export default function SpecialScreen({
         </div>
 
         <div className="pip-special-grid">
-          {SPECIAL_KEYS.map((key) => (
-            <div className="pip-special-card" key={key}>
-              <div className="pip-special-letter">{key}</div>
-              <input
-                className="pip-special-input"
-                value={form.special[key]}
-                onChange={(e) => onSpecialChange(key, e.target.value)}
-              />
-            </div>
-          ))}
+          {SPECIAL_KEYS.map((key) => {
+            // Вычисляем минимальное и максимальное значение для конкретной характеристики
+            const minAllowed = limits.min !== undefined ? limits.min : 1;
+            const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);
+
+            return (
+              <div className="pip-special-card" key={key}>
+                <div className="pip-special-letter">{key}</div>
+                <input
+                  className="pip-special-input"
+                  value={form.special[key]}
+                  onChange={(e) => onSpecialChange(key, e.target.value)}
+                />
+                {/* Выводим лимиты под полем ввода */}
+                <div style={{ fontSize: '0.65em', opacity: 0.7, marginTop: '4px', textAlign: 'center', letterSpacing: '1px' }}>
+                  [{minAllowed}-{maxAllowed}]
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 

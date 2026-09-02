@@ -8,9 +8,10 @@ import {
   WEAPON_EFFECT_OPTIONS,
   WEAPON_QUALITY_OPTIONS,
   SKILL_LABEL_KEYS,
+  WEAPON_AMMO_OPTIONS, // Наш список набоїв
 } from "../../constants.js";
 
-export default function WeaponEditor({ draft, setDraft, onSave, onCancel }) {
+export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
   const { t } = useTranslation();
 
   const toggleQuality = (value) => {
@@ -36,12 +37,90 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel }) {
     return key ? t(key) : skill;
   };
 
+  // Оновлення конкретного слота модифікації
+  const handleModChange = (slot, value) => {
+    setDraft((prev) => ({
+      ...prev,
+      mods: {
+        ...(prev.mods || {}),
+        [slot]: value,
+      },
+    }));
+  };
+
+  // --- ФУНКЦІЇ АВТОЗАПОВНЕННЯ З CSV ---
+  const normalizeKey = (str) => {
+    if (!str) return "";
+    return String(str).toLowerCase().trim().replace(/[\s-]/g, '_');
+  };
+
+  const parseTags = (str) => {
+    if (!str || typeof str !== 'string') return [];
+    return str.split(',').map(s => normalizeKey(s)).filter(Boolean);
+  };
+
+  const mapSkill = (csvSkill) => {
+    const s = normalizeKey(csvSkill);
+    if (s.includes('small')) return 'small_guns';
+    if (s.includes('energy')) return 'energy_weapons';
+    if (s.includes('big')) return 'big_guns';
+    if (s.includes('melee')) return 'melee';
+    if (s.includes('unarmed')) return 'unarmed';
+    if (s.includes('explosive')) return 'explosives';
+    if (s.includes('throw')) return 'throw';
+    return s || "small_guns";
+  };
+
+  const handleLoadFromDb = (indexStr) => {
+    const idx = parseInt(indexStr, 10);
+    const w = globalWeapons[idx];
+    if (!w) return;
+
+    setDraft((prev) => ({
+      ...prev,
+      name: w.name || "",
+      damage: w['Damage Rating'] || "",
+      rate: w['Rate of Fire'] || "",
+      ammo: w['Ammo'] || "", 
+      skill: mapSkill(w['Weapon type']),
+      type: normalizeKey(w['Damage type']) || "physical",
+      range: String(w['Range'] || "").trim().toUpperCase(),
+      effects: parseTags(w.Effects),
+      qualities: parseTags(w.Qualities),
+      customEffect: w.Effects || "", 
+      qualitiesCustom: w.Qualities || "",
+    }));
+  };
+  // ------------------------------------
+
   return (
     <section className="pip-panel pip-block">
       <div className="pip-head">
         <h2>[ {t("weapons.editorTitle")} ]</h2>
         <span>{t("weapons.configMode")}</span>
       </div>
+
+      {/* === ЗАВАНТАЖЕННЯ З CSV === */}
+      {globalWeapons && globalWeapons.length > 0 && (
+        <div style={{ marginBottom: "15px", padding: "0 10px" }}>
+          <label style={{ opacity: 0.8, display: "block", marginBottom: "5px" }}>
+             [ TERMINAL ARCHIVE: WEAPONS ]
+          </label>
+          <select
+            className="pip-input"
+            onChange={(e) => handleLoadFromDb(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>-- Select to autoload --</option>
+            {globalWeapons.map((gw, idx) => (
+              <option key={idx} value={idx}>
+                {gw.name} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      {/* ========================== */}
 
       <div className="pip-form-grid">
         <input
@@ -113,13 +192,67 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel }) {
           onChange={(e) => setDraft({ ...draft, rate: e.target.value })}
         />
 
-        <input
+        <select
           className="pip-input"
-          placeholder={t("weapons.ammo")}
           value={draft.ammo || ""}
           onChange={(e) => setDraft({ ...draft, ammo: e.target.value })}
-        />
+        >
+          <option value="" disabled>-- {t("weapons.ammo")} --</option>
+          {WEAPON_AMMO_OPTIONS.map((ammoType) => (
+            <option key={ammoType} value={ammoType}>
+              {ammoType}
+            </option>
+          ))}
+        </select>
       </div>
+
+      {/* === БЛОК МОДИФІКАЦІЙ (WORKBENCH) === */}
+      <div className="push-top">
+        <details className="pip-collapsible pip-collapsible--field" open>
+          <summary className="pip-collapsible__summary">
+            [ WORKBENCH: MODS ]
+          </summary>
+          <div className="pip-collapsible__body pip-form-grid">
+            <input
+              className="pip-input"
+              placeholder="Receiver (e.g. Hardened)"
+              value={draft.mods?.receiver || ""}
+              onChange={(e) => handleModChange("receiver", e.target.value)}
+            />
+            <input
+              className="pip-input"
+              placeholder="Barrel (e.g. Long Light)"
+              value={draft.mods?.barrel || ""}
+              onChange={(e) => handleModChange("barrel", e.target.value)}
+            />
+            <input
+              className="pip-input"
+              placeholder="Grip / Stock (e.g. Full Stock)"
+              value={draft.mods?.grip || ""}
+              onChange={(e) => handleModChange("grip", e.target.value)}
+            />
+            <input
+              className="pip-input"
+              placeholder="Magazine (e.g. Large)"
+              value={draft.mods?.magazine || ""}
+              onChange={(e) => handleModChange("magazine", e.target.value)}
+            />
+            <input
+              className="pip-input"
+              placeholder="Sights (e.g. Reflex)"
+              value={draft.mods?.sights || ""}
+              onChange={(e) => handleModChange("sights", e.target.value)}
+            />
+            <input
+              className="pip-input"
+              placeholder="Muzzle (e.g. Suppressor)"
+              value={draft.mods?.muzzle || ""}
+              onChange={(e) => handleModChange("muzzle", e.target.value)}
+            />
+          </div>
+        </details>
+      </div>
+      {/* ==================================== */}
 
       <div className="push-top">
         <details className="pip-collapsible pip-collapsible--field">
