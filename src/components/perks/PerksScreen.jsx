@@ -80,15 +80,15 @@ export default function PerksScreen({
     if (perkData) {
       setPerkDraft((prev) => ({
         ...prev,
-        name: t(`perksInfo.${perkId}.name`),
-        description: t(`perksInfo.${perkId}.desc`) + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
+        name: t(`perksInfo.${perkId}.name`, { defaultValue: perkData.name || perkId }),
+        description: t(`perksInfo.${perkId}.desc`, { defaultValue: perkData.description || "" }) + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
       }));
     }
   };
 
   // Ищем выбранный перк в базе по имени, чтобы динамически проверять требования
   const matchedPerk = PERKS_LIST.find(
-    (p) => t(`perksInfo.${p.id}.name`) === perkDraft?.name
+    (p) => t(`perksInfo.${p.id}.name`, { defaultValue: p.name || p.id }) === perkDraft?.name
   );
   
   // Получаем список предупреждений
@@ -178,7 +178,7 @@ export default function PerksScreen({
                   <option value="" disabled>-- Choose a Perk --</option>
                   {PERKS_LIST.map(perk => (
                     <option key={perk.id} value={perk.id}>
-                      {t(`perksInfo.${perk.id}.name`)}
+                      {t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id })}
                     </option>
                   ))}
                 </select>
