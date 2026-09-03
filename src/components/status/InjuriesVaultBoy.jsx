@@ -8,7 +8,6 @@ import {
 
 import healthy from "../../assets/injuries/vaultboy_healthy.png";
 import powerArmor from "../../assets/injuries/vaultboy_power_armor.png";
-import paDamageSprite from "../../assets/injuries/pa_damage_sprite.webp";
 import {
   calculatePowerArmorLocations,
   getPowerArmorPartCondition,
@@ -16,21 +15,29 @@ import {
 
 import headInjured from "../../assets/injuries/head_injured.png";
 import headCritical from "../../assets/injuries/head_critical.png";
-
 import rightArmInjured from "../../assets/injuries/right_arm_injured.png";
 import rightArmCritical from "../../assets/injuries/right_arm_critical.png";
-
 import leftArmInjured from "../../assets/injuries/left_arm_injured.png";
 import leftArmCritical from "../../assets/injuries/left_arm_critical.png";
-
 import torsoInjured from "../../assets/injuries/torso_injured.png";
 import torsoCritical from "../../assets/injuries/torso_critical.png";
-
 import rightLegInjured from "../../assets/injuries/right_leg_injured.png";
 import rightLegCritical from "../../assets/injuries/right_leg_critical.png";
-
 import leftLegInjured from "../../assets/injuries/left_leg_injured.png";
 import leftLegCritical from "../../assets/injuries/left_leg_critical.png";
+
+import paHeadDamaged from "../../assets/injuries/power-armor-v2/head_damaged.svg";
+import paHeadBroken from "../../assets/injuries/power-armor-v2/head_broken.svg";
+import paTorsoDamaged from "../../assets/injuries/power-armor-v2/torso_damaged.svg";
+import paTorsoBroken from "../../assets/injuries/power-armor-v2/torso_broken.svg";
+import paLeftArmDamaged from "../../assets/injuries/power-armor-v2/left_arm_damaged.svg";
+import paLeftArmBroken from "../../assets/injuries/power-armor-v2/left_arm_broken.svg";
+import paRightArmDamaged from "../../assets/injuries/power-armor-v2/right_arm_damaged.svg";
+import paRightArmBroken from "../../assets/injuries/power-armor-v2/right_arm_broken.svg";
+import paLeftLegDamaged from "../../assets/injuries/power-armor-v2/left_leg_damaged.svg";
+import paLeftLegBroken from "../../assets/injuries/power-armor-v2/left_leg_broken.svg";
+import paRightLegDamaged from "../../assets/injuries/power-armor-v2/right_leg_damaged.svg";
+import paRightLegBroken from "../../assets/injuries/power-armor-v2/right_leg_broken.svg";
 
 const injuryLayers = {
   head: { treated: headInjured, crippled: headCritical },
@@ -39,6 +46,15 @@ const injuryLayers = {
   torso: { treated: torsoInjured, crippled: torsoCritical },
   leftLeg: { treated: leftLegInjured, crippled: leftLegCritical },
   rightLeg: { treated: rightLegInjured, crippled: rightLegCritical },
+};
+
+const POWER_ARMOR_DAMAGE_IMAGES = {
+  head: { damaged: paHeadDamaged, broken: paHeadBroken },
+  torso: { damaged: paTorsoDamaged, broken: paTorsoBroken },
+  leftArm: { damaged: paLeftArmDamaged, broken: paLeftArmBroken },
+  rightArm: { damaged: paRightArmDamaged, broken: paRightArmBroken },
+  leftLeg: { damaged: paLeftLegDamaged, broken: paLeftLegBroken },
+  rightLeg: { damaged: paRightLegDamaged, broken: paRightLegBroken },
 };
 
 const PART_ORDER = ["head", "torso", "leftArm", "rightArm", "leftLeg", "rightLeg"];
@@ -61,21 +77,14 @@ const ARMOR_BADGES = {
   rightLeg: { top: "63%", left: "66%", code: "RL" },
 };
 
-// Position of each generated damaged/broken armor part over the PA Vault Boy.
-// The source asset is 1536 x 640: 6 columns x 2 rows.
 const POWER_ARMOR_DAMAGE_OVERLAYS = {
-  head: { top: "15%", left: "35%", width: "30%", height: "27%", column: 0 },
-  torso: { top: "31%", left: "31%", width: "38%", height: "34%", column: 1 },
-  leftArm: { top: "33%", left: "13%", width: "34%", height: "42%", column: 2 },
-  rightArm: { top: "33%", left: "53%", width: "34%", height: "42%", column: 3 },
-  leftLeg: { top: "54%", left: "26%", width: "29%", height: "44%", column: 4 },
-  rightLeg: { top: "54%", left: "45%", width: "29%", height: "44%", column: 5 },
+  head: { top: "17%", left: "36%", width: "28%", height: "24%" },
+  torso: { top: "31%", left: "32%", width: "36%", height: "34%" },
+  leftArm: { top: "34%", left: "14%", width: "32%", height: "40%" },
+  rightArm: { top: "34%", left: "54%", width: "32%", height: "40%" },
+  leftLeg: { top: "55%", left: "27%", width: "27%", height: "42%" },
+  rightLeg: { top: "55%", left: "46%", width: "27%", height: "42%" },
 };
-
-const DAMAGE_SPRITE_CELL_WIDTH = 256;
-const DAMAGE_SPRITE_CELL_HEIGHT = 320;
-const DAMAGE_SPRITE_WIDTH = 1536;
-const DAMAGE_SPRITE_HEIGHT = 640;
 
 const ARMOR_KEY_MAP = {
   head: "Head",
@@ -134,40 +143,38 @@ function applyDerivedResistance(base = {}, derived = {}) {
 
 function PowerArmorDamagePart({ part, state }) {
   const overlay = POWER_ARMOR_DAMAGE_OVERLAYS[part];
-  if (!overlay || (state !== "damaged" && state !== "broken")) return null;
-
-  const sourceX = overlay.column * DAMAGE_SPRITE_CELL_WIDTH;
-  const sourceY = state === "broken" ? DAMAGE_SPRITE_CELL_HEIGHT : 0;
+  const src = POWER_ARMOR_DAMAGE_IMAGES[part]?.[state];
+  if (!overlay || !src) return null;
 
   return (
-    <svg
+    <img
+      src={src}
+      alt=""
       aria-hidden="true"
-      viewBox={`${sourceX} ${sourceY} ${DAMAGE_SPRITE_CELL_WIDTH} ${DAMAGE_SPRITE_CELL_HEIGHT}`}
-      preserveAspectRatio="xMidYMid meet"
+      draggable="false"
       style={{
         position: "absolute",
+        inset: "auto",
         top: overlay.top,
         left: overlay.left,
+        right: "auto",
+        bottom: "auto",
         width: overlay.width,
         height: overlay.height,
-        overflow: "hidden",
+        maxWidth: "none",
+        margin: 0,
+        padding: 0,
+        objectFit: "fill",
+        objectPosition: "center",
+        zIndex: 4,
         pointerEvents: "none",
-        opacity: state === "broken" ? 1 : 0.98,
+        opacity: state === "broken" ? 1 : 0.96,
         filter:
           state === "broken"
-            ? "drop-shadow(0 0 7px rgba(255, 70, 70, 0.72))"
-            : "drop-shadow(0 0 6px rgba(255, 175, 55, 0.62))",
+            ? "drop-shadow(0 0 6px rgba(255, 70, 70, 0.7))"
+            : "drop-shadow(0 0 5px rgba(255, 180, 60, 0.6))",
       }}
-    >
-      <image
-        href={paDamageSprite}
-        x="0"
-        y="0"
-        width={DAMAGE_SPRITE_WIDTH}
-        height={DAMAGE_SPRITE_HEIGHT}
-        preserveAspectRatio="none"
-      />
-    </svg>
+    />
   );
 }
 
@@ -236,7 +243,6 @@ export default function InjuriesVaultBoy({
     .map((part) => {
       const state = injuries[part];
       if (state !== "treated" && state !== "crippled") return null;
-
       return {
         part,
         src: injuryLayers[part]?.[state] || null,
