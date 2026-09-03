@@ -8,6 +8,7 @@ import {
 } from "../../constants.js";
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
 import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
+import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";
 
 const qualityMap = Object.fromEntries(
   WEAPON_QUALITY_OPTIONS.map((item) => [item.key, item])
@@ -31,7 +32,7 @@ export default function WeaponCard({
   onRoll,
   globalWeapons,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [useRate, setUseRate] = useState(false);
   const [activePropertyIndex, setActivePropertyIndex] = useState(null);
   const propertiesRef = useRef(null);
@@ -296,7 +297,7 @@ export default function WeaponCard({
       {hasMods && (
         <div className="pip-weapon-mods-blueprint">
           <div style={{ opacity: 0.6, marginBottom: "10px", textTransform: "uppercase", fontSize: "0.8em", letterSpacing: "1px" }}>
-            [ WORKBENCH SCHEMATICS ]
+            [ {t("weaponMods.title")} ]
           </div>
           <div className="pip-weapon-mods-grid">
             {MOD_SLOTS.map((slot) => {
@@ -306,8 +307,8 @@ export default function WeaponCard({
               
               return (
                 <div key={slot.key} style={{ display: "flex", gap: "5px" }}>
-                  <span style={{ opacity: 0.5, textTransform: "uppercase" }}>{slot.label}:</span>
-                  <span style={{ fontWeight: "bold", color: "var(--pip-color-highlight, #fff)" }}>{modName}</span>
+                  <span style={{ opacity: 0.5, textTransform: "uppercase" }}>{t(`weaponMods.slots.${slot.key}`, slot.label)}:</span>
+                  <span style={{ fontWeight: "bold", color: "var(--pip-color-highlight, #fff)" }}>{localizeWeaponModName(modName, i18n.resolvedLanguage)}</span>
                 </div>
               );
             })}
