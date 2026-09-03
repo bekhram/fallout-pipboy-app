@@ -436,6 +436,10 @@
     "sleep": "Sleep"
   },
   "injuries": {
+    "modeInjuries": "INJURIES",
+    "modePowerArmor": "POWER ARMOR",
+    "powerArmor": "Power armor",
+    "noPowerArmor": "No power armor equipped",
     "vaultBoyAlt": "Vault Boy injury display",
     "title": "INJURIES",
     "selectBodyPart": "SELECT BODY PART",
@@ -492,6 +496,10 @@
     }
   },
   "armorPanel": {
+    "intact": "Intact",
+    "damaged": "Damaged",
+    "broken": "Broken",
+    "emptyPiece": "No piece",
     "title": "ARMOR",
     "locationDr": "LOCATION DR",
     "physical": "Physical",

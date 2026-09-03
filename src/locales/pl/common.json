@@ -435,6 +435,10 @@
     "sleep": "Sen"
   },
   "injuries": {
+    "modeInjuries": "OBRAŻENIA",
+    "modePowerArmor": "PANCERZ WSPOMAGANY",
+    "powerArmor": "Pancerz wspomagany",
+    "noPowerArmor": "Brak założonego pancerza wspomaganego",
     "vaultBoyAlt": "Schemat obrażeń Vault Boya",
     "title": "OBRAŻENIA",
     "selectBodyPart": "WYBIERZ CZĘŚĆ CIAŁA",
@@ -491,6 +495,10 @@
     }
   },
   "armorPanel": {
+    "intact": "Sprawna",
+    "damaged": "Uszkodzona",
+    "broken": "Zniszczona",
+    "emptyPiece": "Brak części",
     "title": "PANCERZ",
     "locationDr": "OCHRONA CZĘŚCI",
     "physical": "Fiz.",

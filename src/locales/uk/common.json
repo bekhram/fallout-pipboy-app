@@ -427,6 +427,10 @@
     "sleep": "Сон"
   },
   "injuries": {
+    "modeInjuries": "ТРАВМИ",
+    "modePowerArmor": "СИЛОВА БРОНЯ",
+    "powerArmor": "Силова броня",
+    "noPowerArmor": "Силову броню не вдягнено",
     "vaultBoyAlt": "Схема травм Vault Boy",
     "title": "ТРАВМИ",
     "selectBodyPart": "ОБЕРІТЬ ЧАСТИНУ ТІЛА",
@@ -483,6 +487,10 @@
     }
   },
   "armorPanel": {
+    "intact": "Справна",
+    "damaged": "Пошкоджена",
+    "broken": "Зламана",
+    "emptyPiece": "Немає деталі",
     "title": "БРОНЯ",
     "locationDr": "ЗАХИСТ ПО ЧАСТИНАХ",
     "physical": "Фіз.",

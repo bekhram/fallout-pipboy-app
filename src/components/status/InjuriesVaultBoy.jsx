@@ -167,7 +167,7 @@ export default function InjuriesVaultBoy({
   onPartClick,
   onArmorPartClick,
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [armorDatabase, setArmorDatabase] = useState(null);
 
   useEffect(() => {
@@ -191,15 +191,10 @@ export default function InjuriesVaultBoy({
   }, []);
 
   const armorStateLabels = {
-    en: { intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece" },
-    ru: { intact: "Целая", damaged: "Повреждена", broken: "Сломана", empty: "Нет детали" },
-    uk: { intact: "Ціла", damaged: "Пошкоджена", broken: "Зламана", empty: "Немає деталі" },
-    pl: { intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", empty: "Brak części" },
-  }[i18n.resolvedLanguage?.split("-")[0]] || {
-    intact: "Intact",
-    damaged: "Damaged",
-    broken: "Broken",
-    empty: "No piece",
+    intact: t("armorPanel.intact"),
+    damaged: t("armorPanel.damaged"),
+    broken: t("armorPanel.broken"),
+    empty: t("armorPanel.emptyPiece"),
   };
 
   const powerConditions = Object.fromEntries(
@@ -354,7 +349,7 @@ export default function InjuriesVaultBoy({
               key={`${part}-armor`}
               className={`pip-armor-badge is-${part}`}
               style={{ top: badge.top, left: badge.left }}
-              title={`${partLabel}: Physical ${physical} / Energy ${energy} / Radiation ${radiation}`}
+              title={`${partLabel}: ${t("armorPanel.physical")} ${physical} / ${t("armorPanel.energy")} ${energy} / ${t("armorPanel.radiation")} ${radiation}`}
             >
               <div className="pip-armor-badge-code">{badge.code}</div>
               <div className="pip-armor-badge-values">

@@ -26,6 +26,19 @@ const UI = {
   pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA", currentHp: "Stan", repair: "Napraw", intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona" },
 };
 
+const POWER_NAMES = {
+  ru: { raider: "Рейдерская силовая броня", t45: "Силовая броня T-45", t51: "Силовая броня T-51", t60: "Силовая броня T-60", x01: "Силовая броня X-01", titanium: "Титановое покрытие", lead: "Свинцовое покрытие", photovoltaic: "Фотовольтаическое покрытие", winterized: "Зимнее покрытие", prism: "Призматическая защита", explosive: "Взрывозащитное покрытие", emp: "ЭМИ-защита", "rad-scrubber": "Очиститель радиации", "sensor-array": "Сенсорный комплекс", "targeting-hud": "Система наведения", "internal-database": "Внутренняя база данных", "welded-rebar": "Приваренная арматура", "core-assembly": "Узел ядра", "blood-cleanser": "Очиститель крови", "emergency-protocols": "Аварийные протоколы", "motion-assist": "Сервоприводы движения", "kinetic-dynamo": "Кинетическая динамо-машина", "medic-pump": "Медицинский насос", "reactive-plates": "Реактивные пластины", "tesla-coils": "Катушки Тесла", "stealth-boy": "Стелс-бой", jetpack: "Реактивный ранец", "rusty-knuckles": "Ржавые кастеты", "hydraulic-bracers": "Гидравлические наручи", "optimized-bracers": "Оптимизированные наручи", "tesla-bracers": "Наручи Тесла", "calibrated-shocks": "Калиброванные амортизаторы", "explosive-vent": "Взрывной клапан", "overdrive-servos": "Форсированные сервоприводы" },
+  uk: { raider: "Рейдерська силова броня", t45: "Силова броня T-45", t51: "Силова броня T-51", t60: "Силова броня T-60", x01: "Силова броня X-01", titanium: "Титанове покриття", lead: "Свинцеве покриття", photovoltaic: "Фотоелектричне покриття", winterized: "Зимове покриття", prism: "Призматичний захист", explosive: "Вибухозахисне покриття", emp: "ЕМІ-захист", "rad-scrubber": "Очищувач радіації", "sensor-array": "Сенсорний комплекс", "targeting-hud": "Система наведення", "internal-database": "Внутрішня база даних", "welded-rebar": "Приварена арматура", "core-assembly": "Вузол ядра", "blood-cleanser": "Очищувач крові", "emergency-protocols": "Аварійні протоколи", "motion-assist": "Сервоприводи руху", "kinetic-dynamo": "Кінетична динамо-машина", "medic-pump": "Медичний насос", "reactive-plates": "Реактивні пластини", "tesla-coils": "Котушки Тесли", "stealth-boy": "Стелс-бой", jetpack: "Реактивний ранець", "rusty-knuckles": "Іржаві кастети", "hydraulic-bracers": "Гідравлічні наручі", "optimized-bracers": "Оптимізовані наручі", "tesla-bracers": "Наручі Тесли", "calibrated-shocks": "Калібровані амортизатори", "explosive-vent": "Вибуховий клапан", "overdrive-servos": "Форсовані сервоприводи" },
+  pl: { raider: "Pancerz wspomagany bandytów", t45: "Pancerz wspomagany T-45", t51: "Pancerz wspomagany T-51", t60: "Pancerz wspomagany T-60", x01: "Pancerz wspomagany X-01", titanium: "Powłoka tytanowa", lead: "Powłoka ołowiana", photovoltaic: "Powłoka fotowoltaiczna", winterized: "Powłoka zimowa", prism: "Osłona pryzmatyczna", explosive: "Osłona przeciwwybuchowa", emp: "Osłona EMP", "rad-scrubber": "Oczyszczacz radiacyjny", "sensor-array": "Zespół czujników", "targeting-hud": "System celowniczy HUD", "internal-database": "Wewnętrzna baza danych", "welded-rebar": "Spawane pręty", "core-assembly": "Zespół rdzenia", "blood-cleanser": "Oczyszczacz krwi", "emergency-protocols": "Protokoły awaryjne", "motion-assist": "Serwomechanizmy ruchu", "kinetic-dynamo": "Dynamo kinetyczne", "medic-pump": "Pompa medyczna", "reactive-plates": "Płyty reaktywne", "tesla-coils": "Cewki Tesli", "stealth-boy": "Stealth Boy", jetpack: "Plecak odrzutowy", "rusty-knuckles": "Rdzawe kastety", "hydraulic-bracers": "Hydrauliczne karwasze", "optimized-bracers": "Zoptymalizowane karwasze", "tesla-bracers": "Karwasze Tesli", "calibrated-shocks": "Kalibrowane amortyzatory", "explosive-vent": "Zawór wybuchowy", "overdrive-servos": "Serwomechanizmy nadbiegu" },
+};
+
+const POWER_PART_NAMES = {
+  en: { head: "Helmet", torso: "Chest piece", arm: "Arm", leg: "Leg" },
+  ru: { head: "Шлем", torso: "Нагрудник", arm: "Рука", leg: "Нога" },
+  uk: { head: "Шолом", torso: "Нагрудник", arm: "Рука", leg: "Нога" },
+  pl: { head: "Hełm", torso: "Napierśnik", arm: "Ramię", leg: "Noga" },
+};
+
 function byId(list, id) {
   return list.find((entry) => entry.id === id);
 }
@@ -50,7 +63,14 @@ function legacySlots(state) {
 
 export default function PowerArmorPanel({ armor, onArmorChange }) {
   const { i18n } = useTranslation();
-  const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
+  const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const labels = UI[language] || UI.en;
+  const localizedName = (entry) => POWER_NAMES[language]?.[entry?.id] || entry?.name || "";
+  const localizedUpgrade = (entry) => {
+    if (!entry || language === "en") return entry?.name || "";
+    const set = POWER_ARMOR_SETS.find((item) => item.id === entry.setId);
+    return `${localizedName(set)} ${entry.tier} — ${POWER_PART_NAMES[language]?.[entry.type] || entry.type}`;
+  };
   const stored = armor?._power?.loadout || { setId: "none", slots: {} };
   const slots = legacySlots(stored);
   const hasPieces = Object.values(slots).some((slot) => slot?.setId);
@@ -158,7 +178,7 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
           <option value="none">{labels.none}</option>
           <option value="frame">{labels.frameOnly}</option>
           <option value="mixed">{labels.custom}</option>
-          {POWER_ARMOR_SETS.map((set) => <option key={set.id} value={set.id}>{set.name}</option>)}
+          {POWER_ARMOR_SETS.map((set) => <option key={set.id} value={set.id}>{localizedName(set)}</option>)}
         </select>
       </label>
 
@@ -184,7 +204,7 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
                 <span>{labels.part}</span>
                 <select className="pip-input" value={selected.setId || ""} onChange={(event) => updateSlot(definition.id, { setId: event.target.value })}>
                   <option value="">{labels.empty}</option>
-                  {POWER_ARMOR_SETS.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                  {POWER_ARMOR_SETS.map((option) => <option key={option.id} value={option.id}>{localizedName(option)}</option>)}
                 </select>
               </label>
               {set && (
@@ -193,19 +213,19 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
                     <span>{labels.upgrade}</span>
                     <select className="pip-input" value={selected.upgradeId || "none"} onChange={(event) => updateSlot(definition.id, { upgradeId: event.target.value })}>
                       <option value="none">{labels.empty}</option>
-                      {upgradeOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.name}</option>)}
+                      {upgradeOptions.map((mod) => <option key={mod.id} value={mod.id}>{localizedUpgrade(mod)}</option>)}
                     </select>
                   </label>
                   <label>
                     <span>{labels.plating}</span>
                     <select className="pip-input" value={selected.platingId || "none"} disabled={set.id === "raider"} onChange={(event) => updateSlot(definition.id, { platingId: event.target.value })}>
-                      {platingOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.id === "none" ? labels.empty : mod.name}</option>)}
+                      {platingOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.id === "none" ? labels.empty : localizedName(mod)}</option>)}
                     </select>
                   </label>
                   <label>
                     <span>{labels.system}</span>
                     <select className="pip-input" value={selected.systemId || "none"} onChange={(event) => updateSlot(definition.id, { systemId: event.target.value })}>
-                      {systemOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.id === "none" ? labels.empty : mod.name}</option>)}
+                      {systemOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.id === "none" ? labels.empty : localizedName(mod)}</option>)}
                     </select>
                   </label>
                 </>

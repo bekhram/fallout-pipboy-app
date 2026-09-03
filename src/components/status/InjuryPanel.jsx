@@ -144,7 +144,7 @@ export default function InjuryPanel({
               onClick={() => setVaultBoyMode("injuries")}
               aria-pressed={activeVaultBoyMode === "injuries"}
             >
-              <span>[ INJURIES ]</span>
+              <span>[ {t("injuries.modeInjuries")} ]</span>
             </button>
             <button
               type="button"
@@ -154,9 +154,9 @@ export default function InjuryPanel({
               onClick={() => setVaultBoyMode("powerArmor")}
               aria-pressed={activeVaultBoyMode === "powerArmor"}
               disabled={!hasPowerArmor}
-              title={hasPowerArmor ? "Power armor" : "No power armor equipped"}
+              title={hasPowerArmor ? t("injuries.powerArmor") : t("injuries.noPowerArmor")}
             >
-              <span>[ POWER ARMOR ]</span>
+              <span>[ {t("injuries.modePowerArmor")} ]</span>
             </button>
           </div>
 
