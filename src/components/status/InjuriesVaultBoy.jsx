@@ -64,6 +64,15 @@ const POWER_ARMOR_DAMAGE_OVERLAYS = {
   rightLeg: { top: "55%", left: "46%", width: "27%", height: "42%" },
 };
 
+const POWER_ARMOR_CRACKS = {
+  head: ["M52 5 46 26 55 40 43 58 50 78 35 96", "M47 28 29 35 18 50", "M54 41 72 34 84 45"],
+  torso: ["M46 4 51 22 43 37 55 52 46 69 53 96", "M45 37 25 31 12 43", "M55 52 76 42 91 49", "M46 69 29 77 20 92"],
+  leftArm: ["M61 4 52 24 61 39 48 56 55 74 43 96", "M53 24 32 18 20 31", "M48 56 26 62 14 78"],
+  rightArm: ["M39 4 48 24 39 39 52 56 45 74 57 96", "M47 24 68 18 80 31", "M52 56 74 62 86 78"],
+  leftLeg: ["M58 3 48 24 57 43 45 61 53 79 40 97", "M49 24 28 31 17 45", "M46 61 25 67 15 82"],
+  rightLeg: ["M42 3 52 24 43 43 55 61 47 79 60 97", "M51 24 72 31 83 45", "M54 61 75 67 85 82"],
+};
+
 const ARMOR_KEY_MAP = {
   head: "Head",
   leftArm: "Left Arm",
@@ -123,17 +132,30 @@ function PowerArmorDamagePart({ part, state }) {
   const overlay = POWER_ARMOR_DAMAGE_OVERLAYS[part];
   if (!overlay || (state !== "damaged" && state !== "broken")) return null;
 
+  const cracks = POWER_ARMOR_CRACKS[part] || [];
+
   return (
-    <div
-      className={`pip-power-damage is-${part} is-${state}`}
+    <svg
+      className={`pip-power-cracks is-${part} is-${state}`}
       aria-hidden="true"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
       style={{
         top: overlay.top,
         left: overlay.left,
         width: overlay.width,
         height: overlay.height,
       }}
-    />
+    >
+      <path className="pip-power-crack-main" d={cracks[0]} />
+      {cracks.slice(1).map((path, index) => (
+        <path
+          className="pip-power-crack-branch"
+          d={path}
+          key={`${part}-crack-${index}`}
+        />
+      ))}
+    </svg>
   );
 }
 
