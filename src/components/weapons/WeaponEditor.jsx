@@ -11,7 +11,7 @@ import {
   WEAPON_AMMO_OPTIONS, // Наш список набоїв
 } from "../../constants.js";
 import { getWeaponModGroups, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
-import { localizeWeaponModEffect, localizeWeaponModName } from "../../utils/weaponModLocalization.js";
+import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
   const { t, i18n } = useTranslation();
@@ -277,7 +277,7 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
                           <small>
                             Δ {t("weaponMods.weightDelta")}: {selected.weight >= 0 ? "+" : ""}{selected.weight}
                             {" · "}Δ {t("weaponMods.costDelta")}: {selected.cost >= 0 ? "+" : ""}{selected.cost}
-                            {selected.perks ? ` · ${selected.perks}` : ""}
+                            {selected.perks ? ` · ${localizeWeaponModRequirement(selected.perks, i18n.resolvedLanguage)}` : ""}
                           </small>
                         </span>
                       )}
