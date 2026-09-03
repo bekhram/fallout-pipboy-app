@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { PERKS_LIST } from "../data/perks";
+import { getAddedPerkTranslation } from "../data/perkTranslations";
 
 // Функция для проверки требований перка
 function getRequirementsWarnings(reqString, form) {
@@ -64,7 +65,15 @@ export default function PerksScreen({
   onCancelEdit,
   form, // <--- Получаем данные персонажа
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const localizedPerk = (perk) => {
+    const added = getAddedPerkTranslation(perk.id, language);
+    return {
+      name: added?.name || t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id }),
+      description: added?.description || t(`perksInfo.${perk.id}.desc`, { defaultValue: perk.description || "" }),
+    };
+  };
   const safeList = Array.isArray(perks) ? perks : [];
   const isEditing = editingIndex !== null;
 
@@ -80,15 +89,15 @@ export default function PerksScreen({
     if (perkData) {
       setPerkDraft((prev) => ({
         ...prev,
-        name: t(`perksInfo.${perkId}.name`, { defaultValue: perkData.name || perkId }),
-        description: t(`perksInfo.${perkId}.desc`, { defaultValue: perkData.description || "" }) + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
+        name: localizedPerk(perkData).name,
+        description: localizedPerk(perkData).description + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
       }));
     }
   };
 
   // Ищем выбранный перк в базе по имени, чтобы динамически проверять требования
   const matchedPerk = PERKS_LIST.find(
-    (p) => t(`perksInfo.${p.id}.name`, { defaultValue: p.name || p.id }) === perkDraft?.name
+    (p) => localizedPerk(p).name === perkDraft?.name
   );
   
   // Получаем список предупреждений
@@ -178,7 +187,7 @@ export default function PerksScreen({
                   <option value="" disabled>-- Choose a Perk --</option>
                   {PERKS_LIST.map(perk => (
                     <option key={perk.id} value={perk.id}>
-                      {t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id })}
+                      {localizedPerk(perk).name}
                     </option>
                   ))}
                 </select>
