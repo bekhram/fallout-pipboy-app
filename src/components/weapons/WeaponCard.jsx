@@ -7,6 +7,7 @@ import {
   SKILL_LABEL_KEYS,
 } from "../../constants.js";
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
+import { MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 
 const qualityMap = Object.fromEntries(
   WEAPON_QUALITY_OPTIONS.map((item) => [item.key, item])
@@ -16,14 +17,10 @@ const effectMap = Object.fromEntries(
   WEAPON_EFFECT_OPTIONS.map((item) => [item.key, item])
 );
 
-const MOD_SLOTS = [
-  { key: "receiver", label: "Receiver" },
-  { key: "barrel", label: "Barrel" },
-  { key: "grip", label: "Grip / Stock" },
-  { key: "magazine", label: "Magazine" },
-  { key: "sights", label: "Sights" },
-  { key: "muzzle", label: "Muzzle" },
-];
+const MOD_SLOTS = Object.entries(MOD_SLOT_LABELS).map(([key, label]) => ({
+  key,
+  label,
+}));
 
 export default function WeaponCard({
   weapon,
