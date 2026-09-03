@@ -6,6 +6,7 @@ import {
   POWER_ARMOR_SETS,
   POWER_ARMOR_SYSTEMS,
   availablePowerMods,
+  availablePowerUpgrades,
   calculatePowerPart,
 } from "../../data/powerArmor.js";
 
@@ -19,10 +20,10 @@ const SLOT_DEFS = [
 ];
 
 const UI = {
-  en: { title: "POWER ARMOR", frame: "Armor Frame", preset: "Complete set", part: "Part", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Frame only", custom: "Mixed set", empty: "No armor piece", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL" },
-  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО" },
-  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ" },
-  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA" },
+  en: { title: "POWER ARMOR", frame: "Armor Frame", preset: "Complete set", part: "Part", upgrade: "Upgrade", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Frame only", custom: "Mixed set", empty: "No armor piece", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL" },
+  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", upgrade: "Улучшение", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО" },
+  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", upgrade: "Покращення", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ" },
+  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA" },
 };
 
 function byId(list, id) {
@@ -78,7 +79,7 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
     const nextSlots = Object.fromEntries(
       SLOT_DEFS.map((slot) => [
         slot.id,
-        { setId: value, platingId: "none", systemId: "none" },
+        { setId: value, upgradeId: "none", platingId: "none", systemId: "none" },
       ])
     );
     update({ setId: value, slots: nextSlots });
@@ -86,10 +87,11 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
 
   const updateSlot = (slotId, patch) => {
     const next = {
-      ...(slots[slotId] || { setId: "", platingId: "none", systemId: "none" }),
+      ...(slots[slotId] || { setId: "", upgradeId: "none", platingId: "none", systemId: "none" }),
       ...patch,
     };
     if (Object.prototype.hasOwnProperty.call(patch, "setId")) {
+      next.upgradeId = "none";
       next.platingId = "none";
       next.systemId = "none";
     }
@@ -102,7 +104,9 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
   const rows = SLOT_DEFS.map((definition) => {
     const selected = slots[definition.id] || {};
     const set = byId(POWER_ARMOR_SETS, selected.setId);
-    if (!set) return { definition, selected, set: null, stats: null, platingOptions: [], systemOptions: [] };
+    if (!set) return { definition, selected, set: null, stats: null, upgradeOptions: [], platingOptions: [], systemOptions: [] };
+    const upgradeOptions = availablePowerUpgrades(set.id, definition.type);
+    const selectedUpgrade = byId(upgradeOptions, selected.upgradeId);
     const platingOptions = set.id === "raider"
       ? POWER_ARMOR_PLATING.filter((mod) => mod.id === "none")
       : availablePowerMods(POWER_ARMOR_PLATING, set.id, definition.type);
@@ -115,7 +119,8 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
       set,
       platingOptions,
       systemOptions,
-      stats: calculatePowerPart(set.parts[definition.type], plating, system, definition.type),
+      upgradeOptions,
+      stats: calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade),
       effect: [plating?.effect, system?.effect].filter(Boolean).join(" "),
     };
   });
@@ -157,7 +162,7 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
 
       {hasFrame && (
         <div className="pip-power-parts">
-          {rows.map(({ definition, selected, set, stats, platingOptions, systemOptions, effect }) => (
+          {rows.map(({ definition, selected, set, stats, upgradeOptions, platingOptions, systemOptions, effect }) => (
             <article className="pip-power-part" key={definition.id}>
               <div className="pip-power-part-head">
                 <strong>{definition.id}</strong>
@@ -173,6 +178,13 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
               </label>
               {set && (
                 <>
+                  <label>
+                    <span>{labels.upgrade}</span>
+                    <select className="pip-input" value={selected.upgradeId || "none"} onChange={(event) => updateSlot(definition.id, { upgradeId: event.target.value })}>
+                      <option value="none">{labels.empty}</option>
+                      {upgradeOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.name}</option>)}
+                    </select>
+                  </label>
                   <label>
                     <span>{labels.plating}</span>
                     <select className="pip-input" value={selected.platingId || "none"} disabled={set.id === "raider"} onChange={(event) => updateSlot(definition.id, { platingId: event.target.value })}>
