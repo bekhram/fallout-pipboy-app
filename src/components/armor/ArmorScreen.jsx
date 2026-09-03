@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ARMOR_PARTS } from "../../constants.js";
 import { useTranslation } from "react-i18next";
 import PowerArmorPanel from "./PowerArmorPanel.jsx";
+import { calculatePowerArmorLocations } from "../../data/powerArmor.js";
 import {
   PART_LOCATION,
   armorModMultiplier,
@@ -142,6 +143,11 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   };
 
   const calculated = useMemo(() => {
+    const powerArmorStats = calculatePowerArmorLocations(
+      armor?._power?.loadout
+    );
+    if (powerArmorStats) return powerArmorStats;
+
     const result = {};
     ARMOR_PARTS.forEach((part) => {
       const selected = slots[part] || {};
