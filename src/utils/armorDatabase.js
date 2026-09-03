@@ -144,6 +144,14 @@ export function compatibleArmorItems(items, part) {
   return items.filter((item) => item.locations[location] && item.family !== "robot");
 }
 
+const UPGRADE_ARMOR_FAMILIES = new Set([
+  "raider",
+  "leather",
+  "metal",
+  "combat",
+  "synth",
+]);
+
 const BALLISTIC_WEAVE_ITEMS = new Set([
   "casual clothing",
   "formal clothing",
@@ -165,7 +173,10 @@ export function compatibleArmorMods(mods, item, part) {
     return mod.family === "vault-jumpsuit" && item.family === "vault-jumpsuit";
   });
   const upgrades = mods.filter(
-    (mod) => mod.family === "upgrade" && mod.locations[location]
+    (mod) =>
+      mod.family === "upgrade" &&
+      mod.locations[location] &&
+      UPGRADE_ARMOR_FAMILIES.has(item.family)
   );
   return { materials, upgrades };
 }
