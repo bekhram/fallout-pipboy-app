@@ -8,6 +8,7 @@ import {
 
 import healthy from "../../assets/injuries/vaultboy_healthy.png";
 import powerArmor from "../../assets/injuries/vaultboy_power_armor.png";
+import paDamageSprite from "../../assets/injuries/pa_damage_sprite.webp";
 import {
   calculatePowerArmorLocations,
   getPowerArmorPartCondition,
@@ -58,6 +59,51 @@ const ARMOR_BADGES = {
   rightArm: { top: "42%", left: "80%", code: "RA" },
   leftLeg: { top: "63%", left: "10%", code: "LL" },
   rightLeg: { top: "63%", left: "66%", code: "RL" },
+};
+
+const POWER_ARMOR_DAMAGE_OVERLAYS = {
+  head: {
+    top: "15%",
+    left: "35%",
+    width: "30%",
+    height: "27%",
+    column: 0,
+  },
+  torso: {
+    top: "31%",
+    left: "31%",
+    width: "38%",
+    height: "34%",
+    column: 1,
+  },
+  leftArm: {
+    top: "33%",
+    left: "13%",
+    width: "34%",
+    height: "42%",
+    column: 2,
+  },
+  rightArm: {
+    top: "33%",
+    left: "53%",
+    width: "34%",
+    height: "42%",
+    column: 3,
+  },
+  leftLeg: {
+    top: "54%",
+    left: "26%",
+    width: "29%",
+    height: "44%",
+    column: 4,
+  },
+  rightLeg: {
+    top: "54%",
+    left: "45%",
+    width: "29%",
+    height: "44%",
+    column: 5,
+  },
 };
 
 const ARMOR_KEY_MAP = {
@@ -112,6 +158,32 @@ function applyDerivedResistance(base = {}, derived = {}) {
     poison: immunities.includes("poison")
       ? 9999
       : Math.max(0, toNumber(base.poison) + toNumber(derived?.poisonResistBonus)),
+  };
+}
+
+function getDamageSpriteStyle(part, state) {
+  const overlay = POWER_ARMOR_DAMAGE_OVERLAYS[part];
+  if (!overlay || (state !== "damaged" && state !== "broken")) return null;
+
+  const xPositions = ["0%", "20%", "40%", "60%", "80%", "100%"];
+  const rowPosition = state === "broken" ? "100%" : "0%";
+
+  return {
+    position: "absolute",
+    top: overlay.top,
+    left: overlay.left,
+    width: overlay.width,
+    height: overlay.height,
+    backgroundImage: `url(${paDamageSprite})`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: "600% 200%",
+    backgroundPosition: `${xPositions[overlay.column]} ${rowPosition}`,
+    pointerEvents: "none",
+    opacity: state === "broken" ? 0.98 : 0.94,
+    filter:
+      state === "broken"
+        ? "drop-shadow(0 0 6px rgba(255, 70, 70, 0.55))"
+        : "drop-shadow(0 0 5px rgba(255, 175, 55, 0.45))",
   };
 }
 
@@ -229,6 +301,30 @@ export default function InjuriesVaultBoy({
           />
         ))}
 
+        {isPowerArmorVisible && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 3,
+              transform: "scale(0.78)",
+              transformOrigin: "center center",
+              pointerEvents: "none",
+            }}
+          >
+            {PART_ORDER.map((part) => {
+              const state = powerConditions[part]?.state;
+              const style = getDamageSpriteStyle(part, state);
+              if (!style) return null;
+
+              return <div key={`pa-damage-${part}-${state}`} style={style} />;
+            })}
+          </div>
+        )}
+
         {PART_ORDER.map((part) => {
           const box = HITBOXES[part];
           const armorCondition = powerConditions[part];
@@ -269,7 +365,6 @@ export default function InjuriesVaultBoy({
             : normalBase
             ? applyDerivedResistance(normalBase, derived)
             : getAdjustedArmorSnapshotForPart({ armor, part, derived });
-          const armorCondition = powerConditions[part];
 
           const physical = formatArmorValue(adjusted.physical);
           const energy = formatArmorValue(adjusted.energy);
@@ -286,11 +381,6 @@ export default function InjuriesVaultBoy({
               title={`${partLabel}: Physical ${physical} / Energy ${energy} / Radiation ${radiation}`}
             >
               <div className="pip-armor-badge-code">{badge.code}</div>
-              {isPowerArmorVisible && (
-                <div className={`pip-armor-badge-condition is-${armorCondition?.state || "empty"}`}>
-                  {armorStateLabels[armorCondition?.state || "empty"]}
-                </div>
-              )}
               <div className="pip-armor-badge-values">
                 <span>{physical}</span>
                 <span>{energy}</span>
