@@ -3,6 +3,7 @@ import { ARMOR_PARTS } from "../../constants.js";
 import { useTranslation } from "react-i18next";
 import {
   PART_LOCATION,
+  armorModMultiplier,
   calculateArmorPart,
   compatibleArmorItems,
   compatibleArmorMods,
@@ -117,7 +118,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
       const item = findById(database.items, selected.itemId);
       const material = findById(database.mods, selected.materialId);
       const upgrade = findById(database.mods, selected.upgradeId);
-      result[part] = calculateArmorPart(item, material, upgrade, armor?.[part]);
+      result[part] = calculateArmorPart(item, material, upgrade, armor?.[part], part);
     });
     return result;
   }, [armor, database, slots]);
@@ -137,8 +138,8 @@ export default function ArmorScreen({ armor, onArmorChange }) {
       const material = findById(database.mods, slot.materialId);
       const upgrade = findById(database.mods, slot.upgradeId);
       return {
-        weight: sum.weight + Number(item?.weight || 0) + Number(material?.weight || 0) + Number(upgrade?.weight || 0),
-        cost: sum.cost + Number(item?.cost || 0) + Number(material?.cost || 0) + Number(upgrade?.cost || 0),
+        weight: sum.weight + Number(item?.weight || 0) + Number(material?.weight || 0) * armorModMultiplier(material, part) + Number(upgrade?.weight || 0) * armorModMultiplier(upgrade, part),
+        cost: sum.cost + Number(item?.cost || 0) + Number(material?.cost || 0) * armorModMultiplier(material, part) + Number(upgrade?.cost || 0) * armorModMultiplier(upgrade, part),
       };
     },
     { weight: 0, cost: 0 }
