@@ -159,7 +159,14 @@ export function compatibleArmorMods(mods, item, part) {
   return { materials, upgrades };
 }
 
-export function calculateArmorPart(item, material, upgrade, manual = {}) {
+export function armorModMultiplier(mod, part) {
+  if (!mod || part !== "Torso") return 1;
+  const alsoFitsAnotherLocation =
+    mod.locations?.head || mod.locations?.arms || mod.locations?.legs;
+  return alsoFitsAnotherLocation ? 2 : 1;
+}
+
+export function calculateArmorPart(item, material, upgrade, manual = {}, part = "") {
   const add = (field) =>
     Number(item?.[field] || 0) +
     Number(material?.[field] || 0) +
@@ -174,11 +181,11 @@ export function calculateArmorPart(item, material, upgrade, manual = {}) {
     hp: Number(manual?.hp || 0),
     weight:
       Number(item?.weight || 0) +
-      Number(material?.weight || 0) +
-      Number(upgrade?.weight || 0),
+      Number(material?.weight || 0) * armorModMultiplier(material, part) +
+      Number(upgrade?.weight || 0) * armorModMultiplier(upgrade, part),
     cost:
       Number(item?.cost || 0) +
-      Number(material?.cost || 0) +
-      Number(upgrade?.cost || 0),
+      Number(material?.cost || 0) * armorModMultiplier(material, part) +
+      Number(upgrade?.cost || 0) * armorModMultiplier(upgrade, part),
   };
 }
