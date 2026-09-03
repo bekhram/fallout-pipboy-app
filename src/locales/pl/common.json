@@ -490,15 +490,15 @@
       "junk": "Złom"
     }
   },
-"armorPanel": {
-  "title": "PANCERZ",
-  "locationDr": "OCHRONA CZĘŚCI",
-  "physical": "Fiz.",
-  "energy": "Ener.",
-  "radiation": "Rad.",
-  "poison": "Trucizna",
-  "hp": "HP"
-},
+  "armorPanel": {
+    "title": "PANCERZ",
+    "locationDr": "OCHRONA CZĘŚCI",
+    "physical": "Fiz.",
+    "energy": "Ener.",
+    "radiation": "Rad.",
+    "poison": "Trucizna",
+    "hp": "HP"
+  },
   "perksPanel": {
     "title": "PERKI / CECHY",
     "perkEditor": "EDYTOR PERKA",
@@ -903,5 +903,29 @@
     "glowing_sea": "Świecące Morze",
     "atom_crater": "Krater Atomu",
     "virgil_cave": "Jaskinia Virgila"
+  },
+  "weaponMods": {
+    "title": "WARSZTAT: MODYFIKACJE",
+    "noModification": "Bez modyfikacji",
+    "custom": "własna",
+    "unavailable": "Brak tabeli modyfikacji dla tej broni.",
+    "weightDelta": "Waga",
+    "costDelta": "Koszt",
+    "slots": {
+      "receiver": "Komora zamkowa",
+      "capacitor": "Kondensator",
+      "dish": "Czasza",
+      "fuel": "Paliwo",
+      "barrel": "Lufa",
+      "grip": "Chwyt",
+      "stock": "Kolba",
+      "magazine": "Magazynek",
+      "tank": "Zbiornik paliwa",
+      "sights": "Celownik",
+      "muzzle": "Wylot lufy",
+      "nozzle": "Dysza",
+      "blade": "Ostrze",
+      "head": "Modyfikacja"
+    }
   }
 }
