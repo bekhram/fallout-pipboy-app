@@ -13,6 +13,15 @@ const injuryLabels = [
   ["rightLeg", "injuries.rightLeg"],
 ];
 
+const powerArmorSlotIds = [
+  "Head",
+  "Torso",
+  "Left Arm",
+  "Right Arm",
+  "Left Leg",
+  "Right Leg",
+];
+
 const cycle = {
   normal: "crippled",
   crippled: "treated",
@@ -30,6 +39,7 @@ export default function InjuryPanel({
 }) {
   const { t } = useTranslation();
   const [selectedStatusKey, setSelectedStatusKey] = useState(null);
+  const [vaultBoyMode, setVaultBoyMode] = useState("powerArmor");
 
   const values = Object.values(injuries || {});
   const crippledCount = values.filter((value) => value === "crippled").length;
@@ -58,6 +68,11 @@ export default function InjuryPanel({
 
   const selectedStatus =
     uniqueStatuses.find((item) => item.key === selectedStatusKey) || null;
+
+  const hasPowerArmor = powerArmorSlotIds.some((slotId) =>
+    Boolean(getPowerArmorPartCondition(armor?._power?.loadout, slotId))
+  );
+  const activeVaultBoyMode = hasPowerArmor ? vaultBoyMode : "injuries";
 
   const handlePartClick = (part) => {
     const current = injuries?.[part] || "normal";
@@ -116,13 +131,44 @@ export default function InjuryPanel({
       </div>
 
       <div className="pip-injuries-card">
-        <InjuriesVaultBoy
-          injuries={injuries}
-          armor={armor}
-          derived={derived}
-          onPartClick={handlePartClick}
-          onArmorPartClick={handleArmorPartClick}
-        />
+        <div className="pip-injuries-visual">
+          <div
+            className="pip-injury-conditions-list"
+            style={{ justifyContent: "center", marginBottom: 8 }}
+          >
+            <button
+              type="button"
+              className={`pip-injury-condition-chip ${
+                activeVaultBoyMode === "injuries" ? "is-positive is-selected" : ""
+              }`}
+              onClick={() => setVaultBoyMode("injuries")}
+              aria-pressed={activeVaultBoyMode === "injuries"}
+            >
+              <span>[ INJURIES ]</span>
+            </button>
+            <button
+              type="button"
+              className={`pip-injury-condition-chip ${
+                activeVaultBoyMode === "powerArmor" ? "is-positive is-selected" : ""
+              }`}
+              onClick={() => setVaultBoyMode("powerArmor")}
+              aria-pressed={activeVaultBoyMode === "powerArmor"}
+              disabled={!hasPowerArmor}
+              title={hasPowerArmor ? "Power armor" : "No power armor equipped"}
+            >
+              <span>[ POWER ARMOR ]</span>
+            </button>
+          </div>
+
+          <InjuriesVaultBoy
+            injuries={injuries}
+            armor={armor}
+            derived={derived}
+            viewMode={activeVaultBoyMode}
+            onPartClick={handlePartClick}
+            onArmorPartClick={handleArmorPartClick}
+          />
+        </div>
 
         <div className="pip-injuries-side">
           {uniqueStatuses.length > 0 && (
