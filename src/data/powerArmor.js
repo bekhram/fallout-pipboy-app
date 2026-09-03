@@ -133,7 +133,20 @@ export function calculatePowerPart(part, plating = {}, system = {}, location) {
 
 
 export function calculatePowerArmorLocations(loadout) {
-  if (!loadout?.setId) return null;
+  if (!loadout?.setId || loadout.setId === "none") return null;
+
+  if (loadout.setId === "frame") {
+    const empty = { physical: 0, energy: 0, radiation: 0, poison: 0, hp: 0 };
+    return {
+      Head: { ...empty },
+      "Left Arm": { ...empty },
+      "Right Arm": { ...empty },
+      Torso: { ...empty },
+      "Left Leg": { ...empty },
+      "Right Leg": { ...empty },
+    };
+  }
+
   const selectedSet = POWER_ARMOR_SETS.find((set) => set.id === loadout.setId);
   if (!selectedSet) return null;
 
