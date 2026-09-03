@@ -248,6 +248,7 @@ export function calculatePowerArmorLocations(loadout) {
       if (!selectedSet) return [part, empty()];
 
       const legacyMods = loadout.mods?.[type] || {};
+      const upgradeId = selected.upgradeId || "none";
       const platingId = selected.platingId || legacyMods.platingId || "none";
       const systemId = selected.systemId || legacyMods.systemId || "none";
       const platingOptions =
@@ -259,6 +260,8 @@ export function calculatePowerArmorLocations(loadout) {
         selectedSet.id,
         type
       );
+      const selectedUpgrade =
+        availablePowerUpgrades(selectedSet.id, type).find((mod) => mod.id === upgradeId);
       const plating =
         platingOptions.find((mod) => mod.id === platingId) || platingOptions[0];
       const system =
@@ -267,7 +270,8 @@ export function calculatePowerArmorLocations(loadout) {
         selectedSet.parts[type],
         plating,
         system,
-        type
+        type,
+        selectedUpgrade
       );
 
       return [
