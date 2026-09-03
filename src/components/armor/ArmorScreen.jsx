@@ -195,7 +195,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
         <span>{t("armorPanel.locationDr")}</span>
       </div>
 
-      <details className="pip-power-details">
+      <details className="pip-power-details" open>
         <summary>[ POWER ARMOR ]</summary>
         <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
       </details>
