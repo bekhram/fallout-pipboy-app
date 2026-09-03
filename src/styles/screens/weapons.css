@@ -579,3 +579,31 @@ button.pip-weapon-property-button:focus-visible,
     height: 84%;
   }
 }
+
+
+/* Robust fit for weapon artwork with different source aspect ratios. */
+.pip-weapon-visual img {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(0.72);
+  transform-origin: center;
+}
+
+@media (min-width: 1200px) {
+  .pip-weapon-visual img {
+    transform: scale(0.68);
+  }
+}
+
+@media (max-width: 640px) {
+  .pip-weapon-visual img {
+    width: 100%;
+    height: 100%;
+    transform: scale(0.78);
+  }
+}
