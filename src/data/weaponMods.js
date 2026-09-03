@@ -258,7 +258,7 @@ const toNumber = (value) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const unique = (items) => [...new Set(items.filter(Boolean))];
+const uniqueList = (items) => [...new Set(items.filter(Boolean))];
 
 const normalizeTrait = (value) => String(value || "")
   .trim()
@@ -415,8 +415,8 @@ export function applyWeaponMods(weapon) {
   state.rate = Math.max(0, state.rate);
   state.weight = Math.max(0, state.weight);
   state.cost = Math.max(0, state.cost);
-  state.effects = unique(state.effects);
-  state.qualities = unique(state.qualities);
+  state.effects = uniqueList(state.effects);
+  state.qualities = uniqueList(state.qualities);
 
   return state;
 }
