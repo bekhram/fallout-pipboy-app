@@ -47,6 +47,10 @@ function findById(list, id) {
   return list.find((entry) => entry.id === id);
 }
 
+function isBodyGarment(item) {
+  return item?.category === "CLOTHING" || item?.category === "OUTFIT";
+}
+
 export default function ArmorScreen({ armor, onArmorChange }) {
   const { t, i18n } = useTranslation();
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
@@ -85,7 +89,10 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     if (!item) return;
     const next = { ...slots };
     ARMOR_PARTS.forEach((part) => {
-      if (item.locations[PART_LOCATION[part]]) {
+      const coversPart = isBodyGarment(item)
+        ? part !== "Head" && item.locations[PART_LOCATION[part]]
+        : item.locations[PART_LOCATION[part]];
+      if (coversPart) {
         next[part] = { itemId: item.id, materialId: "", upgradeId: "" };
       }
     });
@@ -93,16 +100,33 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   };
 
   const changeSlot = (part, patch) => {
-    setSlots({
-      ...slots,
-      [part]: {
+    const next = { ...slots };
+    const selectedItem = Object.prototype.hasOwnProperty.call(patch, "itemId")
+      ? findById(database.items, patch.itemId)
+      : findById(database.items, slots[part]?.itemId);
+
+    if (selectedItem && isBodyGarment(selectedItem)) {
+      ARMOR_PARTS.forEach((targetPart) => {
+        if (targetPart === "Head" || !selectedItem.locations[PART_LOCATION[targetPart]]) return;
+        next[targetPart] = {
+          itemId: selectedItem.id,
+          materialId: "",
+          upgradeId: "",
+          ...(slots[targetPart]?.itemId === selectedItem.id ? slots[targetPart] : {}),
+          ...patch,
+        };
+      });
+    } else {
+      next[part] = {
         itemId: "",
         materialId: "",
         upgradeId: "",
         ...(slots[part] || {}),
         ...patch,
-      },
-    });
+      };
+    }
+
+    setSlots(next);
   };
 
   const removeSlot = (part) => {
@@ -130,11 +154,16 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   }, 0);
   const shadowedTier = shadowedPieces >= 5 ? 3 : shadowedPieces >= 3 ? 2 : shadowedPieces >= 1 ? 1 : 0;
 
+  const countedGarments = new Set();
   const totals = ARMOR_PARTS.reduce(
     (sum, part) => {
       const slot = slots[part];
       if (!slot?.itemId) return sum;
       const item = findById(database.items, slot.itemId);
+      if (isBodyGarment(item)) {
+        if (countedGarments.has(item.id)) return sum;
+        countedGarments.add(item.id);
+      }
       const material = findById(database.mods, slot.materialId);
       const upgrade = findById(database.mods, slot.upgradeId);
       return {
