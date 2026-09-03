@@ -11,10 +11,10 @@ import {
 } from "../../data/powerArmor.js";
 
 const UI = {
-  en: { title: "POWER ARMOR", frame: "Armor Frame", model: "Model", plating: "Plating", system: "System", none: "None", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL" },
-  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", model: "Модель", plating: "Покрытие", system: "Система", none: "Нет", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО" },
-  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", model: "Модель", plating: "Покриття", system: "Система", none: "Немає", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ" },
-  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", model: "Model", plating: "Pokrycie", system: "System", none: "Brak", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA" },
+  en: { title: "POWER ARMOR", frame: "Armor Frame", model: "Model", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Armor Frame only", noArmor: "Power armor is not equipped.", bareFrame: "Only the Armor Frame is equipped. It provides no DR.", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL" },
+  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", model: "Модель", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", noArmor: "Силовая броня не надета.", bareFrame: "Надет только каркас. Он не даёт сопротивления урону.", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО" },
+  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", model: "Модель", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", noArmor: "Силова броня не вдягнена.", bareFrame: "Вдягнений лише каркас. Він не дає опору пошкодженням.", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ" },
+  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", model: "Model", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", noArmor: "Pancerz wspomagany nie jest założony.", bareFrame: "Założona jest tylko rama. Nie zapewnia odporności na obrażenia.", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA" },
 };
 
 function find(list, id) {
@@ -25,10 +25,11 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
   const { i18n } = useTranslation();
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
   const state = armor?._power?.loadout || {
-    setId: "t45",
+    setId: "none",
     mods: {},
   };
-  const selectedSet = find(POWER_ARMOR_SETS, state.setId);
+  const selectedSet = POWER_ARMOR_SETS.find((set) => set.id === state.setId);
+  const hasFrame = state.setId !== "none";
 
   const update = (patch) => {
     onArmorChange("_power", "loadout", { ...state, ...patch });
@@ -48,7 +49,7 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
     });
   };
 
-  const rows = POWER_PARTS.map((partInfo) => {
+  const rows = selectedSet ? POWER_PARTS.map((partInfo) => {
     const base = selectedSet.parts[partInfo.id];
     const selectedMods = state.mods?.[partInfo.id] || {};
     const platingOptions =
@@ -64,39 +65,49 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
     const system = find(systemOptions, selectedMods.systemId || "none");
     const stats = calculatePowerPart(base, plating, system, partInfo.id);
     return { partInfo, platingOptions, systemOptions, plating, system, stats };
-  });
+  }) : [];
 
   const totals = rows.reduce(
     (sum, row) => ({
       weight: sum.weight + row.stats.weight * row.partInfo.count,
       cost: sum.cost + row.stats.cost * row.partInfo.count,
     }),
-    { weight: POWER_ARMOR_FRAME.weight, cost: POWER_ARMOR_FRAME.cost }
+    {
+      weight: hasFrame ? POWER_ARMOR_FRAME.weight : 0,
+      cost: hasFrame ? POWER_ARMOR_FRAME.cost : 0,
+    }
   );
 
   return (
     <div className="pip-power-armor">
       <div className="pip-armor-section-title">[ {labels.title} ]</div>
 
-      <div className="pip-power-frame">
-        <strong>{labels.frame}</strong>
-        <span>{labels.weight}: {POWER_ARMOR_FRAME.weight}</span>
-        <span>{labels.cost}: {POWER_ARMOR_FRAME.cost}</span>
-        <span>{labels.rarity}: {POWER_ARMOR_FRAME.rarity}</span>
-      </div>
+      {hasFrame && (
+        <div className="pip-power-frame">
+          <strong>{labels.frame}</strong>
+          <span>{labels.weight}: {POWER_ARMOR_FRAME.weight}</span>
+          <span>{labels.cost}: {POWER_ARMOR_FRAME.cost}</span>
+          <span>{labels.rarity}: {POWER_ARMOR_FRAME.rarity}</span>
+        </div>
+      )}
 
       <label className="pip-power-model">
         <span>{labels.model}</span>
         <select
           className="pip-input"
-          value={selectedSet.id}
+          value={state.setId}
           onChange={(event) => update({ setId: event.target.value, mods: {} })}
         >
+          <option value="none">{labels.none}</option>
+          <option value="frame">{labels.frameOnly}</option>
           {POWER_ARMOR_SETS.map((set) => (
             <option key={set.id} value={set.id}>{set.name}</option>
           ))}
         </select>
       </label>
+
+      {state.setId === "none" && <div className="pip-armor-message">{labels.noArmor}</div>}
+      {state.setId === "frame" && <div className="pip-armor-message">{labels.bareFrame}</div>}
 
       <div className="pip-power-parts">
         {rows.map(({ partInfo, platingOptions, systemOptions, plating, system, stats }) => (
@@ -150,7 +161,7 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
         <strong>[ {labels.total} ]</strong>
         <span>{labels.weight}: {totals.weight}</span>
         <span>{labels.cost}: {totals.cost}</span>
-        <span>{labels.rarity}: {selectedSet.rarity}</span>
+        <span>{labels.rarity}: {selectedSet?.rarity ?? (hasFrame ? POWER_ARMOR_FRAME.rarity : 0)}</span>
       </div>
     </div>
   );
