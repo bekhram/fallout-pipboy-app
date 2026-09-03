@@ -224,6 +224,181 @@ export function getWeaponModGroups(weapon) {
   return unique[slug] || {};
 }
 
+const EFFECT_KEYS = new Map([
+  ["persistent", "persistent"],
+  ["vicious", "vicious"],
+  ["burst", "burst"],
+  ["breaking", "breaking"],
+  ["radioactive", "radioactive"],
+  ["spread", "spread"],
+  ["stun", "stun"],
+]);
+
+const QUALITY_KEYS = new Map([
+  ["accurate", "accurate"],
+  ["blast", "blast"],
+  ["close quarters", "closeQuarters"],
+  ["concealed", "concealed"],
+  ["debilitating", "debilitating"],
+  ["gatling", "gatling"],
+  ["inaccurate", "inaccurate"],
+  ["night vision", "nightVision"],
+  ["parry", "parry"],
+  ["recon", "recon"],
+  ["reliable", "reliable"],
+  ["suppressed", "suppressed"],
+  ["two-handed", "twoHanded"],
+  ["unreliable", "unreliable"],
+]);
+
+const RANGE_STEPS = ["Melee", "Close (C)", "Medium (M)", "Long (L)", "Extreme (X)"];
+
+const toNumber = (value) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const unique = (items) => [...new Set(items.filter(Boolean))];
+
+const normalizeTrait = (value) => String(value || "")
+  .trim()
+  .toLowerCase()
+  .replace(/[_-]+/g, " ")
+  .replace(/\s+/g, " ");
+
+const removeTrait = (items, trait) => {
+  const normalized = normalizeTrait(trait);
+  return items.filter((item) => normalizeTrait(item) !== normalized);
+};
+
+const addTrait = (state, trait) => {
+  const normalized = normalizeTrait(trait);
+  const piercing = normalized.match(/^piercing\s+(\d+)$/);
+
+  if (piercing) {
+    state.effects = removeTrait(state.effects, `piercing ${piercing[1]}`);
+    state.effects.push(`piercing ${piercing[1]}`);
+    return;
+  }
+
+  const effectKey = EFFECT_KEYS.get(normalized);
+  if (effectKey) {
+    state.effects.push(effectKey);
+    return;
+  }
+
+  const qualityKey = QUALITY_KEYS.get(normalized);
+  if (qualityKey) state.qualities.push(qualityKey);
+};
+
+const deleteTrait = (state, trait) => {
+  const normalized = normalizeTrait(trait);
+  const effectKey = EFFECT_KEYS.get(normalized) || normalized;
+  const qualityKey = QUALITY_KEYS.get(normalized) || normalized;
+  state.effects = removeTrait(state.effects, effectKey);
+  state.qualities = removeTrait(state.qualities, qualityKey);
+};
+
+const changeRange = (range, delta) => {
+  const normalized = String(range || "").trim().toUpperCase();
+  const aliases = {
+    MELEE: 0,
+    C: 1,
+    "CLOSE (C)": 1,
+    M: 2,
+    "MEDIUM (M)": 2,
+    L: 3,
+    "LONG (L)": 3,
+    X: 4,
+    "EXTREME (X)": 4,
+  };
+  const current = aliases[normalized];
+  if (current === undefined) return range;
+  return RANGE_STEPS[Math.max(0, Math.min(RANGE_STEPS.length - 1, current + delta))];
+};
+
+const extractTraitList = (text) => text
+  .replace(/^(gain|remove)\s+/i, "")
+  .split(/,|\band\b/i)
+  .map((item) => item.trim())
+  .filter(Boolean);
+
+const applyEffectText = (state, text) => {
+  const source = String(text || "");
+
+  const fixedDamage = source.match(/damage\s+(?:becomes|to)\s+(\d+)/i);
+  if (fixedDamage) {
+    state.damage = Number(fixedDamage[1]);
+  } else {
+    for (const match of source.matchAll(/([+-]\d+)\s+damage/gi)) {
+      state.damage += Number(match[1]);
+    }
+  }
+
+  for (const match of source.matchAll(/([+-]\d+)\s+Fire Rate/gi)) {
+    state.rate += Number(match[1]);
+  }
+
+  const rangeUp = source.match(/increase Range by (\d+) step/i);
+  const rangeDown = source.match(/reduce Range by (\d+) step/i);
+  if (rangeUp) state.range = changeRange(state.range, Number(rangeUp[1]));
+  if (rangeDown) state.range = changeRange(state.range, -Number(rangeDown[1]));
+
+  const damageType = source.match(/damage (?:type )?(?:becomes|to)\s+(Physical|Energy|Radiation|Poison)/i);
+  if (damageType) state.type = damageType[1].toLowerCase();
+
+  const ammo = source.match(/ammo becomes\s+([^;]+)/i);
+  if (ammo) state.ammo = ammo[1].trim();
+
+  for (const part of source.split(";")) {
+    const trimmed = part.trim();
+    if (/^gain\s+/i.test(trimmed)) {
+      extractTraitList(trimmed).forEach((trait) => addTrait(state, trait));
+    }
+    if (/^remove\s+/i.test(trimmed)) {
+      extractTraitList(trimmed).forEach((trait) => deleteTrait(state, trait));
+    }
+  }
+};
+
 export function findWeaponMod(weapon, slot, name) {
   return (getWeaponModGroups(weapon)[slot] || []).find((item) => item.name === name);
+}
+
+export function getSelectedWeaponMods(weapon) {
+  return Object.entries(weapon?.mods || {})
+    .map(([slot, name]) => findWeaponMod(weapon, slot, name))
+    .filter(Boolean);
+}
+
+export function applyWeaponMods(weapon) {
+  const selectedMods = getSelectedWeaponMods(weapon);
+  const state = {
+    ...weapon,
+    damage: toNumber(weapon?.damage),
+    rate: toNumber(weapon?.rate),
+    weight: toNumber(weapon?.weight),
+    cost: toNumber(weapon?.cost),
+    range: weapon?.range || "",
+    type: weapon?.type || "physical",
+    ammo: weapon?.ammo || "",
+    effects: Array.isArray(weapon?.effects) ? [...weapon.effects] : [],
+    qualities: Array.isArray(weapon?.qualities) ? [...weapon.qualities] : [],
+    appliedMods: selectedMods,
+  };
+
+  selectedMods.forEach((selectedMod) => {
+    state.weight += toNumber(selectedMod.weight);
+    state.cost += toNumber(selectedMod.cost);
+    applyEffectText(state, selectedMod.effect);
+  });
+
+  state.damage = Math.max(0, state.damage);
+  state.rate = Math.max(0, state.rate);
+  state.weight = Math.max(0, state.weight);
+  state.cost = Math.max(0, state.cost);
+  state.effects = unique(state.effects);
+  state.qualities = unique(state.qualities);
+
+  return state;
 }
