@@ -163,7 +163,7 @@ export default function InjuriesVaultBoy({
         <img
           src={isPowerArmorVisible ? powerArmor : healthy}
           alt={t("injuries.vaultBoyAlt")}
-          className="pip-injuries-vaultboy-base"
+          className={`pip-injuries-vaultboy-base${isPowerArmorVisible ? " is-power-armor" : ""}`}
           draggable="false"
         />
 

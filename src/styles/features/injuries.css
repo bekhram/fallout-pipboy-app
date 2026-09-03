@@ -75,6 +75,11 @@
   z-index: 1;
 }
 
+.pip-injuries-vaultboy-base.is-power-armor {
+  transform: scale(0.78);
+  transform-origin: center center;
+}
+
 .pip-injuries-vaultboy-overlay {
   z-index: 2;
   opacity: 0.9;
