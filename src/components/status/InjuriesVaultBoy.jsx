@@ -26,19 +26,6 @@ import rightLegCritical from "../../assets/injuries/right_leg_critical.png";
 import leftLegInjured from "../../assets/injuries/left_leg_injured.png";
 import leftLegCritical from "../../assets/injuries/left_leg_critical.png";
 
-import paHeadDamaged from "../../assets/injuries/power-armor-v2/head_damaged.svg";
-import paHeadBroken from "../../assets/injuries/power-armor-v2/head_broken.svg";
-import paTorsoDamaged from "../../assets/injuries/power-armor-v2/torso_damaged.svg";
-import paTorsoBroken from "../../assets/injuries/power-armor-v2/torso_broken.svg";
-import paLeftArmDamaged from "../../assets/injuries/power-armor-v2/left_arm_damaged.svg";
-import paLeftArmBroken from "../../assets/injuries/power-armor-v2/left_arm_broken.svg";
-import paRightArmDamaged from "../../assets/injuries/power-armor-v2/right_arm_damaged.svg";
-import paRightArmBroken from "../../assets/injuries/power-armor-v2/right_arm_broken.svg";
-import paLeftLegDamaged from "../../assets/injuries/power-armor-v2/left_leg_damaged.svg";
-import paLeftLegBroken from "../../assets/injuries/power-armor-v2/left_leg_broken.svg";
-import paRightLegDamaged from "../../assets/injuries/power-armor-v2/right_leg_damaged.svg";
-import paRightLegBroken from "../../assets/injuries/power-armor-v2/right_leg_broken.svg";
-
 const injuryLayers = {
   head: { treated: headInjured, crippled: headCritical },
   leftArm: { treated: leftArmInjured, crippled: leftArmCritical },
@@ -46,15 +33,6 @@ const injuryLayers = {
   torso: { treated: torsoInjured, crippled: torsoCritical },
   leftLeg: { treated: leftLegInjured, crippled: leftLegCritical },
   rightLeg: { treated: rightLegInjured, crippled: rightLegCritical },
-};
-
-const POWER_ARMOR_DAMAGE_IMAGES = {
-  head: { damaged: paHeadDamaged, broken: paHeadBroken },
-  torso: { damaged: paTorsoDamaged, broken: paTorsoBroken },
-  leftArm: { damaged: paLeftArmDamaged, broken: paLeftArmBroken },
-  rightArm: { damaged: paRightArmDamaged, broken: paRightArmBroken },
-  leftLeg: { damaged: paLeftLegDamaged, broken: paLeftLegBroken },
-  rightLeg: { damaged: paRightLegDamaged, broken: paRightLegBroken },
 };
 
 const PART_ORDER = ["head", "torso", "leftArm", "rightArm", "leftLeg", "rightLeg"];
@@ -143,36 +121,17 @@ function applyDerivedResistance(base = {}, derived = {}) {
 
 function PowerArmorDamagePart({ part, state }) {
   const overlay = POWER_ARMOR_DAMAGE_OVERLAYS[part];
-  const src = POWER_ARMOR_DAMAGE_IMAGES[part]?.[state];
-  if (!overlay || !src) return null;
+  if (!overlay || (state !== "damaged" && state !== "broken")) return null;
 
   return (
-    <img
-      src={src}
-      alt=""
+    <div
+      className={`pip-power-damage is-${part} is-${state}`}
       aria-hidden="true"
-      draggable="false"
       style={{
-        position: "absolute",
-        inset: "auto",
         top: overlay.top,
         left: overlay.left,
-        right: "auto",
-        bottom: "auto",
         width: overlay.width,
         height: overlay.height,
-        maxWidth: "none",
-        margin: 0,
-        padding: 0,
-        objectFit: "fill",
-        objectPosition: "center",
-        zIndex: 4,
-        pointerEvents: "none",
-        opacity: state === "broken" ? 1 : 0.96,
-        filter:
-          state === "broken"
-            ? "drop-shadow(0 0 6px rgba(255, 70, 70, 0.7))"
-            : "drop-shadow(0 0 5px rgba(255, 180, 60, 0.6))",
       }}
     />
   );
