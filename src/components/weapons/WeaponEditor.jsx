@@ -64,14 +64,14 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
 
   const mapSkill = (csvSkill) => {
     const s = normalizeKey(csvSkill);
-    if (s.includes('small')) return 'small_guns';
-    if (s.includes('energy')) return 'energy_weapons';
-    if (s.includes('big')) return 'big_guns';
-    if (s.includes('melee')) return 'melee';
-    if (s.includes('unarmed')) return 'unarmed';
-    if (s.includes('explosive')) return 'explosives';
-    if (s.includes('throw')) return 'throw';
-    return s || "small_guns";
+    if (s.includes("small")) return "Small Guns";
+    if (s.includes("energy")) return "Energy Weapons";
+    if (s.includes("big")) return "Big Guns";
+    if (s.includes("melee")) return "Melee Weapons";
+    if (s.includes("unarmed")) return "Unarmed";
+    if (s.includes("explosive")) return "Explosives";
+    if (s.includes("throw")) return "Throwing";
+    return "Small Guns";
   };
 
   const handleLoadFromDb = (indexStr) => {
