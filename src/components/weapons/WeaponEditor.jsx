@@ -10,9 +10,12 @@ import {
   SKILL_LABEL_KEYS,
   WEAPON_AMMO_OPTIONS, // Наш список набоїв
 } from "../../constants.js";
+import { getWeaponModGroups, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
   const { t } = useTranslation();
+  const availableModGroups = getWeaponModGroups(draft);
+  const availableModSlots = Object.entries(availableModGroups);
 
   const toggleQuality = (value) => {
     const current = Array.isArray(draft.qualities) ? draft.qualities : [];
@@ -92,6 +95,7 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
       qualities: parseTags(w.Qualities),
       customEffect: w.Effects || "", 
       qualitiesCustom: w.Qualities || "",
+      mods: {},
     }));
   };
   // ------------------------------------
@@ -239,43 +243,52 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
           <summary className="pip-collapsible__summary">
             [ WORKBENCH: MODS ]
           </summary>
-          <div className="pip-collapsible__body pip-form-grid">
-            <input
-              className="pip-input"
-              placeholder="Receiver (e.g. Hardened)"
-              value={draft.mods?.receiver || ""}
-              onChange={(e) => handleModChange("receiver", e.target.value)}
-            />
-            <input
-              className="pip-input"
-              placeholder="Barrel (e.g. Long Light)"
-              value={draft.mods?.barrel || ""}
-              onChange={(e) => handleModChange("barrel", e.target.value)}
-            />
-            <input
-              className="pip-input"
-              placeholder="Grip / Stock (e.g. Full Stock)"
-              value={draft.mods?.grip || ""}
-              onChange={(e) => handleModChange("grip", e.target.value)}
-            />
-            <input
-              className="pip-input"
-              placeholder="Magazine (e.g. Large)"
-              value={draft.mods?.magazine || ""}
-              onChange={(e) => handleModChange("magazine", e.target.value)}
-            />
-            <input
-              className="pip-input"
-              placeholder="Sights (e.g. Reflex)"
-              value={draft.mods?.sights || ""}
-              onChange={(e) => handleModChange("sights", e.target.value)}
-            />
-            <input
-              className="pip-input"
-              placeholder="Muzzle (e.g. Suppressor)"
-              value={draft.mods?.muzzle || ""}
-              onChange={(e) => handleModChange("muzzle", e.target.value)}
-            />
+          <div className="pip-collapsible__body">
+            {availableModSlots.length > 0 ? (
+              <div className="pip-form-grid">
+                {availableModSlots.map(([slot, options]) => {
+                  const selectedName = draft.mods?.[slot] || "";
+                  const selected = options.find((item) => item.name === selectedName);
+
+                  return (
+                    <label key={slot} className="pip-mod-field">
+                      <span className="pip-mod-field__label">
+                        {MOD_SLOT_LABELS[slot] || slot}
+                      </span>
+                      <select
+                        className="pip-input"
+                        value={selectedName}
+                        onChange={(event) => handleModChange(slot, event.target.value)}
+                      >
+                        <option value="">— No modification —</option>
+                        {selectedName && !selected && (
+                          <option value={selectedName}>{selectedName} (custom)</option>
+                        )}
+                        {options.map((item) => (
+                          <option key={item.name} value={item.name}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                      {selected && (
+                        <span className="pip-mod-field__details">
+                          {selected.effect}
+                          <small>
+                            Δ Weight: {selected.weight >= 0 ? "+" : ""}{selected.weight}
+                            {" · "}Δ Cost: {selected.cost >= 0 ? "+" : ""}{selected.cost}
+                            {selected.perks ? ` · ${selected.perks}` : ""}
+                          </small>
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="pip-mod-empty">
+                No modification table is available for this weapon.
+              </p>
+            )}
           </div>
         </details>
       </div>
