@@ -432,7 +432,7 @@ const replaceTerms = (value, terms) => {
   Object.entries(terms || {})
     .sort(([a], [b]) => b.length - a.length)
     .forEach(([source, target]) => {
-      const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\      result = result.split(source).join(target);");
+      const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       result = result.replace(new RegExp(escaped, "gi"), target);
     });
   return result;
