@@ -274,14 +274,20 @@ export function calculatePowerArmorLocations(loadout) {
         selectedUpgrade
       );
 
+      const currentHp =
+        selected.currentHp === null || selected.currentHp === undefined
+          ? stats.hp
+          : Math.max(0, Math.min(Number(selected.currentHp || 0), stats.hp));
+      const broken = currentHp <= 0;
+
       return [
         part,
         {
-          physical: stats.physical,
-          energy: stats.energy,
-          radiation: stats.radiation,
+          physical: broken ? 0 : stats.physical,
+          energy: broken ? 0 : stats.energy,
+          radiation: broken ? 0 : stats.radiation,
           poison: 0,
-          hp: stats.hp,
+          hp: currentHp,
         },
       ];
     })
