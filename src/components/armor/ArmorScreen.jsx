@@ -1,8 +1,15 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ARMOR_PARTS } from "../../constants.js";
 import { useTranslation } from "react-i18next";
+import {
+  PART_LOCATION,
+  calculateArmorPart,
+  compatibleArmorItems,
+  compatibleArmorMods,
+  parseArmorDatabase,
+} from "../../utils/armorDatabase.js";
 
-const ARMOR_PART_LABEL_KEYS = {
+const LABEL_KEYS = {
   Head: "injuries.head",
   "Left Arm": "injuries.leftArm",
   "Right Arm": "injuries.rightArm",
@@ -11,7 +18,7 @@ const ARMOR_PART_LABEL_KEYS = {
   "Right Leg": "injuries.rightLeg",
 };
 
-const ARMOR_PART_CODES = {
+const CODES = {
   Head: "H",
   "Left Arm": "LA",
   "Right Arm": "RA",
@@ -20,7 +27,7 @@ const ARMOR_PART_CODES = {
   "Right Leg": "RL",
 };
 
-const ARMOR_FIELDS = [
+const FIELDS = [
   { key: "physical", icon: "⌖", labelKey: "armorPanel.physical" },
   { key: "energy", icon: "⚡", labelKey: "armorPanel.energy" },
   { key: "radiation", icon: "☢", labelKey: "armorPanel.radiation" },
@@ -28,8 +35,107 @@ const ARMOR_FIELDS = [
   { key: "hp", icon: "", labelKey: "armorPanel.hp" },
 ];
 
+const UI = {
+  en: { catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove" },
+  ru: { catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять" },
+  uk: { catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти" },
+  pl: { catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij" },
+};
+
+function findById(list, id) {
+  return list.find((entry) => entry.id === id);
+}
+
 export default function ArmorScreen({ armor, onArmorChange }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
+  const [database, setDatabase] = useState({ items: [], mods: [] });
+  const [catalogItemId, setCatalogItemId] = useState("");
+  const [loadState, setLoadState] = useState("loading");
+
+  useEffect(() => {
+    let active = true;
+    fetch("/Armor.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Armor database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (!active) return;
+        const parsed = parseArmorDatabase(text);
+        setDatabase(parsed);
+        setCatalogItemId(parsed.items.find((item) => item.family !== "robot")?.id || "");
+        setLoadState("ready");
+      })
+      .catch(() => active && setLoadState("error"));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const slots = armor?._equipment?.slots || {};
+
+  const setSlots = (nextSlots) => {
+    onArmorChange("_equipment", "slots", nextSlots);
+  };
+
+  const equipCatalogItem = () => {
+    const item = findById(database.items, catalogItemId);
+    if (!item) return;
+    const next = { ...slots };
+    ARMOR_PARTS.forEach((part) => {
+      if (item.locations[PART_LOCATION[part]]) {
+        next[part] = { itemId: item.id, materialId: "", upgradeId: "" };
+      }
+    });
+    setSlots(next);
+  };
+
+  const changeSlot = (part, patch) => {
+    setSlots({
+      ...slots,
+      [part]: {
+        itemId: "",
+        materialId: "",
+        upgradeId: "",
+        ...(slots[part] || {}),
+        ...patch,
+      },
+    });
+  };
+
+  const removeSlot = (part) => {
+    const next = { ...slots };
+    delete next[part];
+    setSlots(next);
+  };
+
+  const calculated = useMemo(() => {
+    const result = {};
+    ARMOR_PARTS.forEach((part) => {
+      const selected = slots[part] || {};
+      const item = findById(database.items, selected.itemId);
+      const material = findById(database.mods, selected.materialId);
+      const upgrade = findById(database.mods, selected.upgradeId);
+      result[part] = calculateArmorPart(item, material, upgrade, armor?.[part]);
+    });
+    return result;
+  }, [armor, database, slots]);
+
+  const totals = ARMOR_PARTS.reduce(
+    (sum, part) => {
+      const slot = slots[part];
+      if (!slot?.itemId) return sum;
+      const item = findById(database.items, slot.itemId);
+      const material = findById(database.mods, slot.materialId);
+      const upgrade = findById(database.mods, slot.upgradeId);
+      return {
+        weight: sum.weight + Number(item?.weight || 0) + Number(material?.weight || 0) + Number(upgrade?.weight || 0),
+        cost: sum.cost + Number(item?.cost || 0) + Number(material?.cost || 0) + Number(upgrade?.cost || 0),
+      };
+    },
+    { weight: 0, cost: 0 }
+  );
 
   return (
     <section className="pip-panel pip-block">
@@ -38,52 +144,109 @@ export default function ArmorScreen({ armor, onArmorChange }) {
         <span>{t("armorPanel.locationDr")}</span>
       </div>
 
+      <div className="pip-armor-catalog">
+        <div className="pip-armor-section-title">[ {labels.catalog} ]</div>
+        {loadState === "loading" && <div className="pip-armor-message">{labels.loading}</div>}
+        {loadState === "error" && <div className="pip-armor-message is-error">{labels.error}</div>}
+        {loadState === "ready" && (
+          <div className="pip-armor-equip-row">
+            <select className="pip-input" value={catalogItemId} onChange={(event) => setCatalogItemId(event.target.value)}>
+              {database.items.filter((item) => item.family !== "robot").map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+            </select>
+            <button type="button" className="pip-btn" onClick={equipCatalogItem}>{labels.equip}</button>
+          </div>
+        )}
+      </div>
+
+      <div className="pip-armor-loadout">
+        {ARMOR_PARTS.map((part) => {
+          const selected = slots[part] || {};
+          const item = findById(database.items, selected.itemId);
+          const availableItems = compatibleArmorItems(database.items, part);
+          const availableMods = compatibleArmorMods(database.mods, item, part);
+          return (
+            <article className="pip-armor-slot" key={part}>
+              <div className="pip-armor-slot-head">
+                <span className="pip-armor-row-code">{CODES[part]}</span>
+                <strong>{t(LABEL_KEYS[part] || part)}</strong>
+                {selected.itemId && (
+                  <button type="button" className="pip-armor-remove" onClick={() => removeSlot(part)} title={labels.remove}>×</button>
+                )}
+              </div>
+              <label>
+                <span>{labels.item}</span>
+                <select
+                  className="pip-input"
+                  value={selected.itemId || ""}
+                  onChange={(event) => changeSlot(part, { itemId: event.target.value, materialId: "", upgradeId: "" })}
+                >
+                  <option value="">{labels.none}</option>
+                  {availableItems.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>{labels.material}</span>
+                <select className="pip-input" disabled={!item} value={selected.materialId || ""} onChange={(event) => changeSlot(part, { materialId: event.target.value })}>
+                  <option value="">{labels.none}</option>
+                  {availableMods.materials.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                </select>
+              </label>
+              <label>
+                <span>{labels.upgrade}</span>
+                <select className="pip-input" disabled={!item} value={selected.upgradeId || ""} onChange={(event) => changeSlot(part, { upgradeId: event.target.value })}>
+                  <option value="">{labels.none}</option>
+                  {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                </select>
+              </label>
+              {(findById(database.mods, selected.materialId)?.effects || findById(database.mods, selected.upgradeId)?.effects) && (
+                <p className="pip-armor-effect">
+                  {[findById(database.mods, selected.materialId)?.effects, findById(database.mods, selected.upgradeId)?.effects].filter(Boolean).join(" ")}
+                </p>
+              )}
+            </article>
+          );
+        })}
+      </div>
+
       <div className="pip-armor-table">
         <div className="pip-armor-table-head">
           <div className="pip-armor-part-col" />
-          {ARMOR_FIELDS.map((field) => (
+          {FIELDS.map((field) => (
             <div key={field.key} className="pip-armor-stat-col">
               <span className="pip-armor-stat-icon">{field.icon}</span>
               <span className="pip-armor-stat-text">{t(field.labelKey)}</span>
             </div>
           ))}
         </div>
-
         <div className="pip-armor-table-body">
           {ARMOR_PARTS.map((part) => (
             <div className="pip-armor-row" key={part}>
               <div className="pip-armor-row-label">
-                <span className="pip-armor-row-code">
-                  {ARMOR_PART_CODES[part]}
-                </span>
-                <span className="pip-armor-row-name">
-                  {t(ARMOR_PART_LABEL_KEYS[part] || part)}
-                </span>
+                <span className="pip-armor-row-code">{CODES[part]}</span>
+                <span className="pip-armor-row-name">{t(LABEL_KEYS[part] || part)}</span>
               </div>
-
-              {ARMOR_FIELDS.map((field) => (
-                <label
-                  key={`${part}-${field.key}`}
-                  className="pip-armor-cell"
-                  title={`${t(ARMOR_PART_LABEL_KEYS[part] || part)} · ${t(field.labelKey)}`}
-                >
-                  <span className="pip-armor-cell-mobile-icon">
-                    {field.icon}
-                  </span>
+              {FIELDS.map((field) => (
+                <label key={`${part}-${field.key}`} className="pip-armor-cell">
+                  <span className="pip-armor-cell-mobile-icon">{field.icon}</span>
                   <input
                     className="pip-input pip-armor-mini-input"
-                    value={armor?.[part]?.[field.key] || ""}
-                    placeholder={field.icon}
-                    inputMode="numeric"
-                    onChange={(e) =>
-                      onArmorChange(part, field.key, e.target.value)
-                    }
+                    value={calculated[part]?.[field.key] ?? 0}
+                    readOnly
+                    title={t(field.labelKey)}
                   />
                 </label>
               ))}
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="pip-armor-totals">
+        <strong>[ {labels.total} ]</strong>
+        <span>{labels.weight}: {totals.weight}</span>
+        <span>{labels.cost}: {totals.cost}</span>
       </div>
     </section>
   );
