@@ -130,3 +130,58 @@ export function calculatePowerPart(part, plating = {}, system = {}, location) {
     cost: Number(part.cost || 0) + Number(plating.cost || 0) * (location === "torso" ? 2 : 1) + Number(system.cost || 0),
   };
 }
+
+
+export function calculatePowerArmorLocations(loadout) {
+  if (!loadout?.setId) return null;
+  const selectedSet = POWER_ARMOR_SETS.find((set) => set.id === loadout.setId);
+  if (!selectedSet) return null;
+
+  const calculate = (location) => {
+    const selectedMods = loadout.mods?.[location] || {};
+    const platingOptions =
+      selectedSet.id === "raider"
+        ? POWER_ARMOR_PLATING.filter((mod) => mod.id === "none")
+        : availablePowerMods(POWER_ARMOR_PLATING, selectedSet.id, location);
+    const systemOptions = availablePowerMods(
+      POWER_ARMOR_SYSTEMS,
+      selectedSet.id,
+      location
+    );
+    const plating =
+      platingOptions.find((mod) => mod.id === selectedMods.platingId) ||
+      platingOptions[0];
+    const system =
+      systemOptions.find((mod) => mod.id === selectedMods.systemId) ||
+      systemOptions[0];
+
+    const stats = calculatePowerPart(
+      selectedSet.parts[location],
+      plating,
+      system,
+      location
+    );
+
+    return {
+      physical: stats.physical,
+      energy: stats.energy,
+      radiation: stats.radiation,
+      poison: 0,
+      hp: stats.hp,
+    };
+  };
+
+  const head = calculate("head");
+  const torso = calculate("torso");
+  const arm = calculate("arm");
+  const leg = calculate("leg");
+
+  return {
+    Head: head,
+    "Left Arm": { ...arm },
+    "Right Arm": { ...arm },
+    Torso: torso,
+    "Left Leg": { ...leg },
+    "Right Leg": { ...leg },
+  };
+}
