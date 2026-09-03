@@ -62,7 +62,7 @@ const ARMOR_BADGES = {
 };
 
 // Position of each generated damaged/broken armor part over the PA Vault Boy.
-// The source asset is a 6 x 2 sheet: damaged on row 1, broken on row 2.
+// The source asset is 1536 x 640: 6 columns x 2 rows.
 const POWER_ARMOR_DAMAGE_OVERLAYS = {
   head: { top: "15%", left: "35%", width: "30%", height: "27%", column: 0 },
   torso: { top: "31%", left: "31%", width: "38%", height: "34%", column: 1 },
@@ -72,10 +72,10 @@ const POWER_ARMOR_DAMAGE_OVERLAYS = {
   rightLeg: { top: "54%", left: "45%", width: "29%", height: "44%", column: 5 },
 };
 
-const DAMAGE_SPRITE_CELL_WIDTH = 192;
-const DAMAGE_SPRITE_CELL_HEIGHT = 288;
-const DAMAGE_SPRITE_WIDTH = DAMAGE_SPRITE_CELL_WIDTH * 6;
-const DAMAGE_SPRITE_HEIGHT = DAMAGE_SPRITE_CELL_HEIGHT * 2;
+const DAMAGE_SPRITE_CELL_WIDTH = 256;
+const DAMAGE_SPRITE_CELL_HEIGHT = 320;
+const DAMAGE_SPRITE_WIDTH = 1536;
+const DAMAGE_SPRITE_HEIGHT = 640;
 
 const ARMOR_KEY_MAP = {
   head: "Head",
@@ -150,7 +150,7 @@ function PowerArmorDamagePart({ part, state }) {
         left: overlay.left,
         width: overlay.width,
         height: overlay.height,
-        overflow: "visible",
+        overflow: "hidden",
         pointerEvents: "none",
         opacity: state === "broken" ? 1 : 0.98,
         filter:
@@ -387,18 +387,8 @@ export default function InjuriesVaultBoy({
           >
             <div className="pip-armor-badge-code">|☢|☠|</div>
             <div className="pip-armor-badge-values">
-              <span>
-                {formatResistModifier(
-                  resistValues.radiation,
-                  immunities.includes("radiation")
-                )}
-              </span>
-              <span>
-                {formatResistModifier(
-                  resistValues.poison,
-                  immunities.includes("poison")
-                )}
-              </span>
+              <span>{formatResistModifier(resistValues.radiation, immunities.includes("radiation"))}</span>
+              <span>{formatResistModifier(resistValues.poison, immunities.includes("poison"))}</span>
             </div>
           </div>
         )}
