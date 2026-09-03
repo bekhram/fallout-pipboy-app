@@ -140,8 +140,9 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     ARMOR_PARTS.forEach((part) => {
       const selected = slots[part] || {};
       const item = findById(database.items, selected.itemId);
-      const material = findById(database.mods, selected.materialId);
-      const upgrade = findById(database.mods, selected.upgradeId);
+      const availableMods = compatibleArmorMods(database.mods, item, part);
+      const material = findById(availableMods.materials, selected.materialId);
+      const upgrade = findById(availableMods.upgrades, selected.upgradeId);
       result[part] = calculateArmorPart(item, material, upgrade, armor?.[part], part);
     });
     return result;
@@ -164,8 +165,9 @@ export default function ArmorScreen({ armor, onArmorChange }) {
         if (countedGarments.has(item.id)) return sum;
         countedGarments.add(item.id);
       }
-      const material = findById(database.mods, slot.materialId);
-      const upgrade = findById(database.mods, slot.upgradeId);
+      const availableMods = compatibleArmorMods(database.mods, item, part);
+      const material = findById(availableMods.materials, slot.materialId);
+      const upgrade = findById(availableMods.upgrades, slot.upgradeId);
       return {
         weight: sum.weight + Number(item?.weight || 0) + Number(material?.weight || 0) * armorModMultiplier(material, part) + Number(upgrade?.weight || 0) * armorModMultiplier(upgrade, part),
         cost: sum.cost + Number(item?.cost || 0) + Number(material?.cost || 0) * armorModMultiplier(material, part) + Number(upgrade?.cost || 0) * armorModMultiplier(upgrade, part),
