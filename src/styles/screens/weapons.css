@@ -609,3 +609,40 @@ button.pip-weapon-property-button:focus-visible,
     padding: 8px 18px;
   }
 }
+
+
+/* Weapon modification selector */
+.pip-mod-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pip-mod-field__label {
+  opacity: 0.68;
+  font-size: 0.78em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pip-mod-field__details {
+  min-height: 3.2em;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(20, 255, 0, 0.28);
+  color: var(--pip-color);
+  font-size: 0.78em;
+  line-height: 1.35;
+}
+
+.pip-mod-field__details small {
+  display: block;
+  margin-top: 3px;
+  opacity: 0.65;
+}
+
+.pip-mod-empty {
+  margin: 0;
+  opacity: 0.6;
+  font-size: 0.85em;
+}
