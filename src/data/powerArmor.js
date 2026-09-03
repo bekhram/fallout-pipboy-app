@@ -67,6 +67,82 @@ export const POWER_ARMOR_SETS = [
   },
 ];
 
+const upgrade = (setId, tier, type, physical, energy, hp, weight, cost, requirement) => ({
+  id: `${setId}-${tier}-${type}`,
+  setId,
+  tier,
+  type,
+  name: `${setId === "x01" ? "X-01 Mk " + tier : setId === "raider" ? "Raider II" : setId.toUpperCase().replace("T", "T-") + tier} ${type === "head" ? "Helm" : type === "torso" ? "Chest Piece" : type === "arm" ? "Arm" : "Leg"}`,
+  physical,
+  energy,
+  radiation: 0,
+  hp,
+  weight,
+  cost,
+  requirement,
+});
+
+export const POWER_ARMOR_UPGRADES = [
+  upgrade("raider", "II", "head", 1, 0, 3, 1, 5, "Armorer 1"),
+  upgrade("raider", "II", "torso", 1, 0, 4, 2, 10, "Armorer 1"),
+  upgrade("raider", "II", "arm", 1, 0, 3, 2, 7, "Armorer 1"),
+  upgrade("raider", "II", "leg", 1, 0, 3, 2, 7, "Armorer 1"),
+
+  ...[
+    ["b", [[0,0,1,1,3],[0,0,1,1,7],[1,1,1,1,7],[1,1,1,1,7]], "Armorer 1"],
+    ["c", [[1,1,2,1,6],[0,0,4,2,14],[2,2,2,2,10],[2,2,2,2,10]], "Armorer 2"],
+    ["d", [[1,1,3,2,9],[1,1,5,3,21],[2,3,3,2,15],[2,3,3,2,15]], "Armorer 2, Science! 1"],
+    ["e", [[1,2,3,2,12],[1,1,7,4,28],[3,3,3,3,20],[3,3,3,3,20]], "Armorer 3, Science! 1"],
+    ["f", [[2,2,4,3,15],[1,1,8,5,35],[3,4,4,4,25],[3,4,4,4,25]], "Armorer 3, Science! 2"],
+  ].flatMap(([tier, values, req]) =>
+    ["head","torso","arm","leg"].map((type, index) =>
+      upgrade("t45", tier, type, ...values[index], req)
+    )
+  ),
+
+  ...[
+    ["b", [[0,0,1,1,4],[1,0,1,1,9],[0,0,1,1,6],[0,0,1,1,6]], "Armorer 1"],
+    ["c", [[0,1,1,1,8],[1,1,3,2,18],[1,1,1,2,13],[1,1,1,2,13]], "Armorer 2"],
+    ["d", [[1,1,2,2,12],[1,1,4,3,27],[1,1,2,2,19],[1,1,2,2,19]], "Armorer 2, Science! 1"],
+    ["e", [[1,1,3,2,16],[2,1,6,4,36],[1,2,3,3,26],[1,2,3,3,26]], "Armorer 3, Science! 1"],
+    ["f", [[1,2,3,3,20],[2,2,7,5,45],[2,2,3,4,32],[2,2,3,4,32]], "Armorer 3, Science! 2"],
+  ].flatMap(([tier, values, req]) =>
+    ["head","torso","arm","leg"].map((type, index) =>
+      upgrade("t51", tier, type, ...values[index], req)
+    )
+  ),
+
+  ...[
+    ["b", [[1,1,1,0,32],[0,0,2,1,37],[1,1,1,1,35],[1,1,1,1,35]], "-"],
+    ["c", [[1,1,2,1,64],[1,0,3,2,74],[1,1,2,2,70],[1,1,2,2,70]], "Armorer 1, Science! 1"],
+    ["d", [[1,2,2,2,96],[1,1,5,3,111],[1,2,2,2,105],[1,2,2,2,105]], "Armorer 2, Science! 1"],
+    ["e", [[2,2,3,2,128],[1,1,7,4,148],[2,2,3,3,140],[2,2,3,3,140]], "Armorer 3, Science! 1"],
+    ["f", [[2,3,4,3,160],[2,1,8,5,185],[2,3,4,4,175],[2,3,4,4,175]], "Armorer 3, Science! 2"],
+  ].flatMap(([tier, values, req]) =>
+    ["head","torso","arm","leg"].map((type, index) =>
+      upgrade("t60", tier, type, ...values[index], req)
+    )
+  ),
+
+  ...[
+    ["II", [[0,0,1,1,7],[0,0,1,1,14],[1,1,1,1,10],[1,1,1,1,10]], "-"],
+    ["III", [[1,0,2,1,14],[0,1,1,2,28],[1,1,1,2,20],[1,1,1,2,20]], "Armorer 1, Science! 1"],
+    ["IV", [[1,1,2,2,21],[1,1,3,3,42],[1,1,2,2,30],[1,1,2,2,30]], "Armorer 2, Science! 1"],
+    ["V", [[2,1,2,2,28],[1,2,4,4,56],[2,2,2,3,40],[2,2,2,3,40]], "Armorer 3, Science! 1"],
+    ["VI", [[2,2,3,3,35],[2,2,5,5,70],[2,3,4,4,50],[2,3,4,4,50]], "Armorer 3, Science! 2"],
+  ].flatMap(([tier, values, req]) =>
+    ["head","torso","arm","leg"].map((type, index) =>
+      upgrade("x01", tier, type, ...values[index], req)
+    )
+  ),
+];
+
+export function availablePowerUpgrades(setId, type) {
+  return POWER_ARMOR_UPGRADES.filter(
+    (item) => item.setId === setId && item.type === type
+  );
+}
+
 export const POWER_ARMOR_PLATING = [
   { id: "none", name: "None" },
   { id: "titanium", name: "Titanium Plating", hp: 1, torsoHp: 2, weight: 1, cost: 10, requirement: "Armorer 3" },
@@ -120,14 +196,14 @@ export function availablePowerMods(mods, setId, location) {
   });
 }
 
-export function calculatePowerPart(part, plating = {}, system = {}, location) {
+export function calculatePowerPart(part, plating = {}, system = {}, location, selectedUpgrade = {}) {
   return {
-    physical: Number(part.physical || 0) + Number(plating.physical || 0),
-    energy: Number(part.energy || 0) + Number(plating.energy || 0),
-    radiation: Number(part.radiation || 0) + Number(plating.radiation || 0),
-    hp: Number(part.hp || 0) + Number(location === "torso" ? plating.torsoHp || plating.hp || 0 : plating.hp || 0),
-    weight: Number(part.weight || 0) + Number(plating.weight || 0) * (location === "torso" ? 2 : 1) + Number(system.weight || 0),
-    cost: Number(part.cost || 0) + Number(plating.cost || 0) * (location === "torso" ? 2 : 1) + Number(system.cost || 0),
+    physical: Number(part.physical || 0) + Number(selectedUpgrade.physical || 0) + Number(plating.physical || 0),
+    energy: Number(part.energy || 0) + Number(selectedUpgrade.energy || 0) + Number(plating.energy || 0),
+    radiation: Number(part.radiation || 0) + Number(selectedUpgrade.radiation || 0) + Number(plating.radiation || 0),
+    hp: Number(part.hp || 0) + Number(selectedUpgrade.hp || 0) + Number(location === "torso" ? plating.torsoHp || plating.hp || 0 : plating.hp || 0),
+    weight: Number(part.weight || 0) + Number(selectedUpgrade.weight || 0) + Number(plating.weight || 0) * (location === "torso" ? 2 : 1) + Number(system.weight || 0),
+    cost: Number(part.cost || 0) + Number(selectedUpgrade.cost || 0) + Number(plating.cost || 0) * (location === "torso" ? 2 : 1) + Number(system.cost || 0),
   };
 }
 
