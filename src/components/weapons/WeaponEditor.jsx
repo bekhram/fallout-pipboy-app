@@ -11,9 +11,10 @@ import {
   WEAPON_AMMO_OPTIONS, // Наш список набоїв
 } from "../../constants.js";
 import { getWeaponModGroups, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
+import { localizeWeaponModEffect, localizeWeaponModName } from "../../utils/weaponModLocalization.js";
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const availableModGroups = getWeaponModGroups(draft);
   const availableModSlots = Object.entries(availableModGroups);
 
@@ -241,7 +242,7 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
       <div className="push-top">
         <details className="pip-collapsible pip-collapsible--field" open>
           <summary className="pip-collapsible__summary">
-            [ WORKBENCH: MODS ]
+            [ {t("weaponMods.title")} ]
           </summary>
           <div className="pip-collapsible__body">
             {availableModSlots.length > 0 ? (
@@ -253,29 +254,29 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
                   return (
                     <label key={slot} className="pip-mod-field">
                       <span className="pip-mod-field__label">
-                        {MOD_SLOT_LABELS[slot] || slot}
+                        {t(`weaponMods.slots.${slot}`, MOD_SLOT_LABELS[slot] || slot)}
                       </span>
                       <select
                         className="pip-input"
                         value={selectedName}
                         onChange={(event) => handleModChange(slot, event.target.value)}
                       >
-                        <option value="">— No modification —</option>
+                        <option value="">— {t("weaponMods.noModification")} —</option>
                         {selectedName && !selected && (
-                          <option value={selectedName}>{selectedName} (custom)</option>
+                          <option value={selectedName}>{selectedName} ({t("weaponMods.custom")})</option>
                         )}
                         {options.map((item) => (
                           <option key={item.name} value={item.name}>
-                            {item.name}
+                            {localizeWeaponModName(item.name, i18n.resolvedLanguage)}
                           </option>
                         ))}
                       </select>
                       {selected && (
                         <span className="pip-mod-field__details">
-                          {selected.effect}
+                          {localizeWeaponModEffect(selected.effect, i18n.resolvedLanguage)}
                           <small>
-                            Δ Weight: {selected.weight >= 0 ? "+" : ""}{selected.weight}
-                            {" · "}Δ Cost: {selected.cost >= 0 ? "+" : ""}{selected.cost}
+                            Δ {t("weaponMods.weightDelta")}: {selected.weight >= 0 ? "+" : ""}{selected.weight}
+                            {" · "}Δ {t("weaponMods.costDelta")}: {selected.cost >= 0 ? "+" : ""}{selected.cost}
                             {selected.perks ? ` · ${selected.perks}` : ""}
                           </small>
                         </span>
@@ -286,7 +287,7 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
               </div>
             ) : (
               <p className="pip-mod-empty">
-                No modification table is available for this weapon.
+                {t("weaponMods.unavailable")}
               </p>
             )}
           </div>
