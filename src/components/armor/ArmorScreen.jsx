@@ -11,6 +11,7 @@ import {
   compatibleArmorMods,
   parseArmorDatabase,
 } from "../../utils/armorDatabase.js";
+import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";
 
 const LABEL_KEYS = {
   Head: "injuries.head",
@@ -63,6 +64,9 @@ function garmentCoversPart(item, part) {
 export default function ArmorScreen({ armor, onArmorChange }) {
   const { t, i18n } = useTranslation();
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
+  const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const armorName = (entry) => localizeArmorName(entry?.name, language);
+  const armorEffect = (entry) => localizeArmorEffect(entry?.effects, language);
   const [database, setDatabase] = useState({ items: [], mods: [] });
   const [catalogItemId, setCatalogItemId] = useState("");
   const [loadState, setLoadState] = useState("loading");
@@ -261,7 +265,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
           <div className="pip-armor-equip-row">
             <select className="pip-input" value={catalogItemId} onChange={(event) => setCatalogItemId(event.target.value)}>
               {database.items.filter((item) => item.family !== "robot").map((item) => (
-                <option key={item.id} value={item.id}>{item.name}</option>
+                <option key={item.id} value={item.id}>{armorName(item)}</option>
               ))}
             </select>
             <button type="button" className="pip-btn" onClick={equipCatalogItem}>{labels.equip}</button>
@@ -292,26 +296,26 @@ export default function ArmorScreen({ armor, onArmorChange }) {
                   onChange={(event) => changeSlot(part, { itemId: event.target.value, materialId: "", upgradeId: "" })}
                 >
                   <option value="">{labels.none}</option>
-                  {availableItems.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                  {availableItems.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
                 </select>
               </label>
               <label>
                 <span>{labels.material}</span>
                 <select className="pip-input" disabled={!item} value={selected.materialId || ""} onChange={(event) => changeSlot(part, { materialId: event.target.value })}>
                   <option value="">{labels.none}</option>
-                  {availableMods.materials.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                  {availableMods.materials.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
                 </select>
               </label>
               <label>
                 <span>{labels.upgrade}</span>
                 <select className="pip-input" disabled={!item} value={selected.upgradeId || ""} onChange={(event) => changeSlot(part, { upgradeId: event.target.value })}>
                   <option value="">{labels.none}</option>
-                  {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+                  {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
                 </select>
               </label>
               {(findById(database.mods, selected.materialId)?.effects || findById(database.mods, selected.upgradeId)?.effects) && (
                 <p className="pip-armor-effect">
-                  {[findById(database.mods, selected.materialId)?.effects, findById(database.mods, selected.upgradeId)?.effects].filter(Boolean).join(" ")}
+                  {[findById(database.mods, selected.materialId), findById(database.mods, selected.upgradeId)].map(armorEffect).filter(Boolean).join(" ")}
                 </p>
               )}
             </article>
