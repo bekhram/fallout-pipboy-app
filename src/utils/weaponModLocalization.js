@@ -435,3 +435,15 @@ export function localizeWeaponModEffect(effect, language) {
   if (lang === "en") return effect;
   return replaceTerms(effect, EFFECT_TERMS[lang]);
 }
+
+const REQUIREMENT_TERMS = {
+  ru: { "Gun Nut": "Фанат оружия", "Science!": "Наука!", "Blacksmith": "Кузнец", "Repair": "Ремонт" },
+  uk: { "Gun Nut": "Зброяр", "Science!": "Наука!", "Blacksmith": "Коваль", "Repair": "Ремонт" },
+  pl: { "Gun Nut": "Rusznikarz", "Science!": "Nauka!", "Blacksmith": "Kowal", "Repair": "Naprawa" },
+};
+
+export function localizeWeaponModRequirement(requirement, language) {
+  const lang = languageCode(language);
+  if (lang === "en") return requirement;
+  return replaceTerms(requirement, REQUIREMENT_TERMS[lang]);
+}
