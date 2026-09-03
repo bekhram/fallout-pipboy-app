@@ -291,6 +291,17 @@ const addTrait = (state, trait) => {
   if (qualityKey) state.qualities.push(qualityKey);
 };
 
+const increasePiercing = (state, amount) => {
+  let current = 0;
+  state.effects = state.effects.filter((item) => {
+    const match = normalizeTrait(item).match(/^piercing\s+(\d+)$/);
+    if (!match) return true;
+    current = Math.max(current, Number(match[1]));
+    return false;
+  });
+  state.effects.push(`piercing ${current + amount}`);
+};
+
 const deleteTrait = (state, trait) => {
   const normalized = normalizeTrait(trait);
   const effectKey = EFFECT_KEYS.get(normalized) || normalized;
@@ -339,6 +350,9 @@ const applyEffectText = (state, text) => {
     state.rate += Number(match[1]);
   }
 
+  const sharedDamageAndRate = source.match(/([+-]\d+)\s+damage\s+and\s+Fire Rate/i);
+  if (sharedDamageAndRate) state.rate += Number(sharedDamageAndRate[1]);
+
   const rangeUp = source.match(/increase Range by (\d+) step/i);
   const rangeDown = source.match(/reduce Range by (\d+) step/i);
   if (rangeUp) state.range = changeRange(state.range, Number(rangeUp[1]));
@@ -357,6 +371,10 @@ const applyEffectText = (state, text) => {
     }
     if (/^remove\s+/i.test(trimmed)) {
       extractTraitList(trimmed).forEach((trait) => deleteTrait(state, trait));
+    }
+    if (/^add\s+/i.test(trimmed)) {
+      const piercing = trimmed.match(/Piercing\s+(\d+)/i);
+      if (piercing) increasePiercing(state, Number(piercing[1]));
     }
   }
 };
