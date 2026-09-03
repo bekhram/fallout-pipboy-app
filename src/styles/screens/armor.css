@@ -93,9 +93,11 @@
 }
 
 .pip-armor-condition.is-healthy { color: var(--pip-accent); }
+.pip-armor-condition.is-improved { color: #66d9ff; }
 .pip-armor-condition.is-damaged { color: #ffc85a; }
 .pip-armor-condition.is-broken { color: #ff7777; }
 
+.pip-armor-row.is-improved { border-color: rgba(102, 217, 255, 0.48); }
 .pip-armor-row.is-damaged { border-color: rgba(255, 190, 70, 0.42); }
 .pip-armor-row.is-broken { border-color: rgba(255, 90, 90, 0.5); }
 
