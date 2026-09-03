@@ -144,13 +144,24 @@ export function compatibleArmorItems(items, part) {
   return items.filter((item) => item.locations[location] && item.family !== "robot");
 }
 
+const BALLISTIC_WEAVE_ITEMS = new Set([
+  "casual clothing",
+  "formal clothing",
+  "formal hat",
+  "heavy coat",
+  "lab coat",
+  "military fatigues",
+]);
+
 export function compatibleArmorMods(mods, item, part) {
   if (!item) return { materials: [], upgrades: [] };
   const location = PART_LOCATION[part];
   const materials = mods.filter((mod) => {
     if (!mod.locations[location]) return false;
     if (mod.family === item.family) return true;
-    if (mod.family === "ballistic") return item.family === "clothing";
+    if (mod.family === "ballistic") {
+      return BALLISTIC_WEAVE_ITEMS.has(item.name.toLowerCase());
+    }
     return mod.family === "vault-jumpsuit" && item.family === "vault-jumpsuit";
   });
   const upgrades = mods.filter(
