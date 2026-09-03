@@ -51,6 +51,11 @@ function isBodyGarment(item) {
   return item?.category === "CLOTHING" || item?.category === "OUTFIT";
 }
 
+function garmentCoversPart(item, part) {
+  if (!item?.locations?.[PART_LOCATION[part]]) return false;
+  return item.category !== "CLOTHING" || part !== "Head";
+}
+
 export default function ArmorScreen({ armor, onArmorChange }) {
   const { t, i18n } = useTranslation();
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
@@ -90,7 +95,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     const next = { ...slots };
     ARMOR_PARTS.forEach((part) => {
       const coversPart = isBodyGarment(item)
-        ? part !== "Head" && item.locations[PART_LOCATION[part]]
+        ? garmentCoversPart(item, part)
         : item.locations[PART_LOCATION[part]];
       if (coversPart) {
         next[part] = { itemId: item.id, materialId: "", upgradeId: "" };
@@ -107,7 +112,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
 
     if (selectedItem && isBodyGarment(selectedItem)) {
       ARMOR_PARTS.forEach((targetPart) => {
-        if (targetPart === "Head" || !selectedItem.locations[PART_LOCATION[targetPart]]) return;
+        if (!garmentCoversPart(selectedItem, targetPart)) return;
         next[targetPart] = {
           itemId: selectedItem.id,
           materialId: "",
