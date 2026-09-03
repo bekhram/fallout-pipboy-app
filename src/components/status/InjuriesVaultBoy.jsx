@@ -1,6 +1,10 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAdjustedArmorSnapshotForPart } from "../../utils/characterMath.js";
+import {
+  calculateNormalArmorLocations,
+  parseArmorDatabase,
+} from "../../utils/armorDatabase.js";
 
 import healthy from "../../assets/injuries/vaultboy_healthy.png";
 import powerArmor from "../../assets/injuries/vaultboy_power_armor.png";
@@ -93,6 +97,24 @@ function formatResistModifier(value, isImmune) {
   return formatSigned(value);
 }
 
+function applyDerivedResistance(base = {}, derived = {}) {
+  const immunities = derived?.immunities || [];
+  return {
+    physical: immunities.includes("physical")
+      ? 9999
+      : Math.max(0, toNumber(base.physical) + toNumber(derived?.physicalResistBonus)),
+    energy: immunities.includes("energy")
+      ? 9999
+      : Math.max(0, toNumber(base.energy) + toNumber(derived?.energyResistBonus)),
+    radiation: immunities.includes("radiation")
+      ? 9999
+      : Math.max(0, toNumber(base.radiation) + toNumber(derived?.radiationResistBonus)),
+    poison: immunities.includes("poison")
+      ? 9999
+      : Math.max(0, toNumber(base.poison) + toNumber(derived?.poisonResistBonus)),
+  };
+}
+
 export default function InjuriesVaultBoy({
   injuries = {},
   armor = {},
@@ -102,6 +124,28 @@ export default function InjuriesVaultBoy({
   onArmorPartClick,
 }) {
   const { t, i18n } = useTranslation();
+  const [armorDatabase, setArmorDatabase] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/Armor.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Armor database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (active) setArmorDatabase(parseArmorDatabase(text));
+      })
+      .catch(() => {
+        if (active) setArmorDatabase(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const armorStateLabels = {
     en: { intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece" },
     ru: { intact: "Целая", damaged: "Повреждена", broken: "Сломана", empty: "Нет детали" },
@@ -122,6 +166,11 @@ export default function InjuriesVaultBoy({
   const powerArmorStats = isPowerArmorVisible
     ? calculatePowerArmorLocations(armor?._power?.loadout)
     : null;
+
+  const normalArmorStats = useMemo(() => {
+    if (!armorDatabase) return null;
+    return calculateNormalArmorLocations(armor, armorDatabase);
+  }, [armor, armorDatabase]);
 
   const layers = PART_ORDER
     .map((part) => {
@@ -214,8 +263,11 @@ export default function InjuriesVaultBoy({
         {PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];
           const partLabel = t(PART_LABEL_KEYS[part]);
+          const normalBase = normalArmorStats?.[ARMOR_KEY_MAP[part]];
           const adjusted = isPowerArmorVisible
             ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || { physical: 0, energy: 0, radiation: 0 }
+            : normalBase
+            ? applyDerivedResistance(normalBase, derived)
             : getAdjustedArmorSnapshotForPart({ armor, part, derived });
           const armorCondition = powerConditions[part];
 
