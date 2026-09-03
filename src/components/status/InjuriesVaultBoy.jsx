@@ -61,50 +61,21 @@ const ARMOR_BADGES = {
   rightLeg: { top: "63%", left: "66%", code: "RL" },
 };
 
+// Position of each generated damaged/broken armor part over the PA Vault Boy.
+// The source asset is a 6 x 2 sheet: damaged on row 1, broken on row 2.
 const POWER_ARMOR_DAMAGE_OVERLAYS = {
-  head: {
-    top: "15%",
-    left: "35%",
-    width: "30%",
-    height: "27%",
-    column: 0,
-  },
-  torso: {
-    top: "31%",
-    left: "31%",
-    width: "38%",
-    height: "34%",
-    column: 1,
-  },
-  leftArm: {
-    top: "33%",
-    left: "13%",
-    width: "34%",
-    height: "42%",
-    column: 2,
-  },
-  rightArm: {
-    top: "33%",
-    left: "53%",
-    width: "34%",
-    height: "42%",
-    column: 3,
-  },
-  leftLeg: {
-    top: "54%",
-    left: "26%",
-    width: "29%",
-    height: "44%",
-    column: 4,
-  },
-  rightLeg: {
-    top: "54%",
-    left: "45%",
-    width: "29%",
-    height: "44%",
-    column: 5,
-  },
+  head: { top: "15%", left: "35%", width: "30%", height: "27%", column: 0 },
+  torso: { top: "31%", left: "31%", width: "38%", height: "34%", column: 1 },
+  leftArm: { top: "33%", left: "13%", width: "34%", height: "42%", column: 2 },
+  rightArm: { top: "33%", left: "53%", width: "34%", height: "42%", column: 3 },
+  leftLeg: { top: "54%", left: "26%", width: "29%", height: "44%", column: 4 },
+  rightLeg: { top: "54%", left: "45%", width: "29%", height: "44%", column: 5 },
 };
+
+const DAMAGE_SPRITE_CELL_WIDTH = 192;
+const DAMAGE_SPRITE_CELL_HEIGHT = 288;
+const DAMAGE_SPRITE_WIDTH = DAMAGE_SPRITE_CELL_WIDTH * 6;
+const DAMAGE_SPRITE_HEIGHT = DAMAGE_SPRITE_CELL_HEIGHT * 2;
 
 const ARMOR_KEY_MAP = {
   head: "Head",
@@ -161,30 +132,43 @@ function applyDerivedResistance(base = {}, derived = {}) {
   };
 }
 
-function getDamageSpriteStyle(part, state) {
+function PowerArmorDamagePart({ part, state }) {
   const overlay = POWER_ARMOR_DAMAGE_OVERLAYS[part];
   if (!overlay || (state !== "damaged" && state !== "broken")) return null;
 
-  const xPositions = ["0%", "20%", "40%", "60%", "80%", "100%"];
-  const rowPosition = state === "broken" ? "100%" : "0%";
+  const sourceX = overlay.column * DAMAGE_SPRITE_CELL_WIDTH;
+  const sourceY = state === "broken" ? DAMAGE_SPRITE_CELL_HEIGHT : 0;
 
-  return {
-    position: "absolute",
-    top: overlay.top,
-    left: overlay.left,
-    width: overlay.width,
-    height: overlay.height,
-    backgroundImage: `url(${paDamageSprite})`,
-    backgroundRepeat: "no-repeat",
-    backgroundSize: "600% 200%",
-    backgroundPosition: `${xPositions[overlay.column]} ${rowPosition}`,
-    pointerEvents: "none",
-    opacity: state === "broken" ? 0.98 : 0.94,
-    filter:
-      state === "broken"
-        ? "drop-shadow(0 0 6px rgba(255, 70, 70, 0.55))"
-        : "drop-shadow(0 0 5px rgba(255, 175, 55, 0.45))",
-  };
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox={`${sourceX} ${sourceY} ${DAMAGE_SPRITE_CELL_WIDTH} ${DAMAGE_SPRITE_CELL_HEIGHT}`}
+      preserveAspectRatio="xMidYMid meet"
+      style={{
+        position: "absolute",
+        top: overlay.top,
+        left: overlay.left,
+        width: overlay.width,
+        height: overlay.height,
+        overflow: "visible",
+        pointerEvents: "none",
+        opacity: state === "broken" ? 1 : 0.98,
+        filter:
+          state === "broken"
+            ? "drop-shadow(0 0 7px rgba(255, 70, 70, 0.72))"
+            : "drop-shadow(0 0 6px rgba(255, 175, 55, 0.62))",
+      }}
+    >
+      <image
+        href={paDamageSprite}
+        x="0"
+        y="0"
+        width={DAMAGE_SPRITE_WIDTH}
+        height={DAMAGE_SPRITE_HEIGHT}
+        preserveAspectRatio="none"
+      />
+    </svg>
+  );
 }
 
 export default function InjuriesVaultBoy({
@@ -224,7 +208,10 @@ export default function InjuriesVaultBoy({
     uk: { intact: "Ціла", damaged: "Пошкоджена", broken: "Зламана", empty: "Немає деталі" },
     pl: { intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", empty: "Brak części" },
   }[i18n.resolvedLanguage?.split("-")[0]] || {
-    intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece",
+    intact: "Intact",
+    damaged: "Damaged",
+    broken: "Broken",
+    empty: "No piece",
   };
 
   const powerConditions = Object.fromEntries(
@@ -233,6 +220,7 @@ export default function InjuriesVaultBoy({
       getPowerArmorPartCondition(armor?._power?.loadout, ARMOR_KEY_MAP[part]),
     ])
   );
+
   const hasPowerArmor = Object.values(powerConditions).some(Boolean);
   const isPowerArmorVisible = viewMode === "powerArmor" && hasPowerArmor;
   const powerArmorStats = isPowerArmorVisible
@@ -277,8 +265,7 @@ export default function InjuriesVaultBoy({
     immunities.length > 0;
 
   const showIncomingBadge =
-    incomingValues.radiation !== 0 ||
-    incomingValues.poison !== 0;
+    incomingValues.radiation !== 0 || incomingValues.poison !== 0;
 
   return (
     <div className="pip-injuries-vaultboy-wrap">
@@ -290,16 +277,17 @@ export default function InjuriesVaultBoy({
           draggable="false"
         />
 
-        {!isPowerArmorVisible && layers.map((layer, index) => (
-          <img
-            key={`${layer.part}-${layer.state}-${index}`}
-            src={layer.src}
-            alt=""
-            aria-hidden="true"
-            className={`pip-injuries-vaultboy-overlay is-${layer.part} is-${layer.state}`}
-            draggable="false"
-          />
-        ))}
+        {!isPowerArmorVisible &&
+          layers.map((layer, index) => (
+            <img
+              key={`${layer.part}-${layer.state}-${index}`}
+              src={layer.src}
+              alt=""
+              aria-hidden="true"
+              className={`pip-injuries-vaultboy-overlay is-${layer.part} is-${layer.state}`}
+              draggable="false"
+            />
+          ))}
 
         {isPowerArmorVisible && (
           <div
@@ -315,13 +303,13 @@ export default function InjuriesVaultBoy({
               pointerEvents: "none",
             }}
           >
-            {PART_ORDER.map((part) => {
-              const state = powerConditions[part]?.state;
-              const style = getDamageSpriteStyle(part, state);
-              if (!style) return null;
-
-              return <div key={`pa-damage-${part}-${state}`} style={style} />;
-            })}
+            {PART_ORDER.map((part) => (
+              <PowerArmorDamagePart
+                key={`pa-damage-${part}-${powerConditions[part]?.state || "empty"}`}
+                part={part}
+                state={powerConditions[part]?.state}
+              />
+            ))}
           </div>
         )}
 
@@ -361,7 +349,11 @@ export default function InjuriesVaultBoy({
           const partLabel = t(PART_LABEL_KEYS[part]);
           const normalBase = normalArmorStats?.[ARMOR_KEY_MAP[part]];
           const adjusted = isPowerArmorVisible
-            ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || { physical: 0, energy: 0, radiation: 0 }
+            ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || {
+                physical: 0,
+                energy: 0,
+                radiation: 0,
+              }
             : normalBase
             ? applyDerivedResistance(normalBase, derived)
             : getAdjustedArmorSnapshotForPart({ armor, part, derived });
@@ -374,10 +366,7 @@ export default function InjuriesVaultBoy({
             <div
               key={`${part}-armor`}
               className={`pip-armor-badge is-${part}`}
-              style={{
-                top: badge.top,
-                left: badge.left,
-              }}
+              style={{ top: badge.top, left: badge.left }}
               title={`${partLabel}: Physical ${physical} / Energy ${energy} / Radiation ${radiation}`}
             >
               <div className="pip-armor-badge-code">{badge.code}</div>
@@ -398,8 +387,18 @@ export default function InjuriesVaultBoy({
           >
             <div className="pip-armor-badge-code">|☢|☠|</div>
             <div className="pip-armor-badge-values">
-              <span>{formatResistModifier(resistValues.radiation, immunities.includes("radiation"))}</span>
-              <span>{formatResistModifier(resistValues.poison, immunities.includes("poison"))}</span>
+              <span>
+                {formatResistModifier(
+                  resistValues.radiation,
+                  immunities.includes("radiation")
+                )}
+              </span>
+              <span>
+                {formatResistModifier(
+                  resistValues.poison,
+                  immunities.includes("poison")
+                )}
+              </span>
             </div>
           </div>
         )}
