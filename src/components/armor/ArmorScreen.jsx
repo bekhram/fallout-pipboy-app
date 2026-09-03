@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ARMOR_PARTS } from "../../constants.js";
 import { useTranslation } from "react-i18next";
+import PowerArmorPanel from "./PowerArmorPanel.jsx";
 import {
   PART_LOCATION,
   armorModMultiplier,
@@ -187,6 +188,11 @@ export default function ArmorScreen({ armor, onArmorChange }) {
         <h2>[ {t("armorPanel.title")} ]</h2>
         <span>{t("armorPanel.locationDr")}</span>
       </div>
+
+      <details className="pip-power-details">
+        <summary>[ POWER ARMOR ]</summary>
+        <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
+      </details>
 
       <div className="pip-armor-catalog">
         <div className="pip-armor-section-title">[ {labels.catalog} ]</div>
