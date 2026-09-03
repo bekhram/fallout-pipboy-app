@@ -36,10 +36,10 @@ const FIELDS = [
 ];
 
 const UI = {
-  en: { catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove" },
-  ru: { catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять" },
-  uk: { catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти" },
-  pl: { catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij" },
+  en: { catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness." },
+  ru: { catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте." },
+  uk: { catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві." },
+  pl: { catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
 };
 
 function findById(list, id) {
@@ -121,6 +121,13 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     });
     return result;
   }, [armor, database, slots]);
+
+  const shadowedPieces = ARMOR_PARTS.reduce((count, part) => {
+    const material = findById(database.mods, slots[part]?.materialId);
+    if (!material?.name.toLowerCase().includes("shadowed")) return count;
+    return count + (part === "Torso" ? 2 : 1);
+  }, 0);
+  const shadowedTier = shadowedPieces >= 5 ? 3 : shadowedPieces >= 3 ? 2 : shadowedPieces >= 1 ? 1 : 0;
 
   const totals = ARMOR_PARTS.reduce(
     (sum, part) => {
@@ -209,6 +216,13 @@ export default function ArmorScreen({ armor, onArmorChange }) {
           );
         })}
       </div>
+
+      {shadowedTier > 0 && (
+        <div className="pip-armor-catalog">
+          <div className="pip-armor-section-title">[ {labels.shadowed}: {shadowedPieces} ]</div>
+          <div className="pip-armor-effect">{labels[`shadowed${shadowedTier}`]}</div>
+        </div>
+      )}
 
       <div className="pip-armor-table">
         <div className="pip-armor-table-head">
