@@ -24,6 +24,7 @@ export default function StatusScreen({
   onChangeOrigin, // <-- Добавлен новый пропс
   onStatusToggle,
   onInjuryToggle,
+  onArmorChange,
   hpMax,
   hpCurrent,
   radiationHp,
@@ -325,6 +326,7 @@ if (derived?.immunities?.includes("radiation")) {
         armor={armor}
         derived={derived}
         onToggle={onInjuryToggle}
+        onArmorChange={onArmorChange}
         survivalConditions={survivalConditions}
       />
 

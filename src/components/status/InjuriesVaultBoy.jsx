@@ -3,6 +3,11 @@ import { useTranslation } from "react-i18next";
 import { getAdjustedArmorSnapshotForPart } from "../../utils/characterMath.js";
 
 import healthy from "../../assets/injuries/vaultboy_healthy.png";
+import powerArmor from "../../assets/injuries/vaultboy_power_armor.png";
+import {
+  calculatePowerArmorLocations,
+  getPowerArmorPartCondition,
+} from "../../data/powerArmor.js";
 
 import headInjured from "../../assets/injuries/head_injured.png";
 import headCritical from "../../assets/injuries/head_critical.png";
@@ -93,8 +98,28 @@ export default function InjuriesVaultBoy({
   armor = {},
   derived = {},
   onPartClick,
+  onArmorPartClick,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const armorStateLabels = {
+    en: { intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece" },
+    ru: { intact: "Целая", damaged: "Повреждена", broken: "Сломана", empty: "Нет детали" },
+    uk: { intact: "Ціла", damaged: "Пошкоджена", broken: "Зламана", empty: "Немає деталі" },
+    pl: { intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", empty: "Brak części" },
+  }[i18n.resolvedLanguage?.split("-")[0]] || {
+    intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece",
+  };
+
+  const powerConditions = Object.fromEntries(
+    PART_ORDER.map((part) => [
+      part,
+      getPowerArmorPartCondition(armor?._power?.loadout, ARMOR_KEY_MAP[part]),
+    ])
+  );
+  const isPowerArmorVisible = Object.values(powerConditions).some(Boolean);
+  const powerArmorStats = isPowerArmorVisible
+    ? calculatePowerArmorLocations(armor?._power?.loadout)
+    : null;
 
   const layers = PART_ORDER
     .map((part) => {
@@ -136,13 +161,13 @@ export default function InjuriesVaultBoy({
     <div className="pip-injuries-vaultboy-wrap">
       <div className="pip-injuries-vaultboy">
         <img
-          src={healthy}
+          src={isPowerArmorVisible ? powerArmor : healthy}
           alt={t("injuries.vaultBoyAlt")}
           className="pip-injuries-vaultboy-base"
           draggable="false"
         />
 
-        {layers.map((layer, index) => (
+        {!isPowerArmorVisible && layers.map((layer, index) => (
           <img
             key={`${layer.part}-${layer.state}-${index}`}
             src={layer.src}
@@ -155,9 +180,14 @@ export default function InjuriesVaultBoy({
 
         {PART_ORDER.map((part) => {
           const box = HITBOXES[part];
-          const state = injuries[part] || "normal";
+          const armorCondition = powerConditions[part];
+          const state = isPowerArmorVisible
+            ? armorCondition?.state || "empty"
+            : injuries[part] || "normal";
           const partLabel = t(PART_LABEL_KEYS[part]);
-          const stateLabel = t(`injuries.state.${state}`);
+          const stateLabel = isPowerArmorVisible
+            ? armorStateLabels[state]
+            : t(`injuries.state.${state}`);
 
           return (
             <button
@@ -170,7 +200,7 @@ export default function InjuriesVaultBoy({
                 width: box.width,
                 height: box.height,
               }}
-              onClick={() => onPartClick?.(part)}
+              onClick={() => isPowerArmorVisible ? onArmorPartClick?.(part) : onPartClick?.(part)}
               aria-label={`${partLabel} ${stateLabel}`}
               title={`${partLabel}: ${stateLabel}`}
             />
@@ -180,11 +210,9 @@ export default function InjuriesVaultBoy({
         {PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];
           const partLabel = t(PART_LABEL_KEYS[part]);
-          const adjusted = getAdjustedArmorSnapshotForPart({
-            armor,
-            part,
-            derived,
-          });
+          const adjusted = powerArmorStats?.[ARMOR_KEY_MAP[part]] ||
+            getAdjustedArmorSnapshotForPart({ armor, part, derived });
+          const armorCondition = powerConditions[part];
 
           const physical = formatArmorValue(adjusted.physical);
           const energy = formatArmorValue(adjusted.energy);
@@ -201,6 +229,11 @@ export default function InjuriesVaultBoy({
               title={`${partLabel}: Physical ${physical} / Energy ${energy} / Radiation ${radiation}`}
             >
               <div className="pip-armor-badge-code">{badge.code}</div>
+              {isPowerArmorVisible && (
+                <div className={`pip-armor-badge-condition is-${armorCondition?.state || "empty"}`}>
+                  {armorStateLabels[armorCondition?.state || "empty"]}
+                </div>
+              )}
               <div className="pip-armor-badge-values">
                 <span>{physical}</span>
                 <span>{energy}</span>

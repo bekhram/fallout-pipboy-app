@@ -561,6 +561,7 @@ const updateSkill = (skillName, field, value) =>
               updateStatus(status, !form.statuses[status])
             }
             onInjuryToggle={updateInjury}
+            onArmorChange={updateArmor}
             hpMax={baseMaxHp}
             hpCurrent={currentHpValue}
             radiationHp={radiationHp}

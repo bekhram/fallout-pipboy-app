@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { STATUS_LIST } from "../../constants.js";
 import InjuriesVaultBoy from "./InjuriesVaultBoy";
+import { getPowerArmorPartCondition } from "../../data/powerArmor.js";
 
 const injuryLabels = [
   ["head", "injuries.head"],
@@ -24,6 +25,7 @@ export default function InjuryPanel({
   armor,
   derived,
   onToggle,
+  onArmorChange,
   survivalConditions = [],
 }) {
   const { t } = useTranslation();
@@ -62,6 +64,40 @@ export default function InjuryPanel({
     onToggle(part, cycle[current]);
   };
 
+  const handleArmorPartClick = (part) => {
+    const armorPartMap = {
+      head: "Head",
+      torso: "Torso",
+      leftArm: "Left Arm",
+      rightArm: "Right Arm",
+      leftLeg: "Left Leg",
+      rightLeg: "Right Leg",
+    };
+    const slotId = armorPartMap[part];
+    const loadout = armor?._power?.loadout;
+    const condition = getPowerArmorPartCondition(loadout, slotId);
+    if (!condition) return;
+
+    const currentHp =
+      condition.state === "intact"
+        ? Math.max(1, condition.maximum - 1)
+        : condition.state === "damaged"
+        ? 0
+        : condition.maximum;
+    const existing = loadout.slots?.[slotId] || {};
+    const legacySetId = loadout.setId && !["none", "frame", "mixed"].includes(loadout.setId)
+      ? loadout.setId
+      : "";
+    onArmorChange?.("_power", "loadout", {
+      ...loadout,
+      setId: "mixed",
+      slots: {
+        ...(loadout.slots || {}),
+        [slotId]: { ...existing, setId: existing.setId || legacySetId, currentHp },
+      },
+    });
+  };
+
   const handleStatusClick = (statusKey) => {
     setSelectedStatusKey((prev) => (prev === statusKey ? null : statusKey));
   };
@@ -85,6 +121,7 @@ export default function InjuryPanel({
           armor={armor}
           derived={derived}
           onPartClick={handlePartClick}
+          onArmorPartClick={handleArmorPartClick}
         />
 
         <div className="pip-injuries-side">

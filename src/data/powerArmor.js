@@ -293,3 +293,61 @@ export function calculatePowerArmorLocations(loadout) {
     })
   );
 }
+
+const POWER_SLOT_TYPES = {
+  Head: "head",
+  Torso: "torso",
+  "Left Arm": "arm",
+  "Right Arm": "arm",
+  "Left Leg": "leg",
+  "Right Leg": "leg",
+};
+
+export function getPowerArmorPartCondition(loadout, part) {
+  if (!loadout || !POWER_SLOT_TYPES[part]) return null;
+  const type = POWER_SLOT_TYPES[part];
+  const selected = loadout.slots?.[part] || {};
+  const legacySet = POWER_ARMOR_SETS.find((set) => set.id === loadout.setId);
+  const selectedSet =
+    POWER_ARMOR_SETS.find((set) => set.id === selected.setId) || legacySet;
+  if (!selectedSet) return null;
+
+  const legacyMods = loadout.mods?.[type] || {};
+  const upgrade = availablePowerUpgrades(selectedSet.id, type).find(
+    (mod) => mod.id === (selected.upgradeId || "none")
+  );
+  const platingOptions =
+    selectedSet.id === "raider"
+      ? POWER_ARMOR_PLATING.filter((mod) => mod.id === "none")
+      : availablePowerMods(POWER_ARMOR_PLATING, selectedSet.id, type);
+  const systemOptions = availablePowerMods(
+    POWER_ARMOR_SYSTEMS,
+    selectedSet.id,
+    type
+  );
+  const plating =
+    platingOptions.find(
+      (mod) => mod.id === (selected.platingId || legacyMods.platingId || "none")
+    ) || platingOptions[0];
+  const system =
+    systemOptions.find(
+      (mod) => mod.id === (selected.systemId || legacyMods.systemId || "none")
+    ) || systemOptions[0];
+  const maximum = calculatePowerPart(
+    selectedSet.parts[type],
+    plating,
+    system,
+    type,
+    upgrade
+  ).hp;
+  const current =
+    selected.currentHp === null || selected.currentHp === undefined
+      ? maximum
+      : Math.max(0, Math.min(Number(selected.currentHp || 0), maximum));
+
+  return {
+    current,
+    maximum,
+    state: current <= 0 ? "broken" : current < maximum ? "damaged" : "intact",
+  };
+}
