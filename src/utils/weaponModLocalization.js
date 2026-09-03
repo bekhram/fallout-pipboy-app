@@ -20,6 +20,11 @@ const NAME_TERMS = {
     "Six-crank capacitor": "Шестизарядный конденсатор",
     "Sharpshooter’s Grip": "Снайперская рукоять",
     "Marksman’s Stock": "Снайперский приклад",
+    ".38 Receiver": "Ствольная коробка .38",
+    ".308 Receiver": "Ствольная коробка .308",
+    ".45 Receiver": "Ствольная коробка .45",
+    ".50 Receiver": "Ствольная коробка .50",
+    "Long": "Длинный",
     "Automatic Piston": "Автоматический поршень",
     "Quick-Eject Mag": "Быстросъёмный магазин",
     "Large Magazine": "Большой магазин",
@@ -116,6 +121,11 @@ const NAME_TERMS = {
     "Six-crank capacitor": "Шестизарядний конденсатор",
     "Sharpshooter’s Grip": "Снайперське руків’я",
     "Marksman’s Stock": "Снайперський приклад",
+    ".38 Receiver": "Ствольна коробка .38",
+    ".308 Receiver": "Ствольна коробка .308",
+    ".45 Receiver": "Ствольна коробка .45",
+    ".50 Receiver": "Ствольна коробка .50",
+    "Long": "Довгий",
     "Automatic Piston": "Автоматичний поршень",
     "Quick-Eject Mag": "Швидкознімний магазин",
     "Large Magazine": "Великий магазин",
@@ -212,6 +222,11 @@ const NAME_TERMS = {
     "Six-crank capacitor": "Kondensator sześcioładunkowy",
     "Sharpshooter’s Grip": "Chwyt strzelecki",
     "Marksman’s Stock": "Kolba strzelecka",
+    ".38 Receiver": "Komora zamkowa .38",
+    ".308 Receiver": "Komora zamkowa .308",
+    ".45 Receiver": "Komora zamkowa .45",
+    ".50 Receiver": "Komora zamkowa .50",
+    "Long": "Długi",
     "Automatic Piston": "Tłok automatyczny",
     "Quick-Eject Mag": "Magazynek szybkowymienny",
     "Large Magazine": "Duży magazynek",
@@ -417,7 +432,8 @@ const replaceTerms = (value, terms) => {
   Object.entries(terms || {})
     .sort(([a], [b]) => b.length - a.length)
     .forEach(([source, target]) => {
-      result = result.split(source).join(target);
+      const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\      result = result.split(source).join(target);");
+      result = result.replace(new RegExp(escaped, "gi"), target);
     });
   return result;
 };
