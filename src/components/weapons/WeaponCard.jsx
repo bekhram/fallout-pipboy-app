@@ -7,7 +7,7 @@ import {
   SKILL_LABEL_KEYS,
 } from "../../constants.js";
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
-import { MOD_SLOT_LABELS } from "../../data/weaponMods.js";
+import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 
 const qualityMap = Object.fromEntries(
   WEAPON_QUALITY_OPTIONS.map((item) => [item.key, item])
@@ -94,10 +94,24 @@ export default function WeaponCard({
     });
   };
 
-  const processedQualities = processTags(weapon.qualities, weapon.qualitiesCustom, qualityMap);
-  const processedEffects = processTags(weapon.effects, weapon.customEffect, effectMap);
+  const baseMetadata = getWeaponMetadata(weapon, globalWeapons);
+  const modifiedWeapon = applyWeaponMods({ ...weapon, ...baseMetadata });
+  const processedQualities = processTags(
+    modifiedWeapon.qualities,
+    modifiedWeapon.qualitiesCustom,
+    qualityMap
+  );
+  const processedEffects = processTags(
+    modifiedWeapon.effects,
+    modifiedWeapon.customEffect,
+    effectMap
+  );
   const allTags = [...processedQualities, ...processedEffects];
-  const weaponMetadata = getWeaponMetadata(weapon, globalWeapons);
+  const weaponMetadata = {
+    cost: modifiedWeapon.cost,
+    weight: modifiedWeapon.weight,
+    rarity: baseMetadata.rarity,
+  };
   const activeProperty = activePropertyIndex === null
     ? null
     : allTags[activePropertyIndex];
@@ -134,12 +148,12 @@ export default function WeaponCard({
     ? translateSafe(SKILL_LABEL_KEYS?.[weapon.skill], weapon.skill)
     : "—";
 
-  const damageTypeLabel = weapon.type
-    ? translateSafe(`weaponDamageTypes.${weapon.type}`, weapon.type)
+  const damageTypeLabel = modifiedWeapon.type
+    ? translateSafe(`weaponDamageTypes.${modifiedWeapon.type}`, modifiedWeapon.type)
     : "—";
 
-  const rangeLabel = weapon.range
-    ? translateSafe(`weaponRanges.${weapon.range}`, weapon.range)
+  const rangeLabel = modifiedWeapon.range
+    ? translateSafe(`weaponRanges.${modifiedWeapon.range}`, modifiedWeapon.range)
     : "—";
 
   const getRangeShort = (rLabel) => {
@@ -151,7 +165,7 @@ export default function WeaponCard({
     e.stopPropagation();
     onRoll?.(
       createWeaponRoll({
-        weapon,
+        weapon: modifiedWeapon,
         diceCount: 2,
         difficulty: 1,
         useRate,
@@ -193,7 +207,7 @@ export default function WeaponCard({
       <div className="pip-weapon-stats-grid">
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">
           <div className="stat-label">Damage Dice</div>
-          <div className="stat-value"><span>🎲</span> {weapon.damage || "0"}</div>
+          <div className="stat-value"><span>🎲</span> {modifiedWeapon.damage || "0"}</div>
           <div className="stat-sub">{damageTypeLabel}</div>
         </div>
 
@@ -203,7 +217,7 @@ export default function WeaponCard({
           title="Click to toggle Burst"
         >
           <div className="stat-label">Rate of Fire</div>
-          <div className="stat-value">{weapon.rate || "0"}</div>
+          <div className="stat-value">{modifiedWeapon.rate || "0"}</div>
           <div className="stat-sub">{useRate ? "ACTIVE" : "OFF"}</div>
         </div>
 
@@ -318,7 +332,7 @@ export default function WeaponCard({
         </div>
 
         <div className="pip-ammo-tab">
-          {weapon.ammo || "NO AMMO"}
+          {modifiedWeapon.ammo || "NO AMMO"}
         </div>
       </footer>
     </article>
