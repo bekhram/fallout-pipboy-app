@@ -97,6 +97,7 @@ export default function InjuriesVaultBoy({
   injuries = {},
   armor = {},
   derived = {},
+  viewMode = "injuries",
   onPartClick,
   onArmorPartClick,
 }) {
@@ -116,7 +117,8 @@ export default function InjuriesVaultBoy({
       getPowerArmorPartCondition(armor?._power?.loadout, ARMOR_KEY_MAP[part]),
     ])
   );
-  const isPowerArmorVisible = Object.values(powerConditions).some(Boolean);
+  const hasPowerArmor = Object.values(powerConditions).some(Boolean);
+  const isPowerArmorVisible = viewMode === "powerArmor" && hasPowerArmor;
   const powerArmorStats = isPowerArmorVisible
     ? calculatePowerArmorLocations(armor?._power?.loadout)
     : null;
@@ -151,7 +153,7 @@ export default function InjuriesVaultBoy({
   const showResistBadge =
     resistValues.radiation !== 0 ||
     resistValues.poison !== 0 ||
-    immunities.length > 0; 
+    immunities.length > 0;
 
   const showIncomingBadge =
     incomingValues.radiation !== 0 ||
@@ -200,7 +202,9 @@ export default function InjuriesVaultBoy({
                 width: box.width,
                 height: box.height,
               }}
-              onClick={() => isPowerArmorVisible ? onArmorPartClick?.(part) : onPartClick?.(part)}
+              onClick={() =>
+                isPowerArmorVisible ? onArmorPartClick?.(part) : onPartClick?.(part)
+              }
               aria-label={`${partLabel} ${stateLabel}`}
               title={`${partLabel}: ${stateLabel}`}
             />
@@ -210,8 +214,9 @@ export default function InjuriesVaultBoy({
         {PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];
           const partLabel = t(PART_LABEL_KEYS[part]);
-          const adjusted = powerArmorStats?.[ARMOR_KEY_MAP[part]] ||
-            getAdjustedArmorSnapshotForPart({ armor, part, derived });
+          const adjusted = isPowerArmorVisible
+            ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || { physical: 0, energy: 0, radiation: 0 }
+            : getAdjustedArmorSnapshotForPart({ armor, part, derived });
           const armorCondition = powerConditions[part];
 
           const physical = formatArmorValue(adjusted.physical);
@@ -247,7 +252,7 @@ export default function InjuriesVaultBoy({
           <div
             className="pip-armor-badge is-modifiers is-resist"
             style={{ top: "1%", left: "70%" }}
-            title={`Environmental Resistances & Immunities`}
+            title="Environmental Resistances & Immunities"
           >
             <div className="pip-armor-badge-code">|☢|☠|</div>
             <div className="pip-armor-badge-values">
@@ -261,7 +266,7 @@ export default function InjuriesVaultBoy({
           <div
             className="pip-armor-badge is-modifiers is-damage"
             style={{ top: "1%", left: "0%" }}
-            title={`Environmental Incoming Modifiers`}
+            title="Environmental Incoming Modifiers"
           >
             <div className="pip-armor-badge-code">|☢|☠|</div>
             <div className="pip-armor-badge-values">
