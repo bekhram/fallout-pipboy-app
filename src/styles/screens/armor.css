@@ -84,6 +84,21 @@
   word-break: break-word;
 }
 
+.pip-armor-condition {
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pip-armor-condition.is-healthy { color: var(--pip-accent); }
+.pip-armor-condition.is-damaged { color: #ffc85a; }
+.pip-armor-condition.is-broken { color: #ff7777; }
+
+.pip-armor-row.is-damaged { border-color: rgba(255, 190, 70, 0.42); }
+.pip-armor-row.is-broken { border-color: rgba(255, 90, 90, 0.5); }
+
 .pip-armor-cell { display: block; min-width: 0; }
 .pip-armor-cell-mobile-icon { display: none; }
 
@@ -93,6 +108,29 @@
   text-align: center;
   font-size: 14px;
 }
+
+.pip-armor-value-control {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+}
+
+.pip-armor-value-control.is-adjustable {
+  grid-template-columns: 24px minmax(30px, 1fr) 24px;
+}
+
+.pip-armor-step {
+  min-width: 0;
+  padding: 0;
+  border: 1px solid rgba(140, 255, 152, 0.25);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--pip-accent);
+  cursor: pointer;
+  font: inherit;
+}
+
+.pip-armor-step:hover { background: rgba(140, 255, 152, 0.12); }
 
 /* ===== ARMOR CATALOG ===== */
 
@@ -240,6 +278,11 @@
     font-size: 12px;
     border-radius: 6px;
   }
+  .pip-armor-value-control.is-adjustable {
+    grid-template-columns: 18px minmax(22px, 1fr) 18px;
+    gap: 2px;
+  }
+  .pip-armor-step { font-size: 10px; }
   .pip-armor-equip-row { grid-template-columns: 1fr; }
   .pip-armor-slot label { grid-template-columns: 72px minmax(0, 1fr); }
 }

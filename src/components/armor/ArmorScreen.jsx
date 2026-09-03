@@ -38,11 +38,13 @@ const FIELDS = [
   { key: "hp", icon: "", labelKey: "armorPanel.hp" },
 ];
 
+const RESISTANCE_FIELDS = FIELDS.filter((field) => field.key !== "hp");
+
 const UI = {
-  en: { catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness." },
-  ru: { catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте." },
-  uk: { catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві." },
-  pl: { catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
+  en: { catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", healthy: "Intact", damaged: "Damaged", broken: "Broken", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness." },
+  ru: { catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", healthy: "Исправна", damaged: "Повреждена", broken: "Сломана", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте." },
+  uk: { catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", healthy: "Справна", damaged: "Пошкоджена", broken: "Зламана", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві." },
+  pl: { catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", healthy: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
 };
 
 function findById(list, id) {
@@ -86,9 +88,16 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   }, []);
 
   const slots = armor?._equipment?.slots || {};
+  const condition = armor?._condition?.parts || {};
 
   const setSlots = (nextSlots) => {
     onArmorChange("_equipment", "slots", nextSlots);
+  };
+
+  const resetConditionParts = (parts) => {
+    const next = { ...condition };
+    parts.forEach((part) => delete next[part]);
+    onArmorChange("_condition", "parts", next);
   };
 
   const equipCatalogItem = () => {
@@ -104,6 +113,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
       }
     });
     setSlots(next);
+    resetConditionParts(ARMOR_PARTS.filter((part) => next[part]?.itemId === item.id));
   };
 
   const changeSlot = (part, patch) => {
@@ -134,20 +144,26 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     }
 
     setSlots(next);
+    resetConditionParts(
+      selectedItem && isBodyGarment(selectedItem)
+        ? ARMOR_PARTS.filter((targetPart) => garmentCoversPart(selectedItem, targetPart))
+        : [part]
+    );
   };
 
   const removeSlot = (part) => {
     const next = { ...slots };
     delete next[part];
     setSlots(next);
+    resetConditionParts([part]);
   };
 
-  const calculated = useMemo(() => {
-    const powerArmorStats = calculatePowerArmorLocations(
-      armor?._power?.loadout
-    );
-    if (powerArmorStats) return powerArmorStats;
+  const powerArmorStats = useMemo(
+    () => calculatePowerArmorLocations(armor?._power?.loadout),
+    [armor?._power?.loadout]
+  );
 
+  const normalMaximums = useMemo(() => {
     const result = {};
     ARMOR_PARTS.forEach((part) => {
       const selected = slots[part] || {};
@@ -159,6 +175,39 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     });
     return result;
   }, [armor, database, slots]);
+
+  const calculated = useMemo(() => {
+    if (powerArmorStats) return powerArmorStats;
+    const result = {};
+    ARMOR_PARTS.forEach((part) => {
+      result[part] = { ...normalMaximums[part], ...(condition[part]?.current || {}) };
+    });
+    return result;
+  }, [condition, normalMaximums, powerArmorStats]);
+
+  const setResistance = (part, field, rawValue) => {
+    if (powerArmorStats || field === "hp") return;
+    const value = Math.max(0, Number.parseInt(rawValue, 10) || 0);
+    const current = { ...(condition[part]?.current || {}), [field]: value };
+    onArmorChange("_condition", "parts", {
+      ...condition,
+      [part]: { current },
+    });
+  };
+
+  const getConditionStatus = (part) => {
+    if (powerArmorStats) return null;
+    const maximum = normalMaximums[part] || {};
+    const current = calculated[part] || {};
+    const hasArmor = RESISTANCE_FIELDS.some((field) => Number(maximum[field.key] || 0) > 0);
+    if (!hasArmor) return null;
+    const isBroken = RESISTANCE_FIELDS.every((field) => Number(current[field.key] || 0) === 0);
+    if (isBroken) return "broken";
+    const isDamaged = RESISTANCE_FIELDS.some(
+      (field) => Number(current[field.key] || 0) < Number(maximum[field.key] || 0)
+    );
+    return isDamaged ? "damaged" : "healthy";
+  };
 
   const shadowedPieces = ARMOR_PARTS.reduce((count, part) => {
     const material = findById(database.mods, slots[part]?.materialId);
@@ -284,25 +333,44 @@ export default function ArmorScreen({ armor, onArmorChange }) {
           ))}
         </div>
         <div className="pip-armor-table-body">
-          {ARMOR_PARTS.map((part) => (
-            <div className="pip-armor-row" key={part}>
+          {ARMOR_PARTS.map((part) => {
+            const status = getConditionStatus(part);
+            return (
+            <div className={`pip-armor-row${status ? ` is-${status}` : ""}`} key={part}>
               <div className="pip-armor-row-label">
                 <span className="pip-armor-row-code">{CODES[part]}</span>
-                <span className="pip-armor-row-name">{t(LABEL_KEYS[part] || part)}</span>
+                <span className="pip-armor-row-name">
+                  {t(LABEL_KEYS[part] || part)}
+                  {status && <small className={`pip-armor-condition is-${status}`}>{labels[status]}</small>}
+                </span>
               </div>
-              {FIELDS.map((field) => (
+              {FIELDS.map((field) => {
+                const canAdjust = !powerArmorStats && field.key !== "hp";
+                const value = calculated[part]?.[field.key] ?? 0;
+                return (
                 <label key={`${part}-${field.key}`} className="pip-armor-cell">
                   <span className="pip-armor-cell-mobile-icon">{field.icon}</span>
-                  <input
-                    className="pip-input pip-armor-mini-input"
-                    value={calculated[part]?.[field.key] ?? 0}
-                    readOnly
-                    title={t(field.labelKey)}
-                  />
+                  <span className={`pip-armor-value-control${canAdjust ? " is-adjustable" : ""}`}>
+                    {canAdjust && (
+                      <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value - 1)} aria-label={`-${t(field.labelKey)}`}>−</button>
+                    )}
+                    <input
+                      className="pip-input pip-armor-mini-input"
+                      type="number"
+                      min="0"
+                      value={value}
+                      readOnly={!canAdjust}
+                      onChange={canAdjust ? (event) => setResistance(part, field.key, event.target.value) : undefined}
+                      title={t(field.labelKey)}
+                    />
+                    {canAdjust && (
+                      <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value + 1)} aria-label={`+${t(field.labelKey)}`}>+</button>
+                    )}
+                  </span>
                 </label>
-              ))}
+              )})}
             </div>
-          ))}
+          )})}
         </div>
       </div>
 
