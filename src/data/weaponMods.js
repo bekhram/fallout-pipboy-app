@@ -15,6 +15,8 @@ export const MOD_SLOT_LABELS = {
   sights: "Sights",
   muzzle: "Muzzle",
   nozzle: "Nozzle",
+  blade: "Blade",
+  head: "Weapon mod",
 };
 
 const sights = [
