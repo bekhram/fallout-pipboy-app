@@ -20,10 +20,10 @@ const SLOT_DEFS = [
 ];
 
 const UI = {
-  en: { title: "POWER ARMOR", frame: "Armor Frame", preset: "Complete set", part: "Part", upgrade: "Upgrade", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Frame only", custom: "Mixed set", empty: "No armor piece", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL" },
-  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", upgrade: "Улучшение", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО" },
-  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", upgrade: "Покращення", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ" },
-  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA" },
+  en: { title: "POWER ARMOR", frame: "Armor Frame", preset: "Complete set", part: "Part", upgrade: "Upgrade", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Frame only", custom: "Mixed set", empty: "No armor piece", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL", currentHp: "Condition", repair: "Repair", intact: "Intact", damaged: "Damaged", broken: "Broken" },
+  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", upgrade: "Улучшение", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО", currentHp: "Состояние", repair: "Ремонт", intact: "Исправна", damaged: "Повреждена", broken: "Сломана" },
+  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", upgrade: "Покращення", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ", currentHp: "Стан", repair: "Ремонт", intact: "Справна", damaged: "Пошкоджена", broken: "Зламана" },
+  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA", currentHp: "Stan", repair: "Napraw", intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona" },
 };
 
 function byId(list, id) {
@@ -94,6 +94,13 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
       next.upgradeId = "none";
       next.platingId = "none";
       next.systemId = "none";
+      next.currentHp = null;
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(patch, "upgradeId") ||
+      Object.prototype.hasOwnProperty.call(patch, "platingId")
+    ) {
+      next.currentHp = null;
     }
     update({
       setId: "mixed",
@@ -122,6 +129,10 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
       upgradeOptions,
       stats: calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade),
       effect: [plating?.effect, system?.effect].filter(Boolean).join(" "),
+      currentHp:
+        selected.currentHp === null || selected.currentHp === undefined
+          ? calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade).hp
+          : Math.max(0, Math.min(Number(selected.currentHp || 0), calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade).hp)),
     };
   });
 
@@ -162,12 +173,12 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
 
       {hasFrame && (
         <div className="pip-power-parts">
-          {rows.map(({ definition, selected, set, stats, upgradeOptions, platingOptions, systemOptions, effect }) => (
+          {rows.map(({ definition, selected, set, stats, currentHp, upgradeOptions, platingOptions, systemOptions, effect }) => (
             <article className="pip-power-part" key={definition.id}>
               <div className="pip-power-part-head">
                 <strong>{definition.id}</strong>
-                <span>{labels.dr}: {stats ? `${stats.physical}/${stats.energy}/${stats.radiation}` : "0/0/0"}</span>
-                <span>{labels.hp}: {stats?.hp || 0}</span>
+                <span>{labels.dr}: {stats && currentHp > 0 ? `${stats.physical}/${stats.energy}/${stats.radiation}` : "0/0/0"}</span>
+                <span>{labels.hp}: {stats ? `${currentHp}/${stats.hp}` : "0/0"}</span>
               </div>
               <label>
                 <span>{labels.part}</span>
@@ -198,6 +209,17 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
                     </select>
                   </label>
                 </>
+              )}
+              {stats && (
+                <div className={`pip-power-condition ${currentHp <= 0 ? "is-broken" : currentHp < stats.hp ? "is-damaged" : "is-intact"}`}>
+                  <span>{labels.currentHp}: {currentHp <= 0 ? labels.broken : currentHp < stats.hp ? labels.damaged : labels.intact}</span>
+                  <div className="pip-power-hp-controls">
+                    <button type="button" className="pip-btn" onClick={() => updateSlot(definition.id, { currentHp: Math.max(0, currentHp - 1) })}>−</button>
+                    <input className="pip-input" inputMode="numeric" value={currentHp} onChange={(event) => updateSlot(definition.id, { currentHp: Math.max(0, Math.min(stats.hp, Number(event.target.value || 0))) })} />
+                    <button type="button" className="pip-btn" onClick={() => updateSlot(definition.id, { currentHp: Math.min(stats.hp, currentHp + 1) })}>+</button>
+                    <button type="button" className="pip-btn" onClick={() => updateSlot(definition.id, { currentHp: stats.hp })}>{labels.repair}</button>
+                  </div>
+                </div>
               )}
               {effect && <p className="pip-armor-effect">{effect}</p>}
               {stats && <div className="pip-power-part-meta"><span>{labels.weight}: {stats.weight}</span><span>{labels.cost}: {stats.cost}</span></div>}
