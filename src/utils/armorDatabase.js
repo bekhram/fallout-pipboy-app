@@ -211,3 +211,27 @@ export function calculateArmorPart(item, material, upgrade, manual = {}, part = 
       Number(upgrade?.cost || 0) * armorModMultiplier(upgrade, part),
   };
 }
+
+export function calculateNormalArmorLocations(armor = {}, database = { items: [], mods: [] }) {
+  const items = database?.items || [];
+  const mods = database?.mods || [];
+  const slots = armor?._equipment?.slots || {};
+  const condition = armor?._condition?.parts || {};
+  const result = {};
+
+  Object.keys(PART_LOCATION).forEach((part) => {
+    const selected = slots[part] || {};
+    const item = items.find((entry) => entry.id === selected.itemId);
+    const availableMods = compatibleArmorMods(mods, item, part);
+    const material = availableMods.materials.find((entry) => entry.id === selected.materialId);
+    const upgrade = availableMods.upgrades.find((entry) => entry.id === selected.upgradeId);
+    const maximum = calculateArmorPart(item, material, upgrade, armor?.[part], part);
+
+    result[part] = {
+      ...maximum,
+      ...(condition[part]?.current || {}),
+    };
+  });
+
+  return result;
+}
