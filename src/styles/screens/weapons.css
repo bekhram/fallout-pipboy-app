@@ -563,3 +563,19 @@ button.pip-weapon-property-button:focus-visible,
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Keep generated weapon artwork comfortably inside the card frame. */
+.pip-weapon-visual img {
+  width: 78%;
+  height: 78%;
+  padding: 0;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .pip-weapon-visual img {
+    width: 84%;
+    height: 84%;
+  }
+}
