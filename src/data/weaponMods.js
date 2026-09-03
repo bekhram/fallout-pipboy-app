@@ -217,9 +217,10 @@ const mergeGroups = (...groups) => {
 
 export function getWeaponModGroups(weapon) {
   const slug = slugify(weapon?.name);
+  const skill = String(weapon?.skill || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
   if (melee[slug]) return melee[slug];
-  if (weapon?.skill === "small_guns") return mergeGroups(smallGuns, unique[slug]);
-  if (weapon?.skill === "energy_weapons") return mergeGroups(energyWeapons, unique[slug]);
+  if (skill === "small_guns") return mergeGroups(smallGuns, unique[slug]);
+  if (skill === "energy_weapons") return mergeGroups(energyWeapons, unique[slug]);
   return unique[slug] || {};
 }
 
