@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
-import LocalSkillCheck from "./LocalSkillCheck.jsx";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
@@ -11,41 +10,6 @@ const LEGACY_CHAT_STORAGE_KEYS = [
   "fallout_pipboy_local_gm_sessions_v2",
   "fallout_pipboy_local_gm_chat_v1",
 ];
-
-const QUICK_ACTIONS = {
-  en: [
-    { id: "look", label: "LOOK AROUND", prompt: "I carefully look around and assess the immediate area." },
-    { id: "search", label: "SEARCH", prompt: "I search the immediate area for useful items, hidden details, tracks, or hazards." },
-    { id: "talk", label: "TALK", prompt: "I try to talk to the nearest relevant NPC or creature that can communicate." },
-    { id: "interact", label: "INTERACT", prompt: "I interact with the most relevant nearby door, terminal, container, mechanism, or point of interest." },
-    { id: "move", label: "MOVE ON", prompt: "I move deeper into the location, following the most natural unexplored route." },
-    { id: "leave", label: "LEAVE", prompt: "I try to safely leave this local location and return to travelling in the world." },
-  ],
-  ru: [
-    { id: "look", label: "ОСМОТРЕТЬСЯ", prompt: "Я внимательно осматриваюсь и оцениваю ближайшую обстановку." },
-    { id: "search", label: "ОБЫСКАТЬ", prompt: "Я обыскиваю ближайшую область в поисках полезных предметов, скрытых деталей, следов или опасностей." },
-    { id: "talk", label: "ПОГОВОРИТЬ", prompt: "Я пытаюсь поговорить с ближайшим подходящим NPC или существом, которое умеет общаться." },
-    { id: "interact", label: "ВЗАИМОДЕЙСТВОВАТЬ", prompt: "Я взаимодействую с ближайшей важной дверью, терминалом, контейнером, механизмом или точкой интереса." },
-    { id: "move", label: "ИДТИ ДАЛЬШЕ", prompt: "Я продвигаюсь глубже в локацию по наиболее естественному неисследованному пути." },
-    { id: "leave", label: "УЙТИ", prompt: "Я пытаюсь безопасно покинуть локальную локацию и вернуться к путешествию по миру." },
-  ],
-  uk: [
-    { id: "look", label: "ОЗИРНУТИСЯ", prompt: "Я уважно оглядаюся та оцінюю найближчу обстановку." },
-    { id: "search", label: "ОБШУКАТИ", prompt: "Я обшукую найближчу область у пошуках корисних предметів, прихованих деталей, слідів або небезпек." },
-    { id: "talk", label: "ПОГОВОРИТИ", prompt: "Я намагаюся поговорити з найближчим доречним NPC або істотою, яка може спілкуватися." },
-    { id: "interact", label: "ВЗАЄМОДІЯТИ", prompt: "Я взаємодію з найближчими важливими дверима, терміналом, контейнером, механізмом або точкою інтересу." },
-    { id: "move", label: "ЙТИ ДАЛІ", prompt: "Я просуваюся глибше в локацію найбільш природним недослідженим шляхом." },
-    { id: "leave", label: "ПІТИ", prompt: "Я намагаюся безпечно залишити локальну локацію та повернутися до подорожі світом." },
-  ],
-  pl: [
-    { id: "look", label: "ROZEJRZYJ SIĘ", prompt: "Uważnie rozglądam się i oceniam najbliższe otoczenie." },
-    { id: "search", label: "PRZESZUKAJ", prompt: "Przeszukuję najbliższy obszar w poszukiwaniu przydatnych przedmiotów, ukrytych szczegółów, śladów lub zagrożeń." },
-    { id: "talk", label: "POROZMAWIAJ", prompt: "Próbuję porozmawiać z najbliższym odpowiednim NPC lub istotą, która potrafi się komunikować." },
-    { id: "interact", label: "WEJDŹ W INTERAKCJĘ", prompt: "Wchodzę w interakcję z najważniejszymi pobliskimi drzwiami, terminalem, pojemnikiem, mechanizmem lub punktem zainteresowania." },
-    { id: "move", label: "IDŹ DALEJ", prompt: "Idę głębiej w lokację najbardziej naturalną, niezbadana trasą." },
-    { id: "leave", label: "ODEJDŹ", prompt: "Próbuję bezpiecznie opuścić lokalną lokację i wrócić do podróżowania po świecie." },
-  ],
-};
 
 function readCharacter() {
   try {
@@ -327,7 +291,6 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   const { i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
   const tx = (key, vars) => mapUiText(language, key, vars);
-  const quickActions = QUICK_ACTIONS[language] || QUICK_ACTIONS.en;
   const rawCharacter = useMemo(() => readCharacter(), []);
   const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
   const world = useMemo(
@@ -561,52 +524,8 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
               : ""}
           </div>
         </div>
-        <div className="pip-local-gm__header-actions">
-          <button
-            type="button"
-            className="pip-btn"
-            onClick={() => setArchiveOpen((value) => !value)}
-            disabled={isSending}
-          >
-            {tx("visited")} ({visitedSessions.length})
-          </button>
-          {isArchiveView ? (
-            <button type="button" className="pip-btn" onClick={() => setViewedSessionKey(null)} disabled={isSending}>
-              {tx("current")}
-            </button>
-          ) : (
-            <button type="button" className="pip-btn pip-local-gm__reset" onClick={resetChat} disabled={isSending}>
-              {tx("newSession")}
-            </button>
-          )}
-        </div>
       </header>
 
-      {archiveOpen ? (
-        <aside className="pip-local-gm__archive">
-          <div className="pip-local-gm__archive-title">{tx("visitedStatic")}</div>
-          {visitedSessions.length === 0 ? (
-            <div className="pip-local-gm__archive-empty">{tx("noSavedLocations")}</div>
-          ) : (
-            <div className="pip-local-gm__archive-list">
-              {visitedSessions.map((session) => (
-                <button
-                  type="button"
-                  key={session.key}
-                  className={`pip-local-gm__archive-item${session.key === activeSessionKey ? " is-active" : ""}`}
-                  onClick={() => openArchivedSession(session.key)}
-                >
-                  <span className="pip-local-gm__archive-name">{sessionLabel(session, tx("unknownLocation"))}</span>
-                  <span className="pip-local-gm__archive-meta">
-                    {(session.messages || []).length} {tx("messages")} · {(session.events || []).length} {tx("discoveries")}
-                    {formatSessionTime(session.updatedAt, language) ? ` · ${formatSessionTime(session.updatedAt, language)}` : ""}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </aside>
-      ) : null}
 
       <div className="pip-local-gm__brief">
         <span>{tx("character")}: {character?.name || tx("notLoaded")}</span>
@@ -634,16 +553,6 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         </div>
       ) : null}
 
-      {!isArchiveView && pendingCheck ? (
-        <LocalSkillCheck
-          key={pendingCheck.id || `${pendingCheck.attribute}-${pendingCheck.skill}`}
-          check={pendingCheck}
-          character={rawCharacter}
-          language={language}
-          disabled={isSending}
-          onSubmit={(text) => sendText(text, { clearCheck: true })}
-        />
-      ) : null}
 
       <div className="pip-local-gm__messages" aria-live="polite">
         {messages.length === 0 && !isSending ? (
@@ -671,19 +580,6 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         <div className="pip-local-gm__archive-note">{tx("archiveNote")}</div>
       ) : (
         <>
-          <div className="pip-local-gm__quick-actions" aria-label="Quick actions">
-            {quickActions.map((action) => (
-              <button
-                type="button"
-                key={action.id}
-                className="pip-local-gm__quick-action"
-                disabled={isSending || Boolean(pendingCheck)}
-                onClick={() => sendText(action.prompt)}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
           <form className="pip-local-gm__composer" onSubmit={sendMessage}>
             <textarea
               value={draft}
