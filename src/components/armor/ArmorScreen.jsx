@@ -359,7 +359,9 @@ export default function ArmorScreen({ armor, onArmorChange }) {
                 const value = calculated[part]?.[field.key] ?? 0;
                 return (
                 <label key={`${part}-${field.key}`} className="pip-armor-cell">
-                  <span className="pip-armor-cell-mobile-icon">{field.icon}</span>
+                  <span className="pip-armor-cell-mobile-icon">
+                    {field.icon || t(field.labelKey)}
+                  </span>
                   <span className={`pip-armor-value-control${canAdjust ? " is-adjustable" : ""}`}>
                     {canAdjust && (
                       <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value - 1)} aria-label={`-${t(field.labelKey)}`}>−</button>
