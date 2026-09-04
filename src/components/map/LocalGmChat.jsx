@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
 import { rollFalloutD20 } from "../../utils/dice.js";
 import { playSound } from "../../utils/soundManager.js";
@@ -166,7 +165,7 @@ function compactLocation(location) {
   };
 }
 
-function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) {
+function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData, locations = [], region = null) {
   const currentCell = mapData?.cells?.find(
     (cell) => cell.x === playerPosition?.x && cell.y === playerPosition?.y
   );
@@ -176,22 +175,24 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
   const worldX = worldOffset.x * cols + (playerPosition?.x || 0);
   const worldY = worldOffset.y * rows + (playerPosition?.y || 0);
 
-  const staticLocation = FALLOUT_4_LOCATIONS.find(
+  const staticLocation = locations.find(
     (location) => location.worldX === worldX && location.worldY === worldY
   );
-  const trackedLocation = FALLOUT_4_LOCATIONS.find(
+  const trackedLocation = locations.find(
     (location) => location.id === savedMapData?.trackedLocationId
   );
 
   const selectedWorldX = selectedCell ? worldOffset.x * cols + selectedCell.x : null;
   const selectedWorldY = selectedCell ? worldOffset.y * rows + selectedCell.y : null;
   const selectedStaticLocation = selectedCell
-    ? FALLOUT_4_LOCATIONS.find(
+    ? locations.find(
         (location) => location.worldX === selectedWorldX && location.worldY === selectedWorldY
       )
     : null;
 
   return {
+    region: region ? { id: region.id || null, name: region.name || null, game: region.game || null } : null,
+    knownStaticLocations: locations.map(compactLocation),
     sector: mapData?.title || mapData?.id || null,
     sectorOffset: worldOffset,
     localPosition: playerPosition || null,
@@ -214,17 +215,18 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
 }
 
 function getSessionKey(world) {
+  const regionId = world?.region?.id || "commonwealth";
   if (world?.isStaticLocation && world?.currentLocation?.id) {
-    return `location:${world.currentLocation.id}`;
+    return `location:${regionId}:${world.currentLocation.id}`;
   }
-  if (world?.worldPosition) return `procedural:${world.worldPosition.x}:${world.worldPosition.y}`;
+  if (world?.worldPosition) return `procedural:${regionId}:${world.worldPosition.x}:${world.worldPosition.y}`;
   return `procedural-sector:${world?.sector || "unknown"}`;
 }
 
 function getSectorKey(world) {
   const offset = world?.sectorOffset;
   if (offset && Number.isFinite(Number(offset.x)) && Number.isFinite(Number(offset.y))) {
-    return `sector:${Number(offset.x)}:${Number(offset.y)}`;
+    return `sector:${world?.region?.id || "commonwealth"}:${Number(offset.x)}:${Number(offset.y)}`;
   }
   return `sector:${world?.sector || "unknown"}`;
 }
@@ -325,18 +327,25 @@ function formatSessionTime(value, language) {
   }
 }
 
-export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents, characterData, weaponDatabase = [] }) {
-  const { i18n } = useTranslation();
+export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents, characterData, weaponDatabase = [], locations = [], region = null }) {
+  const { t, i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
   const tx = (key, vars) => mapUiText(language, key, vars);
   const rawCharacter = characterData || readCharacter();
+  const localizedLocations = useMemo(
+    () => locations.map((location) => ({
+      ...location,
+      name: location.nameKey ? t(location.nameKey, { defaultValue: location.name }) : location.name,
+    })),
+    [locations, t, language]
+  );
   const character = useMemo(
     () => compactCharacter(rawCharacter, weaponDatabase),
     [rawCharacter, weaponDatabase]
   );
   const world = useMemo(
-    () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData),
-    [mapData, playerPosition, selectedCell, rawCharacter]
+    () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData, localizedLocations, region),
+    [mapData, playerPosition, selectedCell, rawCharacter, localizedLocations, region]
   );
   const isPersistentLocation = world.isStaticLocation === true;
   const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
