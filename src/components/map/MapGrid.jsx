@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
-import LocalCombatPanel from "./LocalCombatPanel.jsx";
 import WorldOverview from "./WorldOverview.jsx";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
@@ -106,14 +105,6 @@ function MapGrid({
 
   const currentWorld = getWorldCoords(mapData, playerPosition);
   const currentStaticLocation = getStaticLocation(mapData, playerPosition);
-  const localSessionKey = currentStaticLocation?.id
-    ? `location:${currentStaticLocation.id}`
-    : currentWorld
-      ? `procedural:${currentWorld.x}:${currentWorld.y}`
-      : "procedural:unknown";
-  const sectorOffset = mapData?.worldOffset || { x: 0, y: 0 };
-  const localSectorKey = `sector:${Number(sectorOffset.x || 0)}:${Number(sectorOffset.y || 0)}`;
-
   const openLocal = () => setMapMode("local");
   const minimizeLocal = () => setMapMode("world");
 
@@ -132,12 +123,6 @@ function MapGrid({
             <button type="button" onClick={minimizeLocal} aria-label="Minimize Auto GM">—</button>
           </div>
           <div className="pip-map-local-fullscreen__content">
-            <LocalCombatPanel
-              language={language}
-              sessionKey={localSessionKey}
-              sectorKey={localSectorKey}
-              persistent={Boolean(currentStaticLocation)}
-            />
             <LocalGmChat mapData={mapData} playerPosition={playerPosition} selectedCell={selectedCell} />
           </div>
         </div>
