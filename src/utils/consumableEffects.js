@@ -48,13 +48,6 @@ function normalizeName(value) {
   return clean(value).toLowerCase().replace(/\s+/g, " ");
 }
 
-function firstNumber(value, fallback = 0) {
-  const match = clean(value).replace(",", ".").match(/-?\d+(?:\.\d+)?/);
-  if (!match) return fallback;
-  const number = Number(match[0]);
-  return Number.isFinite(number) ? number : fallback;
-}
-
 function extractAttributes(value) {
   const lower = clean(value).toLowerCase();
   return Object.entries(ATTRIBUTE_KEYS)
@@ -92,6 +85,15 @@ function addTestModifier(modifiers, keys, patch) {
 }
 
 function parseDifficultyModifiers(text, modifiers) {
+  const dirtyWastelander = clean(text).match(
+    /reduce difficulty of all STR tests by\s*(\d+).*increase difficulty of all INT tests by\s*(\d+)/i
+  );
+  if (dirtyWastelander) {
+    addTestModifier(modifiers, ["S"], { difficultyDelta: -Number(dirtyWastelander[1]) });
+    addTestModifier(modifiers, ["I"], { difficultyDelta: Number(dirtyWastelander[2]) });
+    return;
+  }
+
   const clauses = clean(text).split(/[.;]/).map((part) => part.trim()).filter(Boolean);
 
   clauses.forEach((clause) => {
@@ -114,14 +116,6 @@ function parseDifficultyModifiers(text, modifiers) {
       addTestModifier(modifiers, keys, { difficultyDelta: Number(plusDifficultyMatch[1]) });
     }
   });
-
-  const dirtyWastelander = clean(text).match(
-    /reduce difficulty of all STR tests by\s*(\d+).*increase difficulty of all INT tests by\s*(\d+)/i
-  );
-  if (dirtyWastelander) {
-    addTestModifier(modifiers, ["S"], { difficultyDelta: -Number(dirtyWastelander[1]) });
-    addTestModifier(modifiers, ["I"], { difficultyDelta: Number(dirtyWastelander[2]) });
-  }
 }
 
 function parseRerolls(text, modifiers) {
@@ -143,8 +137,9 @@ export function buildConsumableModifiers(effectText) {
   const lower = text.toLowerCase();
   const modifiers = makeModifiers();
 
-  const maxHp = text.match(/(?:max hp\s*\+|\+)(\d+)\s*(?:max hp)?/i);
-  if (maxHp && /max hp/i.test(text)) addNumeric(modifiers.derived, "maxHpBonus", Number(maxHp[1]));
+  const maxHp = text.match(/max hp\s*\+(\d+)/i)
+    || text.match(/\+(\d+)\s*max hp/i);
+  if (maxHp) addNumeric(modifiers.derived, "maxHpBonus", Number(maxHp[1]));
 
   const carryWeight = text.match(/carry weight[^+\d]*\+?(\d+)/i);
   if (carryWeight) addNumeric(modifiers.derived, "carryWeightBonus", Number(carryWeight[1]));
@@ -157,7 +152,7 @@ export function buildConsumableModifiers(effectText) {
   ];
   resistTypes.forEach(([label, key]) => {
     const patterns = [
-      new RegExp(`plus\\s*(\\d+)\\s*${label} damage resistance`, "i"),
+      new RegExp(`plus\\s*(\\d+)\\s*(?:to\\s*)?${label} damage resistance`, "i"),
       new RegExp(`\\+(\\d+)\\s*(?:to\\s*)?${label} damage resistance`, "i"),
     ];
     for (const pattern of patterns) {
