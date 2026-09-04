@@ -134,6 +134,68 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+/* ===== SCREEN SWIPE TRANSITION ===== */
+
+.pip-main {
+  overflow-x: clip;
+}
+
+.pip-screen-slide {
+  position: relative;
+  min-width: 0;
+}
+
+.pip-screen-slide.is-from-right {
+  animation: pipScreenFromRight 260ms cubic-bezier(0.22, 0.75, 0.24, 1) both;
+}
+
+.pip-screen-slide.is-from-left {
+  animation: pipScreenFromLeft 260ms cubic-bezier(0.22, 0.75, 0.24, 1) both;
+}
+
+.pip-screen-slide.is-from-right::after,
+.pip-screen-slide.is-from-left::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  z-index: 5;
+  pointer-events: none;
+  background: var(--pip-accent);
+  box-shadow: 0 0 14px 3px rgba(140, 255, 152, 0.32);
+  opacity: 0;
+  animation: pipScreenEdgeScan 260ms ease-out both;
+}
+
+.pip-screen-slide.is-from-right::after { left: 0; }
+.pip-screen-slide.is-from-left::after { right: 0; }
+
+@keyframes pipScreenFromRight {
+  from { opacity: 0.35; transform: translateX(34px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pipScreenFromLeft {
+  from { opacity: 0.35; transform: translateX(-34px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pipScreenEdgeScan {
+  0% { opacity: 0; transform: scaleY(0.25); }
+  35% { opacity: 0.9; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pip-screen-slide.is-from-right,
+  .pip-screen-slide.is-from-left,
+  .pip-screen-slide.is-from-right::after,
+  .pip-screen-slide.is-from-left::after {
+    animation: none;
+  }
+}
+
 .pip-list {
   display: grid;
   gap: 8px;
