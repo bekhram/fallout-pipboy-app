@@ -1001,6 +1001,7 @@ export function createEmptyPerk() {
 
 export function buildDefaultMapState() {
   return {
+    regionId: "commonwealth",
     worldOffset: { x: 0, y: 0 },
     playerPosition: null,
     worldTotalHours: 8,
