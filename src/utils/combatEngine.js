@@ -2,24 +2,16 @@ import { rollFalloutD20, rollFalloutD6, rollHitLocationD20 } from "./dice.js";
 
 export const MAX_GROUP_AP = 6;
 export const MAX_TEST_D20 = 5;
-
 export const RANGE_BANDS = ["close", "medium", "long", "extreme"];
 
-const RANGE_DISTANCE = {
-  close: 0,
-  medium: 1,
-  long: 2,
-  extreme: 3,
-};
+const RANGE_DISTANCE = { close: 0, medium: 1, long: 2, extreme: 3 };
 
 export function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value) || 0));
 }
 
 export function getInitiative(character = {}, creature = false) {
-  if (creature) {
-    return Number(character.body || 0) + Number(character.mind || 0) + Number(character.initiativeBonus || 0);
-  }
+  if (creature) return Number(character.body || 0) + Number(character.mind || 0) + Number(character.initiativeBonus || 0);
   const special = character.special || character.SPECIAL || {};
   return Number(special.P || 0) + Number(special.A || 0) + Number(character.initiativeBonus || 0);
 }
@@ -41,7 +33,6 @@ export function getRangeDifficultyModifier(weaponRange, targetRange) {
 
 export function getAttackTestProfile(weapon = {}) {
   const type = String(weapon.attackType || weapon.type || weapon.skill || "").toLowerCase();
-
   if (type.includes("unarmed")) return { attribute: "S", skill: "Unarmed" };
   if (type.includes("melee")) return { attribute: "S", skill: "Melee Weapons" };
   if (type.includes("big gun")) return { attribute: "E", skill: "Big Guns" };
@@ -64,7 +55,6 @@ export function buildAttackCheck({ attacker = {}, target = {}, weapon = {}, targ
   const reachMod = ranged && withinReach ? 2 : 0;
   const locationMod = chosenLocation ? 1 : 0;
   const difficulty = Math.max(0, Number(target.defense || 1) + rangeMod + reachMod + locationMod);
-
   return {
     ...profile,
     targetNumber,
@@ -78,12 +68,7 @@ export function buildAttackCheck({ attacker = {}, target = {}, weapon = {}, targ
 export function rollAttack(args = {}) {
   const check = buildAttackCheck(args);
   const diceCount = clamp(args.diceCount || 2, 1, MAX_TEST_D20);
-  const roll = rollFalloutD20({
-    diceCount,
-    targetNumber: check.targetNumber,
-    criticalRange: check.criticalRange,
-    label: `${check.attribute} + ${check.skill}`,
-  });
+  const roll = rollFalloutD20({ diceCount, targetNumber: check.targetNumber, criticalRange: check.criticalRange, label: `${check.attribute} + ${check.skill}` });
   return {
     check,
     roll,
@@ -130,7 +115,6 @@ export function resolveDamage({ weapon = {}, target = {}, location = null, extra
   const criticalHit = finalDamage >= 5;
   const radioactive = effects.includes("radioactive") ? roll.totalEffects : 0;
   const persistentEffect = effects.find((effect) => effect.startsWith("persistent")) || null;
-
   return {
     hitLocation,
     damageType,
@@ -161,13 +145,10 @@ export function applyDamageToTarget(target = {}, damageResult = {}) {
   const damage = Math.max(0, Number(damageResult.finalDamage || 0));
   let nextMaxHp = maxHp;
   let nextHp = Math.max(0, currentHp - damage);
-
   if (damageResult.damageType === "radiation") {
-    const radiation = damage;
-    nextMaxHp = Math.max(0, maxHp - radiation);
+    nextMaxHp = Math.max(0, maxHp - damage);
     nextHp = Math.min(nextHp, nextMaxHp);
   }
-
   return {
     hp: { current: nextHp, max: nextMaxHp },
     defeated: nextHp <= 0,
@@ -186,7 +167,6 @@ export function createCombatState({ player, enemies = [], gmAp = null, groupAp =
       ...enemy,
     })),
   ].filter(Boolean);
-
   return {
     round: 1,
     turnIndex: 0,
@@ -200,10 +180,19 @@ export function createCombatState({ player, enemies = [], gmAp = null, groupAp =
 export function advanceTurn(state) {
   const combatants = state?.combatants || [];
   if (!combatants.length) return state;
-  const nextIndex = (Number(state.turnIndex || 0) + 1) % combatants.length;
+  const currentIndex = Number(state.turnIndex || 0);
+  let nextIndex = currentIndex;
+  let wrapped = false;
+  let inspected = 0;
+  do {
+    nextIndex = (nextIndex + 1) % combatants.length;
+    if (nextIndex === 0) wrapped = true;
+    inspected += 1;
+  } while (inspected < combatants.length && combatants[nextIndex]?.defeated);
+
   return {
     ...state,
     turnIndex: nextIndex,
-    round: nextIndex === 0 ? Number(state.round || 1) + 1 : Number(state.round || 1),
+    round: wrapped ? Number(state.round || 1) + 1 : Number(state.round || 1),
   };
 }
