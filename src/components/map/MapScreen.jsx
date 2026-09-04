@@ -9,6 +9,9 @@ import { buildDefaultMapState } from "../../constants.js";
 import "./map.css";
 import bostonMapImage from "../../assets/map/boston-map.png";
 import fallout1MapAsset from "../../assets/map/fallout1-southern-california.js";
+import fallout2MapAsset from "../../assets/map/fallout2-northern-california.js";
+import fallout3MapAsset from "../../assets/map/fallout3-capital-wasteland.js";
+import newVegasMapAsset from "../../assets/map/new-vegas-mojave.js";
 import {
   findTravelRoute,
   getCell,
@@ -36,6 +39,13 @@ const HOURS_IN_DAY = 24;
 const DAYS_IN_MONTH = 30;
 const MONTHS_IN_YEAR = 12;
 const WORLD_ROUTE_MARGIN = 6;
+const REGION_MAP_ASSETS = {
+  commonwealth: bostonMapImage,
+  california_fo1: fallout1MapAsset,
+  california_fo2: fallout2MapAsset,
+  capital_wasteland: fallout3MapAsset,
+  mojave: newVegasMapAsset,
+};
 
 function getPoiIcon(poi) {
   if (!poi) return null;
@@ -598,7 +608,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} disabled={!atRightEdge}>{t("mapPanel.east")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} disabled={!atBottomEdge}>{t("mapPanel.south")}</button>
 
-          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: activeRegion.id === "commonwealth" ? `url(${bostonMapImage})` : activeRegion.id === "california_fo1" ? `url(${fallout1MapAsset})` : "none", backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
+          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: `url(${REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage})`, backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
             <div className="pip-map-poi-layer">
               {visibleWorldLocations.map((location) => (
                 <button
