@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { INVENTORY_CATEGORIES } from "../../constants.js";
+import { extendInventoryCategories, getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
 import InventoryCard from "./InventoryCard.jsx";
 import InventoryEditor from "./InventoryEditor.jsx";
 
@@ -32,26 +33,32 @@ export default function InventoryScreen({
   onRemove,
   onSaveEdit,
   onCancelEdit,
-  globalAmmo, // <--- ДОДАЛИ БАЗУ НАБОЇВ СЮДИ
+  globalAmmo,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedIndices, setSelectedIndices] = useState([]);
   const [sellBonusPercent, setSellBonusPercent] = useState("0");
 
   const inventoryCategories = useMemo(() => {
-    if (INVENTORY_CATEGORIES.some((item) => item.value === "armor")) {
-      return INVENTORY_CATEGORIES;
+    let next = extendInventoryCategories(INVENTORY_CATEGORIES);
+
+    if (!next.some((item) => item.value === "armor")) {
+      next = [...next];
+      const weaponsIndex = next.findIndex((item) => item.value === "weapons");
+      next.splice(Math.max(0, weaponsIndex + 1), 0, {
+        value: "armor",
+        label: "Armor",
+        labelKey: "armorPanel.title",
+      });
     }
 
-    const next = [...INVENTORY_CATEGORIES];
-    const weaponsIndex = next.findIndex((item) => item.value === "weapons");
-    next.splice(Math.max(0, weaponsIndex + 1), 0, {
-      value: "armor",
-      label: "Armor",
-      labelKey: "armorPanel.title",
-    });
     return next;
   }, []);
+
+  const labelForCategory = (item) =>
+    CATEGORY_LABEL_KEYS[item.value]
+      ? t(CATEGORY_LABEL_KEYS[item.value])
+      : getExtraCategoryLabel(item.value, i18n.resolvedLanguage);
 
   const filteredItems =
     activeCategory === "all"
@@ -172,7 +179,7 @@ export default function InventoryScreen({
                 clearSelected();
               }}
             >
-              {t(CATEGORY_LABEL_KEYS[item.value] || item.labelKey || item.label)}
+              {labelForCategory(item)}
             </button>
           ))}
         </div>
@@ -258,7 +265,7 @@ export default function InventoryScreen({
           setDraft={setItemDraft}
           onSave={() => onSaveEdit(editingIndex)}
           onCancel={onCancelEdit}
-          globalAmmo={globalAmmo} // <--- ПЕРЕДАЄМО БАЗУ В РЕДАКТОР
+          globalAmmo={globalAmmo}
         />
       )}
     </div>
