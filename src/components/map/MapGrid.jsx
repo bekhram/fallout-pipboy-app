@@ -35,6 +35,8 @@ function MapGrid({
   discoveredKeys,
   onSelectCell,
   onTravel,
+  character,
+  weaponDatabase,
 }) {
   const { i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
@@ -123,7 +125,13 @@ function MapGrid({
             <button type="button" onClick={minimizeLocal} aria-label="Minimize Auto GM">—</button>
           </div>
           <div className="pip-map-local-fullscreen__content">
-            <LocalGmChat mapData={mapData} playerPosition={playerPosition} selectedCell={selectedCell} />
+            <LocalGmChat
+              mapData={mapData}
+              playerPosition={playerPosition}
+              selectedCell={selectedCell}
+              characterData={character}
+              weaponDatabase={weaponDatabase}
+            />
           </div>
         </div>
       ) : mapMode === "overview" ? (
