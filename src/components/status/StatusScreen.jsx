@@ -316,16 +316,22 @@ if (derived?.immunities?.includes("radiation")) {
               </div>
             </div>
 
-            <div className="pip-combat-summary">
-              <div className="pip-summary-title">[ {t("main.combatData")} ]</div>
-              <div className="pip-combat-grid">
-                <div className="pip-combat-stat"><small>{t("main.defense")}</small><strong>{derived.defense}</strong></div>
-                <div className="pip-combat-stat"><small>{t("main.initiative")}</small><strong>{derived.initiative}</strong></div>
-                <div className="pip-combat-stat"><small>{t("main.melee")}</small><strong>{derived.md}</strong></div>
-                <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>
-              </div>
-            </div>
+          </div>
+        </div>
 
+        <div className="pip-hero-dashboard">
+          <div className="pip-combat-summary">
+            <div className="pip-summary-title">[ {t("main.combatData")} ]</div>
+            <div className="pip-combat-grid">
+              <div className="pip-combat-stat"><small>{t("main.defense")}</small><strong>{derived.defense}</strong></div>
+              <div className="pip-combat-stat"><small>{t("main.initiative")}</small><strong>{derived.initiative}</strong></div>
+              <div className="pip-combat-stat"><small>{t("main.melee")}</small><strong>{derived.md}</strong></div>
+              <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>
+            </div>
+          </div>
+
+          <div className="pip-survival-summary">
+            <div className="pip-summary-title">[ {t("vitals.title")} ]</div>
             <div className="pip-status-vitals-inline">
               <VitalsPanel
                 form={form}
