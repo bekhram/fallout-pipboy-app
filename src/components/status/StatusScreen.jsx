@@ -21,7 +21,7 @@ export default function StatusScreen({
   onPickPortrait,
   onRemovePortrait,
   onTopLevelChange,
-  onChangeOrigin, // <-- Добавлен новый пропс
+  onChangeOrigin,
   onStatusToggle,
   onInjuryToggle,
   onArmorChange,
@@ -75,7 +75,7 @@ export default function StatusScreen({
 if (derived?.immunities?.includes("radiation")) {
     effectBadges.push({
       key: "immune-rad",
-      tone: "positive", // Зеленый цвет
+      tone: "positive",
       label: `☢ RADIATION IMMUNE`,
     });
   }
@@ -279,12 +279,12 @@ if (derived?.immunities?.includes("radiation")) {
               <label>{t("main.origin")}</label>
               <button
                 type="button"
-                className="pip-input" 
+                className="pip-input"
                 style={{ textAlign: 'left', cursor: 'pointer' }}
                 onClick={() => setIsOriginModalOpen(true)}
               >
-                {form.origin && ORIGINS[form.origin] 
-                  ? t(ORIGINS[form.origin].translationKey) 
+                {form.origin && ORIGINS[form.origin]
+                  ? t(ORIGINS[form.origin].translationKey)
                   : form.origin || t("characterCreation.selectOriginTitle")}
               </button>
             </div>
@@ -363,10 +363,10 @@ if (derived?.immunities?.includes("radiation")) {
         survivalConditions={survivalConditions}
       />
 
-<OriginSelectionModal
+      <OriginSelectionModal
         open={isOriginModalOpen}
-        onSelectOrigin={(id, traits) => {
-          onChangeOrigin(id, traits, t); // <--- Добавили t
+        onSelectOrigin={(id, traits, selectedPack) => {
+          onChangeOrigin(id, traits, selectedPack, t);
           setIsOriginModalOpen(false);
         }}
         onCancel={() => setIsOriginModalOpen(false)}
