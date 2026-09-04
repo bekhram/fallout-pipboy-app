@@ -1,0 +1,51 @@
+.pip-local-combat__turn-actions {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(120, 255, 140, 0.3);
+  background: rgba(120, 255, 140, 0.035);
+}
+
+.pip-local-combat__turn-head {
+  display: flex;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.pip-local-combat__action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.pip-local-combat__action-grid .pip-btn {
+  min-height: 36px;
+}
+
+.pip-local-combat__rule-note {
+  padding: 6px 8px;
+  border-left: 2px solid currentColor;
+  font-size: 10px;
+  opacity: 0.78;
+}
+
+@media (max-width: 700px) {
+  .pip-local-combat__turn-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pip-local-combat__action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 430px) {
+  .pip-local-combat__action-grid {
+    grid-template-columns: 1fr;
+  }
+}
