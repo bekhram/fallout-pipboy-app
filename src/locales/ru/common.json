@@ -1,6 +1,6 @@
 {
   "tabs": {
-    "status": "СТАТУС",
+    "status": "СТАТУСЫ",
     "special": "SPECIAL",
     "weapons": "ОРУЖИЕ",
     "inventory": "ИНВ",
@@ -408,6 +408,7 @@
     "addPortrait": "ДОБАВИТЬ ПОРТРЕТ",
     "origin": "Происхождение",
     "level": "Уровень",
+    "xp": "Опыт",
     "defense": "Защита",
     "initiative": "Инициатива",
     "melee": "Ближний бой",
