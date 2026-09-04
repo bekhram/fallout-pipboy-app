@@ -59,21 +59,36 @@ function writeStore(store) {
   }
 }
 
-function compactCharacter(character) {
+function normalizeItemName(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function findWeaponProfile(item, weaponDatabase) {
+  const names = [item?.name, item?.baseName, item?.sourceName, item?.catalogName]
+    .map(normalizeItemName)
+    .filter(Boolean);
+  return (weaponDatabase || []).find((entry) => names.includes(normalizeItemName(entry?.name))) || null;
+}
+
+function compactCharacter(character, weaponDatabase = []) {
   if (!character) return null;
 
-  const weapons = (character.weapons || []).slice(0, 20).map((weapon) => ({
-    name: weapon?.name || null,
-    skill: weapon?.skill || weapon?.skillName || null,
-    damage: weapon?.damage ?? null,
-    damageType: weapon?.damageType || weapon?.type || null,
-    rate: weapon?.rate ?? null,
-    range: weapon?.range || null,
-    ammo: weapon?.ammo || null,
-    effects: weapon?.effects || weapon?.damageEffects || null,
-    qualities: weapon?.qualities || null,
-    mods: weapon?.mods || weapon?.modifications || null,
-  }));
+  const weapons = (character.weapons || []).slice(0, 20).map((weapon) => {
+    const profile = findWeaponProfile(weapon, weaponDatabase);
+    return {
+      name: weapon?.name || profile?.name || null,
+      skill: weapon?.skill || weapon?.skillName || profile?.["Weapon type"] || null,
+      damage: weapon?.damage ?? profile?.["Damage Rating"] ?? null,
+      damageType: weapon?.damageType || weapon?.type || profile?.["Damage type"] || null,
+      rate: weapon?.rate ?? profile?.["Rate of Fire"] ?? null,
+      range: weapon?.range || profile?.Range || null,
+      ammo: weapon?.ammo || null,
+      effects: weapon?.effects || weapon?.damageEffects || profile?.Effects || null,
+      qualities: weapon?.qualities || profile?.Qualities || null,
+      mods: weapon?.mods || weapon?.modifications || null,
+      databaseMatched: Boolean(profile),
+    };
+  });
 
   const armor = Object.fromEntries(
     Object.entries(character.armor || {}).map(([part, values]) => [
@@ -115,12 +130,26 @@ function compactCharacter(character) {
       rank: perk?.rank,
       description: perk?.description || null,
     })),
-    inventory: (character.inventoryItems || []).slice(0, 50).map((item) => ({
-      name: item?.name,
-      category: item?.category || null,
-      quantity: item?.quantity,
-      effect: item?.effect || item?.description || null,
-    })),
+    inventory: (character.inventoryItems || []).slice(0, 50).map((item) => {
+      const profile = findWeaponProfile(item, weaponDatabase);
+      return {
+        name: item?.name,
+        category: item?.category || profile?.["Weapon type"] || null,
+        quantity: item?.quantity,
+        effect: item?.effect || item?.description || null,
+        weaponProfile: profile
+          ? {
+              damage: Number(profile["Damage Rating"]) || 0,
+              damageType: profile["Damage type"] || null,
+              effects: profile.Effects || null,
+              qualities: profile.Qualities || null,
+              rate: Number(profile["Rate of Fire"]) || 0,
+              range: profile.Range || null,
+              rarity: profile.Rarity || null,
+            }
+          : null,
+      };
+    }),
   };
 }
 
@@ -296,12 +325,15 @@ function formatSessionTime(value, language) {
   }
 }
 
-export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents }) {
+export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents, characterData, weaponDatabase = [] }) {
   const { i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
   const tx = (key, vars) => mapUiText(language, key, vars);
-  const rawCharacter = useMemo(() => readCharacter(), []);
-  const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
+  const rawCharacter = characterData || readCharacter();
+  const character = useMemo(
+    () => compactCharacter(rawCharacter, weaponDatabase),
+    [rawCharacter, weaponDatabase]
+  );
   const world = useMemo(
     () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData),
     [mapData, playerPosition, selectedCell, rawCharacter]
@@ -513,7 +545,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       });
       const passed = result.totalSuccesses >= difficulty;
       const dice = result.rolls.map((die) => die.value).join(", ");
-      const summary = `${text.check}: ${attributeKey} + ${pendingCheck.skill}; d20=[${dice}]; ${text.target}=${targetNumber}; ${text.successes}=${result.totalSuccesses}; ${text.complications}=${result.complications}; ${text.difficulty}=${difficulty}; ${passed ? text.success : text.failure}. Resolve this check and continue the scene.`;
+      const summary = `${text.check}: ${attributeKey} + ${pendingCheck.skill}; d20=[${dice}]; ${text.target}=${targetNumber}; ${text.successes}=${result.totalSuccesses}; ${text.complications}=${result.complications}; ${text.difficulty}=${difficulty}; ${passed ? text.success : text.failure}.`;
       setIsCheckRolling(false);
       sendText(summary, { clearCheck: true });
     }, 550);
