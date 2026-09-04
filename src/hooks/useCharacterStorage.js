@@ -21,6 +21,8 @@ import {
 } from "../data/startingEquipment.js";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
+const ORIGIN_EQUIPMENT_CHOICE_EVENT = "pipboy:set-origin-equipment-choices";
+const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
 
 function makeSafeFileName(name) {
   return (name || "Character")
@@ -131,6 +133,7 @@ export function useCharacterStorage(initialForm) {
         activeConsumableEffects: [],
         originEquipmentPack: "",
         startingEquipmentGrants: {},
+        startingEquipmentChoices: {},
         ...initialForm,
       };
 
@@ -148,6 +151,7 @@ export function useCharacterStorage(initialForm) {
         activeConsumableEffects: [],
         originEquipmentPack: "",
         startingEquipmentGrants: {},
+        startingEquipmentChoices: {},
         ...initialForm,
       };
     }
@@ -218,6 +222,8 @@ export function useCharacterStorage(initialForm) {
     const sourceKey = `origin:${form.origin}:${form.originEquipmentPack}`;
     if (form.startingEquipmentGrants?.[sourceKey]) return;
 
+    const choices = form.startingEquipmentChoices?.[sourceKey] || {};
+
     setForm((prev) => {
       if (prev.startingEquipmentGrants?.[sourceKey]) return prev;
       return applyStartingEquipmentGrant(
@@ -228,7 +234,8 @@ export function useCharacterStorage(initialForm) {
           armor: armorInventoryDatabase,
           weapons: weaponInventoryDatabase,
           ammo: ammoInventoryDatabase,
-        }
+        },
+        choices
       );
     });
   }, [
@@ -236,6 +243,7 @@ export function useCharacterStorage(initialForm) {
     form.origin,
     form.originEquipmentPack,
     form.startingEquipmentGrants,
+    form.startingEquipmentChoices,
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
@@ -259,6 +267,7 @@ export function useCharacterStorage(initialForm) {
       Object.entries(prev.skills || {}).forEach(([skillName, skill]) => {
         const sourceKey = `tag:${skillName}`;
         const hasGrant = Boolean(next.startingEquipmentGrants?.[sourceKey]);
+        const choices = next.startingEquipmentChoices?.[sourceKey] || {};
 
         if (skill?.tagged && !hasGrant) {
           next = applyStartingEquipmentGrant(
@@ -269,7 +278,8 @@ export function useCharacterStorage(initialForm) {
               armor: armorInventoryDatabase,
               weapons: weaponInventoryDatabase,
               ammo: ammoInventoryDatabase,
-            }
+            },
+            choices
           );
         } else if (!skill?.tagged && hasGrant) {
           next = removeStartingEquipmentGrant(next, sourceKey);
@@ -282,6 +292,104 @@ export function useCharacterStorage(initialForm) {
     starterDatabasesReady,
     form.skills,
     form.startingEquipmentGrants,
+    form.startingEquipmentChoices,
+    armorInventoryDatabase,
+    weaponInventoryDatabase,
+    ammoInventoryDatabase,
+  ]);
+
+  useEffect(() => {
+    const databases = {
+      armor: armorInventoryDatabase,
+      weapons: weaponInventoryDatabase,
+      ammo: ammoInventoryDatabase,
+    };
+
+    const handleOriginEquipmentChoices = (event) => {
+      const originId = String(event?.detail?.originId || "").trim();
+      const packId = String(event?.detail?.packId || "").trim();
+      const choices = { ...(event?.detail?.choices || {}) };
+      if (!originId || !packId) return;
+
+      const sourceKey = `origin:${originId}:${packId}`;
+
+      setForm((prev) => {
+        const nextWithChoices = {
+          ...prev,
+          startingEquipmentChoices: {
+            ...(prev.startingEquipmentChoices || {}),
+            [sourceKey]: choices,
+          },
+        };
+
+        if (
+          !starterDatabasesReady ||
+          nextWithChoices.origin !== originId ||
+          nextWithChoices.originEquipmentPack !== packId
+        ) {
+          return nextWithChoices;
+        }
+
+        return applyStartingEquipmentGrant(
+          nextWithChoices,
+          sourceKey,
+          getOriginEquipmentGrant(packId),
+          databases,
+          choices
+        );
+      });
+    };
+
+    const handleTagEquipmentChoice = (event) => {
+      const skillName = String(event?.detail?.skillName || "").trim();
+      const choiceId = String(event?.detail?.choiceId || "").trim();
+      const optionIndex = Number(event?.detail?.optionIndex || 0);
+      if (!skillName || !choiceId) return;
+
+      const sourceKey = `tag:${skillName}`;
+
+      setForm((prev) => {
+        const sourceChoices = {
+          ...(prev.startingEquipmentChoices?.[sourceKey] || {}),
+          [choiceId]: optionIndex,
+        };
+        const nextWithChoices = {
+          ...prev,
+          startingEquipmentChoices: {
+            ...(prev.startingEquipmentChoices || {}),
+            [sourceKey]: sourceChoices,
+          },
+        };
+
+        if (!starterDatabasesReady || !nextWithChoices.skills?.[skillName]?.tagged) {
+          return nextWithChoices;
+        }
+
+        return applyStartingEquipmentGrant(
+          nextWithChoices,
+          sourceKey,
+          getTagSkillEquipmentGrant(skillName),
+          databases,
+          sourceChoices
+        );
+      });
+    };
+
+    window.addEventListener(
+      ORIGIN_EQUIPMENT_CHOICE_EVENT,
+      handleOriginEquipmentChoices
+    );
+    window.addEventListener(TAG_EQUIPMENT_CHOICE_EVENT, handleTagEquipmentChoice);
+
+    return () => {
+      window.removeEventListener(
+        ORIGIN_EQUIPMENT_CHOICE_EVENT,
+        handleOriginEquipmentChoices
+      );
+      window.removeEventListener(TAG_EQUIPMENT_CHOICE_EVENT, handleTagEquipmentChoice);
+    };
+  }, [
+    starterDatabasesReady,
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
@@ -508,7 +616,10 @@ export function useCharacterStorage(initialForm) {
         const activeConsumableEffects = (prev.activeConsumableEffects || []).filter(
           (effect) => effect?.id !== effectId
         );
-        if (activeConsumableEffects.length === (prev.activeConsumableEffects || []).length) {
+        if (
+          activeConsumableEffects.length ===
+          (prev.activeConsumableEffects || []).length
+        ) {
           return prev;
         }
 
@@ -622,7 +733,7 @@ export function useCharacterStorage(initialForm) {
         equipmentDatabase: {
           ...(prev.equipmentDatabase || {}),
           weapons: parsedData,
-        }
+        },
       }));
       alert(`Успешно загружено ${parsedData.length} видов оружия из CSV!`);
     };
@@ -646,6 +757,7 @@ export function useCharacterStorage(initialForm) {
           activeConsumableEffects: [],
           originEquipmentPack: "",
           startingEquipmentGrants: {},
+          startingEquipmentChoices: {},
           ...fallbackFactory(),
           ...loaded,
         };
@@ -678,6 +790,7 @@ export function useCharacterStorage(initialForm) {
       activeConsumableEffects: [],
       originEquipmentPack: "",
       startingEquipmentGrants: {},
+      startingEquipmentChoices: {},
       ...factory(),
     };
     setForm(fresh);
@@ -696,6 +809,7 @@ export function useCharacterStorage(initialForm) {
         activeConsumableEffects: [],
         originEquipmentPack: "",
         startingEquipmentGrants: {},
+        startingEquipmentChoices: {},
         ...factory(),
         ...(parsed?.data || {}),
       };
@@ -716,7 +830,9 @@ export function useCharacterStorage(initialForm) {
           next = removeStartingEquipmentGrant(next, key);
         });
 
-      const filteredPerks = (next.perksAndTraits || []).filter((p) => !p.isOriginTrait);
+      const filteredPerks = (next.perksAndTraits || []).filter(
+        (p) => !p.isOriginTrait
+      );
       const originData = ORIGINS[newOriginId];
       const newOriginTraits = [];
 
@@ -749,6 +865,7 @@ export function useCharacterStorage(initialForm) {
         origin: newOriginId,
         originTraits: traits,
         originEquipmentPack: selectedPack || "",
+        startingEquipmentChoices: {},
         tagged_skills: [],
         skills,
         perksAndTraits: [...filteredPerks, ...newOriginTraits],
