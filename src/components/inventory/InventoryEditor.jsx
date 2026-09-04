@@ -108,11 +108,11 @@ export default function InventoryEditor({
   };
 
   const hasArchive = archiveItems.length > 0;
-  const showEffect = ["aid", "food", "beverages", "magazines"].includes(draft.category);
+  const showEffect = ["aid", "food", "beverages", "magazines", "tools"].includes(draft.category);
   const showAidFields = draft.category === "aid";
   const showConsumableFields = ["food", "beverages"].includes(draft.category);
   const showMagazineFields = draft.category === "magazines";
-  const showRarity = ["aid", "food", "beverages"].includes(draft.category);
+  const showRarity = ["aid", "food", "beverages", "tools"].includes(draft.category);
 
   return (
     <section className="pip-panel pip-block">
