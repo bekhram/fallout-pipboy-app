@@ -1,167 +1,66 @@
-.companion-tab-screen {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 70;
-  overflow: auto;
-  overscroll-behavior: contain;
-  background:
-    linear-gradient(rgba(5, 14, 9, 0.985), rgba(5, 14, 9, 0.995)),
-    repeating-linear-gradient(
-      0deg,
-      rgba(255, 255, 255, 0.018) 0,
-      rgba(255, 255, 255, 0.018) 1px,
-      transparent 1px,
-      transparent 4px
-    );
-  backdrop-filter: blur(4px);
-}
-
-.companion-tab-inner {
-  width: min(980px, calc(100% - 22px));
-  margin: 12px auto 40px;
-  display: grid;
-  gap: 14px;
-}
-
-.companion-page-head {
-  display: block;
-  min-width: 0;
-  padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, currentColor 52%, transparent);
-  background: rgba(0, 0, 0, 0.22);
-}
-
-.companion-page-title {
-  min-width: 0;
-  display: grid;
-  gap: 5px;
-}
-
-.companion-page-title h2 {
-  margin: 0 !important;
-  max-width: 100%;
-  font-size: clamp(1.05rem, 3.2vw, 1.45rem) !important;
-  line-height: 1.08 !important;
-  letter-spacing: 0.025em;
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  overflow-wrap: anywhere;
-  word-break: normal;
-}
-
-.companion-page-title span {
-  display: block;
-  max-width: 100%;
-  font-size: 0.82rem;
-  line-height: 1.25;
-  opacity: 0.68;
-  overflow-wrap: anywhere;
-}
-
-.companion-toolbar {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  padding: 2px 0;
-}
-
-.companion-toolbar .pip-btn {
+.companion-screen {
   width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  padding: 9px 10px;
-  border: 1px solid color-mix(in srgb, currentColor 58%, transparent);
-  white-space: normal;
-  line-height: 1.1;
 }
 
-.companion-toolbar .pip-btn + .pip-btn {
+.companion-head {
+  align-items: end;
+}
+
+.companion-head-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.companion-head-copy h2 {
   margin: 0;
 }
 
+.companion-head-copy span {
+  font-size: 0.75rem;
+  opacity: 0.65;
+}
+
+.companion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.companion-actions .pip-btn {
+  min-width: 110px;
+}
+
 .companion-delete-btn {
-  opacity: 0.9;
+  opacity: 0.88;
 }
 
 .companion-roster {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 9px;
+  gap: 7px;
 }
 
-.companion-roster-item {
-  appearance: none;
-  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
-  background: rgba(0, 0, 0, 0.18);
-  color: inherit;
-  min-width: 0;
-  min-height: 64px;
-  padding: 9px 10px;
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+.companion-roster-tag {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  text-align: left;
-  cursor: pointer;
+  gap: 7px;
+  max-width: 220px;
 }
 
-.companion-roster-item.is-active {
-  border-color: currentColor;
-  background: color-mix(in srgb, currentColor 9%, transparent);
-  box-shadow: inset 0 0 18px color-mix(in srgb, currentColor 7%, transparent);
-}
-
-.companion-roster-avatar,
-.companion-big-avatar {
-  display: grid;
-  place-items: center;
-  aspect-ratio: 1;
-  border: 1px solid currentColor;
-  font-weight: 800;
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.companion-roster-avatar {
-  width: 44px;
-  font-size: 1rem;
-}
-
-.companion-roster-copy {
+.companion-roster-tag > span {
   min-width: 0;
-  display: grid;
-  gap: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.companion-roster-copy strong {
-  display: block;
-  min-width: 0;
-  font-size: 0.98rem;
-  line-height: 1.08;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.companion-roster-copy small {
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  font-size: 0.75rem;
-  line-height: 1.15;
-  opacity: 0.72;
-}
-
-.companion-roster-copy small span {
-  min-width: 0;
-  overflow-wrap: anywhere;
+.companion-roster-tag small {
+  flex: 0 0 auto;
+  opacity: 0.68;
+  font-size: 0.7em;
 }
 
 .companion-empty {
-  min-height: 180px;
+  min-height: 150px;
   display: grid;
   place-items: center;
   align-content: center;
@@ -170,62 +69,46 @@
 }
 
 .companion-empty span {
-  opacity: 0.7;
   max-width: 420px;
+  opacity: 0.7;
 }
 
-.companion-sheet {
+.companion-content {
   display: grid;
-  gap: 12px;
+  gap: 0;
 }
 
-.companion-identity-row {
+.companion-summary {
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+
+.companion-summary span:first-child {
+  font-weight: 800;
+}
+
+.companion-identity-grid {
   display: grid;
-  grid-template-columns: 72px minmax(180px, 1.4fr) minmax(180px, 1fr) 110px;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(170px, 1fr) 110px;
   gap: 10px;
-  align-items: end;
 }
 
-.companion-big-avatar {
-  width: 72px;
-  font-size: 1.8rem;
-}
-
-.companion-text-field,
-.companion-stat-field,
-.companion-long-field {
+.companion-identity-grid .pip-top-field,
+.companion-stat-cell {
   min-width: 0;
-  display: grid;
-  gap: 5px;
 }
 
-.companion-text-field > span,
-.companion-stat-field > span,
-.companion-long-field > span {
-  font-size: 0.73rem;
-  letter-spacing: 0.06em;
-  opacity: 0.76;
-  text-transform: uppercase;
-}
-
-.companion-text-field .pip-input,
-.companion-stat-field .pip-input,
-.companion-long-field .pip-input {
-  min-width: 0;
+.companion-identity-grid .pip-inline-input,
+.companion-stat-cell .pip-inline-input {
   width: 100%;
+  box-sizing: border-box;
 }
 
 .companion-kind-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 7px;
 }
 
-.companion-kind-row .pip-btn {
-  width: 100%;
-}
-
-.companion-stat-table {
+.companion-stat-grid {
   display: grid;
   gap: 8px;
 }
@@ -239,43 +122,39 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.companion-stat-field {
-  padding: 8px;
-  border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
-  background: rgba(0, 0, 0, 0.13);
-  text-align: center;
+.companion-stat-cell {
+  display: grid;
+  gap: 4px;
 }
 
-.companion-stat-field > span {
+.companion-stat-cell > span {
   min-height: 2em;
   display: grid;
   place-items: center;
-  line-height: 1.15;
+  text-align: center;
+  font-size: 0.68rem;
+  line-height: 1.12;
 }
 
-.companion-stat-field .pip-input {
+.companion-stat-cell .pip-inline-input {
   text-align: center;
-  font-size: 1.06rem;
   font-weight: 700;
 }
 
 .companion-hp-section {
   display: grid;
   gap: 8px;
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
-  background: rgba(0, 0, 0, 0.15);
 }
 
 .companion-hp-heading {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 10px;
 }
 
 .companion-hp-track {
-  height: 11px;
+  height: 9px;
   border: 1px solid currentColor;
   overflow: hidden;
 }
@@ -283,39 +162,44 @@
 .companion-hp-fill {
   height: 100%;
   background: currentColor;
-  box-shadow: 0 0 14px currentColor;
+  box-shadow: 0 0 10px currentColor;
   transition: width 140ms ease;
 }
 
 .companion-hp-controls {
   display: grid;
-  grid-template-columns: 44px minmax(70px, 1fr) auto minmax(70px, 1fr) 44px;
+  grid-template-columns: 42px minmax(64px, 1fr) auto minmax(64px, 1fr) 42px;
+  gap: 6px;
   align-items: center;
-  gap: 7px;
 }
 
-.companion-hp-controls .pip-input {
-  min-width: 0;
+.companion-hp-controls .pip-inline-input {
+  width: 100%;
+  box-sizing: border-box;
   text-align: center;
 }
 
+.companion-long-grid {
+  display: grid;
+  gap: 10px;
+}
+
 .companion-long-field {
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, currentColor 50%, transparent);
-  background: rgba(0, 0, 0, 0.12);
+  display: grid;
+  gap: 7px;
 }
 
 .companion-long-field > span {
   font-weight: 800;
-  opacity: 0.9;
-  text-align: center;
+  text-align: left;
 }
 
 .companion-long-field textarea {
   width: 100%;
-  min-height: 86px;
+  box-sizing: border-box;
   resize: vertical;
-  line-height: 1.42;
+  min-height: 84px;
+  line-height: 1.38;
 }
 
 .companion-notes-field textarea {
@@ -323,60 +207,26 @@
 }
 
 @media (max-width: 760px) {
-  .companion-tab-inner {
-    width: min(100% - 12px, 980px);
-    margin-top: 8px;
-    gap: 10px;
+  .companion-head {
+    align-items: stretch;
   }
 
-  .companion-page-head {
-    padding: 10px 11px;
+  .companion-head-copy span {
+    display: none;
   }
 
-  .companion-page-title h2 {
-    font-size: 1.3rem !important;
-    line-height: 1.08 !important;
+  .companion-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .companion-page-title span {
-    display: block;
-    font-size: 0.76rem;
+  .companion-actions .pip-btn {
+    min-width: 0;
+    width: 100%;
   }
 
-  .companion-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .companion-toolbar .pip-btn {
-    min-height: 42px;
-    font-size: 0.82rem;
-  }
-
-  .companion-roster {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    padding-bottom: 3px;
-  }
-
-  .companion-roster-item {
-    flex: 0 0 min(76vw, 270px);
-    scroll-snap-align: start;
-  }
-
-  .companion-identity-row {
-    grid-template-columns: 58px minmax(0, 1fr) 86px;
-    align-items: end;
-  }
-
-  .companion-big-avatar {
-    width: 58px;
-  }
-
-  .companion-type-field {
-    grid-column: 1 / -1;
+  .companion-identity-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 86px;
   }
 
   .companion-main-stats {
@@ -389,113 +239,56 @@
   }
 }
 
-@media (max-width: 430px) {
-  .companion-tab-inner {
-    width: calc(100% - 8px);
+@media (max-width: 520px) {
+  .companion-head {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 8px;
-    margin-bottom: 28px;
   }
 
-  .companion-page-head {
-    padding: 9px 10px;
+  .companion-head h2 {
+    font-size: 1rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 
-  .companion-page-title h2 {
-    font-size: 1.08rem !important;
-    line-height: 1.1 !important;
-    letter-spacing: 0.015em;
+  .companion-head > .pip-btn {
+    width: 100%;
   }
 
-  .companion-page-title span {
-    margin-top: 2px;
-    font-size: 0.69rem;
-    line-height: 1.18;
+  .companion-actions {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
   }
 
-  .companion-toolbar {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 7px;
+  .companion-identity-grid {
+    grid-template-columns: 1fr 84px;
   }
 
-  .companion-toolbar .pip-btn {
-    min-height: 40px;
-    padding: 7px 5px;
-    font-size: 0.73rem;
-    line-height: 1.08;
-  }
-
-  .companion-roster-item {
-    flex-basis: min(82vw, 285px);
-    grid-template-columns: 42px minmax(0, 1fr);
-    padding: 8px 9px;
-  }
-
-  .companion-roster-copy strong {
-    font-size: 0.9rem;
-  }
-
-  .companion-roster-copy small {
-    font-size: 0.68rem;
-    gap: 3px 8px;
-  }
-
-  .companion-sheet {
-    padding: 8px;
-  }
-
-  .companion-identity-row {
-    grid-template-columns: 50px minmax(0, 1fr) 76px;
-    gap: 7px;
-  }
-
-  .companion-big-avatar {
-    width: 50px;
-    font-size: 1.3rem;
-  }
-
-  .companion-text-field > span,
-  .companion-stat-field > span,
-  .companion-long-field > span {
-    font-size: 0.66rem;
-  }
-
-  .companion-kind-row {
-    gap: 7px;
+  .companion-name-field,
+  .companion-type-field {
+    grid-column: 1 / -1;
   }
 
   .companion-main-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .companion-main-stats .companion-stat-field:last-child {
+  .companion-main-stats .companion-stat-cell:last-child {
     grid-column: 1 / -1;
   }
 
-  .companion-stat-field {
-    padding: 6px;
-  }
-
-  .companion-stat-field > span {
-    min-height: 1.7em;
-  }
-
   .companion-hp-controls {
-    grid-template-columns: 40px 1fr auto 1fr 40px;
+    grid-template-columns: 38px 1fr auto 1fr 38px;
     gap: 5px;
   }
 
   .companion-hp-controls .pip-btn {
-    min-width: 40px;
+    min-width: 38px;
     padding-inline: 0;
   }
-}
 
-@media (max-width: 350px) {
-  .companion-toolbar {
-    grid-template-columns: 1fr;
-  }
-
-  .companion-page-title h2 {
-    font-size: 0.98rem !important;
+  .companion-roster-tag {
+    max-width: 100%;
   }
 }
