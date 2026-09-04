@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { playSound } from "../../utils/soundManager";
 
-const tabs = [
+export const PIPBOY_TABS = [
   { key: "status", labelKey: "tabs.status" },
   { key: "special", labelKey: "tabs.special" },
   { key: "weapons", labelKey: "tabs.weapons" },
@@ -51,7 +51,7 @@ export default function TopNav({ activeTab, onTabChange, onToggleMenu }) {
 
       <div className="pip-tab-scroll">
         <div className="pip-tabrow pip-tabrow-nowrap">
-          {tabs.map((tab) => (
+          {PIPBOY_TABS.map((tab) => (
             <button
               key={tab.key}
               type="button"
