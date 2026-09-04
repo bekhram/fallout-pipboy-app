@@ -1,7 +1,7 @@
 import { FALLOUT_4_LOCATIONS } from "./bostonMap.js";
 
 const location = (id, name, type, worldX, worldY, icon = "◆", major = false) => ({
-  id, name, type, worldX, worldY, icon, major,
+  id, name, nameKey: `locations.${id}`, type, worldX, worldY, icon, major,
 });
 
 const FALLOUT_1_LOCATIONS = [
