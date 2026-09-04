@@ -156,6 +156,49 @@
   text-transform: uppercase;
 }
 
+.pip-local-gm__check {
+  display: grid;
+  width: 100%;
+  gap: 5px;
+  padding: 11px 12px;
+  border: 1px solid rgba(120, 255, 140, 0.52);
+  background: rgba(120, 255, 140, 0.07);
+  color: var(--pip-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: inset 0 0 18px rgba(120, 255, 140, 0.04);
+}
+
+.pip-local-gm__check:active:not(:disabled) {
+  background: rgba(120, 255, 140, 0.14);
+}
+
+.pip-local-gm__check:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.pip-local-gm__check-label,
+.pip-local-gm__check > span:last-child {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  opacity: 0.72;
+}
+
+.pip-local-gm__check strong {
+  font-size: 15px;
+  letter-spacing: 0.05em;
+}
+
+.pip-local-gm__check em {
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.35;
+  opacity: 0.82;
+}
+
 .pip-local-gm__messages {
   display: flex;
   min-height: 250px;
