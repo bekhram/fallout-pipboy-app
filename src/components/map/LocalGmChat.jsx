@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
+import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
@@ -195,16 +197,16 @@ function buildVisitedSessions() {
     .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 }
 
-function sessionLabel(session) {
+function sessionLabel(session, unknownLabel) {
   if (session?.location?.name) return session.location.name;
   if (session?.location?.id) return session.location.id.replaceAll("_", " ");
-  return session?.key || "Unknown location";
+  return session?.key || unknownLabel;
 }
 
-function formatSessionTime(value) {
+function formatSessionTime(value, language) {
   if (!value) return "";
   try {
-    return new Date(value).toLocaleString([], {
+    return new Date(value).toLocaleString(language || undefined, {
       month: "short",
       day: "2-digit",
       hour: "2-digit",
@@ -216,6 +218,9 @@ function formatSessionTime(value) {
 }
 
 export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents }) {
+  const { i18n } = useTranslation();
+  const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
+  const tx = (key, vars) => mapUiText(language, key, vars);
   const rawCharacter = useMemo(() => readCharacter(), []);
   const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
   const world = useMemo(
@@ -308,15 +313,16 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       body: JSON.stringify({
         character,
         world,
+        language,
         sessionKey: currentSessionKey,
         history: history.slice(-16),
         message,
       }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data?.error || `GM request failed (${response.status})`);
+    if (!response.ok) throw new Error(data?.error || `${tx("gmError")} (${response.status})`);
     return {
-      text: data?.text || "The GM did not return a response.",
+      text: data?.text || tx("gmEmpty"),
       events: Array.isArray(data?.events) ? data.events : [],
     };
   }
@@ -335,7 +341,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       );
       persist([...history, { role: "gm", text: result.text, at: Date.now() }], result.events);
     } catch (requestError) {
-      setError(requestError?.message || "Could not contact Auto GM.");
+      setError(requestError?.message || tx("gmError"));
     } finally {
       setIsSending(false);
     }
@@ -365,7 +371,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       const result = await requestGm(text, previousMessages);
       persist([...nextMessages, { role: "gm", text: result.text, at: Date.now() }], result.events);
     } catch (requestError) {
-      setError(requestError?.message || "Could not contact Auto GM.");
+      setError(requestError?.message || tx("gmError"));
     } finally {
       setIsSending(false);
     }
@@ -393,28 +399,28 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   }
 
   const currentPlace =
-    world.currentLocation?.name || world.currentLocation?.id || world.currentTerrain || "Wasteland";
+    world.currentLocation?.name || world.currentLocation?.id || world.currentTerrain || tx("wasteland");
   const objective =
     world.selectedDestination?.location?.name ||
     world.selectedDestination?.location?.id ||
     world.trackedObjective?.name ||
     world.trackedObjective?.id ||
-    "Explore area";
-  const displayedPlace = isArchiveView ? sessionLabel(activeArchiveSession) : currentPlace;
+    tx("exploreArea");
+  const displayedPlace = isArchiveView ? sessionLabel(activeArchiveSession, tx("unknownLocation")) : currentPlace;
 
   return (
     <section className="pip-local-gm">
       <header className="pip-local-gm__header">
         <div>
-          <div className="pip-local-gm__eyebrow">LOCAL // AUTO GM</div>
-          <h3>{isArchiveView ? "Session Archive" : "Fallout 2D20 Session"}</h3>
+          <div className="pip-local-gm__eyebrow">{tx("local")} // {tx("autoGm")}</div>
+          <h3>{isArchiveView ? tx("sessionArchive") : tx("falloutSession")}</h3>
           <div className="pip-local-gm__context">
             {displayedPlace}
             {!isArchiveView && world.worldPosition
-              ? ` · WORLD ${world.worldPosition.x},${world.worldPosition.y}`
+              ? ` · ${tx("world")} ${world.worldPosition.x},${world.worldPosition.y}`
               : ""}
             {!isArchiveView
-              ? ` · ${isPersistentLocation ? "STATIC / SAVED" : "PROCEDURAL / TEMP"}`
+              ? ` · ${isPersistentLocation ? `${tx("static")} / ${tx("saved")}` : `${tx("procedural")} / ${tx("temp")}`}`
               : ""}
           </div>
         </div>
@@ -425,15 +431,15 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
             onClick={() => setArchiveOpen((value) => !value)}
             disabled={isSending}
           >
-            VISITED ({visitedSessions.length})
+            {tx("visited")} ({visitedSessions.length})
           </button>
           {isArchiveView ? (
             <button type="button" className="pip-btn" onClick={() => setViewedSessionKey(null)} disabled={isSending}>
-              CURRENT
+              {tx("current")}
             </button>
           ) : (
             <button type="button" className="pip-btn pip-local-gm__reset" onClick={resetChat} disabled={isSending}>
-              NEW SESSION
+              {tx("newSession")}
             </button>
           )}
         </div>
@@ -441,9 +447,9 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
       {archiveOpen ? (
         <aside className="pip-local-gm__archive">
-          <div className="pip-local-gm__archive-title">VISITED STATIC LOCATIONS</div>
+          <div className="pip-local-gm__archive-title">{tx("visitedStatic")}</div>
           {visitedSessions.length === 0 ? (
-            <div className="pip-local-gm__archive-empty">No saved static locations yet.</div>
+            <div className="pip-local-gm__archive-empty">{tx("noSavedLocations")}</div>
           ) : (
             <div className="pip-local-gm__archive-list">
               {visitedSessions.map((session) => (
@@ -453,10 +459,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
                   className={`pip-local-gm__archive-item${session.key === activeSessionKey ? " is-active" : ""}`}
                   onClick={() => openArchivedSession(session.key)}
                 >
-                  <span className="pip-local-gm__archive-name">{sessionLabel(session)}</span>
+                  <span className="pip-local-gm__archive-name">{sessionLabel(session, tx("unknownLocation"))}</span>
                   <span className="pip-local-gm__archive-meta">
-                    {(session.messages || []).length} messages · {(session.events || []).length} discoveries
-                    {formatSessionTime(session.updatedAt) ? ` · ${formatSessionTime(session.updatedAt)}` : ""}
+                    {(session.messages || []).length} {tx("messages")} · {(session.events || []).length} {tx("discoveries")}
+                    {formatSessionTime(session.updatedAt, language) ? ` · ${formatSessionTime(session.updatedAt, language)}` : ""}
                   </span>
                 </button>
               ))}
@@ -466,15 +472,15 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       ) : null}
 
       <div className="pip-local-gm__brief">
-        <span>CHARACTER: {character?.name || "Not loaded"}</span>
-        <span>LEVEL: {character?.level ?? "-"}</span>
-        <span>LOCATION: {displayedPlace}</span>
-        <span>{isArchiveView ? "MODE: ARCHIVE / READ ONLY" : `OBJECTIVE: ${objective}`}</span>
+        <span>{tx("character")}: {character?.name || tx("notLoaded")}</span>
+        <span>{tx("level")}: {character?.level ?? "-"}</span>
+        <span>{tx("location")}: {displayedPlace}</span>
+        <span>{isArchiveView ? tx("modeArchive") : `${tx("objective")}: ${objective}`}</span>
       </div>
 
       {events.length > 0 ? (
         <div className="pip-local-gm__discoveries">
-          <div className="pip-local-gm__archive-title">DISCOVERIES ({events.length})</div>
+          <div className="pip-local-gm__archive-title">{tx("discoveriesTitle")} ({events.length})</div>
           <div className="pip-local-gm__discovery-list">
             {events.slice(-8).reverse().map((event, index) => (
               <div
@@ -494,12 +500,8 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       <div className="pip-local-gm__messages" aria-live="polite">
         {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
-            <strong>AUTO GM READY.</strong>
-            <p>
-              {isPersistentLocation
-                ? "This static location keeps its exploration history and discoveries."
-                : "This procedural location is temporary and will reset after you leave."}
-            </p>
+            <strong>{tx("autoGmReady")}</strong>
+            <p>{isPersistentLocation ? tx("staticHistory") : tx("proceduralTemp")}</p>
           </div>
         ) : (
           messages.map((message, index) => (
@@ -507,26 +509,24 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
               key={`${message.at || index}-${index}`}
               className={`pip-local-gm__message pip-local-gm__message--${message.role}`}
             >
-              <div className="pip-local-gm__speaker">{message.role === "gm" ? "AUTO GM" : "YOU"}</div>
+              <div className="pip-local-gm__speaker">{message.role === "gm" ? tx("autoGm") : tx("you")}</div>
               <div>{message.text}</div>
             </article>
           ))
         )}
-        {isSending ? <div className="pip-local-gm__thinking">AUTO GM IS PROCESSING...</div> : null}
+        {isSending ? <div className="pip-local-gm__thinking">{tx("processing")}</div> : null}
       </div>
 
       {error ? <div className="pip-local-gm__error">{error}</div> : null}
 
       {isArchiveView ? (
-        <div className="pip-local-gm__archive-note">
-          ARCHIVE VIEW — this journal is read-only. Return to CURRENT to continue playing at your character's actual WORLD position.
-        </div>
+        <div className="pip-local-gm__archive-note">{tx("archiveNote")}</div>
       ) : (
         <form className="pip-local-gm__composer" onSubmit={sendMessage}>
           <textarea
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="What do you do?"
+            placeholder={tx("whatDo")}
             rows={3}
             disabled={isSending}
             onKeyDown={(event) => {
@@ -537,7 +537,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
             }}
           />
           <button type="submit" className="pip-action-button" disabled={!draft.trim() || isSending}>
-            SEND
+            {tx("send")}
           </button>
         </form>
       )}
