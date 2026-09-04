@@ -597,7 +597,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} disabled={!atRightEdge}>{t("mapPanel.east")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} disabled={!atBottomEdge}>{t("mapPanel.south")}</button>
 
-          <div className="pip-map-board" style={{ backgroundImage: `url(${bostonMapImage})`, backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
+          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: activeRegion.id === "commonwealth" ? `url(${bostonMapImage})` : "none", backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
             <div className="pip-map-poi-layer">
               {visibleWorldLocations.map((location) => (
                 <button
@@ -634,6 +634,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
 
             <div className="pip-map-grid-layer">
               <MapGrid
+                key={activeRegion.id}
                 mapData={mapData}
                 playerPosition={playerPosition}
                 selectedCell={selectedCell}
