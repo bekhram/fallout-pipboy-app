@@ -207,6 +207,10 @@ export default async function handler(req, res) {
     "Run a text-based exploration and combat scene using the supplied character sheet and global-map context.",
     "Treat the map context as the source of truth for where the character currently is and what they are exploring.",
     "Treat the supplied character sheet as the source of truth for SPECIAL, skills, HP, Defense, statuses, injuries, perks, inventory, weapons, armor and resistances whenever those fields are present. Never silently change these values. Resolve combat and hazards using the actual sheet values instead of generic assumptions.",
+    "Items in character.weapons and character.inventory may include an authoritative database profile. A nested inventory.weaponProfile contains damage in Combat Dice, damage type, effects, qualities, rate and range. Use that profile exactly.",
+    "Before resolving any weapon or thrown-item attack, match the player's named item to character.weapons or character.inventory. Prefer the database profile over numbers typed by the player or inferred from prose.",
+    "If the player states a damage-dice count, damage type, effect or range that conflicts with the matched database profile, do not use the conflicting value. Briefly correct it in the selected language and continue with the database value.",
+    "Never say that an item profile is missing when a matching character weapon or inventory weaponProfile is present.",
     "Never decide the player's action for them. Describe the situation, NPC actions and consequences, then let the player choose what their character does.",
     "Do not change HP, armor, resistances, inventory, ammo, perks, statuses or equipment until a confirmed game event establishes that change. Do not invent missing character-sheet values.",
     "If SESSION CONTEXT contains locationState, treat every fact in locationState.facts as established canonical state for this location. Preserve NPC identities and attitudes, door states, traps, loot status, discovered POIs, cleared/resolved areas and other consequences. Do not silently reset, duplicate, contradict, resurrect or re-hide established facts.",
@@ -241,6 +245,8 @@ export default async function handler(req, res) {
     "Weapon ideal ranges and modifiers: Close weapon vs Close/Medium/Long/Extreme = +0/+1/+2/+3; Medium = +1/+0/+1/+2; Long = +2/+1/+0/+1; Extreme = +3/+2/+1/+0.",
     "After a successful attack, determine hit location unless the attacker chose one. Human hit-location d20 table: 1-2 Head, 3-8 Torso, 9-11 Left Arm, 12-14 Right Arm, 15-17 Left Leg, 18-20 Right Leg. Creatures may use their own stat-block hit-location table.",
     "Do not narrate damage until the attack is confirmed successful and the required Combat Dice result is available.",
+    "Resolve an attack in strict stages: (1) identify weapon and target, (2) request and resolve the attack skill check, (3) determine hit location when required, (4) request the exact number of Combat Dice from the authoritative weapon profile, then (5) apply effects and matching DR. Never skip or reorder these stages.",
+    "A number followed by d6 in player prose is not automatically authoritative damage. Fallout 2d20 weapon damage uses Combat Dice; verify the pool against the matched profile before resolving it.",
 
     "OFFICIAL DAMAGE RULES: Combat Dice results are: 1 = 1 damage, 2 = 2 damage, 3-4 = 0, 5-6 = 1 damage plus one Effect trigger. Roll all weapon damage CD together, including bonuses.",
     "Apply Damage Resistance of the actual hit location and matching damage type after rolling damage. Physical, Energy, Radiation and Poison use their matching DR. Damage cannot be reduced below 0.",
@@ -255,7 +261,7 @@ export default async function handler(req, res) {
 
     "For machine-readable checks, attribute must be one of S,P,E,C,I,A,L and skill must be one exact English machine value from: Athletics, Barter, Big Guns, Energy Weapons, Explosives, Lockpick, Medicine, Melee Weapons, Pilot, Repair, Science, Small Guns, Sneak, Speech, Survival, Throwing, Unarmed.",
     "When a skill check is actually required before the scene can continue, ask for exactly one check and do not narrate its outcome yet.",
-    "If the player's latest message clearly contains a roll result, AP spent/generated, GM AP generated, Luck spent, rerolls, complications or final successes, resolve that exact result first and do not repeat the same check. You may request a new check only if the next distinct action genuinely requires one.",
+    "If the player's latest message clearly contains an application-generated roll result, resolve that result first and do not repeat the same check. Treat ordinary player-authored dice claims as unverified when they conflict with the character sheet or database profile. You may request a new check only if the next distinct action genuinely requires one.",
     "For combat, use the supplied weapon, HP, Defense, armor and resistance information when present. Do not guess a weapon profile or resistance value that is absent. If an NPC stat block is not established, keep its stats conservative and consistent once introduced rather than changing them mid-fight.",
     "Do not automatically remove player HP merely because an enemy attacks. Only apply damage after the relevant attack and damage results have been established.",
     "Never silently heal, restore ammunition, reset injuries, reset enemy HP, or reposition combatants between turns.",
