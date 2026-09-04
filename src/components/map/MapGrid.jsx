@@ -40,7 +40,7 @@ function MapGrid({
   setMapMode,
   locations,
 }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
   const tx = (key, vars) => mapUiText(language, key, vars);
   const discoveredSet = useMemo(() => new Set(discoveredKeys), [discoveredKeys]);
@@ -96,9 +96,12 @@ function MapGrid({
     ? `${deltaY < 0 ? "N" : deltaY > 0 ? "S" : ""}${deltaX > 0 ? "E" : deltaX < 0 ? "W" : ""}` || tx("here")
     : null;
   const selectedStaticLocation = selectedCell ? getStaticLocation(mapData, selectedCell, locations) : null;
+  const translatedStaticName = selectedStaticLocation?.nameKey
+    ? t(selectedStaticLocation.nameKey, { defaultValue: selectedStaticLocation.name })
+    : selectedStaticLocation?.name;
   const destinationType = selectedStaticLocation ? tx("static") : tx("procedural");
   const destinationName =
-    selectedStaticLocation?.name ||
+    translatedStaticName ||
     selectedStaticLocation?.id?.replaceAll("_", " ") ||
     selectedCell?.poi?.name ||
     selectedCell?.poi?.id?.replaceAll("_", " ") ||
@@ -106,7 +109,15 @@ function MapGrid({
   const routeReady = Boolean(route && route.cells.length > 0);
 
   const currentWorld = getWorldCoords(mapData, playerPosition);
-  const currentStaticLocation = getStaticLocation(mapData, playerPosition, locations);
+  const currentStaticLocationRaw = getStaticLocation(mapData, playerPosition, locations);
+  const currentStaticLocation = currentStaticLocationRaw
+    ? {
+        ...currentStaticLocationRaw,
+        name: currentStaticLocationRaw.nameKey
+          ? t(currentStaticLocationRaw.nameKey, { defaultValue: currentStaticLocationRaw.name })
+          : currentStaticLocationRaw.name,
+      }
+    : null;
   const openLocal = () => setMapMode("local");
   const minimizeLocal = () => setMapMode("world");
 
