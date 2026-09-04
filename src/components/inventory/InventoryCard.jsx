@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
-import { getLocalizedInventoryItem } from "../../data/inventoryLocalization.js";
+import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
 import {
   isConsumableItem,
   PIPBOY_USE_ITEM_EVENT,
@@ -24,6 +24,13 @@ const USE_LABELS = {
   pl: "UŻYJ",
 };
 
+const META_LABELS = {
+  en: { range: "Range", type: "Type", ammo: "Ammo", locations: "Locations", duration: "Duration", addictive: "Addictive", rarity: "Rarity", series: "Series" },
+  ru: { range: "Дистанция", type: "Тип", ammo: "Боеприпасы", locations: "Зоны", duration: "Длительность", addictive: "Зависимость", rarity: "Редкость", series: "Серия" },
+  uk: { range: "Дистанція", type: "Тип", ammo: "Боєприпаси", locations: "Зони", duration: "Тривалість", addictive: "Залежність", rarity: "Рідкість", series: "Серія" },
+  pl: { range: "Zasięg", type: "Typ", ammo: "Amunicja", locations: "Strefy", duration: "Czas", addictive: "Uzależnia", rarity: "Rzadkość", series: "Seria" },
+};
+
 const isVisibleValue = (value) => {
   const text = String(value ?? "").trim();
   return text !== "" && text !== "-";
@@ -38,6 +45,7 @@ export default function InventoryCard({
 }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const labels = META_LABELS[language] || META_LABELS.en;
   const localized = getLocalizedInventoryItem(item, language);
   const categoryLabel = CATEGORY_LABEL_KEYS[item.category]
     ? t(CATEGORY_LABEL_KEYS[item.category])
@@ -45,23 +53,30 @@ export default function InventoryCard({
   const canUse = isConsumableItem(item);
   const quantity = Math.max(0, Number(item.quantity || 0));
 
+  const displayDamageType = localized.displayDamageType || item.damageType;
+  const displayWeaponType = localized.displayWeaponType || item.weaponType;
+  const displayQualities = localized.displayQualities || item.qualities;
+  const displayArmorLocations = localized.displayArmorLocations || item.armorLocations;
+  const displaySeries = localized.displaySeries || item.series;
+
   const metadata = [
     isVisibleValue(item.damage) && `DMG ${item.damage}`,
     isVisibleValue(item.rate) && `FR ${item.rate}`,
-    isVisibleValue(item.range) && `Range ${item.range}`,
-    isVisibleValue(item.damageType) && `Type: ${item.damageType}`,
-    isVisibleValue(item.weaponType) && item.weaponType,
-    isVisibleValue(item.ammo) && `Ammo: ${item.ammo}`,
+    isVisibleValue(item.range) && `${labels.range}: ${item.range}`,
+    isVisibleValue(displayDamageType) && `${labels.type}: ${displayDamageType}`,
+    isVisibleValue(displayWeaponType) && displayWeaponType,
+    isVisibleValue(item.ammo) && `${labels.ammo}: ${item.ammo}`,
+    isVisibleValue(displayQualities) && displayQualities,
     isVisibleValue(item.armorPhysical) && `P DR ${item.armorPhysical}`,
     isVisibleValue(item.armorEnergy) && `E DR ${item.armorEnergy}`,
     isVisibleValue(item.armorRadiation) && `R DR ${item.armorRadiation}`,
-    isVisibleValue(item.armorLocations) && `Locations: ${item.armorLocations}`,
+    isVisibleValue(displayArmorLocations) && `${labels.locations}: ${displayArmorLocations}`,
     isVisibleValue(item.healing) && `HP +${item.healing}`,
     isVisibleValue(item.radiation) && `RAD ${item.radiation}`,
-    isVisibleValue(item.duration) && `Duration: ${item.duration}`,
-    isVisibleValue(item.addiction) && `Addictive: ${item.addiction}`,
-    isVisibleValue(item.rarity) && `Rarity: ${item.rarity}`,
-    isVisibleValue(item.series) && `Series: ${item.series}`,
+    isVisibleValue(item.duration) && `${labels.duration}: ${item.duration}`,
+    isVisibleValue(item.addiction) && `${labels.addictive}: ${item.addiction}`,
+    isVisibleValue(item.rarity) && `${labels.rarity}: ${item.rarity}`,
+    isVisibleValue(displaySeries) && `${labels.series}: ${displaySeries}`,
   ].filter(Boolean);
 
   const handleUse = () => {
