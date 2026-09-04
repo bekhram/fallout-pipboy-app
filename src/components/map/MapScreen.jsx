@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { createRandomMap, FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { maybeRollTravelEncounter } from "../../utils/encounterEngine.js";
 import MapGrid from "./MapGrid.jsx";
+import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
 import "./map.css";
 import bostonMapImage from "../../assets/map/boston-map.png";
@@ -106,10 +107,17 @@ function getWorldLocationDisplayName(location, t) {
   return getPoiDisplayName(location, t);
 }
 
-function encounterText(encounter, t) {
+function encounterText(encounter, t, fallback) {
   if (!encounter) return null;
   if (encounter.textKey) return t(encounter.textKey);
-  return encounter.text || encounter.name || encounter.id || "Travel encounter";
+  return encounter.text || encounter.name || encounter.id || fallback;
+}
+
+function mergeTravelLog(base, entries) {
+  const cleanEntries = (entries || [])
+    .filter((entry) => entry !== null && entry !== undefined && String(entry).trim())
+    .map((entry) => String(entry));
+  return [...cleanEntries, ...(Array.isArray(base.travelLog) ? base.travelLog : [])].slice(0, MAX_LOG_ENTRIES);
 }
 
 function modulo(value, size) {
@@ -217,7 +225,9 @@ function findWorldTravelRoute(start, target, cache, cols = MAP_COLS, rows = MAP_
 }
 
 export default function MapScreen({ mapState, onMapChange }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage || i18n.language || "en";
+  const tx = (key, vars) => mapUiText(language, key, vars);
   const [selectedCell, setSelectedCell] = useState(null);
 
   const safeMapState = useMemo(
@@ -355,14 +365,14 @@ export default function MapScreen({ mapState, onMapChange }) {
     let nextDiscoveredKeys = [...discoveredKeys];
     let stoppedEncounter = null;
     let reachedDestination = true;
-    const routeLog = [];
+    const detailLog = [];
 
     for (const step of selectedRoute.cells) {
       const stepCost = getCellMoveCost(step) ?? 1;
       totalCost += stepCost;
       finalPosition = { x: step.x, y: step.y };
       nextDiscoveredKeys = revealAround(mapData, finalPosition, 1, nextDiscoveredKeys);
-      routeLog.unshift(
+      detailLog.push(
         t("mapPanel.movedTo", {
           x: step.x,
           y: step.y,
@@ -371,21 +381,21 @@ export default function MapScreen({ mapState, onMapChange }) {
         })
       );
       if (step.poi) {
-        routeLog.unshift(t("mapPanel.locationFound", { name: getPoiDisplayName(step.poi, t) }));
+        detailLog.push(t("mapPanel.locationFound", { name: getPoiDisplayName(step.poi, t) }));
       }
       const encounter = maybeRollTravelEncounter(step.terrain, t);
       if (encounter) {
         stoppedEncounter = encounter;
         reachedDestination = step.x === selectedCell.x && step.y === selectedCell.y;
-        routeLog.unshift(encounterText(encounter, t));
-        if (!reachedDestination) routeLog.unshift("ROUTE INTERRUPTED — encounter detected.");
+        detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
         break;
       }
     }
 
-    if (!stoppedEncounter) {
-      routeLog.unshift(`ROUTE COMPLETE — ${selectedRoute.cells.length} steps, ${totalCost}h.`);
-    }
+    const summary = stoppedEncounter && !reachedDestination
+      ? tx("routeInterrupted")
+      : tx("routeComplete", { steps: selectedRoute.cells.length, hours: totalCost });
+    const routeLog = [summary, ...detailLog.reverse()];
 
     onMapChange((prevMap) => {
       const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
@@ -394,7 +404,7 @@ export default function MapScreen({ mapState, onMapChange }) {
         playerPosition: finalPosition,
         worldTotalHours: (base.worldTotalHours || 0) + totalCost,
         discoveredKeys: nextDiscoveredKeys,
-        travelLog: [...routeLog, ...(base.travelLog || [])].slice(0, MAX_LOG_ENTRIES),
+        travelLog: mergeTravelLog(base, routeLog),
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: mapData },
       };
     });
@@ -409,16 +419,14 @@ export default function MapScreen({ mapState, onMapChange }) {
     const start = { x: playerWorldX, y: playerWorldY };
     const target = { x: trackedLocation.worldX, y: trackedLocation.worldY };
     const route = findWorldTravelRoute(start, target, workingCache, mapData.cols, mapData.rows);
+    const targetName = getWorldLocationDisplayName(trackedLocation, t);
 
     if (!route?.steps?.length) {
       onMapChange((prevMap) => {
         const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
         return {
           ...base,
-          travelLog: [
-            `WORLD ROUTE FAILED — no safe route to ${getWorldLocationDisplayName(trackedLocation, t)}.`,
-            ...(base.travelLog || []),
-          ].slice(0, MAX_LOG_ENTRIES),
+          travelLog: mergeTravelLog(base, [tx("worldRouteFailed", { name: targetName })]),
         };
       });
       return;
@@ -428,9 +436,7 @@ export default function MapScreen({ mapState, onMapChange }) {
     let finalStep = null;
     let stoppedEncounter = null;
     let previousSectorKey = sectorKey;
-    const routeLog = [
-      `WORLD ROUTE // ${getWorldLocationDisplayName(trackedLocation, t)} // ${route.steps.length} blocks`,
-    ];
+    const detailLog = [tx("worldRouteStart", { name: targetName, blocks: route.steps.length })];
 
     for (const step of route.steps) {
       const stepCost = getCellMoveCost(step.cell) ?? 1;
@@ -438,7 +444,7 @@ export default function MapScreen({ mapState, onMapChange }) {
       finalStep = step;
 
       if (step.key !== previousSectorKey) {
-        routeLog.unshift(`ENTERED SECTOR ${step.offset.x},${step.offset.y}.`);
+        detailLog.push(tx("enteredSector", { x: step.offset.x, y: step.offset.y }));
         previousSectorKey = step.key;
       }
 
@@ -446,15 +452,13 @@ export default function MapScreen({ mapState, onMapChange }) {
         (location) => location.worldX === step.worldX && location.worldY === step.worldY
       );
       if (staticLocation && staticLocation.id !== trackedLocation.id) {
-        routeLog.unshift(`PASSED ${getWorldLocationDisplayName(staticLocation, t)}.`);
+        detailLog.push(tx("passed", { name: getWorldLocationDisplayName(staticLocation, t) }));
       }
 
       const encounter = maybeRollTravelEncounter(step.cell.terrain, t);
       if (encounter) {
         stoppedEncounter = encounter;
-        routeLog.unshift(encounterText(encounter, t));
-        const reachedTarget = step.worldX === target.x && step.worldY === target.y;
-        if (!reachedTarget) routeLog.unshift("WORLD ROUTE INTERRUPTED — encounter detected.");
+        detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
         break;
       }
     }
@@ -462,11 +466,12 @@ export default function MapScreen({ mapState, onMapChange }) {
     if (!finalStep) return;
 
     const reachedTarget = finalStep.worldX === target.x && finalStep.worldY === target.y;
-    if (reachedTarget) {
-      routeLog.unshift(`ARRIVED // ${getWorldLocationDisplayName(trackedLocation, t)} // ${totalCost}h.`);
-    } else if (!stoppedEncounter) {
-      routeLog.unshift("WORLD ROUTE STOPPED before destination.");
-    }
+    const summary = reachedTarget
+      ? tx("arrived", { name: targetName, hours: totalCost })
+      : stoppedEncounter
+        ? tx("worldRouteInterrupted")
+        : tx("worldRouteStopped");
+    const routeLog = [summary, ...detailLog.reverse()];
 
     const finalSector = worldToSectorPosition(finalStep.worldX, finalStep.worldY, mapData.cols, mapData.rows);
     const finalMap = route.cache[finalSector.key] || finalStep.map;
@@ -481,7 +486,7 @@ export default function MapScreen({ mapState, onMapChange }) {
         worldTotalHours: (base.worldTotalHours || 0) + totalCost,
         discoveredKeys: finalDiscovery,
         sectorCache: { ...(base.sectorCache || {}), ...route.cache },
-        travelLog: [...routeLog, ...(base.travelLog || [])].slice(0, MAX_LOG_ENTRIES),
+        travelLog: mergeTravelLog(base, routeLog),
       };
     });
 
@@ -496,7 +501,7 @@ export default function MapScreen({ mapState, onMapChange }) {
         ...base,
         worldTotalHours: (base.worldTotalHours || 0) + 8,
         discoveredKeys: revealAround(nextMap, playerPosition, 1, []),
-        travelLog: [t("mapPanel.campRest"), ...(base.travelLog || [])].slice(0, MAX_LOG_ENTRIES),
+        travelLog: mergeTravelLog(base, [t("mapPanel.campRest")]),
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: nextMap },
       };
     });
@@ -520,7 +525,7 @@ export default function MapScreen({ mapState, onMapChange }) {
         worldOffset: nextOffset,
         playerPosition: nextPlayer,
         discoveredKeys: revealAround(nextMap, nextPlayer, 1, []),
-        travelLog: [t("mapPanel.shiftedMap", { direction: t(`mapPanel.${direction}`) }), ...(base.travelLog || [])].slice(0, MAX_LOG_ENTRIES),
+        travelLog: mergeTravelLog(base, [t("mapPanel.shiftedMap", { direction: t(`mapPanel.${direction}`) })]),
         sectorCache: {
           ...(base.sectorCache || {}),
           [sectorKey]: mapData,
@@ -581,7 +586,7 @@ export default function MapScreen({ mapState, onMapChange }) {
             </div>
 
             <div className="pip-map-player-layer">
-              <div className="pip-map-player-marker" style={{ left: `${((playerPosition.x - viewStartX + 0.5) / VIEW_COLS) * 100}%`, top: `${((playerPosition.y - viewStartY + 0.5) / VIEW_ROWS) * 100}%` }} title="Player">
+              <div className="pip-map-player-marker" style={{ left: `${((playerPosition.x - viewStartX + 0.5) / VIEW_COLS) * 100}%`, top: `${((playerPosition.y - viewStartY + 0.5) / VIEW_ROWS) * 100}%` }} title={tx("currentPosition")}>
                 <span className="pip-map-player-marker__inner">●</span>
               </div>
             </div>
@@ -613,14 +618,14 @@ export default function MapScreen({ mapState, onMapChange }) {
             {trackedLocation ? (
               <div className={`pip-map-world-route ${trackedIsInterSector ? "is-inter-sector" : "is-local-sector"}`}>
                 <div className="pip-map-world-route__topline">
-                  <span>WORLD ROUTE // STATIC</span>
-                  <span>{trackedIsInterSector ? `${trackedSectorDistance} SECTORS` : "CURRENT SECTOR"}</span>
+                  <span>{tx("worldRouteStatic")}</span>
+                  <span>{trackedIsInterSector ? `${trackedSectorDistance} ${tx("sectors")}` : tx("currentSector")}</span>
                 </div>
                 <strong>{getWorldLocationDisplayName(trackedLocation, t)}</strong>
                 <div className="pip-map-world-route__meta">
-                  <span>DIR {trackedDirection || "-"}</span>
-                  <span>{trackedDistanceBlocks?.toFixed(1) ?? "-"} BLOCKS</span>
-                  <span>{trackedDistanceKm?.toFixed(1) ?? "-"} KM</span>
+                  <span>{tx("direction")} {trackedDirection || "-"}</span>
+                  <span>{trackedDistanceBlocks?.toFixed(1) ?? "-"} {tx("blocks")}</span>
+                  <span>{trackedDistanceKm?.toFixed(1) ?? "-"} {tx("km")}</span>
                 </div>
                 <button
                   type="button"
@@ -628,9 +633,9 @@ export default function MapScreen({ mapState, onMapChange }) {
                   onClick={handleWorldTravel}
                   disabled={trackedAtCurrentPosition}
                 >
-                  {trackedAtCurrentPosition ? "YOU ARE HERE" : "TRAVEL TO TARGET"}
+                  {trackedAtCurrentPosition ? tx("youAreHere") : tx("travelToTarget")}
                 </button>
-                <div className="pip-map-world-route__hint">Auto route crosses sectors and stops if a random encounter interrupts the trip.</div>
+                <div className="pip-map-world-route__hint">{tx("worldRouteHint")}</div>
               </div>
             ) : null}
 
@@ -658,7 +663,7 @@ export default function MapScreen({ mapState, onMapChange }) {
 
           <div className="pip-panel pip-map-info">
             <div className="pip-panel-title">{t("mapPanel.log")}</div>
-            <div className="pip-map-log">
+            <div className="pip-map-log" key={travelLog.join("|")}>
               {travelLog.map((entry, index) => (
                 <div key={`${entry}-${index}`} className="pip-map-log__item">{entry}</div>
               ))}
