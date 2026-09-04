@@ -159,11 +159,10 @@
 .pip-local-gm__messages {
   display: flex;
   min-height: 250px;
-  max-height: 48vh;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 10px;
-  overflow-y: auto;
+  overflow: visible;
   padding: 4px 2px 8px;
 }
 
@@ -291,7 +290,7 @@
 
   .pip-local-gm__messages {
     min-height: 220px;
-    max-height: 50vh;
+    max-height: none;
   }
 
   .pip-local-gm__message {
