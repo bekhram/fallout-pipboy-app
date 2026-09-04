@@ -171,6 +171,16 @@ function mergeEvents(previous, incoming) {
   return next.slice(-40);
 }
 
+function buildLocationState(events, persistent) {
+  const facts = (Array.isArray(events) ? events : []).slice(-40).map((event) => ({
+    type: String(event.type || ""),
+    title: String(event.title || ""),
+    detail: String(event.detail || ""),
+    status: String(event.status || "discovered"),
+  }));
+  return { persistent: persistent === true, facts };
+}
+
 function readSession(sessionKey, persistent) {
   if (!persistent) return { messages: [], events: [] };
 
@@ -314,6 +324,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         character,
         world,
         language,
+        locationState: buildLocationState(events, isPersistentLocation),
         sessionKey: currentSessionKey,
         history: history.slice(-16),
         message,
@@ -333,10 +344,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     setIsSending(true);
     try {
       const persistenceInstruction = isPersistentLocation
-        ? "This is a static named world location. Treat prior discoveries and consequences as persistent."
+        ? "This is a static named world location. Continue its saved discoveries and consequences exactly as established."
         : "This is a procedural location. Treat this visit as temporary and do not assume discoveries persist after the character leaves.";
       const result = await requestGm(
-        `Begin the local exploration scene now. ${persistenceInstruction} Use the supplied character sheet and global-map context. Briefly establish where the character is, what they immediately notice, and one clear situation or point of interest they can react to. Do not decide the character's actions for them. End by asking what they do.`,
+        `Begin or continue the local exploration scene now. ${persistenceInstruction} Use the supplied character sheet, global-map context, and structured location state. Do not reintroduce already resolved threats or collected loot unless the saved state explicitly supports it. Briefly establish the immediate situation without deciding the character's actions. End by asking what they do.`,
         history
       );
       persist([...history, { role: "gm", text: result.text, at: Date.now() }], result.events);
