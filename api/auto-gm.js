@@ -171,6 +171,38 @@ function extractMachineBlocks(text) {
   };
 }
 
+function buildMapGrounding(world) {
+  if (!world || typeof world !== "object") return null;
+
+  const region = world.region && typeof world.region === "object"
+    ? {
+        id: world.region.id || null,
+        name: world.region.name || null,
+        game: world.region.game || null,
+      }
+    : null;
+  const knownStaticLocations = Array.isArray(world.knownStaticLocations)
+    ? world.knownStaticLocations.slice(0, 80).map((location) => ({
+        id: location?.id || null,
+        name: location?.name || null,
+        type: location?.type || null,
+        worldX: location?.worldX ?? null,
+        worldY: location?.worldY ?? null,
+        major: location?.major ?? null,
+      }))
+    : [];
+
+  return {
+    activeRegion: region,
+    currentLocation: world.currentLocation || null,
+    currentTerrain: world.currentTerrain || null,
+    worldPosition: world.worldPosition || null,
+    selectedDestination: world.selectedDestination || null,
+    trackedObjective: world.trackedObjective || null,
+    knownStaticLocations,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -189,6 +221,7 @@ export default async function handler(req, res) {
   const languageCode = normalizeLanguage(language);
   const languageName = LANGUAGE_NAMES[languageCode];
   const structuredLocationState = sanitizeLocationState(locationState);
+  const mapGrounding = buildMapGrounding(world);
 
   if (!userText) {
     return res.status(400).json({ error: "Message is required" });
@@ -197,6 +230,7 @@ export default async function handler(req, res) {
   const sessionContext = {
     character: character || null,
     world: world || null,
+    mapGrounding,
     language: languageCode,
     locationState: structuredLocationState,
   };
@@ -206,6 +240,10 @@ export default async function handler(req, res) {
     `IMPORTANT LANGUAGE RULE: The application's selected language is ${languageName} (${languageCode}). Write ALL visible narrative, questions, check descriptions, NPC dialogue, and map-event title/detail/status text in ${languageName}. Do not switch to English unless the player explicitly asks you to.`,
     "Run a text-based exploration and combat scene using the supplied character sheet and global-map context.",
     "Treat the map context as the source of truth for where the character currently is and what they are exploring.",
+    "REGION GROUNDING RULE: SESSION CONTEXT.mapGrounding.activeRegion is authoritative. Never assume Commonwealth/Fallout 4 when another region is active. Use the active region's game, name, current coordinates, current location, selected destination, tracked objective, and known static locations before inventing geography.",
+    "LOCATION GROUNDING RULE: SESSION CONTEXT.mapGrounding.knownStaticLocations is the canonical list of named locations available on the selected regional map. Recognize those locations by id or localized name, including Fallout, Fallout 2, Fallout 3 and Fallout: New Vegas regions. Do not claim a supplied location does not exist merely because it is outside Fallout 4.",
+    "If mapGrounding.currentLocation is present, explicitly treat that named location as the scene's current place. If it is absent, the character is in a procedural location at mapGrounding.worldPosition; use nearby/known named locations only as geographic context, not as the current place.",
+    "When the player asks where they are, what is nearby, where a destination is, or references a named map location, answer from mapGrounding first. Do not substitute lore geography from a different Fallout region.",
     "Treat the supplied character sheet as the source of truth for SPECIAL, skills, HP, Defense, statuses, injuries, perks, inventory, weapons, armor and resistances whenever those fields are present. Never silently change these values. Resolve combat and hazards using the actual sheet values instead of generic assumptions.",
     "Items in character.weapons and character.inventory may include an authoritative database profile. A nested inventory.weaponProfile contains damage in Combat Dice, damage type, effects, qualities, rate and range. Use that profile exactly.",
     "Before resolving any weapon or thrown-item attack, match the player's named item to character.weapons or character.inventory. Prefer the database profile over numbers typed by the player or inferred from prose.",
