@@ -1,3 +1,4 @@
+import i18n from "../i18n.js";
 import aidRows from "./inventory/aid.js";
 import foodRows from "./inventory/food.js";
 import beverageRows from "./inventory/beverages.js";
@@ -5,6 +6,10 @@ import magazineRows1 from "./inventory/magazines-1.js";
 import magazineRows2 from "./inventory/magazines-2.js";
 import magazineRows3 from "./inventory/magazines-3.js";
 import toolRows from "./inventory/tools.js";
+import {
+  translateInventoryItemEffect,
+  translateInventoryItemName,
+} from "./inventoryLocalization.js";
 
 export const EXTRA_INVENTORY_CATEGORIES = [
   { value: "armor", label: "Armor" },
@@ -115,5 +120,14 @@ export const INVENTORY_DATABASE = [
 ];
 
 export function getInventoryArchiveItems(category) {
-  return INVENTORY_DATABASE.filter((item) => item.category === category);
+  const language = i18n.resolvedLanguage || i18n.language || "en";
+  return INVENTORY_DATABASE
+    .filter((item) => item.category === category)
+    .map((item) => ({
+      ...item,
+      canonicalName: item.name,
+      canonicalEffect: item.effect,
+      name: translateInventoryItemName(item.name, language),
+      effect: translateInventoryItemEffect(item.effect, language),
+    }));
 }
