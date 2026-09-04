@@ -83,6 +83,71 @@ export function getTravelCost(mapData, to) {
   return getCellMoveCost(targetCell);
 }
 
+export function findTravelRoute(mapData, from, to) {
+  if (!mapData || !from || !to) return null;
+  if (!isInsideMap(mapData, to.x, to.y)) return null;
+  if (from.x === to.x && from.y === to.y) return { cells: [], cost: 0 };
+
+  const destination = getCell(mapData, to.x, to.y);
+  if (!destination || getTerrain(destination.terrain).blocked) return null;
+
+  const startKey = getCellKey(from.x, from.y);
+  const targetKey = getCellKey(to.x, to.y);
+  const distance = new Map([[startKey, 0]]);
+  const previous = new Map();
+  const queue = [{ x: from.x, y: from.y, cost: 0 }];
+
+  while (queue.length) {
+    queue.sort((a, b) => a.cost - b.cost);
+    const current = queue.shift();
+    const currentKey = getCellKey(current.x, current.y);
+    if (current.cost !== distance.get(currentKey)) continue;
+    if (currentKey === targetKey) break;
+
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue;
+        const x = current.x + dx;
+        const y = current.y + dy;
+        if (!isInsideMap(mapData, x, y)) continue;
+
+        const cell = getCell(mapData, x, y);
+        if (!cell || getTerrain(cell.terrain).blocked) continue;
+
+        const moveCost = getCellMoveCost(cell) ?? 1;
+        const diagonalPenalty = dx !== 0 && dy !== 0 ? 0.25 : 0;
+        const nextCost = current.cost + moveCost + diagonalPenalty;
+        const key = getCellKey(x, y);
+
+        if (nextCost < (distance.get(key) ?? Infinity)) {
+          distance.set(key, nextCost);
+          previous.set(key, currentKey);
+          queue.push({ x, y, cost: nextCost });
+        }
+      }
+    }
+  }
+
+  if (!distance.has(targetKey)) return null;
+
+  const keys = [];
+  let cursor = targetKey;
+  while (cursor !== startKey) {
+    keys.push(cursor);
+    cursor = previous.get(cursor);
+    if (!cursor) return null;
+  }
+  keys.reverse();
+
+  const cells = keys.map((key) => {
+    const [x, y] = key.split(",").map(Number);
+    return getCell(mapData, x, y);
+  }).filter(Boolean);
+
+  const cost = cells.reduce((sum, cell) => sum + (getCellMoveCost(cell) ?? 1), 0);
+  return { cells, cost };
+}
+
 export function getCellsInRadius(mapData, center, radius = 1) {
   const result = [];
 
