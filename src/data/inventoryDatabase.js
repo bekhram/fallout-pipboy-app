@@ -4,15 +4,18 @@ import beverageRows from "./inventory/beverages.js";
 import magazineRows1 from "./inventory/magazines-1.js";
 import magazineRows2 from "./inventory/magazines-2.js";
 import magazineRows3 from "./inventory/magazines-3.js";
+import toolRows from "./inventory/tools.js";
 
 export const EXTRA_INVENTORY_CATEGORIES = [
   { value: "beverages", label: "Beverages" },
   { value: "magazines", label: "Magazines" },
+  { value: "tools", label: "Tools" },
 ];
 
 const EXTRA_CATEGORY_LABELS = {
   beverages: { en: "Beverages", ru: "Напитки", uk: "Напої", pl: "Napoje" },
   magazines: { en: "Magazines", ru: "Журналы", uk: "Журнали", pl: "Czasopisma" },
+  tools: { en: "Tools", ru: "Инструменты", uk: "Інструменти", pl: "Narzędzia" },
 };
 
 export function getExtraCategoryLabel(category, language = "en") {
@@ -30,11 +33,22 @@ export function extendInventoryCategories(categories = []) {
 
     const foodIndex = next.findIndex((item) => item.value === "food");
     const beverageIndex = next.findIndex((item) => item.value === "beverages");
-    const insertAt = extra.value === "beverages"
-      ? (foodIndex >= 0 ? foodIndex + 1 : next.length)
-      : (beverageIndex >= 0
+    const magazineIndex = next.findIndex((item) => item.value === "magazines");
+
+    let insertAt = next.length;
+    if (extra.value === "beverages") {
+      insertAt = foodIndex >= 0 ? foodIndex + 1 : next.length;
+    } else if (extra.value === "magazines") {
+      insertAt = beverageIndex >= 0
         ? beverageIndex + 1
-        : (foodIndex >= 0 ? foodIndex + 1 : next.length));
+        : (foodIndex >= 0 ? foodIndex + 1 : next.length);
+    } else if (extra.value === "tools") {
+      insertAt = magazineIndex >= 0
+        ? magazineIndex + 1
+        : (beverageIndex >= 0
+          ? beverageIndex + 1
+          : (foodIndex >= 0 ? foodIndex + 1 : next.length));
+    }
 
     next.splice(insertAt, 0, extra);
   }
@@ -78,12 +92,21 @@ const magazineItems = [magazineRows1, magazineRows2, magazineRows3]
     effect,
     weight,
   }));
+const toolItems = toolRows.map(([name, effect, weight, cost, rarity]) => ({
+  name,
+  category: "tools",
+  effect,
+  weight,
+  cost,
+  rarity,
+}));
 
 export const INVENTORY_DATABASE = [
   ...aidItems,
   ...foodItems,
   ...beverageItems,
   ...magazineItems,
+  ...toolItems,
 ];
 
 export function getInventoryArchiveItems(category) {
