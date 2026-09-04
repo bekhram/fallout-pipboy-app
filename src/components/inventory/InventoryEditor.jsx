@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { INVENTORY_CATEGORIES } from "../../constants.js";
 import {
@@ -37,6 +37,9 @@ const categoryLabel = (category, t, language) =>
     ? t(CATEGORY_LABEL_KEYS[category])
     : getExtraCategoryLabel(category, language);
 
+const normalizeSearchText = (value) =>
+  String(value ?? "").trim().toLocaleLowerCase();
+
 export default function InventoryEditor({
   draft,
   setDraft,
@@ -45,6 +48,8 @@ export default function InventoryEditor({
   globalAmmo,
 }) {
   const { t, i18n } = useTranslation();
+  const [archiveSearch, setArchiveSearch] = useState("");
+
   const categories = useMemo(
     () => extendInventoryCategories(INVENTORY_CATEGORIES).filter((item) => item.value !== "all"),
     []
@@ -63,8 +68,26 @@ export default function InventoryEditor({
     return getInventoryArchiveItems(draft.category);
   }, [draft.category, globalAmmo]);
 
+  const filteredArchiveItems = useMemo(() => {
+    const query = normalizeSearchText(archiveSearch);
+    if (!query) return archiveItems;
+
+    return archiveItems.filter((item) =>
+      [
+        item.name,
+        item.series,
+        item.effect,
+        item.rarity,
+        item.duration,
+        item.addiction,
+      ]
+        .filter(Boolean)
+        .some((value) => normalizeSearchText(value).includes(query))
+    );
+  }, [archiveItems, archiveSearch]);
+
   const handleLoadArchiveItem = (indexStr) => {
-    const item = archiveItems[Number(indexStr)];
+    const item = filteredArchiveItems[Number(indexStr)];
     if (!item) return;
 
     setDraft((prev) => ({
@@ -76,6 +99,7 @@ export default function InventoryEditor({
   };
 
   const handleCategoryChange = (category) => {
+    setArchiveSearch("");
     setDraft((prev) => ({
       ...prev,
       ...EMPTY_DETAIL_FIELDS,
@@ -123,19 +147,40 @@ export default function InventoryEditor({
           <label style={{ opacity: 0.8, display: "block", marginBottom: "5px" }}>
             [ TERMINAL ARCHIVE: {categoryLabel(draft.category, t, i18n.resolvedLanguage).toUpperCase()} ]
           </label>
+
+          <input
+            className="pip-input"
+            type="search"
+            placeholder="Search archive by name, series or effect..."
+            value={archiveSearch}
+            onChange={(e) => setArchiveSearch(e.target.value)}
+            style={{ marginBottom: "8px" }}
+          />
+
           <select
             className="pip-input"
             onChange={(e) => handleLoadArchiveItem(e.target.value)}
             value=""
+            disabled={filteredArchiveItems.length === 0}
           >
-            <option value="" disabled>-- Select item to autoload --</option>
-            {archiveItems.map((item, idx) => (
-              <option key={`${item.name}-${idx}`} value={idx}>
+            <option value="" disabled>
+              {filteredArchiveItems.length === 0
+                ? "-- No matching items --"
+                : `-- Select item to autoload (${filteredArchiveItems.length}) --`}
+            </option>
+            {filteredArchiveItems.map((item, idx) => (
+              <option key={`${item.name}-${item.series || ""}-${idx}`} value={idx}>
                 {item.name}
                 {item.series ? ` — ${item.series}` : ""}
               </option>
             ))}
           </select>
+
+          <div style={{ marginTop: "6px", opacity: 0.65, fontSize: "11px" }}>
+            {archiveSearch
+              ? `${filteredArchiveItems.length} / ${archiveItems.length} records`
+              : `${archiveItems.length} records`}
+          </div>
         </div>
       )}
 
