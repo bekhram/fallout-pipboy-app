@@ -1,6 +1,7 @@
 .pip-map-screen { display:flex; flex-direction:column; gap:12px; }
 .pip-map-layout { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(280px,.9fr); gap:12px; align-items:start; }
-.pip-map-panel { position:relative; padding:58px 10px 10px; overflow:visible; }
+.pip-map-column { min-width:0; }
+.pip-map-panel { position:relative; padding:10px; overflow:hidden; }
 .pip-map-layout,
 .pip-map-sidebar { overflow:visible; }
 .pip-map-board { position:relative; width:100%; max-width:760px; aspect-ratio:1/1; overflow:visible; border-radius:10px; margin:0 auto; background:rgba(8,16,10,.96); }
