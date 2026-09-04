@@ -238,7 +238,8 @@ if (derived?.immunities?.includes("radiation")) {
                 className="pip-action-btn"
                 onClick={onOpenDerived}
               >
-                ★
+                <span className="pip-action-icon">★</span>
+                <small>{t("main.statsAction")}</small>
               </button>
 
               <button
@@ -247,7 +248,8 @@ if (derived?.immunities?.includes("radiation")) {
                 onClick={onSpendLuck}
                 disabled={currentLuckPoints <= 0}
               >
-                ✤{currentLuckPoints}
+                <span className="pip-action-icon">✤{currentLuckPoints}</span>
+                <small>{t("main.luckAction")}</small>
               </button>
 
               <button
@@ -255,21 +257,25 @@ if (derived?.immunities?.includes("radiation")) {
                 className="pip-action-btn"
                 onClick={onOpenConditions}
               >
-                ➙
+                <span className="pip-action-icon">➙</span>
+                <small>{t("main.statusesAction")}</small>
               </button>
             </div>
           </div>
 
           <div className="pip-hero-meta">
-            <input
-              value={form.characterName}
-              onChange={(e) =>
-                onTopLevelChange("characterName", e.target.value)
-              }
-              className="pip-input"
-            />
+            <div className="pip-identity-card">
+              <label>{t("main.name")}</label>
+              <input
+                value={form.characterName}
+                onChange={(e) =>
+                  onTopLevelChange("characterName", e.target.value)
+                }
+                className="pip-input pip-character-name"
+              />
+            </div>
 
-            <div>
+            <div className="pip-identity-card">
               <label>{t("main.origin")}</label>
               <button
                 type="button"
@@ -283,36 +289,41 @@ if (derived?.immunities?.includes("radiation")) {
               </button>
             </div>
 
-            <div>
-              <label>{t("main.level")}</label>
-              <input
-                type="number"
-                min="1"
-                value={form.level}
-                onChange={(e) => onTopLevelChange("level", e.target.value)}
-                className="pip-input"
-              />
+            <div className="pip-progression-grid">
+              <div>
+                <label>{t("main.level")}</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={form.level}
+                  onChange={(e) => onTopLevelChange("level", e.target.value)}
+                  className="pip-input"
+                />
+              </div>
+
+              <div>
+                <label>{t("main.xp")}</label>
+                <input
+                  type="number"
+                  min="0"
+                  inputMode="numeric"
+                  value={form.xp ?? "0"}
+                  onChange={(e) =>
+                    onTopLevelChange("xp", String(Math.max(0, Number(e.target.value) || 0)))
+                  }
+                  className="pip-input"
+                />
+              </div>
             </div>
 
-            <div>
-              <label>{t("main.xp")}</label>
-              <input
-                type="number"
-                min="0"
-                inputMode="numeric"
-                value={form.xp ?? "0"}
-                onChange={(e) =>
-                  onTopLevelChange("xp", String(Math.max(0, Number(e.target.value) || 0)))
-                }
-                className="pip-input"
-              />
-            </div>
-
-            <div className="pip-inline-stats">
-              <span>{t("main.defense")}:[{derived.defense}]</span>
-              <span>{t("main.initiative")}:[{derived.initiative}]</span>
-              <span>{t("main.melee")}:[{derived.md}]</span>
-              <span>{t("main.luck")}:[{currentLuckPoints}]</span>
+            <div className="pip-combat-summary">
+              <div className="pip-summary-title">[ {t("main.combatData")} ]</div>
+              <div className="pip-combat-grid">
+                <div className="pip-combat-stat"><small>{t("main.defense")}</small><strong>{derived.defense}</strong></div>
+                <div className="pip-combat-stat"><small>{t("main.initiative")}</small><strong>{derived.initiative}</strong></div>
+                <div className="pip-combat-stat"><small>{t("main.melee")}</small><strong>{derived.md}</strong></div>
+                <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>
+              </div>
             </div>
 
             <div className="pip-status-vitals-inline">
