@@ -8,7 +8,7 @@ const MAX_ZOOM = 2;
 const ZOOM_STEP = 0.2;
 const PADDING = 4;
 
-function locationName(location) {
+function fallbackLocationName(location) {
   if (!location) return "Unknown";
   return location.name || location.id?.replaceAll("_", " ") || "Unknown";
 }
@@ -18,9 +18,16 @@ function clamp(value, min, max) {
 }
 
 export default function WorldOverview({ mapData, playerPosition }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
+  const displayName = (location) => {
+    if (location?.nameKey) {
+      const translated = t(location.nameKey);
+      if (translated && translated !== location.nameKey) return translated;
+    }
+    return fallbackLocationName(location);
+  };
   const worldOffset = mapData?.worldOffset || { x: 0, y: 0 };
   const cols = mapData?.cols || 8;
   const rows = mapData?.rows || 8;
@@ -105,7 +112,7 @@ export default function WorldOverview({ mapData, playerPosition }) {
       <div className="pip-world-overview__toolbar">
         <div>
           <strong>{tx("worldOverview")}</strong>
-          <span>{selected ? `${tx("route")} // ${locationName(selected).toUpperCase()}` : tx("selectStaticLocation")}</span>
+          <span>{selected ? `${tx("route")} // ${displayName(selected).toUpperCase()}` : tx("selectStaticLocation")}</span>
         </div>
         <div className="pip-world-overview__zoom">
           <button type="button" onClick={() => setZoom((value) => clamp(value - ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}>−</button>
@@ -139,10 +146,10 @@ export default function WorldOverview({ mapData, playerPosition }) {
                 className={`pip-world-overview__poi${location.id === selectedId ? " is-selected" : ""}${location.major ? " is-major" : ""}`}
                 style={pos}
                 onClick={() => chooseLocation(location)}
-                title={locationName(location)}
+                title={displayName(location)}
               >
                 <span>{location.icon || "◆"}</span>
-                <em>{locationName(location)}</em>
+                <em>{displayName(location)}</em>
               </button>
             );
           })}
