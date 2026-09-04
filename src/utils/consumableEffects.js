@@ -1,3 +1,9 @@
+import i18n from "../i18n.js";
+import {
+  translateInventoryItemEffect,
+  translateInventoryItemName,
+} from "../data/inventoryLocalization.js";
+
 const CONSUMABLE_CATEGORIES = new Set(["aid", "food", "beverages"]);
 
 export const PIPBOY_USE_ITEM_EVENT = "pipboy:use-inventory-item";
@@ -200,11 +206,19 @@ function hasStructuredModifiers(modifiers) {
   );
 }
 
-function inferDuration(item) {
+function getCanonicalName(item) {
+  return clean(item?.canonicalName || item?.name);
+}
+
+function getCanonicalEffect(item) {
+  return clean(item?.canonicalEffect || item?.effect);
+}
+
+function inferDuration(item, canonicalEffect = getCanonicalEffect(item)) {
   const explicit = clean(item?.duration);
   if (explicit && explicit.toLowerCase() !== "instant") return explicit;
 
-  const effect = clean(item?.effect).toLowerCase();
+  const effect = clean(canonicalEffect).toLowerCase();
   if (/end of (?:the )?current scene/.test(effect)) return "Until end of current scene";
   if (/end of (?:the )?(?:next|following) scene/.test(effect)) return "Until end of next scene";
   if (/start of next scene/.test(effect)) return "Next scene";
@@ -213,7 +227,7 @@ function inferDuration(item) {
 }
 
 function makeEffectId(item) {
-  return `consumable:${normalizeName(item?.name).replace(/[^a-z0-9]+/g, "-")}`;
+  return `consumable:${normalizeName(getCanonicalName(item)).replace(/[^a-z0-9]+/g, "-")}`;
 }
 
 export function isConsumableItem(item) {
@@ -221,9 +235,10 @@ export function isConsumableItem(item) {
 }
 
 export function getConsumableUsePlan(item) {
-  const effectText = clean(item?.effect);
+  const canonicalName = getCanonicalName(item);
+  const effectText = getCanonicalEffect(item);
   const lower = effectText.toLowerCase();
-  const statusKey = CHEM_STATUS_BY_NAME[normalizeName(item?.name)] || null;
+  const statusKey = CHEM_STATUS_BY_NAME[normalizeName(canonicalName)] || null;
   const healingField = Number(String(item?.healing ?? "").replace(",", "."));
   const healingFromText = effectText.match(/heals?\s*(\d+)\s*hp/i);
   const healingHp = Number.isFinite(healingField) && healingField > 0
@@ -233,6 +248,7 @@ export function getConsumableUsePlan(item) {
   const healingRadiation = radiationHealMatch ? Number(radiationHealMatch[1]) : 0;
   const cureAddictions = /(?:removes?|cures?) all addictions/i.test(effectText);
   const cureDiseases = /cure all illnesses/i.test(effectText);
+  const language = i18n.resolvedLanguage || i18n.language || "en";
 
   let activeEffect = null;
   if (!statusKey) {
@@ -240,9 +256,11 @@ export function getConsumableUsePlan(item) {
     if (hasStructuredModifiers(modifiers)) {
       activeEffect = {
         id: makeEffectId(item),
-        sourceName: clean(item?.name) || "Consumable",
-        effectText,
-        duration: inferDuration(item),
+        sourceName: translateInventoryItemName(canonicalName, language) || "Consumable",
+        effectText: translateInventoryItemEffect(effectText, language) || effectText,
+        canonicalSourceName: canonicalName,
+        canonicalEffect: effectText,
+        duration: inferDuration(item, effectText),
         category: item?.category || "consumable",
         modifiers,
       };
