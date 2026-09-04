@@ -256,48 +256,58 @@
   .pip-armor-table-head { display: none; }
   .pip-armor-table-body { gap: 6px; }
   .pip-armor-row {
-    grid-template-columns: 44px repeat(5, minmax(0, 1fr));
-    gap: 4px;
-    padding: 6px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 9px;
     border-radius: 8px;
   }
-  .pip-armor-row-label { justify-content: center; }
-  .pip-armor-row-code { min-width: 28px; width: 28px; height: 24px; font-size: 11px; }
-  .pip-armor-row-name { display: none; }
+  .pip-armor-row-label {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(140, 255, 152, 0.1);
+  }
+  .pip-armor-row-code { min-width: 32px; width: 32px; height: 26px; font-size: 11px; }
+  .pip-armor-row-name { display: block; font-size: 12px; }
   .pip-armor-cell { display: grid; gap: 3px; }
+  .pip-armor-cell:last-child { grid-column: 1 / -1; }
   .pip-armor-cell-mobile-icon {
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--pip-text-dim);
-    font-size: 9px;
+    font-size: 10px;
     line-height: 1;
     min-height: 10px;
   }
   .pip-armor-mini-input {
-    min-height: 26px;
+    min-height: 32px;
     padding: 2px 4px;
     font-size: 12px;
     border-radius: 6px;
   }
   .pip-armor-value-control.is-adjustable {
-    grid-template-columns: 18px minmax(22px, 1fr) 18px;
-    gap: 2px;
+    grid-template-columns: 30px minmax(38px, 1fr) 30px;
+    gap: 4px;
   }
-  .pip-armor-step { font-size: 10px; }
+  .pip-armor-step { min-height: 32px; font-size: 12px; }
   .pip-armor-equip-row { grid-template-columns: 1fr; }
   .pip-armor-slot label { grid-template-columns: 72px minmax(0, 1fr); }
 }
 
 @media (max-width: 420px) {
   .pip-armor-row {
-    grid-template-columns: 38px repeat(5, minmax(0, 1fr));
-    gap: 3px;
-    padding: 5px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    padding: 8px;
   }
-  .pip-armor-row-code { min-width: 24px; width: 24px; height: 22px; font-size: 10px; }
-  .pip-armor-cell-mobile-icon { font-size: 8px; }
-  .pip-armor-mini-input { min-height: 22px; padding: 1px 2px; font-size: 11px; }
+  .pip-armor-row-code { min-width: 30px; width: 30px; height: 24px; font-size: 10px; }
+  .pip-armor-cell-mobile-icon { font-size: 9px; }
+  .pip-armor-mini-input { min-height: 30px; padding: 2px 4px; font-size: 12px; }
+  .pip-armor-value-control.is-adjustable {
+    grid-template-columns: 26px minmax(34px, 1fr) 26px;
+  }
+  .pip-armor-step { min-height: 30px; }
 }
 
 
