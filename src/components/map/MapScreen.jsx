@@ -657,6 +657,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
                 mapMode={mapMode}
                 setMapMode={setMapMode}
                 locations={regionLocations}
+                region={{ id: activeRegion.id, game: activeRegion.game, name: getRegionName(activeRegion, language) }}
               />
             </div>
           </div>
