@@ -1,0 +1,21 @@
+export default [
+  ["Backpack, Large","Wearer adds +10xSTR to maximum Carry weight.","0","60","2"],
+  ["Backpack, Small","Wearer adds +5xSTR to maximum Carry weight.","0","30","1"],
+  ["Bobby Pin","Reduces difficulty of Lockpick tests by 1 (minimum), One bobby pin breaks per complication rolled.","0.1","1","0"],
+  ["Deluxe Toolkit","Reduce the difficulty of Repair tests by 1 (minimum 0), May attempt Repair tests which normally require a workbench or similar at +1 difficulty.","20","150","3"],
+  ["Doctor's Bag","Reduce the difficulty of Medicine tests by 1 (minimum 0), When providing long-term care, allows care of up to 2 additional patients.","10","300","3"],
+  ["Electronic Lockpicker","Reduces difficulty of Lockpick tests by 2 (minimum 0), Ignores first complication rolled, Breaks if two or more complications are rolled at once.","4","375","4"],
+  ["First Aid Kit","Heal +2 HP upn succeding at the First Aid action.","4","200","2"],
+  ["Flashlight","Generate bright light in a single zone within Medium range; the user may choose which zone is illuminated.","2","100","3"],
+  ["Geiger Counter","Allows a PER + Survival test, difficulty 1, to determine if there is radiation present in an area, and how much.","8","325","3"],
+  ["Holotags","Identifies the fallen.","0.1","5","2"],
+  ["Holotape Player","Allows playback of audio holotapes.","3","250","2"],
+  ["Lantern","Generates bright light within Close range, and dim light within Medium range.","3","15","2"],
+  ["Lock Pick Set","Reduces the difficulty of Lockpick tests by 1 (minimum 0), After 3 complications, the set is broken.","1","100","2"],
+  ["Multi-Tool","Reduce the difficulty of Repair tests by 1 (minimum 0).","1","100","2"],
+  ["Pack Brahmin","A mutant cow that carries heavy loads and produces milk and fertiliser.","0","200","3"],
+  ["Pip-Boy","All Pip-Boy units aid their wearer during combat thanks to the Vault-Tec Assisted Targeting System, or V.A.T.S. A character equipped with a Pip-Boy may use V.A.T.S. when they make an attack, ignoring the normal difficulty increase for targeting a specific location of the enemy.","0","-","-"],
+  ["Radio","Picks up and plays radio transmissions.","2","75","2"],
+  ["Signal Flare","Generates bright light withing Close range until the end of the current scene, One use only.","0.3","10","1"],
+  ["Torch","Generates bright light within Close range until the end of the current scene, Requires an INT + Survival test to light, difficulty 1, +1 for each previous use.","1","10","1"]
+];
