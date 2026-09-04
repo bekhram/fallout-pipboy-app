@@ -7,6 +7,7 @@ function MapCell({
   isSelected,
   isDiscovered,
   isReachable,
+  isRoute,
   onSelect,
 }) {
   const terrain = useMemo(() => {
@@ -24,12 +25,13 @@ function MapCell({
       terrain.className,
       isPlayerHere && "is-player",
       isSelected && "is-selected",
+      isRoute && "is-route",
       isDiscovered ? "is-discovered" : "is-undiscovered",
       isReachable && "is-reachable",
     ]
       .filter(Boolean)
       .join(" ");
-  }, [terrain.className, isPlayerHere, isSelected, isDiscovered, isReachable]);
+  }, [terrain.className, isPlayerHere, isSelected, isRoute, isDiscovered, isReachable]);
 
   const title = useMemo(() => {
     return isDiscovered
@@ -44,6 +46,9 @@ function MapCell({
       onClick={handleClick}
       title={title}
     >
+      {isRoute && !isPlayerHere && !isSelected ? (
+        <span className="pip-map-cell__route-marker">•</span>
+      ) : null}
 
       {isPlayerHere && (
         <span className="pip-map-cell__player-marker">▲</span>
