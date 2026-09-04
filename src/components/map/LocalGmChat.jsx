@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import "./localGmChat.css";
 
@@ -86,12 +86,8 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
     (location) => location.id === savedMapData?.trackedLocationId
   );
 
-  const selectedWorldX = selectedCell
-    ? worldOffset.x * cols + selectedCell.x
-    : null;
-  const selectedWorldY = selectedCell
-    ? worldOffset.y * rows + selectedCell.y
-    : null;
+  const selectedWorldX = selectedCell ? worldOffset.x * cols + selectedCell.x : null;
+  const selectedWorldY = selectedCell ? worldOffset.y * rows + selectedCell.y : null;
   const selectedStaticLocation = selectedCell
     ? FALLOUT_4_LOCATIONS.find(
         (location) =>
@@ -125,6 +121,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
+  const introStartedRef = useRef(false);
 
   const rawCharacter = useMemo(() => readCharacter(), []);
   const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
@@ -142,6 +139,54 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     }
   }
 
+  async function requestGm(message, history = []) {
+    const response = await fetch("/api/auto-gm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        character,
+        world,
+        history: history.slice(-16),
+        message,
+      }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data?.error || `GM request failed (${response.status})`);
+    }
+
+    return data?.text || "The GM did not return a response.";
+  }
+
+  async function startScene(history = []) {
+    if (isSending) return;
+    setError("");
+    setIsSending(true);
+
+    try {
+      const text = await requestGm(
+        "Begin the local exploration scene now. Use the supplied character sheet and global-map context. Briefly establish where the character is, what they immediately notice, and one clear situation or point of interest they can react to. Do not decide the character's actions for them. End by asking what they do.",
+        history
+      );
+
+      const gmMessage = { role: "gm", text, at: Date.now() };
+      persist([...history, gmMessage]);
+    } catch (requestError) {
+      setError(requestError?.message || "Could not contact Auto GM.");
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  useEffect(() => {
+    if (introStartedRef.current || messages.length > 0) return;
+    introStartedRef.current = true;
+    startScene([]);
+    // The first scene should run once when an empty LOCAL chat is mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function sendMessage(event) {
     event?.preventDefault?.();
     const text = draft.trim();
@@ -156,27 +201,8 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     setIsSending(true);
 
     try {
-      const response = await fetch("/api/auto-gm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          character,
-          world,
-          history: previousMessages.slice(-16),
-          message: text,
-        }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data?.error || `GM request failed (${response.status})`);
-      }
-
-      const gmMessage = {
-        role: "gm",
-        text: data?.text || "The GM did not return a response.",
-        at: Date.now(),
-      };
+      const gmText = await requestGm(text, previousMessages);
+      const gmMessage = { role: "gm", text: gmText, at: Date.now() };
       persist([...nextMessages, gmMessage]);
     } catch (requestError) {
       setError(requestError?.message || "Could not contact Auto GM.");
@@ -187,7 +213,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
 
   function resetChat() {
     persist([]);
+    setDraft("");
     setError("");
+    introStartedRef.current = true;
+    startScene([]);
   }
 
   const currentPlace =
@@ -215,7 +244,12 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
               : ""}
           </div>
         </div>
-        <button type="button" className="pip-btn pip-local-gm__reset" onClick={resetChat}>
+        <button
+          type="button"
+          className="pip-btn pip-local-gm__reset"
+          onClick={resetChat}
+          disabled={isSending}
+        >
           NEW SESSION
         </button>
       </header>
@@ -228,12 +262,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
       </div>
 
       <div className="pip-local-gm__messages" aria-live="polite">
-        {messages.length === 0 ? (
+        {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
             <strong>AUTO GM READY.</strong>
-            <p>
-              Describe what your character does. The app sends the GM your character summary, exact global-map position, current location and tracked objective automatically.
-            </p>
+            <p>The GM will start the scene using your character and WORLD-map context.</p>
           </div>
         ) : (
           messages.map((message, index) => (
@@ -269,7 +301,11 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
             }
           }}
         />
-        <button type="submit" className="pip-action-button" disabled={!draft.trim() || isSending}>
+        <button
+          type="submit"
+          className="pip-action-button"
+          disabled={!draft.trim() || isSending}
+        >
           SEND
         </button>
       </form>
