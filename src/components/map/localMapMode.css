@@ -9,9 +9,10 @@
   left: 50%;
   z-index: 20;
   display: inline-flex;
+  max-width: calc(100% - 16px);
   transform: translateX(-50%);
   border: 1px solid rgba(120, 255, 140, 0.45);
-  background: rgba(4, 14, 8, 0.94);
+  background: rgba(4, 14, 8, 0.96);
   box-shadow: 0 0 12px rgba(120, 255, 140, 0.12);
 }
 
@@ -25,8 +26,9 @@
   color: rgba(170, 255, 180, 0.72);
   font: inherit;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .pip-map-mode-switch button:last-child {
@@ -50,12 +52,18 @@
     repeating-linear-gradient(90deg, transparent 0 23px, rgba(120, 255, 140, 0.03) 24px);
 }
 
-.pip-map-grid-layer:has(.pip-map-mode-shell.is-local) {
+.pip-map-grid-layer:has(.pip-map-mode-shell.is-local),
+.pip-map-grid-layer:has(.pip-map-mode-shell.is-overview) {
   z-index: 12;
 }
 
 .pip-map-mode-shell.is-local .pip-map-local-mode {
   pointer-events: auto;
+}
+
+.pip-map-mode-shell.is-overview .pip-world-overview {
+  box-sizing: border-box;
+  padding-top: 52px;
 }
 
 .pip-map-mode-shell.is-world .pip-map-mode-switch {
@@ -69,16 +77,35 @@
 @media (max-width: 768px) {
   .pip-map-mode-switch {
     top: 6px;
+    width: calc(100% - 20px);
   }
 
   .pip-map-mode-switch button {
-    min-width: 72px;
+    flex: 1 1 0;
+    min-width: 0;
     min-height: 30px;
-    padding: 4px 10px;
-    font-size: 10px;
+    padding: 4px 5px;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .pip-map-local-mode {
     padding-top: 44px;
+  }
+
+  .pip-map-mode-shell.is-overview .pip-world-overview {
+    padding-top: 42px;
+  }
+
+  .pip-map-mode-shell.is-overview .pip-world-overview__toolbar {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .pip-map-mode-shell.is-overview .pip-world-overview__zoom {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
