@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
+import WorldOverview from "./WorldOverview.jsx";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
 import "./localMapMode.css";
@@ -98,9 +99,10 @@ function MapGrid({
   const routeReady = Boolean(route && route.cells.length > 0);
 
   return (
-    <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : "is-world"}`}>
+    <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : mapMode === "overview" ? "is-overview" : "is-world"}`}>
       <div className="pip-map-mode-switch" role="tablist" aria-label="Map mode">
         <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>WORLD</button>
+        <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>OVERVIEW</button>
         <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={() => setMapMode("local")}>LOCAL</button>
       </div>
 
@@ -108,6 +110,8 @@ function MapGrid({
         <div className="pip-map-local-mode">
           <LocalGmChat mapData={mapData} playerPosition={playerPosition} selectedCell={selectedCell} />
         </div>
+      ) : mapMode === "overview" ? (
+        <WorldOverview mapData={mapData} playerPosition={playerPosition} />
       ) : (
         <>
           <div className="pip-map-nav-hud">
