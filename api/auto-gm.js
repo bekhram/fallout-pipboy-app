@@ -9,6 +9,18 @@ const ALLOWED_EVENT_TYPES = new Set([
   "poi",
 ]);
 
+const LANGUAGE_NAMES = {
+  en: "English",
+  ru: "Russian",
+  uk: "Ukrainian",
+  pl: "Polish",
+};
+
+function normalizeLanguage(language) {
+  const code = String(language || "en").toLowerCase().split("-")[0];
+  return LANGUAGE_NAMES[code] ? code : "en";
+}
+
 function extractOutputText(payload) {
   if (typeof payload?.output_text === "string" && payload.output_text.trim()) {
     return payload.output_text.trim();
@@ -85,8 +97,10 @@ export default async function handler(req, res) {
     });
   }
 
-  const { character, world, history, message } = req.body || {};
+  const { character, world, history, message, language } = req.body || {};
   const userText = String(message || "").trim();
+  const languageCode = normalizeLanguage(language);
+  const languageName = LANGUAGE_NAMES[languageCode];
 
   if (!userText) {
     return res.status(400).json({ error: "Message is required" });
@@ -95,10 +109,12 @@ export default async function handler(req, res) {
   const sessionContext = {
     character: character || null,
     world: world || null,
+    language: languageCode,
   };
 
   const instructions = [
     "You are the Auto GM for a Fallout 2d20 tabletop role-playing session.",
+    `IMPORTANT LANGUAGE RULE: The application's selected language is ${languageName} (${languageCode}). Write ALL visible narrative, questions, check descriptions, NPC dialogue, and map-event title/detail/status text in ${languageName}. Do not switch to English unless the player explicitly asks you to.`,
     "Run a text-based exploration scene using the supplied character summary and global-map context.",
     "Treat the map context as the source of truth for where the character currently is and what they are exploring.",
     "Be concise but atmospheric. Advance the scene in small steps and end with a clear situation or choice for the player.",
@@ -110,7 +126,7 @@ export default async function handler(req, res) {
     "The visible narrative must come before that block. The block is hidden by the app and must not be explained to the player.",
     "Only record persistent exploration facts that were actually established in the scene. Do not record hypothetical choices.",
     "Allowed event types are: explored, npc, door, trap, loot, poi.",
-    "Each event must be an object with type, title, detail, status. Use status discovered by default; use resolved, opened, disarmed, collected, friendly, hostile, or cleared only when the scene clearly establishes it.",
+    `Each event must be an object with type, title, detail, status. The type must stay one of the allowed English machine values, but title/detail/status must be written in ${languageName}.`,
     "If no persistent fact changed, return an empty array: <map_events>[]</map_events>.",
     `SESSION CONTEXT: ${JSON.stringify(sessionContext)}`,
   ].join("\n");
