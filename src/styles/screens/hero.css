@@ -46,11 +46,18 @@
 
 .pip-identity-card,
 .pip-progression-grid,
-.pip-combat-summary {
+.pip-combat-summary,
+.pip-survival-summary {
   padding: 10px;
   border: 1px solid rgba(140, 255, 152, 0.14);
   border-radius: 8px;
   background: linear-gradient(135deg, rgba(140, 255, 152, 0.035), rgba(0, 0, 0, 0.18));
+}
+
+.pip-hero-dashboard {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .pip-character-name {
@@ -75,8 +82,8 @@
 
 .pip-combat-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .pip-combat-stat {
@@ -96,9 +103,8 @@
   color: var(--pip-text-dim);
   font-size: 9px;
   letter-spacing: 0.04em;
-  text-overflow: ellipsis;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .pip-combat-stat strong {
@@ -214,11 +220,40 @@
 
   .pip-identity-card,
   .pip-progression-grid,
-  .pip-combat-summary {
+  .pip-combat-summary,
+  .pip-survival-summary {
     padding: 8px;
   }
 
   .pip-combat-stat {
-    padding: 7px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 7px 6px;
+  }
+
+  .pip-combat-stat small {
+    min-height: 2.2em;
+    overflow: visible;
+    line-height: 1.1;
+  }
+
+  .pip-combat-stat strong {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .pip-combat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pip-combat-stat {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .pip-combat-stat small {
+    min-height: 0;
   }
 }
