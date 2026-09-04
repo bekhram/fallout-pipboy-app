@@ -7,12 +7,14 @@ import magazineRows3 from "./inventory/magazines-3.js";
 import toolRows from "./inventory/tools.js";
 
 export const EXTRA_INVENTORY_CATEGORIES = [
+  { value: "armor", label: "Armor" },
   { value: "beverages", label: "Beverages" },
   { value: "magazines", label: "Magazines" },
   { value: "tools", label: "Tools" },
 ];
 
 const EXTRA_CATEGORY_LABELS = {
+  armor: { en: "Armor", ru: "Броня", uk: "Броня", pl: "Pancerz" },
   beverages: { en: "Beverages", ru: "Напитки", uk: "Напої", pl: "Napoje" },
   magazines: { en: "Magazines", ru: "Журналы", uk: "Журнали", pl: "Czasopisma" },
   tools: { en: "Tools", ru: "Инструменты", uk: "Інструменти", pl: "Narzędzia" },
@@ -31,12 +33,15 @@ export function extendInventoryCategories(categories = []) {
   for (const extra of EXTRA_INVENTORY_CATEGORIES) {
     if (next.some((item) => item.value === extra.value)) continue;
 
+    const weaponsIndex = next.findIndex((item) => item.value === "weapons");
     const foodIndex = next.findIndex((item) => item.value === "food");
     const beverageIndex = next.findIndex((item) => item.value === "beverages");
     const magazineIndex = next.findIndex((item) => item.value === "magazines");
 
     let insertAt = next.length;
-    if (extra.value === "beverages") {
+    if (extra.value === "armor") {
+      insertAt = weaponsIndex >= 0 ? weaponsIndex + 1 : next.length;
+    } else if (extra.value === "beverages") {
       insertAt = foodIndex >= 0 ? foodIndex + 1 : next.length;
     } else if (extra.value === "magazines") {
       insertAt = beverageIndex >= 0
