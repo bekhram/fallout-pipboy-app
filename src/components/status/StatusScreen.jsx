@@ -286,8 +286,24 @@ if (derived?.immunities?.includes("radiation")) {
             <div>
               <label>{t("main.level")}</label>
               <input
+                type="number"
+                min="1"
                 value={form.level}
                 onChange={(e) => onTopLevelChange("level", e.target.value)}
+                className="pip-input"
+              />
+            </div>
+
+            <div>
+              <label>{t("main.xp")}</label>
+              <input
+                type="number"
+                min="0"
+                inputMode="numeric"
+                value={form.xp ?? "0"}
+                onChange={(e) =>
+                  onTopLevelChange("xp", String(Math.max(0, Number(e.target.value) || 0)))
+                }
                 className="pip-input"
               />
             </div>
