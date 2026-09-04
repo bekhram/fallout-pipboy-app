@@ -1,11 +1,34 @@
 import React, { useMemo, useState } from "react";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
+import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { canTravelToCell, getCellKey, getTravelCost } from "../../utils/mapMath.js";
 import "./localMapMode.css";
 
 const VIEW_COLS = 8;
 const VIEW_ROWS = 8;
+
+function getWorldCoords(mapData, cell) {
+  if (!cell) return null;
+  const offset = mapData?.worldOffset || { x: 0, y: 0 };
+  return {
+    x: offset.x * (mapData?.cols || VIEW_COLS) + cell.x,
+    y: offset.y * (mapData?.rows || VIEW_ROWS) + cell.y,
+  };
+}
+
+function getStaticLocation(mapData, cell) {
+  const coords = getWorldCoords(mapData, cell);
+  if (!coords) return null;
+  return FALLOUT_4_LOCATIONS.find(
+    (location) => location.worldX === coords.x && location.worldY === coords.y
+  ) || null;
+}
+
+function triggerTravel() {
+  const button = document.querySelector(".pip-map-sidebar .pip-action-button");
+  if (button && !button.disabled) button.click();
+}
 
 function MapGrid({
   mapData,
@@ -61,6 +84,14 @@ function MapGrid({
   const direction = selectedCell
     ? `${deltaY < 0 ? "N" : deltaY > 0 ? "S" : ""}${deltaX > 0 ? "E" : deltaX < 0 ? "W" : ""}` || "HERE"
     : null;
+  const selectedStaticLocation = selectedCell ? getStaticLocation(mapData, selectedCell) : null;
+  const destinationType = selectedStaticLocation ? "STATIC" : "PROCEDURAL";
+  const destinationName =
+    selectedStaticLocation?.name ||
+    selectedStaticLocation?.id?.replaceAll("_", " ") ||
+    selectedCell?.poi?.name ||
+    selectedCell?.poi?.id?.replaceAll("_", " ") ||
+    (selectedCell ? `CELL ${selectedCell.x},${selectedCell.y}` : null);
 
   return (
     <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : "is-world"}`}>
@@ -82,12 +113,34 @@ function MapGrid({
                 <span>DEST {selectedCell.x},{selectedCell.y}</span>
                 <span>DIR {direction}</span>
                 <span>{selectedReachable ? `ETA ${selectedCost ?? 1}H` : "OUT OF RANGE"}</span>
-                <button type="button" onClick={() => onSelectCell(null)}>CLEAR</button>
               </>
             ) : (
               <span>TAP A CELL TO SET DESTINATION</span>
             )}
           </div>
+
+          {selectedCell ? (
+            <div className={`pip-map-route-card ${selectedReachable ? "is-ready" : "is-blocked"}`}>
+              <div className="pip-map-route-card__topline">
+                <span>ROUTE // {destinationType}</span>
+                <button type="button" onClick={() => onSelectCell(null)}>×</button>
+              </div>
+              <strong>{destinationName}</strong>
+              <div className="pip-map-route-card__meta">
+                <span>DIR {direction}</span>
+                <span>{selectedReachable ? `${selectedCost ?? 1}H` : "BEYOND CURRENT MOVE"}</span>
+              </div>
+              <button
+                type="button"
+                className="pip-map-route-card__travel"
+                disabled={!selectedReachable}
+                onClick={triggerTravel}
+              >
+                {selectedReachable ? "TRAVEL" : "SELECT A CLOSER CELL"}
+              </button>
+            </div>
+          ) : null}
+
           <div className="pip-map-compass" aria-hidden="true"><span>N</span><span>W</span><b>+</b><span>E</span><span>S</span></div>
           <div
             className="pip-map-grid pip-map-grid--wasteland"
