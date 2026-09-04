@@ -1,5 +1,26 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+function AutoGrowingTextarea({ value, onChange, ...props }) {
+  const textareaRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.setProperty("height", "auto", "important");
+    textarea.style.setProperty("height", `${textarea.scrollHeight}px`, "important");
+  }, [value]);
+
+  return (
+    <textarea
+      {...props}
+      ref={textareaRef}
+      value={value}
+      onChange={onChange}
+    />
+  );
+}
 
 export default function NotesScreen({ form, onTopLevelChange }) {
   const [editingBackstory, setEditingBackstory] = useState(false);
@@ -50,8 +71,8 @@ export default function NotesScreen({ form, onTopLevelChange }) {
             <p className="pip-body-copy">{backstoryPreview}</p>
           </div>
         ) : (
-          <textarea
-            className="pip-textarea pip-textarea--large"
+          <AutoGrowingTextarea
+            className="pip-textarea pip-textarea--large pip-textarea--auto-grow"
             value={form.backstory || ""}
             onChange={(e) => onTopLevelChange("backstory", e.target.value)}
             placeholder={t("notesPanel.backstoryPlaceholder")}
@@ -65,8 +86,8 @@ export default function NotesScreen({ form, onTopLevelChange }) {
           <span>{t("notesPanel.activeObjectives")}</span>
         </div>
 
-        <textarea
-          className="pip-textarea pip-textarea--large"
+        <AutoGrowingTextarea
+          className="pip-textarea pip-textarea--large pip-textarea--auto-grow"
           value={form.questNotes}
           onChange={(e) => onTopLevelChange("questNotes", e.target.value)}
         />

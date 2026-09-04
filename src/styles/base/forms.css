@@ -47,6 +47,11 @@ select.pip-input:focus {
   min-height: 240px;
 }
 
+.pip-textarea--auto-grow {
+  overflow-y: hidden;
+  resize: none;
+}
+
 .pip-field {
   display: grid;
   gap: 6px;

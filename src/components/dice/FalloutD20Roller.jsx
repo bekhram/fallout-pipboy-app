@@ -27,9 +27,10 @@ function getSkillTestValue(skill, form) {
   const rank = Number(skill.rank || 0);
   const attributeKey = skill.attribute || "A";
   const attrValue = Number(form.special?.[attributeKey] || 0);
+  const tagBonus = skill.tagged ? 2 : 0;
   const bonus = Number(skill.bonus || 0);
 
-  return rank + attrValue + bonus;
+  return rank + attrValue + tagBonus + bonus;
 }
 
 function getSkillCriticalRange(skill) {
