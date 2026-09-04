@@ -63,6 +63,34 @@ function sanitizeEvents(events) {
     }));
 }
 
+function sanitizeLocationState(locationState) {
+  if (!locationState || typeof locationState !== "object") return null;
+  const facts = Array.isArray(locationState.facts)
+    ? locationState.facts.slice(-40).filter((event) => event && ALLOWED_EVENT_TYPES.has(event.type)).map((event) => ({
+        type: event.type,
+        title: String(event.title || event.type).slice(0, 120),
+        detail: String(event.detail || "").slice(0, 500),
+        status: String(event.status || "discovered").slice(0, 40),
+      }))
+    : [];
+  const byType = {};
+  for (const type of ALLOWED_EVENT_TYPES) byType[type] = facts.filter((event) => event.type === type);
+  return {
+    persistent: locationState.persistent === true,
+    facts,
+    byType,
+    summary: {
+      total: facts.length,
+      npcs: byType.npc.length,
+      doors: byType.door.length,
+      traps: byType.trap.length,
+      loot: byType.loot.length,
+      pois: byType.poi.length,
+      explored: byType.explored.length,
+    },
+  };
+}
+
 function extractMapEvents(text) {
   const marker = /<map_events>([\s\S]*?)<\/map_events>/i;
   const match = String(text || "").match(marker);
@@ -97,10 +125,11 @@ export default async function handler(req, res) {
     });
   }
 
-  const { character, world, history, message, language } = req.body || {};
+  const { character, world, history, message, language, locationState } = req.body || {};
   const userText = String(message || "").trim();
   const languageCode = normalizeLanguage(language);
   const languageName = LANGUAGE_NAMES[languageCode];
+  const structuredLocationState = sanitizeLocationState(locationState);
 
   if (!userText) {
     return res.status(400).json({ error: "Message is required" });
@@ -110,6 +139,7 @@ export default async function handler(req, res) {
     character: character || null,
     world: world || null,
     language: languageCode,
+    locationState: structuredLocationState,
   };
 
   const instructions = [
@@ -117,6 +147,9 @@ export default async function handler(req, res) {
     `IMPORTANT LANGUAGE RULE: The application's selected language is ${languageName} (${languageCode}). Write ALL visible narrative, questions, check descriptions, NPC dialogue, and map-event title/detail/status text in ${languageName}. Do not switch to English unless the player explicitly asks you to.`,
     "Run a text-based exploration scene using the supplied character summary and global-map context.",
     "Treat the map context as the source of truth for where the character currently is and what they are exploring.",
+    "If SESSION CONTEXT contains locationState, treat every fact in locationState.facts as established canonical state for this location. Preserve NPC identities and attitudes, door states, traps, loot status, discovered POIs, cleared/resolved areas and other consequences. Do not silently reset, duplicate, contradict, resurrect or re-hide established facts.",
+    "When an established fact changes, update the same fact through a map event using the same type and preferably the same title, with the new status/detail. Only create a new event for a genuinely new discovery.",
+    "For static persistent locations, continue the existing location state across visits. For procedural temporary locations, use supplied facts only for the current visit and never imply they survive after the player leaves.",
     "Be concise but atmospheric. Advance the scene in small steps and end with a clear situation or choice for the player.",
     "Use Fallout 2d20-style checks, skills, AP, complications, loot, NPCs and environmental discoveries when appropriate, but do not invent changes to the character sheet unless the player confirms them.",
     "When a rules check is needed, state the suggested attribute + skill and difficulty, then wait for the player to provide the roll result unless the app already supplied it.",
@@ -124,10 +157,10 @@ export default async function handler(req, res) {
     "Do not claim to be the Dodo custom GPT. You are this application's independent Auto GM.",
     "At the very end of every response append exactly one machine-readable <map_events>...</map_events> block containing a JSON array.",
     "The visible narrative must come before that block. The block is hidden by the app and must not be explained to the player.",
-    "Only record persistent exploration facts that were actually established in the scene. Do not record hypothetical choices.",
+    "Only record exploration facts that were actually established in the scene. Do not record hypothetical choices.",
     "Allowed event types are: explored, npc, door, trap, loot, poi.",
     `Each event must be an object with type, title, detail, status. The type must stay one of the allowed English machine values, but title/detail/status must be written in ${languageName}.`,
-    "If no persistent fact changed, return an empty array: <map_events>[]</map_events>.",
+    "If no exploration fact changed, return an empty array: <map_events>[]</map_events>.",
     `SESSION CONTEXT: ${JSON.stringify(sessionContext)}`,
   ].join("\n");
 
