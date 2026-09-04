@@ -5,7 +5,7 @@
 
 .pip-map-mode-switch {
   position: absolute;
-  top: 10px;
+  top: -48px;
   left: 50%;
   z-index: 20;
   display: inline-flex;
@@ -171,7 +171,7 @@ body:has(.pip-map-local-fullscreen) .dice-fab {
 .pip-map-mode-shell.is-world .pip-map-grid { inset: 0; }
 
 @media (max-width: 768px) {
-  .pip-map-mode-switch { top: 6px; width: calc(100% - 20px); }
+  .pip-map-mode-switch { top: -42px; width: calc(100% - 20px); }
   .pip-map-mode-switch button {
     flex: 1 1 0;
     min-width: 0;
