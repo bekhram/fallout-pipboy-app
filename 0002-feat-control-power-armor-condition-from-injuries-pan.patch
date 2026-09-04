@@ -1,0 +1,367 @@
+From 75faa07557fda4670fdb60820639c825d03ad866 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 3 Sep 2026 10:13:55 -0700
+Subject: [PATCH 2/2] feat: control power armor condition from injuries panel
+
+---
+ src/App.jsx                                |  1 +
+ src/components/status/InjuriesVaultBoy.jsx | 57 ++++++++++++++++-----
+ src/components/status/InjuryPanel.jsx      | 39 ++++++++++++++-
+ src/components/status/StatusScreen.jsx     |  4 +-
+ src/data/powerArmor.js                     | 58 ++++++++++++++++++++++
+ src/styles/features/injuries.css           | 24 ++++++++-
+ 6 files changed, 168 insertions(+), 15 deletions(-)
+
+diff --git a/src/App.jsx b/src/App.jsx
+index 4c7472d..9357b19 100644
+--- a/src/App.jsx
++++ b/src/App.jsx
+@@ -561,6 +561,7 @@ const updateSkill = (skillName, field, value) =>
+               updateStatus(status, !form.statuses[status])
+             }
+             onInjuryToggle={updateInjury}
++            onArmorChange={updateArmor}
+             hpMax={baseMaxHp}
+             hpCurrent={currentHpValue}
+             radiationHp={radiationHp}
+diff --git a/src/components/status/InjuriesVaultBoy.jsx b/src/components/status/InjuriesVaultBoy.jsx
+index c00f83d..9e2602d 100644
+--- a/src/components/status/InjuriesVaultBoy.jsx
++++ b/src/components/status/InjuriesVaultBoy.jsx
+@@ -3,6 +3,11 @@ import { useTranslation } from "react-i18next";
+ import { getAdjustedArmorSnapshotForPart } from "../../utils/characterMath.js";
+ 
+ import healthy from "../../assets/injuries/vaultboy_healthy.png";
++import powerArmor from "../../assets/injuries/vaultboy_power_armor.png";
++import {
++  calculatePowerArmorLocations,
++  getPowerArmorPartCondition,
++} from "../../data/powerArmor.js";
+ 
+ import headInjured from "../../assets/injuries/head_injured.png";
+ import headCritical from "../../assets/injuries/head_critical.png";
+@@ -93,8 +98,28 @@ export default function InjuriesVaultBoy({
+   armor = {},
+   derived = {},
+   onPartClick,
++  onArmorPartClick,
+ }) {
+-  const { t } = useTranslation();
++  const { t, i18n } = useTranslation();
++  const armorStateLabels = {
++    en: { intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece" },
++    ru: { intact: "Целая", damaged: "Повреждена", broken: "Сломана", empty: "Нет детали" },
++    uk: { intact: "Ціла", damaged: "Пошкоджена", broken: "Зламана", empty: "Немає деталі" },
++    pl: { intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", empty: "Brak części" },
++  }[i18n.resolvedLanguage?.split("-")[0]] || {
++    intact: "Intact", damaged: "Damaged", broken: "Broken", empty: "No piece",
++  };
++
++  const powerConditions = Object.fromEntries(
++    PART_ORDER.map((part) => [
++      part,
++      getPowerArmorPartCondition(armor?._power?.loadout, ARMOR_KEY_MAP[part]),
++    ])
++  );
++  const isPowerArmorVisible = Object.values(powerConditions).some(Boolean);
++  const powerArmorStats = isPowerArmorVisible
++    ? calculatePowerArmorLocations(armor?._power?.loadout)
++    : null;
+ 
+   const layers = PART_ORDER
+     .map((part) => {
+@@ -136,13 +161,13 @@ export default function InjuriesVaultBoy({
+     <div className="pip-injuries-vaultboy-wrap">
+       <div className="pip-injuries-vaultboy">
+         <img
+-          src={healthy}
++          src={isPowerArmorVisible ? powerArmor : healthy}
+           alt={t("injuries.vaultBoyAlt")}
+           className="pip-injuries-vaultboy-base"
+           draggable="false"
+         />
+ 
+-        {layers.map((layer, index) => (
++        {!isPowerArmorVisible && layers.map((layer, index) => (
+           <img
+             key={`${layer.part}-${layer.state}-${index}`}
+             src={layer.src}
+@@ -155,9 +180,14 @@ export default function InjuriesVaultBoy({
+ 
+         {PART_ORDER.map((part) => {
+           const box = HITBOXES[part];
+-          const state = injuries[part] || "normal";
++          const armorCondition = powerConditions[part];
++          const state = isPowerArmorVisible
++            ? armorCondition?.state || "empty"
++            : injuries[part] || "normal";
+           const partLabel = t(PART_LABEL_KEYS[part]);
+-          const stateLabel = t(`injuries.state.${state}`);
++          const stateLabel = isPowerArmorVisible
++            ? armorStateLabels[state]
++            : t(`injuries.state.${state}`);
+ 
+           return (
+             <button
+@@ -170,7 +200,7 @@ export default function InjuriesVaultBoy({
+                 width: box.width,
+                 height: box.height,
+               }}
+-              onClick={() => onPartClick?.(part)}
++              onClick={() => isPowerArmorVisible ? onArmorPartClick?.(part) : onPartClick?.(part)}
+               aria-label={`${partLabel} ${stateLabel}`}
+               title={`${partLabel}: ${stateLabel}`}
+             />
+@@ -180,11 +210,9 @@ export default function InjuriesVaultBoy({
+         {PART_ORDER.map((part) => {
+           const badge = ARMOR_BADGES[part];
+           const partLabel = t(PART_LABEL_KEYS[part]);
+-          const adjusted = getAdjustedArmorSnapshotForPart({
+-            armor,
+-            part,
+-            derived,
+-          });
++          const adjusted = powerArmorStats?.[ARMOR_KEY_MAP[part]] ||
++            getAdjustedArmorSnapshotForPart({ armor, part, derived });
++          const armorCondition = powerConditions[part];
+ 
+           const physical = formatArmorValue(adjusted.physical);
+           const energy = formatArmorValue(adjusted.energy);
+@@ -201,6 +229,11 @@ export default function InjuriesVaultBoy({
+               title={`${partLabel}: Physical ${physical} / Energy ${energy} / Radiation ${radiation}`}
+             >
+               <div className="pip-armor-badge-code">{badge.code}</div>
++              {isPowerArmorVisible && (
++                <div className={`pip-armor-badge-condition is-${armorCondition?.state || "empty"}`}>
++                  {armorStateLabels[armorCondition?.state || "empty"]}
++                </div>
++              )}
+               <div className="pip-armor-badge-values">
+                 <span>{physical}</span>
+                 <span>{energy}</span>
+@@ -240,4 +273,4 @@ export default function InjuriesVaultBoy({
+       </div>
+     </div>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/components/status/InjuryPanel.jsx b/src/components/status/InjuryPanel.jsx
+index 9e1e8f3..564d1a8 100644
+--- a/src/components/status/InjuryPanel.jsx
++++ b/src/components/status/InjuryPanel.jsx
+@@ -2,6 +2,7 @@ import React, { useState } from "react";
+ import { useTranslation } from "react-i18next";
+ import { STATUS_LIST } from "../../constants.js";
+ import InjuriesVaultBoy from "./InjuriesVaultBoy";
++import { getPowerArmorPartCondition } from "../../data/powerArmor.js";
+ 
+ const injuryLabels = [
+   ["head", "injuries.head"],
+@@ -24,6 +25,7 @@ export default function InjuryPanel({
+   armor,
+   derived,
+   onToggle,
++  onArmorChange,
+   survivalConditions = [],
+ }) {
+   const { t } = useTranslation();
+@@ -62,6 +64,40 @@ export default function InjuryPanel({
+     onToggle(part, cycle[current]);
+   };
+ 
++  const handleArmorPartClick = (part) => {
++    const armorPartMap = {
++      head: "Head",
++      torso: "Torso",
++      leftArm: "Left Arm",
++      rightArm: "Right Arm",
++      leftLeg: "Left Leg",
++      rightLeg: "Right Leg",
++    };
++    const slotId = armorPartMap[part];
++    const loadout = armor?._power?.loadout;
++    const condition = getPowerArmorPartCondition(loadout, slotId);
++    if (!condition) return;
++
++    const currentHp =
++      condition.state === "intact"
++        ? Math.max(1, condition.maximum - 1)
++        : condition.state === "damaged"
++        ? 0
++        : condition.maximum;
++    const existing = loadout.slots?.[slotId] || {};
++    const legacySetId = loadout.setId && !["none", "frame", "mixed"].includes(loadout.setId)
++      ? loadout.setId
++      : "";
++    onArmorChange?.("_power", "loadout", {
++      ...loadout,
++      setId: "mixed",
++      slots: {
++        ...(loadout.slots || {}),
++        [slotId]: { ...existing, setId: existing.setId || legacySetId, currentHp },
++      },
++    });
++  };
++
+   const handleStatusClick = (statusKey) => {
+     setSelectedStatusKey((prev) => (prev === statusKey ? null : statusKey));
+   };
+@@ -85,6 +121,7 @@ export default function InjuryPanel({
+           armor={armor}
+           derived={derived}
+           onPartClick={handlePartClick}
++          onArmorPartClick={handleArmorPartClick}
+         />
+ 
+         <div className="pip-injuries-side">
+@@ -154,4 +191,4 @@ export default function InjuryPanel({
+       </div>
+     </section>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/components/status/StatusScreen.jsx b/src/components/status/StatusScreen.jsx
+index 5cb0f59..3d6853b 100644
+--- a/src/components/status/StatusScreen.jsx
++++ b/src/components/status/StatusScreen.jsx
+@@ -24,6 +24,7 @@ export default function StatusScreen({
+   onChangeOrigin, // <-- Добавлен новый пропс
+   onStatusToggle,
+   onInjuryToggle,
++  onArmorChange,
+   hpMax,
+   hpCurrent,
+   radiationHp,
+@@ -325,6 +326,7 @@ if (derived?.immunities?.includes("radiation")) {
+         armor={armor}
+         derived={derived}
+         onToggle={onInjuryToggle}
++        onArmorChange={onArmorChange}
+         survivalConditions={survivalConditions}
+       />
+ 
+@@ -338,4 +340,4 @@ if (derived?.immunities?.includes("radiation")) {
+       />
+     </div>
+   );
+-}
+\ No newline at end of file
++}
+diff --git a/src/data/powerArmor.js b/src/data/powerArmor.js
+index f5bfbc9..91b37db 100644
+--- a/src/data/powerArmor.js
++++ b/src/data/powerArmor.js
+@@ -293,3 +293,61 @@ export function calculatePowerArmorLocations(loadout) {
+     })
+   );
+ }
++
++const POWER_SLOT_TYPES = {
++  Head: "head",
++  Torso: "torso",
++  "Left Arm": "arm",
++  "Right Arm": "arm",
++  "Left Leg": "leg",
++  "Right Leg": "leg",
++};
++
++export function getPowerArmorPartCondition(loadout, part) {
++  if (!loadout || !POWER_SLOT_TYPES[part]) return null;
++  const type = POWER_SLOT_TYPES[part];
++  const selected = loadout.slots?.[part] || {};
++  const legacySet = POWER_ARMOR_SETS.find((set) => set.id === loadout.setId);
++  const selectedSet =
++    POWER_ARMOR_SETS.find((set) => set.id === selected.setId) || legacySet;
++  if (!selectedSet) return null;
++
++  const legacyMods = loadout.mods?.[type] || {};
++  const upgrade = availablePowerUpgrades(selectedSet.id, type).find(
++    (mod) => mod.id === (selected.upgradeId || "none")
++  );
++  const platingOptions =
++    selectedSet.id === "raider"
++      ? POWER_ARMOR_PLATING.filter((mod) => mod.id === "none")
++      : availablePowerMods(POWER_ARMOR_PLATING, selectedSet.id, type);
++  const systemOptions = availablePowerMods(
++    POWER_ARMOR_SYSTEMS,
++    selectedSet.id,
++    type
++  );
++  const plating =
++    platingOptions.find(
++      (mod) => mod.id === (selected.platingId || legacyMods.platingId || "none")
++    ) || platingOptions[0];
++  const system =
++    systemOptions.find(
++      (mod) => mod.id === (selected.systemId || legacyMods.systemId || "none")
++    ) || systemOptions[0];
++  const maximum = calculatePowerPart(
++    selectedSet.parts[type],
++    plating,
++    system,
++    type,
++    upgrade
++  ).hp;
++  const current =
++    selected.currentHp === null || selected.currentHp === undefined
++      ? maximum
++      : Math.max(0, Math.min(Number(selected.currentHp || 0), maximum));
++
++  return {
++    current,
++    maximum,
++    state: current <= 0 ? "broken" : current < maximum ? "damaged" : "intact",
++  };
++}
+diff --git a/src/styles/features/injuries.css b/src/styles/features/injuries.css
+index 08b019b..35fefaa 100644
+--- a/src/styles/features/injuries.css
++++ b/src/styles/features/injuries.css
+@@ -124,6 +124,16 @@
+   background: rgba(255, 220, 120, 0.08);
+ }
+ 
++.pip-injury-hitbox.is-damaged:hover {
++  background: rgba(255, 190, 70, 0.12);
++  box-shadow: inset 0 0 0 1px rgba(255, 190, 70, 0.42);
++}
++
++.pip-injury-hitbox.is-broken:hover {
++  background: rgba(255, 90, 90, 0.12);
++  box-shadow: inset 0 0 0 1px rgba(255, 90, 90, 0.5);
++}
++
+ .pip-injury-hitbox:focus-visible {
+   box-shadow: inset 0 0 0 1px rgba(207, 255, 159, 0.55);
+ }
+@@ -150,6 +160,18 @@
+   margin-bottom: 6px;
+ }
+ 
++.pip-armor-badge-condition {
++  margin: -2px 0 6px;
++  font-size: 8px;
++  letter-spacing: 0.05em;
++  text-transform: uppercase;
++}
++
++.pip-armor-badge-condition.is-intact { color: var(--pip-accent); }
++.pip-armor-badge-condition.is-damaged { color: #ffc85a; }
++.pip-armor-badge-condition.is-broken { color: #ff7777; }
++.pip-armor-badge-condition.is-empty { color: var(--pip-text-dim); }
++
+ .pip-armor-badge-values {
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+@@ -664,4 +686,4 @@
+ 
+ .pip-injury-mod-row.is-negative strong {
+   color: var(--pip-danger);
+-}
+\ No newline at end of file
++}
+-- 
+2.51.1
+

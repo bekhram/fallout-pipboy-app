@@ -1,0 +1,42 @@
+From 8a98f2f59b14e0b0e92f725a4d77d558be447315 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Thu, 3 Sep 2026 10:18:39 -0700
+Subject: [PATCH] fix: align power armor figure scale
+
+---
+ src/components/status/InjuriesVaultBoy.jsx | 2 +-
+ src/styles/features/injuries.css           | 5 +++++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/src/components/status/InjuriesVaultBoy.jsx b/src/components/status/InjuriesVaultBoy.jsx
+index 9e2602d..514d9f0 100644
+--- a/src/components/status/InjuriesVaultBoy.jsx
++++ b/src/components/status/InjuriesVaultBoy.jsx
+@@ -163,7 +163,7 @@ export default function InjuriesVaultBoy({
+         <img
+           src={isPowerArmorVisible ? powerArmor : healthy}
+           alt={t("injuries.vaultBoyAlt")}
+-          className="pip-injuries-vaultboy-base"
++          className={`pip-injuries-vaultboy-base${isPowerArmorVisible ? " is-power-armor" : ""}`}
+           draggable="false"
+         />
+ 
+diff --git a/src/styles/features/injuries.css b/src/styles/features/injuries.css
+index 35fefaa..30fbab7 100644
+--- a/src/styles/features/injuries.css
++++ b/src/styles/features/injuries.css
+@@ -75,6 +75,11 @@
+   z-index: 1;
+ }
+ 
++.pip-injuries-vaultboy-base.is-power-armor {
++  transform: scale(0.78);
++  transform-origin: center center;
++}
++
+ .pip-injuries-vaultboy-overlay {
+   z-index: 2;
+   opacity: 0.9;
+-- 
+2.51.1
+
