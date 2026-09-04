@@ -23,6 +23,13 @@
   border-radius: 10px;
 }
 
+/* The mode switch intentionally sits above the map. Do not clip its parent layer. */
 .pip-map-board > .pip-map-grid-layer {
+  overflow: visible;
+}
+
+/* Clip only the map artwork/cells, leaving the mode switch visible above it. */
+.pip-map-grid {
   overflow: hidden;
+  border-radius: 10px;
 }
