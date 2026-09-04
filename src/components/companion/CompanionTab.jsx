@@ -40,7 +40,6 @@ const COPY = {
     notesPlaceholder: "Equipment, behavior and useful reminders...",
     copy: "COPY",
     remove: "DELETE",
-    close: "CLOSE",
     emptyTitle: "NO COMPANIONS YET",
     emptyText: "Add a companion or pet to create the first card.",
   },
@@ -77,7 +76,6 @@ const COPY = {
     notesPlaceholder: "Снаряжение, поведение и важные заметки...",
     copy: "КОПИЯ",
     remove: "УДАЛИТЬ",
-    close: "ЗАКРЫТЬ",
     emptyTitle: "КОМПАНЬОНОВ ПОКА НЕТ",
     emptyText: "Добавь компаньона или питомца, чтобы создать первую карточку.",
   },
@@ -114,7 +112,6 @@ const COPY = {
     notesPlaceholder: "Спорядження, поведінка та важливі нотатки...",
     copy: "КОПІЯ",
     remove: "ВИДАЛИТИ",
-    close: "ЗАКРИТИ",
     emptyTitle: "КОМПАНЬЙОНІВ ЩЕ НЕМАЄ",
     emptyText: "Додай компаньйона або улюбленця, щоб створити першу картку.",
   },
@@ -151,7 +148,6 @@ const COPY = {
     notesPlaceholder: "Ekwipunek, zachowanie i ważne notatki...",
     copy: "KOPIUJ",
     remove: "USUŃ",
-    close: "ZAMKNIJ",
     emptyTitle: "BRAK TOWARZYSZY",
     emptyText: "Dodaj towarzysza lub pupila, aby utworzyć pierwszą kartę.",
   },
@@ -262,18 +258,15 @@ export default function CompanionTab({ open, onClose }) {
 
   useEffect(() => {
     if (!open) return undefined;
-
     const measure = () => {
       const nav = document.querySelector(".pip-topnav");
       const bottom = nav?.getBoundingClientRect?.().bottom;
       setTopOffset(Math.max(0, Math.round(Number(bottom) || 0)));
     };
-
     measure();
     window.addEventListener("resize", measure);
     window.addEventListener("orientationchange", measure);
     const timer = window.setTimeout(measure, 120);
-
     return () => {
       window.removeEventListener("resize", measure);
       window.removeEventListener("orientationchange", measure);
@@ -304,9 +297,7 @@ export default function CompanionTab({ open, onClose }) {
     if (!active) return;
     setState((prev) => ({
       ...prev,
-      items: prev.items.map((item) =>
-        item.id === active.id ? { ...item, ...patch } : item
-      ),
+      items: prev.items.map((item) => item.id === active.id ? { ...item, ...patch } : item),
     }));
   };
 
@@ -317,18 +308,14 @@ export default function CompanionTab({ open, onClose }) {
       id: makeId(),
       name: active.name ? `${active.name} Copy` : "",
     });
-    setState((prev) => ({
-      items: [...prev.items, duplicate],
-      activeId: duplicate.id,
-    }));
+    setState((prev) => ({ items: [...prev.items, duplicate], activeId: duplicate.id }));
   };
 
   const removeActive = () => {
     if (!active) return;
     setState((prev) => {
       const items = prev.items.filter((item) => item.id !== active.id);
-      const activeId = items[0]?.id || null;
-      return { items, activeId };
+      return { items, activeId: items[0]?.id || null };
     });
   };
 
@@ -360,20 +347,13 @@ export default function CompanionTab({ open, onClose }) {
             <h2>[ {copy.title} ]</h2>
             <span>{copy.subtitle}</span>
           </div>
-          <button type="button" className="pip-btn companion-close-btn" onClick={onClose}>
-            ✕ <span>{copy.close}</span>
-          </button>
         </div>
 
         <div className="companion-toolbar">
           <button type="button" className="pip-btn is-primary" onClick={() => add("companion")}>{copy.addCompanion}</button>
           <button type="button" className="pip-btn" onClick={() => add("pet")}>{copy.addPet}</button>
-          {active && (
-            <>
-              <button type="button" className="pip-btn" onClick={copyActive}>{copy.copy}</button>
-              <button type="button" className="pip-btn companion-delete-btn" onClick={removeActive}>{copy.remove}</button>
-            </>
-          )}
+          {active && <button type="button" className="pip-btn" onClick={copyActive}>{copy.copy}</button>}
+          {active && <button type="button" className="pip-btn companion-delete-btn" onClick={removeActive}>{copy.remove}</button>}
         </div>
 
         {state.items.length > 0 && (
@@ -390,7 +370,10 @@ export default function CompanionTab({ open, onClose }) {
                 <span className="companion-roster-avatar">{(item.name || "?").trim().slice(0, 1).toUpperCase() || "?"}</span>
                 <span className="companion-roster-copy">
                   <strong>{item.name || copy.unnamed}</strong>
-                  <small>{item.creatureType || (item.kind === "pet" ? copy.pet : copy.companion)} · LV {item.level || "1"}</small>
+                  <small>
+                    <span>{item.creatureType || (item.kind === "pet" ? copy.pet : copy.companion)}</span>
+                    <span>LV {item.level || "1"}</span>
+                  </small>
                 </span>
               </button>
             ))}
