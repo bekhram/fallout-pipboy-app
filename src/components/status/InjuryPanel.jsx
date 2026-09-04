@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { STATUS_LIST } from "../../constants.js";
 import InjuriesVaultBoy from "./InjuriesVaultBoy";
 import { getPowerArmorPartCondition } from "../../data/powerArmor.js";
+import { PIPBOY_END_CONSUMABLE_EFFECT_EVENT } from "../../utils/consumableEffects.js";
 
 const injuryLabels = [
   ["head", "injuries.head"],
@@ -28,6 +29,13 @@ const cycle = {
   treated: "normal",
 };
 
+const CONSUMABLE_UI = {
+  en: { title: "ACTIVE CONSUMABLES", end: "END" },
+  ru: { title: "АКТИВНЫЕ РАСХОДНИКИ", end: "ЗАВЕРШИТЬ" },
+  uk: { title: "АКТИВНІ ВИТРАТНІ ПРЕДМЕТИ", end: "ЗАВЕРШИТИ" },
+  pl: { title: "AKTYWNE MATERIAŁY", end: "ZAKOŃCZ" },
+};
+
 export default function InjuryPanel({
   injuries,
   statuses,
@@ -37,7 +45,9 @@ export default function InjuryPanel({
   onArmorChange,
   survivalConditions = [],
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const consumableUi = CONSUMABLE_UI[language] || CONSUMABLE_UI.en;
   const [selectedStatusKey, setSelectedStatusKey] = useState(null);
   const [vaultBoyMode, setVaultBoyMode] = useState("powerArmor");
 
@@ -68,6 +78,9 @@ export default function InjuryPanel({
 
   const selectedStatus =
     uniqueStatuses.find((item) => item.key === selectedStatusKey) || null;
+  const consumableEffects = Array.isArray(derived?.activeConsumableEffects)
+    ? derived.activeConsumableEffects
+    : [];
 
   const hasPowerArmor = powerArmorSlotIds.some((slotId) =>
     Boolean(getPowerArmorPartCondition(armor?._power?.loadout, slotId))
@@ -115,6 +128,14 @@ export default function InjuryPanel({
 
   const handleStatusClick = (statusKey) => {
     setSelectedStatusKey((prev) => (prev === statusKey ? null : statusKey));
+  };
+
+  const handleEndConsumableEffect = (effectId) => {
+    window.dispatchEvent(
+      new CustomEvent(PIPBOY_END_CONSUMABLE_EFFECT_EVENT, {
+        detail: { effectId },
+      })
+    );
   };
 
   return (
@@ -208,6 +229,33 @@ export default function InjuryPanel({
                   <p>{t(selectedStatus.descriptionKey)}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {consumableEffects.length > 0 && (
+            <div className="pip-injury-effects">
+              <div className="pip-injuries-label">[ {consumableUi.title} ]</div>
+              <div className="pip-injury-effects-list">
+                {consumableEffects.map((effect) => (
+                  <div
+                    key={effect.id}
+                    className="pip-injury-effect-row is-treated"
+                    title={effect.effectText}
+                  >
+                    <strong>{effect.sourceName}</strong>
+                    <small>{effect.duration}</small>
+                    <span>{effect.effectText}</span>
+                    <button
+                      type="button"
+                      className="pip-btn"
+                      onClick={() => handleEndConsumableEffect(effect.id)}
+                      style={{ marginTop: 6, alignSelf: "flex-start" }}
+                    >
+                      {consumableUi.end}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
