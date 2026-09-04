@@ -4,6 +4,7 @@ import { getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
 
 const CATEGORY_LABEL_KEYS = {
   weapons: "inventory.categories.weapons",
+  armor: "armorPanel.title",
   ammo: "inventory.categories.ammo",
   aid: "inventory.categories.aid",
   food: "inventory.categories.food",
@@ -29,6 +30,16 @@ export default function InventoryCard({
     : getExtraCategoryLabel(item.category, i18n.resolvedLanguage);
 
   const metadata = [
+    isVisibleValue(item.damage) && `DMG ${item.damage}`,
+    isVisibleValue(item.rate) && `FR ${item.rate}`,
+    isVisibleValue(item.range) && `Range ${item.range}`,
+    isVisibleValue(item.damageType) && `Type: ${item.damageType}`,
+    isVisibleValue(item.weaponType) && item.weaponType,
+    isVisibleValue(item.ammo) && `Ammo: ${item.ammo}`,
+    isVisibleValue(item.armorPhysical) && `P DR ${item.armorPhysical}`,
+    isVisibleValue(item.armorEnergy) && `E DR ${item.armorEnergy}`,
+    isVisibleValue(item.armorRadiation) && `R DR ${item.armorRadiation}`,
+    isVisibleValue(item.armorLocations) && `Locations: ${item.armorLocations}`,
     isVisibleValue(item.healing) && `HP +${item.healing}`,
     isVisibleValue(item.radiation) && `RAD ${item.radiation}`,
     isVisibleValue(item.duration) && `Duration: ${item.duration}`,
