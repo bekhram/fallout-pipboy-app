@@ -8,6 +8,7 @@ import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
 import "./map.css";
 import bostonMapImage from "../../assets/map/boston-map.png";
+import fallout1MapAsset from "../../assets/map/fallout1-southern-california.js";
 import {
   findTravelRoute,
   getCell,
@@ -597,7 +598,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} disabled={!atRightEdge}>{t("mapPanel.east")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} disabled={!atBottomEdge}>{t("mapPanel.south")}</button>
 
-          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: activeRegion.id === "commonwealth" ? `url(${bostonMapImage})` : "none", backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
+          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: activeRegion.id === "commonwealth" ? `url(${bostonMapImage})` : activeRegion.id === "california_fo1" ? `url(${fallout1MapAsset})` : "none", backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
             <div className="pip-map-poi-layer">
               {visibleWorldLocations.map((location) => (
                 <button
