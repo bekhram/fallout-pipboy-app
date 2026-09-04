@@ -1,6 +1,6 @@
 {
   "tabs": {
-    "status": "STATUS",
+    "status": "STATUSES",
     "special": "SPECIAL",
     "weapons": "WEAPONS",
     "inventory": "INV",
@@ -417,6 +417,7 @@
     "addPortrait": "ADD PORTRAIT",
     "origin": "Origin",
     "level": "Level",
+    "xp": "Experience",
     "defense": "Defense",
     "initiative": "Initiative",
     "melee": "Melee",
