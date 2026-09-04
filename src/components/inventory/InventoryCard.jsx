@@ -64,9 +64,14 @@ export default function InventoryCard({
 
   const handleUse = () => {
     if (!canUse || quantity <= 0) return;
+
     window.dispatchEvent(
       new CustomEvent(PIPBOY_USE_ITEM_EVENT, { detail: { index } })
     );
+
+    if (quantity <= 1) {
+      onRemove(index);
+    }
   };
 
   return (
