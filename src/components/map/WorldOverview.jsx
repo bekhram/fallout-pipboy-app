@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
+import { mapUiText } from "./mapUiText.js";
 
 const MIN_ZOOM = 0.65;
 const MAX_ZOOM = 2;
@@ -16,6 +18,9 @@ function clamp(value, min, max) {
 }
 
 export default function WorldOverview({ mapData, playerPosition }) {
+  const { i18n } = useTranslation();
+  const language = i18n.resolvedLanguage || i18n.language || "en";
+  const tx = (key, vars) => mapUiText(language, key, vars);
   const worldOffset = mapData?.worldOffset || { x: 0, y: 0 };
   const cols = mapData?.cols || 8;
   const rows = mapData?.rows || 8;
@@ -99,14 +104,14 @@ export default function WorldOverview({ mapData, playerPosition }) {
     <section className="pip-world-overview">
       <div className="pip-world-overview__toolbar">
         <div>
-          <strong>WORLD OVERVIEW</strong>
-          <span>{selected ? `ROUTE // ${locationName(selected).toUpperCase()}` : "SELECT A STATIC LOCATION"}</span>
+          <strong>{tx("worldOverview")}</strong>
+          <span>{selected ? `${tx("route")} // ${locationName(selected).toUpperCase()}` : tx("selectStaticLocation")}</span>
         </div>
         <div className="pip-world-overview__zoom">
           <button type="button" onClick={() => setZoom((value) => clamp(value - ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}>−</button>
           <span>{Math.round(zoom * 100)}%</span>
           <button type="button" onClick={() => setZoom((value) => clamp(value + ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}>+</button>
-          <button type="button" onClick={() => setZoom(1)}>FIT</button>
+          <button type="button" onClick={() => setZoom(1)}>{tx("fit")}</button>
         </div>
       </div>
 
@@ -142,18 +147,18 @@ export default function WorldOverview({ mapData, playerPosition }) {
             );
           })}
 
-          <div className="pip-world-overview__player" style={playerPoint} title="Current position">
+          <div className="pip-world-overview__player" style={playerPoint} title={tx("currentPosition")}>
             <span>▲</span>
-            <em>YOU</em>
+            <em>{tx("you")}</em>
           </div>
         </div>
       </div>
 
       <div className="pip-world-overview__status">
-        <span>WORLD {playerWorld.x},{playerWorld.y}</span>
-        {selected ? <span>TARGET {selected.worldX},{selected.worldY}</span> : null}
-        {selected ? <span>~{distance.toFixed(1)} BLOCKS</span> : null}
-        <span>{Math.ceil(bounds.width / cols)}×{Math.ceil(bounds.height / rows)} SECTOR VIEW</span>
+        <span>{tx("world")} {playerWorld.x},{playerWorld.y}</span>
+        {selected ? <span>{tx("target")} {selected.worldX},{selected.worldY}</span> : null}
+        {selected ? <span>~{distance.toFixed(1)} {tx("blocks")}</span> : null}
+        <span>{Math.ceil(bounds.width / cols)}×{Math.ceil(bounds.height / rows)} {tx("sectorView")}</span>
       </div>
     </section>
   );
