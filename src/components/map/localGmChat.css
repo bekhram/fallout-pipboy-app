@@ -52,7 +52,8 @@
   letter-spacing: 0.08em;
 }
 
-.pip-local-gm__archive {
+.pip-local-gm__archive,
+.pip-local-gm__discoveries {
   border: 1px solid rgba(120, 255, 140, 0.28);
   background: rgba(2, 12, 6, 0.94);
   box-shadow: inset 0 0 18px rgba(120, 255, 140, 0.025);
@@ -116,6 +117,43 @@
   padding: 10px;
   border: 1px dashed rgba(120, 255, 140, 0.28);
   text-align: center;
+}
+
+.pip-local-gm__discovery-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pip-local-gm__discovery {
+  display: grid;
+  grid-template-columns: auto minmax(90px, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 210px;
+  flex: 1 1 220px;
+  padding: 7px 9px;
+  border: 1px solid rgba(120, 255, 140, 0.16);
+  background: rgba(120, 255, 140, 0.035);
+  font-size: 10px;
+}
+
+.pip-local-gm__discovery span,
+.pip-local-gm__discovery em {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  opacity: 0.62;
+}
+
+.pip-local-gm__discovery strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pip-local-gm__discovery em {
+  font-style: normal;
+  text-transform: uppercase;
 }
 
 .pip-local-gm__messages {
@@ -230,5 +268,9 @@
 
   .pip-local-gm__archive-list {
     grid-template-columns: 1fr;
+  }
+
+  .pip-local-gm__discovery {
+    min-width: 100%;
   }
 }
