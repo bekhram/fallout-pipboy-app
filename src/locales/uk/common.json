@@ -501,6 +501,8 @@
   },
   "perksPanel": {
     "title": "ПЕРКИ / РИСИ",
+    "originTraits": "РИСИ ПОХОДЖЕННЯ",
+    "perks": "ПЕРКИ",
     "perkEditor": "РЕДАКТОР ПЕРКА",
     "entryMode": "РЕЖИМ ВВЕДЕННЯ",
     "perkName": "Назва перка",

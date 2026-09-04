@@ -88,6 +88,8 @@ export default function PerksScreen({
   };
   const safeList = Array.isArray(perks) ? perks : [];
   const isEditing = editingIndex !== null;
+  const hasOriginTraits = safeList.some((item) => item.isOriginTrait);
+  const firstRegularPerkIndex = safeList.findIndex((item) => !item.isOriginTrait);
 
   const handleChange = (field, value) => {
     setPerkDraft((prev) => ({ ...prev, [field]: value }));
@@ -132,16 +134,28 @@ export default function PerksScreen({
 
       <div className="pip-perks-layout">
         <div className="pip-perks-list">
+          {hasOriginTraits && (
+            <h3 className="pip-perk-section-title">
+              [ {t("perksPanel.originTraits")} ]
+            </h3>
+          )}
           {safeList.map((item, index) => {
             const currentlyEditing = editingIndex === index;
             const perkId = getPerkId(item);
             const perkImage = PERK_IMAGES[perkId];
             return (
+              <React.Fragment key={item.id || index}>
+              {index === firstRegularPerkIndex && (
+                <h3 className="pip-perk-section-title is-perks">
+                  [ {t("perksPanel.perks")} ]
+                </h3>
+              )}
               <div
-                key={item.id || index}
                 className={`pip-perk-card ${
                   currentlyEditing ? "is-editing" : ""
-                } ${item.isOriginTrait ? "is-origin" : ""}`}
+                } ${item.isOriginTrait ? "is-origin" : ""} ${
+                  perkImage ? "has-image" : "no-image"
+                }`}
               >
                 {perkImage && (
                   <div className="pip-perk-image-wrap" aria-hidden="true">
@@ -195,6 +209,7 @@ export default function PerksScreen({
                 )}
                 </div>
               </div>
+              </React.Fragment>
             );
           })}
           {safeList.length === 0 && (

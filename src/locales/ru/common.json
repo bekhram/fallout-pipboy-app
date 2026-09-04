@@ -501,6 +501,8 @@
   },
   "perksPanel": {
     "title": "ПЕРКИ / ЧЕРТЫ",
+    "originTraits": "ЧЕРТЫ ПРОИСХОЖДЕНИЯ",
+    "perks": "ПЕРКИ",
     "perkEditor": "РЕДАКТОР ПЕРКА",
     "entryMode": "РЕЖИМ ВВОДА",
     "perkName": "Название перка",

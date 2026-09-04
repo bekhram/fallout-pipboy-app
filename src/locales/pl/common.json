@@ -509,6 +509,8 @@
   },
   "perksPanel": {
     "title": "PERKI / CECHY",
+    "originTraits": "CECHY POCHODZENIA",
+    "perks": "PERKI",
     "perkEditor": "EDYTOR PERKA",
     "entryMode": "TRYB WPROWADZANIA",
     "perkName": "Nazwa perka",

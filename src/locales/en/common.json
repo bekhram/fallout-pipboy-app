@@ -510,6 +510,8 @@
   },
   "perksPanel": {
     "title": "PERKS / TRAITS",
+    "originTraits": "ORIGIN TRAITS",
+    "perks": "PERKS",
     "perkEditor": "PERK EDITOR",
     "entryMode": "ENTRY MODE",
     "perkName": "Perk name",
