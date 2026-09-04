@@ -2,18 +2,29 @@
   width: 100%;
 }
 
-.companion-head {
+.pip-head.companion-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
+  gap: 12px;
 }
 
 .companion-head-copy {
   min-width: 0;
+  width: 100%;
   display: grid;
   gap: 3px;
 }
 
-.companion-head-copy h2 {
+.pip-head.companion-head .companion-head-copy h2 {
   margin: 0;
+  min-width: 0;
+  width: 100%;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
 }
 
 .companion-head-copy span {
@@ -330,8 +341,21 @@
 }
 
 @media (max-width: 760px) {
-  .companion-head {
+  .pip-head.companion-head {
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
+    gap: 8px;
+  }
+
+  .companion-head-copy {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .pip-head.companion-head > .pip-btn {
+    grid-column: 1 / -1;
+    width: 100%;
+    min-width: 0;
   }
 
   .companion-head-copy span {
@@ -363,19 +387,27 @@
 }
 
 @media (max-width: 520px) {
-  .companion-head {
+  .pip-head.companion-head {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
     gap: 8px;
   }
 
-  .companion-head h2 {
+  .pip-head.companion-head .companion-head-copy h2 {
+    display: block;
+    width: 100%;
+    max-width: 100%;
     font-size: 1rem;
-    line-height: 1.15;
-    overflow-wrap: anywhere;
+    line-height: 1.2;
+    writing-mode: horizontal-tb;
+    word-break: normal;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
 
-  .companion-head > .pip-btn {
+  .pip-head.companion-head > .pip-btn {
+    display: block;
     width: 100%;
   }
 
