@@ -597,24 +597,6 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       ) : null}
 
 
-      {!isArchiveView && pendingCheck ? (
-        <button
-          type="button"
-          className="pip-local-gm__check"
-          onClick={rollPendingCheck}
-          disabled={isSending || isCheckRolling}
-        >
-          <span className="pip-local-gm__check-label">{(CHECK_TEXT[language] || CHECK_TEXT.en).check}</span>
-          <strong>{pendingCheck.attribute || rawCharacter?.skills?.[pendingCheck.skill]?.attribute || "A"} + {pendingCheck.skill}</strong>
-          {pendingCheck.reason ? <em>{pendingCheck.reason}</em> : null}
-          <span>
-            {(CHECK_TEXT[language] || CHECK_TEXT.en).difficulty}: {pendingCheck.difficulty || 1}
-            {" · "}
-            {isCheckRolling ? (CHECK_TEXT[language] || CHECK_TEXT.en).rolling : (CHECK_TEXT[language] || CHECK_TEXT.en).tap}
-          </span>
-        </button>
-      ) : null}
-
       <div className="pip-local-gm__messages" aria-live="polite">
         {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
@@ -641,6 +623,23 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         <div className="pip-local-gm__archive-note">{tx("archiveNote")}</div>
       ) : (
         <>
+          {pendingCheck ? (
+            <button
+              type="button"
+              className="pip-local-gm__check"
+              onClick={rollPendingCheck}
+              disabled={isSending || isCheckRolling}
+            >
+              <span className="pip-local-gm__check-label">{(CHECK_TEXT[language] || CHECK_TEXT.en).check}</span>
+              <strong>{pendingCheck.attribute || rawCharacter?.skills?.[pendingCheck.skill]?.attribute || "A"} + {pendingCheck.skill}</strong>
+              {pendingCheck.reason ? <em>{pendingCheck.reason}</em> : null}
+              <span>
+                {(CHECK_TEXT[language] || CHECK_TEXT.en).difficulty}: {pendingCheck.difficulty || 1}
+                {" · "}
+                {isCheckRolling ? (CHECK_TEXT[language] || CHECK_TEXT.en).rolling : (CHECK_TEXT[language] || CHECK_TEXT.en).tap}
+              </span>
+            </button>
+          ) : null}
           <form className="pip-local-gm__composer" onSubmit={sendMessage}>
             <textarea
               value={draft}
