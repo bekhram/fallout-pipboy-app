@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { createRandomMap, FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
+import { createRandomMap } from "../../data/map/bostonMap.js";
+import { MAP_REGIONS, getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
 import { maybeRollTravelEncounter } from "../../utils/encounterEngine.js";
 import MapGrid from "./MapGrid.jsx";
 import { mapUiText } from "./mapUiText.js";
@@ -235,6 +236,8 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     () => ({ ...buildDefaultMapState(), ...(mapState || {}) }),
     [mapState]
   );
+  const activeRegion = getMapRegion(safeMapState.regionId);
+  const regionLocations = activeRegion.locations;
 
   const worldOffset = safeMapState.worldOffset;
   const worldTotalHours = safeMapState.worldTotalHours;
@@ -293,7 +296,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   const playerWorldX = worldOffset.x * mapData.cols + playerPosition.x;
   const playerWorldY = worldOffset.y * mapData.rows + playerPosition.y;
   const worldDateTime = useMemo(() => getWorldDateTime(worldTotalHours, t), [worldTotalHours, t]);
-  const trackedLocation = useMemo(() => getLocationById(trackedLocationId), [trackedLocationId]);
+  const trackedLocation = useMemo(() => getLocationById(trackedLocationId, regionLocations), [trackedLocationId, regionLocations]);
   const trackedDistanceBlocks = trackedLocation
     ? getDistanceInBlocks(playerWorldX, playerWorldY, trackedLocation.worldX, trackedLocation.worldY)
     : null;
@@ -323,8 +326,8 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     : 0;
 
   const worldLocations = useMemo(
-    () => getLocationsInSector(worldOffset, mapData.cols, mapData.rows),
-    [worldOffset, mapData.cols, mapData.rows]
+    () => getLocationsInSector(worldOffset, mapData.cols, mapData.rows, regionLocations),
+    [worldOffset, mapData.cols, mapData.rows, regionLocations]
   );
   const visibleWorldLocations = useMemo(
     () => worldLocations.filter((location) =>
@@ -449,7 +452,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         previousSectorKey = step.key;
       }
 
-      const staticLocation = FALLOUT_4_LOCATIONS.find(
+      const staticLocation = regionLocations.find(
         (location) => location.worldX === step.worldX && location.worldY === step.worldY
       );
       if (staticLocation && staticLocation.id !== trackedLocation.id) {
@@ -537,6 +540,26 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     setSelectedCell(null);
   }
 
+  function handleRegionChange(regionId) {
+    const nextRegion = getMapRegion(regionId);
+    const worldX = nextRegion.start.x;
+    const worldY = nextRegion.start.y;
+    const nextOffset = { x: Math.floor(worldX / MAP_COLS), y: Math.floor(worldY / MAP_ROWS) };
+    const nextPlayer = { x: modulo(worldX, MAP_COLS), y: modulo(worldY, MAP_ROWS) };
+    const nextMap = createRandomMap(MAP_ROWS, MAP_COLS, nextOffset);
+    onMapChange({
+      regionId: nextRegion.id,
+      worldOffset: nextOffset,
+      playerPosition: nextPlayer,
+      trackedLocationId: nextRegion.defaultTargetId,
+      discoveredKeys: revealAround(nextMap, nextPlayer, 1, []),
+      travelLog: [`${getRegionName(nextRegion, language)} // ${tx("enteredRegion")}`],
+      sectorCache: { [getSectorKey(nextOffset)]: nextMap },
+    });
+    setSelectedCell(null);
+    setMapMode("world");
+  }
+
   function selectStaticLocation(location) {
     onMapChange({ trackedLocationId: location.id });
     const cell = getCell(mapData, location.localX, location.localY);
@@ -547,6 +570,14 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     <div className="pip-screen pip-map-screen">
       <div className="pip-screen-header">
         <div className="pip-map-screen__time">{t("mapPanel.worldTime")}: {worldDateTime.fullText}</div>
+        <label className="pip-map-region-select">
+          <span>{tx("region")}</span>
+          <select className="pip-input" value={activeRegion.id} onChange={(event) => handleRegionChange(event.target.value)}>
+            {MAP_REGIONS.map((region) => (
+              <option key={region.id} value={region.id}>{region.game} — {getRegionName(region, language)}</option>
+            ))}
+          </select>
+        </label>
         <div className="pip-map-inline-hazards">{t("mapPanel.hazards")}: {renderHazardBadges(currentHazards)}</div>
       </div>
 
@@ -613,6 +644,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
                 weaponDatabase={weaponDatabase}
                 mapMode={mapMode}
                 setMapMode={setMapMode}
+                locations={regionLocations}
               />
             </div>
           </div>
@@ -624,7 +656,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
             <label className="pip-map-select-label">
               {t("mapPanel.target")}
               <select className="pip-input" value={trackedLocationId} onChange={(e) => onMapChange({ trackedLocationId: e.target.value })}>
-                {FALLOUT_4_LOCATIONS.map((location) => (
+                {regionLocations.map((location) => (
                   <option key={location.id} value={location.id}>{location.nameKey ? t(location.nameKey) : location.name}</option>
                 ))}
               </select>
