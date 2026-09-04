@@ -119,6 +119,7 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
     worldPosition: { x: worldX, y: worldY },
     currentTerrain: currentCell?.terrain || null,
     currentLocation: compactLocation(staticLocation) || currentCell?.poi || null,
+    isStaticLocation: Boolean(staticLocation),
     trackedObjective: compactLocation(trackedLocation),
     selectedDestination: selectedCell
       ? {
@@ -134,9 +135,11 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
 }
 
 function getSessionKey(world) {
-  if (world?.currentLocation?.id) return `location:${world.currentLocation.id}`;
-  if (world?.worldPosition) return `world:${world.worldPosition.x}:${world.worldPosition.y}`;
-  return `sector:${world?.sector || "unknown"}`;
+  if (world?.isStaticLocation && world?.currentLocation?.id) {
+    return `location:${world.currentLocation.id}`;
+  }
+  if (world?.worldPosition) return `procedural:${world.worldPosition.x}:${world.worldPosition.y}`;
+  return `procedural-sector:${world?.sector || "unknown"}`;
 }
 
 function normalizeEvents(events) {
@@ -166,7 +169,9 @@ function mergeEvents(previous, incoming) {
   return next.slice(-40);
 }
 
-function readSession(sessionKey) {
+function readSession(sessionKey, persistent) {
+  if (!persistent) return { messages: [], events: [] };
+
   const store = readStore();
   const saved = store?.[sessionKey];
   if (saved) {
@@ -176,20 +181,16 @@ function readSession(sessionKey) {
     };
   }
 
-  try {
-    const legacy = localStorage.getItem(LEGACY_CHAT_STORAGE_KEYS[1]);
-    const parsed = legacy ? JSON.parse(legacy) : null;
-    if (Array.isArray(parsed) && parsed.length) return { messages: parsed.slice(-80), events: [] };
-  } catch {
-    // Ignore legacy data errors.
-  }
-
   return { messages: [], events: [] };
 }
 
 function buildVisitedSessions() {
   return Object.entries(readStore())
-    .filter(([, session]) => Array.isArray(session?.messages) && session.messages.length > 0)
+    .filter(([key, session]) => {
+      if (!Array.isArray(session?.messages) || session.messages.length === 0) return false;
+      if (session?.persistent === true) return true;
+      return key.startsWith("location:");
+    })
     .map(([key, session]) => ({ key, ...session }))
     .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 }
@@ -197,8 +198,6 @@ function buildVisitedSessions() {
 function sessionLabel(session) {
   if (session?.location?.name) return session.location.name;
   if (session?.location?.id) return session.location.id.replaceAll("_", " ");
-  const position = session?.location?.worldPosition;
-  if (position) return `World ${position.x},${position.y}`;
   return session?.key || "Unknown location";
 }
 
@@ -223,6 +222,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData),
     [mapData, playerPosition, selectedCell, rawCharacter]
   );
+  const isPersistentLocation = world.isStaticLocation === true;
   const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
 
   const [draft, setDraft] = useState("");
@@ -231,8 +231,12 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [version, setVersion] = useState(0);
   const [viewedSessionKey, setViewedSessionKey] = useState(null);
-  const [messages, setMessages] = useState(() => readSession(currentSessionKey).messages);
-  const [events, setEvents] = useState(() => readSession(currentSessionKey).events);
+  const [messages, setMessages] = useState(
+    () => readSession(currentSessionKey, isPersistentLocation).messages
+  );
+  const [events, setEvents] = useState(
+    () => readSession(currentSessionKey, isPersistentLocation).events
+  );
   const introStartedRef = useRef(new Set());
 
   const activeSessionKey = viewedSessionKey || currentSessionKey;
@@ -245,20 +249,21 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
   useEffect(() => {
     setViewedSessionKey(null);
-    const session = readSession(currentSessionKey);
+    const session = readSession(currentSessionKey, isPersistentLocation);
     setMessages(session.messages);
     setEvents(session.events);
     setDraft("");
     setError("");
-  }, [currentSessionKey]);
+  }, [currentSessionKey, isPersistentLocation]);
 
   useEffect(() => {
-    const session = readSession(activeSessionKey);
+    if (!isArchiveView) return;
+    const session = readSession(activeSessionKey, true);
     setMessages(session.messages);
     setEvents(session.events);
     setDraft("");
     setError("");
-  }, [activeSessionKey]);
+  }, [activeSessionKey, isArchiveView]);
 
   function persist(nextMessages, incomingEvents = []) {
     const trimmedMessages = nextMessages.slice(-80);
@@ -266,22 +271,29 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     setMessages(trimmedMessages);
     setEvents(nextEvents);
 
-    const store = readStore();
-    store[currentSessionKey] = {
-      messages: trimmedMessages,
-      events: nextEvents,
-      updatedAt: Date.now(),
-      location: {
-        id: world.currentLocation?.id || null,
-        name: world.currentLocation?.name || null,
-        terrain: world.currentTerrain || null,
-        worldPosition: world.worldPosition || null,
-      },
-    };
-    writeStore(store);
-    setVersion((value) => value + 1);
+    if (isPersistentLocation) {
+      const store = readStore();
+      store[currentSessionKey] = {
+        messages: trimmedMessages,
+        events: nextEvents,
+        persistent: true,
+        updatedAt: Date.now(),
+        location: {
+          id: world.currentLocation?.id || null,
+          name: world.currentLocation?.name || null,
+          terrain: world.currentTerrain || null,
+          worldPosition: world.worldPosition || null,
+        },
+      };
+      writeStore(store);
+      setVersion((value) => value + 1);
+    }
 
-    if (incomingEvents.length && typeof onWorldEvents === "function") {
+    if (
+      isPersistentLocation &&
+      incomingEvents.length &&
+      typeof onWorldEvents === "function"
+    ) {
       onWorldEvents(normalizeEvents(incomingEvents), {
         sessionKey: currentSessionKey,
         world,
@@ -314,8 +326,11 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     setError("");
     setIsSending(true);
     try {
+      const persistenceInstruction = isPersistentLocation
+        ? "This is a static named world location. Treat prior discoveries and consequences as persistent."
+        : "This is a procedural location. Treat this visit as temporary and do not assume discoveries persist after the character leaves.";
       const result = await requestGm(
-        "Begin the local exploration scene now. Use the supplied character sheet and global-map context. Briefly establish where the character is, what they immediately notice, and one clear situation or point of interest they can react to. Do not decide the character's actions for them. End by asking what they do.",
+        `Begin the local exploration scene now. ${persistenceInstruction} Use the supplied character sheet and global-map context. Briefly establish where the character is, what they immediately notice, and one clear situation or point of interest they can react to. Do not decide the character's actions for them. End by asking what they do.`,
         history
       );
       persist([...history, { role: "gm", text: result.text, at: Date.now() }], result.events);
@@ -358,14 +373,16 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
   function resetChat() {
     if (isArchiveView) return;
-    const store = readStore();
-    delete store[currentSessionKey];
-    writeStore(store);
+    if (isPersistentLocation) {
+      const store = readStore();
+      delete store[currentSessionKey];
+      writeStore(store);
+      setVersion((value) => value + 1);
+    }
     setMessages([]);
     setEvents([]);
     setDraft("");
     setError("");
-    setVersion((value) => value + 1);
     introStartedRef.current.delete(currentSessionKey);
   }
 
@@ -396,10 +413,18 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
             {!isArchiveView && world.worldPosition
               ? ` · WORLD ${world.worldPosition.x},${world.worldPosition.y}`
               : ""}
+            {!isArchiveView
+              ? ` · ${isPersistentLocation ? "STATIC / SAVED" : "PROCEDURAL / TEMP"}`
+              : ""}
           </div>
         </div>
         <div className="pip-local-gm__header-actions">
-          <button type="button" className="pip-btn" onClick={() => setArchiveOpen((value) => !value)} disabled={isSending}>
+          <button
+            type="button"
+            className="pip-btn"
+            onClick={() => setArchiveOpen((value) => !value)}
+            disabled={isSending}
+          >
             VISITED ({visitedSessions.length})
           </button>
           {isArchiveView ? (
@@ -416,9 +441,9 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
       {archiveOpen ? (
         <aside className="pip-local-gm__archive">
-          <div className="pip-local-gm__archive-title">VISITED LOCATIONS</div>
+          <div className="pip-local-gm__archive-title">VISITED STATIC LOCATIONS</div>
           {visitedSessions.length === 0 ? (
-            <div className="pip-local-gm__archive-empty">No saved local sessions yet.</div>
+            <div className="pip-local-gm__archive-empty">No saved static locations yet.</div>
           ) : (
             <div className="pip-local-gm__archive-list">
               {visitedSessions.map((session) => (
@@ -452,7 +477,11 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
           <div className="pip-local-gm__archive-title">DISCOVERIES ({events.length})</div>
           <div className="pip-local-gm__discovery-list">
             {events.slice(-8).reverse().map((event, index) => (
-              <div className="pip-local-gm__discovery" key={`${event.type}-${event.title}-${index}`} title={event.detail || event.title}>
+              <div
+                className="pip-local-gm__discovery"
+                key={`${event.type}-${event.title}-${index}`}
+                title={event.detail || event.title}
+              >
                 <span>{event.type.toUpperCase()}</span>
                 <strong>{event.title}</strong>
                 <em>{event.status}</em>
@@ -466,11 +495,18 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
             <strong>AUTO GM READY.</strong>
-            <p>The GM will start this location's scene using your character and WORLD-map context.</p>
+            <p>
+              {isPersistentLocation
+                ? "This static location keeps its exploration history and discoveries."
+                : "This procedural location is temporary and will reset after you leave."}
+            </p>
           </div>
         ) : (
           messages.map((message, index) => (
-            <article key={`${message.at || index}-${index}`} className={`pip-local-gm__message pip-local-gm__message--${message.role}`}>
+            <article
+              key={`${message.at || index}-${index}`}
+              className={`pip-local-gm__message pip-local-gm__message--${message.role}`}
+            >
               <div className="pip-local-gm__speaker">{message.role === "gm" ? "AUTO GM" : "YOU"}</div>
               <div>{message.text}</div>
             </article>
