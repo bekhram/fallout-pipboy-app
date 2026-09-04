@@ -7,6 +7,7 @@ import InventoryEditor from "./InventoryEditor.jsx";
 const CATEGORY_LABEL_KEYS = {
   all: "inventory.categories.all",
   weapons: "inventory.categories.weapons",
+  armor: "armorPanel.title",
   ammo: "inventory.categories.ammo",
   aid: "inventory.categories.aid",
   food: "inventory.categories.food",
@@ -36,6 +37,21 @@ export default function InventoryScreen({
   const { t } = useTranslation();
   const [selectedIndices, setSelectedIndices] = useState([]);
   const [sellBonusPercent, setSellBonusPercent] = useState("0");
+
+  const inventoryCategories = useMemo(() => {
+    if (INVENTORY_CATEGORIES.some((item) => item.value === "armor")) {
+      return INVENTORY_CATEGORIES;
+    }
+
+    const next = [...INVENTORY_CATEGORIES];
+    const weaponsIndex = next.findIndex((item) => item.value === "weapons");
+    next.splice(Math.max(0, weaponsIndex + 1), 0, {
+      value: "armor",
+      label: "Armor",
+      labelKey: "armorPanel.title",
+    });
+    return next;
+  }, []);
 
   const filteredItems =
     activeCategory === "all"
@@ -144,7 +160,7 @@ export default function InventoryScreen({
         </div>
 
         <div className="pip-tagrow is-wrap push-bottom">
-          {INVENTORY_CATEGORIES.map((item) => (
+          {inventoryCategories.map((item) => (
             <button
               key={item.value}
               type="button"
@@ -156,7 +172,7 @@ export default function InventoryScreen({
                 clearSelected();
               }}
             >
-              {t(CATEGORY_LABEL_KEYS[item.value] || item.label)}
+              {t(CATEGORY_LABEL_KEYS[item.value] || item.labelKey || item.label)}
             </button>
           ))}
         </div>
