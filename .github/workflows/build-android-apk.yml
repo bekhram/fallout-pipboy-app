@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "public/downloads/**"
   workflow_dispatch:
 
 permissions:
@@ -53,54 +51,43 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      - name: Publish APK into web downloads
+      - name: Prepare APK
         shell: bash
         run: |
           set -euo pipefail
           APK_SOURCE="android/app/build/outputs/apk/release/app-release.apk"
-          APK_TARGET="public/downloads/pip2d20-android.apk"
-          VERSION="1.1.0"
-
+          mkdir -p mobile-release
           test -f "$APK_SOURCE"
-          mkdir -p public/downloads
-          cp "$APK_SOURCE" "$APK_TARGET"
-
-          SHA256=$(sha256sum "$APK_TARGET" | awk '{print $1}')
-          SIZE=$(stat -c%s "$APK_TARGET")
-          BUILT_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-          cat > public/downloads/mobile-version.json <<JSON
-          {
-            "platform": "android",
-            "version": "$VERSION",
-            "versionCode": 2,
-            "apk": "/downloads/pip2d20-android.apk",
-            "sha256": "$SHA256",
-            "size": $SIZE,
-            "commit": "${GITHUB_SHA}",
-            "builtAt": "$BUILT_AT"
-          }
-          JSON
+          cp "$APK_SOURCE" mobile-release/pip2d20-android.apk
+          sha256sum mobile-release/pip2d20-android.apk > mobile-release/pip2d20-android.apk.sha256
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: pip2d20-android-1.1.0
-          path: public/downloads/pip2d20-android.apk
+          path: |
+            mobile-release/pip2d20-android.apk
+            mobile-release/pip2d20-android.apk.sha256
           if-no-files-found: error
 
-      - name: Commit downloadable APK
+      - name: Publish GitHub Release
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/downloads/pip2d20-android.apk public/downloads/mobile-version.json
+          TAG="android-v1.1.0"
+          APK="mobile-release/pip2d20-android.apk"
+          CHECKSUM="mobile-release/pip2d20-android.apk.sha256"
 
-          if git diff --cached --quiet; then
-            echo "APK is already current."
-            exit 0
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" "$CHECKSUM" --clobber
+            gh release edit "$TAG" \
+              --title "PIP 2D20 Android 1.1.0" \
+              --notes "Signed Android build generated from the current main branch."
+          else
+            gh release create "$TAG" "$APK" "$CHECKSUM" \
+              --target "$GITHUB_SHA" \
+              --title "PIP 2D20 Android 1.1.0" \
+              --notes "Signed Android build generated from the current main branch."
           fi
-
-          git commit -m "chore: publish Android APK 1.1.0"
-          git push origin HEAD:main
