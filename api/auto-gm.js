@@ -9,6 +9,27 @@ const ALLOWED_EVENT_TYPES = new Set([
   "poi",
 ]);
 
+const ALLOWED_ATTRIBUTES = new Set(["S", "P", "E", "C", "I", "A", "L"]);
+const ALLOWED_SKILLS = new Set([
+  "Athletics",
+  "Barter",
+  "Big Guns",
+  "Energy Weapons",
+  "Explosives",
+  "Lockpick",
+  "Medicine",
+  "Melee Weapons",
+  "Pilot",
+  "Repair",
+  "Science",
+  "Small Guns",
+  "Sneak",
+  "Speech",
+  "Survival",
+  "Throwing",
+  "Unarmed",
+]);
+
 const LANGUAGE_NAMES = {
   en: "English",
   ru: "Russian",
@@ -66,15 +87,22 @@ function sanitizeEvents(events) {
 function sanitizeLocationState(locationState) {
   if (!locationState || typeof locationState !== "object") return null;
   const facts = Array.isArray(locationState.facts)
-    ? locationState.facts.slice(-40).filter((event) => event && ALLOWED_EVENT_TYPES.has(event.type)).map((event) => ({
-        type: event.type,
-        title: String(event.title || event.type).slice(0, 120),
-        detail: String(event.detail || "").slice(0, 500),
-        status: String(event.status || "discovered").slice(0, 40),
-      }))
+    ? locationState.facts
+        .slice(-40)
+        .filter((event) => event && ALLOWED_EVENT_TYPES.has(event.type))
+        .map((event) => ({
+          type: event.type,
+          title: String(event.title || event.type).slice(0, 120),
+          detail: String(event.detail || "").slice(0, 500),
+          status: String(event.status || "discovered").slice(0, 40),
+        }))
     : [];
+
   const byType = {};
-  for (const type of ALLOWED_EVENT_TYPES) byType[type] = facts.filter((event) => event.type === type);
+  for (const type of ALLOWED_EVENT_TYPES) {
+    byType[type] = facts.filter((event) => event.type === type);
+  }
+
   return {
     persistent: locationState.persistent === true,
     facts,
@@ -91,24 +119,55 @@ function sanitizeLocationState(locationState) {
   };
 }
 
-function extractMapEvents(text) {
-  const marker = /<map_events>([\s\S]*?)<\/map_events>/i;
-  const match = String(text || "").match(marker);
+function sanitizeSkillCheck(value) {
+  if (!value || typeof value !== "object") return null;
 
-  if (!match) {
-    return { text: String(text || "").trim(), events: [] };
+  const attribute = String(value.attribute || "").toUpperCase();
+  const skill = String(value.skill || "");
+  if (!ALLOWED_ATTRIBUTES.has(attribute) || !ALLOWED_SKILLS.has(skill)) return null;
+
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    attribute,
+    skill,
+    difficulty: Math.max(0, Math.min(5, Number(value.difficulty) || 1)),
+    diceCount: Math.max(1, Math.min(5, Number(value.diceCount) || 2)),
+    reason: String(value.reason || "").slice(0, 240),
+  };
+}
+
+function extractMachineBlocks(text) {
+  let visibleText = String(text || "");
+  let events = [];
+  let check = null;
+
+  const mapMarker = /<map_events>([\s\S]*?)<\/map_events>/i;
+  const mapMatch = visibleText.match(mapMarker);
+  if (mapMatch) {
+    try {
+      events = sanitizeEvents(JSON.parse(mapMatch[1]));
+    } catch {
+      events = [];
+    }
+    visibleText = visibleText.replace(mapMarker, "");
   }
 
-  let events = [];
-  try {
-    events = sanitizeEvents(JSON.parse(match[1]));
-  } catch {
-    events = [];
+  const checkMarker = /<skill_check>([\s\S]*?)<\/skill_check>/i;
+  const checkMatch = visibleText.match(checkMarker);
+  if (checkMatch) {
+    try {
+      const parsed = JSON.parse(checkMatch[1]);
+      check = parsed === null ? null : sanitizeSkillCheck(parsed);
+    } catch {
+      check = null;
+    }
+    visibleText = visibleText.replace(checkMarker, "");
   }
 
   return {
-    text: String(text || "").replace(marker, "").trim(),
+    text: visibleText.trim(),
     events,
+    check,
   };
 }
 
@@ -151,16 +210,20 @@ export default async function handler(req, res) {
     "When an established fact changes, update the same fact through a map event using the same type and preferably the same title, with the new status/detail. Only create a new event for a genuinely new discovery.",
     "For static persistent locations, continue the existing location state across visits. For procedural temporary locations, use supplied facts only for the current visit and never imply they survive after the player leaves.",
     "Be concise but atmospheric. Advance the scene in small steps and end with a clear situation or choice for the player.",
-    "Use Fallout 2d20-style checks, skills, AP, complications, loot, NPCs and environmental discoveries when appropriate, but do not invent changes to the character sheet unless the player confirms them.",
-    "When a rules check is needed, state the suggested attribute + skill and difficulty, then wait for the player to provide the roll result unless the app already supplied it.",
+    "Use Fallout 2d20-style skill checks, AP, complications, loot, NPCs and environmental discoveries when appropriate, but do not invent changes to the character sheet unless the player confirms them.",
+    "When a skill check is actually required before the scene can continue, ask for exactly one check and do not narrate its outcome yet.",
+    "For machine-readable checks, attribute must be one of S,P,E,C,I,A,L and skill must be one exact English machine value from: Athletics, Barter, Big Guns, Energy Weapons, Explosives, Lockpick, Medicine, Melee Weapons, Pilot, Repair, Science, Small Guns, Sneak, Speech, Survival, Throwing, Unarmed.",
+    "Prefer non-combat exploration/social skill checks when appropriate. Do not request a check when ordinary roleplay can simply continue.",
+    "If the player's latest message clearly contains a roll result, resolve that result first and do not repeat the same check. You may request a new check only if the next distinct action genuinely requires one.",
     "Keep descriptions suitable for a general teen audience: no graphic injury detail, gore, sexual content, or instructions for real-world dangerous activities.",
     "Do not claim to be the Dodo custom GPT. You are this application's independent Auto GM.",
-    "At the very end of every response append exactly one machine-readable <map_events>...</map_events> block containing a JSON array.",
-    "The visible narrative must come before that block. The block is hidden by the app and must not be explained to the player.",
+    "At the very end of every response append exactly one <skill_check>...</skill_check> block and exactly one <map_events>...</map_events> block.",
+    "The visible narrative must come before both blocks. The app hides the blocks, so never explain them to the player.",
+    `If a roll is required, <skill_check> must contain JSON like {\"attribute\":\"P\",\"skill\":\"Survival\",\"difficulty\":1,\"diceCount\":2,\"reason\":\"${languageName} text\"}. If no roll is required, output <skill_check>null</skill_check>.`,
     "Only record exploration facts that were actually established in the scene. Do not record hypothetical choices.",
-    "Allowed event types are: explored, npc, door, trap, loot, poi.",
-    `Each event must be an object with type, title, detail, status. The type must stay one of the allowed English machine values, but title/detail/status must be written in ${languageName}.`,
-    "If no exploration fact changed, return an empty array: <map_events>[]</map_events>.",
+    "Allowed map event types are: explored, npc, door, trap, loot, poi.",
+    `Each map event must contain type, title, detail, status. The type stays one of the allowed English machine values, but title/detail/status must be written in ${languageName}.`,
+    "If no exploration fact changed, return <map_events>[]</map_events>.",
     `SESSION CONTEXT: ${JSON.stringify(sessionContext)}`,
   ].join("\n");
 
@@ -180,7 +243,7 @@ export default async function handler(req, res) {
         model: process.env.OPENAI_GM_MODEL || "gpt-5.6-luna",
         instructions,
         input,
-        max_output_tokens: 1000,
+        max_output_tokens: 1100,
       }),
     });
 
@@ -198,7 +261,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Auto GM returned an empty response" });
     }
 
-    const parsed = extractMapEvents(rawText);
+    const parsed = extractMachineBlocks(rawText);
     if (!parsed.text) {
       return res.status(502).json({ error: "Auto GM returned no visible narrative" });
     }
