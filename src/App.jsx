@@ -669,6 +669,8 @@ const updateSkill = (skillName, field, value) =>
           <MapScreen
             mapState={mapState}
             onMapChange={updateMapData}
+            character={form}
+            weaponDatabase={globalWeapons}
           />
         );
         break;
