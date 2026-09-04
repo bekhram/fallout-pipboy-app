@@ -103,17 +103,26 @@ function MapGrid({
     (selectedCell ? `${tx("destination")} ${selectedCell.x},${selectedCell.y}` : null);
   const routeReady = Boolean(route && route.cells.length > 0);
 
+  const openLocal = () => setMapMode("local");
+  const minimizeLocal = () => setMapMode("world");
+
   return (
     <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : mapMode === "overview" ? "is-overview" : "is-world"}`}>
       <div className="pip-map-mode-switch" role="tablist" aria-label="Map mode">
         <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
         <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
-        <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={() => setMapMode("local")}>{tx("local")}</button>
+        <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={openLocal}>{tx("local")}</button>
       </div>
 
       {mapMode === "local" ? (
-        <div className="pip-map-local-mode">
-          <LocalGmChat mapData={mapData} playerPosition={playerPosition} selectedCell={selectedCell} />
+        <div className="pip-map-local-fullscreen" role="dialog" aria-modal="true" aria-label="Auto GM">
+          <div className="pip-map-local-fullscreen__bar">
+            <strong>{tx("local")} // {tx("autoGm")}</strong>
+            <button type="button" onClick={minimizeLocal} aria-label="Minimize Auto GM">—</button>
+          </div>
+          <div className="pip-map-local-fullscreen__content">
+            <LocalGmChat mapData={mapData} playerPosition={playerPosition} selectedCell={selectedCell} />
+          </div>
         </div>
       ) : mapMode === "overview" ? (
         <WorldOverview mapData={mapData} playerPosition={playerPosition} />
