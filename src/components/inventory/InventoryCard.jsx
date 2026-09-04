@@ -1,6 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
+import {
+  isConsumableItem,
+  PIPBOY_USE_ITEM_EVENT,
+} from "../../utils/consumableEffects.js";
 
 const CATEGORY_LABEL_KEYS = {
   weapons: "inventory.categories.weapons",
@@ -10,6 +14,13 @@ const CATEGORY_LABEL_KEYS = {
   food: "inventory.categories.food",
   misc: "inventory.categories.misc",
   junk: "inventory.categories.junk",
+};
+
+const USE_LABELS = {
+  en: "USE",
+  ru: "ИСПОЛЬЗОВАТЬ",
+  uk: "ВИКОРИСТАТИ",
+  pl: "UŻYJ",
 };
 
 const isVisibleValue = (value) => {
@@ -25,9 +36,12 @@ export default function InventoryCard({
   onRemove,
 }) {
   const { t, i18n } = useTranslation();
+  const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const categoryLabel = CATEGORY_LABEL_KEYS[item.category]
     ? t(CATEGORY_LABEL_KEYS[item.category])
     : getExtraCategoryLabel(item.category, i18n.resolvedLanguage);
+  const canUse = isConsumableItem(item);
+  const quantity = Math.max(0, Number(item.quantity || 0));
 
   const metadata = [
     isVisibleValue(item.damage) && `DMG ${item.damage}`,
@@ -48,9 +62,26 @@ export default function InventoryCard({
     isVisibleValue(item.series) && `Series: ${item.series}`,
   ].filter(Boolean);
 
+  const handleUse = () => {
+    if (!canUse || quantity <= 0) return;
+    window.dispatchEvent(
+      new CustomEvent(PIPBOY_USE_ITEM_EVENT, { detail: { index } })
+    );
+  };
+
   return (
     <article className="pip-panel pip-item-card pip-floating-actions-card">
       <div className="pip-floating-card-actions">
+        {canUse && (
+          <button
+            type="button"
+            className="pip-btn is-primary"
+            onClick={handleUse}
+            disabled={quantity <= 0}
+          >
+            {USE_LABELS[language] || USE_LABELS.en}
+          </button>
+        )}
         <button type="button" className="pip-btn" onClick={() => onEdit(index)}>
           {t("common.edit")}
         </button>
