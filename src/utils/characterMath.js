@@ -2,6 +2,7 @@ import {
   getCharacterEffectModifiers,
   applyEffectModifiersToDerived,
 } from "./effects.js";
+import { applyActiveConsumableEffects } from "./consumableEffects.js";
 import { ORIGINS } from "../components/data/origins.js"; 
 
 export function toNumber(value, fallback = 0) {
@@ -105,6 +106,7 @@ export function getDerivedStats(form) {
   };
 
   const effectMods = getCharacterEffectModifiers(form);
+  applyActiveConsumableEffects(effectMods, form.activeConsumableEffects);
   const derivedWithEffects = applyEffectModifiersToDerived(
     baseDerived,
     effectMods
@@ -146,6 +148,9 @@ export function getDerivedStats(form) {
     activeStatuses: effectMods.activeStatuses,
     activeAddictions: effectMods.activeAddictions,
     activeEffectNotes: effectMods.notes,
+    activeConsumableEffects: Array.isArray(form.activeConsumableEffects)
+      ? form.activeConsumableEffects
+      : [],
     
     // Передаем массив иммунитетов в финальный объект derived
     immunities: originData?.immunities || [], 
