@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
 import WorldOverview from "./WorldOverview.jsx";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
+import { mapUiText } from "./mapUiText.js";
 import "./localMapMode.css";
 
 const VIEW_COLS = 8;
@@ -34,6 +36,9 @@ function MapGrid({
   onSelectCell,
   onTravel,
 }) {
+  const { i18n } = useTranslation();
+  const language = i18n.resolvedLanguage || i18n.language || "en";
+  const tx = (key, vars) => mapUiText(language, key, vars);
   const [mapMode, setMapMode] = useState("world");
 
   const discoveredSet = useMemo(() => new Set(discoveredKeys), [discoveredKeys]);
@@ -86,24 +91,24 @@ function MapGrid({
   const deltaX = selectedCell ? selectedCell.x - playerPosition.x : 0;
   const deltaY = selectedCell ? selectedCell.y - playerPosition.y : 0;
   const direction = selectedCell
-    ? `${deltaY < 0 ? "N" : deltaY > 0 ? "S" : ""}${deltaX > 0 ? "E" : deltaX < 0 ? "W" : ""}` || "HERE"
+    ? `${deltaY < 0 ? "N" : deltaY > 0 ? "S" : ""}${deltaX > 0 ? "E" : deltaX < 0 ? "W" : ""}` || tx("here")
     : null;
   const selectedStaticLocation = selectedCell ? getStaticLocation(mapData, selectedCell) : null;
-  const destinationType = selectedStaticLocation ? "STATIC" : "PROCEDURAL";
+  const destinationType = selectedStaticLocation ? tx("static") : tx("procedural");
   const destinationName =
     selectedStaticLocation?.name ||
     selectedStaticLocation?.id?.replaceAll("_", " ") ||
     selectedCell?.poi?.name ||
     selectedCell?.poi?.id?.replaceAll("_", " ") ||
-    (selectedCell ? `CELL ${selectedCell.x},${selectedCell.y}` : null);
+    (selectedCell ? `${tx("destination")} ${selectedCell.x},${selectedCell.y}` : null);
   const routeReady = Boolean(route && route.cells.length > 0);
 
   return (
     <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : mapMode === "overview" ? "is-overview" : "is-world"}`}>
       <div className="pip-map-mode-switch" role="tablist" aria-label="Map mode">
-        <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>WORLD</button>
-        <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>OVERVIEW</button>
-        <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={() => setMapMode("local")}>LOCAL</button>
+        <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
+        <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
+        <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={() => setMapMode("local")}>{tx("local")}</button>
       </div>
 
       {mapMode === "local" ? (
@@ -115,40 +120,38 @@ function MapGrid({
       ) : (
         <>
           <div className="pip-map-nav-hud">
-            <span>YOU {playerPosition.x},{playerPosition.y}</span>
+            <span>{tx("you")} {playerPosition.x},{playerPosition.y}</span>
             {selectedCell ? (
               <>
-                <span>DEST {selectedCell.x},{selectedCell.y}</span>
-                <span>DIR {direction}</span>
-                <span>{route ? `${route.cells.length} STEPS · ${route.cost}H` : "NO ROUTE"}</span>
+                <span>{tx("destination")} {selectedCell.x},{selectedCell.y}</span>
+                <span>{tx("direction")} {direction}</span>
+                <span>{route ? `${route.cells.length} ${tx("steps")} · ${route.cost}H` : tx("noRoute")}</span>
               </>
             ) : (
-              <span>TAP ANY CELL TO PLAN A ROUTE</span>
+              <span>{tx("tapAnyCell")}</span>
             )}
           </div>
 
           {selectedCell ? (
             <div className={`pip-map-route-card ${routeReady ? "is-ready" : "is-blocked"}`}>
               <div className="pip-map-route-card__topline">
-                <span>ROUTE // {destinationType}</span>
+                <span>{tx("route")} // {destinationType}</span>
                 <button type="button" onClick={() => onSelectCell(null)}>×</button>
               </div>
               <strong>{destinationName}</strong>
               <div className="pip-map-route-card__meta">
-                <span>DIR {direction}</span>
-                <span>{route ? `${route.cells.length} STEPS` : "NO SAFE ROUTE"}</span>
-                <span>{route ? `ETA ${route.cost}H` : ""}</span>
+                <span>{tx("direction")} {direction}</span>
+                <span>{route ? `${route.cells.length} ${tx("steps")}` : tx("noSafeRoute")}</span>
+                <span>{route ? `${tx("eta")} ${route.cost}H` : ""}</span>
               </div>
-              <div className="pip-map-route-card__hint">
-                Travel follows the highlighted route and stops automatically if an encounter occurs.
-              </div>
+              <div className="pip-map-route-card__hint">{tx("travelHint")}</div>
               <button
                 type="button"
                 className="pip-map-route-card__travel"
                 disabled={!routeReady}
                 onClick={() => onTravel?.()}
               >
-                {routeReady ? "START TRAVEL" : "ROUTE UNAVAILABLE"}
+                {routeReady ? tx("startTravel") : tx("routeUnavailable")}
               </button>
             </div>
           ) : null}
