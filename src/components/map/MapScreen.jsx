@@ -229,6 +229,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
   const [selectedCell, setSelectedCell] = useState(null);
+  const [mapMode, setMapMode] = useState("world");
 
   const safeMapState = useMemo(
     () => ({ ...buildDefaultMapState(), ...(mapState || {}) }),
@@ -550,7 +551,14 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       </div>
 
       <div className="pip-map-layout">
-        <div className="pip-panel pip-map-panel">
+        <div className="pip-map-column">
+          <div className="pip-map-mode-switch pip-map-mode-switch--external" role="tablist" aria-label="Map mode">
+            <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
+            <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
+            <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={() => setMapMode("local")}>{tx("local")}</button>
+          </div>
+
+          <div className="pip-panel pip-map-panel">
           <button type="button" className="pip-map-edge-button pip-map-edge-button--north" onClick={() => shiftMap("north")} disabled={!atTopEdge}>{t("mapPanel.north")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--west" onClick={() => shiftMap("west")} disabled={!atLeftEdge}>{t("mapPanel.west")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} disabled={!atRightEdge}>{t("mapPanel.east")}</button>
@@ -601,9 +609,12 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
                 onTravel={handleTravel}
                 character={character}
                 weaponDatabase={weaponDatabase}
+                mapMode={mapMode}
+                setMapMode={setMapMode}
               />
             </div>
           </div>
+        </div>
         </div>
 
         <div className="pip-map-sidebar">
