@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionTab from "../companion/CompanionTab.jsx";
+import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 
 const SWIPE_THRESHOLD = 60;
 const INTERACTIVE_SELECTOR = [
@@ -26,6 +27,10 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
     : currentIndex > previousIndex
       ? " is-from-right"
       : " is-from-left";
+
+  useEffect(() => {
+    installCompanionGmBridge();
+  }, []);
 
   useEffect(() => {
     previousTab.current = activeTab;
