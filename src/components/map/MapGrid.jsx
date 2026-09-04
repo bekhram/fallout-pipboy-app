@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
 import WorldOverview from "./WorldOverview.jsx";
-import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
 import "./localMapMode.css";
@@ -20,10 +19,10 @@ function getWorldCoords(mapData, cell) {
   };
 }
 
-function getStaticLocation(mapData, cell) {
+function getStaticLocation(mapData, cell, locations = []) {
   const coords = getWorldCoords(mapData, cell);
   if (!coords) return null;
-  return FALLOUT_4_LOCATIONS.find(
+  return locations.find(
     (location) => location.worldX === coords.x && location.worldY === coords.y
   ) || null;
 }
@@ -39,6 +38,7 @@ function MapGrid({
   weaponDatabase,
   mapMode,
   setMapMode,
+  locations,
 }) {
   const { i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
@@ -95,7 +95,7 @@ function MapGrid({
   const direction = selectedCell
     ? `${deltaY < 0 ? "N" : deltaY > 0 ? "S" : ""}${deltaX > 0 ? "E" : deltaX < 0 ? "W" : ""}` || tx("here")
     : null;
-  const selectedStaticLocation = selectedCell ? getStaticLocation(mapData, selectedCell) : null;
+  const selectedStaticLocation = selectedCell ? getStaticLocation(mapData, selectedCell, locations) : null;
   const destinationType = selectedStaticLocation ? tx("static") : tx("procedural");
   const destinationName =
     selectedStaticLocation?.name ||
@@ -106,7 +106,7 @@ function MapGrid({
   const routeReady = Boolean(route && route.cells.length > 0);
 
   const currentWorld = getWorldCoords(mapData, playerPosition);
-  const currentStaticLocation = getStaticLocation(mapData, playerPosition);
+  const currentStaticLocation = getStaticLocation(mapData, playerPosition, locations);
   const openLocal = () => setMapMode("local");
   const minimizeLocal = () => setMapMode("world");
 
@@ -129,7 +129,7 @@ function MapGrid({
           </div>
         </div>
       ) : mapMode === "overview" ? (
-        <WorldOverview mapData={mapData} playerPosition={playerPosition} />
+        <WorldOverview mapData={mapData} playerPosition={playerPosition} locations={locations} />
       ) : (
         <>
           <div className="pip-map-nav-hud">
