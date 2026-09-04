@@ -189,18 +189,22 @@ export function armorModMultiplier(mod, part) {
 }
 
 export function calculateArmorPart(item, material, upgrade, manual = {}, part = "") {
+  // Values in armor[part] predate the equipment catalogue. They represent a
+  // manually entered armor profile, not a bonus to an equipped item. Keeping
+  // them in the sum made migrated characters receive both profiles at once.
+  const manualProfile = item ? {} : manual;
   const add = (field) =>
     Number(item?.[field] || 0) +
     Number(material?.[field] || 0) +
     Number(upgrade?.[field] || 0) +
-    Number(manual?.[field] || 0);
+    Number(manualProfile?.[field] || 0);
 
   return {
     physical: add("physical"),
     energy: add("energy"),
     radiation: add("radiation"),
-    poison: Number(manual?.poison || 0),
-    hp: Number(manual?.hp || 0),
+    poison: Number(manualProfile?.poison || 0),
+    hp: Number(manualProfile?.hp || 0),
     weight:
       Number(item?.weight || 0) +
       Number(material?.weight || 0) * armorModMultiplier(material, part) +
