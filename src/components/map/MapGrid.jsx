@@ -1,6 +1,8 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import MapCell from "./MapCell.jsx";
+import LocalMap from "./LocalMap.jsx";
 import { canTravelToCell, getCellKey } from "../../utils/mapMath.js";
+import "./localMapMode.css";
 
 const VIEW_COLS = 8;
 const VIEW_ROWS = 8;
@@ -12,6 +14,8 @@ function MapGrid({
   discoveredKeys,
   onSelectCell,
 }) {
+  const [mapMode, setMapMode] = useState("world");
+
   const discoveredSet = useMemo(() => {
     return new Set(discoveredKeys);
   }, [discoveredKeys]);
@@ -68,30 +72,59 @@ function MapGrid({
     : null;
 
   return (
-    <div
-      className="pip-map-grid pip-map-grid--wasteland"
-      style={{
-        gridTemplateColumns: `repeat(${VIEW_COLS}, minmax(0, 1fr))`,
-        gridTemplateRows: `repeat(${VIEW_ROWS}, minmax(0, 1fr))`,
-      }}
-    >
-      {visibleCells.map((cell) => {
-        const key = getCellKey(cell.x, cell.y);
+    <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : "is-world"}`}>
+      <div className="pip-map-mode-switch" role="tablist" aria-label="Map mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mapMode === "world"}
+          className={mapMode === "world" ? "is-active" : ""}
+          onClick={() => setMapMode("world")}
+        >
+          WORLD
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mapMode === "local"}
+          className={mapMode === "local" ? "is-active" : ""}
+          onClick={() => setMapMode("local")}
+        >
+          LOCAL
+        </button>
+      </div>
 
-        return (
-          <MapCell
-            key={key}
-            cell={cell}
-            isPlayerHere={
-              playerPosition.x === cell.x && playerPosition.y === cell.y
-            }
-            isSelected={selectedKey === key}
-            isDiscovered={discoveredSet.has(key)}
-            isReachable={reachableMap.get(key)}
-            onSelect={onSelectCell}
-          />
-        );
-      })}
+      {mapMode === "local" ? (
+        <div className="pip-map-local-mode">
+          <LocalMap />
+        </div>
+      ) : (
+        <div
+          className="pip-map-grid pip-map-grid--wasteland"
+          style={{
+            gridTemplateColumns: `repeat(${VIEW_COLS}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${VIEW_ROWS}, minmax(0, 1fr))`,
+          }}
+        >
+          {visibleCells.map((cell) => {
+            const key = getCellKey(cell.x, cell.y);
+
+            return (
+              <MapCell
+                key={key}
+                cell={cell}
+                isPlayerHere={
+                  playerPosition.x === cell.x && playerPosition.y === cell.y
+                }
+                isSelected={selectedKey === key}
+                isDiscovered={discoveredSet.has(key)}
+                isReachable={reachableMap.get(key)}
+                onSelect={onSelectCell}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
