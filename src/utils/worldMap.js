@@ -10,10 +10,10 @@ export function getSectorOrigin(worldOffset, cols, rows) {
   };
 }
 
-export function getLocationsInSector(worldOffset, cols, rows) {
+export function getLocationsInSector(worldOffset, cols, rows, locations = FALLOUT_4_LOCATIONS) {
   const origin = getSectorOrigin(worldOffset, cols, rows);
 
-  return FALLOUT_4_LOCATIONS.filter((location) => {
+  return locations.filter((location) => {
     const localX = location.worldX - origin.x;
     const localY = location.worldY - origin.y;
 
@@ -30,10 +30,8 @@ export function getLocationsInSector(worldOffset, cols, rows) {
   });
 }
 
-export function getLocationById(locationId) {
-  return (
-    FALLOUT_4_LOCATIONS.find((location) => location.id === locationId) || null
-  );
+export function getLocationById(locationId, locations = FALLOUT_4_LOCATIONS) {
+  return locations.find((location) => location.id === locationId) || null;
 }
 
 export function getDistanceInBlocks(fromX, fromY, toX, toY) {
