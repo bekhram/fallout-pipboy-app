@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { rollFalloutD20, rollFalloutD6, rollHitLocationD20 } from "../../utils/dice.js";
+import { playSound } from "../../utils/soundManager.js";
 import "./companion.css";
 
 const STORAGE_KEY = "fallout_pipboy_companions_v2";
@@ -34,13 +36,38 @@ const COPY = {
     attacks: "Attacks",
     abilities: "Special Abilities",
     notes: "Notes",
-    attacksPlaceholder: "Bite — Body + Melee, damage, effects...",
     abilitiesPlaceholder: "Traits, companion abilities, special rules...",
     notesPlaceholder: "Equipment, behavior and useful reminders...",
     copy: "COPY",
     remove: "DELETE",
     emptyTitle: "NO COMPANIONS YET",
     emptyText: "Add a companion or pet to create the first card.",
+    addAttack: "+ ATTACK",
+    attackName: "Attack",
+    attackNamePlaceholder: "Bite, Claw, Laser...",
+    attribute: "Attribute",
+    skill: "Skill",
+    damage: "Damage CD",
+    damageType: "Damage type",
+    effects: "Effects",
+    effectsPlaceholder: "Vicious, Piercing 1...",
+    difficulty: "Difficulty",
+    diceCount: "D20",
+    roll: "ROLL",
+    removeAttack: "REMOVE",
+    attackNotes: "Attack notes",
+    attackNotesPlaceholder: "Legacy attack text or situational rules...",
+    target: "TN",
+    successes: "Successes",
+    complications: "Complications",
+    success: "SUCCESS",
+    failure: "FAILURE",
+    hit: "Hit",
+    effectTriggers: "Effects",
+    physical: "Physical",
+    energy: "Energy",
+    radiation: "Radiation",
+    poison: "Poison",
   },
   ru: {
     title: "КОМПАНЬОНЫ / ПИТОМЦЫ",
@@ -70,13 +97,38 @@ const COPY = {
     attacks: "Атаки",
     abilities: "Особые способности",
     notes: "Заметки",
-    attacksPlaceholder: "Укус — Тело + Ближний бой, урон, эффекты...",
     abilitiesPlaceholder: "Черты, способности компаньона, особые правила...",
     notesPlaceholder: "Снаряжение, поведение и важные заметки...",
     copy: "КОПИЯ",
     remove: "УДАЛИТЬ",
     emptyTitle: "КОМПАНЬОНОВ ПОКА НЕТ",
     emptyText: "Добавь компаньона или питомца, чтобы создать первую карточку.",
+    addAttack: "+ АТАКА",
+    attackName: "Атака",
+    attackNamePlaceholder: "Укус, когти, лазер...",
+    attribute: "Характеристика",
+    skill: "Навык",
+    damage: "Урон CD",
+    damageType: "Тип урона",
+    effects: "Эффекты",
+    effectsPlaceholder: "Vicious, Piercing 1...",
+    difficulty: "Сложность",
+    diceCount: "D20",
+    roll: "БРОСИТЬ",
+    removeAttack: "УБРАТЬ",
+    attackNotes: "Заметки атак",
+    attackNotesPlaceholder: "Старое описание атаки или ситуационные правила...",
+    target: "TN",
+    successes: "Успехи",
+    complications: "Осложнения",
+    success: "УСПЕХ",
+    failure: "НЕУДАЧА",
+    hit: "Попадание",
+    effectTriggers: "Эффекты",
+    physical: "Физический",
+    energy: "Энергетический",
+    radiation: "Радиационный",
+    poison: "Яд",
   },
   uk: {
     title: "КОМПАНЬЙОНИ / УЛЮБЛЕНЦІ",
@@ -106,13 +158,38 @@ const COPY = {
     attacks: "Атаки",
     abilities: "Особливі здібності",
     notes: "Нотатки",
-    attacksPlaceholder: "Укус — Тіло + Ближній бій, шкода, ефекти...",
     abilitiesPlaceholder: "Риси, здібності компаньйона, особливі правила...",
     notesPlaceholder: "Спорядження, поведінка та важливі нотатки...",
     copy: "КОПІЯ",
     remove: "ВИДАЛИТИ",
     emptyTitle: "КОМПАНЬЙОНІВ ЩЕ НЕМАЄ",
     emptyText: "Додай компаньйона або улюбленця, щоб створити першу картку.",
+    addAttack: "+ АТАКА",
+    attackName: "Атака",
+    attackNamePlaceholder: "Укус, кігті, лазер...",
+    attribute: "Характеристика",
+    skill: "Навичка",
+    damage: "Шкода CD",
+    damageType: "Тип шкоди",
+    effects: "Ефекти",
+    effectsPlaceholder: "Vicious, Piercing 1...",
+    difficulty: "Складність",
+    diceCount: "D20",
+    roll: "КИНУТИ",
+    removeAttack: "ПРИБРАТИ",
+    attackNotes: "Нотатки атак",
+    attackNotesPlaceholder: "Старий опис атаки або ситуаційні правила...",
+    target: "TN",
+    successes: "Успіхи",
+    complications: "Ускладнення",
+    success: "УСПІХ",
+    failure: "НЕВДАЧА",
+    hit: "Влучання",
+    effectTriggers: "Ефекти",
+    physical: "Фізична",
+    energy: "Енергетична",
+    radiation: "Радіаційна",
+    poison: "Отрута",
   },
   pl: {
     title: "TOWARZYSZE / PUPILE",
@@ -142,14 +219,46 @@ const COPY = {
     attacks: "Ataki",
     abilities: "Zdolności specjalne",
     notes: "Notatki",
-    attacksPlaceholder: "Ugryzienie — Ciało + Walka wręcz, obrażenia, efekty...",
     abilitiesPlaceholder: "Cechy, zdolności towarzysza, specjalne zasady...",
     notesPlaceholder: "Ekwipunek, zachowanie i ważne notatki...",
     copy: "KOPIUJ",
     remove: "USUŃ",
     emptyTitle: "BRAK TOWARZYSZY",
     emptyText: "Dodaj towarzysza lub pupila, aby utworzyć pierwszą kartę.",
+    addAttack: "+ ATAK",
+    attackName: "Atak",
+    attackNamePlaceholder: "Ugryzienie, pazury, laser...",
+    attribute: "Atrybut",
+    skill: "Umiejętność",
+    damage: "Obrażenia CD",
+    damageType: "Typ obrażeń",
+    effects: "Efekty",
+    effectsPlaceholder: "Vicious, Piercing 1...",
+    difficulty: "Trudność",
+    diceCount: "D20",
+    roll: "RZUĆ",
+    removeAttack: "USUŃ",
+    attackNotes: "Notatki ataków",
+    attackNotesPlaceholder: "Stary opis ataku lub zasady sytuacyjne...",
+    target: "TN",
+    successes: "Sukcesy",
+    complications: "Komplikacje",
+    success: "SUKCES",
+    failure: "PORAŻKA",
+    hit: "Trafienie",
+    effectTriggers: "Efekty",
+    physical: "Fizyczne",
+    energy: "Energetyczne",
+    radiation: "Radiacyjne",
+    poison: "Trucizna",
   },
+};
+
+const HIT_LOCATION_LABELS = {
+  en: { head: "Head", torso: "Torso", leftArm: "Left arm", rightArm: "Right arm", leftLeg: "Left leg", rightLeg: "Right leg" },
+  ru: { head: "Голова", torso: "Торс", leftArm: "Левая рука", rightArm: "Правая рука", leftLeg: "Левая нога", rightLeg: "Правая нога" },
+  uk: { head: "Голова", torso: "Торс", leftArm: "Ліва рука", rightArm: "Права рука", leftLeg: "Ліва нога", rightLeg: "Права нога" },
+  pl: { head: "Głowa", torso: "Tułów", leftArm: "Lewa ręka", rightArm: "Prawa ręka", leftLeg: "Lewa noga", rightLeg: "Prawa noga" },
 };
 
 function getLanguage(value) {
@@ -157,12 +266,33 @@ function getLanguage(value) {
   return COPY[key] ? key : "en";
 }
 
-function makeId() {
-  return `cmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+function makeId(prefix = "cmp") {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function createAttack(seed = {}) {
+  return {
+    id: seed.id || makeId("atk"),
+    name: String(seed.name || ""),
+    attribute: seed.attribute === "mind" ? "mind" : "body",
+    skill: ["melee", "guns", "other"].includes(seed.skill) ? seed.skill : "melee",
+    damage: String(seed.damage ?? "2"),
+    damageType: ["physical", "energy", "radiation", "poison"].includes(seed.damageType)
+      ? seed.damageType
+      : "physical",
+    effects: String(seed.effects || ""),
+    difficulty: String(seed.difficulty ?? "1"),
+    diceCount: String(seed.diceCount ?? "2"),
+  };
 }
 
 function createCompanion(kind = "companion", seed = {}) {
   const legacySpecial = seed.special || {};
+  const attacks = Array.isArray(seed.attacks)
+    ? seed.attacks.map((attack) => createAttack(attack))
+    : [];
+  const attackNotes = seed.attackNotes || (!Array.isArray(seed.attacks) ? String(seed.attacks || "") : "");
+
   return {
     id: seed.id || makeId(),
     kind: seed.kind || kind,
@@ -184,7 +314,8 @@ function createCompanion(kind = "companion", seed = {}) {
     energyDr: String(seed.energyDr ?? "0"),
     radDr: String(seed.radDr ?? "0"),
     poisonDr: String(seed.poisonDr ?? "0"),
-    attacks: seed.attacks || "",
+    attacks,
+    attackNotes,
     specialAbilities: seed.specialAbilities || "",
     notes: seed.notes || "",
   };
@@ -223,12 +354,27 @@ function NumberField({ label, value, onChange, min = 0, max = 999 }) {
   );
 }
 
+function parseEffects(value) {
+  return String(value || "")
+    .split(/[,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function attackTargetNumber(companion, attack) {
+  const attribute = Number(companion?.[attack?.attribute] || 0);
+  const skill = Number(companion?.[attack?.skill] || 0);
+  return Math.max(0, Math.min(20, attribute + skill));
+}
+
 export default function CompanionTab() {
   const { i18n } = useTranslation();
   const language = getLanguage(i18n.resolvedLanguage || i18n.language);
   const copy = COPY[language];
+  const hitLabels = HIT_LOCATION_LABELS[language] || HIT_LOCATION_LABELS.en;
   const [state, setState] = useState({ items: [], activeId: null });
   const [ready, setReady] = useState(false);
+  const [attackResults, setAttackResults] = useState({});
 
   useEffect(() => {
     try {
@@ -278,6 +424,7 @@ export default function CompanionTab() {
       ...active,
       id: makeId(),
       name: active.name ? `${active.name} Copy` : "",
+      attacks: (active.attacks || []).map((attack) => ({ ...attack, id: undefined })),
     });
     setState((prev) => ({ items: [...prev.items, duplicate], activeId: duplicate.id }));
   };
@@ -304,6 +451,66 @@ export default function CompanionTab() {
     updateActive({ maxHp: String(nextMax), currentHp: String(nextCurrent) });
   };
 
+  const addAttack = () => {
+    if (!active) return;
+    updateActive({ attacks: [...(active.attacks || []), createAttack()] });
+  };
+
+  const updateAttack = (attackId, patch) => {
+    if (!active) return;
+    updateActive({
+      attacks: (active.attacks || []).map((attack) =>
+        attack.id === attackId ? { ...attack, ...patch } : attack
+      ),
+    });
+  };
+
+  const removeAttack = (attackId) => {
+    if (!active) return;
+    updateActive({ attacks: (active.attacks || []).filter((attack) => attack.id !== attackId) });
+    setAttackResults((prev) => {
+      const next = { ...prev };
+      delete next[`${active.id}:${attackId}`];
+      return next;
+    });
+  };
+
+  const rollAttack = (attack) => {
+    if (!active) return;
+    playSound("diceRoll");
+
+    const targetNumber = attackTargetNumber(active, attack);
+    const diceCount = Math.max(1, Math.min(5, Number(attack.diceCount) || 2));
+    const difficulty = Math.max(0, Math.min(10, Number(attack.difficulty) || 1));
+    const effects = parseEffects(attack.effects);
+    const attackRoll = rollFalloutD20({
+      diceCount,
+      targetNumber,
+      criticalRange: 1,
+      label: `${active.name || copy.unnamed}: ${attack.name || copy.attackName}`,
+    });
+    const passed = attackRoll.totalSuccesses >= difficulty;
+    const damageDice = Math.max(0, Math.min(50, Number(attack.damage) || 0));
+    const damageRoll = passed && damageDice > 0
+      ? rollFalloutD6({ diceCount: damageDice, effects })
+      : null;
+    const hitLocation = passed ? rollHitLocationD20() : null;
+
+    setAttackResults((prev) => ({
+      ...prev,
+      [`${active.id}:${attack.id}`]: {
+        attackRoll,
+        passed,
+        difficulty,
+        targetNumber,
+        damageRoll,
+        hitLocation,
+        damageType: attack.damageType,
+        at: Date.now(),
+      },
+    }));
+  };
+
   const hpPercent = active
     ? Math.max(0, Math.min(100, (Number(active.currentHp || 0) / Math.max(1, Number(active.maxHp || 1))) * 100))
     : 0;
@@ -316,7 +523,7 @@ export default function CompanionTab() {
             <h2>[ {copy.title} ]</h2>
             <span>{copy.subtitle}</span>
           </div>
-          <button type="button" className="pip-btn is-primary" onClick={() => add("companion")}> 
+          <button type="button" className="pip-btn is-primary" onClick={() => add("companion")}>
             {copy.addCompanion}
           </button>
         </div>
@@ -412,12 +619,119 @@ export default function CompanionTab() {
               <NumberField label={copy.poisonDr} value={active.poisonDr} min={0} max={99} onChange={(poisonDr) => updateActive({ poisonDr })} />
             </div>
 
-            <div className="companion-long-grid">
-              <label className="pip-logbox companion-long-field">
-                <span>[ {copy.attacks} ]</span>
-                <textarea className="pip-input" rows={4} value={active.attacks} placeholder={copy.attacksPlaceholder} onChange={(event) => updateActive({ attacks: event.target.value })} />
-              </label>
+            <div className="pip-logbox companion-attacks-block push-bottom">
+              <div className="companion-section-head">
+                <strong>[ {copy.attacks} ]</strong>
+                <button type="button" className="pip-btn is-primary" onClick={addAttack}>{copy.addAttack}</button>
+              </div>
 
+              {(active.attacks || []).length === 0 ? (
+                <div className="companion-attacks-empty">—</div>
+              ) : (
+                <div className="companion-attack-list">
+                  {(active.attacks || []).map((attack) => {
+                    const result = attackResults[`${active.id}:${attack.id}`];
+                    const tn = attackTargetNumber(active, attack);
+                    const damageTypeLabel = copy[attack.damageType] || attack.damageType;
+                    return (
+                      <div className="companion-attack-card" key={attack.id}>
+                        <div className="companion-attack-head">
+                          <label className="pip-top-field companion-attack-name">
+                            <span>{copy.attackName}</span>
+                            <input
+                              className="pip-inline-input"
+                              value={attack.name}
+                              placeholder={copy.attackNamePlaceholder}
+                              onChange={(event) => updateAttack(attack.id, { name: event.target.value })}
+                            />
+                          </label>
+                          <button type="button" className="pip-btn" onClick={() => removeAttack(attack.id)}>{copy.removeAttack}</button>
+                        </div>
+
+                        <div className="companion-attack-grid">
+                          <label className="pip-top-field">
+                            <span>{copy.attribute}</span>
+                            <select className="pip-inline-input" value={attack.attribute} onChange={(event) => updateAttack(attack.id, { attribute: event.target.value })}>
+                              <option value="body">{copy.body}</option>
+                              <option value="mind">{copy.mind}</option>
+                            </select>
+                          </label>
+                          <label className="pip-top-field">
+                            <span>{copy.skill}</span>
+                            <select className="pip-inline-input" value={attack.skill} onChange={(event) => updateAttack(attack.id, { skill: event.target.value })}>
+                              <option value="melee">{copy.melee}</option>
+                              <option value="guns">{copy.guns}</option>
+                              <option value="other">{copy.other}</option>
+                            </select>
+                          </label>
+                          <label className="pip-top-field">
+                            <span>{copy.damage}</span>
+                            <input className="pip-inline-input" inputMode="numeric" value={attack.damage} onChange={(event) => updateAttack(attack.id, { damage: clamp(event.target.value, 0, 50) })} />
+                          </label>
+                          <label className="pip-top-field">
+                            <span>{copy.difficulty}</span>
+                            <input className="pip-inline-input" inputMode="numeric" value={attack.difficulty} onChange={(event) => updateAttack(attack.id, { difficulty: clamp(event.target.value, 0, 10) })} />
+                          </label>
+                          <label className="pip-top-field">
+                            <span>{copy.diceCount}</span>
+                            <input className="pip-inline-input" inputMode="numeric" value={attack.diceCount} onChange={(event) => updateAttack(attack.id, { diceCount: clamp(event.target.value, 1, 5) })} />
+                          </label>
+                          <label className="pip-top-field">
+                            <span>{copy.damageType}</span>
+                            <select className="pip-inline-input" value={attack.damageType} onChange={(event) => updateAttack(attack.id, { damageType: event.target.value })}>
+                              <option value="physical">{copy.physical}</option>
+                              <option value="energy">{copy.energy}</option>
+                              <option value="radiation">{copy.radiation}</option>
+                              <option value="poison">{copy.poison}</option>
+                            </select>
+                          </label>
+                          <label className="pip-top-field companion-attack-effects">
+                            <span>{copy.effects}</span>
+                            <input className="pip-inline-input" value={attack.effects} placeholder={copy.effectsPlaceholder} onChange={(event) => updateAttack(attack.id, { effects: event.target.value })} />
+                          </label>
+                        </div>
+
+                        <div className="companion-attack-footer">
+                          <div className="pip-inline-stats companion-attack-summary">
+                            <span>{copy.target}: {tn}</span>
+                            <span>{attack.diceCount || 2}d20</span>
+                            <span>D{attack.difficulty || 1}</span>
+                            <span>{attack.damage || 0} CD</span>
+                            <span>{damageTypeLabel}</span>
+                          </div>
+                          <button type="button" className="pip-btn is-primary" onClick={() => rollAttack(attack)}>{copy.roll}</button>
+                        </div>
+
+                        {result ? (
+                          <div className={`companion-attack-result ${result.passed ? "is-success" : "is-failure"}`}>
+                            <strong>{result.passed ? copy.success : copy.failure}</strong>
+                            <span>d20: {result.attackRoll.rolls.map((die) => die.value).join(", ")}</span>
+                            <span>{copy.target}: {result.targetNumber}</span>
+                            <span>{copy.successes}: {result.attackRoll.totalSuccesses}</span>
+                            <span>{copy.complications}: {result.attackRoll.complications}</span>
+                            {result.hitLocation ? <span>{copy.hit}: {hitLabels[result.hitLocation.location] || result.hitLocation.label}</span> : null}
+                            {result.damageRoll ? <span>{copy.damage}: {result.damageRoll.totalDamage} · {copy.effectTriggers}: {result.damageRoll.totalEffects}</span> : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <label className="companion-attack-notes">
+                <span>{copy.attackNotes}</span>
+                <textarea
+                  className="pip-input"
+                  rows={2}
+                  value={active.attackNotes || ""}
+                  placeholder={copy.attackNotesPlaceholder}
+                  onChange={(event) => updateActive({ attackNotes: event.target.value })}
+                />
+              </label>
+            </div>
+
+            <div className="companion-long-grid">
               <label className="pip-logbox companion-long-field">
                 <span>[ {copy.abilities} ]</span>
                 <textarea className="pip-input" rows={6} value={active.specialAbilities} placeholder={copy.abilitiesPlaceholder} onChange={(event) => updateActive({ specialAbilities: event.target.value })} />
