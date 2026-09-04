@@ -552,11 +552,13 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
 
       <div className="pip-map-layout">
         <div className="pip-map-column">
-          <div className="pip-map-mode-switch pip-map-mode-switch--external" role="tablist" aria-label="Map mode">
-            <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
-            <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
-            <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={() => setMapMode("local")}>{tx("local")}</button>
-          </div>
+          {mapMode !== "local" ? (
+            <div className="pip-map-mode-switch pip-map-mode-switch--external" role="tablist" aria-label="Map mode">
+              <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
+              <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
+              <button type="button" role="tab" aria-selected={false} onClick={() => setMapMode("local")}>{tx("local")}</button>
+            </div>
+          ) : null}
 
           <div className="pip-panel pip-map-panel">
           <button type="button" className="pip-map-edge-button pip-map-edge-button--north" onClick={() => shiftMap("north")} disabled={!atTopEdge}>{t("mapPanel.north")}</button>
