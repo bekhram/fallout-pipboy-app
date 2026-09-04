@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ORIGINS, TRAITS_DICTIONARY } from "../components/data/origins.js";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
@@ -14,53 +14,101 @@ function makeSafeFileName(name) {
     .replace(/^_+|_+$/g, "") || "Character";
 }
 
-function weaponSignature(weapon) {
-  if (!weapon?.name?.trim()) return null;
-  return [
-    weapon.name.trim(),
-    weapon.cost ?? "",
-    weapon.weight ?? "",
-    weapon.damage ?? "",
-    weapon.ammo ?? "",
-  ].join("|");
+function makeInventorySourceId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function joinList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+  return String(value || "").trim();
 }
 
 function createInventoryWeapon(weapon) {
+  const effects = String(weapon?.customEffect || joinList(weapon?.effects)).trim();
+  const qualities = String(weapon?.qualitiesCustom || joinList(weapon?.qualities)).trim();
+  const effect = [
+    effects,
+    qualities ? `Qualities: ${qualities}` : "",
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
   return {
     name: String(weapon?.name || "Weapon"),
     quantity: "1",
     cost: String(weapon?.cost ?? ""),
-    weight: String(weapon?.weight ?? ""),
+    weight: String(weapon?.weight ?? "").replace(",", "."),
     category: "weapons",
     sourceType: "weapon",
+    sourceId: weapon?.inventoryId || null,
+    rarity: String(weapon?.rarity ?? ""),
+    effect,
+    damage: String(weapon?.damage ?? ""),
+    rate: String(weapon?.rate ?? ""),
+    range: String(weapon?.range ?? ""),
+    damageType: String(weapon?.type ?? ""),
+    weaponType: String(weapon?.skill ?? ""),
+    qualities,
+    ammo: String(weapon?.ammo ?? ""),
   };
 }
 
-function createInventoryArmor(item) {
+function armorLocationsText(locations = {}) {
+  return [
+    locations.head && "Head",
+    locations.arms && "Arms",
+    locations.legs && "Legs",
+    locations.torso && "Torso",
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function createInventoryArmor(item, quantity = 1) {
   return {
     name: String(item?.name || "Armor"),
-    quantity: "1",
+    quantity: String(Math.max(1, Number(quantity) || 1)),
     cost: String(item?.cost ?? ""),
-    weight: String(item?.weight ?? ""),
+    weight: String(item?.weight ?? "").replace(",", "."),
     category: "armor",
     sourceType: "armor",
     sourceId: item?.id || null,
+    rarity: String(item?.rarity ?? ""),
+    effect: String(item?.effects ?? ""),
+    armorPhysical: String(item?.physical ?? ""),
+    armorEnergy: String(item?.energy ?? ""),
+    armorRadiation: String(item?.radiation ?? ""),
+    armorLocations: armorLocationsText(item?.locations),
+    armorGroup: String(item?.group || item?.category || ""),
   };
+}
+
+function sameWeaponInventoryIdentity(item, desired) {
+  return (
+    item?.sourceType === "weapon" &&
+    !item?.sourceId &&
+    String(item?.name || "") === String(desired?.name || "") &&
+    String(item?.cost ?? "") === String(desired?.cost ?? "") &&
+    String(item?.weight ?? "") === String(desired?.weight ?? "")
+  );
+}
+
+function isBodyGarment(item) {
+  return item?.category === "CLOTHING" || item?.category === "OUTFIT";
 }
 
 export function useCharacterStorage(initialForm) {
   const [form, setForm] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      
-      // Инициализируем новые поля по умолчанию, если их нет
+
       const baseForm = { origin: "", originTraits: [], tagged_skills: [], ...initialForm };
-      
+
       if (!raw) return baseForm;
-      
+
       const parsed = JSON.parse(raw);
       const loadedData = parsed?.data || {};
-      
+
       return { ...baseForm, ...loadedData };
     } catch {
       return { origin: "", originTraits: [], tagged_skills: [], ...initialForm };
@@ -73,8 +121,6 @@ export function useCharacterStorage(initialForm) {
     JSON.stringify(form)
   );
   const [armorInventoryDatabase, setArmorInventoryDatabase] = useState([]);
-  const previousWeaponsRef = useRef(null);
-  const previousArmorSlotsRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -97,78 +143,151 @@ export function useCharacterStorage(initialForm) {
   }, []);
 
   useEffect(() => {
-    const currentWeapons = Array.isArray(form.weapons) ? form.weapons : [];
-    const previousWeapons = previousWeaponsRef.current;
-    previousWeaponsRef.current = currentWeapons.map((weapon) => ({ ...weapon }));
+    setForm((prev) => {
+      const currentWeapons = Array.isArray(prev.weapons) ? prev.weapons : [];
+      if (!currentWeapons.length) {
+        const hasLinkedWeapons = (prev.inventoryItems || []).some(
+          (item) => item?.sourceType === "weapon" && item?.sourceId
+        );
+        if (!hasLinkedWeapons) return prev;
 
-    if (!previousWeapons) return;
+        return {
+          ...prev,
+          inventoryItems: (prev.inventoryItems || []).filter(
+            (item) => !(item?.sourceType === "weapon" && item?.sourceId)
+          ),
+        };
+      }
 
-    const additions = [];
+      let weaponsChanged = false;
+      const seenIds = new Set();
+      const weapons = currentWeapons.map((weapon) => {
+        let inventoryId = String(weapon?.inventoryId || "").trim();
+        if (!inventoryId || seenIds.has(inventoryId)) {
+          inventoryId = makeInventorySourceId("weapon");
+          weaponsChanged = true;
+        }
+        seenIds.add(inventoryId);
+        return inventoryId === weapon?.inventoryId
+          ? weapon
+          : { ...weapon, inventoryId };
+      });
 
-    if (currentWeapons.length === previousWeapons.length) {
-      currentWeapons.forEach((weapon, index) => {
-        const previous = previousWeapons[index];
-        if (!previous?.name?.trim() && weapon?.name?.trim()) {
-          additions.push(createInventoryWeapon(weapon));
+      const activeIds = new Set(weapons.map((weapon) => weapon.inventoryId));
+      const prevItems = Array.isArray(prev.inventoryItems) ? prev.inventoryItems : [];
+      let inventoryItems = prevItems.filter(
+        (item) =>
+          !(
+            item?.sourceType === "weapon" &&
+            item?.sourceId &&
+            !activeIds.has(item.sourceId)
+          )
+      );
+      let inventoryChanged = inventoryItems.length !== prevItems.length;
+
+      weapons.forEach((weapon) => {
+        if (!String(weapon?.name || "").trim()) return;
+
+        const desired = createInventoryWeapon(weapon);
+        let index = inventoryItems.findIndex(
+          (item) => item?.sourceType === "weapon" && item?.sourceId === weapon.inventoryId
+        );
+
+        if (index === -1) {
+          index = inventoryItems.findIndex((item) => sameWeaponInventoryIdentity(item, desired));
+        }
+
+        if (index === -1) {
+          inventoryItems = [...inventoryItems, desired];
+          inventoryChanged = true;
+          return;
+        }
+
+        const current = inventoryItems[index];
+        const next = {
+          ...current,
+          ...desired,
+          quantity: current?.quantity || "1",
+        };
+
+        if (JSON.stringify(next) !== JSON.stringify(current)) {
+          inventoryItems = [...inventoryItems];
+          inventoryItems[index] = next;
+          inventoryChanged = true;
         }
       });
-    } else if (currentWeapons.length > previousWeapons.length) {
-      const previousCounts = new Map();
-      previousWeapons.forEach((weapon) => {
-        const signature = weaponSignature(weapon);
-        if (!signature) return;
-        previousCounts.set(signature, (previousCounts.get(signature) || 0) + 1);
-      });
 
-      currentWeapons.forEach((weapon) => {
-        const signature = weaponSignature(weapon);
-        if (!signature) return;
-        const remaining = previousCounts.get(signature) || 0;
-        if (remaining > 0) {
-          previousCounts.set(signature, remaining - 1);
-        } else {
-          additions.push(createInventoryWeapon(weapon));
-        }
-      });
-    }
+      if (!weaponsChanged && !inventoryChanged) return prev;
 
-    if (!additions.length) return;
-    setForm((prev) => ({
-      ...prev,
-      inventoryItems: [...(prev.inventoryItems || []), ...additions],
-    }));
+      return {
+        ...prev,
+        weapons: weaponsChanged ? weapons : prev.weapons,
+        inventoryItems,
+      };
+    });
   }, [form.weapons]);
 
   useEffect(() => {
     if (!armorInventoryDatabase.length) return;
 
-    const currentSlots = form.armor?._equipment?.slots || {};
-    const previousSlots = previousArmorSlotsRef.current;
-    previousArmorSlotsRef.current = Object.fromEntries(
-      Object.entries(currentSlots).map(([part, slot]) => [part, { ...(slot || {}) }])
-    );
+    const slots = form.armor?._equipment?.slots || {};
+    const equippedCounts = new Map();
 
-    if (!previousSlots) return;
-
-    const newlyEquippedIds = new Set();
-    Object.entries(currentSlots).forEach(([part, slot]) => {
+    Object.values(slots).forEach((slot) => {
       const itemId = slot?.itemId;
       if (!itemId) return;
-      if (previousSlots?.[part]?.itemId !== itemId) newlyEquippedIds.add(itemId);
+      const item = armorInventoryDatabase.find((entry) => entry.id === itemId);
+      if (!item) return;
+
+      if (isBodyGarment(item)) {
+        equippedCounts.set(itemId, 1);
+      } else {
+        equippedCounts.set(itemId, (equippedCounts.get(itemId) || 0) + 1);
+      }
     });
 
-    if (!newlyEquippedIds.size) return;
+    if (!equippedCounts.size) return;
 
-    const additions = [...newlyEquippedIds]
-      .map((itemId) => armorInventoryDatabase.find((item) => item.id === itemId))
-      .filter(Boolean)
-      .map(createInventoryArmor);
+    setForm((prev) => {
+      let inventoryItems = Array.isArray(prev.inventoryItems)
+        ? [...prev.inventoryItems]
+        : [];
+      let changed = false;
 
-    if (!additions.length) return;
-    setForm((prev) => ({
-      ...prev,
-      inventoryItems: [...(prev.inventoryItems || []), ...additions],
-    }));
+      equippedCounts.forEach((equippedQuantity, itemId) => {
+        const item = armorInventoryDatabase.find((entry) => entry.id === itemId);
+        if (!item) return;
+
+        const desired = createInventoryArmor(item, equippedQuantity);
+        const index = inventoryItems.findIndex(
+          (entry) => entry?.sourceType === "armor" && entry?.sourceId === itemId
+        );
+
+        if (index === -1) {
+          inventoryItems.push(desired);
+          changed = true;
+          return;
+        }
+
+        const current = inventoryItems[index];
+        const ownedQuantity = Math.max(
+          Number(current?.quantity || 0),
+          equippedQuantity
+        );
+        const next = {
+          ...current,
+          ...desired,
+          quantity: String(Math.max(1, ownedQuantity)),
+        };
+
+        if (JSON.stringify(next) !== JSON.stringify(current)) {
+          inventoryItems[index] = next;
+          changed = true;
+        }
+      });
+
+      return changed ? { ...prev, inventoryItems } : prev;
+    });
   }, [form.armor?._equipment?.slots, armorInventoryDatabase]);
 
   useEffect(() => {
@@ -249,7 +368,6 @@ export function useCharacterStorage(initialForm) {
 
       setForm((prev) => ({
         ...prev,
-        // Создаем или обновляем базу оружия в стейте персонажа
         equipmentDatabase: {
           ...(prev.equipmentDatabase || {}),
           weapons: parsedData,
@@ -258,7 +376,7 @@ export function useCharacterStorage(initialForm) {
       alert(`Успешно загружено ${parsedData.length} видов оружия из CSV!`);
     };
     reader.readAsText(file);
-    event.target.value = null; // Сбрасываем инпут
+    event.target.value = null;
   };
 
   const importJson = (event, fallbackFactory) => {
@@ -321,7 +439,6 @@ export function useCharacterStorage(initialForm) {
     }
   };
 
-// Принимаем третий параметр: t
   const changeOrigin = (newOriginId, traits = [], t) => {
     setForm((prev) => {
       const filteredPerks = (prev.perksAndTraits || []).filter((p) => !p.isOriginTrait);
@@ -349,8 +466,8 @@ export function useCharacterStorage(initialForm) {
         ...prev,
         origin: newOriginId,
         originTraits: traits,
-        tagged_skills: [], 
-        perksAndTraits: [...filteredPerks, ...newOriginTraits], 
+        tagged_skills: [],
+        perksAndTraits: [...filteredPerks, ...newOriginTraits],
       };
     });
   };
@@ -366,6 +483,6 @@ export function useCharacterStorage(initialForm) {
     loadLastCharacterMeta,
     resetToNewCharacter,
     continueLastCharacter,
-    changeOrigin, 
+    changeOrigin,
   };
 }
