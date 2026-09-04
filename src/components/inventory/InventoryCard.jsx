@@ -52,6 +52,7 @@ export default function InventoryCard({
     : getExtraCategoryLabel(item.category, i18n.resolvedLanguage);
   const canUse = isConsumableItem(item);
   const quantity = Math.max(0, Number(item.quantity || 0));
+  const useLabel = USE_LABELS[language] || USE_LABELS.en;
 
   const displayDamageType = localized.displayDamageType || item.damageType;
   const displayWeaponType = localized.displayWeaponType || item.weaponType;
@@ -95,8 +96,11 @@ export default function InventoryCard({
             className="pip-btn is-primary"
             onClick={handleUse}
             disabled={quantity <= 0}
+            title={useLabel}
+            aria-label={useLabel}
+            style={{ minWidth: 42, paddingInline: 10 }}
           >
-            {USE_LABELS[language] || USE_LABELS.en}
+            ▶
           </button>
         )}
         <button type="button" className="pip-btn" onClick={() => onEdit(index)}>
