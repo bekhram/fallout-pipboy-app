@@ -7,6 +7,7 @@ const MIN_ZOOM = 0.65;
 const MAX_ZOOM = 2;
 const ZOOM_STEP = 0.2;
 const PADDING = 4;
+const LOCAL_GM_STORE_KEY = "fallout_pipboy_local_gm_sessions_v3";
 
 function fallbackLocationName(location) {
   if (!location) return "Unknown";
@@ -15,6 +16,32 @@ function fallbackLocationName(location) {
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function readLocalGmStore() {
+  try {
+    const raw = localStorage.getItem(LOCAL_GM_STORE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function getLocationProgress(locationId, sessions) {
+  const session = sessions?.[`location:${locationId}`];
+  if (!session) return null;
+  const messages = Array.isArray(session.messages) ? session.messages : [];
+  const events = Array.isArray(session.events) ? session.events : [];
+  if (!messages.length && !events.length) return null;
+  const cleared = events.some((event) => ["cleared", "resolved"].includes(String(event?.status || "").toLowerCase()));
+  return {
+    status: cleared ? "cleared" : events.length ? "explored" : "visited",
+    messages: messages.length,
+    discoveries: events.length,
+    updatedAt: Number(session.updatedAt || 0),
+    events,
+  };
 }
 
 export default function WorldOverview({ mapData, playerPosition }) {
@@ -36,6 +63,7 @@ export default function WorldOverview({ mapData, playerPosition }) {
     y: worldOffset.y * rows + (playerPosition?.y || 0),
   };
 
+  const sessions = useMemo(() => readLocalGmStore(), []);
   const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState(() => {
     try {
@@ -47,6 +75,7 @@ export default function WorldOverview({ mapData, playerPosition }) {
   });
 
   const selected = FALLOUT_4_LOCATIONS.find((location) => location.id === selectedId) || null;
+  const selectedProgress = selected ? getLocationProgress(selected.id, sessions) : null;
 
   const bounds = useMemo(() => {
     const xs = [playerWorld.x, ...FALLOUT_4_LOCATIONS.map((location) => location.worldX)];
@@ -113,6 +142,11 @@ export default function WorldOverview({ mapData, playerPosition }) {
         <div>
           <strong>{tx("worldOverview")}</strong>
           <span>{selected ? `${tx("route")} // ${displayName(selected).toUpperCase()}` : tx("selectStaticLocation")}</span>
+          {selectedProgress ? (
+            <span className={`pip-world-overview__progress-text is-${selectedProgress.status}`}>
+              {selectedProgress.status.toUpperCase()} · {selectedProgress.discoveries} {tx("discoveries")}
+            </span>
+          ) : null}
         </div>
         <div className="pip-world-overview__zoom">
           <button type="button" onClick={() => setZoom((value) => clamp(value - ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}>−</button>
@@ -139,16 +173,18 @@ export default function WorldOverview({ mapData, playerPosition }) {
 
           {FALLOUT_4_LOCATIONS.map((location) => {
             const pos = point(location.worldX, location.worldY);
+            const progress = getLocationProgress(location.id, sessions);
             return (
               <button
                 key={location.id}
                 type="button"
-                className={`pip-world-overview__poi${location.id === selectedId ? " is-selected" : ""}${location.major ? " is-major" : ""}`}
+                className={`pip-world-overview__poi${location.id === selectedId ? " is-selected" : ""}${location.major ? " is-major" : ""}${progress ? ` is-${progress.status}` : ""}`}
                 style={pos}
                 onClick={() => chooseLocation(location)}
-                title={displayName(location)}
+                title={`${displayName(location)}${progress ? ` · ${progress.status} · ${progress.discoveries} ${tx("discoveries")}` : ""}`}
               >
                 <span>{location.icon || "◆"}</span>
+                {progress ? <b className="pip-world-overview__progress-dot">{progress.status === "cleared" ? "✓" : progress.status === "explored" ? "•" : "○"}</b> : null}
                 <em>{displayName(location)}</em>
               </button>
             );
@@ -165,6 +201,7 @@ export default function WorldOverview({ mapData, playerPosition }) {
         <span>{tx("world")} {playerWorld.x},{playerWorld.y}</span>
         {selected ? <span>{tx("target")} {selected.worldX},{selected.worldY}</span> : null}
         {selected ? <span>~{distance.toFixed(1)} {tx("blocks")}</span> : null}
+        {selectedProgress ? <span>{selectedProgress.messages} {tx("messages")} · {selectedProgress.discoveries} {tx("discoveries")}</span> : null}
         <span>{Math.ceil(bounds.width / cols)}×{Math.ceil(bounds.height / rows)} {tx("sectorView")}</span>
       </div>
     </section>
