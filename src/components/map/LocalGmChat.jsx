@@ -2,10 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
+import { rollFalloutD20 } from "../../utils/dice.js";
+import { playSound } from "../../utils/soundManager.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
 const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_sessions_v3";
+const CHECK_TEXT = {
+  en: { check: "SKILL CHECK", tap: "TAP TO ROLL", rolling: "ROLLING...", target: "TARGET", difficulty: "DIFFICULTY", successes: "successes", complications: "complications", success: "SUCCESS", failure: "FAILURE" },
+  ru: { check: "ПРОВЕРКА НАВЫКА", tap: "НАЖМИТЕ, ЧТОБЫ БРОСИТЬ", rolling: "БРОСОК...", target: "ЦЕЛЬ", difficulty: "СЛОЖНОСТЬ", successes: "успехов", complications: "осложнений", success: "УСПЕХ", failure: "НЕУДАЧА" },
+  uk: { check: "ПЕРЕВІРКА НАВИЧКИ", tap: "НАТИСНІТЬ, ЩОБ КИНУТИ", rolling: "КИДОК...", target: "ЦІЛЬ", difficulty: "СКЛАДНІСТЬ", successes: "успіхів", complications: "ускладнень", success: "УСПІХ", failure: "НЕВДАЧА" },
+  pl: { check: "TEST UMIEJĘTNOŚCI", tap: "DOTKNIJ, ABY RZUCIĆ", rolling: "RZUT...", target: "CEL", difficulty: "TRUDNOŚĆ", successes: "sukcesy", complications: "komplikacje", success: "SUKCES", failure: "PORAŻKA" },
+};
+
 const LEGACY_CHAT_STORAGE_KEYS = [
   "fallout_pipboy_local_gm_sessions_v2",
   "fallout_pipboy_local_gm_chat_v1",
@@ -307,6 +316,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isCheckRolling, setIsCheckRolling] = useState(false);
   const [error, setError] = useState("");
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [version, setVersion] = useState(0);
@@ -476,6 +486,39 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     await sendText(draft);
   }
 
+  function rollPendingCheck() {
+    if (!pendingCheck || isSending || isCheckRolling || isArchiveView) return;
+
+    const text = CHECK_TEXT[language] || CHECK_TEXT.en;
+    const skill = rawCharacter?.skills?.[pendingCheck.skill] || {};
+    const attributeKey = pendingCheck.attribute || skill.attribute || "A";
+    const attributeValue = Number(rawCharacter?.special?.[attributeKey] ?? rawCharacter?.SPECIAL?.[attributeKey] ?? 0);
+    const rank = Number(skill.rank || 0);
+    const bonus = Number(skill.bonus || 0);
+    const tagBonus = skill.tagged ? 2 : 0;
+    const targetNumber = Math.max(0, Math.min(20, attributeValue + rank + bonus + tagBonus));
+    const criticalRange = skill.tagged ? Math.max(1, Math.min(20, rank)) : 1;
+    const difficulty = Math.max(0, Math.min(10, Number(pendingCheck.difficulty) || 1));
+    const diceCount = Math.max(1, Math.min(5, Number(pendingCheck.diceCount) || 2));
+
+    playSound("diceRoll");
+    setIsCheckRolling(true);
+
+    window.setTimeout(() => {
+      const result = rollFalloutD20({
+        diceCount,
+        targetNumber,
+        criticalRange,
+        label: `${attributeKey} + ${pendingCheck.skill}`,
+      });
+      const passed = result.totalSuccesses >= difficulty;
+      const dice = result.rolls.map((die) => die.value).join(", ");
+      const summary = `${text.check}: ${attributeKey} + ${pendingCheck.skill}; d20=[${dice}]; ${text.target}=${targetNumber}; ${text.successes}=${result.totalSuccesses}; ${text.complications}=${result.complications}; ${text.difficulty}=${difficulty}; ${passed ? text.success : text.failure}. Resolve this check and continue the scene.`;
+      setIsCheckRolling(false);
+      sendText(summary, { clearCheck: true });
+    }, 550);
+  }
+
   function resetChat() {
     if (isArchiveView) return;
     const store = readStore();
@@ -553,6 +596,24 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         </div>
       ) : null}
 
+
+      {!isArchiveView && pendingCheck ? (
+        <button
+          type="button"
+          className="pip-local-gm__check"
+          onClick={rollPendingCheck}
+          disabled={isSending || isCheckRolling}
+        >
+          <span className="pip-local-gm__check-label">{(CHECK_TEXT[language] || CHECK_TEXT.en).check}</span>
+          <strong>{pendingCheck.attribute || rawCharacter?.skills?.[pendingCheck.skill]?.attribute || "A"} + {pendingCheck.skill}</strong>
+          {pendingCheck.reason ? <em>{pendingCheck.reason}</em> : null}
+          <span>
+            {(CHECK_TEXT[language] || CHECK_TEXT.en).difficulty}: {pendingCheck.difficulty || 1}
+            {" · "}
+            {isCheckRolling ? (CHECK_TEXT[language] || CHECK_TEXT.en).rolling : (CHECK_TEXT[language] || CHECK_TEXT.en).tap}
+          </span>
+        </button>
+      ) : null}
 
       <div className="pip-local-gm__messages" aria-live="polite">
         {messages.length === 0 && !isSending ? (
