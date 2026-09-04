@@ -3,6 +3,18 @@ import { useTranslation } from "react-i18next";
 import { PERKS_LIST } from "../data/perks";
 import { getAddedPerkTranslation } from "../data/perkTranslations";
 
+const perkImageModules = import.meta.glob("../../assets/perks/*.png", {
+  eager: true,
+  import: "default",
+});
+
+const PERK_IMAGES = Object.fromEntries(
+  Object.entries(perkImageModules).map(([path, image]) => [
+    path.split("/").pop().replace(/\.png$/, ""),
+    image,
+  ])
+);
+
 // Функция для проверки требований перка
 function getRequirementsWarnings(reqString, form) {
   if (!reqString || reqString === "None") return [];
@@ -89,6 +101,7 @@ export default function PerksScreen({
     if (perkData) {
       setPerkDraft((prev) => ({
         ...prev,
+        id: perkData.id,
         name: localizedPerk(perkData).name,
         description: localizedPerk(perkData).description + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
       }));
@@ -97,8 +110,11 @@ export default function PerksScreen({
 
   // Ищем выбранный перк в базе по имени, чтобы динамически проверять требования
   const matchedPerk = PERKS_LIST.find(
-    (p) => localizedPerk(p).name === perkDraft?.name
+    (p) => p.id === perkDraft?.id || localizedPerk(p).name === perkDraft?.name
   );
+
+  const getPerkId = (item) =>
+    item?.id || PERKS_LIST.find((perk) => localizedPerk(perk).name === item?.name)?.id;
   
   // Получаем список предупреждений
   const warnings = matchedPerk ? getRequirementsWarnings(matchedPerk.requirements, form) : [];
@@ -118,6 +134,8 @@ export default function PerksScreen({
         <div className="pip-perks-list">
           {safeList.map((item, index) => {
             const currentlyEditing = editingIndex === index;
+            const perkId = getPerkId(item);
+            const perkImage = PERK_IMAGES[perkId];
             return (
               <div
                 key={item.id || index}
@@ -125,6 +143,17 @@ export default function PerksScreen({
                   currentlyEditing ? "is-editing" : ""
                 } ${item.isOriginTrait ? "is-origin" : ""}`}
               >
+                {perkImage && (
+                  <div className="pip-perk-image-wrap" aria-hidden="true">
+                    <img
+                      className="pip-perk-image"
+                      src={perkImage}
+                      alt=""
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+                <div className="pip-perk-content">
                   <div className="pip-perk-header" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
                   <strong style={{ fontSize: '1.1em' }}>
                     {item.name || t("perksPanel.unnamedPerk")}
@@ -164,6 +193,7 @@ export default function PerksScreen({
                     </button>
                   </div>
                 )}
+                </div>
               </div>
             );
           })}
@@ -180,6 +210,11 @@ export default function PerksScreen({
             </div>
 
             <div className="pip-form-grid">
+              {matchedPerk && PERK_IMAGES[matchedPerk.id] && (
+                <div className="pip-perk-editor-preview" aria-hidden="true">
+                  <img src={PERK_IMAGES[matchedPerk.id]} alt="" />
+                </div>
+              )}
               
               <div style={{ gridColumn: "1 / -1" }}>
                 <label>Select from Database</label>

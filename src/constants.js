@@ -992,6 +992,7 @@ export function createEmptyItem(category = "misc") {
 
 export function createEmptyPerk() {
   return {
+    id: "",
     name: "",
     rank: "",
     description: "",

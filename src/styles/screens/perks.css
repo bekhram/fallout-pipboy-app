@@ -1,0 +1,54 @@
+.pip-perk-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.pip-perk-image-wrap {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--pip-line-strong);
+  background: color-mix(in srgb, var(--pip-text) 5%, transparent);
+  box-shadow: inset 0 0 18px color-mix(in srgb, var(--pip-text) 12%, transparent);
+}
+
+.pip-perk-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px color-mix(in srgb, var(--pip-text) 45%, transparent));
+}
+
+.pip-perk-content {
+  min-width: 0;
+}
+
+.pip-perk-editor-preview {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  border: 1px solid var(--pip-line-strong);
+  background: color-mix(in srgb, var(--pip-text) 4%, transparent);
+}
+
+.pip-perk-editor-preview img {
+  width: min(220px, 55vw);
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .pip-perk-card {
+    grid-template-columns: 84px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .pip-perk-image-wrap {
+    width: 84px;
+  }
+}

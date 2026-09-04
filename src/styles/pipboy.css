@@ -17,6 +17,7 @@
 @import "./screens/armor.css";
 @import "./screens/status.css";
 @import "./screens/skills.css";
+@import "./screens/perks.css";
 
 @import "./features/injuries.css";
 @import "./features/vitals.css";
