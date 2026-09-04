@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ORIGINS, TRAITS_DICTIONARY } from "../components/data/origins.js";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { parseCSV } from "../utils/csvParser.js";
+import { parseArmorDatabase } from "../utils/armorDatabase.js";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 
@@ -11,6 +12,40 @@ function makeSafeFileName(name) {
   return (name || "Character")
     .replace(/[^a-zA-Z0-9_-]+/g, "_")
     .replace(/^_+|_+$/g, "") || "Character";
+}
+
+function weaponSignature(weapon) {
+  if (!weapon?.name?.trim()) return null;
+  return [
+    weapon.name.trim(),
+    weapon.cost ?? "",
+    weapon.weight ?? "",
+    weapon.damage ?? "",
+    weapon.ammo ?? "",
+  ].join("|");
+}
+
+function createInventoryWeapon(weapon) {
+  return {
+    name: String(weapon?.name || "Weapon"),
+    quantity: "1",
+    cost: String(weapon?.cost ?? ""),
+    weight: String(weapon?.weight ?? ""),
+    category: "weapons",
+    sourceType: "weapon",
+  };
+}
+
+function createInventoryArmor(item) {
+  return {
+    name: String(item?.name || "Armor"),
+    quantity: "1",
+    cost: String(item?.cost ?? ""),
+    weight: String(item?.weight ?? ""),
+    category: "armor",
+    sourceType: "armor",
+    sourceId: item?.id || null,
+  };
 }
 
 export function useCharacterStorage(initialForm) {
@@ -37,6 +72,104 @@ export function useCharacterStorage(initialForm) {
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(() =>
     JSON.stringify(form)
   );
+  const [armorInventoryDatabase, setArmorInventoryDatabase] = useState([]);
+  const previousWeaponsRef = useRef(null);
+  const previousArmorSlotsRef = useRef(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/Armor.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Armor database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (!active) return;
+        setArmorInventoryDatabase(parseArmorDatabase(text).items || []);
+      })
+      .catch(() => {
+        if (active) setArmorInventoryDatabase([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentWeapons = Array.isArray(form.weapons) ? form.weapons : [];
+    const previousWeapons = previousWeaponsRef.current;
+    previousWeaponsRef.current = currentWeapons.map((weapon) => ({ ...weapon }));
+
+    if (!previousWeapons) return;
+
+    const additions = [];
+
+    if (currentWeapons.length === previousWeapons.length) {
+      currentWeapons.forEach((weapon, index) => {
+        const previous = previousWeapons[index];
+        if (!previous?.name?.trim() && weapon?.name?.trim()) {
+          additions.push(createInventoryWeapon(weapon));
+        }
+      });
+    } else if (currentWeapons.length > previousWeapons.length) {
+      const previousCounts = new Map();
+      previousWeapons.forEach((weapon) => {
+        const signature = weaponSignature(weapon);
+        if (!signature) return;
+        previousCounts.set(signature, (previousCounts.get(signature) || 0) + 1);
+      });
+
+      currentWeapons.forEach((weapon) => {
+        const signature = weaponSignature(weapon);
+        if (!signature) return;
+        const remaining = previousCounts.get(signature) || 0;
+        if (remaining > 0) {
+          previousCounts.set(signature, remaining - 1);
+        } else {
+          additions.push(createInventoryWeapon(weapon));
+        }
+      });
+    }
+
+    if (!additions.length) return;
+    setForm((prev) => ({
+      ...prev,
+      inventoryItems: [...(prev.inventoryItems || []), ...additions],
+    }));
+  }, [form.weapons]);
+
+  useEffect(() => {
+    if (!armorInventoryDatabase.length) return;
+
+    const currentSlots = form.armor?._equipment?.slots || {};
+    const previousSlots = previousArmorSlotsRef.current;
+    previousArmorSlotsRef.current = Object.fromEntries(
+      Object.entries(currentSlots).map(([part, slot]) => [part, { ...(slot || {}) }])
+    );
+
+    if (!previousSlots) return;
+
+    const newlyEquippedIds = new Set();
+    Object.entries(currentSlots).forEach(([part, slot]) => {
+      const itemId = slot?.itemId;
+      if (!itemId) return;
+      if (previousSlots?.[part]?.itemId !== itemId) newlyEquippedIds.add(itemId);
+    });
+
+    if (!newlyEquippedIds.size) return;
+
+    const additions = [...newlyEquippedIds]
+      .map((itemId) => armorInventoryDatabase.find((item) => item.id === itemId))
+      .filter(Boolean)
+      .map(createInventoryArmor);
+
+    if (!additions.length) return;
+    setForm((prev) => ({
+      ...prev,
+      inventoryItems: [...(prev.inventoryItems || []), ...additions],
+    }));
+  }, [form.armor?._equipment?.slots, armorInventoryDatabase]);
 
   useEffect(() => {
     localStorage.setItem(
