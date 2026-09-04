@@ -1,6 +1,6 @@
 {
   "tabs": {
-    "status": "STATUS",
+    "status": "STATUSY",
     "special": "SPECIAL",
     "weapons": "BROŃ",
     "inventory": "EKW",
@@ -416,6 +416,7 @@
     "addPortrait": "DODAJ PORTRET",
     "origin": "Pochodzenie",
     "level": "Poziom",
+    "xp": "Doświadczenie",
     "defense": "Obrona",
     "initiative": "Inicjatywa",
     "melee": "Walka wręcz",
