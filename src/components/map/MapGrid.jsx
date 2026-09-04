@@ -39,6 +39,7 @@ function MapGrid({
   mapMode,
   setMapMode,
   locations,
+  region,
 }) {
   const { t, i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
@@ -136,6 +137,8 @@ function MapGrid({
               selectedCell={selectedCell}
               characterData={character}
               weaponDatabase={weaponDatabase}
+              locations={locations}
+              region={region}
             />
           </div>
         </div>
