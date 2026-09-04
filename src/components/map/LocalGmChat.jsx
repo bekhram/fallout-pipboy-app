@@ -3,7 +3,8 @@ import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
-const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_chat_v1";
+const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_sessions_v2";
+const LEGACY_CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_chat_v1";
 
 function readCharacter() {
   try {
@@ -15,14 +16,22 @@ function readCharacter() {
   }
 }
 
-function readSavedMessages() {
+function readSessionStore() {
   try {
     const raw = localStorage.getItem(CHAT_STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   } catch {
-    return [];
+    return {};
+  }
+}
+
+function writeSessionStore(store) {
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(store));
+  } catch {
+    // Storage is optional; the chat still works for the current session.
   }
 }
 
@@ -116,12 +125,43 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
   };
 }
 
+function getSessionKey(world) {
+  if (world?.currentLocation?.id) return `location:${world.currentLocation.id}`;
+  if (world?.worldPosition) {
+    return `world:${world.worldPosition.x}:${world.worldPosition.y}`;
+  }
+  return `sector:${world?.sector || "unknown"}`;
+}
+
+function readSessionMessages(sessionKey) {
+  const store = readSessionStore();
+  const saved = store?.[sessionKey]?.messages;
+  if (Array.isArray(saved)) return saved;
+
+  try {
+    const legacy = localStorage.getItem(LEGACY_CHAT_STORAGE_KEY);
+    if (!legacy) return [];
+    const parsed = JSON.parse(legacy);
+    if (!Array.isArray(parsed) || parsed.length === 0) return [];
+
+    store[sessionKey] = {
+      messages: parsed.slice(-80),
+      updatedAt: Date.now(),
+      migratedFromLegacy: true,
+    };
+    writeSessionStore(store);
+    localStorage.removeItem(LEGACY_CHAT_STORAGE_KEY);
+    return parsed.slice(-80);
+  } catch {
+    return [];
+  }
+}
+
 export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
-  const [messages, setMessages] = useState(() => readSavedMessages());
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
-  const introStartedRef = useRef(false);
+  const introStartedRef = useRef(new Set());
 
   const rawCharacter = useMemo(() => readCharacter(), []);
   const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
@@ -129,14 +169,31 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData),
     [mapData, playerPosition, selectedCell, rawCharacter]
   );
+  const sessionKey = useMemo(() => getSessionKey(world), [world]);
+  const [messages, setMessages] = useState(() => readSessionMessages(sessionKey));
+
+  useEffect(() => {
+    setMessages(readSessionMessages(sessionKey));
+    setDraft("");
+    setError("");
+  }, [sessionKey]);
 
   function persist(nextMessages) {
-    setMessages(nextMessages);
-    try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(nextMessages.slice(-80)));
-    } catch {
-      // Storage is optional; the chat still works for the current session.
-    }
+    const trimmed = nextMessages.slice(-80);
+    setMessages(trimmed);
+
+    const store = readSessionStore();
+    store[sessionKey] = {
+      messages: trimmed,
+      updatedAt: Date.now(),
+      location: {
+        id: world.currentLocation?.id || null,
+        name: world.currentLocation?.name || null,
+        terrain: world.currentTerrain || null,
+        worldPosition: world.worldPosition || null,
+      },
+    };
+    writeSessionStore(store);
   }
 
   async function requestGm(message, history = []) {
@@ -146,6 +203,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
       body: JSON.stringify({
         character,
         world,
+        sessionKey,
         history: history.slice(-16),
         message,
       }),
@@ -180,12 +238,12 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   }
 
   useEffect(() => {
-    if (introStartedRef.current || messages.length > 0) return;
-    introStartedRef.current = true;
+    if (messages.length > 0 || introStartedRef.current.has(sessionKey)) return;
+    introStartedRef.current.add(sessionKey);
     startScene([]);
-    // The first scene should run once when an empty LOCAL chat is mounted.
+    // Start one intro per empty world-location session.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sessionKey, messages.length]);
 
   async function sendMessage(event) {
     event?.preventDefault?.();
@@ -212,11 +270,13 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   }
 
   function resetChat() {
-    persist([]);
+    const store = readSessionStore();
+    delete store[sessionKey];
+    writeSessionStore(store);
+    setMessages([]);
     setDraft("");
     setError("");
-    introStartedRef.current = true;
-    startScene([]);
+    introStartedRef.current.delete(sessionKey);
   }
 
   const currentPlace =
@@ -265,7 +325,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
         {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
             <strong>AUTO GM READY.</strong>
-            <p>The GM will start the scene using your character and WORLD-map context.</p>
+            <p>The GM will start this location's scene using your character and WORLD-map context.</p>
           </div>
         ) : (
           messages.map((message, index) => (
