@@ -224,7 +224,7 @@ function findWorldTravelRoute(start, target, cache, cols = MAP_COLS, rows = MAP_
   return { steps, cost: costs.get(targetKey) ?? 0, cache };
 }
 
-export default function MapScreen({ mapState, onMapChange }) {
+export default function MapScreen({ mapState, onMapChange, character, weaponDatabase }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
@@ -599,6 +599,8 @@ export default function MapScreen({ mapState, onMapChange }) {
                 discoveredKeys={discoveredKeys}
                 onSelectCell={setSelectedCell}
                 onTravel={handleTravel}
+                character={character}
+                weaponDatabase={weaponDatabase}
               />
             </div>
           </div>
