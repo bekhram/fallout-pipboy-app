@@ -41,24 +41,74 @@
   text-shadow: 0 0 7px rgba(120, 255, 140, 0.55);
 }
 
-.pip-map-local-mode {
-  position: absolute;
+.pip-map-local-fullscreen {
+  position: fixed;
   inset: 0;
-  overflow: auto;
-  padding: 54px 10px 12px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
   background:
-    linear-gradient(rgba(5, 12, 7, 0.96), rgba(5, 12, 7, 0.96)),
+    linear-gradient(rgba(5, 12, 7, 0.985), rgba(5, 12, 7, 0.985)),
     repeating-linear-gradient(0deg, transparent 0 23px, rgba(120, 255, 140, 0.03) 24px),
     repeating-linear-gradient(90deg, transparent 0 23px, rgba(120, 255, 140, 0.03) 24px);
+  color: var(--pip-text);
 }
 
-.pip-map-grid-layer:has(.pip-map-mode-shell.is-local),
+.pip-map-local-fullscreen__bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 50px;
+  padding: max(8px, env(safe-area-inset-top)) 14px 8px;
+  border-bottom: 1px solid rgba(120, 255, 140, 0.28);
+  background: rgba(4, 14, 8, 0.98);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.35);
+  letter-spacing: 0.08em;
+}
+
+.pip-map-local-fullscreen__bar strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.pip-map-local-fullscreen__bar button {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 34px;
+  border: 1px solid rgba(120, 255, 140, 0.42);
+  background: rgba(18, 34, 20, 0.98);
+  color: inherit;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pip-map-local-fullscreen__content {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+  overscroll-behavior: contain;
+}
+
+.pip-map-local-fullscreen__content .pip-local-gm {
+  width: min(100%, 1100px);
+  min-height: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 .pip-map-grid-layer:has(.pip-map-mode-shell.is-overview) {
   z-index: 12;
-}
-
-.pip-map-mode-shell.is-local .pip-map-local-mode {
-  pointer-events: auto;
 }
 
 .pip-map-mode-shell.is-overview .pip-world-overview {
@@ -91,10 +141,6 @@
     text-overflow: ellipsis;
   }
 
-  .pip-map-local-mode {
-    padding-top: 44px;
-  }
-
   .pip-map-mode-shell.is-overview .pip-world-overview {
     padding-top: 42px;
   }
@@ -107,5 +153,28 @@
   .pip-map-mode-shell.is-overview .pip-world-overview__zoom {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .pip-map-local-fullscreen__bar {
+    min-height: 46px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .pip-map-local-fullscreen__bar strong {
+    font-size: 11px;
+  }
+
+  .pip-map-local-fullscreen__bar button {
+    width: 40px;
+    height: 32px;
+  }
+
+  .pip-map-local-fullscreen__content {
+    padding: 8px 8px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .pip-map-local-fullscreen__content .pip-local-gm__messages {
+    max-height: none;
   }
 }
