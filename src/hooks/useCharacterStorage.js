@@ -13,6 +13,12 @@ import {
   PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
   PIPBOY_USE_ITEM_EVENT,
 } from "../utils/consumableEffects.js";
+import {
+  applyStartingEquipmentGrant,
+  getOriginEquipmentGrant,
+  getTagSkillEquipmentGrant,
+  removeStartingEquipmentGrant,
+} from "../data/startingEquipment.js";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 
@@ -123,6 +129,8 @@ export function useCharacterStorage(initialForm) {
         originTraits: [],
         tagged_skills: [],
         activeConsumableEffects: [],
+        originEquipmentPack: "",
+        startingEquipmentGrants: {},
         ...initialForm,
       };
 
@@ -138,6 +146,8 @@ export function useCharacterStorage(initialForm) {
         originTraits: [],
         tagged_skills: [],
         activeConsumableEffects: [],
+        originEquipmentPack: "",
+        startingEquipmentGrants: {},
         ...initialForm,
       };
     }
@@ -149,9 +159,12 @@ export function useCharacterStorage(initialForm) {
     JSON.stringify(form)
   );
   const [armorInventoryDatabase, setArmorInventoryDatabase] = useState([]);
+  const [weaponInventoryDatabase, setWeaponInventoryDatabase] = useState([]);
+  const [ammoInventoryDatabase, setAmmoInventoryDatabase] = useState([]);
 
   useEffect(() => {
     let active = true;
+
     fetch("/Armor.csv")
       .then((response) => {
         if (!response.ok) throw new Error("Armor database unavailable");
@@ -165,10 +178,114 @@ export function useCharacterStorage(initialForm) {
         if (active) setArmorInventoryDatabase([]);
       });
 
+    fetch("/weapons.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Weapon database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (active) setWeaponInventoryDatabase(parseCSV(text));
+      })
+      .catch(() => {
+        if (active) setWeaponInventoryDatabase([]);
+      });
+
+    fetch("/Ammo.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Ammo database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (active) setAmmoInventoryDatabase(parseCSV(text));
+      })
+      .catch(() => {
+        if (active) setAmmoInventoryDatabase([]);
+      });
+
     return () => {
       active = false;
     };
   }, []);
+
+  const starterDatabasesReady =
+    armorInventoryDatabase.length > 0 &&
+    weaponInventoryDatabase.length > 0 &&
+    ammoInventoryDatabase.length > 0;
+
+  useEffect(() => {
+    if (!starterDatabasesReady || !form.origin || !form.originEquipmentPack) return;
+
+    const sourceKey = `origin:${form.origin}:${form.originEquipmentPack}`;
+    if (form.startingEquipmentGrants?.[sourceKey]) return;
+
+    setForm((prev) => {
+      if (prev.startingEquipmentGrants?.[sourceKey]) return prev;
+      return applyStartingEquipmentGrant(
+        prev,
+        sourceKey,
+        getOriginEquipmentGrant(prev.originEquipmentPack),
+        {
+          armor: armorInventoryDatabase,
+          weapons: weaponInventoryDatabase,
+          ammo: ammoInventoryDatabase,
+        }
+      );
+    });
+  }, [
+    starterDatabasesReady,
+    form.origin,
+    form.originEquipmentPack,
+    form.startingEquipmentGrants,
+    armorInventoryDatabase,
+    weaponInventoryDatabase,
+    ammoInventoryDatabase,
+  ]);
+
+  useEffect(() => {
+    if (!starterDatabasesReady || !form.skills) return;
+
+    const skillEntries = Object.entries(form.skills || {});
+    const needsChange = skillEntries.some(([skillName, skill]) => {
+      const sourceKey = `tag:${skillName}`;
+      const hasGrant = Boolean(form.startingEquipmentGrants?.[sourceKey]);
+      return Boolean(skill?.tagged) !== hasGrant;
+    });
+
+    if (!needsChange) return;
+
+    setForm((prev) => {
+      let next = prev;
+
+      Object.entries(prev.skills || {}).forEach(([skillName, skill]) => {
+        const sourceKey = `tag:${skillName}`;
+        const hasGrant = Boolean(next.startingEquipmentGrants?.[sourceKey]);
+
+        if (skill?.tagged && !hasGrant) {
+          next = applyStartingEquipmentGrant(
+            next,
+            sourceKey,
+            getTagSkillEquipmentGrant(skillName),
+            {
+              armor: armorInventoryDatabase,
+              weapons: weaponInventoryDatabase,
+              ammo: ammoInventoryDatabase,
+            }
+          );
+        } else if (!skill?.tagged && hasGrant) {
+          next = removeStartingEquipmentGrant(next, sourceKey);
+        }
+      });
+
+      return next;
+    });
+  }, [
+    starterDatabasesReady,
+    form.skills,
+    form.startingEquipmentGrants,
+    armorInventoryDatabase,
+    weaponInventoryDatabase,
+    ammoInventoryDatabase,
+  ]);
 
   useEffect(() => {
     setForm((prev) => {
@@ -332,10 +449,14 @@ export function useCharacterStorage(initialForm) {
         if (!item || !isConsumableItem(item) || quantity <= 0) return prev;
 
         const plan = getConsumableUsePlan(item);
-        inventoryItems[index] = {
-          ...item,
-          quantity: String(Math.max(0, quantity - 1)),
-        };
+        if (quantity <= 1) {
+          inventoryItems.splice(index, 1);
+        } else {
+          inventoryItems[index] = {
+            ...item,
+            quantity: String(quantity - 1),
+          };
+        }
 
         let statuses = { ...(prev.statuses || {}) };
         if (plan.cureAddictions) statuses = clearStatusGroup(statuses, "addiction");
@@ -523,6 +644,8 @@ export function useCharacterStorage(initialForm) {
 
         const next = {
           activeConsumableEffects: [],
+          originEquipmentPack: "",
+          startingEquipmentGrants: {},
           ...fallbackFactory(),
           ...loaded,
         };
@@ -551,7 +674,12 @@ export function useCharacterStorage(initialForm) {
   };
 
   const resetToNewCharacter = (factory) => {
-    const fresh = { activeConsumableEffects: [], ...factory() };
+    const fresh = {
+      activeConsumableEffects: [],
+      originEquipmentPack: "",
+      startingEquipmentGrants: {},
+      ...factory(),
+    };
     setForm(fresh);
     setLastSavedSnapshot(JSON.stringify(fresh));
     setSaveStatus("");
@@ -566,6 +694,8 @@ export function useCharacterStorage(initialForm) {
       const parsed = JSON.parse(raw);
       const next = {
         activeConsumableEffects: [],
+        originEquipmentPack: "",
+        startingEquipmentGrants: {},
         ...factory(),
         ...(parsed?.data || {}),
       };
@@ -577,9 +707,16 @@ export function useCharacterStorage(initialForm) {
     }
   };
 
-  const changeOrigin = (newOriginId, traits = [], t) => {
+  const changeOrigin = (newOriginId, traits = [], selectedPack = "", t) => {
     setForm((prev) => {
-      const filteredPerks = (prev.perksAndTraits || []).filter((p) => !p.isOriginTrait);
+      let next = prev;
+      Object.keys(next.startingEquipmentGrants || {})
+        .filter((key) => key.startsWith("origin:") || key.startsWith("tag:"))
+        .forEach((key) => {
+          next = removeStartingEquipmentGrant(next, key);
+        });
+
+      const filteredPerks = (next.perksAndTraits || []).filter((p) => !p.isOriginTrait);
       const originData = ORIGINS[newOriginId];
       const newOriginTraits = [];
 
@@ -600,11 +737,20 @@ export function useCharacterStorage(initialForm) {
         traits.forEach(addTrait);
       }
 
+      const skills = Object.fromEntries(
+        Object.entries(next.skills || {}).map(([skillName, skill]) => [
+          skillName,
+          { ...skill, tagged: false },
+        ])
+      );
+
       return {
-        ...prev,
+        ...next,
         origin: newOriginId,
         originTraits: traits,
+        originEquipmentPack: selectedPack || "",
         tagged_skills: [],
+        skills,
         perksAndTraits: [...filteredPerks, ...newOriginTraits],
       };
     });
