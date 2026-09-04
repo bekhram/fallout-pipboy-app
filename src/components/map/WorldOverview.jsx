@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { mapUiText } from "./mapUiText.js";
 
 const MIN_ZOOM = 0.65;
@@ -44,7 +43,7 @@ function getLocationProgress(locationId, sessions) {
   };
 }
 
-export default function WorldOverview({ mapData, playerPosition }) {
+export default function WorldOverview({ mapData, playerPosition, locations = [] }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
@@ -68,24 +67,24 @@ export default function WorldOverview({ mapData, playerPosition }) {
   const [selectedId, setSelectedId] = useState(() => {
     try {
       const select = document.querySelector(".pip-map-select-label select");
-      return select?.value || FALLOUT_4_LOCATIONS[0]?.id || "";
+      return select?.value || locations[0]?.id || "";
     } catch {
-      return FALLOUT_4_LOCATIONS[0]?.id || "";
+      return locations[0]?.id || "";
     }
   });
 
-  const selected = FALLOUT_4_LOCATIONS.find((location) => location.id === selectedId) || null;
+  const selected = locations.find((location) => location.id === selectedId) || null;
   const selectedProgress = selected ? getLocationProgress(selected.id, sessions) : null;
 
   const bounds = useMemo(() => {
-    const xs = [playerWorld.x, ...FALLOUT_4_LOCATIONS.map((location) => location.worldX)];
-    const ys = [playerWorld.y, ...FALLOUT_4_LOCATIONS.map((location) => location.worldY)];
+    const xs = [playerWorld.x, ...locations.map((location) => location.worldX)];
+    const ys = [playerWorld.y, ...locations.map((location) => location.worldY)];
     const minX = Math.min(...xs) - PADDING;
     const maxX = Math.max(...xs) + PADDING;
     const minY = Math.min(...ys) - PADDING;
     const maxY = Math.max(...ys) + PADDING;
     return { minX, maxX, minY, maxY, width: Math.max(1, maxX - minX), height: Math.max(1, maxY - minY) };
-  }, [playerWorld.x, playerWorld.y]);
+  }, [playerWorld.x, playerWorld.y, locations]);
 
   function point(worldX, worldY) {
     return {
@@ -171,7 +170,7 @@ export default function WorldOverview({ mapData, playerPosition }) {
             </svg>
           ) : null}
 
-          {FALLOUT_4_LOCATIONS.map((location) => {
+          {locations.map((location) => {
             const pos = point(location.worldX, location.worldY);
             const progress = getLocationProgress(location.id, sessions);
             return (
