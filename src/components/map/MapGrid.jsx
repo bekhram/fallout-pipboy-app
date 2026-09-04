@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import MapCell from "./MapCell.jsx";
-import LocalMap from "./LocalMap.jsx";
+import LocalGmChat from "./LocalGmChat.jsx";
 import { canTravelToCell, getCellKey } from "../../utils/mapMath.js";
 import "./localMapMode.css";
 
@@ -96,7 +96,11 @@ function MapGrid({
 
       {mapMode === "local" ? (
         <div className="pip-map-local-mode">
-          <LocalMap />
+          <LocalGmChat
+            mapData={mapData}
+            playerPosition={playerPosition}
+            selectedCell={selectedCell}
+          />
         </div>
       ) : (
         <div
