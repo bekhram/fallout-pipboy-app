@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { INVENTORY_CATEGORIES } from "../../constants.js";
 import {
@@ -6,9 +6,12 @@ import {
   getExtraCategoryLabel,
   getInventoryArchiveItems,
 } from "../../data/inventoryDatabase.js";
+import { parseCSV } from "../../utils/csvParser.js";
+import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 
 const CATEGORY_LABEL_KEYS = {
   weapons: "inventory.categories.weapons",
+  armor: "armorPanel.title",
   ammo: "inventory.categories.ammo",
   aid: "inventory.categories.aid",
   food: "inventory.categories.food",
@@ -24,6 +27,18 @@ const EMPTY_DETAIL_FIELDS = {
   radiation: "",
   rarity: "",
   series: "",
+  damage: "",
+  rate: "",
+  range: "",
+  damageType: "",
+  weaponType: "",
+  qualities: "",
+  ammo: "",
+  armorPhysical: "",
+  armorEnergy: "",
+  armorRadiation: "",
+  armorLocations: "",
+  armorGroup: "",
 };
 
 const EMPTY_ARCHIVE_FIELDS = {
@@ -40,6 +55,62 @@ const categoryLabel = (category, t, language) =>
 const normalizeSearchText = (value) =>
   String(value ?? "").trim().toLocaleLowerCase();
 
+const normalizeWeight = (value) => String(value ?? "").replace(",", ".");
+
+const armorLocationsText = (locations = {}) =>
+  [
+    locations.head && "Head",
+    locations.arms && "Arms",
+    locations.legs && "Legs",
+    locations.torso && "Torso",
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+const weaponRowToInventoryItem = (weapon) => {
+  const effects = String(weapon?.Effects || "").trim();
+  const qualities = String(weapon?.Qualities || "").trim();
+  const effect = [
+    effects,
+    qualities ? `Qualities: ${qualities}` : "",
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
+  return {
+    name: weapon?.name || "",
+    category: "weapons",
+    quantity: "1",
+    cost: String(weapon?.Cost ?? ""),
+    weight: normalizeWeight(weapon?.Weight),
+    rarity: String(weapon?.Rarity ?? ""),
+    effect,
+    damage: String(weapon?.["Damage Rating"] ?? ""),
+    rate: String(weapon?.["Rate of Fire"] ?? ""),
+    range: String(weapon?.Range ?? ""),
+    damageType: String(weapon?.["Damage type"] ?? ""),
+    weaponType: String(weapon?.["Weapon type"] ?? ""),
+    qualities,
+    ammo: String(weapon?.Ammo ?? ""),
+  };
+};
+
+const armorEntryToInventoryItem = (armor) => ({
+  name: armor?.name || "",
+  category: "armor",
+  quantity: "1",
+  cost: String(armor?.cost ?? ""),
+  weight: normalizeWeight(armor?.weight),
+  rarity: String(armor?.rarity ?? ""),
+  effect: String(armor?.effects ?? ""),
+  armorPhysical: String(armor?.physical ?? ""),
+  armorEnergy: String(armor?.energy ?? ""),
+  armorRadiation: String(armor?.radiation ?? ""),
+  armorLocations: armorLocationsText(armor?.locations),
+  armorGroup: String(armor?.group || armor?.category || ""),
+  armorSourceId: armor?.id || "",
+});
+
 export default function InventoryEditor({
   draft,
   setDraft,
@@ -49,6 +120,40 @@ export default function InventoryEditor({
 }) {
   const { t, i18n } = useTranslation();
   const [archiveSearch, setArchiveSearch] = useState("");
+  const [weaponArchive, setWeaponArchive] = useState([]);
+  const [armorArchive, setArmorArchive] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+
+    fetch("/weapons.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Weapon database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (active) setWeaponArchive(parseCSV(text));
+      })
+      .catch(() => {
+        if (active) setWeaponArchive([]);
+      });
+
+    fetch("/Armor.csv")
+      .then((response) => {
+        if (!response.ok) throw new Error("Armor database unavailable");
+        return response.text();
+      })
+      .then((text) => {
+        if (active) setArmorArchive(parseArmorDatabase(text).items || []);
+      })
+      .catch(() => {
+        if (active) setArmorArchive([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const categories = useMemo(
     () => extendInventoryCategories(INVENTORY_CATEGORIES).filter((item) => item.value !== "all"),
@@ -56,17 +161,26 @@ export default function InventoryEditor({
   );
 
   const archiveItems = useMemo(() => {
+    if (draft.category === "weapons") {
+      return weaponArchive.map(weaponRowToInventoryItem);
+    }
+
+    if (draft.category === "armor") {
+      return armorArchive.map(armorEntryToInventoryItem);
+    }
+
     if (draft.category === "ammo") {
       return (globalAmmo || []).map((ammo) => ({
         name: ammo["Ammo Type"] || "",
         category: "ammo",
+        quantity: "1",
         cost: String(ammo.Cost ?? ""),
-        weight: String(ammo.Weight ?? "").replace(",", "."),
+        weight: normalizeWeight(ammo.Weight),
       }));
     }
 
     return getInventoryArchiveItems(draft.category);
-  }, [draft.category, globalAmmo]);
+  }, [draft.category, globalAmmo, weaponArchive, armorArchive]);
 
   const filteredArchiveItems = useMemo(() => {
     const query = normalizeSearchText(archiveSearch);
@@ -80,6 +194,13 @@ export default function InventoryEditor({
         item.rarity,
         item.duration,
         item.addiction,
+        item.weaponType,
+        item.damageType,
+        item.range,
+        item.qualities,
+        item.ammo,
+        item.armorGroup,
+        item.armorLocations,
       ]
         .filter(Boolean)
         .some((value) => normalizeSearchText(value).includes(query))
@@ -94,7 +215,7 @@ export default function InventoryEditor({
       ...prev,
       ...EMPTY_ARCHIVE_FIELDS,
       ...item,
-      quantity: prev.quantity,
+      quantity: prev.quantity || item.quantity || "1",
     }));
   };
 
@@ -108,11 +229,13 @@ export default function InventoryEditor({
   };
 
   const hasArchive = archiveItems.length > 0;
-  const showEffect = ["aid", "food", "beverages", "magazines", "tools"].includes(draft.category);
+  const showEffect = ["weapons", "armor", "aid", "food", "beverages", "magazines", "tools"].includes(draft.category);
   const showAidFields = draft.category === "aid";
   const showConsumableFields = ["food", "beverages"].includes(draft.category);
   const showMagazineFields = draft.category === "magazines";
-  const showRarity = ["aid", "food", "beverages", "tools"].includes(draft.category);
+  const showWeaponFields = draft.category === "weapons";
+  const showArmorFields = draft.category === "armor";
+  const showRarity = ["weapons", "armor", "aid", "food", "beverages", "tools"].includes(draft.category);
 
   return (
     <section className="pip-panel pip-block">
@@ -151,7 +274,7 @@ export default function InventoryEditor({
           <input
             className="pip-input"
             type="search"
-            placeholder="Search archive by name, series or effect..."
+            placeholder="Search archive by name, type, series or effect..."
             value={archiveSearch}
             onChange={(e) => setArchiveSearch(e.target.value)}
             style={{ marginBottom: "8px" }}
@@ -169,9 +292,11 @@ export default function InventoryEditor({
                 : `-- Select item to autoload (${filteredArchiveItems.length}) --`}
             </option>
             {filteredArchiveItems.map((item, idx) => (
-              <option key={`${item.name}-${item.series || ""}-${idx}`} value={idx}>
+              <option key={`${item.name}-${item.series || item.armorSourceId || ""}-${idx}`} value={idx}>
                 {item.name}
                 {item.series ? ` — ${item.series}` : ""}
+                {item.weaponType ? ` — ${item.weaponType}` : ""}
+                {item.armorGroup ? ` — ${item.armorGroup}` : ""}
               </option>
             ))}
           </select>
@@ -213,6 +338,76 @@ export default function InventoryEditor({
             value={draft.rarity || ""}
             onChange={(e) => setDraft({ ...draft, rarity: e.target.value })}
           />
+        )}
+
+        {showWeaponFields && (
+          <>
+            <input
+              className="pip-input"
+              placeholder="Damage"
+              value={draft.damage || ""}
+              onChange={(e) => setDraft({ ...draft, damage: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Rate of Fire"
+              value={draft.rate || ""}
+              onChange={(e) => setDraft({ ...draft, rate: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Range"
+              value={draft.range || ""}
+              onChange={(e) => setDraft({ ...draft, range: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Damage type"
+              value={draft.damageType || ""}
+              onChange={(e) => setDraft({ ...draft, damageType: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Weapon type"
+              value={draft.weaponType || ""}
+              onChange={(e) => setDraft({ ...draft, weaponType: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Ammo"
+              value={draft.ammo || ""}
+              onChange={(e) => setDraft({ ...draft, ammo: e.target.value })}
+            />
+          </>
+        )}
+
+        {showArmorFields && (
+          <>
+            <input
+              className="pip-input"
+              placeholder="Physical DR"
+              value={draft.armorPhysical || ""}
+              onChange={(e) => setDraft({ ...draft, armorPhysical: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Energy DR"
+              value={draft.armorEnergy || ""}
+              onChange={(e) => setDraft({ ...draft, armorEnergy: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Radiation DR"
+              value={draft.armorRadiation || ""}
+              onChange={(e) => setDraft({ ...draft, armorRadiation: e.target.value })}
+            />
+            <input
+              className="pip-input"
+              placeholder="Locations"
+              value={draft.armorLocations || ""}
+              onChange={(e) => setDraft({ ...draft, armorLocations: e.target.value })}
+            />
+          </>
         )}
 
         {showConsumableFields && (
@@ -263,7 +458,7 @@ export default function InventoryEditor({
         <textarea
           className="pip-input"
           style={{ width: "100%", minHeight: "96px", marginTop: "12px", resize: "vertical" }}
-          placeholder="Effect"
+          placeholder="Effect / qualities"
           value={draft.effect || ""}
           onChange={(e) => setDraft({ ...draft, effect: e.target.value })}
         />
