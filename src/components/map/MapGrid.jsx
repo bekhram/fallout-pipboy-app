@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
@@ -37,12 +37,12 @@ function MapGrid({
   onTravel,
   character,
   weaponDatabase,
+  mapMode,
+  setMapMode,
 }) {
   const { i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
   const tx = (key, vars) => mapUiText(language, key, vars);
-  const [mapMode, setMapMode] = useState("world");
-
   const discoveredSet = useMemo(() => new Set(discoveredKeys), [discoveredKeys]);
 
   const cellIndex = useMemo(() => {
@@ -112,12 +112,6 @@ function MapGrid({
 
   return (
     <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : mapMode === "overview" ? "is-overview" : "is-world"}`}>
-      <div className="pip-map-mode-switch" role="tablist" aria-label="Map mode">
-        <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
-        <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
-        <button type="button" role="tab" aria-selected={mapMode === "local"} className={mapMode === "local" ? "is-active" : ""} onClick={openLocal}>{tx("local")}</button>
-      </div>
-
       {mapMode === "local" ? (
         <div className="pip-map-local-fullscreen" role="dialog" aria-modal="true" aria-label="Auto GM">
           <div className="pip-map-local-fullscreen__bar">
