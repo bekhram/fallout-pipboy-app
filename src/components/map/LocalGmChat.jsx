@@ -219,6 +219,26 @@ function getSessionKey(world) {
   return `procedural-sector:${world?.sector || "unknown"}`;
 }
 
+function getSectorKey(world) {
+  const offset = world?.sectorOffset;
+  if (offset && Number.isFinite(Number(offset.x)) && Number.isFinite(Number(offset.y))) {
+    return `sector:${Number(offset.x)}:${Number(offset.y)}`;
+  }
+  return `sector:${world?.sector || "unknown"}`;
+}
+
+function pruneTemporarySessions(activeSectorKey) {
+  const store = readStore();
+  let changed = false;
+  for (const [key, session] of Object.entries(store)) {
+    if (session?.temporary === true && session?.sectorKey !== activeSectorKey) {
+      delete store[key];
+      changed = true;
+    }
+  }
+  if (changed) writeStore(store);
+}
+
 function normalizeEvents(events) {
   if (!Array.isArray(events)) return [];
   return events
@@ -256,20 +276,20 @@ function buildLocationState(events, persistent) {
   return { persistent: persistent === true, facts };
 }
 
-function readSession(sessionKey, persistent) {
-  if (!persistent) return { messages: [], events: [], check: null };
-
+function readSession(sessionKey, persistent, sectorKey) {
   const store = readStore();
   const saved = store?.[sessionKey];
-  if (saved) {
-    return {
-      messages: Array.isArray(saved.messages) ? saved.messages : [],
-      events: Array.isArray(saved.events) ? saved.events : [],
-      check: saved.check && typeof saved.check === "object" ? saved.check : null,
-    };
+  if (!saved) return { messages: [], events: [], check: null };
+
+  if (!persistent && !(saved.temporary === true && saved.sectorKey === sectorKey)) {
+    return { messages: [], events: [], check: null };
   }
 
-  return { messages: [], events: [], check: null };
+  return {
+    messages: Array.isArray(saved.messages) ? saved.messages : [],
+    events: Array.isArray(saved.events) ? saved.events : [],
+    check: saved.check && typeof saved.check === "object" ? saved.check : null,
+  };
 }
 
 function buildVisitedSessions() {
@@ -316,9 +336,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   );
   const isPersistentLocation = world.isStaticLocation === true;
   const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
+  const currentSectorKey = useMemo(() => getSectorKey(world), [world]);
   const initialSession = useMemo(
-    () => readSession(currentSessionKey, isPersistentLocation),
-    [currentSessionKey, isPersistentLocation]
+    () => readSession(currentSessionKey, isPersistentLocation, currentSectorKey),
+    [currentSessionKey, isPersistentLocation, currentSectorKey]
   );
 
   const [draft, setDraft] = useState("");
@@ -341,24 +362,28 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   );
 
   useEffect(() => {
+    pruneTemporarySessions(currentSectorKey);
+  }, [currentSectorKey]);
+
+  useEffect(() => {
     setViewedSessionKey(null);
-    const session = readSession(currentSessionKey, isPersistentLocation);
+    const session = readSession(currentSessionKey, isPersistentLocation, currentSectorKey);
     setMessages(session.messages);
     setEvents(session.events);
     setPendingCheck(session.check);
     setDraft("");
     setError("");
-  }, [currentSessionKey, isPersistentLocation]);
+  }, [currentSessionKey, isPersistentLocation, currentSectorKey]);
 
   useEffect(() => {
     if (!isArchiveView) return;
-    const session = readSession(activeSessionKey, true);
+    const session = readSession(activeSessionKey, true, currentSectorKey);
     setMessages(session.messages);
     setEvents(session.events);
     setPendingCheck(null);
     setDraft("");
     setError("");
-  }, [activeSessionKey, isArchiveView]);
+  }, [activeSessionKey, isArchiveView, currentSectorKey]);
 
   function persist(nextMessages, incomingEvents = [], nextCheck = pendingCheck) {
     const trimmedMessages = nextMessages.slice(-80);
@@ -366,24 +391,24 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     setMessages(trimmedMessages);
     setEvents(nextEvents);
 
-    if (isPersistentLocation) {
-      const store = readStore();
-      store[currentSessionKey] = {
-        messages: trimmedMessages,
-        events: nextEvents,
-        check: nextCheck || null,
-        persistent: true,
-        updatedAt: Date.now(),
-        location: {
-          id: world.currentLocation?.id || null,
-          name: world.currentLocation?.name || null,
-          terrain: world.currentTerrain || null,
-          worldPosition: world.worldPosition || null,
-        },
-      };
-      writeStore(store);
-      setVersion((value) => value + 1);
-    }
+    const store = readStore();
+    store[currentSessionKey] = {
+      messages: trimmedMessages,
+      events: nextEvents,
+      check: nextCheck || null,
+      persistent: isPersistentLocation,
+      temporary: !isPersistentLocation,
+      sectorKey: isPersistentLocation ? null : currentSectorKey,
+      updatedAt: Date.now(),
+      location: {
+        id: world.currentLocation?.id || null,
+        name: world.currentLocation?.name || null,
+        terrain: world.currentTerrain || null,
+        worldPosition: world.worldPosition || null,
+      },
+    };
+    writeStore(store);
+    if (isPersistentLocation) setVersion((value) => value + 1);
 
     if (
       isPersistentLocation &&
@@ -427,7 +452,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     try {
       const persistenceInstruction = isPersistentLocation
         ? "This is a static named world location. Continue its saved discoveries and consequences exactly as established."
-        : "This is a procedural location. Treat this visit as temporary and do not assume discoveries persist after the character leaves.";
+        : "This is a procedural location. Preserve its temporary progress while the player remains in this world sector. Once the player changes sector, that temporary location history is discarded.";
       const result = await requestGm(
         `Begin or continue the local exploration scene now. ${persistenceInstruction} Use the supplied character sheet, global-map context, and structured location state. Do not reintroduce already resolved threats or collected loot unless the saved state explicitly supports it. Briefly establish the immediate situation without deciding the character's actions. End by asking what they do, or request one skill check if the next outcome genuinely depends on it.`,
         history
@@ -490,12 +515,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
   function resetChat() {
     if (isArchiveView) return;
-    if (isPersistentLocation) {
-      const store = readStore();
-      delete store[currentSessionKey];
-      writeStore(store);
-      setVersion((value) => value + 1);
-    }
+    const store = readStore();
+    delete store[currentSessionKey];
+    writeStore(store);
+    if (isPersistentLocation) setVersion((value) => value + 1);
     setMessages([]);
     setEvents([]);
     setPendingCheck(null);
