@@ -136,6 +136,31 @@ body:has(.pip-map-local-fullscreen) .dice-fab {
   box-sizing: border-box;
 }
 
+.pip-world-overview__poi { position: absolute; }
+.pip-world-overview__progress-dot {
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: #050c07;
+  font-size: 8px;
+  line-height: 1;
+  font-weight: 800;
+  font-style: normal;
+}
+.pip-world-overview__poi.is-visited > span { box-shadow: 0 0 9px rgba(120,255,140,.2); }
+.pip-world-overview__poi.is-explored > span { box-shadow: 0 0 12px rgba(190,255,195,.35); }
+.pip-world-overview__poi.is-cleared > span { box-shadow: 0 0 15px rgba(243,255,186,.48); }
+.pip-world-overview__progress-text { font-size: 8px; letter-spacing: .06em; opacity: .82 !important; }
+.pip-world-overview__progress-text.is-cleared { opacity: 1 !important; }
+
 .pip-map-grid-layer:has(.pip-map-mode-shell.is-overview) { z-index: 12; }
 .pip-map-mode-shell.is-overview .pip-world-overview { box-sizing: border-box; padding-top: 52px; }
 .pip-map-mode-shell.is-world .pip-map-mode-switch { z-index: 8; }
@@ -161,4 +186,5 @@ body:has(.pip-map-local-fullscreen) .dice-fab {
   .pip-map-local-fullscreen__bar button { width: 40px; height: 32px; }
   .pip-map-local-fullscreen__content { padding: 8px 8px calc(10px + env(safe-area-inset-bottom)); }
   .pip-map-local-fullscreen__content .pip-local-gm__messages { max-height: none; }
+  .pip-world-overview__progress-dot { width: 12px; height: 12px; right: -6px; top: -6px; font-size: 7px; }
 }
