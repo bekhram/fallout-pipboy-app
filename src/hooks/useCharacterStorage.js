@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { ORIGINS, TRAITS_DICTIONARY } from "../components/data/origins.js";
+import { STATUS_LIST } from "../constants.js";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { parseCSV } from "../utils/csvParser.js";
 import { parseArmorDatabase } from "../utils/armorDatabase.js";
+import { getDerivedStats } from "../utils/characterMath.js";
+import {
+  getConsumableUsePlan,
+  isConsumableItem,
+  PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
+  PIPBOY_USE_ITEM_EVENT,
+} from "../utils/consumableEffects.js";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 
@@ -97,12 +105,26 @@ function isBodyGarment(item) {
   return item?.category === "CLOTHING" || item?.category === "OUTFIT";
 }
 
+function clearStatusGroup(statuses, group) {
+  const next = { ...(statuses || {}) };
+  STATUS_LIST.filter((item) => item.group === group).forEach((item) => {
+    next[item.key] = false;
+  });
+  return next;
+}
+
 export function useCharacterStorage(initialForm) {
   const [form, setForm] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
 
-      const baseForm = { origin: "", originTraits: [], tagged_skills: [], ...initialForm };
+      const baseForm = {
+        origin: "",
+        originTraits: [],
+        tagged_skills: [],
+        activeConsumableEffects: [],
+        ...initialForm,
+      };
 
       if (!raw) return baseForm;
 
@@ -111,7 +133,13 @@ export function useCharacterStorage(initialForm) {
 
       return { ...baseForm, ...loadedData };
     } catch {
-      return { origin: "", originTraits: [], tagged_skills: [], ...initialForm };
+      return {
+        origin: "",
+        originTraits: [],
+        tagged_skills: [],
+        activeConsumableEffects: [],
+        ...initialForm,
+      };
     }
   });
 
@@ -291,6 +319,108 @@ export function useCharacterStorage(initialForm) {
   }, [form.armor?._equipment?.slots, armorInventoryDatabase]);
 
   useEffect(() => {
+    const handleUseItem = (event) => {
+      const index = Number(event?.detail?.index);
+      if (!Number.isInteger(index) || index < 0) return;
+
+      setForm((prev) => {
+        const inventoryItems = Array.isArray(prev.inventoryItems)
+          ? [...prev.inventoryItems]
+          : [];
+        const item = inventoryItems[index];
+        const quantity = Number(item?.quantity || 0);
+        if (!item || !isConsumableItem(item) || quantity <= 0) return prev;
+
+        const plan = getConsumableUsePlan(item);
+        inventoryItems[index] = {
+          ...item,
+          quantity: String(Math.max(0, quantity - 1)),
+        };
+
+        let statuses = { ...(prev.statuses || {}) };
+        if (plan.cureAddictions) statuses = clearStatusGroup(statuses, "addiction");
+        if (plan.cureDiseases) statuses = clearStatusGroup(statuses, "disease");
+        if (plan.statusKey) statuses[plan.statusKey] = true;
+
+        let activeConsumableEffects = Array.isArray(prev.activeConsumableEffects)
+          ? [...prev.activeConsumableEffects]
+          : [];
+
+        if (plan.activeEffect) {
+          activeConsumableEffects = activeConsumableEffects.filter(
+            (effect) => effect?.id !== plan.activeEffect.id
+          );
+          activeConsumableEffects.push(plan.activeEffect);
+        }
+
+        const radiationHp = Math.max(
+          0,
+          Number(prev.radiationHp || 0) - Number(plan.healingRadiation || 0)
+        );
+
+        const nextBase = {
+          ...prev,
+          inventoryItems,
+          statuses,
+          activeConsumableEffects,
+          radiationHp: String(radiationHp),
+        };
+
+        const nextDerived = getDerivedStats(nextBase);
+        const currentHp = Math.min(
+          Number(nextDerived.effectiveMaxHp || 0),
+          Number(prev.currentHp || 0) + Number(plan.healingHp || 0)
+        );
+
+        return {
+          ...nextBase,
+          currentHp: String(Math.max(0, currentHp)),
+        };
+      });
+    };
+
+    const handleEndConsumableEffect = (event) => {
+      const effectId = String(event?.detail?.effectId || "").trim();
+      if (!effectId) return;
+
+      setForm((prev) => {
+        const activeConsumableEffects = (prev.activeConsumableEffects || []).filter(
+          (effect) => effect?.id !== effectId
+        );
+        if (activeConsumableEffects.length === (prev.activeConsumableEffects || []).length) {
+          return prev;
+        }
+
+        const nextBase = { ...prev, activeConsumableEffects };
+        const nextDerived = getDerivedStats(nextBase);
+        return {
+          ...nextBase,
+          currentHp: String(
+            Math.min(
+              Number(prev.currentHp || 0),
+              Number(nextDerived.effectiveMaxHp || 0)
+            )
+          ),
+        };
+      });
+    };
+
+    window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
+    window.addEventListener(
+      PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
+      handleEndConsumableEffect
+    );
+
+    return () => {
+      window.removeEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
+      window.removeEventListener(
+        PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
+        handleEndConsumableEffect
+      );
+    };
+  }, []);
+
+  useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -391,7 +521,11 @@ export function useCharacterStorage(initialForm) {
         const loaded = parsed?.data;
         if (!loaded) throw new Error("Invalid import");
 
-        const next = { ...fallbackFactory(), ...loaded };
+        const next = {
+          activeConsumableEffects: [],
+          ...fallbackFactory(),
+          ...loaded,
+        };
         setForm(next);
         setLastSavedSnapshot(JSON.stringify(next));
         setLoadStatus("Character loaded from JSON file");
@@ -417,7 +551,7 @@ export function useCharacterStorage(initialForm) {
   };
 
   const resetToNewCharacter = (factory) => {
-    const fresh = factory();
+    const fresh = { activeConsumableEffects: [], ...factory() };
     setForm(fresh);
     setLastSavedSnapshot(JSON.stringify(fresh));
     setSaveStatus("");
@@ -430,7 +564,11 @@ export function useCharacterStorage(initialForm) {
       if (!raw) return;
 
       const parsed = JSON.parse(raw);
-      const next = { ...factory(), ...(parsed?.data || {}) };
+      const next = {
+        activeConsumableEffects: [],
+        ...factory(),
+        ...(parsed?.data || {}),
+      };
       setForm(next);
       setLastSavedSnapshot(JSON.stringify(next));
       setLoadStatus("Last character loaded");
