@@ -127,9 +127,7 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
 
 function getSessionKey(world) {
   if (world?.currentLocation?.id) return `location:${world.currentLocation.id}`;
-  if (world?.worldPosition) {
-    return `world:${world.worldPosition.x}:${world.worldPosition.y}`;
-  }
+  if (world?.worldPosition) return `world:${world.worldPosition.x}:${world.worldPosition.y}`;
   return `sector:${world?.sector || "unknown"}`;
 }
 
@@ -157,10 +155,48 @@ function readSessionMessages(sessionKey) {
   }
 }
 
+function buildVisitedSessions() {
+  const store = readSessionStore();
+  return Object.entries(store)
+    .filter(([, session]) => Array.isArray(session?.messages) && session.messages.length > 0)
+    .map(([key, session]) => ({
+      key,
+      messages: session.messages,
+      updatedAt: Number(session.updatedAt || 0),
+      location: session.location || {},
+    }))
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+function sessionLabel(session) {
+  if (session?.location?.name) return session.location.name;
+  if (session?.location?.id) return session.location.id.replaceAll("_", " ");
+  const position = session?.location?.worldPosition;
+  if (position) return `World ${position.x},${position.y}`;
+  return session?.key || "Unknown location";
+}
+
+function formatSessionTime(value) {
+  if (!value) return "";
+  try {
+    return new Date(value).toLocaleString([], {
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiveVersion, setArchiveVersion] = useState(0);
+  const [viewedSessionKey, setViewedSessionKey] = useState(null);
   const introStartedRef = useRef(new Set());
 
   const rawCharacter = useMemo(() => readCharacter(), []);
@@ -169,21 +205,36 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData),
     [mapData, playerPosition, selectedCell, rawCharacter]
   );
-  const sessionKey = useMemo(() => getSessionKey(world), [world]);
-  const [messages, setMessages] = useState(() => readSessionMessages(sessionKey));
+  const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
+  const activeSessionKey = viewedSessionKey || currentSessionKey;
+  const isArchiveView = activeSessionKey !== currentSessionKey;
+  const [messages, setMessages] = useState(() => readSessionMessages(currentSessionKey));
+
+  const visitedSessions = useMemo(() => buildVisitedSessions(), [archiveVersion, messages]);
+  const activeArchiveSession = useMemo(
+    () => visitedSessions.find((session) => session.key === activeSessionKey) || null,
+    [visitedSessions, activeSessionKey]
+  );
 
   useEffect(() => {
-    setMessages(readSessionMessages(sessionKey));
+    setViewedSessionKey(null);
+    setMessages(readSessionMessages(currentSessionKey));
     setDraft("");
     setError("");
-  }, [sessionKey]);
+  }, [currentSessionKey]);
+
+  useEffect(() => {
+    setMessages(readSessionMessages(activeSessionKey));
+    setDraft("");
+    setError("");
+  }, [activeSessionKey]);
 
   function persist(nextMessages) {
     const trimmed = nextMessages.slice(-80);
     setMessages(trimmed);
 
     const store = readSessionStore();
-    store[sessionKey] = {
+    store[currentSessionKey] = {
       messages: trimmed,
       updatedAt: Date.now(),
       location: {
@@ -194,6 +245,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
       },
     };
     writeSessionStore(store);
+    setArchiveVersion((value) => value + 1);
   }
 
   async function requestGm(message, history = []) {
@@ -203,22 +255,19 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
       body: JSON.stringify({
         character,
         world,
-        sessionKey,
+        sessionKey: currentSessionKey,
         history: history.slice(-16),
         message,
       }),
     });
 
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(data?.error || `GM request failed (${response.status})`);
-    }
-
+    if (!response.ok) throw new Error(data?.error || `GM request failed (${response.status})`);
     return data?.text || "The GM did not return a response.";
   }
 
   async function startScene(history = []) {
-    if (isSending) return;
+    if (isSending || isArchiveView) return;
     setError("");
     setIsSending(true);
 
@@ -227,9 +276,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
         "Begin the local exploration scene now. Use the supplied character sheet and global-map context. Briefly establish where the character is, what they immediately notice, and one clear situation or point of interest they can react to. Do not decide the character's actions for them. End by asking what they do.",
         history
       );
-
-      const gmMessage = { role: "gm", text, at: Date.now() };
-      persist([...history, gmMessage]);
+      persist([...history, { role: "gm", text, at: Date.now() }]);
     } catch (requestError) {
       setError(requestError?.message || "Could not contact Auto GM.");
     } finally {
@@ -238,17 +285,16 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   }
 
   useEffect(() => {
-    if (messages.length > 0 || introStartedRef.current.has(sessionKey)) return;
-    introStartedRef.current.add(sessionKey);
+    if (isArchiveView || messages.length > 0 || introStartedRef.current.has(currentSessionKey)) return;
+    introStartedRef.current.add(currentSessionKey);
     startScene([]);
-    // Start one intro per empty world-location session.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionKey, messages.length]);
+  }, [currentSessionKey, messages.length, isArchiveView]);
 
   async function sendMessage(event) {
     event?.preventDefault?.();
     const text = draft.trim();
-    if (!text || isSending) return;
+    if (!text || isSending || isArchiveView) return;
 
     const userMessage = { role: "user", text, at: Date.now() };
     const previousMessages = messages;
@@ -260,8 +306,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
 
     try {
       const gmText = await requestGm(text, previousMessages);
-      const gmMessage = { role: "gm", text: gmText, at: Date.now() };
-      persist([...nextMessages, gmMessage]);
+      persist([...nextMessages, { role: "gm", text: gmText, at: Date.now() }]);
     } catch (requestError) {
       setError(requestError?.message || "Could not contact Auto GM.");
     } finally {
@@ -270,55 +315,109 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   }
 
   function resetChat() {
+    if (isArchiveView) return;
     const store = readSessionStore();
-    delete store[sessionKey];
+    delete store[currentSessionKey];
     writeSessionStore(store);
     setMessages([]);
     setDraft("");
     setError("");
-    introStartedRef.current.delete(sessionKey);
+    setArchiveVersion((value) => value + 1);
+    introStartedRef.current.delete(currentSessionKey);
+  }
+
+  function openArchivedSession(key) {
+    if (isSending) return;
+    setViewedSessionKey(key === currentSessionKey ? null : key);
+    setArchiveOpen(false);
+  }
+
+  function returnToCurrent() {
+    if (isSending) return;
+    setViewedSessionKey(null);
+    setArchiveOpen(false);
   }
 
   const currentPlace =
-    world.currentLocation?.name ||
-    world.currentLocation?.id ||
-    world.currentTerrain ||
-    "Wasteland";
+    world.currentLocation?.name || world.currentLocation?.id || world.currentTerrain || "Wasteland";
   const objective =
     world.selectedDestination?.location?.name ||
     world.selectedDestination?.location?.id ||
     world.trackedObjective?.name ||
     world.trackedObjective?.id ||
     "Explore area";
+  const displayedPlace = isArchiveView ? sessionLabel(activeArchiveSession) : currentPlace;
 
   return (
     <section className="pip-local-gm">
       <header className="pip-local-gm__header">
         <div>
           <div className="pip-local-gm__eyebrow">LOCAL // AUTO GM</div>
-          <h3>Fallout 2D20 Session</h3>
+          <h3>{isArchiveView ? "Session Archive" : "Fallout 2D20 Session"}</h3>
           <div className="pip-local-gm__context">
-            {currentPlace}
-            {world.worldPosition
+            {displayedPlace}
+            {!isArchiveView && world.worldPosition
               ? ` · WORLD ${world.worldPosition.x},${world.worldPosition.y}`
               : ""}
           </div>
         </div>
-        <button
-          type="button"
-          className="pip-btn pip-local-gm__reset"
-          onClick={resetChat}
-          disabled={isSending}
-        >
-          NEW SESSION
-        </button>
+        <div className="pip-local-gm__header-actions">
+          <button
+            type="button"
+            className="pip-btn"
+            onClick={() => setArchiveOpen((value) => !value)}
+            disabled={isSending}
+          >
+            VISITED ({visitedSessions.length})
+          </button>
+          {isArchiveView ? (
+            <button type="button" className="pip-btn" onClick={returnToCurrent} disabled={isSending}>
+              CURRENT
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="pip-btn pip-local-gm__reset"
+              onClick={resetChat}
+              disabled={isSending}
+            >
+              NEW SESSION
+            </button>
+          )}
+        </div>
       </header>
+
+      {archiveOpen ? (
+        <aside className="pip-local-gm__archive">
+          <div className="pip-local-gm__archive-title">VISITED LOCATIONS</div>
+          {visitedSessions.length === 0 ? (
+            <div className="pip-local-gm__archive-empty">No saved local sessions yet.</div>
+          ) : (
+            <div className="pip-local-gm__archive-list">
+              {visitedSessions.map((session) => (
+                <button
+                  type="button"
+                  key={session.key}
+                  className={`pip-local-gm__archive-item${session.key === activeSessionKey ? " is-active" : ""}`}
+                  onClick={() => openArchivedSession(session.key)}
+                >
+                  <span className="pip-local-gm__archive-name">{sessionLabel(session)}</span>
+                  <span className="pip-local-gm__archive-meta">
+                    {session.messages.length} messages
+                    {formatSessionTime(session.updatedAt) ? ` · ${formatSessionTime(session.updatedAt)}` : ""}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </aside>
+      ) : null}
 
       <div className="pip-local-gm__brief">
         <span>CHARACTER: {character?.name || "Not loaded"}</span>
         <span>LEVEL: {character?.level ?? "-"}</span>
-        <span>LOCATION: {currentPlace}</span>
-        <span>OBJECTIVE: {objective}</span>
+        <span>LOCATION: {displayedPlace}</span>
+        <span>{isArchiveView ? "MODE: ARCHIVE / READ ONLY" : `OBJECTIVE: ${objective}`}</span>
       </div>
 
       <div className="pip-local-gm__messages" aria-live="polite">
@@ -333,42 +432,40 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
               key={`${message.at || index}-${index}`}
               className={`pip-local-gm__message pip-local-gm__message--${message.role}`}
             >
-              <div className="pip-local-gm__speaker">
-                {message.role === "gm" ? "AUTO GM" : "YOU"}
-              </div>
+              <div className="pip-local-gm__speaker">{message.role === "gm" ? "AUTO GM" : "YOU"}</div>
               <div>{message.text}</div>
             </article>
           ))
         )}
-        {isSending ? (
-          <div className="pip-local-gm__thinking">AUTO GM IS PROCESSING...</div>
-        ) : null}
+        {isSending ? <div className="pip-local-gm__thinking">AUTO GM IS PROCESSING...</div> : null}
       </div>
 
       {error ? <div className="pip-local-gm__error">{error}</div> : null}
 
-      <form className="pip-local-gm__composer" onSubmit={sendMessage}>
-        <textarea
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="What do you do?"
-          rows={3}
-          disabled={isSending}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              sendMessage(event);
-            }
-          }}
-        />
-        <button
-          type="submit"
-          className="pip-action-button"
-          disabled={!draft.trim() || isSending}
-        >
-          SEND
-        </button>
-      </form>
+      {isArchiveView ? (
+        <div className="pip-local-gm__archive-note">
+          ARCHIVE VIEW — this journal is read-only. Return to CURRENT to continue playing at your character's actual WORLD position.
+        </div>
+      ) : (
+        <form className="pip-local-gm__composer" onSubmit={sendMessage}>
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="What do you do?"
+            rows={3}
+            disabled={isSending}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage(event);
+              }
+            }}
+          />
+          <button type="submit" className="pip-action-button" disabled={!draft.trim() || isSending}>
+            SEND
+          </button>
+        </form>
+      )}
     </section>
   );
 }
