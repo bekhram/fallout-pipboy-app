@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
@@ -53,22 +54,67 @@ function compactCharacter(character) {
   };
 }
 
-function buildWorldContext(mapData, playerPosition, selectedCell) {
+function compactLocation(location) {
+  if (!location) return null;
+  return {
+    id: location.id || null,
+    name: location.name || null,
+    nameKey: location.nameKey || null,
+    type: location.type || null,
+    worldX: location.worldX ?? null,
+    worldY: location.worldY ?? null,
+    major: location.major ?? null,
+  };
+}
+
+function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) {
   const currentCell = mapData?.cells?.find(
     (cell) => cell.x === playerPosition?.x && cell.y === playerPosition?.y
   );
 
+  const worldOffset = mapData?.worldOffset || savedMapData?.worldOffset || { x: 0, y: 0 };
+  const cols = mapData?.cols || 8;
+  const rows = mapData?.rows || 8;
+  const worldX = worldOffset.x * cols + (playerPosition?.x || 0);
+  const worldY = worldOffset.y * rows + (playerPosition?.y || 0);
+
+  const staticLocation = FALLOUT_4_LOCATIONS.find(
+    (location) => location.worldX === worldX && location.worldY === worldY
+  );
+
+  const trackedLocation = FALLOUT_4_LOCATIONS.find(
+    (location) => location.id === savedMapData?.trackedLocationId
+  );
+
+  const selectedWorldX = selectedCell
+    ? worldOffset.x * cols + selectedCell.x
+    : null;
+  const selectedWorldY = selectedCell
+    ? worldOffset.y * rows + selectedCell.y
+    : null;
+  const selectedStaticLocation = selectedCell
+    ? FALLOUT_4_LOCATIONS.find(
+        (location) =>
+          location.worldX === selectedWorldX && location.worldY === selectedWorldY
+      )
+    : null;
+
   return {
-    sector: mapData?.sectorKey || mapData?.id || null,
-    position: playerPosition || null,
+    sector: mapData?.title || mapData?.id || null,
+    sectorOffset: worldOffset,
+    localPosition: playerPosition || null,
+    worldPosition: { x: worldX, y: worldY },
     currentTerrain: currentCell?.terrain || null,
-    currentPoi: currentCell?.poi || null,
+    currentLocation: compactLocation(staticLocation) || currentCell?.poi || null,
+    trackedObjective: compactLocation(trackedLocation),
     selectedDestination: selectedCell
       ? {
-          x: selectedCell.x,
-          y: selectedCell.y,
+          localX: selectedCell.x,
+          localY: selectedCell.y,
+          worldX: selectedWorldX,
+          worldY: selectedWorldY,
           terrain: selectedCell.terrain,
-          poi: selectedCell.poi || null,
+          location: compactLocation(selectedStaticLocation) || selectedCell.poi || null,
         }
       : null,
   };
@@ -80,10 +126,11 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
 
-  const character = useMemo(() => compactCharacter(readCharacter()), []);
+  const rawCharacter = useMemo(() => readCharacter(), []);
+  const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
   const world = useMemo(
-    () => buildWorldContext(mapData, playerPosition, selectedCell),
-    [mapData, playerPosition, selectedCell]
+    () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData),
+    [mapData, playerPosition, selectedCell, rawCharacter]
   );
 
   function persist(nextMessages) {
@@ -101,7 +148,8 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     if (!text || isSending) return;
 
     const userMessage = { role: "user", text, at: Date.now() };
-    const nextMessages = [...messages, userMessage];
+    const previousMessages = messages;
+    const nextMessages = [...previousMessages, userMessage];
     persist(nextMessages);
     setDraft("");
     setError("");
@@ -114,7 +162,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
         body: JSON.stringify({
           character,
           world,
-          history: nextMessages.slice(-16),
+          history: previousMessages.slice(-16),
           message: text,
         }),
       });
@@ -142,6 +190,18 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     setError("");
   }
 
+  const currentPlace =
+    world.currentLocation?.name ||
+    world.currentLocation?.id ||
+    world.currentTerrain ||
+    "Wasteland";
+  const objective =
+    world.selectedDestination?.location?.name ||
+    world.selectedDestination?.location?.id ||
+    world.trackedObjective?.name ||
+    world.trackedObjective?.id ||
+    "Explore area";
+
   return (
     <section className="pip-local-gm">
       <header className="pip-local-gm__header">
@@ -149,8 +209,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
           <div className="pip-local-gm__eyebrow">LOCAL // AUTO GM</div>
           <h3>Fallout 2D20 Session</h3>
           <div className="pip-local-gm__context">
-            {world.currentPoi?.name || world.currentPoi?.id || world.currentTerrain || "Wasteland"}
-            {world.position ? ` · ${world.position.x},${world.position.y}` : ""}
+            {currentPlace}
+            {world.worldPosition
+              ? ` · WORLD ${world.worldPosition.x},${world.worldPosition.y}`
+              : ""}
           </div>
         </div>
         <button type="button" className="pip-btn pip-local-gm__reset" onClick={resetChat}>
@@ -161,8 +223,8 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
       <div className="pip-local-gm__brief">
         <span>CHARACTER: {character?.name || "Not loaded"}</span>
         <span>LEVEL: {character?.level ?? "-"}</span>
-        <span>TERRAIN: {world.currentTerrain || "-"}</span>
-        <span>OBJECTIVE: {world.selectedDestination?.poi?.name || world.selectedDestination?.poi?.id || "Explore area"}</span>
+        <span>LOCATION: {currentPlace}</span>
+        <span>OBJECTIVE: {objective}</span>
       </div>
 
       <div className="pip-local-gm__messages" aria-live="polite">
@@ -170,7 +232,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
           <div className="pip-local-gm__empty">
             <strong>AUTO GM READY.</strong>
             <p>
-              Describe what your character does. The app sends the GM your character summary and current global-map context automatically.
+              Describe what your character does. The app sends the GM your character summary, exact global-map position, current location and tracked objective automatically.
             </p>
           </div>
         ) : (
