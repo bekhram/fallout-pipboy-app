@@ -3,48 +3,59 @@ import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
-const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_sessions_v2";
-const LEGACY_CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_chat_v1";
+const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_sessions_v3";
+const LEGACY_CHAT_STORAGE_KEYS = [
+  "fallout_pipboy_local_gm_sessions_v2",
+  "fallout_pipboy_local_gm_chat_v1",
+];
 
 function readCharacter() {
   try {
     const raw = localStorage.getItem(CHARACTER_STORAGE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw)?.data || null;
+    return raw ? JSON.parse(raw)?.data || null : null;
   } catch {
     return null;
   }
 }
 
-function readSessionStore() {
+function readStore() {
   try {
     const raw = localStorage.getItem(CHAT_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    }
+
+    const previous = localStorage.getItem(LEGACY_CHAT_STORAGE_KEYS[0]);
+    if (previous) {
+      const parsed = JSON.parse(previous);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(parsed));
+        return parsed;
+      }
+    }
   } catch {
-    return {};
+    // Ignore corrupted or unavailable storage.
   }
+  return {};
 }
 
-function writeSessionStore(store) {
+function writeStore(store) {
   try {
     localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(store));
   } catch {
-    // Storage is optional; the chat still works for the current session.
+    // Storage is optional for the active session.
   }
 }
 
 function compactCharacter(character) {
   if (!character) return null;
-
   return {
     name: character.characterName || character.name || "Unknown wanderer",
     level: character.level ?? null,
     origin: character.origin || null,
     special: character.special || character.SPECIAL || null,
     skills: character.skills || null,
-    taggedSkills: character.tagged_skills || null,
     hp: {
       current: character.currentHp ?? character.hpCurrent ?? null,
       max: character.maxHp ?? character.hpMax ?? null,
@@ -80,7 +91,6 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
   const currentCell = mapData?.cells?.find(
     (cell) => cell.x === playerPosition?.x && cell.y === playerPosition?.y
   );
-
   const worldOffset = mapData?.worldOffset || savedMapData?.worldOffset || { x: 0, y: 0 };
   const cols = mapData?.cols || 8;
   const rows = mapData?.rows || 8;
@@ -90,7 +100,6 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
   const staticLocation = FALLOUT_4_LOCATIONS.find(
     (location) => location.worldX === worldX && location.worldY === worldY
   );
-
   const trackedLocation = FALLOUT_4_LOCATIONS.find(
     (location) => location.id === savedMapData?.trackedLocationId
   );
@@ -99,8 +108,7 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData) 
   const selectedWorldY = selectedCell ? worldOffset.y * rows + selectedCell.y : null;
   const selectedStaticLocation = selectedCell
     ? FALLOUT_4_LOCATIONS.find(
-        (location) =>
-          location.worldX === selectedWorldX && location.worldY === selectedWorldY
+        (location) => location.worldX === selectedWorldX && location.worldY === selectedWorldY
       )
     : null;
 
@@ -131,41 +139,59 @@ function getSessionKey(world) {
   return `sector:${world?.sector || "unknown"}`;
 }
 
-function readSessionMessages(sessionKey) {
-  const store = readSessionStore();
-  const saved = store?.[sessionKey]?.messages;
-  if (Array.isArray(saved)) return saved;
+function normalizeEvents(events) {
+  if (!Array.isArray(events)) return [];
+  return events
+    .filter((event) => event?.type && event?.title)
+    .slice(0, 8)
+    .map((event) => ({
+      type: String(event.type),
+      title: String(event.title),
+      detail: String(event.detail || ""),
+      status: String(event.status || "discovered"),
+      at: Date.now(),
+    }));
+}
+
+function mergeEvents(previous, incoming) {
+  const next = [...(previous || [])];
+  for (const event of normalizeEvents(incoming)) {
+    const key = `${event.type}:${event.title}`.toLowerCase();
+    const index = next.findIndex(
+      (item) => `${item.type}:${item.title}`.toLowerCase() === key
+    );
+    if (index >= 0) next[index] = { ...next[index], ...event };
+    else next.push(event);
+  }
+  return next.slice(-40);
+}
+
+function readSession(sessionKey) {
+  const store = readStore();
+  const saved = store?.[sessionKey];
+  if (saved) {
+    return {
+      messages: Array.isArray(saved.messages) ? saved.messages : [],
+      events: Array.isArray(saved.events) ? saved.events : [],
+    };
+  }
 
   try {
-    const legacy = localStorage.getItem(LEGACY_CHAT_STORAGE_KEY);
-    if (!legacy) return [];
-    const parsed = JSON.parse(legacy);
-    if (!Array.isArray(parsed) || parsed.length === 0) return [];
-
-    store[sessionKey] = {
-      messages: parsed.slice(-80),
-      updatedAt: Date.now(),
-      migratedFromLegacy: true,
-    };
-    writeSessionStore(store);
-    localStorage.removeItem(LEGACY_CHAT_STORAGE_KEY);
-    return parsed.slice(-80);
+    const legacy = localStorage.getItem(LEGACY_CHAT_STORAGE_KEYS[1]);
+    const parsed = legacy ? JSON.parse(legacy) : null;
+    if (Array.isArray(parsed) && parsed.length) return { messages: parsed.slice(-80), events: [] };
   } catch {
-    return [];
+    // Ignore legacy data errors.
   }
+
+  return { messages: [], events: [] };
 }
 
 function buildVisitedSessions() {
-  const store = readSessionStore();
-  return Object.entries(store)
+  return Object.entries(readStore())
     .filter(([, session]) => Array.isArray(session?.messages) && session.messages.length > 0)
-    .map(([key, session]) => ({
-      key,
-      messages: session.messages,
-      updatedAt: Number(session.updatedAt || 0),
-      location: session.location || {},
-    }))
-    .sort((a, b) => b.updatedAt - a.updatedAt);
+    .map(([key, session]) => ({ key, ...session }))
+    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 }
 
 function sessionLabel(session) {
@@ -190,15 +216,7 @@ function formatSessionTime(value) {
   }
 }
 
-export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
-  const [draft, setDraft] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState("");
-  const [archiveOpen, setArchiveOpen] = useState(false);
-  const [archiveVersion, setArchiveVersion] = useState(0);
-  const [viewedSessionKey, setViewedSessionKey] = useState(null);
-  const introStartedRef = useRef(new Set());
-
+export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents }) {
   const rawCharacter = useMemo(() => readCharacter(), []);
   const character = useMemo(() => compactCharacter(rawCharacter), [rawCharacter]);
   const world = useMemo(
@@ -206,11 +224,20 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     [mapData, playerPosition, selectedCell, rawCharacter]
   );
   const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
+
+  const [draft, setDraft] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState("");
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [version, setVersion] = useState(0);
+  const [viewedSessionKey, setViewedSessionKey] = useState(null);
+  const [messages, setMessages] = useState(() => readSession(currentSessionKey).messages);
+  const [events, setEvents] = useState(() => readSession(currentSessionKey).events);
+  const introStartedRef = useRef(new Set());
+
   const activeSessionKey = viewedSessionKey || currentSessionKey;
   const isArchiveView = activeSessionKey !== currentSessionKey;
-  const [messages, setMessages] = useState(() => readSessionMessages(currentSessionKey));
-
-  const visitedSessions = useMemo(() => buildVisitedSessions(), [archiveVersion, messages]);
+  const visitedSessions = useMemo(() => buildVisitedSessions(), [version, messages, events]);
   const activeArchiveSession = useMemo(
     () => visitedSessions.find((session) => session.key === activeSessionKey) || null,
     [visitedSessions, activeSessionKey]
@@ -218,24 +245,31 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
 
   useEffect(() => {
     setViewedSessionKey(null);
-    setMessages(readSessionMessages(currentSessionKey));
+    const session = readSession(currentSessionKey);
+    setMessages(session.messages);
+    setEvents(session.events);
     setDraft("");
     setError("");
   }, [currentSessionKey]);
 
   useEffect(() => {
-    setMessages(readSessionMessages(activeSessionKey));
+    const session = readSession(activeSessionKey);
+    setMessages(session.messages);
+    setEvents(session.events);
     setDraft("");
     setError("");
   }, [activeSessionKey]);
 
-  function persist(nextMessages) {
-    const trimmed = nextMessages.slice(-80);
-    setMessages(trimmed);
+  function persist(nextMessages, incomingEvents = []) {
+    const trimmedMessages = nextMessages.slice(-80);
+    const nextEvents = mergeEvents(events, incomingEvents);
+    setMessages(trimmedMessages);
+    setEvents(nextEvents);
 
-    const store = readSessionStore();
+    const store = readStore();
     store[currentSessionKey] = {
-      messages: trimmed,
+      messages: trimmedMessages,
+      events: nextEvents,
       updatedAt: Date.now(),
       location: {
         id: world.currentLocation?.id || null,
@@ -244,8 +278,15 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
         worldPosition: world.worldPosition || null,
       },
     };
-    writeSessionStore(store);
-    setArchiveVersion((value) => value + 1);
+    writeStore(store);
+    setVersion((value) => value + 1);
+
+    if (incomingEvents.length && typeof onWorldEvents === "function") {
+      onWorldEvents(normalizeEvents(incomingEvents), {
+        sessionKey: currentSessionKey,
+        world,
+      });
+    }
   }
 
   async function requestGm(message, history = []) {
@@ -260,23 +301,24 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
         message,
       }),
     });
-
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.error || `GM request failed (${response.status})`);
-    return data?.text || "The GM did not return a response.";
+    return {
+      text: data?.text || "The GM did not return a response.",
+      events: Array.isArray(data?.events) ? data.events : [],
+    };
   }
 
   async function startScene(history = []) {
     if (isSending || isArchiveView) return;
     setError("");
     setIsSending(true);
-
     try {
-      const text = await requestGm(
+      const result = await requestGm(
         "Begin the local exploration scene now. Use the supplied character sheet and global-map context. Briefly establish where the character is, what they immediately notice, and one clear situation or point of interest they can react to. Do not decide the character's actions for them. End by asking what they do.",
         history
       );
-      persist([...history, { role: "gm", text, at: Date.now() }]);
+      persist([...history, { role: "gm", text: result.text, at: Date.now() }], result.events);
     } catch (requestError) {
       setError(requestError?.message || "Could not contact Auto GM.");
     } finally {
@@ -305,8 +347,8 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
     setIsSending(true);
 
     try {
-      const gmText = await requestGm(text, previousMessages);
-      persist([...nextMessages, { role: "gm", text: gmText, at: Date.now() }]);
+      const result = await requestGm(text, previousMessages);
+      persist([...nextMessages, { role: "gm", text: result.text, at: Date.now() }], result.events);
     } catch (requestError) {
       setError(requestError?.message || "Could not contact Auto GM.");
     } finally {
@@ -316,25 +358,20 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
 
   function resetChat() {
     if (isArchiveView) return;
-    const store = readSessionStore();
+    const store = readStore();
     delete store[currentSessionKey];
-    writeSessionStore(store);
+    writeStore(store);
     setMessages([]);
+    setEvents([]);
     setDraft("");
     setError("");
-    setArchiveVersion((value) => value + 1);
+    setVersion((value) => value + 1);
     introStartedRef.current.delete(currentSessionKey);
   }
 
   function openArchivedSession(key) {
     if (isSending) return;
     setViewedSessionKey(key === currentSessionKey ? null : key);
-    setArchiveOpen(false);
-  }
-
-  function returnToCurrent() {
-    if (isSending) return;
-    setViewedSessionKey(null);
     setArchiveOpen(false);
   }
 
@@ -362,25 +399,15 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
           </div>
         </div>
         <div className="pip-local-gm__header-actions">
-          <button
-            type="button"
-            className="pip-btn"
-            onClick={() => setArchiveOpen((value) => !value)}
-            disabled={isSending}
-          >
+          <button type="button" className="pip-btn" onClick={() => setArchiveOpen((value) => !value)} disabled={isSending}>
             VISITED ({visitedSessions.length})
           </button>
           {isArchiveView ? (
-            <button type="button" className="pip-btn" onClick={returnToCurrent} disabled={isSending}>
+            <button type="button" className="pip-btn" onClick={() => setViewedSessionKey(null)} disabled={isSending}>
               CURRENT
             </button>
           ) : (
-            <button
-              type="button"
-              className="pip-btn pip-local-gm__reset"
-              onClick={resetChat}
-              disabled={isSending}
-            >
+            <button type="button" className="pip-btn pip-local-gm__reset" onClick={resetChat} disabled={isSending}>
               NEW SESSION
             </button>
           )}
@@ -403,7 +430,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
                 >
                   <span className="pip-local-gm__archive-name">{sessionLabel(session)}</span>
                   <span className="pip-local-gm__archive-meta">
-                    {session.messages.length} messages
+                    {(session.messages || []).length} messages · {(session.events || []).length} discoveries
                     {formatSessionTime(session.updatedAt) ? ` · ${formatSessionTime(session.updatedAt)}` : ""}
                   </span>
                 </button>
@@ -420,6 +447,21 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
         <span>{isArchiveView ? "MODE: ARCHIVE / READ ONLY" : `OBJECTIVE: ${objective}`}</span>
       </div>
 
+      {events.length > 0 ? (
+        <div className="pip-local-gm__discoveries">
+          <div className="pip-local-gm__archive-title">DISCOVERIES ({events.length})</div>
+          <div className="pip-local-gm__discovery-list">
+            {events.slice(-8).reverse().map((event, index) => (
+              <div className="pip-local-gm__discovery" key={`${event.type}-${event.title}-${index}`} title={event.detail || event.title}>
+                <span>{event.type.toUpperCase()}</span>
+                <strong>{event.title}</strong>
+                <em>{event.status}</em>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="pip-local-gm__messages" aria-live="polite">
         {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
@@ -428,10 +470,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell }) {
           </div>
         ) : (
           messages.map((message, index) => (
-            <article
-              key={`${message.at || index}-${index}`}
-              className={`pip-local-gm__message pip-local-gm__message--${message.role}`}
-            >
+            <article key={`${message.at || index}-${index}`} className={`pip-local-gm__message pip-local-gm__message--${message.role}`}>
               <div className="pip-local-gm__speaker">{message.role === "gm" ? "AUTO GM" : "YOU"}</div>
               <div>{message.text}</div>
             </article>
