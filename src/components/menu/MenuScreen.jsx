@@ -4,6 +4,7 @@ import TrackedButton from "../shared/TrackedButton.jsx";
 import QuickCharacterWizard, {
   getCreationCopy,
 } from "../characterCreation/QuickCharacterWizard.jsx";
+import AppDownloadPanel from "./AppDownloadPanel.jsx";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 
@@ -129,6 +130,8 @@ export default function MenuScreen({
             </div>
           )}
         </section>
+
+        <AppDownloadPanel />
       </section>
 
       {showCreationMode && (
