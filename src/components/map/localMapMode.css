@@ -16,6 +16,16 @@
   box-shadow: 0 0 12px rgba(120, 255, 140, 0.12);
 }
 
+.pip-map-mode-switch--external {
+  position: relative;
+  top: auto;
+  left: auto;
+  z-index: 20;
+  width: fit-content;
+  margin: 0 auto 10px;
+  transform: none;
+}
+
 .pip-map-mode-switch button {
   min-width: 86px;
   min-height: 34px;
@@ -166,12 +176,13 @@ body:has(.pip-map-local-fullscreen) .dice-fab {
 .pip-world-overview__progress-text.is-cleared { opacity: 1 !important; }
 
 .pip-map-grid-layer:has(.pip-map-mode-shell.is-overview) { z-index: 12; }
-.pip-map-mode-shell.is-overview .pip-world-overview { box-sizing: border-box; padding-top: 52px; }
+.pip-map-mode-shell.is-overview .pip-world-overview { box-sizing: border-box; padding-top: 0; }
 .pip-map-mode-shell.is-world .pip-map-mode-switch { z-index: 8; }
 .pip-map-mode-shell.is-world .pip-map-grid { inset: 0; }
 
 @media (max-width: 768px) {
   .pip-map-mode-switch { top: -42px; width: calc(100% - 20px); }
+  .pip-map-mode-switch--external { top: auto; width: 100%; margin-bottom: 8px; }
   .pip-map-mode-switch button {
     flex: 1 1 0;
     min-width: 0;
@@ -182,7 +193,7 @@ body:has(.pip-map-local-fullscreen) .dice-fab {
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .pip-map-mode-shell.is-overview .pip-world-overview { padding-top: 42px; }
+  .pip-map-mode-shell.is-overview .pip-world-overview { padding-top: 0; }
   .pip-map-mode-shell.is-overview .pip-world-overview__toolbar { flex-wrap: wrap; gap: 5px; }
   .pip-map-mode-shell.is-overview .pip-world-overview__zoom { width: 100%; justify-content: flex-end; }
   .pip-map-local-fullscreen__bar { min-height: 46px; padding-left: 10px; padding-right: 10px; }
