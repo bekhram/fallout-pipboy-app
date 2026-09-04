@@ -88,6 +88,34 @@ function writeStore(store) {
 
 function compactCharacter(character) {
   if (!character) return null;
+
+  const weapons = (character.weapons || []).slice(0, 20).map((weapon) => ({
+    name: weapon?.name || null,
+    skill: weapon?.skill || weapon?.skillName || null,
+    damage: weapon?.damage ?? null,
+    damageType: weapon?.damageType || weapon?.type || null,
+    rate: weapon?.rate ?? null,
+    range: weapon?.range || null,
+    ammo: weapon?.ammo || null,
+    effects: weapon?.effects || weapon?.damageEffects || null,
+    qualities: weapon?.qualities || null,
+    mods: weapon?.mods || weapon?.modifications || null,
+  }));
+
+  const armor = Object.fromEntries(
+    Object.entries(character.armor || {}).map(([part, values]) => [
+      part,
+      {
+        name: values?.name || values?.armorName || null,
+        physical: values?.physical ?? values?.physicalResistance ?? null,
+        energy: values?.energy ?? values?.energyResistance ?? null,
+        radiation: values?.radiation ?? values?.radiationResistance ?? null,
+        status: values?.status || null,
+        mods: values?.mods || values?.modifications || null,
+      },
+    ])
+  );
+
   return {
     name: character.characterName || character.name || "Unknown wanderer",
     level: character.level ?? null,
@@ -96,18 +124,29 @@ function compactCharacter(character) {
     skills: character.skills || null,
     hp: {
       current: character.currentHp ?? character.hpCurrent ?? null,
-      max: character.maxHp ?? character.hpMax ?? null,
+      max: character.maxHp ?? character.hpMax ?? character.maxHpOverride ?? null,
+      radiation: character.radiationHp ?? null,
     },
     defense: character.defenseOverride || character.defense || null,
+    resistances: {
+      physical: character.physicalResistance ?? character.physicalDR ?? null,
+      energy: character.energyResistance ?? character.energyDR ?? null,
+      radiation: character.radiationResistance ?? character.radiationDR ?? null,
+    },
+    armor,
+    weapons,
     statuses: character.statuses || null,
     injuries: character.injuries || null,
-    perks: (character.perksAndTraits || []).slice(0, 20).map((perk) => ({
+    perks: (character.perksAndTraits || []).slice(0, 30).map((perk) => ({
       name: perk?.name,
       rank: perk?.rank,
+      description: perk?.description || null,
     })),
-    inventory: (character.inventoryItems || []).slice(0, 30).map((item) => ({
+    inventory: (character.inventoryItems || []).slice(0, 50).map((item) => ({
       name: item?.name,
+      category: item?.category || null,
       quantity: item?.quantity,
+      effect: item?.effect || item?.description || null,
     })),
   };
 }
