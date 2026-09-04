@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 
 const SWIPE_THRESHOLD = 60;
@@ -17,6 +17,18 @@ const INTERACTIVE_SELECTOR = [
 
 export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, children }) {
   const touchStart = useRef(null);
+  const previousTab = useRef(activeTab);
+  const previousIndex = PIPBOY_TABS.findIndex((tab) => tab.key === previousTab.current);
+  const currentIndex = PIPBOY_TABS.findIndex((tab) => tab.key === activeTab);
+  const slideDirection = previousTab.current === activeTab
+    ? ""
+    : currentIndex > previousIndex
+      ? " is-from-right"
+      : " is-from-left";
+
+  useEffect(() => {
+    previousTab.current = activeTab;
+  }, [activeTab]);
 
   const handleTouchStart = (event) => {
     if (event.touches.length !== 1 || event.target.closest?.(INTERACTIVE_SELECTOR)) {
@@ -51,7 +63,9 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {children}
+          <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
+            {children}
+          </div>
         </main>
       </div>
     </div>
