@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
+import { getLocalizedInventoryItem } from "../../data/inventoryLocalization.js";
 import {
   isConsumableItem,
   PIPBOY_USE_ITEM_EVENT,
@@ -37,6 +38,7 @@ export default function InventoryCard({
 }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const localized = getLocalizedInventoryItem(item, language);
   const categoryLabel = CATEGORY_LABEL_KEYS[item.category]
     ? t(CATEGORY_LABEL_KEYS[item.category])
     : getExtraCategoryLabel(item.category, i18n.resolvedLanguage);
@@ -64,14 +66,9 @@ export default function InventoryCard({
 
   const handleUse = () => {
     if (!canUse || quantity <= 0) return;
-
     window.dispatchEvent(
       new CustomEvent(PIPBOY_USE_ITEM_EVENT, { detail: { index } })
     );
-
-    if (quantity <= 1) {
-      onRemove(index);
-    }
   };
 
   return (
@@ -100,13 +97,13 @@ export default function InventoryCard({
 
       <div className="pip-floating-card-body">
         <div className="pip-item-title-row">
-          <h3>{item.name || t("inventory.unnamedItem")}</h3>
+          <h3>{localized.displayName || t("inventory.unnamedItem")}</h3>
           <span className="pip-item-category-inline">{categoryLabel}</span>
         </div>
 
-        {isVisibleValue(item.effect) && (
+        {isVisibleValue(localized.displayEffect) && (
           <div style={{ margin: "8px 0 10px", opacity: 0.9, lineHeight: 1.35 }}>
-            {item.effect}
+            {localized.displayEffect}
           </div>
         )}
 
