@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
+import CompanionTab from "../companion/CompanionTab.jsx";
 
 const SWIPE_THRESHOLD = 60;
 const INTERACTIVE_SELECTOR = [
@@ -64,7 +65,7 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
           onTouchEnd={handleTouchEnd}
         >
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
-            {children}
+            {activeTab === "companion" ? <CompanionTab /> : children}
           </div>
         </main>
       </div>
