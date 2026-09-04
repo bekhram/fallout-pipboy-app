@@ -6,6 +6,7 @@ import {
   getExtraCategoryLabel,
   getInventoryArchiveItems,
 } from "../../data/inventoryDatabase.js";
+import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 
@@ -17,6 +18,33 @@ const CATEGORY_LABEL_KEYS = {
   food: "inventory.categories.food",
   misc: "inventory.categories.misc",
   junk: "inventory.categories.junk",
+};
+
+const ARCHIVE_LABELS = {
+  en: {
+    search: "Search archive by name, type, series or effect...",
+    empty: "-- No matching items --",
+    select: "Select item to autoload",
+    records: "records",
+  },
+  ru: {
+    search: "Поиск по названию, типу, серии или эффекту...",
+    empty: "-- Ничего не найдено --",
+    select: "Выберите предмет для загрузки",
+    records: "записей",
+  },
+  uk: {
+    search: "Пошук за назвою, типом, серією або ефектом...",
+    empty: "-- Нічого не знайдено --",
+    select: "Оберіть предмет для завантаження",
+    records: "записів",
+  },
+  pl: {
+    search: "Szukaj po nazwie, typie, serii lub efekcie...",
+    empty: "-- Brak wyników --",
+    select: "Wybierz przedmiot do wczytania",
+    records: "rekordów",
+  },
 };
 
 const EMPTY_DETAIL_FIELDS = {
@@ -122,6 +150,8 @@ export default function InventoryEditor({
   const [archiveSearch, setArchiveSearch] = useState("");
   const [weaponArchive, setWeaponArchive] = useState([]);
   const [armorArchive, setArmorArchive] = useState([]);
+  const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const archiveLabels = ARCHIVE_LABELS[language] || ARCHIVE_LABELS.en;
 
   useEffect(() => {
     let active = true;
@@ -182,11 +212,19 @@ export default function InventoryEditor({
     return getInventoryArchiveItems(draft.category);
   }, [draft.category, globalAmmo, weaponArchive, armorArchive]);
 
-  const filteredArchiveItems = useMemo(() => {
-    const query = normalizeSearchText(archiveSearch);
-    if (!query) return archiveItems;
+  const archiveEntries = useMemo(
+    () => archiveItems.map((item) => ({
+      item,
+      localized: getLocalizedInventoryItem(item, language),
+    })),
+    [archiveItems, language]
+  );
 
-    return archiveItems.filter((item) =>
+  const filteredArchiveEntries = useMemo(() => {
+    const query = normalizeSearchText(archiveSearch);
+    if (!query) return archiveEntries;
+
+    return archiveEntries.filter(({ item, localized }) =>
       [
         item.name,
         item.series,
@@ -201,14 +239,23 @@ export default function InventoryEditor({
         item.ammo,
         item.armorGroup,
         item.armorLocations,
+        localized.displayName,
+        localized.displaySeries,
+        localized.displayEffect,
+        localized.displayWeaponType,
+        localized.displayDamageType,
+        localized.displayQualities,
+        localized.displayArmorGroup,
+        localized.displayArmorLocations,
       ]
         .filter(Boolean)
         .some((value) => normalizeSearchText(value).includes(query))
     );
-  }, [archiveItems, archiveSearch]);
+  }, [archiveEntries, archiveSearch]);
 
   const handleLoadArchiveItem = (indexStr) => {
-    const item = filteredArchiveItems[Number(indexStr)];
+    const entry = filteredArchiveEntries[Number(indexStr)];
+    const item = entry?.item;
     if (!item) return;
 
     setDraft((prev) => ({
@@ -274,7 +321,7 @@ export default function InventoryEditor({
           <input
             className="pip-input"
             type="search"
-            placeholder="Search archive by name, type, series or effect..."
+            placeholder={archiveLabels.search}
             value={archiveSearch}
             onChange={(e) => setArchiveSearch(e.target.value)}
             style={{ marginBottom: "8px" }}
@@ -284,27 +331,27 @@ export default function InventoryEditor({
             className="pip-input"
             onChange={(e) => handleLoadArchiveItem(e.target.value)}
             value=""
-            disabled={filteredArchiveItems.length === 0}
+            disabled={filteredArchiveEntries.length === 0}
           >
             <option value="" disabled>
-              {filteredArchiveItems.length === 0
-                ? "-- No matching items --"
-                : `-- Select item to autoload (${filteredArchiveItems.length}) --`}
+              {filteredArchiveEntries.length === 0
+                ? archiveLabels.empty
+                : `-- ${archiveLabels.select} (${filteredArchiveEntries.length}) --`}
             </option>
-            {filteredArchiveItems.map((item, idx) => (
+            {filteredArchiveEntries.map(({ item, localized }, idx) => (
               <option key={`${item.name}-${item.series || item.armorSourceId || ""}-${idx}`} value={idx}>
-                {item.name}
-                {item.series ? ` — ${item.series}` : ""}
-                {item.weaponType ? ` — ${item.weaponType}` : ""}
-                {item.armorGroup ? ` — ${item.armorGroup}` : ""}
+                {localized.displayName || item.name}
+                {(localized.displaySeries || item.series) ? ` — ${localized.displaySeries || item.series}` : ""}
+                {(localized.displayWeaponType || item.weaponType) ? ` — ${localized.displayWeaponType || item.weaponType}` : ""}
+                {(localized.displayArmorGroup || item.armorGroup) ? ` — ${localized.displayArmorGroup || item.armorGroup}` : ""}
               </option>
             ))}
           </select>
 
           <div style={{ marginTop: "6px", opacity: 0.65, fontSize: "11px" }}>
             {archiveSearch
-              ? `${filteredArchiveItems.length} / ${archiveItems.length} records`
-              : `${archiveItems.length} records`}
+              ? `${filteredArchiveEntries.length} / ${archiveItems.length} ${archiveLabels.records}`
+              : `${archiveItems.length} ${archiveLabels.records}`}
           </div>
         </div>
       )}
