@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
+import LocalSkillCheck from "./LocalSkillCheck.jsx";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
@@ -217,7 +218,7 @@ function buildLocationState(events, persistent) {
 }
 
 function readSession(sessionKey, persistent) {
-  if (!persistent) return { messages: [], events: [] };
+  if (!persistent) return { messages: [], events: [], check: null };
 
   const store = readStore();
   const saved = store?.[sessionKey];
@@ -225,10 +226,11 @@ function readSession(sessionKey, persistent) {
     return {
       messages: Array.isArray(saved.messages) ? saved.messages : [],
       events: Array.isArray(saved.events) ? saved.events : [],
+      check: saved.check && typeof saved.check === "object" ? saved.check : null,
     };
   }
 
-  return { messages: [], events: [] };
+  return { messages: [], events: [], check: null };
 }
 
 function buildVisitedSessions() {
@@ -275,6 +277,10 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   );
   const isPersistentLocation = world.isStaticLocation === true;
   const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
+  const initialSession = useMemo(
+    () => readSession(currentSessionKey, isPersistentLocation),
+    [currentSessionKey, isPersistentLocation]
+  );
 
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -282,12 +288,9 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [version, setVersion] = useState(0);
   const [viewedSessionKey, setViewedSessionKey] = useState(null);
-  const [messages, setMessages] = useState(
-    () => readSession(currentSessionKey, isPersistentLocation).messages
-  );
-  const [events, setEvents] = useState(
-    () => readSession(currentSessionKey, isPersistentLocation).events
-  );
+  const [messages, setMessages] = useState(() => initialSession.messages);
+  const [events, setEvents] = useState(() => initialSession.events);
+  const [pendingCheck, setPendingCheck] = useState(() => initialSession.check);
   const introStartedRef = useRef(new Set());
 
   const activeSessionKey = viewedSessionKey || currentSessionKey;
@@ -303,6 +306,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     const session = readSession(currentSessionKey, isPersistentLocation);
     setMessages(session.messages);
     setEvents(session.events);
+    setPendingCheck(session.check);
     setDraft("");
     setError("");
   }, [currentSessionKey, isPersistentLocation]);
@@ -312,11 +316,12 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     const session = readSession(activeSessionKey, true);
     setMessages(session.messages);
     setEvents(session.events);
+    setPendingCheck(null);
     setDraft("");
     setError("");
   }, [activeSessionKey, isArchiveView]);
 
-  function persist(nextMessages, incomingEvents = []) {
+  function persist(nextMessages, incomingEvents = [], nextCheck = pendingCheck) {
     const trimmedMessages = nextMessages.slice(-80);
     const nextEvents = mergeEvents(events, incomingEvents);
     setMessages(trimmedMessages);
@@ -327,6 +332,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       store[currentSessionKey] = {
         messages: trimmedMessages,
         events: nextEvents,
+        check: nextCheck || null,
         persistent: true,
         updatedAt: Date.now(),
         location: {
@@ -371,6 +377,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     return {
       text: data?.text || tx("gmEmpty"),
       events: Array.isArray(data?.events) ? data.events : [],
+      check: data?.check && typeof data.check === "object" ? data.check : null,
     };
   }
 
@@ -383,10 +390,15 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         ? "This is a static named world location. Continue its saved discoveries and consequences exactly as established."
         : "This is a procedural location. Treat this visit as temporary and do not assume discoveries persist after the character leaves.";
       const result = await requestGm(
-        `Begin or continue the local exploration scene now. ${persistenceInstruction} Use the supplied character sheet, global-map context, and structured location state. Do not reintroduce already resolved threats or collected loot unless the saved state explicitly supports it. Briefly establish the immediate situation without deciding the character's actions. End by asking what they do.`,
+        `Begin or continue the local exploration scene now. ${persistenceInstruction} Use the supplied character sheet, global-map context, and structured location state. Do not reintroduce already resolved threats or collected loot unless the saved state explicitly supports it. Briefly establish the immediate situation without deciding the character's actions. End by asking what they do, or request one skill check if the next outcome genuinely depends on it.`,
         history
       );
-      persist([...history, { role: "gm", text: result.text, at: Date.now() }], result.events);
+      setPendingCheck(result.check);
+      persist(
+        [...history, { role: "gm", text: result.text, at: Date.now() }],
+        result.events,
+        result.check
+      );
     } catch (requestError) {
       setError(requestError?.message || tx("gmError"));
     } finally {
@@ -401,21 +413,30 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSessionKey, messages.length, isArchiveView]);
 
-  async function sendText(text) {
+  async function sendText(text, options = {}) {
     const cleanText = String(text || "").trim();
     if (!cleanText || isSending || isArchiveView) return;
 
+    const clearCheck = options.clearCheck === true;
+    const checkForMessage = clearCheck ? null : pendingCheck;
     const userMessage = { role: "user", text: cleanText, at: Date.now() };
     const previousMessages = messages;
     const nextMessages = [...previousMessages, userMessage];
-    persist(nextMessages);
+
+    if (clearCheck) setPendingCheck(null);
+    persist(nextMessages, [], checkForMessage);
     setDraft("");
     setError("");
     setIsSending(true);
 
     try {
       const result = await requestGm(cleanText, previousMessages);
-      persist([...nextMessages, { role: "gm", text: result.text, at: Date.now() }], result.events);
+      setPendingCheck(result.check);
+      persist(
+        [...nextMessages, { role: "gm", text: result.text, at: Date.now() }],
+        result.events,
+        result.check
+      );
     } catch (requestError) {
       setError(requestError?.message || tx("gmError"));
     } finally {
@@ -438,6 +459,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     }
     setMessages([]);
     setEvents([]);
+    setPendingCheck(null);
     setDraft("");
     setError("");
     introStartedRef.current.delete(currentSessionKey);
@@ -457,7 +479,9 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     world.trackedObjective?.name ||
     world.trackedObjective?.id ||
     tx("exploreArea");
-  const displayedPlace = isArchiveView ? sessionLabel(activeArchiveSession, tx("unknownLocation")) : currentPlace;
+  const displayedPlace = isArchiveView
+    ? sessionLabel(activeArchiveSession, tx("unknownLocation"))
+    : currentPlace;
 
   return (
     <section className="pip-local-gm">
@@ -548,6 +572,17 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         </div>
       ) : null}
 
+      {!isArchiveView && pendingCheck ? (
+        <LocalSkillCheck
+          key={pendingCheck.id || `${pendingCheck.attribute}-${pendingCheck.skill}`}
+          check={pendingCheck}
+          character={rawCharacter}
+          language={language}
+          disabled={isSending}
+          onSubmit={(text) => sendText(text, { clearCheck: true })}
+        />
+      ) : null}
+
       <div className="pip-local-gm__messages" aria-live="polite">
         {messages.length === 0 && !isSending ? (
           <div className="pip-local-gm__empty">
@@ -580,7 +615,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
                 type="button"
                 key={action.id}
                 className="pip-local-gm__quick-action"
-                disabled={isSending}
+                disabled={isSending || Boolean(pendingCheck)}
                 onClick={() => sendText(action.prompt)}
               >
                 {action.label}
