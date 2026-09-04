@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import "./companion.css";
 
@@ -9,7 +8,7 @@ const LEGACY_STORAGE_KEY = "fallout_pipboy_companion_v1";
 const COPY = {
   en: {
     title: "COMPANIONS / PETS",
-    subtitle: "Fallout 2d20 compact creature cards",
+    subtitle: "Fallout 2d20 creature cards",
     addCompanion: "+ COMPANION",
     addPet: "+ PET",
     companion: "Companion",
@@ -45,7 +44,7 @@ const COPY = {
   },
   ru: {
     title: "КОМПАНЬОНЫ / ПИТОМЦЫ",
-    subtitle: "Компактные карточки существ Fallout 2d20",
+    subtitle: "Карточки существ Fallout 2d20",
     addCompanion: "+ КОМПАНЬОН",
     addPet: "+ ПИТОМЕЦ",
     companion: "Компаньон",
@@ -81,7 +80,7 @@ const COPY = {
   },
   uk: {
     title: "КОМПАНЬЙОНИ / УЛЮБЛЕНЦІ",
-    subtitle: "Компактні картки істот Fallout 2d20",
+    subtitle: "Картки істот Fallout 2d20",
     addCompanion: "+ КОМПАНЬЙОН",
     addPet: "+ УЛЮБЛЕНЕЦЬ",
     companion: "Компаньйон",
@@ -117,7 +116,7 @@ const COPY = {
   },
   pl: {
     title: "TOWARZYSZE / PUPILE",
-    subtitle: "Kompaktowe karty stworzeń Fallout 2d20",
+    subtitle: "Karty stworzeń Fallout 2d20",
     addCompanion: "+ TOWARZYSZ",
     addPet: "+ PUPIL",
     companion: "Towarzysz",
@@ -210,12 +209,12 @@ function clamp(value, min = 0, max = 999) {
   return String(Math.max(min, Math.min(max, numeric)));
 }
 
-function NumberField({ label, value, onChange, min = 0, max = 999, className = "" }) {
+function NumberField({ label, value, onChange, min = 0, max = 999 }) {
   return (
-    <label className={`companion-stat-field ${className}`}>
+    <label className="pip-top-field companion-stat-cell">
       <span>{label}</span>
       <input
-        className="pip-input"
+        className="pip-inline-input"
         inputMode="numeric"
         value={value}
         onChange={(event) => onChange(clamp(event.target.value, min, max))}
@@ -224,13 +223,12 @@ function NumberField({ label, value, onChange, min = 0, max = 999, className = "
   );
 }
 
-export default function CompanionTab({ open, onClose }) {
+export default function CompanionTab() {
   const { i18n } = useTranslation();
   const language = getLanguage(i18n.resolvedLanguage || i18n.language);
   const copy = COPY[language];
   const [state, setState] = useState({ items: [], activeId: null });
   const [ready, setReady] = useState(false);
-  const [topOffset, setTopOffset] = useState(0);
 
   useEffect(() => {
     try {
@@ -255,33 +253,6 @@ export default function CompanionTab({ open, onClose }) {
     if (!ready) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state, ready]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const measure = () => {
-      const nav = document.querySelector(".pip-topnav");
-      const bottom = nav?.getBoundingClientRect?.().bottom;
-      setTopOffset(Math.max(0, Math.round(Number(bottom) || 0)));
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    window.addEventListener("orientationchange", measure);
-    const timer = window.setTimeout(measure, 120);
-    return () => {
-      window.removeEventListener("resize", measure);
-      window.removeEventListener("orientationchange", measure);
-      window.clearTimeout(timer);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") onClose?.();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
 
   const active = useMemo(
     () => state.items.find((item) => item.id === state.activeId) || state.items[0] || null,
@@ -337,75 +308,74 @@ export default function CompanionTab({ open, onClose }) {
     ? Math.max(0, Math.min(100, (Number(active.currentHp || 0) / Math.max(1, Number(active.maxHp || 1))) * 100))
     : 0;
 
-  if (!open || typeof document === "undefined") return null;
-
-  return createPortal(
-    <section className="companion-tab-screen" style={{ top: `${topOffset}px` }} aria-label={copy.title}>
-      <div className="companion-tab-inner">
-        <div className="companion-page-head">
-          <div className="companion-page-title">
+  return (
+    <div className="pip-screen-grid companion-screen">
+      <section className="pip-panel pip-block">
+        <div className="pip-head companion-head">
+          <div className="companion-head-copy">
             <h2>[ {copy.title} ]</h2>
             <span>{copy.subtitle}</span>
           </div>
+          <button type="button" className="pip-btn is-primary" onClick={() => add("companion")}> 
+            {copy.addCompanion}
+          </button>
         </div>
 
-        <div className="companion-toolbar">
-          <button type="button" className="pip-btn is-primary" onClick={() => add("companion")}>{copy.addCompanion}</button>
+        <div className="pip-inventory-actions push-bottom companion-actions">
           <button type="button" className="pip-btn" onClick={() => add("pet")}>{copy.addPet}</button>
-          {active && <button type="button" className="pip-btn" onClick={copyActive}>{copy.copy}</button>}
-          {active && <button type="button" className="pip-btn companion-delete-btn" onClick={removeActive}>{copy.remove}</button>}
+          <button type="button" className="pip-btn" onClick={copyActive} disabled={!active}>{copy.copy}</button>
+          <button type="button" className="pip-btn companion-delete-btn" onClick={removeActive} disabled={!active}>{copy.remove}</button>
         </div>
 
         {state.items.length > 0 && (
-          <div className="companion-roster" role="tablist" aria-label={copy.title}>
+          <div className="pip-tagrow is-wrap push-bottom companion-roster" role="tablist" aria-label={copy.title}>
             {state.items.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 role="tab"
                 aria-selected={active?.id === item.id}
-                className={`companion-roster-item ${active?.id === item.id ? "is-active" : ""}`}
+                className={`pip-tag companion-roster-tag ${active?.id === item.id ? "is-selected" : ""}`}
                 onClick={() => setState((prev) => ({ ...prev, activeId: item.id }))}
               >
-                <span className="companion-roster-avatar">{(item.name || "?").trim().slice(0, 1).toUpperCase() || "?"}</span>
-                <span className="companion-roster-copy">
-                  <strong>{item.name || copy.unnamed}</strong>
-                  <small>
-                    <span>{item.creatureType || (item.kind === "pet" ? copy.pet : copy.companion)}</span>
-                    <span>LV {item.level || "1"}</span>
-                  </small>
-                </span>
+                <span>{item.name || copy.unnamed}</span>
+                <small>LV {item.level || "1"}</small>
               </button>
             ))}
           </div>
         )}
 
         {!active ? (
-          <div className="pip-panel pip-block companion-empty">
+          <div className="pip-logbox companion-empty">
             <strong>{copy.emptyTitle}</strong>
             <span>{copy.emptyText}</span>
           </div>
         ) : (
-          <div className="pip-panel pip-block companion-sheet">
-            <div className="companion-identity-row">
-              <div className="companion-big-avatar">{(active.name || "?").trim().slice(0, 1).toUpperCase() || "?"}</div>
-              <label className="companion-text-field companion-name-field">
+          <div className="companion-content">
+            <div className="pip-inline-stats companion-summary push-bottom">
+              <span>{active.name || copy.unnamed}</span>
+              <span>{active.creatureType || (active.kind === "pet" ? copy.pet : copy.companion)}</span>
+              <span>LV {active.level || "1"}</span>
+            </div>
+
+            <div className="companion-identity-grid push-bottom">
+              <label className="pip-top-field companion-name-field">
                 <span>{copy.name}</span>
-                <input className="pip-input" value={active.name} placeholder={copy.unnamed} onChange={(event) => updateActive({ name: event.target.value })} />
+                <input className="pip-inline-input" value={active.name} placeholder={copy.unnamed} onChange={(event) => updateActive({ name: event.target.value })} />
               </label>
-              <label className="companion-text-field companion-type-field">
+              <label className="pip-top-field companion-type-field">
                 <span>{copy.type}</span>
-                <input className="pip-input" value={active.creatureType} placeholder={active.kind === "pet" ? copy.pet : copy.companion} onChange={(event) => updateActive({ creatureType: event.target.value })} />
+                <input className="pip-inline-input" value={active.creatureType} placeholder={active.kind === "pet" ? copy.pet : copy.companion} onChange={(event) => updateActive({ creatureType: event.target.value })} />
               </label>
-              <NumberField label={copy.level} value={active.level} min={1} max={999} onChange={(value) => updateActive({ level: value || "1" })} className="companion-level-field" />
+              <NumberField label={copy.level} value={active.level} min={1} max={999} onChange={(value) => updateActive({ level: value || "1" })} />
             </div>
 
-            <div className="companion-kind-row">
-              <button type="button" className={`pip-btn ${active.kind === "companion" ? "is-primary" : ""}`} onClick={() => updateActive({ kind: "companion" })}>{copy.companion}</button>
-              <button type="button" className={`pip-btn ${active.kind === "pet" ? "is-primary" : ""}`} onClick={() => updateActive({ kind: "pet" })}>{copy.pet}</button>
+            <div className="pip-tagrow is-wrap push-bottom companion-kind-row">
+              <button type="button" className={`pip-tag ${active.kind === "companion" ? "is-selected" : ""}`} onClick={() => updateActive({ kind: "companion" })}>{copy.companion}</button>
+              <button type="button" className={`pip-tag ${active.kind === "pet" ? "is-selected" : ""}`} onClick={() => updateActive({ kind: "pet" })}>{copy.pet}</button>
             </div>
 
-            <div className="companion-stat-table companion-main-stats">
+            <div className="companion-stat-grid companion-main-stats push-bottom">
               <NumberField label={copy.body} value={active.body} min={0} max={20} onChange={(body) => updateActive({ body })} />
               <NumberField label={copy.mind} value={active.mind} min={0} max={20} onChange={(mind) => updateActive({ mind })} />
               <NumberField label={copy.melee} value={active.melee} min={0} max={20} onChange={(melee) => updateActive({ melee })} />
@@ -413,7 +383,7 @@ export default function CompanionTab({ open, onClose }) {
               <NumberField label={copy.other} value={active.other} min={0} max={20} onChange={(other) => updateActive({ other })} />
             </div>
 
-            <div className="companion-hp-section">
+            <div className="pip-logbox companion-hp-section push-bottom">
               <div className="companion-hp-heading">
                 <strong>{copy.hp}</strong>
                 <span>{active.currentHp || 0} / {active.maxHp || 1}</span>
@@ -421,45 +391,46 @@ export default function CompanionTab({ open, onClose }) {
               <div className="companion-hp-track"><div className="companion-hp-fill" style={{ width: `${hpPercent}%` }} /></div>
               <div className="companion-hp-controls">
                 <button type="button" className="pip-btn" onClick={() => updateHp(-1)}>−</button>
-                <input className="pip-input" inputMode="numeric" value={active.currentHp} onChange={(event) => updateActive({ currentHp: clamp(event.target.value, 0, Math.max(1, Number(active.maxHp || 1))) })} />
+                <input className="pip-inline-input" inputMode="numeric" value={active.currentHp} onChange={(event) => updateActive({ currentHp: clamp(event.target.value, 0, Math.max(1, Number(active.maxHp || 1))) })} />
                 <span>/</span>
-                <input className="pip-input" inputMode="numeric" value={active.maxHp} onChange={(event) => updateMaxHp(event.target.value)} />
+                <input className="pip-inline-input" inputMode="numeric" value={active.maxHp} onChange={(event) => updateMaxHp(event.target.value)} />
                 <button type="button" className="pip-btn" onClick={() => updateHp(1)}>+</button>
               </div>
             </div>
 
-            <div className="companion-stat-table companion-combat-stats">
+            <div className="companion-stat-grid companion-combat-stats push-bottom">
               <NumberField label={copy.initiative} value={active.initiative} min={0} max={999} onChange={(initiative) => updateActive({ initiative })} />
               <NumberField label={copy.defense} value={active.defense} min={0} max={99} onChange={(defense) => updateActive({ defense })} />
               <NumberField label={copy.carryWeight} value={active.carryWeight} min={0} max={9999} onChange={(carryWeight) => updateActive({ carryWeight })} />
               <NumberField label={copy.meleeBonus} value={active.meleeBonus} min={0} max={99} onChange={(meleeBonus) => updateActive({ meleeBonus })} />
             </div>
 
-            <div className="companion-stat-table companion-dr-stats">
+            <div className="companion-stat-grid companion-dr-stats push-bottom">
               <NumberField label={copy.physDr} value={active.physDr} min={0} max={99} onChange={(physDr) => updateActive({ physDr })} />
               <NumberField label={copy.energyDr} value={active.energyDr} min={0} max={99} onChange={(energyDr) => updateActive({ energyDr })} />
               <NumberField label={copy.radDr} value={active.radDr} min={0} max={99} onChange={(radDr) => updateActive({ radDr })} />
               <NumberField label={copy.poisonDr} value={active.poisonDr} min={0} max={99} onChange={(poisonDr) => updateActive({ poisonDr })} />
             </div>
 
-            <label className="companion-long-field">
-              <span>[ {copy.attacks} ]</span>
-              <textarea className="pip-input" rows={4} value={active.attacks} placeholder={copy.attacksPlaceholder} onChange={(event) => updateActive({ attacks: event.target.value })} />
-            </label>
+            <div className="companion-long-grid">
+              <label className="pip-logbox companion-long-field">
+                <span>[ {copy.attacks} ]</span>
+                <textarea className="pip-input" rows={4} value={active.attacks} placeholder={copy.attacksPlaceholder} onChange={(event) => updateActive({ attacks: event.target.value })} />
+              </label>
 
-            <label className="companion-long-field">
-              <span>[ {copy.abilities} ]</span>
-              <textarea className="pip-input" rows={6} value={active.specialAbilities} placeholder={copy.abilitiesPlaceholder} onChange={(event) => updateActive({ specialAbilities: event.target.value })} />
-            </label>
+              <label className="pip-logbox companion-long-field">
+                <span>[ {copy.abilities} ]</span>
+                <textarea className="pip-input" rows={6} value={active.specialAbilities} placeholder={copy.abilitiesPlaceholder} onChange={(event) => updateActive({ specialAbilities: event.target.value })} />
+              </label>
 
-            <label className="companion-long-field companion-notes-field">
-              <span>[ {copy.notes} ]</span>
-              <textarea className="pip-input" rows={3} value={active.notes} placeholder={copy.notesPlaceholder} onChange={(event) => updateActive({ notes: event.target.value })} />
-            </label>
+              <label className="pip-logbox companion-long-field companion-notes-field">
+                <span>[ {copy.notes} ]</span>
+                <textarea className="pip-input" rows={3} value={active.notes} placeholder={copy.notesPlaceholder} onChange={(event) => updateActive({ notes: event.target.value })} />
+              </label>
+            </div>
           </div>
         )}
-      </div>
-    </section>,
-    document.body
+      </section>
+    </div>
   );
 }
