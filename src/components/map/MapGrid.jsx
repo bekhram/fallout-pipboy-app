@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import MapCell from "./MapCell.jsx";
 import LocalGmChat from "./LocalGmChat.jsx";
 import { FALLOUT_4_LOCATIONS } from "../../data/map/bostonMap.js";
-import { canTravelToCell, getCellKey, getTravelCost } from "../../utils/mapMath.js";
+import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
 import "./localMapMode.css";
 
 const VIEW_COLS = 8;
@@ -25,17 +25,13 @@ function getStaticLocation(mapData, cell) {
   ) || null;
 }
 
-function triggerTravel() {
-  const button = document.querySelector(".pip-map-sidebar .pip-action-button");
-  if (button && !button.disabled) button.click();
-}
-
 function MapGrid({
   mapData,
   playerPosition,
   selectedCell,
   discoveredKeys,
   onSelectCell,
+  onTravel,
 }) {
   const [mapMode, setMapMode] = useState("world");
 
@@ -76,9 +72,16 @@ function MapGrid({
     return result;
   }, [visibleCells, mapData, playerPosition]);
 
+  const route = useMemo(
+    () => selectedCell ? findTravelRoute(mapData, playerPosition, selectedCell) : null,
+    [mapData, playerPosition, selectedCell]
+  );
+  const routeKeys = useMemo(
+    () => new Set((route?.cells || []).map((cell) => getCellKey(cell.x, cell.y))),
+    [route]
+  );
+
   const selectedKey = selectedCell ? getCellKey(selectedCell.x, selectedCell.y) : null;
-  const selectedReachable = selectedCell ? canTravelToCell(mapData, playerPosition, selectedCell) : false;
-  const selectedCost = selectedReachable ? getTravelCost(mapData, selectedCell) : null;
   const deltaX = selectedCell ? selectedCell.x - playerPosition.x : 0;
   const deltaY = selectedCell ? selectedCell.y - playerPosition.y : 0;
   const direction = selectedCell
@@ -92,6 +95,7 @@ function MapGrid({
     selectedCell?.poi?.name ||
     selectedCell?.poi?.id?.replaceAll("_", " ") ||
     (selectedCell ? `CELL ${selectedCell.x},${selectedCell.y}` : null);
+  const routeReady = Boolean(route && route.cells.length > 0);
 
   return (
     <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : "is-world"}`}>
@@ -112,15 +116,15 @@ function MapGrid({
               <>
                 <span>DEST {selectedCell.x},{selectedCell.y}</span>
                 <span>DIR {direction}</span>
-                <span>{selectedReachable ? `ETA ${selectedCost ?? 1}H` : "OUT OF RANGE"}</span>
+                <span>{route ? `${route.cells.length} STEPS · ${route.cost}H` : "NO ROUTE"}</span>
               </>
             ) : (
-              <span>TAP A CELL TO SET DESTINATION</span>
+              <span>TAP ANY CELL TO PLAN A ROUTE</span>
             )}
           </div>
 
           {selectedCell ? (
-            <div className={`pip-map-route-card ${selectedReachable ? "is-ready" : "is-blocked"}`}>
+            <div className={`pip-map-route-card ${routeReady ? "is-ready" : "is-blocked"}`}>
               <div className="pip-map-route-card__topline">
                 <span>ROUTE // {destinationType}</span>
                 <button type="button" onClick={() => onSelectCell(null)}>×</button>
@@ -128,15 +132,19 @@ function MapGrid({
               <strong>{destinationName}</strong>
               <div className="pip-map-route-card__meta">
                 <span>DIR {direction}</span>
-                <span>{selectedReachable ? `${selectedCost ?? 1}H` : "BEYOND CURRENT MOVE"}</span>
+                <span>{route ? `${route.cells.length} STEPS` : "NO SAFE ROUTE"}</span>
+                <span>{route ? `ETA ${route.cost}H` : ""}</span>
+              </div>
+              <div className="pip-map-route-card__hint">
+                Travel follows the highlighted route and stops automatically if an encounter occurs.
               </div>
               <button
                 type="button"
                 className="pip-map-route-card__travel"
-                disabled={!selectedReachable}
-                onClick={triggerTravel}
+                disabled={!routeReady}
+                onClick={() => onTravel?.()}
               >
-                {selectedReachable ? "TRAVEL" : "SELECT A CLOSER CELL"}
+                {routeReady ? "START TRAVEL" : "ROUTE UNAVAILABLE"}
               </button>
             </div>
           ) : null}
@@ -156,6 +164,7 @@ function MapGrid({
                   isSelected={selectedKey === key}
                   isDiscovered={discoveredSet.has(key)}
                   isReachable={reachableMap.get(key)}
+                  isRoute={routeKeys.has(key)}
                   onSelect={onSelectCell}
                 />
               );
