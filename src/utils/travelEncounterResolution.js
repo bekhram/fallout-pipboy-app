@@ -18,32 +18,14 @@ const DAMAGE_PROFILES = {
   toxic_puddle: { diceCount: 3, damageType: "poison", hitLocation: true },
 };
 
+// Only consequences that the application can apply immediately belong here.
+// Narrative outcomes stay unresolved until Auto GM handles them in Local mode.
 const FIXED_CONSEQUENCES = {
   hunger_crash: {
     kind: "survival",
     satietySet: 0,
     vigorDelta: -1,
-    summary: "Hunger drops to 0 and vigor drops by 1.",
-  },
-  stuck_in_textures: {
-    kind: "condition",
-    summary: "Movement is blocked until a long rest resolves the encounter.",
-  },
-  overload: {
-    kind: "choice",
-    summary: "The player must drop enough carried weight or accept 1 level of exhaustion.",
-  },
-  pickpocket: {
-    kind: "inventory",
-    summary: "One unequipped inventory item may be stolen; Auto GM must establish which item before changing inventory.",
-  },
-  fatal_breakdown: {
-    kind: "equipment",
-    summary: "An equipped weapon or armor piece may break; Auto GM must identify the affected item before changing equipment.",
-  },
-  food_poisoning: {
-    kind: "condition",
-    summary: "Food poisoning becomes the immediate scene consequence; Auto GM should resolve any required test before adding a lasting condition.",
+    summary: "SAT 0 // VIG -1",
   },
 };
 
@@ -90,8 +72,8 @@ function resolveCombat(encounter, character) {
     kind: "combat",
     combat,
     summary: enemy
-      ? `Combat encounter: ${enemy.name}. HP ${enemy.hp.current}/${enemy.hp.max}, Defense ${enemy.defense}, Initiative ${enemy.initiative ?? "—"}. Exact attacks, DR and abilities are attached from the Core Rulebook bestiary.`
-      : "Combat encounter created from the Core Rulebook bestiary.",
+      ? `COMBAT // ${enemy.name} // HP ${enemy.hp.current}/${enemy.hp.max} // DEF ${enemy.defense} // INIT ${enemy.initiative ?? "—"}`
+      : "COMBAT // BESTIARY",
   };
 }
 
@@ -107,9 +89,8 @@ export function resolveTravelEncounter(encounter, character) {
   const combatResolution = resolveCombat(encounter, character);
   if (combatResolution) return combatResolution;
 
-  // Narrative-only encounters are described once by Auto GM in Local mode.
-  // They intentionally have no application-generated resolution/card because
-  // no dice, damage, inventory, condition, or character-sheet change has been
-  // resolved by the app yet.
+  // Narrative-only encounters are described exactly once by Auto GM.
+  // No synthetic fallback resolution is created because the app has not
+  // resolved dice, damage, inventory, conditions, or character-sheet changes.
   return null;
 }
