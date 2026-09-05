@@ -24,6 +24,10 @@ const CARRY_LABELS = {
   pl: { player: "Gracz", companions: "Towarzysze", total: "Razem" },
 };
 
+function isProtectedInventoryItem(item) {
+  return item?.sourceType === "power_armor" && item?.equipped !== false;
+}
+
 export default function InventoryScreen({
   items,
   editingIndex,
@@ -83,10 +87,16 @@ export default function InventoryScreen({
     originalIndex: items.indexOf(item),
   }));
 
+  const selectableFilteredItems = filteredItemsWithIndex.filter(
+    ({ item }) => !isProtectedInventoryItem(item)
+  );
+
   const parsedBonusPercent = Math.max(0, Number(sellBonusPercent || 0));
   const totalSellPercent = 25 + parsedBonusPercent;
 
   const toggleSelected = (index) => {
+    if (isProtectedInventoryItem(items[index])) return;
+
     setSelectedIndices((prev) =>
       prev.includes(index)
         ? prev.filter((value) => value !== index)
@@ -100,12 +110,17 @@ export default function InventoryScreen({
 
   const selectAllFiltered = () => {
     setSelectedIndices(
-      filteredItemsWithIndex.map(({ originalIndex }) => originalIndex)
+      selectableFilteredItems.map(({ originalIndex }) => originalIndex)
     );
   };
 
+  const sellableSelectedIndices = useMemo(
+    () => selectedIndices.filter((index) => !isProtectedInventoryItem(items[index])),
+    [items, selectedIndices]
+  );
+
   const selectedFullValue = useMemo(() => {
-    return selectedIndices.reduce((sum, index) => {
+    return sellableSelectedIndices.reduce((sum, index) => {
       const item = items[index];
       if (!item) return sum;
 
@@ -114,16 +129,19 @@ export default function InventoryScreen({
 
       return sum + qty * cost;
     }, 0);
-  }, [items, selectedIndices]);
+  }, [items, sellableSelectedIndices]);
 
   const selectedSellValue = useMemo(() => {
     return Math.floor(selectedFullValue * (totalSellPercent / 100));
   }, [selectedFullValue, totalSellPercent]);
 
   const handleSellSelected = () => {
-    if (!selectedIndices.length) return;
+    if (!sellableSelectedIndices.length) {
+      clearSelected();
+      return;
+    }
 
-    const sortedDesc = [...selectedIndices].sort((a, b) => b - a);
+    const sortedDesc = [...sellableSelectedIndices].sort((a, b) => b - a);
 
     onCapsChange(String(Number(caps || 0) + selectedSellValue));
     sortedDesc.forEach((index) => onRemove(index));
@@ -202,7 +220,7 @@ export default function InventoryScreen({
             type="button"
             className="pip-btn"
             onClick={selectAllFiltered}
-            disabled={!filteredItemsWithIndex.length}
+            disabled={!selectableFilteredItems.length}
           >
             Select all
           </button>
@@ -228,9 +246,9 @@ export default function InventoryScreen({
             type="button"
             className="pip-btn is-primary"
             onClick={handleSellSelected}
-            disabled={!selectedIndices.length}
+            disabled={!sellableSelectedIndices.length}
           >
-            Sell ({selectedIndices.length})
+            Sell ({sellableSelectedIndices.length})
           </button>
         </div>
 
@@ -249,31 +267,35 @@ export default function InventoryScreen({
         </div>
 
         <div className="pip-stack">
-          {filteredItemsWithIndex.map(({ item, originalIndex }) => (
-            <div
-              key={`${item.name}-${originalIndex}`}
-              className="pip-inventory-select-row"
-            >
-              <label className="pip-checkbox">
-                <input
-                  type="checkbox"
-                  checked={selectedIndices.includes(originalIndex)}
-                  onChange={() => toggleSelected(originalIndex)}
-                />
-                <span className="pip-checkbox-box" />
-              </label>
+          {filteredItemsWithIndex.map(({ item, originalIndex }) => {
+            const isProtected = isProtectedInventoryItem(item);
+            return (
+              <div
+                key={`${item.name}-${originalIndex}`}
+                className="pip-inventory-select-row"
+              >
+                <label className="pip-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!isProtected && selectedIndices.includes(originalIndex)}
+                    disabled={isProtected}
+                    onChange={() => toggleSelected(originalIndex)}
+                  />
+                  <span className="pip-checkbox-box" />
+                </label>
 
-              <div className="pip-inventory-card-wrap">
-                <InventoryCard
-                  item={item}
-                  index={originalIndex}
-                  onEdit={onEdit}
-                  onCopy={onCopy}
-                  onRemove={onRemove}
-                />
+                <div className="pip-inventory-card-wrap">
+                  <InventoryCard
+                    item={item}
+                    index={originalIndex}
+                    onEdit={onEdit}
+                    onCopy={onCopy}
+                    onRemove={onRemove}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
