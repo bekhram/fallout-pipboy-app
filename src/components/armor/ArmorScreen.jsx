@@ -168,6 +168,25 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     [armor?._power?.loadout]
   );
 
+  const powerArmorMaximums = useMemo(() => {
+    const loadout = armor?._power?.loadout;
+    if (!loadout || !powerArmorStats) return null;
+
+    const cleanSlots = Object.fromEntries(
+      Object.entries(loadout.slots || {}).map(([part, slot]) => {
+        const clean = { ...(slot || {}) };
+        delete clean.currentHp;
+        delete clean.currentPhysical;
+        delete clean.currentEnergy;
+        delete clean.currentRadiation;
+        delete clean.currentPoison;
+        return [part, clean];
+      })
+    );
+
+    return calculatePowerArmorLocations({ ...loadout, slots: cleanSlots });
+  }, [armor?._power?.loadout, powerArmorStats]);
+
   const normalMaximums = useMemo(() => {
     const result = {};
     ARMOR_PARTS.forEach((part) => {
@@ -220,18 +239,23 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   };
 
   const getConditionStatus = (part) => {
-    if (powerArmorStats) return null;
-    const maximum = normalMaximums[part] || {};
+    const maximum = (powerArmorStats ? powerArmorMaximums : normalMaximums)?.[part] || {};
     const current = calculated[part] || {};
-    const hasArmor = RESISTANCE_FIELDS.some((field) => Number(maximum[field.key] || 0) > 0);
+    const hasArmor = FIELDS.some((field) => Number(maximum[field.key] || 0) > 0);
     if (!hasArmor) return null;
-    const isBroken = RESISTANCE_FIELDS.every((field) => Number(current[field.key] || 0) === 0);
+
+    const maximumHp = Number(maximum.hp || 0);
+    const isBroken = maximumHp > 0
+      ? Number(current.hp || 0) <= 0
+      : RESISTANCE_FIELDS.every((field) => Number(current[field.key] || 0) === 0);
     if (isBroken) return "broken";
-    const isDamaged = RESISTANCE_FIELDS.some(
+
+    const isDamaged = FIELDS.some(
       (field) => Number(current[field.key] || 0) < Number(maximum[field.key] || 0)
     );
     if (isDamaged) return "damaged";
-    const isImproved = RESISTANCE_FIELDS.some(
+
+    const isImproved = FIELDS.some(
       (field) => Number(current[field.key] || 0) > Number(maximum[field.key] || 0)
     );
     return isImproved ? "improved" : "healthy";
