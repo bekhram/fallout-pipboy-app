@@ -9,7 +9,8 @@ import "./crafting.css";
 
 const TEXT = {
   en: {
-    title: "CRAFTING", subtitle: "WORKBENCH // CORE RULEBOOK RECIPES", weapons: "WEAPONS", armor: "ARMOR", items: "OTHER ITEMS",
+    title: "CRAFTING", subtitle: "WORKBENCH // CORE RULEBOOK RECIPES",
+    weapons: "WEAPONS", armor: "ARMOR", mods: "MODS", explosives: "EXPLOSIVES", items: "OTHER",
     search: "Search recipes, mods, workbenches...", skill: "SKILL", complexity: "COMPLEXITY", difficulty: "DIFFICULTY", materials: "MATERIALS",
     requirements: "PERKS", rarity: "RARITY", craft: "CRAFT", recipeFound: "RECIPE FOUND", forgetRecipe: "REMOVE RECIPE", unknownRare: "RARE RECIPE NOT LEARNED",
     inventory: "INVENTORY ITEMS", source: "SOURCE", page: "p.", workbench: "WORKBENCH", benchReady: "ACCESS", benchMissing: "NO ACCESS",
@@ -18,9 +19,11 @@ const TEXT = {
     complicationLoss: "Complications may waste ingredients; no amount is auto-invented.", missingMaterials: "Missing materials", missingPerks: "Missing required perk rank",
     needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
     common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.", ready: "READY", locked: "LOCKED",
+    noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",
   },
   ru: {
-    title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ CORE RULEBOOK", weapons: "ОРУЖИЕ", armor: "БРОНЯ", items: "ДРУГИЕ ПРЕДМЕТЫ",
+    title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ CORE RULEBOOK",
+    weapons: "ОРУЖИЕ", armor: "БРОНЯ", mods: "МОДЫ", explosives: "ВЗРЫВЧАТКА", items: "ДРУГОЕ",
     search: "Поиск рецептов, модов, верстаков...", skill: "НАВЫК", complexity: "СЛОЖНОСТЬ", difficulty: "ТРУДНОСТЬ", materials: "МАТЕРИАЛЫ",
     requirements: "ПЕРКИ", rarity: "РЕДКОСТЬ", craft: "СОЗДАТЬ", recipeFound: "РЕЦЕПТ НАЙДЕН", forgetRecipe: "УБРАТЬ РЕЦЕПТ", unknownRare: "РЕДКИЙ РЕЦЕПТ НЕ ИЗУЧЕН",
     inventory: "ПРЕДМЕТОВ В ИНВЕНТАРЕ", source: "ИСТОЧНИК", page: "стр.", workbench: "ВЕРСТАК", benchReady: "ДОСТУП ЕСТЬ", benchMissing: "НЕТ ДОСТУПА",
@@ -29,9 +32,11 @@ const TEXT = {
     complicationLoss: "Осложнения могут испортить материалы; приложение не выдумывает их количество.", missingMaterials: "Не хватает материалов", missingPerks: "Не хватает ранга перка",
     needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
     common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
+    noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",
   },
   uk: {
-    title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ CORE RULEBOOK", weapons: "ЗБРОЯ", armor: "БРОНЯ", items: "ІНШІ ПРЕДМЕТИ",
+    title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ CORE RULEBOOK",
+    weapons: "ЗБРОЯ", armor: "БРОНЯ", mods: "МОДИ", explosives: "ВИБУХІВКА", items: "ІНШЕ",
     search: "Пошук рецептів, модів, верстатів...", skill: "НАВИЧКА", complexity: "СКЛАДНІСТЬ", difficulty: "ТРУДНІСТЬ", materials: "МАТЕРІАЛИ",
     requirements: "ПЕРКИ", rarity: "РІДКІСТЬ", craft: "СТВОРИТИ", recipeFound: "РЕЦЕПТ ЗНАЙДЕНО", forgetRecipe: "ПРИБРАТИ РЕЦЕПТ", unknownRare: "РІДКІСНИЙ РЕЦЕПТ НЕ ВИВЧЕНО",
     inventory: "ПРЕДМЕТІВ В ІНВЕНТАРІ", source: "ДЖЕРЕЛО", page: "стор.", workbench: "ВЕРСТАТ", benchReady: "ДОСТУП Є", benchMissing: "НЕМАЄ ДОСТУПУ",
@@ -40,9 +45,11 @@ const TEXT = {
     complicationLoss: "Ускладнення можуть зіпсувати матеріали; застосунок не вигадує їх кількість.", missingMaterials: "Не вистачає матеріалів", missingPerks: "Не вистачає рангу перка",
     needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
     common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
+    noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",
   },
   pl: {
-    title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY CORE RULEBOOK", weapons: "BROŃ", armor: "PANCERZ", items: "INNE PRZEDMIOTY",
+    title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY CORE RULEBOOK",
+    weapons: "BROŃ", armor: "PANCERZ", mods: "MODY", explosives: "MATERIAŁY WYBUCHOWE", items: "INNE",
     search: "Szukaj receptur, modyfikacji, warsztatów...", skill: "UMIEJĘTNOŚĆ", complexity: "ZŁOŻONOŚĆ", difficulty: "TRUDNOŚĆ", materials: "MATERIAŁY",
     requirements: "ATUTY", rarity: "RZADKOŚĆ", craft: "WYTWÓRZ", recipeFound: "RECEPTURA ZNALEZIONA", forgetRecipe: "USUŃ RECEPTURĘ", unknownRare: "RZADKA RECEPTURA NIEPOZNANA",
     inventory: "PRZEDMIOTY W EKWIPUNKU", source: "ŹRÓDŁO", page: "s.", workbench: "WARSZTAT", benchReady: "DOSTĘP", benchMissing: "BRAK DOSTĘPU",
@@ -51,15 +58,20 @@ const TEXT = {
     complicationLoss: "Komplikacje mogą zmarnować materiały; aplikacja nie wymyśla ich liczby.", missingMaterials: "Brak materiałów", missingPerks: "Brak wymaganego poziomu atutu",
     needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
     common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.", ready: "GOTOWE", locked: "NIEDOSTĘPNE",
+    noBaseWeapons: "Core Rulebook nie zawiera receptur tworzenia podstawowej broni od zera. Receptury warsztatu broni są w sekcji MODY.",
   },
 };
 
-const CATEGORIES = ["weapons", "armor", "items"];
+const CATEGORIES = ["weapons", "armor", "mods", "explosives", "items"];
+
 const WORKBENCHES = {
   weapons: ["weapons"],
-  armor: ["armor", "power_armor"],
+  armor: ["armor", "power_armor", "robot"],
+  mods: ["weapons", "armor", "power_armor", "robot"],
+  explosives: ["chemistry"],
   items: ["chemistry", "cooking", "robot"],
 };
+
 const WORKBENCH_LABELS = {
   weapons: { en: "Weapons Workbench", ru: "Оружейный верстак", uk: "Збройовий верстат", pl: "Warsztat broni" },
   armor: { en: "Armor Workbench", ru: "Верстак брони", uk: "Верстат броні", pl: "Warsztat pancerza" },
@@ -87,11 +99,36 @@ function diceText(roll) {
   return (roll?.rolls || []).map((die) => die.value).join(", ");
 }
 
+function recipeCategory(recipe) {
+  const group = String(recipe?.group || "").toUpperCase();
+  const bench = String(recipe?.workbench || "").toLowerCase();
+
+  if (group === "EXPLOSIVES") return "explosives";
+
+  if (
+    bench === "weapons"
+    || group.includes(" MOD")
+    || group.endsWith("MODS")
+    || group === "ARMOR MODS"
+    || group === "ROBOT MODS"
+    || group === "POWER ARMOR SYSTEMS"
+    || group === "POWER ARMOR PLATING"
+  ) return "mods";
+
+  if (
+    bench === "armor"
+    || group === "POWER ARMOR UPGRADES"
+    || group === "ROBOT ARMOR"
+  ) return "armor";
+
+  return "items";
+}
+
 export default function CraftingScreen({ character = null, setCharacter = null }) {
   const { i18n } = useTranslation();
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
   const copy = TEXT[language];
-  const [category, setCategory] = useState("weapons");
+  const [category, setCategory] = useState("mods");
   const [workbench, setWorkbench] = useState("all");
   const [search, setSearch] = useState("");
   const [benchAccess, setBenchAccess] = useState({});
@@ -106,7 +143,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const visibleRecipes = useMemo(() => {
     const query = search.trim().toLowerCase();
     return CRAFTING_RECIPES.filter((recipe) => {
-      if (recipe.category !== category) return false;
+      if (recipeCategory(recipe) !== category) return false;
       if (workbench !== "all" && recipe.workbench !== workbench) return false;
       if (!query) return true;
       return [recipe.name, recipe.group, recipe.skill, recipe.perks, recipe.rarity, benchLabel(recipe.workbench, language)]
@@ -224,7 +261,11 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               role="tab"
               aria-selected={category === key}
               className={`pip-btn ${category === key ? "is-primary" : ""}`}
-              onClick={() => { setCategory(key); setWorkbench("all"); }}
+              onClick={() => {
+                setCategory(key);
+                setWorkbench("all");
+                setExpandedRecipeId(null);
+              }}
             >
               {copy[key]}
             </button>
@@ -284,7 +325,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);
               const expanded = expandedRecipeId === recipe.id;
               return (
-                <article key={recipe.id} className={`pip-panel crafting-recipe-card ${expanded ? "is-expanded" : ""}`}> 
+                <article key={recipe.id} className={`pip-panel crafting-recipe-card ${expanded ? "is-expanded" : ""}`}>
                   <button
                     type="button"
                     className="crafting-recipe-card__heading"
@@ -310,72 +351,76 @@ export default function CraftingScreen({ character = null, setCharacter = null }
 
                   {expanded ? (
                     <div className="crafting-recipe-card__details">
-                  <div className="crafting-recipe-card__stats">
-                    <div><span>{copy.workbench}</span><strong>{benchLabel(recipe.workbench, language)}</strong></div>
-                    <div><span>{copy.skill}</span><strong>{recipe.skill} {state.skill.effectiveRank}</strong></div>
-                    <div><span>{copy.target}</span><strong>{state.skill.targetNumber}</strong></div>
-                    <div><span>{copy.complexity}</span><strong>{recipe.complexity}</strong></div>
-                    <div><span>{copy.difficulty}</span><strong>D{state.difficulty}</strong></div>
-                    <div><span>{copy.source}</span><strong>{copy.page}{recipe.sourcePage}</strong></div>
-                  </div>
-
-                  <div className="craft-section">
-                    <strong>[ {copy.materials} ]</strong>
-                    <div className="craft-material-list">
-                      {state.materialState.map((entry) => (
-                        <span key={entry.name} className={entry.enough ? "is-ok" : "is-missing"}>
-                          {entry.name}: {entry.available}/{entry.required}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="craft-section">
-                    <strong>[ {copy.requirements} ]</strong>
-                    {state.perkState.length ? (
-                      <div className="craft-material-list">
-                        {state.perkState.map((perk) => (
-                          <span key={`${perk.id}-${perk.rank}`} className={perk.met ? "is-ok" : "is-missing"}>
-                            {perk.label} {perk.rank}: {perk.currentRank}/{perk.rank}
-                          </span>
-                        ))}
+                      <div className="crafting-recipe-card__stats">
+                        <div><span>{copy.workbench}</span><strong>{benchLabel(recipe.workbench, language)}</strong></div>
+                        <div><span>{copy.skill}</span><strong>{recipe.skill} {state.skill.effectiveRank}</strong></div>
+                        <div><span>{copy.target}</span><strong>{state.skill.targetNumber}</strong></div>
+                        <div><span>{copy.complexity}</span><strong>{recipe.complexity}</strong></div>
+                        <div><span>{copy.difficulty}</span><strong>D{state.difficulty}</strong></div>
+                        <div><span>{copy.source}</span><strong>{copy.page}{recipe.sourcePage}</strong></div>
                       </div>
-                    ) : <span>—</span>}
-                  </div>
 
-                  {String(recipe.rarity).toLowerCase() === "rare" ? (
-                    <button
-                      type="button"
-                      className={`pip-btn ${state.knownRare ? "is-primary" : ""}`}
-                      onClick={() => toggleKnownRecipe(recipe)}
-                      disabled={!setCharacter}
-                    >
-                      {state.knownRare ? copy.forgetRecipe : copy.recipeFound}
-                    </button>
-                  ) : null}
+                      <div className="craft-section">
+                        <strong>[ {copy.materials} ]</strong>
+                        <div className="craft-material-list">
+                          {state.materialState.map((entry) => (
+                            <span key={entry.name} className={entry.enough ? "is-ok" : "is-missing"}>
+                              {entry.name}: {entry.available}/{entry.required}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
 
-                  <button
-                    type="button"
-                    className="pip-btn is-primary crafting-recipe-card__craft"
-                    onClick={() => handleCraft(recipe)}
-                    disabled={!canCraft}
-                  >
-                    {copy.craft} // {copy.target} {state.skill.targetNumber} // D{state.difficulty}
-                  </button>
+                      <div className="craft-section">
+                        <strong>[ {copy.requirements} ]</strong>
+                        {state.perkState.length ? (
+                          <div className="craft-material-list">
+                            {state.perkState.map((perk) => (
+                              <span key={`${perk.id}-${perk.rank}`} className={perk.met ? "is-ok" : "is-missing"}>
+                                {perk.label} {perk.rank}: {perk.currentRank}/{perk.rank}
+                              </span>
+                            ))}
+                          </div>
+                        ) : <span>—</span>}
+                      </div>
 
-                  {!benchReady ? <div className="craft-warning">{copy.needBench}</div> : null}
-                  {!state.hasMaterials ? <div className="craft-warning">{copy.missingMaterials}</div> : null}
-                  {!state.hasPerks ? <div className="craft-warning">{copy.missingPerks}</div> : null}
-                  {!state.knownRare ? <div className="craft-warning">{copy.unknownRare}</div> : null}
+                      {String(recipe.rarity).toLowerCase() === "rare" ? (
+                        <button
+                          type="button"
+                          className={`pip-btn ${state.knownRare ? "is-primary" : ""}`}
+                          onClick={() => toggleKnownRecipe(recipe)}
+                          disabled={!setCharacter}
+                        >
+                          {state.knownRare ? copy.forgetRecipe : copy.recipeFound}
+                        </button>
+                      ) : null}
 
-                  {renderResult(recipe)}
+                      <button
+                        type="button"
+                        className="pip-btn is-primary crafting-recipe-card__craft"
+                        onClick={() => handleCraft(recipe)}
+                        disabled={!canCraft}
+                      >
+                        {copy.craft} // {copy.target} {state.skill.targetNumber} // D{state.difficulty}
+                      </button>
+
+                      {!benchReady ? <div className="craft-warning">{copy.needBench}</div> : null}
+                      {!state.hasMaterials ? <div className="craft-warning">{copy.missingMaterials}</div> : null}
+                      {!state.hasPerks ? <div className="craft-warning">{copy.missingPerks}</div> : null}
+                      {!state.knownRare ? <div className="craft-warning">{copy.unknownRare}</div> : null}
+
+                      {renderResult(recipe)}
                     </div>
                   ) : null}
                 </article>
               );
             })}
           </div>
-        ) : <div className="crafting-screen__empty">{copy.noRecipes}</div>}
+        ) : (
+          <div className="crafting-screen__empty">
+            {category === "weapons" ? copy.noBaseWeapons : copy.noRecipes}
+          </div>
+        )}
       </section>
     </div>
   );
