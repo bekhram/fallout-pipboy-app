@@ -110,3 +110,5 @@ if anchor not in app:
     raise SystemExit("App crafting-material migration anchor not found")
 app = app.replace(anchor, replacement, 1)
 app_path.write_text(app, encoding="utf-8")
+
+# trigger
