@@ -12,10 +12,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Patch crafting filters
+      - name: Remove duplicate helper
         run: |
-          echo 'CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aApwPVBhdGgoInNyYy9jb21wb25lbnRzL2NyYWZ0aW5nL0NyYWZ0aW5nU2NyZWVuLmpzeCIpCnM9cC5yZWFkX3RleHQoKQpzPXMucmVwbGFjZSgiPGJ1dHR0b24iLCAiPGJ1dHRvbiIpCmE9cy5pbmRleCgiZnVuY3Rpb24gcmVjaXBlQ2F0ZWdvcnkocmVjaXBlKSB7IikKYj1zLmluZGV4KCJcblxuZXhwb3J0IGRlZmF1bHQgZnVuY3Rpb24gQ3JhZnRpbmdTY3JlZW4iLGEpCmNsYXNzaWZpZXI9JycnZnVuY3Rpb24gcmVjaXBlTW9kVHlwZShyZWNpcGUpIHsKICBjb25zdCBiZW5jaCA9IFN0cmluZyhyZWNpcGU/LndvcmtiZW5jaCB8fCAiIikudG9Mb3dlckNhc2UoKTsKICBpZiAoWyJ3ZWFwb25zIiwgImFybW9yIiwgInBvd2VyX2FybW9yIiwgInJvYm90Il0uaW5jbHVkZXMoYmVuY2gpKSByZXR1cm4gYmVuY2g7CiAgcmV0dXJuIG51bGw7Cn0KCmZ1bmN0aW9uIHJlY2lwZUNhdGVnb3J5KHJlY2lwZSkgewogIGNvbnN0IGdyb3VwID0gU3RyaW5nKHJlY2lwZT8uZ3JvdXAgfHwgIiIpLnRvVXBwZXJDYXNlKCk7CgogIGlmIChncm91cCA9PT0gIkVYUExPU0lWRVMiKSByZXR1cm4gImV4cGxvc2l2ZXMiOwogIGlmIChncm91cCA9PT0gIkFNTVVOSVRJT04iKSByZXR1cm4gImFtbW8iOwoKICBpZiAoCiAgICBncm91cC5pbmNsdWRlcygiIE1PRCIpCiAgICB8fCBncm91cC5lbmRzV2l0aCgiTU9EUyIpCiAgICB8fCBncm91cC5pbmNsdWRlcygiVVBHUkFERSIpCiAgICB8fCBncm91cC5pbmNsdWRlcygiUExBVElORyIpCiAgICB8fCBncm91cC5pbmNsdWRlcygiU1lTVEVNIikKICAgIHx8IGdyb3VwLmluY2x1ZGVzKCJNQVRFUklBTCIpCiAgICB8fCBncm91cC5pbmNsdWRlcygiTElOSU5HIikKICAgIHx8IGdyb3VwID09PSAiQkFMTElTVElDIFdFQVZFIgogICAgfHwgZ3JvdXAgPT09ICJST0JPVCBBUk1PUiIKICApIHJldHVybiAibW9kcyI7CgogIGlmIChyZWNpcGU/LmNhdGVnb3J5ID09PSAid2VhcG9ucyIpIHJldHVybiAid2VhcG9ucyI7CiAgaWYgKHJlY2lwZT8uY2F0ZWdvcnkgPT09ICJhcm1vciIpIHJldHVybiAiYXJtb3IiOwogIHJldHVybiAiaXRlbXMiOwp9JycnCnM9c1s6YV0rY2xhc3NpZmllcitzW2I6XQpwLndyaXRlX3RleHQocykK' | base64 -d > /tmp/patch.py
-          python /tmp/patch.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("src/components/crafting/CraftingScreen.jsx")
+          text = path.read_text()
+          block = '''function recipeModType(recipe) {
+            const bench = String(recipe?.workbench || "").toLowerCase();
+            if (["weapons", "armor", "power_armor", "robot"].includes(bench)) return bench;
+            return null;
+          }
+
+          '''
+          # The source block has no leading indentation; normalize the string before matching.
+          block = "\n".join(line[10:] if line.startswith("          ") else line for line in block.splitlines()) + "\n"
+          while text.count(block) > 1:
+              text = text.replace(block + block, block, 1)
+          path.write_text(text)
+          PY
       - name: Commit patch
         run: |
           if git diff --quiet; then
@@ -25,5 +40,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/components/crafting/CraftingScreen.jsx
-          git commit -m "fix: finalize crafting recipe filters"
+          git commit -m "fix: remove duplicate crafting filter helper"
           git push origin HEAD:main
