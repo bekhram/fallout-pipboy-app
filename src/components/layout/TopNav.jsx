@@ -15,6 +15,12 @@ const EXTRA_TAB_LABELS = {
     uk: "БЕСТІАРІЙ",
     pl: "BESTIARIUSZ",
   },
+  crafting: {
+    en: "CRAFTING",
+    ru: "КРАФТ",
+    uk: "КРАФТ",
+    pl: "RZEMIOSŁO",
+  },
 };
 
 export const PIPBOY_TABS = [
@@ -23,6 +29,7 @@ export const PIPBOY_TABS = [
   { key: "companion" },
   { key: "weapons", labelKey: "tabs.weapons" },
   { key: "inventory", labelKey: "tabs.inventory" },
+  { key: "crafting" },
   { key: "armor", labelKey: "tabs.armor" },
   { key: "perks", labelKey: "tabs.perks" },
   { key: "bestiary" },
