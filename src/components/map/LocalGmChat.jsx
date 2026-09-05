@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
+import { getLocationWikiMeta } from "../../data/map/locationLore.js";
 import { rollFalloutD20 } from "../../utils/dice.js";
 import { playSound } from "../../utils/soundManager.js";
 import "./localGmChat.css";
@@ -13,6 +14,27 @@ const CHECK_TEXT = {
   uk: { check: "ПЕРЕВІРКА НАВИЧКИ", tap: "НАТИСНІТЬ, ЩОБ КИНУТИ", rolling: "КИДОК...", target: "ЦІЛЬ", difficulty: "СКЛАДНІСТЬ", successes: "успіхів", complications: "ускладнень", success: "УСПІХ", failure: "НЕВДАЧА" },
   pl: { check: "TEST UMIEJĘTNOŚCI", tap: "DOTKNIJ, ABY RZUCIĆ", rolling: "RZUT...", target: "CEL", difficulty: "TRUDNOŚĆ", successes: "sukcesy", complications: "komplikacje", success: "SUKCES", failure: "PORAŻKA" },
 };
+
+const LORE_TEXT = {
+  en: {
+    label: (name) => `What is known about ${name}?`,
+    question: (name) => `What is known about ${name} in Fallout lore?`,
+  },
+  ru: {
+    label: (name) => `Что известно о ${name}?`,
+    question: (name) => `Что известно о ${name} по лору Fallout?`,
+  },
+  uk: {
+    label: (name) => `Що відомо про ${name}?`,
+    question: (name) => `Що відомо про ${name} за лором Fallout?`,
+  },
+  pl: {
+    label: (name) => `Co wiadomo o ${name}?`,
+    question: (name) => `Co wiadomo o ${name} w lore Fallout?`,
+  },
+};
+
+const LORE_REFERENCE_CACHE = new Map();
 
 const LEGACY_CHAT_STORAGE_KEYS = [
   "fallout_pipboy_local_gm_sessions_v2",
@@ -348,6 +370,11 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     [mapData, playerPosition, selectedCell, rawCharacter, localizedLocations, region]
   );
   const isPersistentLocation = world.isStaticLocation === true;
+  const loreTarget = useMemo(() => {
+    if (world.currentLocation?.id) return world.currentLocation;
+    if (world.trackedObjective?.id) return world.trackedObjective;
+    return null;
+  }, [world]);
   const currentSessionKey = useMemo(() => getSessionKey(world), [world]);
   const currentSectorKey = useMemo(() => getSectorKey(world), [world]);
   const initialSession = useMemo(
@@ -357,6 +384,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
 
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isLoreLoading, setIsLoreLoading] = useState(false);
   const [isCheckRolling, setIsCheckRolling] = useState(false);
   const [error, setError] = useState("");
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -436,13 +464,13 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     }
   }
 
-  async function requestGm(message, history = []) {
+  async function requestGm(message, history = [], worldOverride = world) {
     const response = await fetch("/api/auto-gm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         character,
-        world,
+        world: worldOverride,
         language,
         locationState: buildLocationState(events, isPersistentLocation),
         sessionKey: currentSessionKey,
@@ -508,7 +536,12 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     setIsSending(true);
 
     try {
-      const result = await requestGm(cleanText, previousMessages);
+      const requestText = String(options.requestText || cleanText).trim() || cleanText;
+      const result = await requestGm(
+        requestText,
+        previousMessages,
+        options.worldOverride || world
+      );
       setPendingCheck(result.check);
       persist(
         [...nextMessages, { role: "gm", text: result.text, at: Date.now() }],
@@ -519,6 +552,63 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
       setError(requestError?.message || tx("gmError"));
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function askLore() {
+    if (!loreTarget || isSending || isLoreLoading || isArchiveView) return;
+
+    const copy = LORE_TEXT[language] || LORE_TEXT.en;
+    const targetName = loreTarget.name || loreTarget.id || tx("unknownLocation");
+    const question = copy.question(targetName);
+    const meta = getLocationWikiMeta(loreTarget);
+    let reference = null;
+
+    setIsLoreLoading(true);
+    try {
+      if (meta) {
+        const cacheKey = `${language}:${meta.id}`;
+        reference = LORE_REFERENCE_CACHE.get(cacheKey) || null;
+        if (!reference) {
+          try {
+            const response = await fetch("/api/location-lore", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                title: meta.wikiTitle,
+                locationName: targetName,
+                language,
+                coreLore: meta.coreLore || "",
+              }),
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (response.ok && payload && typeof payload === "object") {
+              reference = payload;
+              LORE_REFERENCE_CACHE.set(cacheKey, payload);
+            }
+          } catch {
+            // Core lore injected by the GM bridge remains available as a fallback.
+          }
+        }
+      }
+
+      const worldOverride = {
+        ...world,
+        loreQuestion: {
+          targetLocation: loreTarget,
+          reference: reference || (meta ? {
+            title: targetName,
+            summary: meta.coreLore || null,
+            sourceLabel: "Fallout Wiki",
+          } : null),
+        },
+      };
+      const requestText = `${question}
+
+AUTO GM LORE MODE: The player is asking for setting/history information about the named location, not a quest walkthrough. Use SESSION CONTEXT.world.loreQuestion.reference as the primary reference when available, together with the supplied location lore. Answer conversationally in the selected app language. Share useful Fallout setting and historical context, but avoid future quest outcomes and hidden spoilers. Do not mention the external Wiki or source unless the player asks.`;
+      await sendText(question, { requestText, worldOverride });
+    } finally {
+      setIsLoreLoading(false);
     }
   }
 
@@ -680,6 +770,21 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
                 {isCheckRolling ? (CHECK_TEXT[language] || CHECK_TEXT.en).rolling : (CHECK_TEXT[language] || CHECK_TEXT.en).tap}
               </span>
             </button>
+          ) : null}
+          {loreTarget ? (
+            <div className="pip-local-gm__lore-row">
+              <button
+                type="button"
+                className="pip-local-gm__lore-question"
+                onClick={askLore}
+                disabled={isSending || isLoreLoading}
+              >
+                <span aria-hidden="true">?</span>
+                {(LORE_TEXT[language] || LORE_TEXT.en).label(
+                  loreTarget.name || loreTarget.id || tx("unknownLocation")
+                )}
+              </button>
+            </div>
           ) : null}
           <form className="pip-local-gm__composer" onSubmit={sendMessage}>
             <textarea

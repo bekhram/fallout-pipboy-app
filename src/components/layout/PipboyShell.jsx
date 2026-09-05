@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
-import LocationLoreDock from "../map/LocationLoreDock.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 
@@ -76,7 +75,6 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
             {activeTab === "companion" ? <CompanionPresetHub /> : children}
           </div>
         </main>
-        <LocationLoreDock active={activeTab === "map"} />
       </div>
     </div>
   );
