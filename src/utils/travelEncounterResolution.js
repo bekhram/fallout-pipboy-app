@@ -6,6 +6,7 @@ import {
   calculateFinalIncomingDamage,
   getDerivedStats,
 } from "./characterMath.js";
+import { buildBestiaryCombatForEncounter } from "./bestiaryCombatContext.js";
 
 export const PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT = "pipboy:travel-encounter-effect";
 
@@ -81,6 +82,19 @@ function resolveDamage(encounter, character, profile) {
   };
 }
 
+function resolveCombat(encounter, character) {
+  const combat = buildBestiaryCombatForEncounter(encounter, character);
+  if (!combat) return null;
+  const enemy = combat.enemies?.[0];
+  return {
+    kind: "combat",
+    combat,
+    summary: enemy
+      ? `Combat encounter: ${enemy.name}. HP ${enemy.hp.current}/${enemy.hp.max}, Defense ${enemy.defense}, Initiative ${enemy.initiative ?? "—"}. Exact attacks, DR and abilities are attached from the Core Rulebook bestiary.`
+      : "Combat encounter created from the Core Rulebook bestiary.",
+  };
+}
+
 export function resolveTravelEncounter(encounter, character) {
   if (!encounter?.id) return null;
 
@@ -89,6 +103,9 @@ export function resolveTravelEncounter(encounter, character) {
 
   const consequence = FIXED_CONSEQUENCES[encounter.id];
   if (consequence) return { ...consequence };
+
+  const combatResolution = resolveCombat(encounter, character);
+  if (combatResolution) return combatResolution;
 
   return {
     kind: "scene",
