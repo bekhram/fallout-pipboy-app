@@ -277,16 +277,32 @@ export function calculatePowerArmorLocations(loadout) {
       const currentHp =
         selected.currentHp === null || selected.currentHp === undefined
           ? stats.hp
-          : Math.max(0, Math.min(Number(selected.currentHp || 0), stats.hp));
+          : Math.max(0, Number(selected.currentHp || 0));
+      const currentPhysical =
+        selected.currentPhysical === null || selected.currentPhysical === undefined
+          ? stats.physical
+          : Math.max(0, Number(selected.currentPhysical || 0));
+      const currentEnergy =
+        selected.currentEnergy === null || selected.currentEnergy === undefined
+          ? stats.energy
+          : Math.max(0, Number(selected.currentEnergy || 0));
+      const currentRadiation =
+        selected.currentRadiation === null || selected.currentRadiation === undefined
+          ? stats.radiation
+          : Math.max(0, Number(selected.currentRadiation || 0));
+      const currentPoison =
+        selected.currentPoison === null || selected.currentPoison === undefined
+          ? 0
+          : Math.max(0, Number(selected.currentPoison || 0));
       const broken = currentHp <= 0;
 
       return [
         part,
         {
-          physical: broken ? 0 : stats.physical,
-          energy: broken ? 0 : stats.energy,
-          radiation: broken ? 0 : stats.radiation,
-          poison: 0,
+          physical: broken ? 0 : currentPhysical,
+          energy: broken ? 0 : currentEnergy,
+          radiation: broken ? 0 : currentRadiation,
+          poison: broken ? 0 : currentPoison,
           hp: currentHp,
         },
       ];

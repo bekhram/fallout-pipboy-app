@@ -191,13 +191,32 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   }, [condition, normalMaximums, powerArmorStats]);
 
   const setResistance = (part, field, rawValue) => {
-    if (powerArmorStats) return;
     const value = Math.max(0, Number.parseInt(rawValue, 10) || 0);
+
+    if (powerArmorStats) {
+      const loadout = armor?._power?.loadout || {};
+      const slots = { ...(loadout.slots || {}) };
+      const selected = { ...(slots[part] || {}) };
+      const currentKey = field === "hp"
+        ? "currentHp"
+        : "current" + field.charAt(0).toUpperCase() + field.slice(1);
+      slots[part] = { ...selected, [currentKey]: value };
+      onArmorChange("_power", "loadout", { ...loadout, slots });
+      return;
+    }
+
     const current = { ...(condition[part]?.current || {}), [field]: value };
     onArmorChange("_condition", "parts", {
       ...condition,
       [part]: { current },
     });
+  };
+
+  const hasPowerArmorPart = (part) => {
+    if (!powerArmorStats) return false;
+    const loadout = armor?._power?.loadout || {};
+    if (loadout?.slots?.[part]?.setId) return true;
+    return Boolean(loadout.setId && loadout.setId !== "none");
   };
 
   const getConditionStatus = (part) => {
@@ -306,7 +325,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
                       </span>
                     </div>
                     {FIELDS.map((field) => {
-                      const canAdjust = !powerArmorStats;
+                      const canAdjust = !powerArmorStats || hasPowerArmorPart(part);
                       const value = calculated[part]?.[field.key] ?? 0;
                       return (
                         <label key={`${part}-${field.key}`} className="pip-armor-cell">
