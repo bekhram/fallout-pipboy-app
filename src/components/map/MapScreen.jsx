@@ -7,6 +7,10 @@ import {
   PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT,
   resolveTravelEncounter,
 } from "../../utils/travelEncounterResolution.js";
+import {
+  formatEnvironmentalHazardLog,
+  processEnvironmentalExposure,
+} from "../../utils/environmentSystem.js";
 import MapGrid from "./MapGrid.jsx";
 import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
@@ -148,6 +152,24 @@ function mergeTravelLog(base, entries) {
     .filter((entry) => entry !== null && entry !== undefined && String(entry).trim())
     .map((entry) => String(entry));
   return [...cleanEntries, ...(Array.isArray(base.travelLog) ? base.travelLog : [])].slice(0, MAX_LOG_ENTRIES);
+}
+
+function addHazardExposureHours(bucket, cell, hours) {
+  const safeHours = Math.max(0, Number(hours) || 0);
+  if (!cell || safeHours <= 0) return;
+  for (const hazardId of getCellHazards(cell)) {
+    bucket[hazardId] = (Number(bucket[hazardId]) || 0) + safeHours;
+  }
+}
+
+function dispatchEnvironmentEffects(effects) {
+  if (typeof window === "undefined") return;
+  for (const effect of effects || []) {
+    if (!effect?.resolution) continue;
+    window.dispatchEvent(new CustomEvent(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, {
+      detail: { token: effect.token, resolution: effect.resolution },
+    }));
+  }
 }
 
 function modulo(value, size) {
@@ -432,10 +454,12 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     let stoppedEncounter = null;
     let reachedDestination = true;
     const detailLog = [];
+    const exposureHoursByHazard = {};
 
     for (const step of selectedRoute.cells) {
       const stepCost = getCellMoveCost(step) ?? 1;
       totalCost += stepCost;
+      addHazardExposureHours(exposureHoursByHazard, step, stepCost);
       finalPosition = { x: step.x, y: step.y };
       nextDiscoveredKeys = revealAround(mapData, finalPosition, 1, nextDiscoveredKeys);
       detailLog.push(
@@ -461,7 +485,15 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     const summary = stoppedEncounter && !reachedDestination
       ? tx("routeInterrupted")
       : tx("routeComplete", { steps: selectedRoute.cells.length, hours: totalCost });
-    const routeLog = [summary, ...detailLog.reverse()];
+    const environmentExposure = processEnvironmentalExposure({
+      previousRemainders: safeMapState.hazardExposureRemainders || {},
+      exposureHoursByHazard,
+      character,
+    });
+    const environmentLog = environmentExposure.effects
+      .map((effect) => formatEnvironmentalHazardLog(effect, language))
+      .filter(Boolean);
+    const routeLog = [summary, ...environmentLog, ...detailLog.reverse()];
     const encounterResolution = stoppedEncounter
       ? resolveTravelEncounter(stoppedEncounter, character)
       : null;
@@ -488,6 +520,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         worldTotalHours: (base.worldTotalHours || 0) + totalCost,
         discoveredKeys: nextDiscoveredKeys,
         travelLog: mergeTravelLog(base, routeLog),
+        hazardExposureRemainders: environmentExposure.remainders,
         pendingTravelEncounter: encounterContext,
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: mapData },
       };
@@ -503,6 +536,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         detail: { token: encounterContext.token, resolution: encounterContext.resolution },
       }));
     }
+    dispatchEnvironmentEffects(environmentExposure.effects);
     if (stoppedEncounter) setMapMode("local");
     if (reachedDestination && !stoppedEncounter) setSelectedCell(null);
   }
@@ -532,10 +566,12 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     let stoppedEncounter = null;
     let previousSectorKey = sectorKey;
     const detailLog = [tx("worldRouteStart", { name: targetName, blocks: route.steps.length })];
+    const exposureHoursByHazard = {};
 
     for (const step of route.steps) {
       const stepCost = getCellMoveCost(step.cell) ?? 1;
       totalCost += stepCost;
+      addHazardExposureHours(exposureHoursByHazard, step.cell, stepCost);
       finalStep = step;
 
       if (step.key !== previousSectorKey) {
@@ -566,7 +602,15 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       : stoppedEncounter
         ? tx("worldRouteInterrupted")
         : tx("worldRouteStopped");
-    const routeLog = [summary, ...detailLog.reverse()];
+    const environmentExposure = processEnvironmentalExposure({
+      previousRemainders: safeMapState.hazardExposureRemainders || {},
+      exposureHoursByHazard,
+      character,
+    });
+    const environmentLog = environmentExposure.effects
+      .map((effect) => formatEnvironmentalHazardLog(effect, language))
+      .filter(Boolean);
+    const routeLog = [summary, ...environmentLog, ...detailLog.reverse()];
     const encounterResolution = stoppedEncounter
       ? resolveTravelEncounter(stoppedEncounter, character)
       : null;
@@ -601,6 +645,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         discoveredKeys: finalDiscovery,
         sectorCache: { ...(base.sectorCache || {}), ...route.cache },
         travelLog: mergeTravelLog(base, routeLog),
+        hazardExposureRemainders: environmentExposure.remainders,
         pendingTravelEncounter: encounterContext,
       };
     });
@@ -615,25 +660,39 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         detail: { token: encounterContext.token, resolution: encounterContext.resolution },
       }));
     }
+    dispatchEnvironmentEffects(environmentExposure.effects);
     if (stoppedEncounter) setMapMode("local");
     setSelectedCell(null);
   }
 
   function handleRegenerateMap() {
     const nextMap = createRandomMap(mapData.rows, mapData.cols, worldOffset);
+    const exposureHoursByHazard = {};
+    addHazardExposureHours(exposureHoursByHazard, currentCell, 8);
+    const environmentExposure = processEnvironmentalExposure({
+      previousRemainders: safeMapState.hazardExposureRemainders || {},
+      exposureHoursByHazard,
+      character,
+    });
+    const environmentLog = environmentExposure.effects
+      .map((effect) => formatEnvironmentalHazardLog(effect, language))
+      .filter(Boolean);
+
     onMapChange((prevMap) => {
       const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
       return {
         ...base,
         worldTotalHours: (base.worldTotalHours || 0) + 8,
         discoveredKeys: revealAround(nextMap, playerPosition, 1, []),
-        travelLog: mergeTravelLog(base, [t("mapPanel.campRest")]),
+        travelLog: mergeTravelLog(base, [t("mapPanel.campRest"), ...environmentLog]),
+        hazardExposureRemainders: environmentExposure.remainders,
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: nextMap },
       };
     });
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent(PIPBOY_CAMP_REST_EVENT));
     }
+    dispatchEnvironmentEffects(environmentExposure.effects);
     setSelectedCell(null);
   }
 

@@ -4,6 +4,8 @@ import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
 import { getLocationWikiMeta } from "../../data/map/locationLore.js";
 import { rollFalloutD20 } from "../../utils/dice.js";
 import { playSound } from "../../utils/soundManager.js";
+import { getCellHazards } from "../../utils/mapMath.js";
+import { getEnvironmentSnapshot } from "../../utils/environmentSystem.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
@@ -212,7 +214,7 @@ function compactLocation(location) {
   };
 }
 
-function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData, locations = [], region = null) {
+function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData, locations = [], region = null, character = null) {
   const currentCell = mapData?.cells?.find(
     (cell) => cell.x === playerPosition?.x && cell.y === playerPosition?.y
   );
@@ -236,6 +238,13 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData, 
         (location) => location.worldX === selectedWorldX && location.worldY === selectedWorldY
       )
     : null;
+  const currentHazards = getCellHazards(currentCell);
+  const environment = getEnvironmentSnapshot({
+    totalHours: Number(savedMapData?.worldTotalHours || 0),
+    regionId: region?.id || "commonwealth",
+    hazards: currentHazards,
+    character,
+  });
 
   return {
     region: region ? { id: region.id || null, name: region.name || null, game: region.game || null } : null,
@@ -245,6 +254,8 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData, 
     localPosition: playerPosition || null,
     worldPosition: { x: worldX, y: worldY },
     currentTerrain: currentCell?.terrain || null,
+    currentHazards,
+    environment,
     currentLocation: compactLocation(staticLocation) || currentCell?.poi || null,
     isStaticLocation: Boolean(staticLocation),
     trackedObjective: compactLocation(trackedLocation),
@@ -398,7 +409,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   );
   const world = useMemo(
     () => ({
-      ...buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData, localizedLocations, region),
+      ...buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData, localizedLocations, region, rawCharacter),
       travelEncounter: travelEncounter || rawCharacter?.mapData?.pendingTravelEncounter || null,
     }),
     [mapData, playerPosition, selectedCell, rawCharacter, localizedLocations, region, travelEncounter]
