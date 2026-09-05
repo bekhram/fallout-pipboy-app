@@ -1,0 +1,129 @@
+.pip-active-combat {
+  margin-top: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.pip-active-combat__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: .78rem;
+}
+
+.pip-active-combat__head > span {
+  opacity: .7;
+}
+
+.pip-active-combat__list {
+  display: grid;
+  gap: 7px;
+}
+
+.pip-active-combat__enemy {
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  padding: 7px;
+  display: grid;
+  gap: 7px;
+}
+
+.pip-active-combat__enemy.is-defeated {
+  opacity: .58;
+}
+
+.pip-active-combat__summary {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  width: 100%;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(120px, 1.5fr) repeat(4, auto);
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pip-active-combat__summary > span:not(.pip-active-combat__name) {
+  font-size: .68rem;
+  opacity: .75;
+  white-space: nowrap;
+}
+
+.pip-active-combat__name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pip-active-combat__hp-controls {
+  display: grid;
+  grid-template-columns: auto auto minmax(70px, 1fr) auto;
+  gap: 5px;
+  align-items: center;
+}
+
+.pip-active-combat__hp-controls button {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  min-height: 30px;
+  padding: 3px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pip-active-combat__hp-controls button:disabled {
+  opacity: .35;
+}
+
+.pip-active-combat__bar {
+  height: 9px;
+  border: 1px solid currentColor;
+  overflow: hidden;
+}
+
+.pip-active-combat__bar > span {
+  display: block;
+  height: 100%;
+  background: currentColor;
+}
+
+.pip-active-combat__details {
+  display: grid;
+  gap: 6px;
+  font-size: .7rem;
+  line-height: 1.35;
+}
+
+.pip-active-combat__details pre {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  font: inherit;
+  opacity: .85;
+}
+
+.pip-active-combat__end {
+  justify-self: end;
+}
+
+@media (max-width: 680px) {
+  .pip-active-combat__summary {
+    grid-template-columns: minmax(0, 1fr) repeat(2, auto);
+  }
+
+  .pip-active-combat__summary > span:nth-child(4),
+  .pip-active-combat__summary > span:nth-child(5) {
+    display: none;
+  }
+
+  .pip-active-combat__end {
+    width: 100%;
+  }
+}
