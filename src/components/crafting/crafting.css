@@ -1,131 +1,393 @@
 .crafting-screen {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .crafting-screen__header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
-  padding: 14px;
+  padding: 12px 14px;
 }
 
-.crafting-screen__header h2 { margin: 0 0 4px; }
-.crafting-screen__header span { opacity: 0.72; font-size: 0.8rem; letter-spacing: 0.08em; }
+.crafting-screen__header h2 {
+  margin: 0 0 2px;
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+}
 
-.crafting-screen__inventory-count { display: grid; justify-items: end; gap: 2px; }
-.crafting-screen__inventory-count strong { font-size: 1.35rem; }
+.crafting-screen__header span {
+  opacity: 0.62;
+  font-size: 0.7rem;
+  letter-spacing: 0.09em;
+}
 
-.crafting-screen__workbench { padding: 14px; }
-.crafting-screen__tabs,
-.crafting-screen__bench-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.crafting-screen__bench-row .pip-btn { font-size: 0.76rem; }
+.crafting-screen__inventory-count {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.crafting-screen__inventory-count strong {
+  font-size: 1.15rem;
+}
+
+.crafting-screen__workbench {
+  padding: 10px;
+}
+
+.crafting-screen__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.crafting-screen__tabs .pip-btn {
+  min-height: 36px;
+  padding-inline: 8px;
+}
+
+.crafting-screen__bench-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 1px 0 7px;
+  margin-bottom: 4px;
+  scrollbar-width: thin;
+}
+
+.crafting-screen__bench-row .pip-btn {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 5px 8px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
 
 .crafting-screen__bench-access {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
-  margin: 0 0 12px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .craft-bench-toggle {
-  display: grid;
-  gap: 3px;
-  padding: 9px 10px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 5px 8px;
   color: inherit;
-  text-align: left;
-  border: 1px solid rgba(20, 255, 0, 0.28);
-  background: rgba(0, 18, 0, 0.35);
+  border: 1px solid rgba(20, 255, 0, 0.22);
+  background: rgba(0, 18, 0, 0.26);
   font: inherit;
   cursor: pointer;
 }
 
-.craft-bench-toggle span { font-size: 0.76rem; opacity: 0.76; }
-.craft-bench-toggle strong { font-size: 0.72rem; letter-spacing: 0.08em; opacity: 0.7; }
-.craft-bench-toggle.is-ready { border-color: rgba(20, 255, 0, 0.8); box-shadow: inset 0 0 12px rgba(20, 255, 0, 0.08); }
-.craft-bench-toggle.is-ready strong { opacity: 1; }
+.craft-bench-toggle::before {
+  content: "○";
+  opacity: 0.55;
+}
 
-.crafting-screen__search { width: 100%; margin-bottom: 8px; }
-.crafting-screen__count { margin: 0 0 12px; opacity: 0.65; font-size: 0.76rem; }
-.crafting-screen__recipes { display: grid; gap: 10px; }
+.craft-bench-toggle.is-ready::before {
+  content: "●";
+  opacity: 1;
+}
 
-.crafting-recipe-card { display: grid; gap: 10px; padding: 12px; }
-.crafting-recipe-card__heading { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-.crafting-recipe-card__heading h3 { margin: 2px 0 0; font-size: 1rem; }
-.crafting-recipe-card__group { display: block; font-size: 0.68rem; letter-spacing: 0.08em; opacity: 0.62; }
+.craft-bench-toggle span {
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.craft-bench-toggle strong {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  opacity: 0.58;
+  white-space: nowrap;
+}
+
+.craft-bench-toggle.is-ready {
+  border-color: rgba(20, 255, 0, 0.7);
+  background: rgba(20, 255, 0, 0.055);
+}
+
+.craft-bench-toggle.is-ready strong {
+  opacity: 0.95;
+}
+
+.crafting-screen__search {
+  width: 100%;
+  min-height: 36px;
+  margin-bottom: 5px;
+}
+
+.crafting-screen__count {
+  margin: 0 2px 8px;
+  opacity: 0.58;
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+}
+
+.crafting-screen__recipes {
+  display: grid;
+  gap: 6px;
+}
+
+.crafting-recipe-card {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-left-width: 3px;
+}
+
+.crafting-recipe-card.is-expanded {
+  box-shadow: inset 0 0 18px rgba(20, 255, 0, 0.035);
+}
+
+.crafting-recipe-card__heading {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px 7px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.crafting-recipe-card__heading-main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crafting-recipe-card__chevron {
+  flex: 0 0 auto;
+  width: 16px;
+  opacity: 0.62;
+  font-size: 0.78rem;
+}
+
+.crafting-recipe-card__heading h3 {
+  margin: 1px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.crafting-recipe-card__group {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  opacity: 0.54;
+  text-transform: uppercase;
+}
 
 .craft-rarity {
   flex: 0 0 auto;
   border: 1px solid currentColor;
-  padding: 3px 6px;
-  font-size: 0.65rem;
-  letter-spacing: 0.07em;
-  opacity: 0.78;
+  padding: 2px 5px;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
 }
-.craft-rarity.is-rare { border-style: double; }
+
+.craft-rarity.is-rare {
+  border-style: double;
+}
+
+.crafting-recipe-card__quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  padding: 0 11px 9px 35px;
+}
+
+.craft-chip {
+  padding: 2px 5px;
+  border: 1px solid rgba(20, 255, 0, 0.18);
+  font-size: 0.62rem;
+  opacity: 0.78;
+  white-space: nowrap;
+}
+
+.craft-chip.is-ready {
+  border-color: rgba(20, 255, 0, 0.55);
+  opacity: 1;
+}
+
+.craft-chip.is-locked {
+  border-style: dashed;
+  opacity: 0.48;
+}
+
+.crafting-recipe-card__details {
+  display: grid;
+  gap: 9px;
+  padding: 9px 11px 11px;
+  border-top: 1px solid rgba(20, 255, 0, 0.14);
+  background: rgba(0, 14, 0, 0.16);
+}
 
 .crafting-recipe-card__stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
+  gap: 5px;
 }
 
 .crafting-recipe-card__stats > div {
   display: grid;
   gap: 2px;
   min-width: 0;
-  padding: 7px 8px;
-  border: 1px solid rgba(20, 255, 0, 0.18);
-  background: rgba(0, 16, 0, 0.22);
+  padding: 6px 7px;
+  border: 1px solid rgba(20, 255, 0, 0.14);
+  background: rgba(0, 16, 0, 0.18);
 }
-.crafting-recipe-card__stats span { opacity: 0.6; font-size: 0.62rem; letter-spacing: 0.08em; }
-.crafting-recipe-card__stats strong { font-size: 0.78rem; overflow-wrap: anywhere; }
 
-.craft-section { display: grid; gap: 6px; }
-.craft-section > strong { font-size: 0.72rem; letter-spacing: 0.08em; }
-.craft-material-list { display: flex; flex-wrap: wrap; gap: 6px; }
-.craft-material-list span { padding: 4px 6px; border: 1px solid rgba(20, 255, 0, 0.25); font-size: 0.72rem; }
-.craft-material-list .is-ok { opacity: 0.82; }
+.crafting-recipe-card__stats span {
+  opacity: 0.52;
+  font-size: 0.57rem;
+  letter-spacing: 0.07em;
+}
+
+.crafting-recipe-card__stats strong {
+  font-size: 0.7rem;
+  overflow-wrap: anywhere;
+}
+
+.craft-section {
+  display: grid;
+  gap: 5px;
+}
+
+.craft-section > strong {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  opacity: 0.78;
+}
+
+.craft-material-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.craft-material-list span {
+  padding: 3px 5px;
+  border: 1px solid rgba(20, 255, 0, 0.2);
+  font-size: 0.66rem;
+}
+
+.craft-material-list .is-ok {
+  opacity: 0.78;
+}
+
 .craft-material-list .is-missing,
 .craft-warning,
-.craft-result.is-failure { border-color: rgba(255, 130, 80, 0.65); color: #ffb08d; }
+.craft-result.is-failure {
+  border-color: rgba(255, 130, 80, 0.65);
+  color: #ffb08d;
+}
 
-.crafting-recipe-card__craft { min-height: 38px; }
-.craft-warning { font-size: 0.72rem; padding: 6px 8px; border: 1px dashed currentColor; }
+.crafting-recipe-card__craft {
+  min-height: 36px;
+}
+
+.craft-warning {
+  font-size: 0.67rem;
+  padding: 5px 7px;
+  border: 1px dashed currentColor;
+}
 
 .craft-result {
   display: grid;
   gap: 4px;
-  margin-top: 2px;
-  padding: 9px;
-  border: 1px solid rgba(20, 255, 0, 0.45);
-  background: rgba(0, 20, 0, 0.25);
-  font-size: 0.74rem;
+  padding: 8px;
+  border: 1px solid rgba(20, 255, 0, 0.4);
+  background: rgba(0, 20, 0, 0.2);
+  font-size: 0.68rem;
 }
-.craft-result.is-success { box-shadow: inset 0 0 14px rgba(20, 255, 0, 0.06); }
-.craft-note { opacity: 0.72; font-size: 0.68rem; }
+
+.craft-result.is-success {
+  box-shadow: inset 0 0 12px rgba(20, 255, 0, 0.05);
+}
+
+.craft-note {
+  opacity: 0.68;
+  font-size: 0.63rem;
+}
 
 .crafting-screen__empty {
-  min-height: 160px;
+  min-height: 130px;
   display: grid;
   place-content: center;
   text-align: center;
-  padding: 24px 16px;
-  border: 1px dashed rgba(20, 255, 0, 0.35);
-  opacity: 0.72;
+  padding: 20px 14px;
+  border: 1px dashed rgba(20, 255, 0, 0.28);
+  opacity: 0.68;
 }
 
 @media (max-width: 720px) {
-  .crafting-screen__header { align-items: flex-start; }
-  .crafting-screen__tabs .pip-btn { flex: 1 1 30%; }
-  .crafting-recipe-card__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crafting-screen__header {
+    align-items: flex-start;
+  }
+
+  .crafting-recipe-card__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 430px) {
-  .crafting-screen__header { flex-direction: column; align-items: stretch; }
-  .crafting-screen__inventory-count { justify-items: start; }
-  .crafting-screen__bench-access { grid-template-columns: 1fr; }
-  .crafting-recipe-card__stats { grid-template-columns: 1fr 1fr; }
-  .crafting-recipe-card__heading { gap: 8px; }
+  .crafting-screen {
+    gap: 7px;
+  }
+
+  .crafting-screen__header {
+    padding: 9px 10px;
+  }
+
+  .crafting-screen__header span {
+    display: none;
+  }
+
+  .crafting-screen__inventory-count span {
+    display: none;
+  }
+
+  .crafting-screen__workbench {
+    padding: 7px;
+  }
+
+  .crafting-screen__tabs {
+    gap: 4px;
+  }
+
+  .crafting-screen__tabs .pip-btn {
+    min-height: 32px;
+    font-size: 0.68rem;
+  }
+
+  .crafting-recipe-card__heading {
+    padding: 9px 8px 6px;
+  }
+
+  .crafting-recipe-card__quick {
+    padding: 0 8px 8px 31px;
+  }
+
+  .crafting-recipe-card__details {
+    padding: 8px;
+  }
 }
