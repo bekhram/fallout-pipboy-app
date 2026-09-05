@@ -1,0 +1,74 @@
+.companion-preset-hub {
+  width: 100%;
+}
+
+.companion-preset-toolbar {
+  margin-bottom: 10px;
+}
+
+.companion-preset-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.companion-preset-picker {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+.companion-preset-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.companion-preset-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.companion-preset-option {
+  min-height: 64px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 4px;
+  text-align: left;
+  white-space: normal;
+}
+
+.companion-preset-option strong,
+.companion-preset-option span {
+  overflow-wrap: anywhere;
+}
+
+.companion-preset-option span {
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+/* The hub owns creation actions. Keep copy/delete inside the card. */
+.companion-preset-hub .companion-head > .pip-btn,
+.companion-preset-hub .companion-actions > .pip-btn:first-child {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .companion-preset-add-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .companion-preset-add-row .pip-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .companion-preset-options {
+    grid-template-columns: 1fr;
+  }
+}
