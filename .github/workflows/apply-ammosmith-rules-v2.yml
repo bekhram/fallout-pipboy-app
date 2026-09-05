@@ -1,0 +1,268 @@
+name: Apply Ammosmith rules v2
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-ammosmith-rules-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply Ammosmith rules
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Pattern not found in {path}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          # Correct ammo rarity and exclude R6+ from Ammosmith recipes.
+          replace('public/Ammo.csv', 'Mini-Nuke,1+1,12,100,5', 'Mini-Nuke,1+1,12,100,6')
+          replace('src/data/craftingRecipes.js', '["Mini-Nuke", 5, 100, 12],', '["Mini-Nuke", 6, 100, 12],')
+          replace(
+              'src/data/craftingRecipes.js',
+              'const AMMO_RECIPES = AMMO_CRAFTING_ROWS.map(([name, rarity, cost, weight]) => ({',
+              'const AMMO_RECIPES = AMMO_CRAFTING_ROWS\n  .filter(([, rarity]) => Number(rarity) <= 5)\n  .map(([name, rarity, cost, weight]) => ({'
+          )
+
+          # Ammosmith rank-level requirements.
+          replace(
+              'src/components/data/perks.js',
+              '"ammosmith": { id: "ammosmith", name: "Ammosmith", description: "Craft ammunition at a weapons workbench. Higher ranks unlock ammunition up to rarity 3 and 5; rank 3 can produce additional rounds.", maxRanks: 3, requirements: "INT 7, Level 2+" },',
+              '"ammosmith": { id: "ammosmith", name: "Ammosmith", description: "Craft ammunition at a weapons workbench. Rank 2 also allows dismantling ammunition for materials; rank 3 can produce additional rounds.", maxRanks: 3, requirements: "INT 7, Level 2+", rankRequirements: { 1: "INT 7, Level 2+", 2: "INT 7, Level 6+", 3: "INT 7, Level 10+" } },'
+          )
+
+          perks_screen = Path('src/components/perks/PerksScreen.jsx')
+          text = perks_screen.read_text()
+          marker = 'export default function PerksScreen({' 
+          helper = '''function getPerkRequirementsForRank(perk, rank) {\n  if (!perk) return "";\n  const safeRank = Math.max(1, Math.min(Number(rank || 1), Number(perk.maxRanks || 1)));\n  return perk.rankRequirements?.[safeRank] || perk.requirements || "";\n}\n\n'''
+          if helper not in text:
+              if marker not in text:
+                  raise SystemExit('PerksScreen export marker not found')
+              text = text.replace(marker, helper + marker, 1)
+          old = 'const warnings = matchedPerk ? getRequirementsWarnings(matchedPerk.requirements, form) : [];'
+          new = 'const activeRequirements = getPerkRequirementsForRank(matchedPerk, perkDraft?.rank);\n  const warnings = matchedPerk ? getRequirementsWarnings(activeRequirements, form) : [];'
+          if old not in text:
+              raise SystemExit('PerksScreen warnings marker not found')
+          text = text.replace(old, new, 1)
+          perks_screen.write_text(text)
+
+          # Localized Ammosmith summary.
+          p = Path('src/components/data/perkTranslations.js')
+          text = p.read_text()
+          if 'ammosmith:' not in text:
+              text = text.replace(
+                  'const TEXT = {',
+                  'const TEXT = {\n  ammosmith: { ru: ["Оружейник боеприпасов", "Создаёт боеприпасы на оружейном верстаке. Ранг 2 открывает разбор боеприпасов, ранг 3 увеличивает количество созданных патронов."], uk: ["Зброяр боєприпасів", "Створює боєприпаси на збройовому верстаті. Ранг 2 відкриває розбирання боєприпасів, ранг 3 збільшує кількість створених патронів."], pl: ["Rusznikarz amunicji", "Wytwarza amunicję przy warsztacie broni. Ranga 2 pozwala rozkładać amunicję, a ranga 3 zwiększa liczbę wytworzonych sztuk."] },',
+                  1,
+              )
+          p.write_text(text)
+
+          # Crafting engine: correct CD hit count, expose rank, add dismantling.
+          p = Path('src/utils/craftingEngine.js')
+          text = p.read_text()
+          text = text.replace('function getAmmosmithRank(character) {', 'export function getAmmosmithRank(character) {', 1)
+          old_hits = 'const hits = (hiddenRoll?.rolls || []).filter((die) => Number(die?.damage || 0) > 0).length;'
+          if old_hits in text:
+              text = text.replace(old_hits, 'const hits = Math.max(0, Number(hiddenRoll?.baseDamage || 0));', 1)
+          anchor = '''function resolveAmmosmithQuantity(character, recipe) {\n  const perkRank = getAmmosmithRank(character);'''
+          if anchor not in text:
+              raise SystemExit('Ammosmith quantity function not found')
+          insert_after = '''  return { quantity, perkRank, rarity, diceCount, hits, effects };\n}\n'''
+          if 'export function dismantleAmmunition' not in text:
+              if insert_after not in text:
+                  raise SystemExit('Ammosmith quantity end marker not found')
+              extra = r'''
+
+export function getAmmosmithDismantleMaterials(recipe) {
+  const materials = getRecipeMaterials(recipe);
+  return Object.fromEntries(
+    Object.entries(materials).map(([name, amount]) => [
+      name,
+      Math.max(1, Math.floor(Number(amount || 0) / 2)),
+    ])
+  );
+}
+
+function consumeOneAmmunition(inventory = [], ammoName) {
+  const wanted = normalize(ammoName);
+  let consumed = false;
+  return inventory.map((item) => {
+    if (consumed) return item;
+    const isAmmo = normalize(item?.category) === "ammo";
+    const matches = itemNames(item).includes(wanted);
+    const quantity = Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
+    if (!isAmmo || !matches || quantity < 1) return item;
+    consumed = true;
+    return { ...item, quantity: String(quantity - 1) };
+  }).filter((item) => Number(item?.quantity ?? item?.qty ?? 0) > 0);
+}
+
+function addCraftingMaterial(inventory = [], materialName, amount) {
+  const wanted = normalize(materialName);
+  const index = inventory.findIndex((item) =>
+    normalize(item?.category) === "junk" && itemNames(item).includes(wanted)
+  );
+  if (index >= 0) {
+    const next = [...inventory];
+    const current = next[index];
+    next[index] = {
+      ...current,
+      quantity: String(Math.max(0, Number(current?.quantity ?? current?.qty ?? 0)) + amount),
+    };
+    return next;
+  }
+
+  const template = findDatabaseOutput(materialName);
+  return [
+    ...inventory,
+    {
+      ...(template || {}),
+      name: template?.name || materialName,
+      canonicalName: template?.name || materialName,
+      category: "junk",
+      quantity: String(amount),
+    },
+  ];
+}
+
+export function dismantleAmmunition(character, recipe) {
+  if (!isAmmoCraftingRecipe(recipe)) return { error: "not_ammo" };
+  const perkRank = getAmmosmithRank(character);
+  if (perkRank < 2) return { error: "ammosmith_rank" };
+
+  const ammoName = recipe?.outputName || recipe?.name;
+  const available = (character?.inventoryItems || []).reduce((sum, item) => {
+    if (normalize(item?.category) !== "ammo") return sum;
+    if (!itemNames(item).includes(normalize(ammoName))) return sum;
+    return sum + Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
+  }, 0);
+  if (available < 1) return { error: "ammo_missing" };
+
+  const returnedMaterials = getAmmosmithDismantleMaterials(recipe);
+  let inventory = consumeOneAmmunition(character?.inventoryItems || [], ammoName);
+  for (const [name, amount] of Object.entries(returnedMaterials)) {
+    inventory = addCraftingMaterial(inventory, name, amount);
+  }
+
+  return {
+    success: true,
+    action: "dismantle",
+    ammoName,
+    consumedQuantity: 1,
+    returnedMaterials,
+    inventory,
+  };
+}
+'''
+              text = text.replace(insert_after, insert_after + extra, 1)
+          p.write_text(text)
+
+          # Crafting UI: one-click dismantle, no dice shown for ammo.
+          p = Path('src/components/crafting/CraftingScreen.jsx')
+          text = p.read_text()
+          old_import = '''import {\n  getCraftingRecipeState,\n  resolveCraftingAttempt,\n} from "../../utils/craftingEngine.js";'''
+          new_import = '''import {\n  dismantleAmmunition,\n  getAmmosmithRank,\n  getCraftingRecipeState,\n  getInventoryQuantity,\n  resolveCraftingAttempt,\n} from "../../utils/craftingEngine.js";'''
+          if old_import not in text:
+              raise SystemExit('CraftingScreen import marker not found')
+          text = text.replace(old_import, new_import, 1)
+
+          translations = {
+              'en': ('    noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",', '    noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",\n    dismantle: "DISMANTLE 1", dismantled: "DISMANTLED", returned: "RETURNED", ammoOwned: "OWNED", needAmmo: "No ammunition to dismantle", needAmmosmith2: "Ammosmith rank 2 required",'),
+              'ru': ('    noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",', '    noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",\n    dismantle: "РАЗОБРАТЬ 1", dismantled: "РАЗОБРАНО", returned: "ВОЗВРАЩЕНО", ammoOwned: "В НАЛИЧИИ", needAmmo: "Нет патронов для разбора", needAmmosmith2: "Требуется Ammosmith 2",'),
+              'uk': ('    noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",', '    noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",\n    dismantle: "РОЗІБРАТИ 1", dismantled: "РОЗІБРАНО", returned: "ПОВЕРНЕНО", ammoOwned: "В НАЯВНОСТІ", needAmmo: "Немає патронів для розбирання", needAmmosmith2: "Потрібен Ammosmith 2",'),
+              'pl': ('    noBaseWeapons: "Core Rulebook nie zawiera receptur tworzenia podstawowej broni od zera. Receptury warsztatu broni są w sekcji MODY.",', '    noBaseWeapons: "Core Rulebook nie zawiera receptur tworzenia podstawowej broni od zera. Receptury warsztatu broni są w sekcji MODY.",\n    dismantle: "ROZŁÓŻ 1", dismantled: "ROZŁOŻONO", returned: "ODZYSKANO", ammoOwned: "POSIADASZ", needAmmo: "Brak amunicji do rozłożenia", needAmmosmith2: "Wymagany Ammosmith 2",'),
+          }
+          for _, (old, new) in translations.items():
+              if old not in text:
+                  raise SystemExit(f'CraftingScreen translation marker not found: {old[:40]}')
+              text = text.replace(old, new, 1)
+
+          craft_anchor = '''  const renderResult = (recipe) => {'''
+          if 'const handleDismantle = (recipe) =>' not in text:
+              handler = r'''  const handleDismantle = (recipe) => {
+    if (!benchAccess[recipe.workbench]) {
+      setLastResult({ recipeId: recipe.id, error: "bench" });
+      return;
+    }
+    const result = dismantleAmmunition(character, recipe);
+    if (result?.error) {
+      setLastResult({ recipeId: recipe.id, error: result.error, action: "dismantle" });
+      return;
+    }
+    if (setCharacter) {
+      setCharacter((prev) => ({
+        ...prev,
+        inventoryItems: result.inventory,
+        craftingHistory: [
+          ...(prev?.craftingHistory || []),
+          {
+            id: `${recipe.id}-dismantle-${Date.now()}`,
+            recipeId: recipe.id,
+            name: recipe.name,
+            action: "dismantle",
+            returnedMaterials: result.returnedMaterials,
+            timestamp: new Date().toISOString(),
+          },
+        ].slice(-50),
+      }));
+    }
+    setLastResult({ recipeId: recipe.id, ...result });
+  };
+
+'''
+              if craft_anchor not in text:
+                  raise SystemExit('renderResult marker not found')
+              text = text.replace(craft_anchor, handler + craft_anchor, 1)
+
+          error_block = '''    if (lastResult.error) {\n      const message = lastResult.error === "bench" ? copy.needBench\n        : lastResult.error === "materials" ? copy.missingMaterials\n          : lastResult.error === "perks" ? copy.missingPerks\n            : copy.unknownRare;\n      return <div className="craft-result is-failure">[ {message} ]</div>;\n    }'''
+          error_new = '''    if (lastResult.error) {\n      const message = lastResult.error === "bench" ? copy.needBench\n        : lastResult.error === "materials" ? copy.missingMaterials\n          : lastResult.error === "perks" ? copy.missingPerks\n            : lastResult.error === "ammosmith_rank" ? copy.needAmmosmith2\n              : lastResult.error === "ammo_missing" ? copy.needAmmo\n                : copy.unknownRare;\n      return <div className="craft-result is-failure">[ {message} ]</div>;\n    }\n    if (lastResult.action === "dismantle") {\n      return (\n        <div className="craft-result is-success">\n          <strong>[ {copy.dismantled}: {recipe.name} ×1 ]</strong>\n          <div>{copy.returned}: {Object.entries(lastResult.returnedMaterials || {}).map(([name, amount]) => `${name} ×${amount}`).join(" // ")}</div>\n        </div>\n      );\n    }'''
+          if error_block not in text:
+              raise SystemExit('renderResult error block not found')
+          text = text.replace(error_block, error_new, 1)
+
+          recipe_consts = '''              const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);\n              const expanded = expandedRecipeId === recipe.id;'''
+          recipe_consts_new = '''              const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);\n              const ammoOwned = recipe.ammoCrafting ? getInventoryQuantity(character?.inventoryItems || [], recipe.name) : 0;\n              const ammosmithRank = recipe.ammoCrafting ? getAmmosmithRank(character) : 0;\n              const canDismantle = Boolean(setCharacter && recipe.ammoCrafting && benchReady && ammosmithRank >= 2 && ammoOwned > 0);\n              const expanded = expandedRecipeId === recipe.id;'''
+          if recipe_consts not in text:
+              raise SystemExit('recipe consts marker not found')
+          text = text.replace(recipe_consts, recipe_consts_new, 1)
+
+          craft_button = '''                      <button\n                        type="button"\n                        className="pip-btn is-primary crafting-recipe-card__craft"\n                        onClick={() => handleCraft(recipe)}\n                        disabled={!canCraft}\n                      >\n                        {recipe.ammoCrafting\n                          ? `${copy.craft} // R${recipe.ammoRarity}`\n                          : `${copy.craft} // ${copy.target} ${state.skill.targetNumber} // D${state.difficulty}`}\n                      </button>'''
+          craft_button_new = craft_button + '''\n\n                      {recipe.ammoCrafting ? (\n                        <>\n                          <div className="craft-note">{copy.ammoOwned}: {ammoOwned}</div>\n                          <button\n                            type="button"\n                            className="pip-btn crafting-recipe-card__craft"\n                            onClick={() => handleDismantle(recipe)}\n                            disabled={!canDismantle}\n                          >\n                            {copy.dismantle}\n                          </button>\n                        </>\n                      ) : null}'''
+          if craft_button not in text:
+              raise SystemExit('craft button marker not found')
+          text = text.replace(craft_button, craft_button_new, 1)
+          p.write_text(text)
+          PY
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Commit changes
+        run: |
+          git config user.name "Bekhram Salimov"
+          git config user.email "bahramsalimov89@gmail.com"
+          git add public/Ammo.csv src/data/craftingRecipes.js src/components/data/perks.js src/components/data/perkTranslations.js src/components/perks/PerksScreen.jsx src/utils/craftingEngine.js src/components/crafting/CraftingScreen.jsx
+          if git diff --cached --quiet; then
+            echo "No source changes"
+            exit 0
+          fi
+          git commit -m "Complete Ammosmith crafting and dismantling rules"
+          git push origin main
