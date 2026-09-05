@@ -1,0 +1,42 @@
+name: Apply pending encounter migration
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-pending-encounter-migration.yml
+      - scripts/apply-pending-encounter-migration.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply source patch
+        run: python3 scripts/apply-pending-encounter-migration.py
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Commit migration
+        run: |
+          git config user.name "Bekhram Salimov"
+          git config user.email "bahramsalimov89@gmail.com"
+          git add src/components/map/MapScreen.jsx
+          if git diff --cached --quiet; then
+            echo "No source changes to commit"
+            exit 0
+          fi
+          git commit -m "Resolve saved pending travel encounters"
+          git push origin main
