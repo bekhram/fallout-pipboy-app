@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import MapCell from "./MapCell.jsx";
-import LocalGmChat from "./LocalGmChat.jsx";
+import CombatAwareLocalGmChat from "./CombatAwareLocalGmChat.jsx";
 import WorldOverview from "./WorldOverview.jsx";
 import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
@@ -133,7 +133,7 @@ function MapGrid({
             <button type="button" onClick={minimizeLocal} aria-label="Minimize Auto GM">—</button>
           </div>
           <div className="pip-map-local-fullscreen__content">
-            <LocalGmChat
+            <CombatAwareLocalGmChat
               mapData={mapData}
               playerPosition={playerPosition}
               selectedCell={selectedCell}
