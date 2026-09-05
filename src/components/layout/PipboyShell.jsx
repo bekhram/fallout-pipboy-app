@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
+import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 
@@ -16,6 +17,7 @@ const INTERACTIVE_SELECTOR = [
   ".dice-modal-overlay",
   ".pip-map-screen",
   ".games-screen",
+  ".bestiary-screen",
 ].join(",");
 
 export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, children }) {
@@ -61,6 +63,10 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
     if (nextTab) onTabChange(nextTab.key);
   };
 
+  let screenContent = children;
+  if (activeTab === "companion") screenContent = <CompanionPresetHub />;
+  if (activeTab === "bestiary") screenContent = <BestiaryScreen />;
+
   return (
     <div className="pip-app">
       <div className="pip-vignette" />
@@ -72,7 +78,7 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
           onTouchEnd={handleTouchEnd}
         >
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
-            {activeTab === "companion" ? <CompanionPresetHub /> : children}
+            {screenContent}
           </div>
         </main>
       </div>
