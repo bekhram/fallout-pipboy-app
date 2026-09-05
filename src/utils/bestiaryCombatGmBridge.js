@@ -12,11 +12,13 @@ function endpointUrl(input) {
 function getIncomingCombat(payload) {
   return payload?.world?.travelEncounter?.resolution?.combat ||
     payload?.world?.travelEncounter?.combat ||
+    payload?.world?.activeCombat ||
+    payload?.combat?.activeCombat ||
     null;
 }
 
 function authoritativePrefix(combat) {
-  if (!combat || combat.status === "resolved") return "";
+  if (!combat) return "";
   const roster = (combat.enemies || []).map((enemy) => ({
     name: enemy.name,
     hp: enemy.hp,
@@ -25,10 +27,12 @@ function authoritativePrefix(combat) {
     drBlock: enemy.drBlock,
     attacks: enemy.attacks,
     abilities: enemy.abilities,
+    combatStatuses: enemy.combatStatuses || null,
     defeated: enemy.defeated,
   }));
+  const latestAction = combat.lastAction || null;
   return `[APPLICATION COMBAT STATE — AUTHORITATIVE]
-The supplied world.activeCombat is the authoritative encounter state from the app's Core Rulebook bestiary. Exact enemy HP, Defense, Initiative, DR, attacks and abilities must not be invented, replaced or silently reset. Do not declare an enemy defeated unless its stored current HP is 0. Do not silently reduce or restore enemy HP. If the player describes an attack but no application-generated attack/damage result is present, request/resolve the required roll before narrating damage. Current roster: ${JSON.stringify(roster)}
+The supplied world.activeCombat is the authoritative encounter state from the app's Core Rulebook bestiary. Exact enemy HP, Defense, Initiative, DR, attacks and abilities must not be invented, replaced or silently reset. Do not declare an enemy defeated unless its stored current HP is 0. Do not silently reduce or restore enemy HP. If the player describes an attack but no application-generated attack/damage result is present, request/resolve the required roll before narrating damage. If latestAction exists, its dice, hit/miss result, hit location, DR, final damage and HP transition have already been resolved by the app and must not be rerolled or changed. Combat status: ${combat.status || "active"}. Current roster: ${JSON.stringify(roster)}. Latest action: ${JSON.stringify(latestAction)}
 [/APPLICATION COMBAT STATE]`;
 }
 
@@ -50,11 +54,15 @@ export function installBestiaryCombatGmBridge() {
       const incomingCombat = getIncomingCombat(payload);
 
       if (sessionKey && incomingCombat) {
-        saveCombatForSession(sessionKey, incomingCombat);
+        const stored = readCombatForSession(sessionKey);
+        const shouldReplaceStored = !stored ||
+          incomingCombat.lastAction ||
+          Number(incomingCombat.updatedAt || 0) >= Number(stored.updatedAt || 0);
+        if (shouldReplaceStored) saveCombatForSession(sessionKey, incomingCombat);
       }
 
       const activeCombat = sessionKey
-        ? (incomingCombat || readCombatForSession(sessionKey))
+        ? (readCombatForSession(sessionKey) || incomingCombat)
         : incomingCombat;
 
       if (activeCombat) {
