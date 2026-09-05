@@ -145,8 +145,25 @@ export function getBobbleheadSkillBonus(form, skillName) {
   return Number(getBobbleheadBonuses(form).skills?.[skillName] || 0);
 }
 
+export function hasActivePowerArmorFrame(form = {}) {
+  const loadout = form?.armor?._power?.loadout;
+  if (!loadout || typeof loadout !== "object") return false;
+
+  const setId = String(loadout.setId || "").trim();
+  if (setId && setId !== "none") return true;
+
+  return Object.values(loadout.slots || {}).some((slot) => {
+    const slotSetId = String(slot?.setId || "").trim();
+    return Boolean(slotSetId && slotSetId !== "none");
+  });
+}
+
 export function getEffectiveSpecialValue(form, key) {
-  return Number(form?.special?.[key] || 0) + getBobbleheadSpecialBonus(form, key);
+  const value = Number(form?.special?.[key] || 0) + getBobbleheadSpecialBonus(form, key);
+  if (key === "S" && hasActivePowerArmorFrame(form)) {
+    return Math.max(11, value);
+  }
+  return value;
 }
 
 export function getEffectiveSkillRank(form, skillName) {
