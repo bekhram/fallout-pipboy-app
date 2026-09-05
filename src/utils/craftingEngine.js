@@ -69,11 +69,12 @@ export function getCharacterPerkRank(character, requirement) {
 
 export function getCraftingSkillProfile(character, skillName) {
   const skill = character?.skills?.[skillName] || {};
-  const effectiveRank = getEffectiveSkillRank(character, skillName);
+  const baseEffectiveRank = getEffectiveSkillRank(character, skillName);
   const intelligence = getEffectiveSpecialValue(character, "I");
   const tagBonus = skill?.tagged ? 2 : 0;
+  const effectiveRank = baseEffectiveRank + tagBonus;
   const bonus = Number(skill?.bonus || 0);
-  const targetNumber = Math.max(0, Math.min(20, intelligence + effectiveRank + tagBonus + bonus));
+  const targetNumber = Math.max(0, Math.min(20, intelligence + effectiveRank + bonus));
   const criticalRange = skill?.tagged
     ? Math.max(1, Math.min(20, effectiveRank || 1))
     : 1;
@@ -81,6 +82,7 @@ export function getCraftingSkillProfile(character, skillName) {
     skillName,
     intelligence,
     effectiveRank,
+    baseEffectiveRank,
     baseRank: Number(skill?.rank || 0),
     tagged: Boolean(skill?.tagged),
     tagBonus,
