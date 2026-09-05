@@ -1076,6 +1076,7 @@ return {
     weapons: [],
     caps: "0",
     inventoryItems: [],
+    activeConsumableEffects: [],
     perksAndTraits: [],
     backstory: "",
     questNotes: "",

@@ -72,6 +72,14 @@ export default function StatusScreen({
   const combatModifiers = derived?.combatModifiers || {};
   const effectBadges = [];
 
+  if (form.statuses?.invisible) {
+    effectBadges.push({
+      key: "invisible",
+      tone: "positive",
+      label: "◉ INVISIBLE",
+    });
+  }
+
 if (derived?.immunities?.includes("radiation")) {
     effectBadges.push({
       key: "immune-rad",

@@ -242,25 +242,42 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     }
 
     if (setCharacter) {
-      setCharacter((prev) => ({
-        ...prev,
-        inventoryItems: result.inventory,
-        craftingHistory: [
-          ...(prev?.craftingHistory || []),
-          {
-            id: `${recipe.id}-${Date.now()}`,
-            recipeId: recipe.id,
-            name: recipe.name,
-            success: result.success,
-            difficulty: result.state.difficulty,
-            targetNumber: result.state.skill.targetNumber,
-            rolls: recipe.ammoCrafting ? [] : (result.roll?.rolls || []).map((die) => die.value),
-            complications: result.complications,
-            durationMinutes: result.durationMinutes,
-            timestamp: new Date().toISOString(),
-          },
-        ].slice(-50),
-      }));
+      setCharacter((prev) => {
+        let weapons = prev?.weapons || [];
+        if (result.success && recipe?.outputTemplate?.sourceType === "crafted_weapon" && result.output) {
+          const {
+            category: _category,
+            quantity: _quantity,
+            canonicalName: _canonicalName,
+            crafted: _crafted,
+            craftingRecipeId: _craftingRecipeId,
+            craftingWorkbench: _craftingWorkbench,
+            ...weaponData
+          } = result.output;
+          weapons = [...weapons, { ...weaponData, sourceType: "crafted_weapon" }];
+        }
+
+        return {
+          ...prev,
+          weapons,
+          inventoryItems: result.inventory,
+          craftingHistory: [
+            ...(prev?.craftingHistory || []),
+            {
+              id: `${recipe.id}-${Date.now()}`,
+              recipeId: recipe.id,
+              name: recipe.name,
+              success: result.success,
+              difficulty: result.state.difficulty,
+              targetNumber: result.state.skill.targetNumber,
+              rolls: recipe.ammoCrafting ? [] : (result.roll?.rolls || []).map((die) => die.value),
+              complications: result.complications,
+              durationMinutes: result.durationMinutes,
+              timestamp: new Date().toISOString(),
+            },
+          ].slice(-50),
+        };
+      });
     }
     setLastResult({ recipeId: recipe.id, ...result });
   };

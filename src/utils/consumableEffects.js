@@ -5,6 +5,11 @@ import {
 } from "../data/inventoryLocalization.js";
 
 const CONSUMABLE_CATEGORIES = new Set(["aid", "food", "beverages"]);
+const UTILITY_CONSUMABLE_NAMES = new Set([
+  "stealth boy",
+  "robot repair kit",
+  "power armor repair kit",
+]);
 
 export const PIPBOY_USE_ITEM_EVENT = "pipboy:use-inventory-item";
 export const PIPBOY_END_CONSUMABLE_EFFECT_EVENT = "pipboy:end-consumable-effect";
@@ -231,7 +236,8 @@ function makeEffectId(item) {
 }
 
 export function isConsumableItem(item) {
-  return CONSUMABLE_CATEGORIES.has(item?.category);
+  return CONSUMABLE_CATEGORIES.has(item?.category)
+    || UTILITY_CONSUMABLE_NAMES.has(normalizeName(getCanonicalName(item)));
 }
 
 export function getConsumableUsePlan(item) {

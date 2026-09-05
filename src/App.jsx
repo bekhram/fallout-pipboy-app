@@ -20,8 +20,12 @@ import PwaInstallButton from "./components/shared/PwaInstallButton.jsx";
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 import { parseCSV } from "./utils/csvParser.js"; 
+import { calculatePowerArmorLocations } from "./data/powerArmor.js";
+import { readCompanionState, writeCompanionState } from "./utils/companionStorage.js";
+import { getConsumableUsePlan, PIPBOY_USE_ITEM_EVENT } from "./utils/consumableEffects.js";
 
 import {
+  ARMOR_PARTS,
   buildDefaultForm,
   buildDefaultMapState,
   createEmptyItem,
@@ -44,9 +48,79 @@ import {
   needsWeaponMetadataHydration,
 } from "./utils/weaponDatabase.js";
 
+const ITEM_USE_COPY = {
+  en: { noPowerArmor: "No damaged power armor parts found.", noRobot: "No damaged robot companions found.", choosePowerArmor: "Choose a power armor part to repair", chooseRobot: "Choose a robot to repair", invalid: "Invalid selection." },
+  ru: { noPowerArmor: "Нет поврежденных частей силовой брони.", noRobot: "Нет поврежденных роботов-компаньонов.", choosePowerArmor: "Выберите часть силовой брони для ремонта", chooseRobot: "Выберите робота для ремонта", invalid: "Неверный выбор." },
+  uk: { noPowerArmor: "Немає пошкоджених частин силової броні.", noRobot: "Немає пошкоджених роботів-компаньйонів.", choosePowerArmor: "Оберіть частину силової броні для ремонту", chooseRobot: "Оберіть робота для ремонту", invalid: "Невірний вибір." },
+  pl: { noPowerArmor: "Brak uszkodzonych części pancerza wspomaganego.", noRobot: "Brak uszkodzonych robotów-towarzyszy.", choosePowerArmor: "Wybierz część pancerza do naprawy", chooseRobot: "Wybierz robota do naprawy", invalid: "Nieprawidłowy wybór." },
+};
+
+function normalizeUtilityName(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function consumeInventoryItemAt(inventory = [], index) {
+  return inventory
+    .map((item, itemIndex) => {
+      if (itemIndex !== index) return item;
+      const quantity = Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
+      return { ...item, quantity: String(Math.max(0, quantity - 1)) };
+    })
+    .filter((item) => Number(item?.quantity ?? item?.qty ?? 0) > 0);
+}
+
+function stripPowerArmorCurrentOverrides(loadout) {
+  return {
+    ...(loadout || {}),
+    slots: Object.fromEntries(
+      Object.entries(loadout?.slots || {}).map(([part, slot]) => {
+        const clean = { ...(slot || {}) };
+        delete clean.currentHp;
+        delete clean.currentPhysical;
+        delete clean.currentEnergy;
+        delete clean.currentRadiation;
+        delete clean.currentPoison;
+        return [part, clean];
+      })
+    ),
+  };
+}
+
+function getDamagedPowerArmorParts(character) {
+  const loadout = character?.armor?._power?.loadout;
+  if (!loadout) return [];
+  const current = calculatePowerArmorLocations(loadout);
+  const maximum = calculatePowerArmorLocations(stripPowerArmorCurrentOverrides(loadout));
+  if (!current || !maximum) return [];
+  return ARMOR_PARTS.filter((part) => {
+    const now = current?.[part];
+    const max = maximum?.[part];
+    if (!now || !max || Number(max.hp || 0) <= 0) return false;
+    return ["hp", "physical", "energy", "radiation", "poison"].some(
+      (field) => Number(now[field] || 0) < Number(max[field] || 0)
+    );
+  }).map((part) => ({ part, current: current[part], maximum: maximum[part] }));
+}
+
+function isRobotCompanion(item) {
+  const text = [item?.creatureType, item?.name, item?.specialAbilities]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return /(robot|robotic|machine|automatron|mister handy|mr\.? handy|protectron|assaultron|eyebot|sentry bot|robobrain)/i.test(text);
+}
+
+function chooseNumberedTarget(title, targets, lineForTarget) {
+  const promptText = [title, ...targets.map((target, index) => `${index + 1}. ${lineForTarget(target)}`)].join("\n");
+  const raw = window.prompt(promptText, "1");
+  if (raw === null) return null;
+  const index = Number.parseInt(raw, 10) - 1;
+  return Number.isInteger(index) && targets[index] ? targets[index] : undefined;
+}
+
 export default function App() {
   const [pendingAutoD6, setPendingAutoD6] = useState(null);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [screen, setScreen] = useState("menu");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
@@ -164,6 +238,145 @@ export default function App() {
       return changed ? { ...prev, inventoryItems } : prev;
     });
   }, [setForm]);
+
+  useEffect(() => {
+    const handleInventoryUse = (event) => {
+      const index = Number(event?.detail?.index);
+      const item = form.inventoryItems?.[index];
+      if (!Number.isInteger(index) || !item || Number(item?.quantity ?? item?.qty ?? 0) <= 0) return;
+
+      const name = normalizeUtilityName(item.canonicalName || item.name);
+      const language = String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
+      const copy = ITEM_USE_COPY[language] || ITEM_USE_COPY.en;
+
+      if (name === "stealth boy") {
+        setForm((prev) => ({
+          ...prev,
+          inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+          statuses: { ...(prev.statuses || {}), invisible: true },
+          stealthBoyState: { active: true, activatedAt: new Date().toISOString(), duration: "manual" },
+        }));
+        return;
+      }
+
+      if (name === "power armor repair kit") {
+        const targets = getDamagedPowerArmorParts(form);
+        if (!targets.length) {
+          window.alert(copy.noPowerArmor);
+          return;
+        }
+        const selected = chooseNumberedTarget(
+          copy.choosePowerArmor,
+          targets,
+          (target) => `${target.part}: ${target.current.hp}/${target.maximum.hp} HP`
+        );
+        if (selected === null) return;
+        if (!selected) {
+          window.alert(copy.invalid);
+          return;
+        }
+
+        setForm((prev) => {
+          const loadout = prev?.armor?._power?.loadout || {};
+          const slots = { ...(loadout.slots || {}) };
+          const repaired = { ...(slots[selected.part] || {}) };
+          delete repaired.currentHp;
+          delete repaired.currentPhysical;
+          delete repaired.currentEnergy;
+          delete repaired.currentRadiation;
+          delete repaired.currentPoison;
+          slots[selected.part] = repaired;
+          return {
+            ...prev,
+            inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+            armor: {
+              ...(prev.armor || {}),
+              _power: {
+                ...(prev.armor?._power || {}),
+                loadout: { ...loadout, slots },
+              },
+            },
+          };
+        });
+        return;
+      }
+
+      if (name === "robot repair kit") {
+        const companionState = readCompanionState();
+        const targets = (companionState.items || []).filter((companion) => {
+          const currentHp = Math.max(0, Number(companion?.currentHp || 0));
+          const maxHp = Math.max(0, Number(companion?.maxHp || 0));
+          return isRobotCompanion(companion) && maxHp > 0 && currentHp < maxHp;
+        });
+        if (!targets.length) {
+          window.alert(copy.noRobot);
+          return;
+        }
+        const selected = chooseNumberedTarget(
+          copy.chooseRobot,
+          targets,
+          (target) => `${target.name || target.creatureType || "Robot"}: ${target.currentHp}/${target.maxHp} HP`
+        );
+        if (selected === null) return;
+        if (!selected) {
+          window.alert(copy.invalid);
+          return;
+        }
+        writeCompanionState({
+          ...companionState,
+          items: companionState.items.map((companion) =>
+            companion.id === selected.id
+              ? { ...companion, currentHp: String(Math.max(0, Number(companion.maxHp || 0))) }
+              : companion
+          ),
+        });
+        setForm((prev) => ({
+          ...prev,
+          inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+        }));
+        return;
+      }
+
+      const plan = getConsumableUsePlan(item);
+      setForm((prev) => {
+        const statuses = { ...(prev.statuses || {}) };
+        if (plan.statusKey) statuses[plan.statusKey] = true;
+        if (plan.cureAddictions) {
+          Object.keys(statuses).forEach((key) => {
+            if (key.toLowerCase().endsWith("addiction")) statuses[key] = false;
+          });
+        }
+
+        let activeConsumableEffects = Array.isArray(prev.activeConsumableEffects)
+          ? [...prev.activeConsumableEffects]
+          : [];
+        if (plan.activeEffect) {
+          activeConsumableEffects = activeConsumableEffects
+            .filter((effect) => effect?.id !== plan.activeEffect.id)
+            .concat(plan.activeEffect);
+        }
+
+        const nextRadiation = Math.max(0, Number(prev.radiationHp || 0) - Number(plan.healingRadiation || 0));
+        const preview = {
+          ...prev,
+          statuses,
+          activeConsumableEffects,
+          radiationHp: String(nextRadiation),
+        };
+        const maxHp = Math.max(0, Number(getDerivedStats(preview).effectiveMaxHp || 0));
+        const nextHp = Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0) + Number(plan.healingHp || 0)));
+
+        return {
+          ...preview,
+          currentHp: String(nextHp),
+          inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+        };
+      });
+    };
+
+    window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleInventoryUse);
+    return () => window.removeEventListener(PIPBOY_USE_ITEM_EVENT, handleInventoryUse);
+  }, [form, i18n.language, i18n.resolvedLanguage, setForm]);
 
   useEffect(() => {
     if (globalWeapons.length === 0) return;
