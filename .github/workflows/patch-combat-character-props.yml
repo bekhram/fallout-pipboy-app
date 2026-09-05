@@ -1,0 +1,49 @@
+name: Patch combat character props
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/patch-combat-character-props.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Wire live character state into PipboyShell
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/App.jsx')
+          text = path.read_text()
+          old = '''        <PipboyShell
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onToggleMenu={() => setSideMenuOpen(true)}
+        >'''
+          new = '''        <PipboyShell
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onToggleMenu={() => setSideMenuOpen(true)}
+          character={form}
+          setCharacter={setForm}
+        >'''
+          if old not in text:
+              raise SystemExit('PipboyShell render anchor not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Commit patch
+        run: |
+          git config user.name "OpenAI Codex"
+          git config user.email "codex@users.noreply.github.com"
+          git add src/App.jsx
+          git commit -m "Pass live character state to combat panel"
+          git push
