@@ -191,7 +191,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   }, [condition, normalMaximums, powerArmorStats]);
 
   const setResistance = (part, field, rawValue) => {
-    if (powerArmorStats || field === "hp") return;
+    if (powerArmorStats) return;
     const value = Math.max(0, Number.parseInt(rawValue, 10) || 0);
     const current = { ...(condition[part]?.current || {}), [field]: value };
     onArmorChange("_condition", "parts", {
@@ -306,7 +306,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
                       </span>
                     </div>
                     {FIELDS.map((field) => {
-                      const canAdjust = !powerArmorStats && field.key !== "hp";
+                      const canAdjust = !powerArmorStats;
                       const value = calculated[part]?.[field.key] ?? 0;
                       return (
                         <label key={`${part}-${field.key}`} className="pip-armor-cell">
