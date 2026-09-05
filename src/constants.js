@@ -1053,6 +1053,7 @@ return {
     satiety: "3",
     thirst: "3",
     vigor: "3",
+    survivalTravelHoursRemainder: "0",
     currentHp: "10",
     radiationHp: "0",
     carryWeightOverride: "",

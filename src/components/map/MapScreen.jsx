@@ -39,6 +39,8 @@ const HOURS_IN_DAY = 24;
 const DAYS_IN_MONTH = 30;
 const MONTHS_IN_YEAR = 12;
 const WORLD_ROUTE_MARGIN = 6;
+const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
+const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
 const REGION_MAP_ASSETS = {
   commonwealth: bostonMapImage,
   california_fo1: fallout1MapAsset,
@@ -424,6 +426,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       };
     });
 
+    if (typeof window !== "undefined" && totalCost > 0) {
+      window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
+        detail: { hours: totalCost },
+      }));
+    }
     if (reachedDestination) setSelectedCell(null);
   }
 
@@ -505,6 +512,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       };
     });
 
+    if (typeof window !== "undefined" && totalCost > 0) {
+      window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
+        detail: { hours: totalCost },
+      }));
+    }
     setSelectedCell(null);
   }
 
@@ -520,6 +532,9 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: nextMap },
       };
     });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(PIPBOY_CAMP_REST_EVENT));
+    }
     setSelectedCell(null);
   }
 

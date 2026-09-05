@@ -23,6 +23,8 @@ import {
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 const ORIGIN_EQUIPMENT_CHOICE_EVENT = "pipboy:set-origin-equipment-choices";
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
+const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
+const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
 
 function makeSafeFileName(name) {
   return (name || "Character")
@@ -587,12 +589,22 @@ export function useCharacterStorage(initialForm) {
           Number(prev.radiationHp || 0) - Number(plan.healingRadiation || 0)
         );
 
+        const category = String(item?.category || "").toLowerCase();
+        const satiety = category === "food"
+          ? Math.min(5, Math.max(0, Number(prev.satiety || 0)) + 1)
+          : Math.max(0, Math.min(5, Number(prev.satiety || 0)));
+        const thirst = category === "beverages"
+          ? Math.min(5, Math.max(0, Number(prev.thirst || 0)) + 1)
+          : Math.max(0, Math.min(5, Number(prev.thirst || 0)));
+
         const nextBase = {
           ...prev,
           inventoryItems,
           statuses,
           activeConsumableEffects,
           radiationHp: String(radiationHp),
+          satiety: String(satiety),
+          thirst: String(thirst),
         };
 
         const nextDerived = getDerivedStats(nextBase);
@@ -637,11 +649,47 @@ export function useCharacterStorage(initialForm) {
       });
     };
 
+    const handleSurvivalTravel = (event) => {
+      const hours = Math.max(0, Number(event?.detail?.hours || 0));
+      if (hours <= 0) return;
+
+      setForm((prev) => {
+        const previousRemainder = Math.max(
+          0,
+          Number(prev.survivalTravelHoursRemainder || 0)
+        );
+        const accumulatedHours = previousRemainder + hours;
+        const drainSteps = Math.floor(accumulatedHours / 4);
+        const remainder = accumulatedHours - drainSteps * 4;
+        const satiety = Math.max(
+          0,
+          Math.min(5, Number(prev.satiety || 0)) - drainSteps
+        );
+        const thirst = Math.max(
+          0,
+          Math.min(5, Number(prev.thirst || 0)) - drainSteps
+        );
+
+        return {
+          ...prev,
+          satiety: String(satiety),
+          thirst: String(thirst),
+          survivalTravelHoursRemainder: String(Number(remainder.toFixed(2))),
+        };
+      });
+    };
+
+    const handleCampRest = () => {
+      setForm((prev) => ({ ...prev, vigor: "5" }));
+    };
+
     window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
     window.addEventListener(
       PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
       handleEndConsumableEffect
     );
+    window.addEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
+    window.addEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
 
     return () => {
       window.removeEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
@@ -649,6 +697,8 @@ export function useCharacterStorage(initialForm) {
         PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
         handleEndConsumableEffect
       );
+      window.removeEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
+      window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
     };
   }, []);
 
