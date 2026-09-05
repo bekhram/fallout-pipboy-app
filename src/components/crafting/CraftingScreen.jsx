@@ -13,7 +13,7 @@ import "./crafting.css";
 const TEXT = {
   en: {
     title: "CRAFTING", subtitle: "WORKBENCH // RECIPES",
-    weapons: "WEAPONS", ammo: "AMMO", armor: "ARMOR", mods: "MODS", explosives: "EXPLOSIVES", items: "OTHER",
+    weapons: "WEAPON RECIPES", ammo: "AMMO", armor: "ARMOR RECIPES", mods: "MODS", explosives: "EXPLOSIVES", items: "OTHER",
     search: "Search recipes, mods, workbenches...", skill: "SKILL", complexity: "COMPLEXITY", difficulty: "DIFFICULTY", materials: "MATERIALS",
     requirements: "PERKS", rarity: "RARITY", craft: "CRAFT", recipeFound: "RECIPE FOUND", forgetRecipe: "REMOVE RECIPE", unknownRare: "RARE RECIPE NOT LEARNED",
     inventory: "INVENTORY ITEMS", source: "SOURCE", page: "p.", workbench: "WORKBENCH", benchReady: "ACCESS", benchMissing: "NO ACCESS",
@@ -27,7 +27,7 @@ const TEXT = {
   },
   ru: {
     title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ",
-    weapons: "ОРУЖИЕ", ammo: "ПАТРОНЫ", armor: "БРОНЯ", mods: "МОДЫ", explosives: "ВЗРЫВЧАТКА", items: "ДРУГОЕ",
+    weapons: "РЕЦЕПТЫ ОРУЖИЯ", ammo: "ПАТРОНЫ", armor: "РЕЦЕПТЫ БРОНИ", mods: "МОДЫ", explosives: "ВЗРЫВЧАТКА", items: "ДРУГОЕ",
     search: "Поиск рецептов, модов, верстаков...", skill: "НАВЫК", complexity: "СЛОЖНОСТЬ", difficulty: "ТРУДНОСТЬ", materials: "МАТЕРИАЛЫ",
     requirements: "ПЕРКИ", rarity: "РЕДКОСТЬ", craft: "СОЗДАТЬ", recipeFound: "РЕЦЕПТ НАЙДЕН", forgetRecipe: "УБРАТЬ РЕЦЕПТ", unknownRare: "РЕДКИЙ РЕЦЕПТ НЕ ИЗУЧЕН",
     inventory: "ПРЕДМЕТОВ В ИНВЕНТАРЕ", source: "ИСТОЧНИК", page: "стр.", workbench: "ВЕРСТАК", benchReady: "ДОСТУП ЕСТЬ", benchMissing: "НЕТ ДОСТУПА",
@@ -41,7 +41,7 @@ const TEXT = {
   },
   uk: {
     title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ",
-    weapons: "ЗБРОЯ", ammo: "ПАТРОНИ", armor: "БРОНЯ", mods: "МОДИ", explosives: "ВИБУХІВКА", items: "ІНШЕ",
+    weapons: "РЕЦЕПТИ ЗБРОЇ", ammo: "ПАТРОНИ", armor: "РЕЦЕПТИ БРОНІ", mods: "МОДИ", explosives: "ВИБУХІВКА", items: "ІНШЕ",
     search: "Пошук рецептів, модів, верстатів...", skill: "НАВИЧКА", complexity: "СКЛАДНІСТЬ", difficulty: "ТРУДНІСТЬ", materials: "МАТЕРІАЛИ",
     requirements: "ПЕРКИ", rarity: "РІДКІСТЬ", craft: "СТВОРИТИ", recipeFound: "РЕЦЕПТ ЗНАЙДЕНО", forgetRecipe: "ПРИБРАТИ РЕЦЕПТ", unknownRare: "РІДКІСНИЙ РЕЦЕПТ НЕ ВИВЧЕНО",
     inventory: "ПРЕДМЕТІВ В ІНВЕНТАРІ", source: "ДЖЕРЕЛО", page: "стор.", workbench: "ВЕРСТАТ", benchReady: "ДОСТУП Є", benchMissing: "НЕМАЄ ДОСТУПУ",
@@ -55,7 +55,7 @@ const TEXT = {
   },
   pl: {
     title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY",
-    weapons: "BROŃ", ammo: "AMUNICJA", armor: "PANCERZ", mods: "MODY", explosives: "MATERIAŁY WYBUCHOWE", items: "INNE",
+    weapons: "RECEPTURY BRONI", ammo: "AMUNICJA", armor: "RECEPTURY PANCERZA", mods: "MODY", explosives: "MATERIAŁY WYBUCHOWE", items: "INNE",
     search: "Szukaj receptur, modyfikacji, warsztatów...", skill: "UMIEJĘTNOŚĆ", complexity: "ZŁOŻONOŚĆ", difficulty: "TRUDNOŚĆ", materials: "MATERIAŁY",
     requirements: "ATUTY", rarity: "RZADKOŚĆ", craft: "WYTWÓRZ", recipeFound: "RECEPTURA ZNALEZIONA", forgetRecipe: "USUŃ RECEPTURĘ", unknownRare: "RZADKA RECEPTURA NIEPOZNANA",
     inventory: "PRZEDMIOTY W EKWIPUNKU", source: "ŹRÓDŁO", page: "s.", workbench: "WARSZTAT", benchReady: "DOSTĘP", benchMissing: "BRAK DOSTĘPU",
@@ -89,6 +89,14 @@ const WORKBENCH_LABELS = {
   robot: { en: "Robot Workbench", ru: "Верстак роботов", uk: "Верстат роботів", pl: "Warsztat robotów" },
 };
 
+const MOD_FILTER_LABELS = {
+  en: { all: "ALL MODS", weapons: "WEAPON MODS", armor: "ARMOR MODS", power_armor: "POWER ARMOR", robot: "ROBOT MODS" },
+  ru: { all: "ВСЕ МОДЫ", weapons: "МОДЫ ОРУЖИЯ", armor: "МОДЫ БРОНИ", power_armor: "СИЛОВАЯ БРОНЯ", robot: "МОДЫ РОБОТОВ" },
+  uk: { all: "УСІ МОДИ", weapons: "МОДИ ЗБРОЇ", armor: "МОДИ БРОНІ", power_armor: "СИЛОВА БРОНЯ", robot: "МОДИ РОБОТІВ" },
+  pl: { all: "WSZYSTKIE MODY", weapons: "MODY BRONI", armor: "MODY PANCERZA", power_armor: "PANCERZ WSPOMAGANY", robot: "MODY ROBOTÓW" },
+};
+const MOD_FILTERS = ["all", "weapons", "armor", "power_armor", "robot"];
+
 function languageCode(value) {
   const code = String(value || "en").split("-")[0];
   return TEXT[code] ? code : "en";
@@ -107,6 +115,12 @@ function diceText(roll) {
   return (roll?.rolls || []).map((die) => die.value).join(", ");
 }
 
+function recipeModType(recipe) {
+  const bench = String(recipe?.workbench || "").toLowerCase();
+  if (["weapons", "armor", "power_armor", "robot"].includes(bench)) return bench;
+  return null;
+}
+
 function recipeCategory(recipe) {
   const group = String(recipe?.group || "").toUpperCase();
   const bench = String(recipe?.workbench || "").toLowerCase();
@@ -115,21 +129,16 @@ function recipeCategory(recipe) {
   if (group === "AMMUNITION") return "ammo";
 
   if (
-    bench === "weapons"
+    ["weapons", "armor", "power_armor", "robot"].includes(bench)
     || group.includes(" MOD")
     || group.endsWith("MODS")
-    || group === "ARMOR MODS"
-    || group === "ROBOT MODS"
-    || group === "POWER ARMOR SYSTEMS"
-    || group === "POWER ARMOR PLATING"
+    || group.includes("UPGRADE")
+    || group.includes("PLATING")
+    || group.includes("SYSTEM")
   ) return "mods";
 
-  if (
-    bench === "armor"
-    || group === "POWER ARMOR UPGRADES"
-    || group === "ROBOT ARMOR"
-  ) return "armor";
-
+  if (recipe?.category === "weapons") return "weapons";
+  if (recipe?.category === "armor") return "armor";
   return "items";
 }
 
@@ -138,6 +147,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
   const copy = TEXT[language];
   const [category, setCategory] = useState("mods");
+  const [modFilter, setModFilter] = useState("all");
   const [workbench, setWorkbench] = useState("all");
   const [search, setSearch] = useState("");
   const [benchAccess, setBenchAccess] = useState({});
@@ -153,13 +163,14 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     const query = search.trim().toLowerCase();
     return CRAFTING_RECIPES.filter((recipe) => {
       if (recipeCategory(recipe) !== category) return false;
+      if (category === "mods" && modFilter !== "all" && recipeModType(recipe) !== modFilter) return false;
       if (workbench !== "all" && recipe.workbench !== workbench) return false;
       if (!query) return true;
       return [recipe.name, recipe.group, recipe.skill, recipe.perks, recipe.rarity, benchLabel(recipe.workbench, language)]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query));
     });
-  }, [category, workbench, search, language]);
+  }, [category, modFilter, workbench, search, language]);
 
   const toggleKnownRecipe = (recipe) => {
     if (!setCharacter) return;
@@ -320,6 +331,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               className={`pip-btn ${category === key ? "is-primary" : ""}`}
               onClick={() => {
                 setCategory(key);
+                setModFilter("all");
                 setWorkbench("all");
                 setExpandedRecipeId(null);
               }}
@@ -330,23 +342,42 @@ export default function CraftingScreen({ character = null, setCharacter = null }
         </div>
 
         <div className="crafting-screen__bench-row">
-          <button
-            type="button"
-            className={`pip-btn ${workbench === "all" ? "is-primary" : ""}`}
-            onClick={() => setWorkbench("all")}
-          >
-            {copy.all}
-          </button>
-          {(WORKBENCHES[category] || []).map((id) => (
-            <button
-              key={id}
-              type="button"
-              className={`pip-btn ${workbench === id ? "is-primary" : ""}`}
-              onClick={() => setWorkbench(id)}
-            >
-              {benchLabel(id, language)}
-            </button>
-          ))}
+          {category === "mods" ? (
+            MOD_FILTERS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={`pip-btn ${modFilter === id ? "is-primary" : ""}`}
+                onClick={() => {
+                  setModFilter(id);
+                  setWorkbench("all");
+                  setExpandedRecipeId(null);
+                }}
+              >
+                {(MOD_FILTER_LABELS[language] || MOD_FILTER_LABELS.en)[id]}
+              </button>
+            ))
+          ) : (
+            <>
+              <buttton
+                type="button"
+                className={`pip-btn ${workbench === "all" ? "is-primary" : ""}`}
+                onClick={() => setWorkbench("all")}
+              >
+                {copy.all}
+              </button>
+              {(WORKBENCHES[category] || []).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`pip-btn ${workbench === id ? "is-primary" : ""}`}
+                  onClick={() => setWorkbench(id)}
+                >
+                  {benchLabel(id, language)}
+                </button>
+              ))}
+            </>
+          )}
         </div>
 
         <div className="crafting-screen__bench-access">
