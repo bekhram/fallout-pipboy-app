@@ -2,6 +2,10 @@ import { BESTIARY_ENTRIES } from "../data/bestiary.js";
 
 export const BESTIARY_COMBAT_STORAGE_KEY = "fallout_pipboy_bestiary_combat_v1";
 export const BESTIARY_COMBAT_CHANGED_EVENT = "pipboy:bestiary-combat-changed";
+export const BESTIARY_COMBAT_ACTION_EVENT = "pipboy:bestiary-combat-action";
+
+const DAMAGE_TYPES = ["physical", "energy", "radiation", "poison"];
+const HIT_LOCATIONS = ["head", "torso", "leftArm", "rightArm", "leftLeg", "rightLeg"];
 
 function numberOrNull(value) {
   if (value === null || value === undefined || value === "" || value === "—") return null;
@@ -22,6 +26,126 @@ function clone(value) {
 function safeLevel(value, fallback = 1) {
   const numeric = numberOrNull(value);
   return numeric == null ? fallback : Math.max(1, numeric);
+}
+
+function emptyResistanceType() {
+  return {
+    immune: false,
+    all: null,
+    head: null,
+    torso: null,
+    leftArm: null,
+    rightArm: null,
+    leftLeg: null,
+    rightLeg: null,
+  };
+}
+
+function assignResistanceLocations(target, value, locationText) {
+  const text = String(locationText || "").toLowerCase();
+  if (!text.trim() || text.includes("all")) {
+    target.all = value;
+    return;
+  }
+
+  let matched = false;
+  if (text.includes("head") || text.includes("face")) {
+    target.head = value;
+    matched = true;
+  }
+  if (text.includes("torso") || text.includes("body")) {
+    target.torso = value;
+    matched = true;
+  }
+  if (text.includes("arm")) {
+    target.leftArm = value;
+    target.rightArm = value;
+    matched = true;
+  }
+  if (text.includes("leg")) {
+    target.leftLeg = value;
+    target.rightLeg = value;
+    matched = true;
+  }
+
+  if (!matched) target.all = value;
+}
+
+export function parseBestiaryDrBlock(value) {
+  const result = Object.fromEntries(DAMAGE_TYPES.map((type) => [type, emptyResistanceType()]));
+  const segments = String(value || "")
+    .split("•")
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+
+  for (const segment of segments) {
+    const match = segment.match(
+      /^(Physical(?:\s*\/\s*Energy)?|Energy(?:\s*\/\s*Physical)?|Radiation|Poison)\s*:?\s*(.*)$/i
+    );
+    if (!match) continue;
+
+    const types = match[1]
+      .split("/")
+      .map((type) => type.trim().toLowerCase())
+      .filter((type) => DAMAGE_TYPES.includes(type));
+    const tail = String(match[2] || "").trim();
+
+    if (/immune/i.test(tail)) {
+      for (const type of types) result[type].immune = true;
+      continue;
+    }
+
+    const pieces = tail.split(";").map((piece) => piece.trim()).filter(Boolean);
+    for (const piece of pieces) {
+      const valueMatch = piece.match(/^(-?\d+(?:\.\d+)?)\s*(.*)$/);
+      if (!valueMatch) continue;
+      const resistance = Math.max(0, Number(valueMatch[1]) || 0);
+      const locationText = valueMatch[2] || "";
+      for (const type of types) {
+        assignResistanceLocations(result[type], resistance, locationText);
+      }
+    }
+  }
+
+  return result;
+}
+
+function normalizeHitLocation(value) {
+  const raw = String(value || "all").trim();
+  if (HIT_LOCATIONS.includes(raw)) return raw;
+  const normalized = raw.toLowerCase().replace(/[\s_-]/g, "");
+  if (normalized === "head" || normalized === "face") return "head";
+  if (normalized === "torso" || normalized === "body") return "torso";
+  if (normalized === "leftarm" || normalized === "arm" || normalized === "arms") return "leftArm";
+  if (normalized === "rightarm") return "rightArm";
+  if (normalized === "leftleg" || normalized === "leg" || normalized === "legs") return "leftLeg";
+  if (normalized === "rightleg") return "rightLeg";
+  return "all";
+}
+
+export function getBestiaryResistance(enemy, damageType = "physical", hitLocation = "all") {
+  const type = DAMAGE_TYPES.includes(String(damageType || "").toLowerCase())
+    ? String(damageType).toLowerCase()
+    : "physical";
+  const parsed = enemy?.resistances || parseBestiaryDrBlock(enemy?.drBlock);
+  const profile = parsed?.[type] || emptyResistanceType();
+  if (profile.immune) return 9999;
+
+  const location = normalizeHitLocation(hitLocation);
+  const locationValue = location !== "all" ? profile?.[location] : null;
+  if (Number.isFinite(Number(locationValue))) return Math.max(0, Number(locationValue));
+  if (Number.isFinite(Number(profile?.all))) return Math.max(0, Number(profile.all));
+  return 0;
+}
+
+export function hasBestiaryLocationSpecificDr(enemy, damageType = "physical") {
+  const type = DAMAGE_TYPES.includes(String(damageType || "").toLowerCase())
+    ? String(damageType).toLowerCase()
+    : "physical";
+  const parsed = enemy?.resistances || parseBestiaryDrBlock(enemy?.drBlock);
+  const profile = parsed?.[type];
+  if (!profile || profile.immune || Number.isFinite(Number(profile.all))) return false;
+  return HIT_LOCATIONS.some((location) => Number.isFinite(Number(profile?.[location])));
 }
 
 function combatSnapshot(entry, index = 0) {
@@ -50,10 +174,12 @@ function combatSnapshot(entry, index = 0) {
     meleeBonus: entry.meleeBonus || null,
     luckPoints: entry.luckPoints || null,
     drBlock: entry.drBlock || null,
+    resistances: parseBestiaryDrBlock(entry.drBlock),
     attacks: entry.attacks || null,
     abilities: entry.abilities || null,
     loot: entry.loot || null,
     source: entry.source || null,
+    combatStatuses: {},
     defeated: false,
   };
 }
@@ -73,8 +199,6 @@ function getAmbushPool(character) {
   const regionId = character?.mapData?.regionId || "commonwealth";
   let pool = BESTIARY_ENTRIES.filter((entry) => entry && entry.category === "enemy" && entry.hp && entry.attacks);
 
-  // Synths are Commonwealth-specific in the Core Rulebook context. Other regions use the
-  // generic raider/super-mutant/ghoul-style enemies that are already present in the book.
   if (regionId !== "commonwealth") {
     pool = pool.filter((entry) => !String(entry.id || "").startsWith("synth"));
   }
@@ -100,6 +224,8 @@ export function buildBestiaryCombatForEncounter(encounter, character = {}) {
     playerLevel,
     round: 1,
     enemies: [enemy],
+    log: [],
+    lastAction: null,
     createdAt: Date.now(),
   };
 }
@@ -129,7 +255,13 @@ function writeStore(store) {
 export function saveCombatForSession(sessionKey, combat) {
   if (!sessionKey || !combat) return;
   const store = readStore();
-  store.bySession[sessionKey] = { ...clone(combat), updatedAt: Date.now() };
+  const existing = store.bySession?.[sessionKey];
+  store.bySession[sessionKey] = {
+    ...clone(combat),
+    log: Array.isArray(combat.log) ? combat.log : (existing?.log || []),
+    lastAction: combat.lastAction || existing?.lastAction || null,
+    updatedAt: Date.now(),
+  };
   store.latestSessionKey = sessionKey;
   writeStore(store);
 }
@@ -168,6 +300,87 @@ export function updateCombatEnemyHp(sessionKey, instanceId, nextHp) {
   store.latestSessionKey = sessionKey;
   writeStore(store);
   return store.bySession[sessionKey];
+}
+
+export function applyCombatAttackResult(sessionKey, instanceId, result) {
+  const store = readStore();
+  const combat = store.bySession?.[sessionKey];
+  if (!combat || !result) return null;
+
+  let targetBefore = null;
+  let targetAfter = null;
+  const enemies = (combat.enemies || []).map((enemy) => {
+    if (enemy.instanceId !== instanceId) return enemy;
+    targetBefore = clone(enemy);
+
+    const current = Math.max(0, Number(enemy?.hp?.current || 0));
+    const max = Math.max(0, Number(enemy?.hp?.max || current));
+    const totalFinalDamage = Math.max(0, Number(result.totalFinalDamage || 0));
+    const radioactiveExtra = Math.max(0, Number(result.radioactiveFinalDamage || 0));
+    const mainRadiation = String(result.damageType || "").toLowerCase() === "radiation"
+      ? totalFinalDamage
+      : 0;
+    const hpDamage = mainRadiation > 0 ? 0 : totalFinalDamage;
+    const radiationDamage = mainRadiation + radioactiveExtra;
+
+    let nextCurrent = Math.max(0, current - hpDamage);
+    const nextMax = Math.max(0, max - radiationDamage);
+    nextCurrent = Math.min(nextCurrent, nextMax);
+
+    const combatStatuses = {
+      ...(enemy.combatStatuses || {}),
+      ...(result.stunned ? { stunned: true } : {}),
+      ...(result.persistentRounds > 0
+        ? { persistent: { rounds: result.persistentRounds, damageType: result.damageType } }
+        : {}),
+    };
+
+    targetAfter = {
+      ...enemy,
+      hp: { current: nextCurrent, max: nextMax },
+      combatStatuses,
+      defeated: nextCurrent <= 0 || nextMax <= 0,
+    };
+    return targetAfter;
+  });
+
+  if (!targetBefore || !targetAfter) return null;
+
+  const action = {
+    token: `combat-action-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: "player_attack",
+    at: Date.now(),
+    target: {
+      instanceId,
+      name: targetBefore.name,
+      hpBefore: targetBefore.hp,
+      hpAfter: targetAfter.hp,
+      defeated: targetAfter.defeated,
+    },
+    result: clone(result),
+  };
+
+  const allDefeated = enemies.length > 0 && enemies.every((enemy) => enemy.defeated || Number(enemy?.hp?.current || 0) <= 0);
+  const nextCombat = {
+    ...combat,
+    enemies,
+    status: allDefeated ? "resolved" : "active",
+    lastAction: action,
+    log: [...(Array.isArray(combat.log) ? combat.log : []), action].slice(-30),
+    updatedAt: Date.now(),
+  };
+
+  store.bySession[sessionKey] = nextCombat;
+  store.latestSessionKey = sessionKey;
+  writeStore(store);
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(BESTIARY_COMBAT_ACTION_EVENT, {
+      detail: { sessionKey, action, combat: nextCombat },
+    }));
+  }
+
+  return { combat: nextCombat, action };
 }
 
 export function clearCombatForSession(sessionKey) {
