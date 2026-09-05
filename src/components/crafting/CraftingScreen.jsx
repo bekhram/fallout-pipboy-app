@@ -121,12 +121,6 @@ function recipeModType(recipe) {
   return null;
 }
 
-function recipeModType(recipe) {
-  const bench = String(recipe?.workbench || "").toLowerCase();
-  if (["weapons", "armor", "power_armor", "robot"].includes(bench)) return bench;
-  return null;
-}
-
 function recipeCategory(recipe) {
   const group = String(recipe?.group || "").toUpperCase();
 
