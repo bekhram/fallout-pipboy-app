@@ -2,7 +2,7 @@
   margin-top: 10px;
   padding: 10px;
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pip-active-combat__head {
@@ -15,6 +15,34 @@
 
 .pip-active-combat__head > span {
   opacity: .7;
+}
+
+.pip-active-combat__attack-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, .8fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.pip-active-combat__attack-toolbar label {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.pip-active-combat__attack-toolbar label > span {
+  font-size: .64rem;
+  opacity: .72;
+}
+
+.pip-active-combat__attack-toolbar .pip-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.pip-active-combat__light-toggle .pip-btn {
+  min-height: 36px;
+  white-space: nowrap;
 }
 
 .pip-active-combat__list {
@@ -95,6 +123,57 @@
   background: currentColor;
 }
 
+.pip-active-combat__attack-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pip-active-combat__attack-button {
+  min-width: 140px;
+}
+
+.pip-active-combat__attack-row > span {
+  font-size: .68rem;
+  opacity: .8;
+}
+
+.pip-active-combat__attack-row > span.is-alert {
+  opacity: 1;
+  font-weight: 700;
+}
+
+.pip-active-combat__result {
+  border-top: 1px dashed color-mix(in srgb, currentColor 45%, transparent);
+  padding-top: 7px;
+  display: grid;
+  gap: 4px;
+  font-size: .69rem;
+  line-height: 1.35;
+}
+
+.pip-active-combat__result-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pip-active-combat__result-head strong {
+  font-size: .78rem;
+}
+
+.pip-active-combat__result.is-miss {
+  opacity: .72;
+}
+
+.pip-active-combat__result.is-hit > strong,
+.pip-active-combat__result.is-hit .pip-active-combat__result-head strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .pip-active-combat__details {
   display: grid;
   gap: 6px;
@@ -114,6 +193,14 @@
 }
 
 @media (max-width: 680px) {
+  .pip-active-combat__attack-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pip-active-combat__light-toggle {
+    grid-column: 1 / -1;
+  }
+
   .pip-active-combat__summary {
     grid-template-columns: minmax(0, 1fr) repeat(2, auto);
   }
@@ -123,7 +210,22 @@
     display: none;
   }
 
+  .pip-active-combat__attack-button,
   .pip-active-combat__end {
     width: 100%;
+  }
+}
+
+@media (max-width: 440px) {
+  .pip-active-combat__attack-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .pip-active-combat__light-toggle {
+    grid-column: auto;
+  }
+
+  .pip-active-combat__hp-controls {
+    grid-template-columns: auto auto minmax(56px, 1fr) auto;
   }
 }
