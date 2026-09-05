@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import BestiaryPanel from "./BestiaryPanel.jsx";
+import BestiaryPanel from "./RulebookBestiaryPanel.jsx";
+import "./rulebook-bestiary.css";
 
 function AutoGrowingTextarea({ value, onChange, ...props }) {
   const textareaRef = useRef(null);
