@@ -233,6 +233,12 @@ function buildWorldContext(mapData, playerPosition, selectedCell, savedMapData, 
           location: compactLocation(selectedStaticLocation) || selectedCell.poi || null,
         }
       : null,
+    travelHistory: {
+      totalHours: Number(savedMapData?.worldTotalHours || 0),
+      recentLog: Array.isArray(savedMapData?.travelLog)
+        ? savedMapData.travelLog.slice(0, 30)
+        : [],
+    },
   };
 }
 
@@ -349,7 +355,7 @@ function formatSessionTime(value, language) {
   }
 }
 
-export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents, characterData, weaponDatabase = [], locations = [], region = null }) {
+export default function LocalGmChat({ mapData, playerPosition, selectedCell, onWorldEvents, characterData, weaponDatabase = [], locations = [], region = null, travelEncounter = null, onTravelEncounterHandled }) {
   const { t, i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
   const tx = (key, vars) => mapUiText(language, key, vars);
@@ -366,8 +372,11 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     [rawCharacter, weaponDatabase]
   );
   const world = useMemo(
-    () => buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData, localizedLocations, region),
-    [mapData, playerPosition, selectedCell, rawCharacter, localizedLocations, region]
+    () => ({
+      ...buildWorldContext(mapData, playerPosition, selectedCell, rawCharacter?.mapData, localizedLocations, region),
+      travelEncounter: travelEncounter || rawCharacter?.mapData?.pendingTravelEncounter || null,
+    }),
+    [mapData, playerPosition, selectedCell, rawCharacter, localizedLocations, region, travelEncounter]
   );
   const isPersistentLocation = world.isStaticLocation === true;
   const loreTarget = useMemo(() => {
@@ -394,6 +403,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   const [events, setEvents] = useState(() => initialSession.events);
   const [pendingCheck, setPendingCheck] = useState(() => initialSession.check);
   const introStartedRef = useRef(new Set());
+  const encounterHandledRef = useRef(new Set());
 
   const activeSessionKey = viewedSessionKey || currentSessionKey;
   const isArchiveView = activeSessionKey !== currentSessionKey;
@@ -513,11 +523,68 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
   }
 
   useEffect(() => {
-    if (isArchiveView || messages.length > 0 || introStartedRef.current.has(currentSessionKey)) return;
+    const encounter = world.travelEncounter;
+    const token = String(encounter?.token || "").trim();
+    if (!token || isArchiveView || encounterHandledRef.current.has(token)) return undefined;
+
+    encounterHandledRef.current.add(token);
+    let cancelled = false;
+
+    const describeTravelEncounter = async () => {
+      setError("");
+      setIsSending(true);
+      try {
+        const result = await requestGm(
+          `A RANDOM TRAVEL ENCOUNTER has just interrupted global-map travel. Treat it as the immediate situation in Local mode. Encounter data: ${JSON.stringify({
+            id: encounter.id || null,
+            type: encounter.type || null,
+            text: encounter.text || null,
+            terrain: encounter.terrain || null,
+            hours: encounter.hours || null,
+            destinationName: encounter.destinationName || null,
+          })}. Use SESSION CONTEXT.world.travelHistory.recentLog to understand the route and what happened immediately before this encounter. Describe the encounter as an actionable Fallout 2d20 scene in the selected app language. Do not decide the player's actions. Do not skip straight to the outcome. End by asking what the player does, or request one meaningful skill check if the situation already demands it.`,
+          messages,
+          world
+        );
+        if (cancelled) return;
+        setPendingCheck(result.check);
+        persist(
+          [...messages, { role: "gm", text: result.text, at: Date.now() }],
+          result.events,
+          result.check
+        );
+      } catch (requestError) {
+        if (cancelled) return;
+        const fallbackText = String(encounter.text || tx("travelEncounter") || tx("gmError"));
+        persist(
+          [...messages, { role: "gm", text: fallbackText, at: Date.now() }],
+          [],
+          pendingCheck
+        );
+        setError(requestError?.message || tx("gmError"));
+      } finally {
+        if (!cancelled) {
+          setIsSending(false);
+          if (typeof onTravelEncounterHandled === "function") {
+            onTravelEncounterHandled(token);
+          }
+        }
+      }
+    };
+
+    describeTravelEncounter();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [world.travelEncounter?.token, currentSessionKey, isArchiveView]);
+
+  useEffect(() => {
+    if (world.travelEncounter || isArchiveView || messages.length > 0 || introStartedRef.current.has(currentSessionKey)) return;
     introStartedRef.current.add(currentSessionKey);
     startScene([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSessionKey, messages.length, isArchiveView]);
+  }, [currentSessionKey, messages.length, isArchiveView, world.travelEncounter]);
 
   async function sendText(text, options = {}) {
     const cleanText = String(text || "").trim();

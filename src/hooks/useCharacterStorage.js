@@ -669,18 +669,28 @@ export function useCharacterStorage(initialForm) {
           0,
           Math.min(5, Number(prev.thirst || 0)) - drainSteps
         );
+        const vigor = Math.max(
+          0,
+          Math.min(5, Number(prev.vigor || 0)) - drainSteps
+        );
 
         return {
           ...prev,
           satiety: String(satiety),
           thirst: String(thirst),
+          vigor: String(vigor),
           survivalTravelHoursRemainder: String(Number(remainder.toFixed(2))),
         };
       });
     };
 
     const handleCampRest = () => {
-      setForm((prev) => ({ ...prev, vigor: "5" }));
+      setForm((prev) => ({
+        ...prev,
+        vigor: "5",
+        satiety: String(Math.max(0, Math.min(5, Number(prev.satiety || 0)) - 2)),
+        thirst: String(Math.max(0, Math.min(5, Number(prev.thirst || 0)) - 2)),
+      }));
     };
 
     window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);

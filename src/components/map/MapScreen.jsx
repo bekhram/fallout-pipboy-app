@@ -127,6 +127,18 @@ function encounterText(encounter, t, fallback) {
   return encounter.text || encounter.name || encounter.id || fallback;
 }
 
+function createTravelEncounterContext(encounter, description, details = {}) {
+  if (!encounter) return null;
+  return {
+    token: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: encounter.id || "travel_encounter",
+    type: encounter.type || "encounter",
+    text: String(description || encounter.text || encounter.name || encounter.id || "Travel encounter"),
+    source: "global_travel",
+    ...details,
+  };
+}
+
 function mergeTravelLog(base, entries) {
   const cleanEntries = (entries || [])
     .filter((entry) => entry !== null && entry !== undefined && String(entry).trim())
@@ -413,6 +425,19 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       ? tx("routeInterrupted")
       : tx("routeComplete", { steps: selectedRoute.cells.length, hours: totalCost });
     const routeLog = [summary, ...detailLog.reverse()];
+    const encounterContext = stoppedEncounter
+      ? createTravelEncounterContext(
+          stoppedEncounter,
+          encounterText(stoppedEncounter, t, tx("travelEncounter")),
+          {
+            regionId: activeRegion.id,
+            terrain: getCell(mapData, finalPosition.x, finalPosition.y)?.terrain || null,
+            hours: totalCost,
+            worldX: worldOffset.x * mapData.cols + finalPosition.x,
+            worldY: worldOffset.y * mapData.rows + finalPosition.y,
+          }
+        )
+      : null;
 
     onMapChange((prevMap) => {
       const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
@@ -422,6 +447,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         worldTotalHours: (base.worldTotalHours || 0) + totalCost,
         discoveredKeys: nextDiscoveredKeys,
         travelLog: mergeTravelLog(base, routeLog),
+        pendingTravelEncounter: encounterContext,
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: mapData },
       };
     });
@@ -431,7 +457,8 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         detail: { hours: totalCost },
       }));
     }
-    if (reachedDestination) setSelectedCell(null);
+    if (stoppedEncounter) setMapMode("local");
+    if (reachedDestination && !stoppedEncounter) setSelectedCell(null);
   }
 
   function handleWorldTravel() {
@@ -494,6 +521,21 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         ? tx("worldRouteInterrupted")
         : tx("worldRouteStopped");
     const routeLog = [summary, ...detailLog.reverse()];
+    const encounterContext = stoppedEncounter
+      ? createTravelEncounterContext(
+          stoppedEncounter,
+          encounterText(stoppedEncounter, t, tx("travelEncounter")),
+          {
+            regionId: activeRegion.id,
+            terrain: finalStep.cell?.terrain || null,
+            hours: totalCost,
+            worldX: finalStep.worldX,
+            worldY: finalStep.worldY,
+            destinationId: trackedLocation.id,
+            destinationName: targetName,
+          }
+        )
+      : null;
 
     const finalSector = worldToSectorPosition(finalStep.worldX, finalStep.worldY, mapData.cols, mapData.rows);
     const finalMap = route.cache[finalSector.key] || finalStep.map;
@@ -509,6 +551,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         discoveredKeys: finalDiscovery,
         sectorCache: { ...(base.sectorCache || {}), ...route.cache },
         travelLog: mergeTravelLog(base, routeLog),
+        pendingTravelEncounter: encounterContext,
       };
     });
 
@@ -517,6 +560,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         detail: { hours: totalCost },
       }));
     }
+    if (stoppedEncounter) setMapMode("local");
     setSelectedCell(null);
   }
 
@@ -590,6 +634,15 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     onMapChange({ trackedLocationId: location.id });
     const cell = getCell(mapData, location.localX, location.localY);
     if (cell) setSelectedCell(cell);
+  }
+
+  function handleTravelEncounterHandled(token) {
+    if (!token) return;
+    onMapChange((prevMap) => {
+      const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
+      if (base.pendingTravelEncounter?.token !== token) return base;
+      return { ...base, pendingTravelEncounter: null };
+    });
   }
 
   return (
@@ -673,6 +726,8 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
                 setMapMode={setMapMode}
                 locations={regionLocations}
                 region={{ id: activeRegion.id, game: activeRegion.game, name: getRegionName(activeRegion, language) }}
+                travelEncounter={safeMapState.pendingTravelEncounter || null}
+                onTravelEncounterHandled={handleTravelEncounterHandled}
               />
             </div>
           </div>

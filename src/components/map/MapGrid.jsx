@@ -40,6 +40,8 @@ function MapGrid({
   setMapMode,
   locations,
   region,
+  travelEncounter,
+  onTravelEncounterHandled,
 }) {
   const { t, i18n } = useTranslation();
   const language = getMapLanguageCode(i18n.resolvedLanguage || i18n.language || "en");
@@ -139,6 +141,8 @@ function MapGrid({
               weaponDatabase={weaponDatabase}
               locations={locations}
               region={region}
+              travelEncounter={travelEncounter}
+              onTravelEncounterHandled={onTravelEncounterHandled}
             />
           </div>
         </div>
