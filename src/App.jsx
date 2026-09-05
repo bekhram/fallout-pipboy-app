@@ -1045,6 +1045,8 @@ const SkillsEditorModal = () => {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onToggleMenu={() => setSideMenuOpen(true)}
+          character={form}
+          setCharacter={setForm}
         >
           {content}
           <SideMenu
