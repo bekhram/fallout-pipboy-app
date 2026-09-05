@@ -238,10 +238,12 @@ export function createCraftedInventoryItem(recipe) {
 
 export function addCraftedInventoryItem(inventory = [], craftedItem) {
   const key = normalize(craftedItem?.canonicalName || craftedItem?.name);
+  const craftedCategory = normalize(craftedItem?.category);
+  const mergeByName = craftedCategory === "ammo";
   const index = inventory.findIndex((item) =>
     normalize(item?.canonicalName || item?.name) === key
-    && normalize(item?.category) === normalize(craftedItem?.category)
-    && normalize(item?.craftingRecipeId) === normalize(craftedItem?.craftingRecipeId)
+    && normalize(item?.category) === craftedCategory
+    && (mergeByName || normalize(item?.craftingRecipeId) === normalize(craftedItem?.craftingRecipeId))
   );
   if (index < 0) return [...inventory, craftedItem];
   const next = [...inventory];
