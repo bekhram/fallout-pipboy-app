@@ -9,6 +9,12 @@ import {
 import { ORIGINS } from "../data/origins.js";
 import { getTagSkillEquipmentGrant } from "../../data/startingEquipment.js";
 import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
+import {
+  getBobbleheadSpecialBonus,
+  getBobbleheadSkillBonus,
+  getEffectiveSpecialValue,
+  getEffectiveSkillRank,
+} from "../../data/inventory/bobbleheads.js";
 
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
 
@@ -28,7 +34,7 @@ export default function SpecialScreen({
   const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
   const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
 
-  const handleSkillRoll = (skillName, skill, testValue) => {
+  const handleSkillRoll = (skillName, skill, testValue, effectiveRank) => {
     if (!onRoll) return;
 
     onRoll({
@@ -37,7 +43,7 @@ export default function SpecialScreen({
       diceType: "d20",
       title: t(SKILL_LABEL_KEYS?.[skillName] || skillName),
       skillName,
-      skill,
+      skill: { ...skill, rank: String(effectiveRank) },
       testValue,
     });
   };
@@ -81,6 +87,8 @@ export default function SpecialScreen({
                 : limits.max !== undefined
                   ? limits.max
                   : 10;
+            const bobbleheadBonus = getBobbleheadSpecialBonus(form, key);
+            const effectiveValue = getEffectiveSpecialValue(form, key);
 
             return (
               <div className="pip-special-card" key={key}>
@@ -90,6 +98,11 @@ export default function SpecialScreen({
                   value={form.special[key]}
                   onChange={(e) => onSpecialChange(key, e.target.value)}
                 />
+                {bobbleheadBonus ? (
+                  <div style={{ fontSize: "0.68em", marginTop: "3px", textAlign: "center" }}>
+                    {effectiveValue} <span style={{ opacity: 0.72 }}>(+{bobbleheadBonus} BOBBLEHEAD)</span>
+                  </div>
+                ) : null}
                 <div
                   style={{
                     fontSize: "0.65em",
@@ -128,11 +141,12 @@ export default function SpecialScreen({
               bonus: "0",
             };
 
-            const rank = Number(skill.rank || 0);
-            const attrValue = Number(form.special?.[skill.attribute || "A"] || 0);
+            const effectiveRank = getEffectiveSkillRank(form, skillName);
+            const skillBobbleheadBonus = getBobbleheadSkillBonus(form, skillName);
+            const attrValue = getEffectiveSpecialValue(form, skill.attribute || "A");
             const tagBonus = skill.tagged ? 2 : 0;
             const bonus = Number(skill.bonus || 0);
-            const testValue = rank + attrValue + tagBonus + bonus;
+            const testValue = effectiveRank + attrValue + tagBonus + bonus;
             const sourceKey = `tag:${skillName}`;
             const equipmentChoices = getTagSkillEquipmentGrant(skillName).filter(
               (entry) => entry?.type === "choice"
@@ -144,9 +158,10 @@ export default function SpecialScreen({
                 <button
                   type="button"
                   className="pip-skill-name-simple pip-skill-name-roll-button"
-                  onClick={() => handleSkillRoll(skillName, skill, testValue)}
+                  onClick={() => handleSkillRoll(skillName, skill, testValue, effectiveRank)}
                 >
                   {t(SKILL_LABEL_KEYS?.[skillName] || skillName)}
+                  {skillBobbleheadBonus ? <small style={{ marginLeft: "5px", opacity: 0.72 }}>+1 BOBBLEHEAD</small> : null}
                 </button>
 
                 <div className="pip-skill-attr-simple">
