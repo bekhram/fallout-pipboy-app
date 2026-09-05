@@ -42,10 +42,10 @@ const FIELDS = [
 const RESISTANCE_FIELDS = FIELDS.filter((field) => field.key !== "hp");
 
 const UI = {
-  en: { normalArmor: "NORMAL ARMOR", catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", healthy: "Intact", improved: "Improved", damaged: "Damaged", broken: "Broken", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness." },
-  ru: { normalArmor: "ОБЫЧНАЯ БРОНЯ", catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", healthy: "Исправна", improved: "Улучшена", damaged: "Повреждена", broken: "Сломана", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте." },
-  uk: { normalArmor: "ЗВИЧАЙНА БРОНЯ", catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", healthy: "Справна", improved: "Покращена", damaged: "Пошкоджена", broken: "Зламана", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві." },
-  pl: { normalArmor: "ZWYKŁY PANCERZ", catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", healthy: "Sprawna", improved: "Ulepszona", damaged: "Uszkodzona", broken: "Zniszczona", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
+  en: { statsTab: "ARMOR STATS", loadoutTab: "ADD / EQUIP ARMOR", powerArmor: "POWER ARMOR", normalArmor: "NORMAL ARMOR", catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", healthy: "Intact", improved: "Improved", damaged: "Damaged", broken: "Broken", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness." },
+  ru: { statsTab: "ПОКАЗАТЕЛИ БРОНИ", loadoutTab: "ДОБАВИТЬ / НАДЕТЬ БРОНЮ", powerArmor: "СИЛОВАЯ БРОНЯ", normalArmor: "ОБЫЧНАЯ БРОНЯ", catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", healthy: "Исправна", improved: "Улучшена", damaged: "Повреждена", broken: "Сломана", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте." },
+  uk: { statsTab: "ПОКАЗНИКИ БРОНІ", loadoutTab: "ДОДАТИ / ОДЯГТИ БРОНЮ", powerArmor: "СИЛОВА БРОНЯ", normalArmor: "ЗВИЧАЙНА БРОНЯ", catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", healthy: "Справна", improved: "Покращена", damaged: "Пошкоджена", broken: "Зламана", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві." },
+  pl: { statsTab: "PARAMETRY PANCERZA", loadoutTab: "DODAJ / ZAŁÓŻ PANCERZ", powerArmor: "PANCERZ WSPOMAGANY", normalArmor: "ZWYKŁY PANCERZ", catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", healthy: "Sprawna", improved: "Ulepszona", damaged: "Uszkodzona", broken: "Zniszczona", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
 };
 
 function findById(list, id) {
@@ -70,6 +70,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
   const [database, setDatabase] = useState({ items: [], mods: [] });
   const [catalogItemId, setCatalogItemId] = useState("");
   const [loadState, setLoadState] = useState("loading");
+  const [armorView, setArmorView] = useState("stats");
 
   useEffect(() => {
     let active = true;
@@ -252,146 +253,171 @@ export default function ArmorScreen({ armor, onArmorChange }) {
         <span>{t("armorPanel.locationDr")}</span>
       </div>
 
-      <details className="pip-power-details" open>
-        <summary>[ POWER ARMOR ]</summary>
-        <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
-      </details>
+      <div className="pip-tagrow is-wrap push-bottom" role="tablist" aria-label={t("armorPanel.title")}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={armorView === "stats"}
+          className={`pip-tag ${armorView === "stats" ? "is-selected" : ""}`}
+          onClick={() => setArmorView("stats")}
+        >
+          {labels.statsTab}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={armorView === "loadout"}
+          className={`pip-tag ${armorView === "loadout" ? "is-selected" : ""}`}
+          onClick={() => setArmorView("loadout")}
+        >
+          {labels.loadoutTab}
+        </button>
+      </div>
 
-      <details className="pip-power-details" open>
-        <summary>[ {labels.normalArmor} ]</summary>
-      <div className="pip-armor-catalog">
-        <div className="pip-armor-section-title">[ {labels.catalog} ]</div>
-        {loadState === "loading" && <div className="pip-armor-message">{labels.loading}</div>}
-        {loadState === "error" && <div className="pip-armor-message is-error">{labels.error}</div>}
-        {loadState === "ready" && (
-          <div className="pip-armor-equip-row">
-            <select className="pip-input" value={catalogItemId} onChange={(event) => setCatalogItemId(event.target.value)}>
-              {database.items.filter((item) => item.family !== "robot").map((item) => (
-                <option key={item.id} value={item.id}>{armorName(item)}</option>
+      {armorView === "stats" ? (
+        <div role="tabpanel">
+          {shadowedTier > 0 && (
+            <div className="pip-armor-catalog">
+              <div className="pip-armor-section-title">[ {labels.shadowed}: {shadowedPieces} ]</div>
+              <div className="pip-armor-effect">{labels[`shadowed${shadowedTier}`]}</div>
+            </div>
+          )}
+
+          <div className="pip-armor-table">
+            <div className="pip-armor-table-head">
+              <div className="pip-armor-part-col" />
+              {FIELDS.map((field) => (
+                <div key={field.key} className="pip-armor-stat-col">
+                  <span className="pip-armor-stat-icon">{field.icon}</span>
+                  <span className="pip-armor-stat-text">{t(field.labelKey)}</span>
+                </div>
               ))}
-            </select>
-            <button type="button" className="pip-btn" onClick={equipCatalogItem}>{labels.equip}</button>
+            </div>
+            <div className="pip-armor-table-body">
+              {ARMOR_PARTS.map((part) => {
+                const status = getConditionStatus(part);
+                return (
+                  <div className={`pip-armor-row${status ? ` is-${status}` : ""}`} key={part}>
+                    <div className="pip-armor-row-label">
+                      <span className="pip-armor-row-code">{CODES[part]}</span>
+                      <span className="pip-armor-row-name">
+                        {t(LABEL_KEYS[part] || part)}
+                        {status && <small className={`pip-armor-condition is-${status}`}>{labels[status]}</small>}
+                      </span>
+                    </div>
+                    {FIELDS.map((field) => {
+                      const canAdjust = !powerArmorStats && field.key !== "hp";
+                      const value = calculated[part]?.[field.key] ?? 0;
+                      return (
+                        <label key={`${part}-${field.key}`} className="pip-armor-cell">
+                          <span className="pip-armor-cell-mobile-icon">
+                            {field.icon || t(field.labelKey)}
+                          </span>
+                          <span className={`pip-armor-value-control${canAdjust ? " is-adjustable" : ""}`}>
+                            {canAdjust && (
+                              <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value - 1)} aria-label={`-${t(field.labelKey)}`}>−</button>
+                            )}
+                            <input
+                              className="pip-input pip-armor-mini-input"
+                              type="number"
+                              min="0"
+                              value={value}
+                              readOnly={!canAdjust}
+                              onChange={canAdjust ? (event) => setResistance(part, field.key, event.target.value) : undefined}
+                              title={t(field.labelKey)}
+                            />
+                            {canAdjust && (
+                              <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value + 1)} aria-label={`+${t(field.labelKey)}`}>+</button>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        )}
-      </div>
 
-      <div className="pip-armor-loadout">
-        {ARMOR_PARTS.map((part) => {
-          const selected = slots[part] || {};
-          const item = findById(database.items, selected.itemId);
-          const availableItems = compatibleArmorItems(database.items, part);
-          const availableMods = compatibleArmorMods(database.mods, item, part);
-          return (
-            <article className="pip-armor-slot" key={part}>
-              <div className="pip-armor-slot-head">
-                <span className="pip-armor-row-code">{CODES[part]}</span>
-                <strong>{t(LABEL_KEYS[part] || part)}</strong>
-                {selected.itemId && (
-                  <button type="button" className="pip-armor-remove" onClick={() => removeSlot(part)} title={labels.remove}>×</button>
-                )}
+          <div className="pip-armor-totals">
+            <strong>[ {labels.total} ]</strong>
+            <span>{labels.weight}: {totals.weight}</span>
+            <span>{labels.cost}: {totals.cost}</span>
+          </div>
+        </div>
+      ) : (
+        <div role="tabpanel">
+          <div className="pip-armor-section-title">[ {labels.powerArmor} ]</div>
+          <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
+
+          <div className="pip-armor-section-title push-top">[ {labels.normalArmor} ]</div>
+          <div className="pip-armor-catalog">
+            <div className="pip-armor-section-title">[ {labels.catalog} ]</div>
+            {loadState === "loading" && <div className="pip-armor-message">{labels.loading}</div>}
+            {loadState === "error" && <div className="pip-armor-message is-error">{labels.error}</div>}
+            {loadState === "ready" && (
+              <div className="pip-armor-equip-row">
+                <select className="pip-input" value={catalogItemId} onChange={(event) => setCatalogItemId(event.target.value)}>
+                  {database.items.filter((item) => item.family !== "robot").map((item) => (
+                    <option key={item.id} value={item.id}>{armorName(item)}</option>
+                  ))}
+                </select>
+                <button type="button" className="pip-btn" onClick={equipCatalogItem}>{labels.equip}</button>
               </div>
-              <label>
-                <span>{labels.item}</span>
-                <select
-                  className="pip-input"
-                  value={selected.itemId || ""}
-                  onChange={(event) => changeSlot(part, { itemId: event.target.value, materialId: "", upgradeId: "" })}
-                >
-                  <option value="">{labels.none}</option>
-                  {availableItems.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
-                </select>
-              </label>
-              <label>
-                <span>{labels.material}</span>
-                <select className="pip-input" disabled={!item} value={selected.materialId || ""} onChange={(event) => changeSlot(part, { materialId: event.target.value })}>
-                  <option value="">{labels.none}</option>
-                  {availableMods.materials.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
-                </select>
-              </label>
-              <label>
-                <span>{labels.upgrade}</span>
-                <select className="pip-input" disabled={!item} value={selected.upgradeId || ""} onChange={(event) => changeSlot(part, { upgradeId: event.target.value })}>
-                  <option value="">{labels.none}</option>
-                  {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
-                </select>
-              </label>
-              {(findById(database.mods, selected.materialId)?.effects || findById(database.mods, selected.upgradeId)?.effects) && (
-                <p className="pip-armor-effect">
-                  {[findById(database.mods, selected.materialId), findById(database.mods, selected.upgradeId)].map(armorEffect).filter(Boolean).join(" ")}
-                </p>
-              )}
-            </article>
-          );
-        })}
-      </div>
+            )}
+          </div>
 
-      {shadowedTier > 0 && (
-        <div className="pip-armor-catalog">
-          <div className="pip-armor-section-title">[ {labels.shadowed}: {shadowedPieces} ]</div>
-          <div className="pip-armor-effect">{labels[`shadowed${shadowedTier}`]}</div>
+          <div className="pip-armor-loadout">
+            {ARMOR_PARTS.map((part) => {
+              const selected = slots[part] || {};
+              const item = findById(database.items, selected.itemId);
+              const availableItems = compatibleArmorItems(database.items, part);
+              const availableMods = compatibleArmorMods(database.mods, item, part);
+              return (
+                <article className="pip-armor-slot" key={part}>
+                  <div className="pip-armor-slot-head">
+                    <span className="pip-armor-row-code">{CODES[part]}</span>
+                    <strong>{t(LABEL_KEYS[part] || part)}</strong>
+                    {selected.itemId && (
+                      <button type="button" className="pip-armor-remove" onClick={() => removeSlot(part)} title={labels.remove}>×</button>
+                    )}
+                  </div>
+                  <label>
+                    <span>{labels.item}</span>
+                    <select
+                      className="pip-input"
+                      value={selected.itemId || ""}
+                      onChange={(event) => changeSlot(part, { itemId: event.target.value, materialId: "", upgradeId: "" })}
+                    >
+                      <option value="">{labels.none}</option>
+                      {availableItems.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>{labels.material}</span>
+                    <select className="pip-input" disabled={!item} value={selected.materialId || ""} onChange={(event) => changeSlot(part, { materialId: event.target.value })}>
+                      <option value="">{labels.none}</option>
+                      {availableMods.materials.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <span>{labels.upgrade}</span>
+                    <select className="pip-input" disabled={!item} value={selected.upgradeId || ""} onChange={(event) => changeSlot(part, { upgradeId: event.target.value })}>
+                      <option value="">{labels.none}</option>
+                      {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
+                    </select>
+                  </label>
+                  {(findById(database.mods, selected.materialId)?.effects || findById(database.mods, selected.upgradeId)?.effects) && (
+                    <p className="pip-armor-effect">
+                      {[findById(database.mods, selected.materialId), findById(database.mods, selected.upgradeId)].map(armorEffect).filter(Boolean).join(" ")}
+                    </p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
         </div>
       )}
-
-      <div className="pip-armor-table">
-        <div className="pip-armor-table-head">
-          <div className="pip-armor-part-col" />
-          {FIELDS.map((field) => (
-            <div key={field.key} className="pip-armor-stat-col">
-              <span className="pip-armor-stat-icon">{field.icon}</span>
-              <span className="pip-armor-stat-text">{t(field.labelKey)}</span>
-            </div>
-          ))}
-        </div>
-        <div className="pip-armor-table-body">
-          {ARMOR_PARTS.map((part) => {
-            const status = getConditionStatus(part);
-            return (
-            <div className={`pip-armor-row${status ? ` is-${status}` : ""}`} key={part}>
-              <div className="pip-armor-row-label">
-                <span className="pip-armor-row-code">{CODES[part]}</span>
-                <span className="pip-armor-row-name">
-                  {t(LABEL_KEYS[part] || part)}
-                  {status && <small className={`pip-armor-condition is-${status}`}>{labels[status]}</small>}
-                </span>
-              </div>
-              {FIELDS.map((field) => {
-                const canAdjust = !powerArmorStats && field.key !== "hp";
-                const value = calculated[part]?.[field.key] ?? 0;
-                return (
-                <label key={`${part}-${field.key}`} className="pip-armor-cell">
-                  <span className="pip-armor-cell-mobile-icon">
-                    {field.icon || t(field.labelKey)}
-                  </span>
-                  <span className={`pip-armor-value-control${canAdjust ? " is-adjustable" : ""}`}>
-                    {canAdjust && (
-                      <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value - 1)} aria-label={`-${t(field.labelKey)}`}>−</button>
-                    )}
-                    <input
-                      className="pip-input pip-armor-mini-input"
-                      type="number"
-                      min="0"
-                      value={value}
-                      readOnly={!canAdjust}
-                      onChange={canAdjust ? (event) => setResistance(part, field.key, event.target.value) : undefined}
-                      title={t(field.labelKey)}
-                    />
-                    {canAdjust && (
-                      <button type="button" className="pip-armor-step" onClick={() => setResistance(part, field.key, value + 1)} aria-label={`+${t(field.labelKey)}`}>+</button>
-                    )}
-                  </span>
-                </label>
-              )})}
-            </div>
-          )})}
-        </div>
-      </div>
-
-      <div className="pip-armor-totals">
-        <strong>[ {labels.total} ]</strong>
-        <span>{labels.weight}: {totals.weight}</span>
-        <span>{labels.cost}: {totals.cost}</span>
-      </div>
-      </details>
     </section>
   );
 }
