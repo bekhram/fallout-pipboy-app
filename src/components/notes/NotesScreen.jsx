@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import BestiaryPanel from "./BestiaryPanel.jsx";
 
 function AutoGrowingTextarea({ value, onChange, ...props }) {
   const textareaRef = useRef(null);
@@ -24,7 +25,7 @@ function AutoGrowingTextarea({ value, onChange, ...props }) {
 
 export default function NotesScreen({ form, onTopLevelChange }) {
   const [editingBackstory, setEditingBackstory] = useState(false);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const backstoryText = form.backstory || "";
   const backstoryPreview =
@@ -92,6 +93,8 @@ export default function NotesScreen({ form, onTopLevelChange }) {
           onChange={(e) => onTopLevelChange("questNotes", e.target.value)}
         />
       </section>
+
+      <BestiaryPanel language={i18n.resolvedLanguage || i18n.language} />
     </div>
   );
 }
