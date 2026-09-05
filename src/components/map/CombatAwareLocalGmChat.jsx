@@ -7,10 +7,10 @@ import { getMapLanguageCode } from "./mapUiText.js";
 const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_sessions_v3";
 
 const LABELS = {
-  en: { attack: "ATTACK", enemyTurn: "ENEMY TURN", hit: "HIT", miss: "MISS", damage: "DAMAGE", hp: "HP", location: "LOCATION", dr: "DR", action: "ACTION", radiation: "RAD" },
-  ru: { attack: "АТАКА", enemyTurn: "ХОД ПРОТИВНИКА", hit: "ПОПАДАНИЕ", miss: "ПРОМАХ", damage: "УРОН", hp: "HP", location: "ЗОНА", dr: "DR", action: "ДЕЙСТВИЕ", radiation: "РАД" },
-  uk: { attack: "АТАКА", enemyTurn: "ХІД ПРОТИВНИКА", hit: "ВЛУЧАННЯ", miss: "ПРОМАХ", damage: "ШКОДА", hp: "HP", location: "ЗОНА", dr: "DR", action: "ДІЯ", radiation: "РАД" },
-  pl: { attack: "ATAK", enemyTurn: "TURA PRZECIWNIKA", hit: "TRAFIENIE", miss: "PUDŁO", damage: "OBRAŻENIA", hp: "HP", location: "LOKACJA", dr: "DR", action: "AKCJA", radiation: "RAD" },
+  en: { attack: "ATTACK", companionTurn: "COMPANION TURN", enemyTurn: "ENEMY TURN", hit: "HIT", miss: "MISS", damage: "DAMAGE", hp: "HP", location: "LOCATION", dr: "DR", action: "ACTION", radiation: "RAD" },
+  ru: { attack: "АТАКА", companionTurn: "ХОД КОМПАНЬОНА", enemyTurn: "ХОД ПРОТИВНИКА", hit: "ПОПАДАНИЕ", miss: "ПРОМАХ", damage: "УРОН", hp: "HP", location: "ЗОНА", dr: "DR", action: "ДЕЙСТВИЕ", radiation: "РАД" },
+  uk: { attack: "АТАКА", companionTurn: "ХІД КОМПАНЬЙОНА", enemyTurn: "ХІД ПРОТИВНИКА", hit: "ВЛУЧАННЯ", miss: "ПРОМАХ", damage: "ШКОДА", hp: "HP", location: "ЗОНА", dr: "DR", action: "ДІЯ", radiation: "РАД" },
+  pl: { attack: "ATAK", companionTurn: "TURA TOWARZYSZA", enemyTurn: "TURA PRZECIWNIKA", hit: "TRAFIENIE", miss: "PUDŁO", damage: "OBRAŻENIA", hp: "HP", location: "LOKACJA", dr: "DR", action: "AKCJA", radiation: "RAD" },
 };
 
 function readStore() {
@@ -46,18 +46,32 @@ function formatPlayerAttack(action, copy) {
     `${copy.attack}: ${weapon} → ${targetName} // ${status}`,
     `d20 ${attackDice} // TN ${result?.skill?.targetNumber ?? "—"} // D ${result?.difficulty ?? "—"} // successes ${result?.attackRoll?.totalSuccesses ?? 0}`,
   ];
-
   if (result?.hit && result?.damageRoll) {
     lines.push(
       `${copy.location}: ${result?.hitLocationLabel || "—"}`,
       `${copy.damage}: ${result?.damageDiceCount ?? 0} CD ${formatDice(result?.damageRoll?.dice)} = ${result?.damageRoll?.rawDamage ?? 0} // ${copy.dr} ${result?.resistance === "immune" ? "IMMUNE" : result?.resistance ?? 0} // final ${result?.totalFinalDamage ?? 0}`
     );
   }
+  if (target?.hpBefore && target?.hpAfter) lines.push(`${copy.hp}: ${target.hpBefore.current}/${target.hpBefore.max} → ${target.hpAfter.current}/${target.hpAfter.max}`);
+  return lines.join("\n");
+}
 
-  if (target?.hpBefore && target?.hpAfter) {
-    lines.push(`${copy.hp}: ${target.hpBefore.current}/${target.hpBefore.max} → ${target.hpAfter.current}/${target.hpAfter.max}`);
+function formatCompanionAttack(action, copy) {
+  const result = action?.result || {};
+  const actor = action?.actor || result?.actor || {};
+  const target = action?.target || {};
+  const status = result?.hit ? copy.hit : copy.miss;
+  const lines = [
+    `${copy.companionTurn}: ${actor.name || "Companion"} // ${result?.attack?.name || copy.attack} → ${target.name || result?.target?.name || "Target"} // ${status}`,
+    `d20 ${formatDice(result?.attackRoll?.dice)} // TN ${result?.attack?.targetNumber ?? "—"} // D ${result?.attack?.difficulty ?? "—"} // successes ${result?.attackRoll?.totalSuccesses ?? 0}`,
+  ];
+  if (result?.hit && result?.damageRoll) {
+    lines.push(
+      `${copy.location}: ${result?.hitLocationLabel || "—"}`,
+      `${copy.damage}: ${result?.attack?.damageDice ?? 0} CD ${formatDice(result?.damageRoll?.dice)} = ${result?.damageRoll?.rawDamage ?? 0} // ${copy.dr} ${result?.resistance === "immune" ? "IMMUNE" : result?.resistance ?? 0} // final ${result?.totalFinalDamage ?? 0}`
+    );
   }
-
+  if (target?.hpBefore && target?.hpAfter) lines.push(`${copy.hp}: ${target.hpBefore.current}/${target.hpBefore.max} → ${target.hpAfter.current}/${target.hpAfter.max}`);
   return lines.join("\n");
 }
 
@@ -67,34 +81,25 @@ function formatEnemyAttack(action, copy) {
   const target = action?.target || {};
   const attackName = result?.attack?.name || copy.attack;
   const status = result?.hit ? copy.hit : copy.miss;
-  const attackDice = formatDice(result?.attackRoll?.dice);
   const lines = [
     `${copy.enemyTurn}: ${actor?.name || "Enemy"} // ${attackName} → ${target?.name || result?.target?.name || "Player"} // ${status}`,
-    `d20 ${attackDice} // TN ${result?.attack?.targetNumber ?? "—"} // D ${result?.difficulty ?? "—"} // successes ${result?.attackRoll?.totalSuccesses ?? 0}`,
+    `d20 ${formatDice(result?.attackRoll?.dice)} // TN ${result?.attack?.targetNumber ?? "—"} // D ${result?.difficulty ?? "—"} // successes ${result?.attackRoll?.totalSuccesses ?? 0}`,
   ];
-
   if (result?.hit && result?.damageRoll) {
     lines.push(
       `${copy.location}: ${result?.hitLocationLabel || "—"} (${result?.hitLocationRoll ?? "—"})`,
       `${copy.damage}: ${result?.attack?.damageDice ?? 0} CD ${formatDice(result?.damageRoll?.dice)} = ${result?.damageRoll?.rawDamage ?? 0} // ${copy.dr} ${result?.resistance === "immune" ? "IMMUNE" : result?.resistance ?? 0} // final ${result?.totalFinalDamage ?? 0}`
     );
   }
-
   if (target?.hpBefore && target?.hpAfter) {
     const afterMax = target.hpAfter.effectiveMax ?? target.hpAfter.max;
     lines.push(`${copy.hp}: ${target.hpBefore.current}/${target.hpBefore.max} → ${target.hpAfter.current}/${afterMax}`);
-    if (Number(target.hpBefore.radiation || 0) !== Number(target.hpAfter.radiation || 0)) {
-      lines.push(`${copy.radiation}: ${target.hpBefore.radiation || 0} → ${target.hpAfter.radiation || 0}`);
-    }
+    if (Number(target.hpBefore.radiation || 0) !== Number(target.hpAfter.radiation || 0)) lines.push(`${copy.radiation}: ${target.hpBefore.radiation || 0} → ${target.hpAfter.radiation || 0}`);
   }
-
   if (result?.stunned) lines.push("STUN: ACTIVE");
   if (Number(result?.persistentRounds || 0) > 0) lines.push(`PERSISTENT: ${result.persistentRounds}`);
-  if (Array.isArray(result?.criticalInjuries) && result.criticalInjuries.length) {
-    lines.push(`INJURY: ${result.criticalInjuries.map((item) => item.location).join(", ")}`);
-  }
+  if (Array.isArray(result?.criticalInjuries) && result.criticalInjuries.length) lines.push(`INJURY: ${result.criticalInjuries.map((item) => item.location).join(", ")}`);
   if (result?.piercingUnresolved) lines.push("PIERCING: rating missing in imported stat block; no DR ignored automatically");
-
   return lines.join("\n");
 }
 
@@ -109,6 +114,7 @@ function formatEnemyAction(action, copy) {
 
 function formatMechanicalAction(action, language) {
   const copy = LABELS[language] || LABELS.en;
+  if (action?.type === "companion_attack") return formatCompanionAttack(action, copy);
   if (action?.type === "enemy_attack") return formatEnemyAttack(action, copy);
   if (action?.type === "enemy_action") return formatEnemyAction(action, copy);
   return formatPlayerAttack(action, copy);
@@ -120,13 +126,7 @@ function mergeEvents(previous, incoming) {
     if (!event?.type || !event?.title) continue;
     const key = `${event.type}:${event.title}`.toLowerCase();
     const index = next.findIndex((item) => `${item?.type}:${item?.title}`.toLowerCase() === key);
-    const normalized = {
-      type: String(event.type),
-      title: String(event.title),
-      detail: String(event.detail || ""),
-      status: String(event.status || "discovered"),
-      at: Date.now(),
-    };
+    const normalized = { type: String(event.type), title: String(event.title), detail: String(event.detail || ""), status: String(event.status || "discovered"), at: Date.now() };
     if (index >= 0) next[index] = { ...next[index], ...normalized };
     else next.push(normalized);
   }
@@ -141,13 +141,10 @@ function sessionHistory(session) {
 }
 
 function narrationInstruction(action) {
-  if (action?.type === "enemy_attack") {
-    return `An application-generated ENEMY ATTACK has just been resolved after Auto GM selected the enemy intent from the supplied bestiary attacks. The result below is authoritative and has already been applied to the stored player character state. Do not reroll or change the attack, damage, hit location, DR, HP, radiation, Stun, Persistent status, or Injury. Briefly narrate the result in the selected app language, respect both combatants' remaining state, then ask what the player does next. RESULT: ${JSON.stringify(action)}`;
-  }
-  if (action?.type === "enemy_action") {
-    return `Auto GM selected a non-damage enemy action from the combat decision layer. Treat this action as already chosen and do not replace it with a different action. Briefly narrate it in the selected app language and continue the combat situation without deciding the player's response. RESULT: ${JSON.stringify(action)}`;
-  }
-  return `An application-generated PLAYER ATTACK has just been resolved. The result below is authoritative and has already been applied to the stored enemy combat state. Do not reroll the attack, damage, hit location, DR, or HP change. Briefly narrate the result in the selected app language, respect the enemy's remaining HP and abilities, then continue the combat situation without deciding the player's next action. RESULT: ${JSON.stringify(action)}`;
+  if (action?.type === "companion_attack") return `An application-generated COMPANION ATTACK has just been resolved. The companion, attack roll, damage, hit location, DR and enemy HP change below are authoritative and already applied. Do not reroll or change them. Briefly narrate the companion's action in the selected app language and continue the combat without deciding the player's action. RESULT: ${JSON.stringify(action)}`;
+  if (action?.type === "enemy_attack") return `An application-generated ENEMY ATTACK has just been resolved after Auto GM selected the enemy intent from the supplied bestiary attacks. The result below is authoritative and has already been applied to the stored player character state. Do not reroll or change the attack, damage, hit location, DR, HP, radiation, Stun, Persistent status, or Injury. Briefly narrate the result in the selected app language, respect both combatants' remaining state, then continue the turn order without inventing another action. RESULT: ${JSON.stringify(action)}`;
+  if (action?.type === "enemy_action") return `Auto GM selected a non-damage enemy action from the combat decision layer. Treat this action as already chosen and do not replace it with a different action. Briefly narrate it in the selected app language and continue the combat turn order. RESULT: ${JSON.stringify(action)}`;
+  return `An application-generated PLAYER ATTACK has just been resolved. The result below is authoritative and has already been applied to the stored enemy combat state. Do not reroll the attack, damage, hit location, DR, or HP change. Briefly narrate the result in the selected app language, respect the enemy's remaining HP and abilities, then continue the combat turn order without inventing another player action. RESULT: ${JSON.stringify(action)}`;
 }
 
 export default function CombatAwareLocalGmChat(props) {
@@ -169,24 +166,11 @@ export default function CombatAwareLocalGmChat(props) {
 
       queueRef.current = queueRef.current.then(async () => {
         const store = readStore();
-        const session = store[sessionKey] || {
-          messages: [],
-          events: [],
-          check: null,
-          persistent: false,
-          temporary: true,
-          updatedAt: Date.now(),
-        };
+        const session = store[sessionKey] || { messages: [], events: [], check: null, persistent: false, temporary: true, updatedAt: Date.now() };
         const existingMessages = Array.isArray(session.messages) ? session.messages : [];
         if (existingMessages.some((message) => message?.combatActionToken === token)) return;
 
-        const mechanicalText = formatMechanicalAction(action, language);
-        const mechanicalMessage = {
-          role: "gm",
-          text: mechanicalText,
-          at: Date.now(),
-          combatActionToken: token,
-        };
+        const mechanicalMessage = { role: "gm", text: formatMechanicalAction(action, language), at: Date.now(), combatActionToken: token };
         const baseMessages = [...existingMessages, mechanicalMessage].slice(-80);
         store[sessionKey] = { ...session, messages: baseMessages, updatedAt: Date.now() };
         writeStore(store);
@@ -195,9 +179,7 @@ export default function CombatAwareLocalGmChat(props) {
         try {
           const mapData = props.mapData || {};
           const playerPosition = props.playerPosition || null;
-          const currentCell = (mapData.cells || []).find(
-            (cell) => cell.x === playerPosition?.x && cell.y === playerPosition?.y
-          ) || null;
+          const currentCell = (mapData.cells || []).find((cell) => cell.x === playerPosition?.x && cell.y === playerPosition?.y) || null;
           const world = {
             region: props.region || null,
             sector: mapData.title || mapData.id || null,
@@ -214,10 +196,7 @@ export default function CombatAwareLocalGmChat(props) {
               character: props.characterData || null,
               world,
               language,
-              locationState: {
-                persistent: session.persistent === true,
-                facts: Array.isArray(session.events) ? session.events.slice(-40) : [],
-              },
+              locationState: { persistent: session.persistent === true, facts: Array.isArray(session.events) ? session.events.slice(-40) : [] },
               sessionKey,
               history: sessionHistory({ ...session, messages: baseMessages }),
               message: narrationInstruction(action),
@@ -225,16 +204,12 @@ export default function CombatAwareLocalGmChat(props) {
           });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok || !payload?.text) return;
-
           const latestStore = readStore();
           const latestSession = latestStore[sessionKey] || session;
           const latestMessages = Array.isArray(latestSession.messages) ? latestSession.messages : baseMessages;
           latestStore[sessionKey] = {
             ...latestSession,
-            messages: [
-              ...latestMessages,
-              { role: "gm", text: payload.text, at: Date.now(), combatNarrationToken: token },
-            ].slice(-80),
+            messages: [...latestMessages, { role: "gm", text: payload.text, at: Date.now(), combatNarrationToken: token }].slice(-80),
             events: mergeEvents(latestSession.events, payload.events),
             check: payload?.check && typeof payload.check === "object" ? payload.check : null,
             updatedAt: Date.now(),
@@ -242,7 +217,7 @@ export default function CombatAwareLocalGmChat(props) {
           writeStore(latestStore);
           setVersion((value) => value + 1);
         } catch {
-          // The authoritative mechanical result remains in chat even if GM narration is unavailable.
+          // Mechanical result remains authoritative even if narration is unavailable.
         }
       });
     };
