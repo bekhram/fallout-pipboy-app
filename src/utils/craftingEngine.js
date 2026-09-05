@@ -145,7 +145,28 @@ function findDatabaseOutput(name) {
   return INVENTORY_DATABASE.find((item) => normalize(item?.name) === wanted) || null;
 }
 
+function isPowerArmorStealthBoyRecipe(recipe) {
+  return normalize(recipe?.workbench) === "power_armor"
+    && normalize(recipe?.name) === "stealth boy";
+}
+
 export function createCraftedInventoryItem(recipe) {
+  if (isPowerArmorStealthBoyRecipe(recipe)) {
+    const name = "Stealth Boy — Power Armor System";
+    return {
+      name,
+      canonicalName: name,
+      category: "misc",
+      quantity: "1",
+      cost: "",
+      weight: "0",
+      effect: "Crafted Power Armor system modification",
+      crafted: true,
+      craftingRecipeId: recipe.id,
+      craftingWorkbench: "power_armor",
+    };
+  }
+
   const databaseItem = findDatabaseOutput(recipe?.outputName || recipe?.name);
   if (databaseItem) {
     return {
