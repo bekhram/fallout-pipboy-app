@@ -3,6 +3,10 @@ import { useTranslation } from "react-i18next";
 import { createRandomMap } from "../../data/map/bostonMap.js";
 import { MAP_REGIONS, getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
 import { maybeRollTravelEncounter } from "../../utils/encounterEngine.js";
+import {
+  PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT,
+  resolveTravelEncounter,
+} from "../../utils/travelEncounterResolution.js";
 import MapGrid from "./MapGrid.jsx";
 import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
@@ -261,6 +265,13 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     () => ({ ...buildDefaultMapState(), ...(mapState || {}) }),
     [mapState]
   );
+
+  useEffect(() => {
+    if (safeMapState.pendingTravelEncounter?.token) {
+      setMapMode("local");
+    }
+  }, [safeMapState.pendingTravelEncounter?.token]);
+
   const activeRegion = getMapRegion(safeMapState.regionId);
   const regionLocations = activeRegion.locations;
 
@@ -425,6 +436,9 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       ? tx("routeInterrupted")
       : tx("routeComplete", { steps: selectedRoute.cells.length, hours: totalCost });
     const routeLog = [summary, ...detailLog.reverse()];
+    const encounterResolution = stoppedEncounter
+      ? resolveTravelEncounter(stoppedEncounter, character)
+      : null;
     const encounterContext = stoppedEncounter
       ? createTravelEncounterContext(
           stoppedEncounter,
@@ -435,6 +449,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
             hours: totalCost,
             worldX: worldOffset.x * mapData.cols + finalPosition.x,
             worldY: worldOffset.y * mapData.rows + finalPosition.y,
+            resolution: encounterResolution,
           }
         )
       : null;
@@ -455,6 +470,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     if (typeof window !== "undefined" && totalCost > 0) {
       window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
         detail: { hours: totalCost },
+      }));
+    }
+    if (typeof window !== "undefined" && encounterContext?.resolution) {
+      window.dispatchEvent(new CustomEvent(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, {
+        detail: { token: encounterContext.token, resolution: encounterContext.resolution },
       }));
     }
     if (stoppedEncounter) setMapMode("local");
@@ -521,6 +541,9 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         ? tx("worldRouteInterrupted")
         : tx("worldRouteStopped");
     const routeLog = [summary, ...detailLog.reverse()];
+    const encounterResolution = stoppedEncounter
+      ? resolveTravelEncounter(stoppedEncounter, character)
+      : null;
     const encounterContext = stoppedEncounter
       ? createTravelEncounterContext(
           stoppedEncounter,
@@ -533,6 +556,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
             worldY: finalStep.worldY,
             destinationId: trackedLocation.id,
             destinationName: targetName,
+            resolution: encounterResolution,
           }
         )
       : null;
@@ -558,6 +582,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     if (typeof window !== "undefined" && totalCost > 0) {
       window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
         detail: { hours: totalCost },
+      }));
+    }
+    if (typeof window !== "undefined" && encounterContext?.resolution) {
+      window.dispatchEvent(new CustomEvent(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, {
+        detail: { token: encounterContext.token, resolution: encounterContext.resolution },
       }));
     }
     if (stoppedEncounter) setMapMode("local");

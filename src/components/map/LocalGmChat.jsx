@@ -36,6 +36,31 @@ const LORE_TEXT = {
 
 const LORE_REFERENCE_CACHE = new Map();
 
+const ENCOUNTER_RESULT_TEXT = {
+  en: { event: "TRAVEL ENCOUNTER", roll: "Damage roll", raw: "raw", location: "location", dr: "DR", final: "final", hp: "HP", rad: "RAD", critical: "critical injury threshold reached" },
+  ru: { event: "СЛУЧАЙНОЕ СОБЫТИЕ", roll: "Бросок урона", raw: "до DR", location: "зона", dr: "DR", final: "итого", hp: "HP", rad: "РАД", critical: "достигнут порог критической травмы" },
+  uk: { event: "ВИПАДКОВА ЗУСТРІЧ", roll: "Кидок шкоди", raw: "до DR", location: "зона", dr: "DR", final: "підсумок", hp: "HP", rad: "РАД", critical: "досягнуто поріг критичної травми" },
+  pl: { event: "LOSOWE ZDARZENIE", roll: "Rzut obrażeń", raw: "przed DR", location: "lokacja", dr: "DR", final: "wynik", hp: "HP", rad: "RAD", critical: "osiągnięto próg obrażeń krytycznych" },
+};
+
+function formatTravelEncounterResolution(encounter, language) {
+  const resolution = encounter?.resolution;
+  if (!resolution) return "";
+  const text = ENCOUNTER_RESULT_TEXT[language] || ENCOUNTER_RESULT_TEXT.en;
+  const title = `${text.event}: ${encounter.text || encounter.id || "-"}`;
+
+  if (resolution.kind === "damage") {
+    const dice = Array.isArray(resolution.dice) ? resolution.dice.join(", ") : "-";
+    const location = resolution.hitLocationLabel || resolution.hitLocation || "-";
+    const resource = resolution.damageType === "radiation" ? text.rad : text.hp;
+    return `${title}
+${text.roll}: ${resolution.diceCount} CD [${dice}] = ${resolution.rawDamage} ${resolution.damageType} (${text.raw}); ${text.location}: ${location}; ${text.dr}: ${resolution.resistance}; ${text.final}: ${resolution.finalDamage} ${resource}${resolution.criticalInjury ? `; ${text.critical}` : ""}.`;
+  }
+
+  return `${title}
+${resolution.summary || ""}`.trim();
+}
+
 const LEGACY_CHAT_STORAGE_KEYS = [
   "fallout_pipboy_local_gm_sessions_v2",
   "fallout_pipboy_local_gm_chat_v1",
@@ -531,6 +556,16 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
     let cancelled = false;
 
     const describeTravelEncounter = async () => {
+      const mechanicalText = formatTravelEncounterResolution(encounter, language);
+      const alreadyLogged = messages.some((message) => message?.travelEncounterToken === token);
+      const baseMessages = mechanicalText && !alreadyLogged
+        ? [...messages, { role: "gm", text: mechanicalText, at: Date.now(), travelEncounterToken: token }]
+        : messages;
+
+      if (baseMessages !== messages) {
+        persist(baseMessages, [], pendingCheck);
+      }
+
       setError("");
       setIsSending(true);
       try {
@@ -542,14 +577,15 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
             terrain: encounter.terrain || null,
             hours: encounter.hours || null,
             destinationName: encounter.destinationName || null,
-          })}. Use SESSION CONTEXT.world.travelHistory.recentLog to understand the route and what happened immediately before this encounter. Describe the encounter as an actionable Fallout 2d20 scene in the selected app language. Do not decide the player's actions. Do not skip straight to the outcome. End by asking what the player does, or request one meaningful skill check if the situation already demands it.`,
-          messages,
+            resolution: encounter.resolution || null,
+          })}. The encounter resolution is authoritative: do not reroll it, do not change its damage dice, hit location, DR, final damage, or already-applied character consequence. Use SESSION CONTEXT.world.travelHistory.recentLog to understand the route and what happened immediately before this encounter. Describe the encounter as an actionable Fallout 2d20 scene in the selected app language. Do not decide the player's actions. Do not skip straight to the outcome. End by asking what the player does, or request one meaningful skill check if the situation already demands it.`,
+          baseMessages,
           world
         );
         if (cancelled) return;
         setPendingCheck(result.check);
         persist(
-          [...messages, { role: "gm", text: result.text, at: Date.now() }],
+          [...baseMessages, { role: "gm", text: result.text, at: Date.now() }],
           result.events,
           result.check
         );
@@ -557,7 +593,7 @@ export default function LocalGmChat({ mapData, playerPosition, selectedCell, onW
         if (cancelled) return;
         const fallbackText = String(encounter.text || tx("travelEncounter") || tx("gmError"));
         persist(
-          [...messages, { role: "gm", text: fallbackText, at: Date.now() }],
+          [...baseMessages, { role: "gm", text: fallbackText, at: Date.now() }],
           [],
           pendingCheck
         );

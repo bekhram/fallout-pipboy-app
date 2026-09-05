@@ -25,6 +25,7 @@ const ORIGIN_EQUIPMENT_CHOICE_EVENT = "pipboy:set-origin-equipment-choices";
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
 const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
 const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
+const PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT = "pipboy:travel-encounter-effect";
 
 function makeSafeFileName(name) {
   return (name || "Character")
@@ -684,6 +685,53 @@ export function useCharacterStorage(initialForm) {
       });
     };
 
+    const handleTravelEncounterEffect = (event) => {
+      const resolution = event?.detail?.resolution;
+      if (!resolution || typeof resolution !== "object") return;
+
+      setForm((prev) => {
+        if (resolution.kind === "damage") {
+          const finalDamage = Math.max(0, Number(resolution.finalDamage || 0));
+          if (finalDamage <= 0) return prev;
+
+          if (resolution.damageType === "radiation") {
+            const derived = getDerivedStats(prev);
+            const nextRadiation = Math.min(
+              Number(derived.maxHp || 0),
+              Math.max(0, Number(prev.radiationHp || 0)) + finalDamage
+            );
+            const nextEffectiveMax = Math.max(0, Number(derived.maxHp || 0) - nextRadiation);
+            return {
+              ...prev,
+              radiationHp: String(nextRadiation),
+              currentHp: String(Math.min(Math.max(0, Number(prev.currentHp || 0)), nextEffectiveMax)),
+            };
+          }
+
+          return {
+            ...prev,
+            currentHp: String(Math.max(0, Number(prev.currentHp || 0) - finalDamage)),
+          };
+        }
+
+        if (resolution.kind === "survival") {
+          const next = { ...prev };
+          if (resolution.satietySet !== undefined) {
+            next.satiety = String(Math.max(0, Math.min(5, Number(resolution.satietySet))));
+          }
+          if (resolution.thirstSet !== undefined) {
+            next.thirst = String(Math.max(0, Math.min(5, Number(resolution.thirstSet))));
+          }
+          if (resolution.vigorDelta) {
+            next.vigor = String(Math.max(0, Math.min(5, Number(prev.vigor || 0) + Number(resolution.vigorDelta))));
+          }
+          return next;
+        }
+
+        return prev;
+      });
+    };
+
     const handleCampRest = () => {
       setForm((prev) => ({
         ...prev,
@@ -699,6 +747,7 @@ export function useCharacterStorage(initialForm) {
       handleEndConsumableEffect
     );
     window.addEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
+    window.addEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
     window.addEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
 
     return () => {
@@ -708,6 +757,7 @@ export function useCharacterStorage(initialForm) {
         handleEndConsumableEffect
       );
       window.removeEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
+      window.removeEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
       window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
     };
   }, []);
