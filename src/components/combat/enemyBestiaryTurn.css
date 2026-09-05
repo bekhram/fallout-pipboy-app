@@ -1,0 +1,93 @@
+.pip-enemy-turn {
+  margin-top: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 9px;
+}
+
+.pip-enemy-turn__head,
+.pip-enemy-turn__enemy-head,
+.pip-enemy-turn__result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pip-enemy-turn__head,
+.pip-enemy-turn__enemy-head {
+  font-size: .75rem;
+}
+
+.pip-enemy-turn__head > span,
+.pip-enemy-turn__enemy-head > span {
+  opacity: .72;
+  white-space: nowrap;
+}
+
+.pip-enemy-turn__range {
+  display: grid;
+  grid-template-columns: auto minmax(130px, 1fr);
+  align-items: center;
+  gap: 8px;
+  font-size: .7rem;
+}
+
+.pip-enemy-turn__list {
+  display: grid;
+  gap: 8px;
+}
+
+.pip-enemy-turn__enemy {
+  border: 1px solid color-mix(in srgb, currentColor 55%, transparent);
+  padding: 8px;
+  display: grid;
+  gap: 7px;
+}
+
+.pip-enemy-turn__button {
+  width: 100%;
+}
+
+.pip-enemy-turn__result {
+  border-top: 1px dashed color-mix(in srgb, currentColor 45%, transparent);
+  padding-top: 7px;
+  display: grid;
+  gap: 4px;
+  font-size: .7rem;
+  line-height: 1.35;
+}
+
+.pip-enemy-turn__result > span,
+.pip-enemy-turn__result > small {
+  overflow-wrap: anywhere;
+}
+
+.pip-enemy-turn__result.is-hit .pip-enemy-turn__result-head > span {
+  font-weight: 700;
+}
+
+.pip-enemy-turn__result.is-miss,
+.pip-enemy-turn__result.is-error {
+  opacity: .78;
+}
+
+.pip-enemy-turn__result.is-error,
+.pip-enemy-turn__result .is-warning {
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+@media (max-width: 680px) {
+  .pip-enemy-turn__head,
+  .pip-enemy-turn__enemy-head,
+  .pip-enemy-turn__result-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .pip-enemy-turn__range {
+    grid-template-columns: 1fr;
+  }
+}
