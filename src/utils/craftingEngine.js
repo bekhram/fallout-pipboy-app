@@ -1,9 +1,10 @@
-import { rollFalloutD20 } from "./dice.js";
+import { rollFalloutD20, rollFalloutD6 } from "./dice.js";
 import { getEffectiveSpecialValue, getEffectiveSkillRank } from "../data/inventory/bobbleheads.js";
 import { INVENTORY_DATABASE } from "../data/inventoryDatabase.js";
 import { getComplexityMaterials } from "../data/craftingRecipes.js";
 
 const PERK_IDS = {
+  "ammosmith": "ammosmith",
   "armorer": "armorer",
   "blacksmith": "blacksmith",
   "chemist": "chemist",
@@ -152,7 +153,47 @@ function isPowerArmorStealthBoyRecipe(recipe) {
     && normalize(recipe?.name) === "stealth boy";
 }
 
+function isAmmoCraftingRecipe(recipe) {
+  return Boolean(recipe?.ammoCrafting) || normalize(recipe?.group) === "ammunition";
+}
+
+function getAmmosmithRank(character) {
+  return getCharacterPerkRank(character, { id: "ammosmith", label: "Ammosmith" });
+}
+
+function resolveAmmosmithQuantity(character, recipe) {
+  const perkRank = getAmmosmithRank(character);
+  const rarity = Math.max(0, Number(recipe?.ammoRarity ?? recipe?.rarity ?? 0));
+  if (perkRank < 3) {
+    return { quantity: 1, perkRank, rarity, diceCount: 0, hits: 0, effects: 0 };
+  }
+
+  const diceCount = Math.max(1, 6 - rarity);
+  const hiddenRoll = rollFalloutD6({ diceCount, effects: [] });
+  const hits = (hiddenRoll?.rolls || []).filter((die) => Number(die?.damage || 0) > 0).length;
+  const effects = Math.max(0, Number(hiddenRoll?.totalEffects || 0));
+  const quantity = Math.max(1, (1 + hits) * (2 ** effects));
+
+  return { quantity, perkRank, rarity, diceCount, hits, effects };
+}
+
 export function createCraftedInventoryItem(recipe) {
+  if (isAmmoCraftingRecipe(recipe)) {
+    const name = recipe?.outputName || recipe?.name || "Ammunition";
+    return {
+      name,
+      canonicalName: name,
+      category: "ammo",
+      quantity: "1",
+      cost: String(recipe?.ammoCost ?? ""),
+      weight: String(recipe?.ammoWeight ?? "0"),
+      rarity: String(recipe?.ammoRarity ?? recipe?.rarity ?? ""),
+      crafted: true,
+      craftingRecipeId: recipe.id,
+      craftingWorkbench: "weapons",
+    };
+  }
+
   if (isPowerArmorStealthBoyRecipe(recipe)) {
     const name = "Stealth Boy — Power Armor System";
     return {
@@ -207,7 +248,10 @@ export function addCraftedInventoryItem(inventory = [], craftedItem) {
   const current = next[index];
   next[index] = {
     ...current,
-    quantity: String(Math.max(0, Number(current?.quantity || 0)) + 1),
+    quantity: String(
+      Math.max(0, Number(current?.quantity || 0))
+      + Math.max(1, Number(craftedItem?.quantity || 1))
+    ),
   };
   return next;
 }
@@ -240,8 +284,13 @@ export function resolveCraftingAttempt(character, recipe) {
   let inventory = character?.inventoryItems || [];
   if (shouldConsume) inventory = consumeCraftingMaterials(inventory, state.materials);
   let output = null;
+  let ammoResult = null;
   if (success) {
     output = createCraftedInventoryItem(recipe);
+    if (isAmmoCraftingRecipe(recipe)) {
+      ammoResult = resolveAmmosmithQuantity(character, recipe);
+      output = { ...output, quantity: String(ammoResult.quantity) };
+    }
     inventory = addCraftedInventoryItem(inventory, output);
   }
 
@@ -257,5 +306,6 @@ export function resolveCraftingAttempt(character, recipe) {
     complicationMaterialLossNeedsGm: !success && !consumeOnFailure && complications > 0,
     inventory,
     output,
+    ammoResult,
   };
 }

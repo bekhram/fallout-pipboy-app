@@ -9,8 +9,8 @@ import "./crafting.css";
 
 const TEXT = {
   en: {
-    title: "CRAFTING", subtitle: "WORKBENCH // CORE RULEBOOK RECIPES",
-    weapons: "WEAPONS", armor: "ARMOR", mods: "MODS", explosives: "EXPLOSIVES", items: "OTHER",
+    title: "CRAFTING", subtitle: "WORKBENCH // RECIPES",
+    weapons: "WEAPONS", ammo: "AMMO", armor: "ARMOR", mods: "MODS", explosives: "EXPLOSIVES", items: "OTHER",
     search: "Search recipes, mods, workbenches...", skill: "SKILL", complexity: "COMPLEXITY", difficulty: "DIFFICULTY", materials: "MATERIALS",
     requirements: "PERKS", rarity: "RARITY", craft: "CRAFT", recipeFound: "RECIPE FOUND", forgetRecipe: "REMOVE RECIPE", unknownRare: "RARE RECIPE NOT LEARNED",
     inventory: "INVENTORY ITEMS", source: "SOURCE", page: "p.", workbench: "WORKBENCH", benchReady: "ACCESS", benchMissing: "NO ACCESS",
@@ -22,8 +22,8 @@ const TEXT = {
     noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",
   },
   ru: {
-    title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ CORE RULEBOOK",
-    weapons: "ОРУЖИЕ", armor: "БРОНЯ", mods: "МОДЫ", explosives: "ВЗРЫВЧАТКА", items: "ДРУГОЕ",
+    title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ",
+    weapons: "ОРУЖИЕ", ammo: "ПАТРОНЫ", armor: "БРОНЯ", mods: "МОДЫ", explosives: "ВЗРЫВЧАТКА", items: "ДРУГОЕ",
     search: "Поиск рецептов, модов, верстаков...", skill: "НАВЫК", complexity: "СЛОЖНОСТЬ", difficulty: "ТРУДНОСТЬ", materials: "МАТЕРИАЛЫ",
     requirements: "ПЕРКИ", rarity: "РЕДКОСТЬ", craft: "СОЗДАТЬ", recipeFound: "РЕЦЕПТ НАЙДЕН", forgetRecipe: "УБРАТЬ РЕЦЕПТ", unknownRare: "РЕДКИЙ РЕЦЕПТ НЕ ИЗУЧЕН",
     inventory: "ПРЕДМЕТОВ В ИНВЕНТАРЕ", source: "ИСТОЧНИК", page: "стр.", workbench: "ВЕРСТАК", benchReady: "ДОСТУП ЕСТЬ", benchMissing: "НЕТ ДОСТУПА",
@@ -35,8 +35,8 @@ const TEXT = {
     noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",
   },
   uk: {
-    title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ CORE RULEBOOK",
-    weapons: "ЗБРОЯ", armor: "БРОНЯ", mods: "МОДИ", explosives: "ВИБУХІВКА", items: "ІНШЕ",
+    title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ",
+    weapons: "ЗБРОЯ", ammo: "ПАТРОНИ", armor: "БРОНЯ", mods: "МОДИ", explosives: "ВИБУХІВКА", items: "ІНШЕ",
     search: "Пошук рецептів, модів, верстатів...", skill: "НАВИЧКА", complexity: "СКЛАДНІСТЬ", difficulty: "ТРУДНІСТЬ", materials: "МАТЕРІАЛИ",
     requirements: "ПЕРКИ", rarity: "РІДКІСТЬ", craft: "СТВОРИТИ", recipeFound: "РЕЦЕПТ ЗНАЙДЕНО", forgetRecipe: "ПРИБРАТИ РЕЦЕПТ", unknownRare: "РІДКІСНИЙ РЕЦЕПТ НЕ ВИВЧЕНО",
     inventory: "ПРЕДМЕТІВ В ІНВЕНТАРІ", source: "ДЖЕРЕЛО", page: "стор.", workbench: "ВЕРСТАТ", benchReady: "ДОСТУП Є", benchMissing: "НЕМАЄ ДОСТУПУ",
@@ -48,8 +48,8 @@ const TEXT = {
     noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",
   },
   pl: {
-    title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY CORE RULEBOOK",
-    weapons: "BROŃ", armor: "PANCERZ", mods: "MODY", explosives: "MATERIAŁY WYBUCHOWE", items: "INNE",
+    title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY",
+    weapons: "BROŃ", ammo: "AMUNICJA", armor: "PANCERZ", mods: "MODY", explosives: "MATERIAŁY WYBUCHOWE", items: "INNE",
     search: "Szukaj receptur, modyfikacji, warsztatów...", skill: "UMIEJĘTNOŚĆ", complexity: "ZŁOŻONOŚĆ", difficulty: "TRUDNOŚĆ", materials: "MATERIAŁY",
     requirements: "ATUTY", rarity: "RZADKOŚĆ", craft: "WYTWÓRZ", recipeFound: "RECEPTURA ZNALEZIONA", forgetRecipe: "USUŃ RECEPTURĘ", unknownRare: "RZADKA RECEPTURA NIEPOZNANA",
     inventory: "PRZEDMIOTY W EKWIPUNKU", source: "ŹRÓDŁO", page: "s.", workbench: "WARSZTAT", benchReady: "DOSTĘP", benchMissing: "BRAK DOSTĘPU",
@@ -62,10 +62,11 @@ const TEXT = {
   },
 };
 
-const CATEGORIES = ["weapons", "armor", "mods", "explosives", "items"];
+const CATEGORIES = ["weapons", "ammo", "armor", "mods", "explosives", "items"];
 
 const WORKBENCHES = {
   weapons: ["weapons"],
+  ammo: ["weapons"],
   armor: ["armor", "power_armor", "robot"],
   mods: ["weapons", "armor", "power_armor", "robot"],
   explosives: ["chemistry"],
@@ -104,6 +105,7 @@ function recipeCategory(recipe) {
   const bench = String(recipe?.workbench || "").toLowerCase();
 
   if (group === "EXPLOSIVES") return "explosives";
+  if (group === "AMMUNITION") return "ammo";
 
   if (
     bench === "weapons"
@@ -201,7 +203,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
             success: result.success,
             difficulty: result.state.difficulty,
             targetNumber: result.state.skill.targetNumber,
-            rolls: (result.roll?.rolls || []).map((die) => die.value),
+            rolls: recipe.ammoCrafting ? [] : (result.roll?.rolls || []).map((die) => die.value),
             complications: result.complications,
             durationMinutes: result.durationMinutes,
             timestamp: new Date().toISOString(),
@@ -224,14 +226,22 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     return (
       <div className={`craft-result ${lastResult.success ? "is-success" : "is-failure"}`}>
         <strong>[ {copy.result}: {lastResult.success ? copy.success : copy.failure} ]</strong>
-        <div>
-          {lastResult.automatic
-            ? copy.automatic
-            : `${copy.roll}: [${diceText(lastResult.roll)}] // ${copy.target} ${lastResult.state.skill.targetNumber} // D${lastResult.state.difficulty} // ${lastResult.roll?.totalSuccesses || 0} ${copy.successes}`}
-        </div>
-        <div>{copy.complications}: {lastResult.complications}</div>
+        {recipe.ammoCrafting ? (
+          lastResult.success
+            ? <div>{copy.output}: {lastResult.output?.name || recipe.name} ×{lastResult.output?.quantity || 1}</div>
+            : null
+        ) : (
+          <>
+            <div>
+              {lastResult.automatic
+                ? copy.automatic
+                : `${copy.roll}: [${diceText(lastResult.roll)}] // ${copy.target} ${lastResult.state.skill.targetNumber} // D${lastResult.state.difficulty} // ${lastResult.roll?.totalSuccesses || 0} ${copy.successes}`}
+            </div>
+            <div>{copy.complications}: {lastResult.complications}</div>
+          </>
+        )}
         <div>{copy.duration}: {lastResult.durationMinutes} {copy.minutes}</div>
-        {lastResult.success ? <div>{copy.output}: {lastResult.output?.name || recipe.outputName || recipe.name}</div> : null}
+        {!recipe.ammoCrafting && lastResult.success ? <div>{copy.output}: {lastResult.output?.name || recipe.outputName || recipe.name}</div> : null}
         {lastResult.success ? <div className="craft-note">{copy.apHint}</div> : null}
         {!lastResult.success && lastResult.consumedMaterials ? <div className="craft-note">{copy.failedConsumed}</div> : null}
         {lastResult.complicationMaterialLossNeedsGm ? <div className="craft-note">{copy.complicationLoss}</div> : null}
@@ -339,7 +349,9 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                         <h3>{recipe.name}</h3>
                       </div>
                     </div>
-                    <span className={`craft-rarity is-${String(recipe.rarity).toLowerCase()}`}>{rarityLabel(recipe.rarity, copy)}</span>
+                    <span className={`craft-rarity is-${String(recipe.rarity).toLowerCase()}`}>
+                      {recipe.ammoCrafting ? `R${recipe.ammoRarity}` : rarityLabel(recipe.rarity, copy)}
+                    </span>
                   </button>
 
                   <div className="crafting-recipe-card__quick">
@@ -401,7 +413,9 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                         onClick={() => handleCraft(recipe)}
                         disabled={!canCraft}
                       >
-                        {copy.craft} // {copy.target} {state.skill.targetNumber} // D{state.difficulty}
+                        {recipe.ammoCrafting
+                          ? `${copy.craft} // R${recipe.ammoRarity}`
+                          : `${copy.craft} // ${copy.target} ${state.skill.targetNumber} // D${state.difficulty}`}
                       </button>
 
                       {!benchReady ? <div className="craft-warning">{copy.needBench}</div> : null}

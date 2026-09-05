@@ -189,7 +189,58 @@ const COOKING_RECIPES = [
   ]),
 ];
 
+const AMMO_CRAFTING_ROWS = [
+  [".38", 0, 1, 0],
+  ["10mm", 0, 2, 0],
+  [".308", 1, 3, 0],
+  ["Flare", 1, 1, 0],
+  ["Shotgun Shell", 1, 3, 0],
+  [".45", 2, 3, 0],
+  ["Flamer Fuel", 2, 1, 0],
+  ["Fusion Cell", 2, 3, 0],
+  ["Gamma Round", 2, 10, 0],
+  ["Railway Spike", 2, 1, 0],
+  ["Syringer Ammo", 2, 1, 0],
+  [".44 Magnum", 3, 3, 0],
+  [".50", 3, 4, 0],
+  ["5.56mm", 3, 2, 0],
+  ["5mm", 3, 1, 0],
+  ["Fusion Core", 3, 200, 4],
+  ["Missile", 3, 25, 7],
+  ["Plasma Cartridge", 4, 5, 0],
+  ["2mm EC", 5, 10, 0],
+  ["Mini-Nuke", 5, 100, 12],
+];
+
+const ammosmithRankForRarity = (rarity) => {
+  const value = Number(rarity || 0);
+  if (value <= 1) return 1;
+  if (value <= 3) return 2;
+  return 3;
+};
+
+const AMMO_RECIPES = AMMO_CRAFTING_ROWS.map(([name, rarity, cost, weight]) => ({
+  id: slug(`weapons-ammunition-${name}`),
+  category: "ammo",
+  workbench: "weapons",
+  group: "AMMUNITION",
+  name,
+  complexity: rarity,
+  perks: `Ammosmith ${ammosmithRankForRarity(rarity)}`,
+  skill: "Repair",
+  rarity,
+  materials: null,
+  outputCategory: "ammo",
+  outputName: name,
+  sourcePage: 211,
+  ammoCrafting: true,
+  ammoRarity: rarity,
+  ammoCost: cost,
+  ammoWeight: weight,
+}));
+
 export const CRAFTING_RECIPES = [
+  ...AMMO_RECIPES,
   ...WEAPON_RECIPES,
   ...ARMOR_RECIPES,
   ...ROBOT_RECIPES,

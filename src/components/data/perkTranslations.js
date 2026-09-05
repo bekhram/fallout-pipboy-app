@@ -1,6 +1,7 @@
 // Short, original summaries for the Core Rulebook perks that were missing
 // from the locale files. Internal perk IDs remain language-independent.
 const TEXT = {
+  ammosmith: { ru: ["Ammosmith", "Позволяет создавать боеприпасы на оружейном верстаке; высокие ранги открывают более редкие боеприпасы и увеличивают результат крафта."], uk: ["Ammosmith", "Дозволяє створювати боєприпаси на збройовому верстаті; вищі ранги відкривають рідкісніші боєприпаси та збільшують результат крафту."], pl: ["Ammosmith", "Pozwala wytwarzać amunicję przy warsztacie broni; wyższe rangi odblokowują rzadszą amunicję i zwiększają wynik wytwarzania."] },
   chemist: { ru: ["Химик", "Созданные вами химикаты действуют вдвое дольше; открываются сложные рецепты."], uk: ["Хімік", "Створені вами хімікати діють удвічі довше; відкриваються складні рецепти."], pl: ["Chemik", "Wytworzone przez ciebie chemikalia działają dwa razy dłużej; odblokowujesz trudniejsze receptury."] },
   commando: { ru: ["Коммандос", "Скорострельное дистанционное оружие получает дополнительные кубики урона."], uk: ["Командос", "Швидкострільна дистанційна зброя отримує додаткові кубики ушкоджень."], pl: ["Komandos", "Szybkostrzelna broń dystansowa otrzymuje dodatkowe kości obrażeń."] },
   comprehension: { ru: ["Понимание", "После использования бонуса журнала есть шанс применить его ещё один раз."], uk: ["Розуміння", "Після використання бонусу журналу є шанс застосувати його ще один раз."], pl: ["Zrozumienie", "Po wykorzystaniu premii z magazynu możesz zachować ją na jeszcze jedno użycie."] },
