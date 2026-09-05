@@ -24,6 +24,13 @@ const USE_LABELS = {
   pl: "UŻYJ",
 };
 
+const EQUIPPED_LABELS = {
+  en: "EQUIPPED",
+  ru: "НАДЕТО",
+  uk: "ОДЯГНЕНО",
+  pl: "ZAŁOŻONO",
+};
+
 const META_LABELS = {
   en: { range: "Range", type: "Type", ammo: "Ammo", locations: "Locations", duration: "Duration", addictive: "Addictive", rarity: "Rarity", series: "Series" },
   ru: { range: "Дистанция", type: "Тип", ammo: "Боеприпасы", locations: "Зоны", duration: "Длительность", addictive: "Зависимость", rarity: "Редкость", series: "Серия" },
@@ -53,6 +60,8 @@ export default function InventoryCard({
   const canUse = isConsumableItem(item);
   const quantity = Math.max(0, Number(item.quantity || 0));
   const useLabel = USE_LABELS[language] || USE_LABELS.en;
+  const isEquippedPowerArmor = item?.sourceType === "power_armor";
+  const equippedLabel = EQUIPPED_LABELS[language] || EQUIPPED_LABELS.en;
 
   const displayDamageType = localized.displayDamageType || item.damageType;
   const displayWeaponType = localized.displayWeaponType || item.weaponType;
@@ -89,35 +98,39 @@ export default function InventoryCard({
 
   return (
     <article className="pip-panel pip-item-card pip-floating-actions-card">
-      <div className="pip-floating-card-actions">
-        {canUse && (
-          <button
-            type="button"
-            className="pip-btn is-primary"
-            onClick={handleUse}
-            disabled={quantity <= 0}
-            title={useLabel}
-            aria-label={useLabel}
-            style={{ minWidth: 42, paddingInline: 10 }}
-          >
-            ▶
+      {!isEquippedPowerArmor && (
+        <div className="pip-floating-card-actions">
+          {canUse && (
+            <button
+              type="button"
+              className="pip-btn is-primary"
+              onClick={handleUse}
+              disabled={quantity <= 0}
+              title={useLabel}
+              aria-label={useLabel}
+              style={{ minWidth: 42, paddingInline: 10 }}
+            >
+              ▶
+            </button>
+          )}
+          <button type="button" className="pip-btn" onClick={() => onEdit(index)}>
+            {t("common.edit")}
           </button>
-        )}
-        <button type="button" className="pip-btn" onClick={() => onEdit(index)}>
-          {t("common.edit")}
-        </button>
-        <button type="button" className="pip-btn" onClick={() => onCopy(index)}>
-          {t("common.copy")}
-        </button>
-        <button type="button" className="pip-btn is-danger" onClick={() => onRemove(index)}>
-          {t("common.delete")}
-        </button>
-      </div>
+          <button type="button" className="pip-btn" onClick={() => onCopy(index)}>
+            {t("common.copy")}
+          </button>
+          <button type="button" className="pip-btn is-danger" onClick={() => onRemove(index)}>
+            {t("common.delete")}
+          </button>
+        </div>
+      )}
 
       <div className="pip-floating-card-body">
         <div className="pip-item-title-row">
           <h3>{localized.displayName || t("inventory.unnamedItem")}</h3>
-          <span className="pip-item-category-inline">{categoryLabel}</span>
+          <span className="pip-item-category-inline">
+            {categoryLabel}{isEquippedPowerArmor ? ` • ${equippedLabel}` : ""}
+          </span>
         </div>
 
         {isVisibleValue(localized.displayEffect) && (
