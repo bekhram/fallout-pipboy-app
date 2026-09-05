@@ -7,10 +7,10 @@ import { getMapLanguageCode } from "./mapUiText.js";
 const CHAT_STORAGE_KEY = "fallout_pipboy_local_gm_sessions_v3";
 
 const LABELS = {
-  en: { attack: "ATTACK", hit: "HIT", miss: "MISS", damage: "DAMAGE", hp: "HP", location: "LOCATION", dr: "DR" },
-  ru: { attack: "АТАКА", hit: "ПОПАДАНИЕ", miss: "ПРОМАХ", damage: "УРОН", hp: "HP", location: "ЗОНА", dr: "DR" },
-  uk: { attack: "АТАКА", hit: "ВЛУЧАННЯ", miss: "ПРОМАХ", damage: "ШКОДА", hp: "HP", location: "ЗОНА", dr: "DR" },
-  pl: { attack: "ATAK", hit: "TRAFIENIE", miss: "PUDŁO", damage: "OBRAŻENIA", hp: "HP", location: "LOKACJA", dr: "DR" },
+  en: { attack: "ATTACK", enemyTurn: "ENEMY TURN", hit: "HIT", miss: "MISS", damage: "DAMAGE", hp: "HP", location: "LOCATION", dr: "DR", action: "ACTION", radiation: "RAD" },
+  ru: { attack: "АТАКА", enemyTurn: "ХОД ПРОТИВНИКА", hit: "ПОПАДАНИЕ", miss: "ПРОМАХ", damage: "УРОН", hp: "HP", location: "ЗОНА", dr: "DR", action: "ДЕЙСТВИЕ", radiation: "РАД" },
+  uk: { attack: "АТАКА", enemyTurn: "ХІД ПРОТИВНИКА", hit: "ВЛУЧАННЯ", miss: "ПРОМАХ", damage: "ШКОДА", hp: "HP", location: "ЗОНА", dr: "DR", action: "ДІЯ", radiation: "РАД" },
+  pl: { attack: "ATAK", enemyTurn: "TURA PRZECIWNIKA", hit: "TRAFIENIE", miss: "PUDŁO", damage: "OBRAŻENIA", hp: "HP", location: "LOKACJA", dr: "DR", action: "AKCJA", radiation: "RAD" },
 };
 
 function readStore() {
@@ -35,8 +35,7 @@ function formatDice(values) {
   return values.map((die) => `[${die?.value ?? die}]`).join(" ");
 }
 
-function formatMechanicalAction(action, language) {
-  const copy = LABELS[language] || LABELS.en;
+function formatPlayerAttack(action, copy) {
   const result = action?.result || {};
   const target = action?.target || {};
   const weapon = result?.weapon?.name || "Weapon";
@@ -60,6 +59,59 @@ function formatMechanicalAction(action, language) {
   }
 
   return lines.join("\n");
+}
+
+function formatEnemyAttack(action, copy) {
+  const result = action?.result || {};
+  const actor = action?.actor || result?.actor || {};
+  const target = action?.target || {};
+  const attackName = result?.attack?.name || copy.attack;
+  const status = result?.hit ? copy.hit : copy.miss;
+  const attackDice = formatDice(result?.attackRoll?.dice);
+  const lines = [
+    `${copy.enemyTurn}: ${actor?.name || "Enemy"} // ${attackName} → ${target?.name || result?.target?.name || "Player"} // ${status}`,
+    `d20 ${attackDice} // TN ${result?.attack?.targetNumber ?? "—"} // D ${result?.difficulty ?? "—"} // successes ${result?.attackRoll?.totalSuccesses ?? 0}`,
+  ];
+
+  if (result?.hit && result?.damageRoll) {
+    lines.push(
+      `${copy.location}: ${result?.hitLocationLabel || "—"} (${result?.hitLocationRoll ?? "—"})`,
+      `${copy.damage}: ${result?.attack?.damageDice ?? 0} CD ${formatDice(result?.damageRoll?.dice)} = ${result?.damageRoll?.rawDamage ?? 0} // ${copy.dr} ${result?.resistance === "immune" ? "IMMUNE" : result?.resistance ?? 0} // final ${result?.totalFinalDamage ?? 0}`
+    );
+  }
+
+  if (target?.hpBefore && target?.hpAfter) {
+    const afterMax = target.hpAfter.effectiveMax ?? target.hpAfter.max;
+    lines.push(`${copy.hp}: ${target.hpBefore.current}/${target.hpBefore.max} → ${target.hpAfter.current}/${afterMax}`);
+    if (Number(target.hpBefore.radiation || 0) !== Number(target.hpAfter.radiation || 0)) {
+      lines.push(`${copy.radiation}: ${target.hpBefore.radiation || 0} → ${target.hpAfter.radiation || 0}`);
+    }
+  }
+
+  if (result?.stunned) lines.push("STUN: ACTIVE");
+  if (Number(result?.persistentRounds || 0) > 0) lines.push(`PERSISTENT: ${result.persistentRounds}`);
+  if (Array.isArray(result?.criticalInjuries) && result.criticalInjuries.length) {
+    lines.push(`INJURY: ${result.criticalInjuries.map((item) => item.location).join(", ")}`);
+  }
+  if (result?.piercingUnresolved) lines.push("PIERCING: rating missing in imported stat block; no DR ignored automatically");
+
+  return lines.join("\n");
+}
+
+function formatEnemyAction(action, copy) {
+  const directive = action?.directive || {};
+  const actor = action?.actor || {};
+  const chosen = String(directive?.action || "pass").toUpperCase();
+  const lines = [`${copy.enemyTurn}: ${actor?.name || "Enemy"} // ${copy.action}: ${chosen}`];
+  if (directive?.moveToRange) lines.push(`RANGE → ${String(directive.moveToRange).toUpperCase()}`);
+  return lines.join("\n");
+}
+
+function formatMechanicalAction(action, language) {
+  const copy = LABELS[language] || LABELS.en;
+  if (action?.type === "enemy_attack") return formatEnemyAttack(action, copy);
+  if (action?.type === "enemy_action") return formatEnemyAction(action, copy);
+  return formatPlayerAttack(action, copy);
 }
 
 function mergeEvents(previous, incoming) {
@@ -86,6 +138,16 @@ function sessionHistory(session) {
     .slice(-16)
     .filter((message) => message?.role === "user" || message?.role === "gm")
     .map((message) => ({ role: message.role, text: String(message.text || "") }));
+}
+
+function narrationInstruction(action) {
+  if (action?.type === "enemy_attack") {
+    return `An application-generated ENEMY ATTACK has just been resolved after Auto GM selected the enemy intent from the supplied bestiary attacks. The result below is authoritative and has already been applied to the stored player character state. Do not reroll or change the attack, damage, hit location, DR, HP, radiation, Stun, Persistent status, or Injury. Briefly narrate the result in the selected app language, respect both combatants' remaining state, then ask what the player does next. RESULT: ${JSON.stringify(action)}`;
+  }
+  if (action?.type === "enemy_action") {
+    return `Auto GM selected a non-damage enemy action from the combat decision layer. Treat this action as already chosen and do not replace it with a different action. Briefly narrate it in the selected app language and continue the combat situation without deciding the player's response. RESULT: ${JSON.stringify(action)}`;
+  }
+  return `An application-generated PLAYER ATTACK has just been resolved. The result below is authoritative and has already been applied to the stored enemy combat state. Do not reroll the attack, damage, hit location, DR, or HP change. Briefly narrate the result in the selected app language, respect the enemy's remaining HP and abilities, then continue the combat situation without deciding the player's next action. RESULT: ${JSON.stringify(action)}`;
 }
 
 export default function CombatAwareLocalGmChat(props) {
@@ -145,7 +207,6 @@ export default function CombatAwareLocalGmChat(props) {
             travelEncounter: props.travelEncounter || null,
             activeCombat: combat || null,
           };
-          const message = `An application-generated PLAYER ATTACK has just been resolved. The result below is authoritative and has already been applied to the stored enemy combat state. Do not reroll the attack, damage, hit location, DR, or HP change. Briefly narrate the result in the selected app language, respect the enemy's remaining HP and abilities, then continue the combat situation without deciding the player's next action. RESULT: ${JSON.stringify(action)}`;
           const response = await fetch("/api/auto-gm", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -159,7 +220,7 @@ export default function CombatAwareLocalGmChat(props) {
               },
               sessionKey,
               history: sessionHistory({ ...session, messages: baseMessages }),
-              message,
+              message: narrationInstruction(action),
             }),
           });
           const payload = await response.json().catch(() => ({}));
