@@ -1,0 +1,40 @@
+name: Apply environment integration
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-environment-context.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply source patch
+        run: python .github/scripts/apply_environment_context.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Commit changes
+        run: |
+          git config user.name "Bekhram Salimov"
+          git config user.email "bahramsalimov89@gmail.com"
+          git add src/components/map/MapScreen.jsx src/components/map/LocalGmChat.jsx api/auto-gm.js
+          if git diff --cached --quiet; then
+            echo "No source changes"
+            exit 0
+          fi
+          git commit -m "Integrate time weather and environmental hazards with Auto GM"
+          git push origin main
