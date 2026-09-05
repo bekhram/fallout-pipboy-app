@@ -1,0 +1,95 @@
+name: Apply base crafting recipes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/patch-base-crafting-recipes.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Patch crafting UI and engine
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          screen_path = Path('src/components/crafting/CraftingScreen.jsx')
+          screen = screen_path.read_text()
+
+          replacements = [
+              (
+                  'import React, { useMemo, useState } from "react";',
+                  'import React, { useEffect, useMemo, useState } from "react";'
+              ),
+              (
+                  'import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";',
+                  'import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";\nimport { buildBaseArmorRecipes, buildBaseWeaponRecipes } from "../../data/baseCraftingRecipes.js";\nimport { parseCSV } from "../../utils/csvParser.js";\nimport { parseArmorDatabase } from "../../utils/armorDatabase.js";'
+              ),
+              (
+                  '  const [expandedRecipeId, setExpandedRecipeId] = useState(null);\n\n  const materialCount = useMemo(',
+                  '''  const [expandedRecipeId, setExpandedRecipeId] = useState(null);\n  const [baseRecipes, setBaseRecipes] = useState([]);\n\n  useEffect(() => {\n    let active = true;\n    Promise.all([\n      fetch("/weapons.csv").then((response) => {\n        if (!response.ok) throw new Error("Weapon archive unavailable");\n        return response.text();\n      }),\n      fetch("/Armor.csv").then((response) => {\n        if (!response.ok) throw new Error("Armor archive unavailable");\n        return response.text();\n      }),\n    ])\n      .then(([weaponCsv, armorCsv]) => {\n        if (!active) return;\n        const weaponRecipes = buildBaseWeaponRecipes(parseCSV(weaponCsv));\n        const armorRecipes = buildBaseArmorRecipes(parseArmorDatabase(armorCsv).items);\n        setBaseRecipes([...weaponRecipes, ...armorRecipes]);\n      })\n      .catch((error) => {\n        console.error("Base crafting recipe archive could not be loaded:", error);\n        if (active) setBaseRecipes([]);\n      });\n    return () => {\n      active = false;\n    };\n  }, []);\n\n  const materialCount = useMemo('''
+              ),
+              (
+                  '    return CRAFTING_RECIPES.filter((recipe) => {',
+                  '    return [...baseRecipes, ...CRAFTING_RECIPES].filter((recipe) => {'
+              ),
+              (
+                  '  }, [category, modFilter, workbench, search, language]);',
+                  '  }, [baseRecipes, category, modFilter, workbench, search, language]);'
+              ),
+              (
+                  '    noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",',
+                  '    noBaseWeapons: "Base weapon and armor recipes are app-generated from the item archive; official modification recipes remain under MODS.",'
+              ),
+              (
+                  '    noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",',
+                  '    noBaseWeapons: "Базовые рецепты оружия и брони генерируются приложением из архива предметов; официальные модификации остаются в разделе МОДЫ.",'
+              ),
+              (
+                  '    noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",',
+                  '    noBaseWeapons: "Базові рецепти зброї та броні генеруються застосунком з архіву предметів; офіційні модифікації залишаються у розділі МОДИ.",'
+              ),
+              (
+                  '    noBaseWeapons: "Core Rulebook nie zawiera receptur tworzenia podstawowej broni od zera. Receptury warsztatu broni są w sekcji MODY.",',
+                  '    noBaseWeapons: "Bazowe receptury broni i pancerza są generowane przez aplikację z archiwum przedmiotów; oficjalne modyfikacje pozostają w sekcji MODY.",'
+              ),
+          ]
+
+          for old, new in replacements:
+              if old not in screen:
+                  raise SystemExit(f'CraftingScreen patch marker not found: {old[:80]}')
+              screen = screen.replace(old, new, 1)
+
+          screen_path.write_text(screen)
+
+          engine_path = Path('src/utils/craftingEngine.js')
+          engine = engine_path.read_text()
+          marker = 'export function createCraftedInventoryItem(recipe) {\n'
+          insert = '''export function createCraftedInventoryItem(recipe) {\n  if (recipe?.outputTemplate && typeof recipe.outputTemplate === "object") {\n    const template = recipe.outputTemplate;\n    const name = template.name || recipe?.outputName || recipe?.name || "Crafted item";\n    return {\n      ...template,\n      name,\n      canonicalName: name,\n      category: recipe?.outputCategory || template.category || "misc",\n      quantity: "1",\n      crafted: true,\n      craftingRecipeId: recipe.id,\n      craftingWorkbench: recipe?.workbench || "",\n    };\n  }\n\n'''
+          if marker not in engine:
+              raise SystemExit('craftingEngine patch marker not found')
+          engine = engine.replace(marker, insert, 1)
+          engine_path.write_text(engine)
+          PY
+      - run: npm ci
+      - run: npm run build
+      - name: Commit application patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/crafting/CraftingScreen.jsx src/utils/craftingEngine.js
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: populate base weapon and armor crafting recipes"
+          git push origin main
