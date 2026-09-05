@@ -375,6 +375,7 @@ export default function CompanionTab() {
   const [state, setState] = useState({ items: [], activeId: null });
   const [ready, setReady] = useState(false);
   const [attackResults, setAttackResults] = useState({});
+  const [editingAttackId, setEditingAttackId] = useState(null);
 
   useEffect(() => {
     try {
@@ -405,8 +406,13 @@ export default function CompanionTab() {
     [state]
   );
 
+  useEffect(() => {
+    setEditingAttackId(null);
+  }, [active?.id]);
+
   const add = (kind) => {
     const item = createCompanion(kind);
+    setEditingAttackId(null);
     setState((prev) => ({ items: [...prev.items, item], activeId: item.id }));
   };
 
@@ -426,11 +432,13 @@ export default function CompanionTab() {
       name: active.name ? `${active.name} Copy` : "",
       attacks: (active.attacks || []).map((attack) => ({ ...attack, id: undefined })),
     });
+    setEditingAttackId(null);
     setState((prev) => ({ items: [...prev.items, duplicate], activeId: duplicate.id }));
   };
 
   const removeActive = () => {
     if (!active) return;
+    setEditingAttackId(null);
     setState((prev) => {
       const items = prev.items.filter((item) => item.id !== active.id);
       return { items, activeId: items[0]?.id || null };
@@ -453,7 +461,9 @@ export default function CompanionTab() {
 
   const addAttack = () => {
     if (!active) return;
-    updateActive({ attacks: [...(active.attacks || []), createAttack()] });
+    const attack = createAttack();
+    updateActive({ attacks: [...(active.attacks || []), attack] });
+    setEditingAttackId(attack.id);
   };
 
   const updateAttack = (attackId, patch) => {
@@ -468,6 +478,7 @@ export default function CompanionTab() {
   const removeAttack = (attackId) => {
     if (!active) return;
     updateActive({ attacks: (active.attacks || []).filter((attack) => attack.id !== attackId) });
+    if (editingAttackId === attackId) setEditingAttackId(null);
     setAttackResults((prev) => {
       const next = { ...prev };
       delete next[`${active.id}:${attackId}`];
@@ -633,74 +644,108 @@ export default function CompanionTab() {
                     const result = attackResults[`${active.id}:${attack.id}`];
                     const tn = attackTargetNumber(active, attack);
                     const damageTypeLabel = copy[attack.damageType] || attack.damageType;
+                    const isEditing = editingAttackId === attack.id;
                     return (
                       <div className="companion-attack-card" key={attack.id}>
-                        <div className="companion-attack-head">
-                          <label className="pip-top-field companion-attack-name">
-                            <span>{copy.attackName}</span>
-                            <input
-                              className="pip-inline-input"
-                              value={attack.name}
-                              placeholder={copy.attackNamePlaceholder}
-                              onChange={(event) => updateAttack(attack.id, { name: event.target.value })}
-                            />
-                          </label>
-                          <button type="button" className="pip-btn" onClick={() => removeAttack(attack.id)}>{copy.removeAttack}</button>
-                        </div>
+                        {isEditing ? (
+                          <>
+                            <div className="companion-attack-head">
+                              <label className="pip-top-field companion-attack-name">
+                                <span>{copy.attackName}</span>
+                                <input
+                                  className="pip-inline-input"
+                                  value={attack.name}
+                                  autoFocus
+                                  placeholder={copy.attackNamePlaceholder}
+                                  onChange={(event) => updateAttack(attack.id, { name: event.target.value })}
+                                />
+                              </label>
+                              <div style={{ display: "flex", gap: "6px" }}>
+                                <button type="button" className="pip-btn is-primary" onClick={() => setEditingAttackId(null)} title="Save">✓</button>
+                                <button type="button" className="pip-btn" onClick={() => removeAttack(attack.id)}>{copy.removeAttack}</button>
+                              </div>
+                            </div>
 
-                        <div className="companion-attack-grid">
-                          <label className="pip-top-field">
-                            <span>{copy.attribute}</span>
-                            <select className="pip-inline-input" value={attack.attribute} onChange={(event) => updateAttack(attack.id, { attribute: event.target.value })}>
-                              <option value="body">{copy.body}</option>
-                              <option value="mind">{copy.mind}</option>
-                            </select>
-                          </label>
-                          <label className="pip-top-field">
-                            <span>{copy.skill}</span>
-                            <select className="pip-inline-input" value={attack.skill} onChange={(event) => updateAttack(attack.id, { skill: event.target.value })}>
-                              <option value="melee">{copy.melee}</option>
-                              <option value="guns">{copy.guns}</option>
-                              <option value="other">{copy.other}</option>
-                            </select>
-                          </label>
-                          <label className="pip-top-field">
-                            <span>{copy.damage}</span>
-                            <input className="pip-inline-input" inputMode="numeric" value={attack.damage} onChange={(event) => updateAttack(attack.id, { damage: clamp(event.target.value, 0, 50) })} />
-                          </label>
-                          <label className="pip-top-field">
-                            <span>{copy.difficulty}</span>
-                            <input className="pip-inline-input" inputMode="numeric" value={attack.difficulty} onChange={(event) => updateAttack(attack.id, { difficulty: clamp(event.target.value, 0, 10) })} />
-                          </label>
-                          <label className="pip-top-field">
-                            <span>{copy.diceCount}</span>
-                            <input className="pip-inline-input" inputMode="numeric" value={attack.diceCount} onChange={(event) => updateAttack(attack.id, { diceCount: clamp(event.target.value, 1, 5) })} />
-                          </label>
-                          <label className="pip-top-field">
-                            <span>{copy.damageType}</span>
-                            <select className="pip-inline-input" value={attack.damageType} onChange={(event) => updateAttack(attack.id, { damageType: event.target.value })}>
-                              <option value="physical">{copy.physical}</option>
-                              <option value="energy">{copy.energy}</option>
-                              <option value="radiation">{copy.radiation}</option>
-                              <option value="poison">{copy.poison}</option>
-                            </select>
-                          </label>
-                          <label className="pip-top-field companion-attack-effects">
-                            <span>{copy.effects}</span>
-                            <input className="pip-inline-input" value={attack.effects} placeholder={copy.effectsPlaceholder} onChange={(event) => updateAttack(attack.id, { effects: event.target.value })} />
-                          </label>
-                        </div>
+                            <div className="companion-attack-grid">
+                              <label className="pip-top-field">
+                                <span>{copy.attribute}</span>
+                                <select className="pip-inline-input" value={attack.attribute} onChange={(event) => updateAttack(attack.id, { attribute: event.target.value })}>
+                                  <option value="body">{copy.body}</option>
+                                  <option value="mind">{copy.mind}</option>
+                                </select>
+                              </label>
+                              <label className="pip-top-field">
+                                <span>{copy.skill}</span>
+                                <select className="pip-inline-input" value={attack.skill} onChange={(event) => updateAttack(attack.id, { skill: event.target.value })}>
+                                  <option value="melee">{copy.melee}</option>
+                                  <option value="guns">{copy.guns}</option>
+                                  <option value="other">{copy.other}</option>
+                                </select>
+                              </label>
+                              <label className="pip-top-field">
+                                <span>{copy.damage}</span>
+                                <input className="pip-inline-input" inputMode="numeric" value={attack.damage} onChange={(event) => updateAttack(attack.id, { damage: clamp(event.target.value, 0, 50) })} />
+                              </label>
+                              <label className="pip-top-field">
+                                <span>{copy.difficulty}</span>
+                                <input className="pip-inline-input" inputMode="numeric" value={attack.difficulty} onChange={(event) => updateAttack(attack.id, { difficulty: clamp(event.target.value, 0, 10) })} />
+                              </label>
+                              <label className="pip-top-field">
+                                <span>{copy.diceCount}</span>
+                                <input className="pip-inline-input" inputMode="numeric" value={attack.diceCount} onChange={(event) => updateAttack(attack.id, { diceCount: clamp(event.target.value, 1, 5) })} />
+                              </label>
+                              <label className="pip-top-field">
+                                <span>{copy.damageType}</span>
+                                <select className="pip-inline-input" value={attack.damageType} onChange={(event) => updateAttack(attack.id, { damageType: event.target.value })}>
+                                  <option value="physical">{copy.physical}</option>
+                                  <option value="energy">{copy.energy}</option>
+                                  <option value="radiation">{copy.radiation}</option>
+                                  <option value="poison">{copy.poison}</option>
+                                </select>
+                              </label>
+                              <label className="pip-top-field companion-attack-effects">
+                                <span>{copy.effects}</span>
+                                <input className="pip-inline-input" value={attack.effects} placeholder={copy.effectsPlaceholder} onChange={(event) => updateAttack(attack.id, { effects: event.target.value })} />
+                              </label>
+                            </div>
 
-                        <div className="companion-attack-footer">
-                          <div className="pip-inline-stats companion-attack-summary">
-                            <span>{copy.target}: {tn}</span>
-                            <span>{attack.diceCount || 2}d20</span>
-                            <span>D{attack.difficulty || 1}</span>
-                            <span>{attack.damage || 0} CD</span>
-                            <span>{damageTypeLabel}</span>
-                          </div>
-                          <button type="button" className="pip-btn is-primary" onClick={() => rollAttack(attack)}>{copy.roll}</button>
-                        </div>
+                            <div className="companion-attack-footer">
+                              <div className="pip-inline-stats companion-attack-summary">
+                                <span>{copy.target}: {tn}</span>
+                                <span>{attack.diceCount || 2}d20</span>
+                                <span>D{attack.difficulty || 1}</span>
+                                <span>{attack.damage || 0} CD</span>
+                                <span>{damageTypeLabel}</span>
+                              </div>
+                              <button type="button" className="pip-btn is-primary" onClick={() => setEditingAttackId(null)} title="Save">✓</button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="pip-btn is-primary"
+                              onClick={() => rollAttack(attack)}
+                              style={{ width: "100%", display: "grid", gap: "5px", textAlign: "left" }}
+                              title={copy.roll}
+                            >
+                              <strong>{attack.name || copy.attackName}</strong>
+                              <span style={{ fontSize: "0.78em", opacity: 0.82 }}>
+                                {copy.target}: {tn} · {attack.diceCount || 2}d20 · D{attack.difficulty || 1} · {attack.damage || 0} CD · {damageTypeLabel}
+                              </span>
+                            </button>
+
+                            <div className="companion-attack-footer">
+                              <div className="pip-inline-stats companion-attack-summary">
+                                {attack.effects ? <span>{copy.effects}: {attack.effects}</span> : <span>{copy.roll}</span>}
+                              </div>
+                              <div style={{ display: "flex", gap: "6px" }}>
+                                <button type="button" className="pip-btn" onClick={() => setEditingAttackId(attack.id)} title={copy.attackName}>✎</button>
+                                <button type="button" className="pip-btn" onClick={() => removeAttack(attack.id)}>{copy.removeAttack}</button>
+                              </div>
+                            </div>
+                          </>
+                        )}
 
                         {result ? (
                           <div className={`companion-attack-result ${result.passed ? "is-success" : "is-failure"}`}>
