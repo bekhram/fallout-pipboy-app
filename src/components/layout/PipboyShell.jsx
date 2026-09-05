@@ -41,6 +41,23 @@ export default function PipboyShell({
       ? " is-from-right"
       : " is-from-left";
 
+  const childArray = React.Children.toArray(children);
+  const characterChild = childArray.find(
+    (child) => React.isValidElement(child) && child.props?.character
+  );
+  const resolvedCharacter = character || characterChild?.props?.character || null;
+  const mapChange = characterChild?.props?.onMapChange;
+  const resolvedSetCharacter = setCharacter || (
+    resolvedCharacter && typeof mapChange === "function"
+      ? (updater) => {
+          const next = typeof updater === "function" ? updater(resolvedCharacter) : updater;
+          if (!next || typeof next !== "object") return;
+          Object.assign(resolvedCharacter, next);
+          mapChange((prevMap) => prevMap);
+        }
+      : null
+  );
+
   useEffect(() => {
     installCompanionGmBridge();
     installLocationLoreGmBridge();
@@ -92,7 +109,10 @@ export default function PipboyShell({
             {screenContent}
           </div>
           {activeTab === "map" ? (
-            <ActiveBestiaryCombatPanel character={character} setCharacter={setCharacter} />
+            <ActiveBestiaryCombatPanel
+              character={resolvedCharacter}
+              setCharacter={resolvedSetCharacter}
+            />
           ) : null}
         </main>
       </div>
