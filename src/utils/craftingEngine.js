@@ -301,6 +301,21 @@ export function dismantleAmmunition(character, recipe) {
 }
 
 export function createCraftedInventoryItem(recipe) {
+  if (recipe?.outputTemplate && typeof recipe.outputTemplate === "object") {
+    const template = recipe.outputTemplate;
+    const name = template.name || recipe?.outputName || recipe?.name || "Crafted item";
+    return {
+      ...template,
+      name,
+      canonicalName: name,
+      category: recipe?.outputCategory || template.category || "misc",
+      quantity: "1",
+      crafted: true,
+      craftingRecipeId: recipe.id,
+      craftingWorkbench: recipe?.workbench || "",
+    };
+  }
+
   if (isAmmoCraftingRecipe(recipe)) {
     const name = recipe?.outputName || recipe?.name || "Ammunition";
     return {

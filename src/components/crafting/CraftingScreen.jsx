@@ -1,6 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";
+import { buildBaseArmorRecipes, buildBaseWeaponRecipes } from "../../data/baseCraftingRecipes.js";
+import { parseCSV } from "../../utils/csvParser.js";
+import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 import {
   dismantleAmmunition,
   getAmmosmithRank,
@@ -22,7 +25,7 @@ const TEXT = {
     complicationLoss: "Complications may waste ingredients; no amount is auto-invented.", missingMaterials: "Missing materials", missingPerks: "Missing required perk rank",
     needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
     common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.", ready: "READY", locked: "LOCKED",
-    noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",
+    noBaseWeapons: "Base weapon and armor recipes are app-generated from the item archive; official modification recipes remain under MODS.",
     dismantle: "DISMANTLE 1", dismantled: "DISMANTLED", returned: "RETURNED", ammoOwned: "OWNED", needAmmo: "No ammunition to dismantle", needAmmosmith2: "Ammosmith rank 2 required",
   },
   ru: {
@@ -36,7 +39,7 @@ const TEXT = {
     complicationLoss: "Осложнения могут испортить материалы; приложение не выдумывает их количество.", missingMaterials: "Не хватает материалов", missingPerks: "Не хватает ранга перка",
     needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
     common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
-    noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",
+    noBaseWeapons: "Базовые рецепты оружия и брони генерируются приложением из архива предметов; официальные модификации остаются в разделе МОДЫ.",
     dismantle: "РАЗОБРАТЬ 1", dismantled: "РАЗОБРАНО", returned: "ВОЗВРАЩЕНО", ammoOwned: "В НАЛИЧИИ", needAmmo: "Нет патронов для разбора", needAmmosmith2: "Требуется Ammosmith 2",
   },
   uk: {
@@ -50,7 +53,7 @@ const TEXT = {
     complicationLoss: "Ускладнення можуть зіпсувати матеріали; застосунок не вигадує їх кількість.", missingMaterials: "Не вистачає матеріалів", missingPerks: "Не вистачає рангу перка",
     needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
     common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
-    noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",
+    noBaseWeapons: "Базові рецепти зброї та броні генеруються застосунком з архіву предметів; офіційні модифікації залишаються у розділі МОДИ.",
     dismantle: "РОЗІБРАТИ 1", dismantled: "РОЗІБРАНО", returned: "ПОВЕРНЕНО", ammoOwned: "В НАЯВНОСТІ", needAmmo: "Немає патронів для розбирання", needAmmosmith2: "Потрібен Ammosmith 2",
   },
   pl: {
@@ -64,7 +67,7 @@ const TEXT = {
     complicationLoss: "Komplikacje mogą zmarnować materiały; aplikacja nie wymyśla ich liczby.", missingMaterials: "Brak materiałów", missingPerks: "Brak wymaganego poziomu atutu",
     needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
     common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.", ready: "GOTOWE", locked: "NIEDOSTĘPNE",
-    noBaseWeapons: "Core Rulebook nie zawiera receptur tworzenia podstawowej broni od zera. Receptury warsztatu broni są w sekcji MODY.",
+    noBaseWeapons: "Bazowe receptury broni i pancerza są generowane przez aplikację z archiwum przedmiotów; oficjalne modyfikacje pozostają w sekcji MODY.",
     dismantle: "ROZŁÓŻ 1", dismantled: "ROZŁOŻONO", returned: "ODZYSKANO", ammoOwned: "POSIADASZ", needAmmo: "Brak amunicji do rozłożenia", needAmmosmith2: "Wymagany Ammosmith 2",
   },
 };
@@ -155,6 +158,34 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const [benchAccess, setBenchAccess] = useState({});
   const [lastResult, setLastResult] = useState(null);
   const [expandedRecipeId, setExpandedRecipeId] = useState(null);
+  const [baseRecipes, setBaseRecipes] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      fetch("/weapons.csv").then((response) => {
+        if (!response.ok) throw new Error("Weapon archive unavailable");
+        return response.text();
+      }),
+      fetch("/Armor.csv").then((response) => {
+        if (!response.ok) throw new Error("Armor archive unavailable");
+        return response.text();
+      }),
+    ])
+      .then(([weaponCsv, armorCsv]) => {
+        if (!active) return;
+        const weaponRecipes = buildBaseWeaponRecipes(parseCSV(weaponCsv));
+        const armorRecipes = buildBaseArmorRecipes(parseArmorDatabase(armorCsv).items);
+        setBaseRecipes([...weaponRecipes, ...armorRecipes]);
+      })
+      .catch((error) => {
+        console.error("Base crafting recipe archive could not be loaded:", error);
+        if (active) setBaseRecipes([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const materialCount = useMemo(
     () => (character?.inventoryItems || []).filter((item) => Number(item?.quantity || 0) > 0).length,
@@ -163,7 +194,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
 
   const visibleRecipes = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return CRAFTING_RECIPES.filter((recipe) => {
+    return [...baseRecipes, ...CRAFTING_RECIPES].filter((recipe) => {
       if (recipeCategory(recipe) !== category) return false;
       if (category === "mods" && modFilter !== "all" && recipeModType(recipe) !== modFilter) return false;
       if (workbench !== "all" && recipe.workbench !== workbench) return false;
@@ -172,7 +203,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query));
     });
-  }, [category, modFilter, workbench, search, language]);
+  }, [baseRecipes, category, modFilter, workbench, search, language]);
 
   const toggleKnownRecipe = (recipe) => {
     if (!setCharacter) return;
