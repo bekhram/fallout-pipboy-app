@@ -2,8 +2,10 @@ import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
+import ActiveBestiaryCombatPanel from "../combat/ActiveBestiaryCombatPanel.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
+import { installBestiaryCombatGmBridge } from "../../utils/bestiaryCombatGmBridge.js";
 
 const SWIPE_THRESHOLD = 60;
 const INTERACTIVE_SELECTOR = [
@@ -18,6 +20,7 @@ const INTERACTIVE_SELECTOR = [
   ".pip-map-screen",
   ".games-screen",
   ".bestiary-screen",
+  ".pip-active-combat",
 ].join(",");
 
 export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, children }) {
@@ -34,6 +37,7 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
   useEffect(() => {
     installCompanionGmBridge();
     installLocationLoreGmBridge();
+    installBestiaryCombatGmBridge();
   }, []);
 
   useEffect(() => {
@@ -80,6 +84,7 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
             {screenContent}
           </div>
+          {activeTab === "map" ? <ActiveBestiaryCombatPanel /> : null}
         </main>
       </div>
     </div>
