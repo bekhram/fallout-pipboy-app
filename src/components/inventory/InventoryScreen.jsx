@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { INVENTORY_CATEGORIES } from "../../constants.js";
 import { extendInventoryCategories, getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
+import { getCompanionCarryWeight } from "../../utils/companionStorage.js";
 import InventoryCard from "./InventoryCard.jsx";
 import InventoryEditor from "./InventoryEditor.jsx";
 
@@ -14,6 +15,13 @@ const CATEGORY_LABEL_KEYS = {
   food: "inventory.categories.food",
   misc: "inventory.categories.misc",
   junk: "inventory.categories.junk",
+};
+
+const CARRY_LABELS = {
+  en: { player: "Player", companions: "Companions", total: "Total" },
+  ru: { player: "Игрок", companions: "Компаньоны", total: "Итого" },
+  uk: { player: "Гравець", companions: "Компаньйони", total: "Разом" },
+  pl: { player: "Gracz", companions: "Towarzysze", total: "Razem" },
 };
 
 export default function InventoryScreen({
@@ -38,6 +46,11 @@ export default function InventoryScreen({
   const { t, i18n } = useTranslation();
   const [selectedIndices, setSelectedIndices] = useState([]);
   const [sellBonusPercent, setSellBonusPercent] = useState("0");
+  const language = String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
+  const carryLabels = CARRY_LABELS[language] || CARRY_LABELS.en;
+  const companionCarryWeight = getCompanionCarryWeight();
+  const playerCarryWeight = Math.max(0, Number(carryWeight || 0));
+  const totalCarryWeight = Number((playerCarryWeight + companionCarryWeight).toFixed(2));
 
   const inventoryCategories = useMemo(() => {
     let next = extendInventoryCategories(INVENTORY_CATEGORIES);
@@ -226,8 +239,13 @@ export default function InventoryScreen({
             {t("inventory.currentWeight")}: {currentCarryWeight}
           </span>
           <span>
-            {t("inventory.maxCarry")}: {carryWeight}
+            {t("inventory.maxCarry")}: {totalCarryWeight}
           </span>
+          {companionCarryWeight > 0 ? (
+            <span>
+              {carryLabels.player}: {playerCarryWeight} + {carryLabels.companions}: {companionCarryWeight} = {carryLabels.total}: {totalCarryWeight}
+            </span>
+          ) : null}
         </div>
 
         <div className="pip-stack">
