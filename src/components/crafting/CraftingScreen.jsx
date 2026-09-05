@@ -1,79 +1,90 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";
+import {
+  getCraftingRecipeState,
+  resolveCraftingAttempt,
+} from "../../utils/craftingEngine.js";
 import "./crafting.css";
 
 const TEXT = {
   en: {
-    title: "CRAFTING",
-    subtitle: "WORKBENCH // RECIPE DATABASE",
-    weapons: "WEAPONS",
-    armor: "ARMOR",
-    items: "OTHER ITEMS",
-    search: "Search recipes...",
-    skill: "REQUIRED SKILL",
-    complexity: "COMPLEXITY",
-    materials: "MATERIALS",
-    requirements: "REQUIREMENTS",
-    craft: "CRAFT",
-    unavailable: "CRAFTING RULES NOT LOADED",
-    empty: "Recipe database is empty. Add the crafting rules to begin.",
-    inventory: "INVENTORY MATERIALS",
+    title: "CRAFTING", subtitle: "WORKBENCH // CORE RULEBOOK RECIPES", weapons: "WEAPONS", armor: "ARMOR", items: "OTHER ITEMS",
+    search: "Search recipes, mods, workbenches...", skill: "SKILL", complexity: "COMPLEXITY", difficulty: "DIFFICULTY", materials: "MATERIALS",
+    requirements: "PERKS", rarity: "RARITY", craft: "CRAFT", recipeFound: "RECIPE FOUND", forgetRecipe: "REMOVE RECIPE", unknownRare: "RARE RECIPE NOT LEARNED",
+    inventory: "INVENTORY ITEMS", source: "SOURCE", page: "p.", workbench: "WORKBENCH", benchReady: "ACCESS", benchMissing: "NO ACCESS",
+    result: "LAST ATTEMPT", success: "SUCCESS", failure: "FAILURE", automatic: "AUTOMATIC SUCCESS (D0)", successes: "successes", complications: "complications",
+    duration: "TIME", minutes: "min", apHint: "On success, 2 AP may halve crafting time.", failedConsumed: "Failure consumed all ingredients at this station.",
+    complicationLoss: "Complications may waste ingredients; no amount is auto-invented.", missingMaterials: "Missing materials", missingPerks: "Missing required perk rank",
+    needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
+    common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.",
   },
   ru: {
-    title: "КРАФТ",
-    subtitle: "ВЕРСТАК // БАЗА РЕЦЕПТОВ",
-    weapons: "ОРУЖИЕ",
-    armor: "БРОНЯ",
-    items: "ДРУГИЕ ПРЕДМЕТЫ",
-    search: "Поиск рецептов...",
-    skill: "НУЖНЫЙ НАВЫК",
-    complexity: "СЛОЖНОСТЬ",
-    materials: "МАТЕРИАЛЫ",
-    requirements: "ТРЕБОВАНИЯ",
-    craft: "СОЗДАТЬ",
-    unavailable: "ПРАВИЛА КРАФТА ЕЩЁ НЕ ЗАГРУЖЕНЫ",
-    empty: "База рецептов пока пуста. Добавьте правила крафта, чтобы начать.",
-    inventory: "МАТЕРИАЛЫ В ИНВЕНТАРЕ",
+    title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ CORE RULEBOOK", weapons: "ОРУЖИЕ", armor: "БРОНЯ", items: "ДРУГИЕ ПРЕДМЕТЫ",
+    search: "Поиск рецептов, модов, верстаков...", skill: "НАВЫК", complexity: "СЛОЖНОСТЬ", difficulty: "ТРУДНОСТЬ", materials: "МАТЕРИАЛЫ",
+    requirements: "ПЕРКИ", rarity: "РЕДКОСТЬ", craft: "СОЗДАТЬ", recipeFound: "РЕЦЕПТ НАЙДЕН", forgetRecipe: "УБРАТЬ РЕЦЕПТ", unknownRare: "РЕДКИЙ РЕЦЕПТ НЕ ИЗУЧЕН",
+    inventory: "ПРЕДМЕТОВ В ИНВЕНТАРЕ", source: "ИСТОЧНИК", page: "стр.", workbench: "ВЕРСТАК", benchReady: "ДОСТУП ЕСТЬ", benchMissing: "НЕТ ДОСТУПА",
+    result: "ПОСЛЕДНЯЯ ПОПЫТКА", success: "УСПЕХ", failure: "ПРОВАЛ", automatic: "АВТОУСПЕХ (D0)", successes: "успехов", complications: "осложнений",
+    duration: "ВРЕМЯ", minutes: "мин", apHint: "При успехе 2 AP могут уменьшить время вдвое.", failedConsumed: "При провале эта станция расходует все ингредиенты.",
+    complicationLoss: "Осложнения могут испортить материалы; приложение не выдумывает их количество.", missingMaterials: "Не хватает материалов", missingPerks: "Не хватает ранга перка",
+    needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
+    common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.",
   },
   uk: {
-    title: "КРАФТ",
-    subtitle: "ВЕРСТАТ // БАЗА РЕЦЕПТІВ",
-    weapons: "ЗБРОЯ",
-    armor: "БРОНЯ",
-    items: "ІНШІ ПРЕДМЕТИ",
-    search: "Пошук рецептів...",
-    skill: "ПОТРІБНА НАВИЧКА",
-    complexity: "СКЛАДНІСТЬ",
-    materials: "МАТЕРІАЛИ",
-    requirements: "ВИМОГИ",
-    craft: "СТВОРИТИ",
-    unavailable: "ПРАВИЛА КРАФТУ ЩЕ НЕ ЗАВАНТАЖЕНІ",
-    empty: "База рецептів поки порожня. Додайте правила крафту, щоб почати.",
-    inventory: "МАТЕРІАЛИ В ІНВЕНТАРІ",
+    title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ CORE RULEBOOK", weapons: "ЗБРОЯ", armor: "БРОНЯ", items: "ІНШІ ПРЕДМЕТИ",
+    search: "Пошук рецептів, модів, верстатів...", skill: "НАВИЧКА", complexity: "СКЛАДНІСТЬ", difficulty: "ТРУДНІСТЬ", materials: "МАТЕРІАЛИ",
+    requirements: "ПЕРКИ", rarity: "РІДКІСТЬ", craft: "СТВОРИТИ", recipeFound: "РЕЦЕПТ ЗНАЙДЕНО", forgetRecipe: "ПРИБРАТИ РЕЦЕПТ", unknownRare: "РІДКІСНИЙ РЕЦЕПТ НЕ ВИВЧЕНО",
+    inventory: "ПРЕДМЕТІВ В ІНВЕНТАРІ", source: "ДЖЕРЕЛО", page: "стор.", workbench: "ВЕРСТАТ", benchReady: "ДОСТУП Є", benchMissing: "НЕМАЄ ДОСТУПУ",
+    result: "ОСТАННЯ СПРОБА", success: "УСПІХ", failure: "НЕВДАЧА", automatic: "АВТОУСПІХ (D0)", successes: "успіхів", complications: "ускладнень",
+    duration: "ЧАС", minutes: "хв", apHint: "За успіху 2 AP можуть удвічі скоротити час.", failedConsumed: "За невдачі ця станція витрачає всі інгредієнти.",
+    complicationLoss: "Ускладнення можуть зіпсувати матеріали; застосунок не вигадує їх кількість.", missingMaterials: "Не вистачає матеріалів", missingPerks: "Не вистачає рангу перка",
+    needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
+    common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.",
   },
   pl: {
-    title: "RZEMIOSŁO",
-    subtitle: "WARSZTAT // BAZA RECEPTUR",
-    weapons: "BROŃ",
-    armor: "PANCERZ",
-    items: "INNE PRZEDMIOTY",
-    search: "Szukaj receptur...",
-    skill: "WYMAGANA UMIEJĘTNOŚĆ",
-    complexity: "ZŁOŻONOŚĆ",
-    materials: "MATERIAŁY",
-    requirements: "WYMAGANIA",
-    craft: "WYTWÓRZ",
-    unavailable: "ZASADY RZEMIOSŁA NIE SĄ JESZCZE WCZYTANE",
-    empty: "Baza receptur jest pusta. Dodaj zasady rzemiosła, aby rozpocząć.",
-    inventory: "MATERIAŁY W EKWIPUNKU",
+    title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY CORE RULEBOOK", weapons: "BROŃ", armor: "PANCERZ", items: "INNE PRZEDMIOTY",
+    search: "Szukaj receptur, modyfikacji, warsztatów...", skill: "UMIEJĘTNOŚĆ", complexity: "ZŁOŻONOŚĆ", difficulty: "TRUDNOŚĆ", materials: "MATERIAŁY",
+    requirements: "ATUTY", rarity: "RZADKOŚĆ", craft: "WYTWÓRZ", recipeFound: "RECEPTURA ZNALEZIONA", forgetRecipe: "USUŃ RECEPTURĘ", unknownRare: "RZADKA RECEPTURA NIEPOZNANA",
+    inventory: "PRZEDMIOTY W EKWIPUNKU", source: "ŹRÓDŁO", page: "s.", workbench: "WARSZTAT", benchReady: "DOSTĘP", benchMissing: "BRAK DOSTĘPU",
+    result: "OSTATNIA PRÓBA", success: "SUKCES", failure: "PORAŻKA", automatic: "AUTOMATYCZNY SUKCES (D0)", successes: "sukcesów", complications: "komplikacji",
+    duration: "CZAS", minutes: "min", apHint: "Po sukcesie 2 AP może skrócić czas o połowę.", failedConsumed: "Porażka zużywa wszystkie składniki na tej stacji.",
+    complicationLoss: "Komplikacje mogą zmarnować materiały; aplikacja nie wymyśla ich liczby.", missingMaterials: "Brak materiałów", missingPerks: "Brak wymaganego poziomu atutu",
+    needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
+    common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.",
   },
 };
 
 const CATEGORIES = ["weapons", "armor", "items"];
+const WORKBENCHES = {
+  weapons: ["weapons"],
+  armor: ["armor", "power_armor"],
+  items: ["chemistry", "cooking", "robot"],
+};
+const WORKBENCH_LABELS = {
+  weapons: { en: "Weapons Workbench", ru: "Оружейный верстак", uk: "Збройовий верстат", pl: "Warsztat broni" },
+  armor: { en: "Armor Workbench", ru: "Верстак брони", uk: "Верстат броні", pl: "Warsztat pancerza" },
+  power_armor: { en: "Power Armor Station", ru: "Станция силовой брони", uk: "Станція силової броні", pl: "Stacja pancerza wspomaganego" },
+  chemistry: { en: "Chemistry Station", ru: "Химическая станция", uk: "Хімічна станція", pl: "Stacja chemiczna" },
+  cooking: { en: "Cooking Station", ru: "Кулинарная станция", uk: "Кулінарна станція", pl: "Stacja gotowania" },
+  robot: { en: "Robot Workbench", ru: "Верстак роботов", uk: "Верстат роботів", pl: "Warsztat robotów" },
+};
 
 function languageCode(value) {
   const code = String(value || "en").split("-")[0];
   return TEXT[code] ? code : "en";
+}
+
+function benchLabel(id, language) {
+  return WORKBENCH_LABELS[id]?.[language] || WORKBENCH_LABELS[id]?.en || id;
+}
+
+function rarityLabel(value, copy) {
+  const key = String(value || "common").toLowerCase();
+  return copy[key] || value;
+}
+
+function diceText(roll) {
+  return (roll?.rolls || []).map((die) => die.value).join(", ");
 }
 
 export default function CraftingScreen({ character = null, setCharacter = null }) {
@@ -81,20 +92,114 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
   const copy = TEXT[language];
   const [category, setCategory] = useState("weapons");
+  const [workbench, setWorkbench] = useState("all");
   const [search, setSearch] = useState("");
+  const [benchAccess, setBenchAccess] = useState({});
+  const [lastResult, setLastResult] = useState(null);
 
   const materialCount = useMemo(
     () => (character?.inventoryItems || []).filter((item) => Number(item?.quantity || 0) > 0).length,
     [character?.inventoryItems]
   );
 
-  // Recipes and mechanics are intentionally empty until the user-provided rules are loaded.
-  const recipes = [];
-  const visibleRecipes = recipes.filter((recipe) => {
-    if (recipe.category !== category) return false;
-    if (!search.trim()) return true;
-    return String(recipe.name || "").toLowerCase().includes(search.trim().toLowerCase());
-  });
+  const visibleRecipes = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return CRAFTING_RECIPES.filter((recipe) => {
+      if (recipe.category !== category) return false;
+      if (workbench !== "all" && recipe.workbench !== workbench) return false;
+      if (!query) return true;
+      return [recipe.name, recipe.group, recipe.skill, recipe.perks, recipe.rarity, benchLabel(recipe.workbench, language)]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query));
+    });
+  }, [category, workbench, search, language]);
+
+  const toggleKnownRecipe = (recipe) => {
+    if (!setCharacter) return;
+    setCharacter((prev) => {
+      const known = new Set(prev?.craftingKnownRecipes || []);
+      if (known.has(recipe.id)) known.delete(recipe.id);
+      else known.add(recipe.id);
+      return { ...prev, craftingKnownRecipes: [...known] };
+    });
+  };
+
+  const handleCraft = (recipe) => {
+    const state = getCraftingRecipeState(character, recipe);
+    const needsWorkbench = !(recipe.workbench === "cooking" && recipe.name === "Cooking Station");
+    if (needsWorkbench && !benchAccess[recipe.workbench]) {
+      setLastResult({ recipeId: recipe.id, error: "bench" });
+      return;
+    }
+    if (!state.hasMaterials) {
+      setLastResult({ recipeId: recipe.id, error: "materials" });
+      return;
+    }
+    if (!state.hasPerks) {
+      setLastResult({ recipeId: recipe.id, error: "perks" });
+      return;
+    }
+    if (!state.knownRare) {
+      setLastResult({ recipeId: recipe.id, error: "recipe_unknown" });
+      return;
+    }
+
+    const result = resolveCraftingAttempt(character, recipe);
+    if (result?.error) {
+      setLastResult({ recipeId: recipe.id, error: result.error });
+      return;
+    }
+
+    if (setCharacter) {
+      setCharacter((prev) => ({
+        ...prev,
+        inventoryItems: result.inventory,
+        craftingHistory: [
+          ...(prev?.craftingHistory || []),
+          {
+            id: `${recipe.id}-${Date.now()}`,
+            recipeId: recipe.id,
+            name: recipe.name,
+            success: result.success,
+            difficulty: result.state.difficulty,
+            targetNumber: result.state.skill.targetNumber,
+            rolls: (result.roll?.rolls || []).map((die) => die.value),
+            complications: result.complications,
+            durationMinutes: result.durationMinutes,
+            timestamp: new Date().toISOString(),
+          },
+        ].slice(-50),
+      }));
+    }
+    setLastResult({ recipeId: recipe.id, ...result });
+  };
+
+  const renderResult = (recipe) => {
+    if (!lastResult || lastResult.recipeId !== recipe.id) return null;
+    if (lastResult.error) {
+      const message = lastResult.error === "bench" ? copy.needBench
+        : lastResult.error === "materials" ? copy.missingMaterials
+          : lastResult.error === "perks" ? copy.missingPerks
+            : copy.unknownRare;
+      return <div className="craft-result is-failure">[ {message} ]</div>;
+    }
+    return (
+      <div className={`craft-result ${lastResult.success ? "is-success" : "is-failure"}`}>
+        <strong>[ {copy.result}: {lastResult.success ? copy.success : copy.failure} ]</strong>
+        <div>
+          {lastResult.automatic
+            ? copy.automatic
+            : `${copy.roll}: [${diceText(lastResult.roll)}] // ${copy.target} ${lastResult.state.skill.targetNumber} // D${lastResult.state.difficulty} // ${lastResult.roll?.totalSuccesses || 0} ${copy.successes}`}
+        </div>
+        <div>{copy.complications}: {lastResult.complications}</div>
+        <div>{copy.duration}: {lastResult.durationMinutes} {copy.minutes}</div>
+        {lastResult.success ? <div>{copy.output}: {lastResult.output?.name || recipe.outputName || recipe.name}</div> : null}
+        {lastResult.success ? <div className="craft-note">{copy.apHint}</div> : null}
+        {!lastResult.success && lastResult.consumedMaterials ? <div className="craft-note">{copy.failedConsumed}</div> : null}
+        {lastResult.complicationMaterialLossNeedsGm ? <div className="craft-note">{copy.complicationLoss}</div> : null}
+      </div>
+    );
+  };
 
   return (
     <div className="pip-screen crafting-screen">
@@ -118,9 +223,43 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               role="tab"
               aria-selected={category === key}
               className={`pip-btn ${category === key ? "is-primary" : ""}`}
-              onClick={() => setCategory(key)}
+              onClick={() => { setCategory(key); setWorkbench("all"); }}
             >
               {copy[key]}
+            </button>
+          ))}
+        </div>
+
+        <div className="crafting-screen__bench-row">
+          <button
+            type="button"
+            className={`pip-btn ${workbench === "all" ? "is-primary" : ""}`}
+            onClick={() => setWorkbench("all")}
+          >
+            {copy.all}
+          </button>
+          {(WORKBENCHES[category] || []).map((id) => (
+            <button
+              key={id}
+              type="button"
+              className={`pip-btn ${workbench === id ? "is-primary" : ""}`}
+              onClick={() => setWorkbench(id)}
+            >
+              {benchLabel(id, language)}
+            </button>
+          ))}
+        </div>
+
+        <div className="crafting-screen__bench-access">
+          {(WORKBENCHES[category] || []).map((id) => (
+            <button
+              key={id}
+              type="button"
+              className={`craft-bench-toggle ${benchAccess[id] ? "is-ready" : ""}`}
+              onClick={() => setBenchAccess((prev) => ({ ...prev, [id]: !prev[id] }))}
+            >
+              <span>{benchLabel(id, language)}</span>
+              <strong>{benchAccess[id] ? copy.benchReady : copy.benchMissing}</strong>
             </button>
           ))}
         </div>
@@ -133,27 +272,89 @@ export default function CraftingScreen({ character = null, setCharacter = null }
           placeholder={copy.search}
         />
 
+        <div className="crafting-screen__count">{visibleRecipes.length} {copy.recipeCount}</div>
+
         {visibleRecipes.length ? (
           <div className="crafting-screen__recipes">
-            {visibleRecipes.map((recipe) => (
-              <article key={recipe.id} className="pip-panel crafting-recipe-card">
-                <h3>{recipe.name}</h3>
-                <div>{copy.skill}: {recipe.skill || "-"}</div>
-                <div>{copy.complexity}: {recipe.complexity ?? "-"}</div>
-                <div>{copy.materials}: {recipe.materials || "-"}</div>
-                <div>{copy.requirements}: {recipe.requirements || "-"}</div>
-                <button type="button" className="pip-btn is-primary" disabled>
-                  {copy.craft}
-                </button>
-              </article>
-            ))}
+            {visibleRecipes.map((recipe) => {
+              const state = getCraftingRecipeState(character, recipe);
+              const needsWorkbench = !(recipe.workbench === "cooking" && recipe.name === "Cooking Station");
+              const benchReady = !needsWorkbench || Boolean(benchAccess[recipe.workbench]);
+              const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);
+              return (
+                <article key={recipe.id} className="pip-panel crafting-recipe-card">
+                  <div className="crafting-recipe-card__heading">
+                    <div>
+                      <span className="crafting-recipe-card__group">{recipe.group}</span>
+                      <h3>{recipe.name}</h3>
+                    </div>
+                    <span className={`craft-rarity is-${String(recipe.rarity).toLowerCase()}`}>{rarityLabel(recipe.rarity, copy)}</span>
+                  </div>
+
+                  <div className="crafting-recipe-card__stats">
+                    <div><span>{copy.workbench}</span><strong>{benchLabel(recipe.workbench, language)}</strong></div>
+                    <div><span>{copy.skill}</span><strong>{recipe.skill} {state.skill.effectiveRank}</strong></div>
+                    <div><span>{copy.target}</span><strong>{state.skill.targetNumber}</strong></div>
+                    <div><span>{copy.complexity}</span><strong>{recipe.complexity}</strong></div>
+                    <div><span>{copy.difficulty}</span><strong>D{state.difficulty}</strong></div>
+                    <div><span>{copy.source}</span><strong>{copy.page}{recipe.sourcePage}</strong></div>
+                  </div>
+
+                  <div className="craft-section">
+                    <strong>[ {copy.materials} ]</strong>
+                    <div className="craft-material-list">
+                      {state.materialState.map((entry) => (
+                        <span key={entry.name} className={entry.enough ? "is-ok" : "is-missing"}>
+                          {entry.name}: {entry.available}/{entry.required}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="craft-section">
+                    <strong>[ {copy.requirements} ]</strong>
+                    {state.perkState.length ? (
+                      <div className="craft-material-list">
+                        {state.perkState.map((perk) => (
+                          <span key={`${perk.id}-${perk.rank}`} className={perk.met ? "is-ok" : "is-missing"}>
+                            {perk.label} {perk.rank}: {perk.currentRank}/{perk.rank}
+                          </span>
+                        ))}
+                      </div>
+                    ) : <span>—</span>}
+                  </div>
+
+                  {String(recipe.rarity).toLowerCase() === "rare" ? (
+                    <button
+                      type="button"
+                      className={`pip-btn ${state.knownRare ? "is-primary" : ""}`}
+                      onClick={() => toggleKnownRecipe(recipe)}
+                      disabled={!setCharacter}
+                    >
+                      {state.knownRare ? copy.forgetRecipe : copy.recipeFound}
+                    </button>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="pip-btn is-primary crafting-recipe-card__craft"
+                    onClick={() => handleCraft(recipe)}
+                    disabled={!canCraft}
+                  >
+                    {copy.craft} // {copy.target} {state.skill.targetNumber} // D{state.difficulty}
+                  </button>
+
+                  {!benchReady ? <div className="craft-warning">{copy.needBench}</div> : null}
+                  {!state.hasMaterials ? <div className="craft-warning">{copy.missingMaterials}</div> : null}
+                  {!state.hasPerks ? <div className="craft-warning">{copy.missingPerks}</div> : null}
+                  {!state.knownRare ? <div className="craft-warning">{copy.unknownRare}</div> : null}
+
+                  {renderResult(recipe)}
+                </article>
+              );
+            })}
           </div>
-        ) : (
-          <div className="crafting-screen__empty">
-            <strong>[ {copy.unavailable} ]</strong>
-            <p>{copy.empty}</p>
-          </div>
-        )}
+        ) : <div className="crafting-screen__empty">{copy.noRecipes}</div>}
       </section>
     </div>
   );
