@@ -38,43 +38,46 @@ jobs:
               if anchor not in text:
                   raise SystemExit("armor sync anchor not found")
 
-              power_effect = '''  useEffect(() => {
-    const desiredPowerArmorItems = buildPowerArmorInventoryItems(
-      form.armor?._power?.loadout || {}
-    );
-
-    setForm((prev) => {
-      const previousItems = Array.isArray(prev.inventoryItems)
-        ? prev.inventoryItems
-        : [];
-      const regularItems = previousItems.filter(
-        (item) => item?.sourceType !== "power_armor"
-      );
-      const previousPowerItems = previousItems.filter(
-        (item) => item?.sourceType === "power_armor"
-      );
-
-      const nextPowerItems = desiredPowerArmorItems.map((desired) => {
-        const current = previousPowerItems.find(
-          (item) => item?.sourceId === desired.sourceId
-        );
-        return {
-          ...(current || {}),
-          ...desired,
-          quantity: "1",
-        };
-      });
-
-      const inventoryItems = [...regularItems, ...nextPowerItems];
-      if (JSON.stringify(inventoryItems) === JSON.stringify(previousItems)) {
-        return prev;
-      }
-
-      return { ...prev, inventoryItems };
-    });
-  }, [form.armor?._power?.loadout]);
-
-'''
+              lines = [
+                  '  useEffect(() => {',
+                  '    const desiredPowerArmorItems = buildPowerArmorInventoryItems(',
+                  '      form.armor?._power?.loadout || {}',
+                  '    );',
+                  '',
+                  '    setForm((prev) => {',
+                  '      const previousItems = Array.isArray(prev.inventoryItems)',
+                  '        ? prev.inventoryItems',
+                  '        : [];',
+                  '      const regularItems = previousItems.filter(',
+                  '        (item) => item?.sourceType !== "power_armor"',
+                  '      );',
+                  '      const previousPowerItems = previousItems.filter(',
+                  '        (item) => item?.sourceType === "power_armor"',
+                  '      );',
+                  '',
+                  '      const nextPowerItems = desiredPowerArmorItems.map((desired) => {',
+                  '        const current = previousPowerItems.find(',
+                  '          (item) => item?.sourceId === desired.sourceId',
+                  '        );',
+                  '        return {',
+                  '          ...(current || {}),',
+                  '          ...desired,',
+                  '          quantity: "1",',
+                  '        };',
+                  '      });',
+                  '',
+                  '      const inventoryItems = [...regularItems, ...nextPowerItems];',
+                  '      if (JSON.stringify(inventoryItems) === JSON.stringify(previousItems)) {',
+                  '        return prev;',
+                  '      }',
+                  '',
+                  '      return { ...prev, inventoryItems };',
+                  '    });',
+                  '  }, [form.armor?._power?.loadout]);',
+                  '',
+                  '',
+              ]
+              power_effect = "\n".join(lines)
               text = text.replace(anchor, dependency + power_effect + effect_marker, 1)
 
           path.write_text(text)
@@ -91,5 +94,3 @@ jobs:
           git add src/hooks/useCharacterStorage.js
           git commit -m "fix: sync equipped power armor with inventory"
           git push origin HEAD:main
-
-# Triggered after initial workflow registration.
