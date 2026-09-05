@@ -1,0 +1,55 @@
+name: Fix Ammosmith ammo stack
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-ammosmith-ammo-stack.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Merge crafted ammo into existing ammo stacks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/utils/craftingEngine.js')
+          text = path.read_text(encoding='utf-8')
+          old = '''export function addCraftedInventoryItem(inventory = [], craftedItem) {
+            const key = normalize(craftedItem?.canonicalName || craftedItem?.name);
+            const index = inventory.findIndex((item) =>
+              normalize(item?.canonicalName || item?.name) === key
+              && normalize(item?.category) === normalize(craftedItem?.category)
+              && normalize(item?.craftingRecipeId) === normalize(craftedItem?.craftingRecipeId)
+            );
+          '''
+          new = '''export function addCraftedInventoryItem(inventory = [], craftedItem) {
+            const key = normalize(craftedItem?.canonicalName || craftedItem?.name);
+            const craftedCategory = normalize(craftedItem?.category);
+            const mergeByName = craftedCategory === "ammo";
+            const index = inventory.findIndex((item) =>
+              normalize(item?.canonicalName || item?.name) === key
+              && normalize(item?.category) === craftedCategory
+              && (mergeByName || normalize(item?.craftingRecipeId) === normalize(craftedItem?.craftingRecipeId))
+            );
+          '''
+          if old not in text:
+              raise SystemExit('Ammo stack merge anchor not found')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+      - run: npm ci
+      - run: npm run build
+      - name: Commit
+        run: |
+          git config user.name "Bekhram Salimov"
+          git config user.email "bahramsalimov89@gmail.com"
+          git add src/utils/craftingEngine.js
+          git commit -m "Merge crafted ammunition into existing stacks"
+          git push origin main
