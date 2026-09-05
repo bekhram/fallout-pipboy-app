@@ -17,7 +17,7 @@ const TEXT = {
     duration: "TIME", minutes: "min", apHint: "On success, 2 AP may halve crafting time.", failedConsumed: "Failure consumed all ingredients at this station.",
     complicationLoss: "Complications may waste ingredients; no amount is auto-invented.", missingMaterials: "Missing materials", missingPerks: "Missing required perk rank",
     needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
-    common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.",
+    common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.", ready: "READY", locked: "LOCKED",
   },
   ru: {
     title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ CORE RULEBOOK", weapons: "ОРУЖИЕ", armor: "БРОНЯ", items: "ДРУГИЕ ПРЕДМЕТЫ",
@@ -28,7 +28,7 @@ const TEXT = {
     duration: "ВРЕМЯ", minutes: "мин", apHint: "При успехе 2 AP могут уменьшить время вдвое.", failedConsumed: "При провале эта станция расходует все ингредиенты.",
     complicationLoss: "Осложнения могут испортить материалы; приложение не выдумывает их количество.", missingMaterials: "Не хватает материалов", missingPerks: "Не хватает ранга перка",
     needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
-    common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.",
+    common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
   },
   uk: {
     title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ CORE RULEBOOK", weapons: "ЗБРОЯ", armor: "БРОНЯ", items: "ІНШІ ПРЕДМЕТИ",
@@ -39,7 +39,7 @@ const TEXT = {
     duration: "ЧАС", minutes: "хв", apHint: "За успіху 2 AP можуть удвічі скоротити час.", failedConsumed: "За невдачі ця станція витрачає всі інгредієнти.",
     complicationLoss: "Ускладнення можуть зіпсувати матеріали; застосунок не вигадує їх кількість.", missingMaterials: "Не вистачає матеріалів", missingPerks: "Не вистачає рангу перка",
     needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
-    common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.",
+    common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
   },
   pl: {
     title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY CORE RULEBOOK", weapons: "BROŃ", armor: "PANCERZ", items: "INNE PRZEDMIOTY",
@@ -50,7 +50,7 @@ const TEXT = {
     duration: "CZAS", minutes: "min", apHint: "Po sukcesie 2 AP może skrócić czas o połowę.", failedConsumed: "Porażka zużywa wszystkie składniki na tej stacji.",
     complicationLoss: "Komplikacje mogą zmarnować materiały; aplikacja nie wymyśla ich liczby.", missingMaterials: "Brak materiałów", missingPerks: "Brak wymaganego poziomu atutu",
     needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
-    common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.",
+    common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.", ready: "GOTOWE", locked: "NIEDOSTĘPNE",
   },
 };
 
@@ -96,6 +96,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const [search, setSearch] = useState("");
   const [benchAccess, setBenchAccess] = useState({});
   const [lastResult, setLastResult] = useState(null);
+  const [expandedRecipeId, setExpandedRecipeId] = useState(null);
 
   const materialCount = useMemo(
     () => (character?.inventoryItems || []).filter((item) => Number(item?.quantity || 0) > 0).length,
@@ -281,16 +282,34 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               const needsWorkbench = !(recipe.workbench === "cooking" && recipe.name === "Cooking Station");
               const benchReady = !needsWorkbench || Boolean(benchAccess[recipe.workbench]);
               const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);
+              const expanded = expandedRecipeId === recipe.id;
               return (
-                <article key={recipe.id} className="pip-panel crafting-recipe-card">
-                  <div className="crafting-recipe-card__heading">
-                    <div>
-                      <span className="crafting-recipe-card__group">{recipe.group}</span>
-                      <h3>{recipe.name}</h3>
+                <article key={recipe.id} className={`pip-panel crafting-recipe-card ${expanded ? "is-expanded" : ""}`}> 
+                  <button
+                    type="button"
+                    className="crafting-recipe-card__heading"
+                    aria-expanded={expanded}
+                    onClick={() => setExpandedRecipeId((current) => current === recipe.id ? null : recipe.id)}
+                  >
+                    <div className="crafting-recipe-card__heading-main">
+                      <span className="crafting-recipe-card__chevron" aria-hidden="true">{expanded ? "▼" : "▶"}</span>
+                      <div>
+                        <span className="crafting-recipe-card__group">{recipe.group}</span>
+                        <h3>{recipe.name}</h3>
+                      </div>
                     </div>
                     <span className={`craft-rarity is-${String(recipe.rarity).toLowerCase()}`}>{rarityLabel(recipe.rarity, copy)}</span>
+                  </button>
+
+                  <div className="crafting-recipe-card__quick">
+                    <span className="craft-chip">{recipe.skill} {state.skill.effectiveRank}</span>
+                    <span className="craft-chip">TN {state.skill.targetNumber}</span>
+                    <span className="craft-chip">D{state.difficulty}</span>
+                    <span className={`craft-chip ${canCraft ? "is-ready" : "is-locked"}`}>{canCraft ? copy.ready : copy.locked}</span>
                   </div>
 
+                  {expanded ? (
+                    <div className="crafting-recipe-card__details">
                   <div className="crafting-recipe-card__stats">
                     <div><span>{copy.workbench}</span><strong>{benchLabel(recipe.workbench, language)}</strong></div>
                     <div><span>{copy.skill}</span><strong>{recipe.skill} {state.skill.effectiveRank}</strong></div>
@@ -350,6 +369,8 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                   {!state.knownRare ? <div className="craft-warning">{copy.unknownRare}</div> : null}
 
                   {renderResult(recipe)}
+                    </div>
+                  ) : null}
                 </article>
               );
             })}

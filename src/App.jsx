@@ -154,6 +154,18 @@ export default function App() {
   } = useCharacterStorage(buildDefaultForm());
 
   useEffect(() => {
+    setForm((prev) => {
+      let changed = false;
+      const inventoryItems = (prev.inventoryItems || []).map((item) => {
+        if (item?.sourceType !== "crafting_material" || item?.category === "junk") return item;
+        changed = true;
+        return { ...item, category: "junk" };
+      });
+      return changed ? { ...prev, inventoryItems } : prev;
+    });
+  }, [setForm]);
+
+  useEffect(() => {
     if (globalWeapons.length === 0) return;
 
     setForm((prev) => {
