@@ -107,8 +107,9 @@ export function resolveTravelEncounter(encounter, character) {
   const combatResolution = resolveCombat(encounter, character);
   if (combatResolution) return combatResolution;
 
-  return {
-    kind: "scene",
-    summary: "No automatic damage is applied. Resolve the encounter through Auto GM before changing the character sheet.",
-  };
+  // Narrative-only encounters are described once by Auto GM in Local mode.
+  // They intentionally have no application-generated resolution/card because
+  // no dice, damage, inventory, condition, or character-sheet change has been
+  // resolved by the app yet.
+  return null;
 }
