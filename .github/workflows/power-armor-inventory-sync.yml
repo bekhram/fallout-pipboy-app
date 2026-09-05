@@ -91,3 +91,5 @@ jobs:
           git add src/hooks/useCharacterStorage.js
           git commit -m "fix: sync equipped power armor with inventory"
           git push origin HEAD:main
+
+# Triggered after initial workflow registration.
