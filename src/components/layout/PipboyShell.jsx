@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
-import CompanionTab from "../companion/CompanionTab.jsx";
+import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 
 const SWIPE_THRESHOLD = 60;
@@ -70,7 +70,7 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
           onTouchEnd={handleTouchEnd}
         >
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
-            {activeTab === "companion" ? <CompanionTab /> : children}
+            {activeTab === "companion" ? <CompanionPresetHub /> : children}
           </div>
         </main>
       </div>
