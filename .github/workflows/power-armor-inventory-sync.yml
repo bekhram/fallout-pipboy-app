@@ -1,0 +1,93 @@
+name: Power Armor Inventory Sync Patch
+
+on:
+  push:
+    paths:
+      - .github/workflows/power-armor-inventory-sync.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch character storage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("src/hooks/useCharacterStorage.js")
+          text = path.read_text()
+
+          import_line = 'import { buildPowerArmorInventoryItems } from "../utils/powerArmorInventory.js";\n'
+          if import_line not in text:
+              marker = 'const STORAGE_KEY = "fallout_pipboy_v4_last_character";'
+              if marker not in text:
+                  raise SystemExit("STORAGE_KEY anchor not found")
+              text = text.replace(marker, import_line + "\n" + marker, 1)
+
+          dependency = '  }, [form.armor?._equipment?.slots, armorInventoryDatabase]);\n\n'
+          effect_marker = '  useEffect(() => {\n    const handleUseItem = (event) => {'
+          if 'sourceType === "power_armor"' not in text:
+              anchor = dependency + effect_marker
+              if anchor not in text:
+                  raise SystemExit("armor sync anchor not found")
+
+              power_effect = '''  useEffect(() => {
+    const desiredPowerArmorItems = buildPowerArmorInventoryItems(
+      form.armor?._power?.loadout || {}
+    );
+
+    setForm((prev) => {
+      const previousItems = Array.isArray(prev.inventoryItems)
+        ? prev.inventoryItems
+        : [];
+      const regularItems = previousItems.filter(
+        (item) => item?.sourceType !== "power_armor"
+      );
+      const previousPowerItems = previousItems.filter(
+        (item) => item?.sourceType === "power_armor"
+      );
+
+      const nextPowerItems = desiredPowerArmorItems.map((desired) => {
+        const current = previousPowerItems.find(
+          (item) => item?.sourceId === desired.sourceId
+        );
+        return {
+          ...(current || {}),
+          ...desired,
+          quantity: "1",
+        };
+      });
+
+      const inventoryItems = [...regularItems, ...nextPowerItems];
+      if (JSON.stringify(inventoryItems) === JSON.stringify(previousItems)) {
+        return prev;
+      }
+
+      return { ...prev, inventoryItems };
+    });
+  }, [form.armor?._power?.loadout]);
+
+'''
+              text = text.replace(anchor, dependency + power_effect + effect_marker, 1)
+
+          path.write_text(text)
+          PY
+
+      - name: Commit patch
+        run: |
+          if git diff --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hooks/useCharacterStorage.js
+          git commit -m "fix: sync equipped power armor with inventory"
+          git push origin HEAD:main
