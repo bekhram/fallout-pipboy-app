@@ -1,10 +1,12 @@
 import { getLocalizedInventoryItem as getConsumableLocalization } from "./inventoryLocalization.js";
 import { getExtendedInventoryLocalization } from "./inventoryLocalizationExtended.js";
 import { getLocalizedBobbleheadItem } from "./inventory/bobbleheads.js";
+import { getLocalizedCraftingMaterial } from "./inventory/craftingMaterials.js";
 
 export function getLocalizedInventoryItem(item, language = "en") {
   const base = getConsumableLocalization(item, language);
   const bobblehead = getLocalizedBobbleheadItem(item, language);
+  const craftingMaterial = getLocalizedCraftingMaterial(item, language);
 
   if (bobblehead) {
     return {
@@ -12,6 +14,15 @@ export function getLocalizedInventoryItem(item, language = "en") {
       ...bobblehead,
       displayName: bobblehead.displayName || base.displayName || item?.name || "",
       displayEffect: bobblehead.displayEffect || base.displayEffect || item?.effect || "",
+    };
+  }
+
+  if (craftingMaterial) {
+    return {
+      ...base,
+      ...craftingMaterial,
+      displayName: craftingMaterial.displayName || base.displayName || item?.name || "",
+      displayEffect: craftingMaterial.displayEffect || base.displayEffect || item?.effect || "",
     };
   }
 
