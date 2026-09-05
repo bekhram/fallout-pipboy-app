@@ -3,7 +3,12 @@ import {
   applyEffectModifiersToDerived,
 } from "./effects.js";
 import { applyActiveConsumableEffects } from "./consumableEffects.js";
-import { ORIGINS } from "../components/data/origins.js"; 
+import { ORIGINS } from "../components/data/origins.js";
+import {
+  getBobbleheadBonuses,
+  getEffectiveSpecialValue,
+  getEffectiveSkillRank,
+} from "../data/inventory/bobbleheads.js";
 
 export function toNumber(value, fallback = 0) {
   const num = Number(value);
@@ -25,20 +30,28 @@ export function normalizeWeightValue(value) {
   return String(Math.max(0, num));
 }
 
+export function getEffectiveCharacterSpecial(form, key) {
+  return getEffectiveSpecialValue(form, key);
+}
+
+export function getEffectiveCharacterSkillRank(form, skillName) {
+  return getEffectiveSkillRank(form, skillName);
+}
+
 export function getDerivedStats(form) {
-  const strength = toNumber(form.special?.S, 0);
-  const perception = toNumber(form.special?.P, 0);
-  const endurance = toNumber(form.special?.E, 0);
-  const agility = toNumber(form.special?.A, 0);
-  const luck = toNumber(form.special?.L, 0);
+  const strength = getEffectiveSpecialValue(form, "S");
+  const perception = getEffectiveSpecialValue(form, "P");
+  const endurance = getEffectiveSpecialValue(form, "E");
+  const agility = getEffectiveSpecialValue(form, "A");
+  const luck = getEffectiveSpecialValue(form, "L");
   const level = Math.max(1, toNumber(form.level, 1));
+  const bobbleheadBonuses = getBobbleheadBonuses(form);
 
   const originData = form.origin ? ORIGINS[form.origin] : null;
 
   const calculatedDefense = agility >= 9 ? 2 : 1;
   const calculatedInitiative = perception + agility;
 
-// Расчет базового урона в ближнем бою (MD) по правилам Fallout 2d20
   let calculatedMd = 0;
   if (strength >= 11) {
     calculatedMd = 3;
@@ -47,25 +60,21 @@ export function getDerivedStats(form) {
   } else if (strength >= 7) {
     calculatedMd = 1;
   }
-  
-  // Трейт Heavy Handed дает +1 к урону
+
   if (form.originTraits?.includes("heavy_handed")) {
     calculatedMd += 1;
   }
 
-  // Расчет очков удачи (Gifted отнимает 1 очко)
   let calculatedLuckPoints = luck;
   if (form.originTraits?.includes("gifted")) {
     calculatedLuckPoints = Math.max(0, luck - 1);
   }
 
-  // Расчет HP с учетом возможных модификаторов из происхождения
   let calculatedMaxHp = Math.max(1, level - 1 + endurance + luck);
   if (originData?.maxHpModifier) {
     calculatedMaxHp += originData.maxHpModifier;
   }
 
-  // Расчет веса (Учитываем Мистера Помощника и трейт Small Frame)
   let calculatedCarryWeight = 150 + strength * 10;
   if (form.origin === "mister_handy") {
     calculatedCarryWeight = 150;
@@ -136,6 +145,17 @@ export function getDerivedStats(form) {
     carryWeight: toNumber(derivedWithEffects.carryWeight),
     currentCarryWeight: Number(currentCarryWeight.toFixed(2)),
 
+    effectiveSpecial: {
+      S: getEffectiveSpecialValue(form, "S"),
+      P: getEffectiveSpecialValue(form, "P"),
+      E: getEffectiveSpecialValue(form, "E"),
+      C: getEffectiveSpecialValue(form, "C"),
+      I: getEffectiveSpecialValue(form, "I"),
+      A: getEffectiveSpecialValue(form, "A"),
+      L: getEffectiveSpecialValue(form, "L"),
+    },
+    bobbleheadBonuses,
+
     physicalResistBonus: toNumber(effectMods.derived.physicalResistBonus),
     energyResistBonus: toNumber(effectMods.derived.energyResistBonus),
     radiationResistBonus: toNumber(effectMods.derived.radiationResistBonus),
@@ -151,9 +171,8 @@ export function getDerivedStats(form) {
     activeConsumableEffects: Array.isArray(form.activeConsumableEffects)
       ? form.activeConsumableEffects
       : [],
-    
-    // Передаем массив иммунитетов в финальный объект derived
-    immunities: originData?.immunities || [], 
+
+    immunities: originData?.immunities || [],
   };
 }
 
@@ -204,9 +223,8 @@ export function getTotalResistanceForPart({
   damageType = "physical",
   derived,
 }) {
-  // Если у персонажа есть иммунитет к этому типу урона, возвращаем огромное число
   if (derived?.immunities?.includes(damageType)) {
-    return 9999; 
+    return 9999;
   }
 
   const baseArmor = getBaseArmorForPart(armor, part, damageType);
@@ -265,7 +283,6 @@ export function calculateFinalIncomingDamage({
 }) {
   const safeRawDamage = Math.max(0, toNumber(rawDamage, 0));
 
-  // Если есть иммунитет, обнуляем финальный урон
   if (derived?.immunities?.includes(damageType)) {
     return {
       rawDamage: safeRawDamage,
