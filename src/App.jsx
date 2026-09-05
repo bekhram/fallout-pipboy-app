@@ -32,6 +32,7 @@ import {
   createEmptyPerk,
   createEmptyWeapon,
   SKILL_LABEL_KEYS,
+  STATUS_LIST,
 } from "./constants.js";
 import { useCharacterStorage } from "./hooks/useCharacterStorage.js";
 import { usePortraitCropper } from "./hooks/usePortraitCropper.js";
@@ -344,6 +345,11 @@ export default function App() {
         if (plan.cureAddictions) {
           Object.keys(statuses).forEach((key) => {
             if (key.toLowerCase().endsWith("addiction")) statuses[key] = false;
+          });
+        }
+        if (plan.cureDiseases) {
+          STATUS_LIST.filter((status) => status.group === "disease").forEach((status) => {
+            statuses[status.key] = false;
           });
         }
 
@@ -865,6 +871,7 @@ const updateSkill = (skillName, field, value) =>
         content = (
           <ArmorScreen
             armor={form.armor}
+            inventoryItems={form.inventoryItems}
             onArmorChange={updateArmor}
             derived={derived}
           />

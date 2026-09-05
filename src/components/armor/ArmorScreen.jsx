@@ -48,6 +48,13 @@ const UI = {
   pl: { statsTab: "PARAMETRY PANCERZA", loadoutTab: "DODAJ / ZAŁÓŻ PANCERZ", powerArmor: "PANCERZ WSPOMAGANY", normalArmor: "ZWYKŁY PANCERZ", catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", healthy: "Sprawna", improved: "Ulepszona", damaged: "Uszkodzona", broken: "Zniszczona", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
 };
 
+const OWNED_LABELS = {
+  en: { title: "CRAFTED / OWNED ARMOR", equip: "EQUIP" },
+  ru: { title: "СКРАФЧЕННАЯ / МОЯ БРОНЯ", equip: "НАДЕТЬ" },
+  uk: { title: "СКРАФЧЕНА / МОЯ БРОНЯ", equip: "ОДЯГТИ" },
+  pl: { title: "WYTWORZONY / POSIADANY PANCERZ", equip: "ZAŁÓŻ" },
+};
+
 function findById(list, id) {
   return list.find((entry) => entry.id === id);
 }
@@ -61,10 +68,11 @@ function garmentCoversPart(item, part) {
   return item.category !== "CLOTHING" || part !== "Head";
 }
 
-export default function ArmorScreen({ armor, onArmorChange }) {
+export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange }) {
   const { t, i18n } = useTranslation();
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const ownedLabels = OWNED_LABELS[language] || OWNED_LABELS.en;
   const armorName = (entry) => localizeArmorName(entry?.name, language);
   const armorEffect = (entry) => localizeArmorEffect(entry?.effects, language);
   const [database, setDatabase] = useState({ items: [], mods: [] });
@@ -94,6 +102,14 @@ export default function ArmorScreen({ armor, onArmorChange }) {
 
   const slots = armor?._equipment?.slots || {};
   const condition = armor?._condition?.parts || {};
+  const ownedCraftedArmor = useMemo(() => {
+    const ids = new Set(
+      (inventoryItems || [])
+        .filter((item) => item?.sourceType === "crafted_armor" && Number(item?.quantity || 0) > 0 && item?.armorItemId)
+        .map((item) => item.armorItemId)
+    );
+    return database.items.filter((item) => ids.has(item.id));
+  }, [database.items, inventoryItems]);
 
   const setSlots = (nextSlots) => {
     onArmorChange("_equipment", "slots", nextSlots);
@@ -105,8 +121,7 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     onArmorChange("_condition", "parts", next);
   };
 
-  const equipCatalogItem = () => {
-    const item = findById(database.items, catalogItemId);
+  const equipArmorItem = (item) => {
     if (!item) return;
     const next = { ...slots };
     ARMOR_PARTS.forEach((part) => {
@@ -119,6 +134,10 @@ export default function ArmorScreen({ armor, onArmorChange }) {
     });
     setSlots(next);
     resetConditionParts(ARMOR_PARTS.filter((part) => next[part]?.itemId === item.id));
+  };
+
+  const equipCatalogItem = () => {
+    equipArmorItem(findById(database.items, catalogItemId));
   };
 
   const changeSlot = (part, patch) => {
@@ -394,6 +413,21 @@ export default function ArmorScreen({ armor, onArmorChange }) {
           <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
 
           <div className="pip-armor-section-title push-top">[ {labels.normalArmor} ]</div>
+          {ownedCraftedArmor.length > 0 && (
+            <div className="pip-armor-catalog">
+              <div className="pip-armor-section-title">[ {ownedLabels.title} ]</div>
+              <div className="pip-stack">
+                {ownedCraftedArmor.map((item) => (
+                  <div key={`owned-${item.id}`} className="pip-armor-equip-row">
+                    <strong>{armorName(item)}</strong>
+                    <button type="button" className="pip-btn is-primary" onClick={() => equipArmorItem(item)}>
+                      {ownedLabels.equip}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="pip-armor-catalog">
             <div className="pip-armor-section-title">[ {labels.catalog} ]</div>
             {loadState === "loading" && <div className="pip-armor-message">{labels.loading}</div>}
