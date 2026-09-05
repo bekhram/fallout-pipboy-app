@@ -1,0 +1,62 @@
+.bestiary-special-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.bestiary-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.bestiary-skill {
+  position: relative;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, currentColor 48%, transparent);
+  padding: 7px 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+}
+
+.bestiary-skill.is-tagged {
+  border-color: currentColor;
+  box-shadow: inset 0 0 12px color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.bestiary-skill > span {
+  min-width: 0;
+  font-size: .76rem;
+  overflow-wrap: anywhere;
+}
+
+.bestiary-skill > strong {
+  font-size: .9rem;
+}
+
+.bestiary-skill > small {
+  grid-column: 1 / -1;
+  font-size: .58rem;
+  letter-spacing: .06em;
+  opacity: .68;
+}
+
+@media (max-width: 900px) {
+  .bestiary-special-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .bestiary-skill-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .bestiary-special-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bestiary-skill-grid {
+    grid-template-columns: 1fr;
+  }
+}
