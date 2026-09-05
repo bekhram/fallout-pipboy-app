@@ -209,7 +209,7 @@ const AMMO_CRAFTING_ROWS = [
   ["Missile", 3, 25, 7],
   ["Plasma Cartridge", 4, 5, 0],
   ["2mm EC", 5, 10, 0],
-  ["Mini-Nuke", 5, 100, 12],
+  ["Mini-Nuke", 6, 100, 12],
 ];
 
 const ammosmithRankForRarity = (rarity) => {
@@ -219,7 +219,9 @@ const ammosmithRankForRarity = (rarity) => {
   return 3;
 };
 
-const AMMO_RECIPES = AMMO_CRAFTING_ROWS.map(([name, rarity, cost, weight]) => ({
+const AMMO_RECIPES = AMMO_CRAFTING_ROWS
+  .filter(([, rarity]) => Number(rarity) <= 5)
+  .map(([name, rarity, cost, weight]) => ({
   id: slug(`weapons-ammunition-${name}`),
   category: "ammo",
   workbench: "weapons",

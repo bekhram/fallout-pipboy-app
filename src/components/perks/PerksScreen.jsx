@@ -64,6 +64,12 @@ function getRequirementsWarnings(reqString, form) {
   return warnings;
 }
 
+function getPerkRequirementsForRank(perk, rank) {
+  if (!perk) return "";
+  const safeRank = Math.max(1, Math.min(Number(rank || 1), Number(perk.maxRanks || 1)));
+  return perk.rankRequirements?.[safeRank] || perk.requirements || "";
+}
+
 export default function PerksScreen({
   perks,
   editingIndex,
@@ -119,7 +125,8 @@ export default function PerksScreen({
     item?.id || PERKS_LIST.find((perk) => localizedPerk(perk).name === item?.name)?.id;
   
   // Получаем список предупреждений
-  const warnings = matchedPerk ? getRequirementsWarnings(matchedPerk.requirements, form) : [];
+  const activeRequirements = getPerkRequirementsForRank(matchedPerk, perkDraft?.rank);
+  const warnings = matchedPerk ? getRequirementsWarnings(activeRequirements, form) : [];
 
   return (
     <section className="pip-panel pip-block">

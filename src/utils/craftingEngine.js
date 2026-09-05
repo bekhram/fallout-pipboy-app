@@ -157,7 +157,7 @@ function isAmmoCraftingRecipe(recipe) {
   return Boolean(recipe?.ammoCrafting) || normalize(recipe?.group) === "ammunition";
 }
 
-function getAmmosmithRank(character) {
+export function getAmmosmithRank(character) {
   return getCharacterPerkRank(character, { id: "ammosmith", label: "Ammosmith" });
 }
 
@@ -170,11 +170,93 @@ function resolveAmmosmithQuantity(character, recipe) {
 
   const diceCount = Math.max(1, 6 - rarity);
   const hiddenRoll = rollFalloutD6({ diceCount, effects: [] });
-  const hits = (hiddenRoll?.rolls || []).filter((die) => Number(die?.damage || 0) > 0).length;
+  const hits = Math.max(0, Number(hiddenRoll?.baseDamage || 0));
   const effects = Math.max(0, Number(hiddenRoll?.totalEffects || 0));
   const quantity = Math.max(1, (1 + hits) * (2 ** effects));
 
   return { quantity, perkRank, rarity, diceCount, hits, effects };
+}
+
+
+export function getAmmosmithDismantleMaterials(recipe) {
+  const materials = getRecipeMaterials(recipe);
+  return Object.fromEntries(
+    Object.entries(materials).map(([name, amount]) => [
+      name,
+      Math.max(1, Math.floor(Number(amount || 0) / 2)),
+    ])
+  );
+}
+
+function consumeOneAmmunition(inventory = [], ammoName) {
+  const wanted = normalize(ammoName);
+  let consumed = false;
+  return inventory.map((item) => {
+    if (consumed) return item;
+    const isAmmo = normalize(item?.category) === "ammo";
+    const matches = itemNames(item).includes(wanted);
+    const quantity = Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
+    if (!isAmmo || !matches || quantity < 1) return item;
+    consumed = true;
+    return { ...item, quantity: String(quantity - 1) };
+  }).filter((item) => Number(item?.quantity ?? item?.qty ?? 0) > 0);
+}
+
+function addCraftingMaterial(inventory = [], materialName, amount) {
+  const wanted = normalize(materialName);
+  const index = inventory.findIndex((item) =>
+    normalize(item?.category) === "junk" && itemNames(item).includes(wanted)
+  );
+  if (index >= 0) {
+    const next = [...inventory];
+    const current = next[index];
+    next[index] = {
+      ...current,
+      quantity: String(Math.max(0, Number(current?.quantity ?? current?.qty ?? 0)) + amount),
+    };
+    return next;
+  }
+
+  const template = findDatabaseOutput(materialName);
+  return [
+    ...inventory,
+    {
+      ...(template || {}),
+      name: template?.name || materialName,
+      canonicalName: template?.name || materialName,
+      category: "junk",
+      quantity: String(amount),
+    },
+  ];
+}
+
+export function dismantleAmmunition(character, recipe) {
+  if (!isAmmoCraftingRecipe(recipe)) return { error: "not_ammo" };
+  const perkRank = getAmmosmithRank(character);
+  if (perkRank < 2) return { error: "ammosmith_rank" };
+
+  const ammoName = recipe?.outputName || recipe?.name;
+  const available = (character?.inventoryItems || []).reduce((sum, item) => {
+    if (normalize(item?.category) !== "ammo") return sum;
+    if (!itemNames(item).includes(normalize(ammoName))) return sum;
+    return sum + Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
+  }, 0);
+  if (available < 1) return { error: "ammo_missing" };
+
+  const returnedMaterials = getAmmosmithDismantleMaterials(recipe);
+  let inventory = consumeOneAmmunition(character?.inventoryItems || [], ammoName);
+  for (const [name, amount] of Object.entries(returnedMaterials)) {
+    inventory = addCraftingMaterial(inventory, name, amount);
+  }
+
+  return {
+    success: true,
+    action: "dismantle",
+    ammoName,
+    consumedQuantity: 1,
+    returnedMaterials,
+    inventory,
+  };
 }
 
 export function createCraftedInventoryItem(recipe) {

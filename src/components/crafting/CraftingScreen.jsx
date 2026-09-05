@@ -2,7 +2,10 @@ import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";
 import {
+  dismantleAmmunition,
+  getAmmosmithRank,
   getCraftingRecipeState,
+  getInventoryQuantity,
   resolveCraftingAttempt,
 } from "../../utils/craftingEngine.js";
 import "./crafting.css";
@@ -20,6 +23,7 @@ const TEXT = {
     needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
     common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.", ready: "READY", locked: "LOCKED",
     noBaseWeapons: "The Core Rulebook does not provide recipes for crafting base weapons from scratch. Weapons Workbench recipes are available under MODS.",
+    dismantle: "DISMANTLE 1", dismantled: "DISMANTLED", returned: "RETURNED", ammoOwned: "OWNED", needAmmo: "No ammunition to dismantle", needAmmosmith2: "Ammosmith rank 2 required",
   },
   ru: {
     title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ",
@@ -33,6 +37,7 @@ const TEXT = {
     needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
     common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
     noBaseWeapons: "В Core Rulebook нет рецептов создания базового оружия с нуля. Рецепты оружейного верстака находятся в разделе МОДЫ.",
+    dismantle: "РАЗОБРАТЬ 1", dismantled: "РАЗОБРАНО", returned: "ВОЗВРАЩЕНО", ammoOwned: "В НАЛИЧИИ", needAmmo: "Нет патронов для разбора", needAmmosmith2: "Требуется Ammosmith 2",
   },
   uk: {
     title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ",
@@ -46,6 +51,7 @@ const TEXT = {
     needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
     common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
     noBaseWeapons: "У Core Rulebook немає рецептів створення базової зброї з нуля. Рецепти збройового верстата знаходяться у розділі МОДИ.",
+    dismantle: "РОЗІБРАТИ 1", dismantled: "РОЗІБРАНО", returned: "ПОВЕРНЕНО", ammoOwned: "В НАЯВНОСТІ", needAmmo: "Немає патронів для розбирання", needAmmosmith2: "Потрібен Ammosmith 2",
   },
   pl: {
     title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY",
@@ -59,6 +65,7 @@ const TEXT = {
     needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
     common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.", ready: "GOTOWE", locked: "NIEDOSTĘPNE",
     noBaseWeapons: "Core Rulebook nie zawiera receptur tworzenia podstawowej broni od zera. Receptury warsztatu broni są w sekcji MODY.",
+    dismantle: "ROZŁÓŻ 1", dismantled: "ROZŁOŻONO", returned: "ODZYSKANO", ammoOwned: "POSIADASZ", needAmmo: "Brak amunicji do rozłożenia", needAmmosmith2: "Wymagany Ammosmith 2",
   },
 };
 
@@ -214,14 +221,54 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     setLastResult({ recipeId: recipe.id, ...result });
   };
 
+  const handleDismantle = (recipe) => {
+    if (!benchAccess[recipe.workbench]) {
+      setLastResult({ recipeId: recipe.id, error: "bench", action: "dismantle" });
+      return;
+    }
+    const result = dismantleAmmunition(character, recipe);
+    if (result?.error) {
+      setLastResult({ recipeId: recipe.id, error: result.error, action: "dismantle" });
+      return;
+    }
+    if (setCharacter) {
+      setCharacter((prev) => ({
+        ...prev,
+        inventoryItems: result.inventory,
+        craftingHistory: [
+          ...(prev?.craftingHistory || []),
+          {
+            id: `${recipe.id}-dismantle-${Date.now()}`,
+            recipeId: recipe.id,
+            name: recipe.name,
+            action: "dismantle",
+            returnedMaterials: result.returnedMaterials,
+            timestamp: new Date().toISOString(),
+          },
+        ].slice(-50),
+      }));
+    }
+    setLastResult({ recipeId: recipe.id, ...result });
+  };
+
   const renderResult = (recipe) => {
     if (!lastResult || lastResult.recipeId !== recipe.id) return null;
     if (lastResult.error) {
       const message = lastResult.error === "bench" ? copy.needBench
         : lastResult.error === "materials" ? copy.missingMaterials
           : lastResult.error === "perks" ? copy.missingPerks
-            : copy.unknownRare;
+            : lastResult.error === "ammosmith_rank" ? copy.needAmmosmith2
+              : lastResult.error === "ammo_missing" ? copy.needAmmo
+                : copy.unknownRare;
       return <div className="craft-result is-failure">[ {message} ]</div>;
+    }
+    if (lastResult.action === "dismantle") {
+      return (
+        <div className="craft-result is-success">
+          <strong>[ {copy.dismantled}: {recipe.name} ×1 ]</strong>
+          <div>{copy.returned}: {Object.entries(lastResult.returnedMaterials || {}).map(([name, amount]) => `${name} ×${amount}`).join(" // ")}</div>
+        </div>
+      );
     }
     return (
       <div className={`craft-result ${lastResult.success ? "is-success" : "is-failure"}`}>
@@ -333,6 +380,9 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               const needsWorkbench = !(recipe.workbench === "cooking" && recipe.name === "Cooking Station");
               const benchReady = !needsWorkbench || Boolean(benchAccess[recipe.workbench]);
               const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);
+              const ammoOwned = recipe.ammoCrafting ? getInventoryQuantity(character?.inventoryItems || [], recipe.name) : 0;
+              const ammosmithRank = recipe.ammoCrafting ? getAmmosmithRank(character) : 0;
+              const canDismantle = Boolean(setCharacter && recipe.ammoCrafting && benchReady && ammosmithRank >= 2 && ammoOwned > 0);
               const expanded = expandedRecipeId === recipe.id;
               return (
                 <article key={recipe.id} className={`pip-panel crafting-recipe-card ${expanded ? "is-expanded" : ""}`}>
@@ -417,6 +467,20 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                           ? `${copy.craft} // R${recipe.ammoRarity}`
                           : `${copy.craft} // ${copy.target} ${state.skill.targetNumber} // D${state.difficulty}`}
                       </button>
+
+                      {recipe.ammoCrafting ? (
+                        <>
+                          <div className="craft-note">{copy.ammoOwned}: {ammoOwned}</div>
+                          <button
+                            type="button"
+                            className="pip-btn crafting-recipe-card__craft"
+                            onClick={() => handleDismantle(recipe)}
+                            disabled={!canDismantle}
+                          >
+                            {copy.dismantle}
+                          </button>
+                        </>
+                      ) : null}
 
                       {!benchReady ? <div className="craft-warning">{copy.needBench}</div> : null}
                       {!state.hasMaterials ? <div className="craft-warning">{copy.missingMaterials}</div> : null}
