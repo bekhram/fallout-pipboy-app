@@ -23,7 +23,14 @@ const INTERACTIVE_SELECTOR = [
   ".pip-active-combat",
 ].join(",");
 
-export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, children }) {
+export default function PipboyShell({
+  activeTab,
+  onTabChange,
+  onToggleMenu,
+  character = null,
+  setCharacter = null,
+  children,
+}) {
   const touchStart = useRef(null);
   const previousTab = useRef(activeTab);
   const previousIndex = PIPBOY_TABS.findIndex((tab) => tab.key === previousTab.current);
@@ -84,7 +91,9 @@ export default function PipboyShell({ activeTab, onTabChange, onToggleMenu, chil
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
             {screenContent}
           </div>
-          {activeTab === "map" ? <ActiveBestiaryCombatPanel /> : null}
+          {activeTab === "map" ? (
+            <ActiveBestiaryCombatPanel character={character} setCharacter={setCharacter} />
+          ) : null}
         </main>
       </div>
     </div>
