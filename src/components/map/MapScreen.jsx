@@ -267,9 +267,35 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   );
 
   useEffect(() => {
-    if (safeMapState.pendingTravelEncounter?.token) {
-      setMapMode("local");
+    const pending = safeMapState.pendingTravelEncounter;
+    if (!pending?.token) return;
+
+    setMapMode("local");
+    if (pending.resolution) return;
+
+    const resolution = resolveTravelEncounter(pending, character);
+    if (!resolution) return;
+
+    onMapChange((prevMap) => {
+      const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
+      if (base.pendingTravelEncounter?.token !== pending.token) return base;
+      if (base.pendingTravelEncounter?.resolution) return base;
+      return {
+        ...base,
+        pendingTravelEncounter: {
+          ...base.pendingTravelEncounter,
+          resolution,
+        },
+      };
+    });
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, {
+        detail: { token: pending.token, resolution },
+      }));
     }
+    // Resolve legacy pending encounters created before exact encounter mechanics existed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeMapState.pendingTravelEncounter?.token]);
 
   const activeRegion = getMapRegion(safeMapState.regionId);
