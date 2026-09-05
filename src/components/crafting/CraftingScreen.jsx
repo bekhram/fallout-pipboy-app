@@ -121,20 +121,28 @@ function recipeModType(recipe) {
   return null;
 }
 
+function recipeModType(recipe) {
+  const bench = String(recipe?.workbench || "").toLowerCase();
+  if (["weapons", "armor", "power_armor", "robot"].includes(bench)) return bench;
+  return null;
+}
+
 function recipeCategory(recipe) {
   const group = String(recipe?.group || "").toUpperCase();
-  const bench = String(recipe?.workbench || "").toLowerCase();
 
   if (group === "EXPLOSIVES") return "explosives";
   if (group === "AMMUNITION") return "ammo";
 
   if (
-    ["weapons", "armor", "power_armor", "robot"].includes(bench)
-    || group.includes(" MOD")
+    group.includes(" MOD")
     || group.endsWith("MODS")
     || group.includes("UPGRADE")
     || group.includes("PLATING")
     || group.includes("SYSTEM")
+    || group.includes("MATERIAL")
+    || group.includes("LINING")
+    || group === "BALLISTIC WEAVE"
+    || group === "ROBOT ARMOR"
   ) return "mods";
 
   if (recipe?.category === "weapons") return "weapons";
@@ -359,7 +367,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
             ))
           ) : (
             <>
-              <buttton
+              <button
                 type="button"
                 className={`pip-btn ${workbench === "all" ? "is-primary" : ""}`}
                 onClick={() => setWorkbench("all")}
