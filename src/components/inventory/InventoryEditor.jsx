@@ -276,7 +276,7 @@ export default function InventoryEditor({
   };
 
   const hasArchive = archiveItems.length > 0;
-  const showEffect = ["weapons", "armor", "aid", "food", "beverages", "magazines", "tools"].includes(draft.category);
+  const showEffect = ["weapons", "armor", "aid", "food", "beverages", "magazines", "tools", "misc"].includes(draft.category);
   const showAidFields = draft.category === "aid";
   const showConsumableFields = ["food", "beverages"].includes(draft.category);
   const showMagazineFields = draft.category === "magazines";

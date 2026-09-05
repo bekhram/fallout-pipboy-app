@@ -6,6 +6,7 @@ import {
 import { getDerivedStats } from "./characterMath.js";
 import { getEnvironmentSnapshot } from "./environmentSystem.js";
 import { applyWeaponMods } from "../data/weaponMods.js";
+import { getEffectiveSpecialValue, getEffectiveSkillRank } from "../data/inventory/bobbleheads.js";
 import {
   getBestiaryResistance,
   hasBestiaryLocationSpecificDr,
@@ -84,8 +85,8 @@ function getSkillProfile(character, weapon) {
   const skill = character?.skills?.[skillName] || null;
   if (!skill) return null;
   const attribute = skill.attribute || weapon?.specialKey || "A";
-  const attributeValue = Number(character?.special?.[attribute] || 0);
-  const rank = Number(skill?.rank || 0);
+  const attributeValue = getEffectiveSpecialValue(character, attribute);
+  const rank = getEffectiveSkillRank(character, skillName);
   const tagBonus = skill?.tagged ? 2 : 0;
   const bonus = Number(skill?.bonus || 0);
   return {

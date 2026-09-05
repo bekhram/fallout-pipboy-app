@@ -6,6 +6,7 @@ import { rollFalloutD20 } from "../../utils/dice.js";
 import { playSound } from "../../utils/soundManager.js";
 import { getCellHazards } from "../../utils/mapMath.js";
 import { getEnvironmentSnapshot } from "../../utils/environmentSystem.js";
+import { getBobbleheadBonuses, getEffectiveSpecialValue, getEffectiveSkillRank } from "../../data/inventory/bobbleheads.js";
 import "./localGmChat.css";
 
 const CHARACTER_STORAGE_KEY = "fallout_pipboy_v4_last_character";
@@ -156,8 +157,16 @@ function compactCharacter(character, weaponDatabase = []) {
     name: character.characterName || character.name || "Unknown wanderer",
     level: character.level ?? null,
     origin: character.origin || null,
-    special: character.special || character.SPECIAL || null,
-    skills: character.skills || null,
+    special: character.special
+      ? Object.fromEntries(["S", "P", "E", "C", "I", "A", "L"].map((key) => [key, getEffectiveSpecialValue(character, key)]))
+      : character.SPECIAL || null,
+    skills: character.skills
+      ? Object.fromEntries(Object.entries(character.skills).map(([name, skill]) => [name, {
+          ...skill,
+          rank: String(getEffectiveSkillRank(character, name)),
+          bobbleheadBonus: Number(getBobbleheadBonuses(character).skills?.[name] || 0),
+        }]))
+      : null,
     hp: {
       current: character.currentHp ?? character.hpCurrent ?? null,
       max: character.maxHp ?? character.hpMax ?? character.maxHpOverride ?? null,
