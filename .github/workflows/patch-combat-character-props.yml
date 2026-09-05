@@ -47,3 +47,5 @@ jobs:
           git add src/App.jsx
           git commit -m "Pass live character state to combat panel"
           git push
+
+# Triggered after workflow registration.
