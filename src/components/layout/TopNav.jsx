@@ -2,11 +2,19 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { playSound } from "../../utils/soundManager";
 
-const COMPANION_LABELS = {
-  en: "COMPANION",
-  ru: "СПУТНИК",
-  uk: "КОМПАНЬЙОН",
-  pl: "TOWARZYSZ",
+const EXTRA_TAB_LABELS = {
+  companion: {
+    en: "COMPANION",
+    ru: "СПУТНИК",
+    uk: "КОМПАНЬЙОН",
+    pl: "TOWARZYSZ",
+  },
+  bestiary: {
+    en: "BESTIARY",
+    ru: "БЕСТИАРИЙ",
+    uk: "БЕСТІАРІЙ",
+    pl: "BESTIARIUSZ",
+  },
 };
 
 export const PIPBOY_TABS = [
@@ -17,6 +25,7 @@ export const PIPBOY_TABS = [
   { key: "inventory", labelKey: "tabs.inventory" },
   { key: "armor", labelKey: "tabs.armor" },
   { key: "perks", labelKey: "tabs.perks" },
+  { key: "bestiary" },
   { key: "notes", labelKey: "tabs.notes" },
   { key: "map", labelKey: "tabs.map" },
   { key: "games", labelKey: "tabs.games" },
@@ -24,7 +33,7 @@ export const PIPBOY_TABS = [
 
 function getLanguage(value) {
   const language = String(value || "en").split("-")[0];
-  return COMPANION_LABELS[language] ? language : "en";
+  return ["en", "ru", "uk", "pl"].includes(language) ? language : "en";
 }
 
 export default function TopNav({ activeTab, onTabChange, onToggleMenu }) {
@@ -72,8 +81,8 @@ export default function TopNav({ activeTab, onTabChange, onToggleMenu }) {
               className={`pip-tab ${activeTab === tab.key ? "is-active" : ""}`}
               onClick={() => handleTabClick(tab.key)}
             >
-              {tab.key === "companion"
-                ? COMPANION_LABELS[language]
+              {EXTRA_TAB_LABELS[tab.key]
+                ? EXTRA_TAB_LABELS[tab.key][language]
                 : t(tab.labelKey)}
             </button>
           ))}
