@@ -2,8 +2,7 @@ import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
-import ActiveBestiaryCombatPanel from "../combat/ActiveBestiaryCombatPanel.jsx";
-import EnemyBestiaryTurnControls from "../combat/EnemyBestiaryTurnControls.jsx";
+import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 import { installBestiaryCombatGmBridge } from "../../utils/bestiaryCombatGmBridge.js";
@@ -22,7 +21,7 @@ const INTERACTIVE_SELECTOR = [
   ".games-screen",
   ".bestiary-screen",
   ".pip-active-combat",
-  ".pip-enemy-turn",
+  ".combat-turn-sequence",
 ].join(",");
 
 export default function PipboyShell({
@@ -111,16 +110,10 @@ export default function PipboyShell({
             {screenContent}
           </div>
           {activeTab === "map" ? (
-            <>
-              <ActiveBestiaryCombatPanel
-                character={resolvedCharacter}
-                setCharacter={resolvedSetCharacter}
-              />
-              <EnemyBestiaryTurnControls
-                character={resolvedCharacter}
-                setCharacter={resolvedSetCharacter}
-              />
-            </>
+            <CombatTurnSequence
+              character={resolvedCharacter}
+              setCharacter={resolvedSetCharacter}
+            />
           ) : null}
         </main>
       </div>
