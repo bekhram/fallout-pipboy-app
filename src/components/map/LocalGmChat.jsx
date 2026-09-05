@@ -181,6 +181,7 @@ function compactCharacter(character, weaponDatabase = []) {
     armor,
     weapons,
     statuses: character.statuses || null,
+    stealthBoyState: character.stealthBoyState || null,
     injuries: character.injuries || null,
     perks: (character.perksAndTraits || []).slice(0, 30).map((perk) => ({
       name: perk?.name,

@@ -50,10 +50,10 @@ import {
 } from "./utils/weaponDatabase.js";
 
 const ITEM_USE_COPY = {
-  en: { noPowerArmor: "No damaged power armor parts found.", noRobot: "No damaged robot companions found.", choosePowerArmor: "Choose a power armor part to repair", chooseRobot: "Choose a robot to repair", invalid: "Invalid selection." },
-  ru: { noPowerArmor: "Нет поврежденных частей силовой брони.", noRobot: "Нет поврежденных роботов-компаньонов.", choosePowerArmor: "Выберите часть силовой брони для ремонта", chooseRobot: "Выберите робота для ремонта", invalid: "Неверный выбор." },
-  uk: { noPowerArmor: "Немає пошкоджених частин силової броні.", noRobot: "Немає пошкоджених роботів-компаньйонів.", choosePowerArmor: "Оберіть частину силової броні для ремонту", chooseRobot: "Оберіть робота для ремонту", invalid: "Невірний вибір." },
-  pl: { noPowerArmor: "Brak uszkodzonych części pancerza wspomaganego.", noRobot: "Brak uszkodzonych robotów-towarzyszy.", choosePowerArmor: "Wybierz część pancerza do naprawy", chooseRobot: "Wybierz robota do naprawy", invalid: "Nieprawidłowy wybór." },
+  en: { noRepairTarget: "No damaged robot or power armor part found.", chooseRepairTarget: "Choose a repair target", invalid: "Invalid selection.", robot: "ROBOT", powerArmor: "POWER ARMOR" },
+  ru: { noRepairTarget: "Нет поврежденного робота или части силовой брони.", chooseRepairTarget: "Выберите цель ремонта", invalid: "Неверный выбор.", robot: "РОБОТ", powerArmor: "СИЛОВАЯ БРОНЯ" },
+  uk: { noRepairTarget: "Немає пошкодженого робота або частини силової броні.", chooseRepairTarget: "Оберіть ціль ремонту", invalid: "Невірний вибір.", robot: "РОБОТ", powerArmor: "СИЛОВА БРОНЯ" },
+  pl: { noRepairTarget: "Brak uszkodzonego robota lub części pancerza wspomaganego.", chooseRepairTarget: "Wybierz cel naprawy", invalid: "Nieprawidłowy wybór.", robot: "ROBOT", powerArmor: "PANCERZ WSPOMAGANY" },
 };
 
 function normalizeUtilityName(value) {
@@ -97,9 +97,7 @@ function getDamagedPowerArmorParts(character) {
     const now = current?.[part];
     const max = maximum?.[part];
     if (!now || !max || Number(max.hp || 0) <= 0) return false;
-    return ["hp", "physical", "energy", "radiation", "poison"].some(
-      (field) => Number(now[field] || 0) < Number(max[field] || 0)
-    );
+    return Number(now.hp || 0) < Number(max.hp || 0);
   }).map((part) => ({ part, current: current[part], maximum: maximum[part] }));
 }
 
@@ -251,25 +249,67 @@ export default function App() {
       const copy = ITEM_USE_COPY[language] || ITEM_USE_COPY.en;
 
       if (name === "stealth boy") {
-        setForm((prev) => ({
-          ...prev,
-          inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
-          statuses: { ...(prev.statuses || {}), invisible: true },
-          stealthBoyState: { active: true, activatedAt: new Date().toISOString(), duration: "manual" },
-        }));
+        setForm((prev) => {
+          const effectId = "consumable:stealth-boy";
+          const activeConsumableEffects = (prev.activeConsumableEffects || [])
+            .filter((effect) => effect?.id !== effectId)
+            .concat({
+              id: effectId,
+              sourceName: item.name || "Stealth Boy",
+              effectText: "Invisibility: +2 Defense; enemies add +2 difficulty to tests to spot you.",
+              canonicalSourceName: "Stealth Boy",
+              canonicalEffect: "Invisibility",
+              duration: "3 turns",
+              category: "misc",
+              modifiers: {
+                derived: { defenseBonus: 2 },
+                tests: [],
+                combat: {},
+                flags: { invisible: true, stealthSpotDifficultyBonus: 2 },
+              },
+            });
+
+          return {
+            ...prev,
+            inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+            activeConsumableEffects,
+            statuses: { ...(prev.statuses || {}), invisible: true },
+            stealthBoyState: {
+              active: true,
+              remainingTurns: 3,
+              spotDifficultyBonus: 2,
+              defenseBonus: 2,
+              activatedAt: new Date().toISOString(),
+            },
+          };
+        });
         return;
       }
 
-      if (name === "power armor repair kit") {
-        const targets = getDamagedPowerArmorParts(form);
+      if (name === "robot repair kit" || name === "power armor repair kit") {
+        const companionState = readCompanionState();
+        const robotTargets = (companionState.items || [])
+          .filter((companion) => {
+            const currentHp = Math.max(0, Number(companion?.currentHp || 0));
+            const maxHp = Math.max(0, Number(companion?.maxHp || 0));
+            return isRobotCompanion(companion) && maxHp > 0 && currentHp < maxHp;
+          })
+          .map((companion) => ({ kind: "robot", companion }));
+        const powerArmorTargets = getDamagedPowerArmorParts(form)
+          .map((target) => ({ kind: "powerArmor", ...target }));
+        const targets = [...robotTargets, ...powerArmorTargets];
+
         if (!targets.length) {
-          window.alert(copy.noPowerArmor);
+          window.alert(copy.noRepairTarget);
           return;
         }
+
         const selected = chooseNumberedTarget(
-          copy.choosePowerArmor,
+          copy.chooseRepairTarget,
           targets,
-          (target) => `${target.part}: ${target.current.hp}/${target.maximum.hp} HP`
+          (target) => target.kind === "robot"
+            ? `[${copy.robot}] ${target.companion.name || target.companion.creatureType || "Robot"}: ${target.companion.currentHp}/${target.companion.maxHp} HP`
+            : `[${copy.powerArmor}] ${target.part}: ${target.current.hp}/${target.maximum.hp} HP`
         );
         if (selected === null) return;
         if (!selected) {
@@ -277,16 +317,32 @@ export default function App() {
           return;
         }
 
+        if (selected.kind === "robot") {
+          writeCompanionState({
+            ...companionState,
+            items: companionState.items.map((companion) => {
+              if (companion.id !== selected.companion.id) return companion;
+              const currentHp = Math.max(0, Number(companion.currentHp || 0));
+              const maxHp = Math.max(0, Number(companion.maxHp || 0));
+              return { ...companion, currentHp: String(Math.min(maxHp, currentHp + 4)) };
+            }),
+          });
+          setForm((prev) => ({
+            ...prev,
+            inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+          }));
+          return;
+        }
+
         setForm((prev) => {
           const loadout = prev?.armor?._power?.loadout || {};
           const slots = { ...(loadout.slots || {}) };
-          const repaired = { ...(slots[selected.part] || {}) };
-          delete repaired.currentHp;
-          delete repaired.currentPhysical;
-          delete repaired.currentEnergy;
-          delete repaired.currentRadiation;
-          delete repaired.currentPoison;
-          slots[selected.part] = repaired;
+          const currentSlot = { ...(slots[selected.part] || {}) };
+          const healedHp = Math.min(
+            Number(selected.maximum.hp || 0),
+            Number(selected.current.hp || 0) + 4
+          );
+          slots[selected.part] = { ...currentSlot, currentHp: healedHp };
           return {
             ...prev,
             inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
@@ -299,42 +355,6 @@ export default function App() {
             },
           };
         });
-        return;
-      }
-
-      if (name === "robot repair kit") {
-        const companionState = readCompanionState();
-        const targets = (companionState.items || []).filter((companion) => {
-          const currentHp = Math.max(0, Number(companion?.currentHp || 0));
-          const maxHp = Math.max(0, Number(companion?.maxHp || 0));
-          return isRobotCompanion(companion) && maxHp > 0 && currentHp < maxHp;
-        });
-        if (!targets.length) {
-          window.alert(copy.noRobot);
-          return;
-        }
-        const selected = chooseNumberedTarget(
-          copy.chooseRobot,
-          targets,
-          (target) => `${target.name || target.creatureType || "Robot"}: ${target.currentHp}/${target.maxHp} HP`
-        );
-        if (selected === null) return;
-        if (!selected) {
-          window.alert(copy.invalid);
-          return;
-        }
-        writeCompanionState({
-          ...companionState,
-          items: companionState.items.map((companion) =>
-            companion.id === selected.id
-              ? { ...companion, currentHp: String(Math.max(0, Number(companion.maxHp || 0))) }
-              : companion
-          ),
-        });
-        setForm((prev) => ({
-          ...prev,
-          inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
-        }));
         return;
       }
 
@@ -383,6 +403,36 @@ export default function App() {
     window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleInventoryUse);
     return () => window.removeEventListener(PIPBOY_USE_ITEM_EVENT, handleInventoryUse);
   }, [form, i18n.language, i18n.resolvedLanguage, setForm]);
+
+  const endStealthBoy = () => {
+    setForm((prev) => ({
+      ...prev,
+      statuses: { ...(prev.statuses || {}), invisible: false },
+      stealthBoyState: { ...(prev.stealthBoyState || {}), active: false, remainingTurns: 0 },
+      activeConsumableEffects: (prev.activeConsumableEffects || [])
+        .filter((effect) => effect?.id !== "consumable:stealth-boy"),
+    }));
+  };
+
+  const advanceStealthBoyTurn = () => {
+    setForm((prev) => {
+      const current = Math.max(0, Number(prev.stealthBoyState?.remainingTurns || 0));
+      const remainingTurns = Math.max(0, current - 1);
+      if (remainingTurns <= 0) {
+        return {
+          ...prev,
+          statuses: { ...(prev.statuses || {}), invisible: false },
+          stealthBoyState: { ...(prev.stealthBoyState || {}), active: false, remainingTurns: 0 },
+          activeConsumableEffects: (prev.activeConsumableEffects || [])
+            .filter((effect) => effect?.id !== "consumable:stealth-boy"),
+        };
+      }
+      return {
+        ...prev,
+        stealthBoyState: { ...(prev.stealthBoyState || {}), active: true, remainingTurns },
+      };
+    });
+  };
 
   useEffect(() => {
     if (globalWeapons.length === 0) return;
@@ -788,9 +838,15 @@ const updateSkill = (skillName, field, value) =>
             onRemovePortrait={portrait.clearPortrait}
             onTopLevelChange={updateTopLevel}
             onChangeOrigin={changeOrigin}
-            onStatusToggle={(status) =>
-              updateStatus(status, !form.statuses[status])
-            }
+            onStatusToggle={(status) => {
+              if (status === "invisible" && form.stealthBoyState?.active) {
+                endStealthBoy();
+                return;
+              }
+              updateStatus(status, !form.statuses[status]);
+            }}
+            onStealthBoyAdvance={advanceStealthBoyTurn}
+            onStealthBoyEnd={endStealthBoy}
             onInjuryToggle={updateInjury}
             onArmorChange={updateArmor}
             hpMax={baseMaxHp}

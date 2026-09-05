@@ -6,6 +6,13 @@ import { useTranslation } from "react-i18next";
 import OriginSelectionModal from "../shared/OriginSelectionModal.jsx";
 import { ORIGINS } from "../data/origins.js";
 
+const STEALTH_COPY = {
+  en: { title: "STEALTH BOY", turns: "TURNS", next: "NEXT TURN", end: "END", spot: "SPOT DIFF" },
+  ru: { title: "СТЕЛС-БОЙ", turns: "ХОДОВ", next: "СЛЕД. ХОД", end: "ЗАВЕРШИТЬ", spot: "СЛОЖН. ОБНАР." },
+  uk: { title: "СТЕЛС-БОЙ", turns: "ХОДІВ", next: "НАСТ. ХІД", end: "ЗАВЕРШИТИ", spot: "СКЛАДН. ВИЯВЛ." },
+  pl: { title: "STEALTH BOY", turns: "TURY", next: "NAST. TURA", end: "ZAKOŃCZ", spot: "TRUDN. WYKRYCIA" },
+};
+
 function formatSigned(value) {
   const num = Number(value) || 0;
   return num > 0 ? `+${num}` : `${num}`;
@@ -23,6 +30,8 @@ export default function StatusScreen({
   onTopLevelChange,
   onChangeOrigin,
   onStatusToggle,
+  onStealthBoyAdvance,
+  onStealthBoyEnd,
   onInjuryToggle,
   onArmorChange,
   hpMax,
@@ -35,7 +44,8 @@ export default function StatusScreen({
   onOpenConditions,
   onOpenDerived,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const stealthCopy = STEALTH_COPY[i18n.resolvedLanguage?.split("-")[0] || "en"] || STEALTH_COPY.en;
   const [isOriginModalOpen, setIsOriginModalOpen] = useState(false);
 
   const survivalConditions = [
@@ -337,6 +347,21 @@ if (derived?.immunities?.includes("radiation")) {
               <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>
             </div>
           </div>
+
+          {form.stealthBoyState?.active && (
+            <div className="pip-survival-summary">
+              <div className="pip-summary-title">[ {stealthCopy.title} ]</div>
+              <div className="pip-inline-stats">
+                <span>{form.stealthBoyState.remainingTurns} {stealthCopy.turns}</span>
+                <span>{t("main.defense")} +{form.stealthBoyState.defenseBonus || 2}</span>
+                <span>{stealthCopy.spot} +{form.stealthBoyState.spotDifficultyBonus || 2}</span>
+              </div>
+              <div className="pip-tagrow push-top">
+                <button type="button" className="pip-btn is-primary" onClick={onStealthBoyAdvance}>{stealthCopy.next}</button>
+                <button type="button" className="pip-btn" onClick={onStealthBoyEnd}>{stealthCopy.end}</button>
+              </div>
+            </div>
+          )}
 
           <div className="pip-survival-summary">
             <div className="pip-summary-title">[ {t("vitals.title")} ]</div>
