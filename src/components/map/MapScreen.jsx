@@ -57,6 +57,13 @@ const REGION_MAP_ASSETS = {
   mojave: newVegasMapAsset,
 };
 
+const RESUME_ROUTE_TEXT = {
+  en: { title: "ROUTE INTERRUPTED", button: "CONTINUE ROUTE", activeCombat: "Resolve the active combat before continuing the route." },
+  ru: { title: "МАРШРУТ ПРЕРВАН", button: "ПРОДОЛЖИТЬ МАРШРУТ", activeCombat: "Сначала завершите активный бой." },
+  uk: { title: "МАРШРУТ ПЕРЕРВАНО", button: "ПРОДОВЖИТИ МАРШРУТ", activeCombat: "Спочатку завершіть активний бій." },
+  pl: { title: "TRASA PRZERWANA", button: "KONTYNUUJ TRASĘ", activeCombat: "Najpierw zakończ aktywną walkę." },
+};
+
 function getPoiIcon(poi) {
   if (!poi) return null;
   const id = poi.id || "";
@@ -143,6 +150,16 @@ function createTravelEncounterContext(encounter, description, details = {}) {
     type: encounter.type || "encounter",
     text: String(description || encounter.text || encounter.name || encounter.id || "Travel encounter"),
     source: "global_travel",
+    generationSource: encounter.generationSource || "app_custom",
+    tableName: encounter.tableName || null,
+    tableRoll: encounter.roll ?? null,
+    weirdRoll: encounter.weirdRoll ?? null,
+    rulesSource: encounter.rulesSource || null,
+    rulesPage: encounter.rulesPage || null,
+    bestiaryRefs: Array.isArray(encounter.bestiaryRefs) ? encounter.bestiaryRefs : [],
+    groupSize: encounter.groupSize ?? null,
+    autoCombat: encounter.autoCombat === true,
+    combatBestiaryIds: Array.isArray(encounter.combatBestiaryIds) ? encounter.combatBestiaryIds : [],
     ...details,
   };
 }
@@ -280,6 +297,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
+  const resumeCopy = RESUME_ROUTE_TEXT[String(language).split("-")[0]] || RESUME_ROUTE_TEXT.en;
   const [selectedCell, setSelectedCell] = useState(null);
   const [mapMode, setMapMode] = useState("world");
 
@@ -445,8 +463,12 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     );
   }
 
-  function handleTravel() {
-    if (!selectedCell || !selectedRoute?.cells?.length) return;
+  function handleTravel(targetOverride = null) {
+    const targetCell = targetOverride && Number.isFinite(Number(targetOverride.x)) && Number.isFinite(Number(targetOverride.y))
+      ? targetOverride
+      : selectedCell;
+    const travelRoute = targetCell ? findTravelRoute(mapData, playerPosition, targetCell) : null;
+    if (!targetCell || !travelRoute?.cells?.length) return;
 
     let totalCost = 0;
     let finalPosition = { ...playerPosition };
@@ -456,7 +478,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     const detailLog = [];
     const exposureHoursByHazard = {};
 
-    for (const step of selectedRoute.cells) {
+    for (const step of travelRoute.cells) {
       const stepCost = getCellMoveCost(step) ?? 1;
       totalCost += stepCost;
       addHazardExposureHours(exposureHoursByHazard, step, stepCost);
@@ -473,10 +495,10 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       if (step.poi) {
         detailLog.push(t("mapPanel.locationFound", { name: getPoiDisplayName(step.poi, t) }));
       }
-      const encounter = maybeRollTravelEncounter(step.terrain, t);
+      const encounter = maybeRollTravelEncounter(step.terrain, { regionId: activeRegion.id, language });
       if (encounter) {
         stoppedEncounter = encounter;
-        reachedDestination = step.x === selectedCell.x && step.y === selectedCell.y;
+        reachedDestination = step.x === targetCell.x && step.y === targetCell.y;
         detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
         break;
       }
@@ -484,7 +506,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
 
     const summary = stoppedEncounter && !reachedDestination
       ? tx("routeInterrupted")
-      : tx("routeComplete", { steps: selectedRoute.cells.length, hours: totalCost });
+      : tx("routeComplete", { steps: travelRoute.cells.length, hours: totalCost });
     const environmentExposure = processEnvironmentalExposure({
       previousRemainders: safeMapState.hazardExposureRemainders || {},
       exposureHoursByHazard,
@@ -522,6 +544,17 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         travelLog: mergeTravelLog(base, routeLog),
         hazardExposureRemainders: environmentExposure.remainders,
         pendingTravelEncounter: encounterContext,
+        interruptedRoute: stoppedEncounter
+          ? {
+              kind: "local",
+              regionId: activeRegion.id,
+              sectorKey,
+              destination: { x: targetCell.x, y: targetCell.y },
+              destinationName: targetCell.poi ? getPoiDisplayName(targetCell.poi, t) : `${targetCell.x},${targetCell.y}`,
+              encounterToken: encounterContext?.token || null,
+              interruptedAt: Date.now(),
+            }
+          : null,
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: mapData },
       };
     });
@@ -541,14 +574,20 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     if (reachedDestination && !stoppedEncounter) setSelectedCell(null);
   }
 
-  function handleWorldTravel() {
-    if (!trackedLocation || trackedAtCurrentPosition) return;
+  function handleWorldTravel(targetOverride = null) {
+    const targetLocation = targetOverride && Number.isFinite(Number(targetOverride.worldX)) && Number.isFinite(Number(targetOverride.worldY))
+      ? targetOverride
+      : trackedLocation;
+    const targetAtCurrentPosition = Boolean(
+      targetLocation && targetLocation.worldX === playerWorldX && targetLocation.worldY === playerWorldY
+    );
+    if (!targetLocation || targetAtCurrentPosition) return;
 
     const workingCache = { ...sectorCache, [sectorKey]: mapData };
     const start = { x: playerWorldX, y: playerWorldY };
-    const target = { x: trackedLocation.worldX, y: trackedLocation.worldY };
+    const target = { x: targetLocation.worldX, y: targetLocation.worldY };
     const route = findWorldTravelRoute(start, target, workingCache, mapData.cols, mapData.rows);
-    const targetName = getWorldLocationDisplayName(trackedLocation, t);
+    const targetName = getWorldLocationDisplayName(targetLocation, t);
 
     if (!route?.steps?.length) {
       onMapChange((prevMap) => {
@@ -582,11 +621,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       const staticLocation = regionLocations.find(
         (location) => location.worldX === step.worldX && location.worldY === step.worldY
       );
-      if (staticLocation && staticLocation.id !== trackedLocation.id) {
+      if (staticLocation && staticLocation.id !== targetLocation.id) {
         detailLog.push(tx("passed", { name: getWorldLocationDisplayName(staticLocation, t) }));
       }
 
-      const encounter = maybeRollTravelEncounter(step.cell.terrain, t);
+      const encounter = maybeRollTravelEncounter(step.cell.terrain, { regionId: activeRegion.id, language });
       if (encounter) {
         stoppedEncounter = encounter;
         detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
@@ -624,7 +663,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
             hours: totalCost,
             worldX: finalStep.worldX,
             worldY: finalStep.worldY,
-            destinationId: trackedLocation.id,
+            destinationId: targetLocation.id,
             destinationName: targetName,
             resolution: encounterResolution,
           }
@@ -647,6 +686,18 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         travelLog: mergeTravelLog(base, routeLog),
         hazardExposureRemainders: environmentExposure.remainders,
         pendingTravelEncounter: encounterContext,
+        interruptedRoute: stoppedEncounter
+          ? {
+              kind: "world",
+              regionId: activeRegion.id,
+              destinationId: targetLocation.id || null,
+              destinationName: targetName,
+              worldX: targetLocation.worldX,
+              worldY: targetLocation.worldY,
+              encounterToken: encounterContext?.token || null,
+              interruptedAt: Date.now(),
+            }
+          : null,
       };
     });
 
@@ -748,6 +799,60 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     onMapChange({ trackedLocationId: location.id });
     const cell = getCell(mapData, location.localX, location.localY);
     if (cell) setSelectedCell(cell);
+  }
+
+  function hasActiveBestiaryCombat() {
+    if (typeof window === "undefined") return false;
+    try {
+      const store = JSON.parse(window.localStorage.getItem("fallout_pipboy_bestiary_combat_v1") || "null");
+      const latestKey = store?.latestSessionKey;
+      return Boolean(latestKey && store?.bySession?.[latestKey]?.status === "active");
+    } catch {
+      return false;
+    }
+  }
+
+  function resumeInterruptedRoute() {
+    const interrupted = safeMapState.interruptedRoute;
+    if (!interrupted) return;
+    if (hasActiveBestiaryCombat()) {
+      setMapMode("local");
+      return;
+    }
+    if (interrupted.regionId && interrupted.regionId !== activeRegion.id) {
+      onMapChange({ interruptedRoute: null });
+      return;
+    }
+
+    if (interrupted.kind === "world") {
+      const target = regionLocations.find((location) => location.id === interrupted.destinationId) || (
+        Number.isFinite(Number(interrupted.worldX)) && Number.isFinite(Number(interrupted.worldY))
+          ? { id: interrupted.destinationId, name: interrupted.destinationName, worldX: Number(interrupted.worldX), worldY: Number(interrupted.worldY) }
+          : null
+      );
+      if (!target) {
+        onMapChange({ interruptedRoute: null });
+        return;
+      }
+      if (target.id) onMapChange({ trackedLocationId: target.id });
+      handleWorldTravel(target);
+      return;
+    }
+
+    if (interrupted.kind === "local") {
+      if (interrupted.sectorKey && interrupted.sectorKey !== sectorKey) {
+        onMapChange({ interruptedRoute: null });
+        return;
+      }
+      const destination = interrupted.destination || {};
+      const targetCell = getCell(mapData, Number(destination.x), Number(destination.y));
+      if (!targetCell) {
+        onMapChange({ interruptedRoute: null });
+        return;
+      }
+      setSelectedCell(targetCell);
+      handleTravel(targetCell);
+    }
   }
 
   function handleTravelEncounterHandled(token) {
@@ -858,6 +963,19 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
                 ))}
               </select>
             </label>
+
+            {safeMapState.interruptedRoute && !safeMapState.pendingTravelEncounter ? (
+              <div className="pip-map-world-route is-inter-sector">
+                <div className="pip-map-world-route__topline">
+                  <span>{resumeCopy.title}</span>
+                  <span>{safeMapState.interruptedRoute.kind === "world" ? tx("world") : tx("currentSector")}</span>
+                </div>
+                <strong>{safeMapState.interruptedRoute.destinationName || resumeCopy.title}</strong>
+                <button type="button" className="pip-map-world-route__travel" onClick={resumeInterruptedRoute}>
+                  {resumeCopy.button}
+                </button>
+              </div>
+            ) : null}
 
             {trackedLocation ? (
               <div className={`pip-map-world-route ${trackedIsInterSector ? "is-inter-sector" : "is-local-sector"}`}>

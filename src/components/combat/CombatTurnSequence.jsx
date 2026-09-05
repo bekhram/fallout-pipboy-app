@@ -23,6 +23,7 @@ import {
   requestEnemyTurnDirective,
   resolveEnemyBestiaryAttack,
 } from "../../utils/enemyBestiaryTurn.js";
+import { grantResolvedCombatRewards } from "../../utils/combatRewards.js";
 import "./combatTurnSequence.css";
 
 const TEXT = {
@@ -30,6 +31,14 @@ const TEXT = {
   ru: { round:"РАУНД", turn:"ХОД", player:"ИГРОК", companion:"КОМПАНЬОН", enemy:"ВРАГ", end:"ЗАВЕРШИТЬ ХОД", wait:"ОЖИДАНИЕ", attack:"АТАКОВАТЬ", target:"ЦЕЛЬ", noAttack:"НЕТ АТАК", enemyTurn:"ХОД ВРАГА // AUTO GM", thinking:"AUTO GM...", range:"ДИСТАНЦИЯ", hit:"ПОПАДАНИЕ", miss:"ПРОМАХ", damage:"УРОН", skip:"ПРОПУСТИТЬ ХОД" },
   uk: { round:"РАУНД", turn:"ХІД", player:"ГРАВЕЦЬ", companion:"КОМПАНЬЙОН", enemy:"ВОРОГ", end:"ЗАВЕРШИТИ ХІД", wait:"ОЧІКУВАННЯ", attack:"АТАКУВАТИ", target:"ЦІЛЬ", noAttack:"НЕМАЄ АТАК", enemyTurn:"ХІД ВОРОГА // AUTO GM", thinking:"AUTO GM...", range:"ДИСТАНЦІЯ", hit:"ВЛУЧАННЯ", miss:"ПРОМАХ", damage:"ШКОДА", skip:"ПРОПУСТИТИ ХІД" },
   pl: { round:"RUNDA", turn:"TURA", player:"GRACZ", companion:"TOWARZYSZ", enemy:"WRÓG", end:"ZAKOŃCZ TURĘ", wait:"OCZEKIWANIE", attack:"ATAKUJ", target:"CEL", noAttack:"BRAK ATAKÓW", enemyTurn:"TURA WROGA // AUTO GM", thinking:"AUTO GM...", range:"DYSTANS", hit:"TRAFIENIE", miss:"PUDŁO", damage:"OBRAŻENIA", skip:"POMIŃ TURĘ" },
+};
+
+
+const REWARD_TEXT = {
+  en: { title: "ENCOUNTER REWARDS", xp: "XP AWARDED", loot: "LOOT / SALVAGE RULES" },
+  ru: { title: "НАГРАДЫ ЗА ВСТРЕЧУ", xp: "ПОЛУЧЕНО XP", loot: "ДОБЫЧА / ПРАВИЛА СБОРА" },
+  uk: { title: "НАГОРОДИ ЗА ЗУСТРІЧ", xp: "ОТРИМАНО XP", loot: "ЗДОБИЧ / ПРАВИЛА ЗБОРУ" },
+  pl: { title: "NAGRODY ZA SPOTKANIE", xp: "PRZYZNANE XP", loot: "ŁUP / ZASADY POZYSKANIA" },
 };
 
 function lang(value) {
@@ -208,6 +217,7 @@ export default function CombatTurnSequence({ character = null, setCharacter = nu
   const { i18n } = useTranslation();
   const language = lang(i18n.resolvedLanguage || i18n.language);
   const copy = TEXT[language];
+  const rewardCopy = REWARD_TEXT[language] || REWARD_TEXT.en;
   const [state, setState] = useState(() => readLatestCombat());
 
   useEffect(() => {
@@ -220,12 +230,33 @@ export default function CombatTurnSequence({ character = null, setCharacter = nu
     };
   }, []);
 
+
+  useEffect(() => {
+    if (!state?.sessionKey || state.status !== "resolved" || state.rewards?.granted) return;
+    const rewards = grantResolvedCombatRewards(state.sessionKey);
+    if (rewards) setState(readLatestCombat());
+  }, [state?.sessionKey, state?.status, state?.rewards?.granted]);
+
   const active = useMemo(() => getActiveCombatActor(state), [state]);
   if (!state) return null;
 
   return (
     <div className="combat-turn-sequence">
       <TurnHeader character={character} state={state} setState={setState} copy={copy} />
+      {state.status === "resolved" && state.rewards?.granted ? (
+        <section className="pip-panel combat-turn-sequence__actor-panel">
+          <strong>[ {rewardCopy.title} ]</strong>
+          <div className="combat-turn-sequence__result">{rewardCopy.xp}: +{state.rewards.xp || 0}</div>
+          {Array.isArray(state.rewards.loot) && state.rewards.loot.length ? (
+            <div className="combat-turn-sequence__result">
+              <strong>{rewardCopy.loot}</strong>
+              {state.rewards.loot.map((entry) => (
+                <div key={`${entry.instanceId || entry.bestiaryId}:${entry.name}`}>{entry.name}: {entry.instruction}</div>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
       <div className={isCombatActorTurn(state, "player") ? "combat-turn-sequence__player is-active" : "combat-turn-sequence__player is-locked"}>
         <ActiveBestiaryCombatPanel character={character} setCharacter={setCharacter} />
       </div>

@@ -207,23 +207,47 @@ function getAmbushPool(character) {
 }
 
 export function buildBestiaryCombatForEncounter(encounter, character = {}) {
-  if (!encounter || encounter.type !== "ambush") return null;
+  if (!encounter || (encounter.type !== "ambush" && encounter.autoCombat !== true)) return null;
 
   const playerLevel = safeLevel(character?.level);
-  const picked = pickClosestByLevel(getAmbushPool(character), playerLevel);
-  if (!picked) return null;
+  const presetIds = Array.isArray(encounter?.combatBestiaryIds)
+    ? encounter.combatBestiaryIds.filter(Boolean)
+    : [];
 
-  const enemy = combatSnapshot(picked, 0);
+  let enemies = [];
+  let selectionRule = "app_level_matched_ambush";
+
+  if (presetIds.length) {
+    const entries = presetIds
+      .map((id) => BESTIARY_ENTRIES.find((entry) => entry?.id === id))
+      .filter(Boolean);
+    if (!entries.length) return null;
+    enemies = entries.map((entry, index) => combatSnapshot(entry, index));
+    selectionRule = encounter?.generationSource === "core_rulebook_official"
+      ? "core_rulebook_encounter_preset"
+      : "encounter_preset";
+  } else {
+    const picked = pickClosestByLevel(getAmbushPool(character), playerLevel);
+    if (!picked) return null;
+    enemies = [combatSnapshot(picked, 0)];
+  }
+
   return {
     id: `combat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     status: "active",
     source: "bestiary",
-    selectionRule: "app_level_matched_ambush",
+    selectionRule,
     encounterId: encounter.id || "ambush",
+    encounterSource: encounter?.generationSource || "app_custom",
+    encounterTable: encounter?.tableName || null,
+    encounterRoll: encounter?.roll ?? null,
+    weirdRoll: encounter?.weirdRoll ?? null,
+    rulesSource: encounter?.rulesSource || null,
+    rulesPage: encounter?.rulesPage || null,
     regionId: character?.mapData?.regionId || "commonwealth",
     playerLevel,
     round: 1,
-    enemies: [enemy],
+    enemies,
     log: [],
     lastAction: null,
     createdAt: Date.now(),

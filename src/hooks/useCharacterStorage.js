@@ -7,6 +7,7 @@ import { Share } from "@capacitor/share";
 import { parseCSV } from "../utils/csvParser.js";
 import { parseArmorDatabase } from "../utils/armorDatabase.js";
 import { getDerivedStats } from "../utils/characterMath.js";
+import { PIPBOY_COMBAT_XP_REWARD_EVENT } from "../utils/combatRewards.js";
 import {
   getConsumableUsePlan,
   isConsumableItem,
@@ -732,6 +733,25 @@ export function useCharacterStorage(initialForm) {
       });
     };
 
+
+    const handleCombatXpReward = (event) => {
+      const xp = Math.max(0, Number(event?.detail?.xp || 0));
+      const sessionKey = String(event?.detail?.sessionKey || "").trim();
+      if (xp <= 0 || !sessionKey) return;
+
+      setForm((prev) => {
+        const applied = Array.isArray(prev.appliedCombatRewardSessions)
+          ? prev.appliedCombatRewardSessions
+          : [];
+        if (applied.includes(sessionKey)) return prev;
+        return {
+          ...prev,
+          xp: String(Math.max(0, Number(prev.xp || 0)) + xp),
+          appliedCombatRewardSessions: [...applied, sessionKey].slice(-50),
+        };
+      });
+    };
+
     const handleCampRest = () => {
       setForm((prev) => ({
         ...prev,
@@ -749,6 +769,7 @@ export function useCharacterStorage(initialForm) {
     window.addEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
     window.addEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
     window.addEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
+    window.addEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
 
     return () => {
       window.removeEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
@@ -759,6 +780,7 @@ export function useCharacterStorage(initialForm) {
       window.removeEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
       window.removeEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
       window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
+      window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
     };
   }, []);
 
