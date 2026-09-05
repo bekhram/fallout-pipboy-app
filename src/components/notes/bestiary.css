@@ -1,0 +1,295 @@
+.bestiary-panel {
+  min-width: 0;
+}
+
+.bestiary-head {
+  align-items: end;
+}
+
+.bestiary-head > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.bestiary-head h2 {
+  margin: 0;
+}
+
+.bestiary-head span {
+  font-size: 0.75rem;
+  opacity: 0.68;
+}
+
+.bestiary-toolbar {
+  display: grid;
+  gap: 8px;
+}
+
+.bestiary-search {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bestiary-filters {
+  gap: 6px;
+}
+
+.bestiary-layout {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.8fr) minmax(0, 2fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.bestiary-list {
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  max-height: 620px;
+  overflow: auto;
+}
+
+.bestiary-list-item {
+  appearance: none;
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 8px 9px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.bestiary-list-item:hover,
+.bestiary-list-item.is-selected {
+  border-color: currentColor;
+  box-shadow: inset 0 0 12px color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.bestiary-list-item.is-selected {
+  background: color-mix(in srgb, currentColor 9%, transparent);
+}
+
+.bestiary-list-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.bestiary-list-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bestiary-list-main small,
+.bestiary-list-kind {
+  font-size: 0.66rem;
+  opacity: 0.62;
+}
+
+.bestiary-list-kind {
+  flex: 0 0 auto;
+}
+
+.bestiary-detail {
+  min-width: 0;
+}
+
+.bestiary-empty {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  opacity: 0.68;
+}
+
+.bestiary-card,
+.bestiary-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.bestiary-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+}
+
+.bestiary-detail-head h3 {
+  margin: 7px 0 0;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.bestiary-title-block > span {
+  display: inline-block;
+  margin-top: 4px;
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+.bestiary-tags {
+  gap: 5px;
+}
+
+.bestiary-section {
+  display: grid;
+  gap: 7px;
+}
+
+.bestiary-section h4 {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.bestiary-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.bestiary-info-field {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, currentColor 58%, transparent);
+  padding: 7px 8px;
+  display: grid;
+  gap: 3px;
+}
+
+.bestiary-info-field > span {
+  font-size: 0.63rem;
+  line-height: 1.15;
+  opacity: 0.68;
+}
+
+.bestiary-info-field > strong {
+  min-width: 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.bestiary-text {
+  white-space: pre-wrap;
+  line-height: 1.42;
+}
+
+.bestiary-reference-hint {
+  font-size: 0.72rem;
+  opacity: 0.62;
+}
+
+.bestiary-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bestiary-edit-field {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.bestiary-edit-field > span {
+  font-size: 0.68rem;
+  opacity: 0.72;
+}
+
+.bestiary-edit-field .pip-input,
+.bestiary-edit-field .pip-textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.bestiary-edit-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.bestiary-edit-field textarea {
+  min-height: 74px;
+  resize: vertical;
+}
+
+@media (max-width: 900px) {
+  .bestiary-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bestiary-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .bestiary-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bestiary-list {
+    max-height: 250px;
+  }
+
+  .bestiary-head {
+    align-items: stretch;
+  }
+
+  .bestiary-head > div:first-child > span {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .bestiary-head {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .bestiary-head > .pip-btn {
+    width: 100%;
+  }
+
+  .bestiary-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bestiary-filters .pip-tag {
+    width: 100%;
+  }
+
+  .bestiary-detail-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .bestiary-detail-head > .pip-btn,
+  .bestiary-detail-head .pip-actions-inline {
+    width: 100%;
+  }
+
+  .bestiary-detail-head .pip-actions-inline {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .bestiary-stat-grid,
+  .bestiary-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bestiary-edit-field.is-wide {
+    grid-column: 1 / -1;
+  }
+}
