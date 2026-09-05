@@ -190,26 +190,27 @@ const COOKING_RECIPES = [
 ];
 
 const AMMO_CRAFTING_ROWS = [
-  [".38", 0, 1, 0],
-  ["10mm", 0, 2, 0],
-  [".308", 1, 3, 0],
-  ["Flare", 1, 1, 0],
-  ["Shotgun Shell", 1, 3, 0],
-  [".45", 2, 3, 0],
-  ["Flamer Fuel", 2, 1, 0],
-  ["Fusion Cell", 2, 3, 0],
-  ["Gamma Round", 2, 10, 0],
-  ["Railway Spike", 2, 1, 0],
-  ["Syringer Ammo", 2, 1, 0],
-  [".44 Magnum", 3, 3, 0],
-  [".50", 3, 4, 0],
-  ["5.56mm", 3, 2, 0],
-  ["5mm", 3, 1, 0],
-  ["Fusion Core", 3, 200, 4],
-  ["Missile", 3, 25, 7],
-  ["Plasma Cartridge", 4, 5, 0],
-  ["2mm EC", 5, 10, 0],
-  ["Mini-Nuke", 6, 100, 12],
+  // name, rarity, cost, weight, static quantity, quantity CD, multiplier
+  [".38", 0, 1, 0, 10, 5, 1],
+  ["10mm", 0, 2, 0, 8, 4, 1],
+  [".308", 1, 3, 0, 6, 3, 1],
+  ["Flare", 1, 1, 0, 2, 1, 1],
+  ["Shotgun Shell", 1, 3, 0, 6, 3, 1],
+  [".45", 2, 3, 0, 8, 4, 1],
+  ["Flamer Fuel", 2, 1, 0, 12, 6, 1],
+  ["Fusion Cell", 2, 3, 0, 14, 7, 1],
+  ["Gamma Round", 2, 10, 0, 4, 2, 1],
+  ["Railway Spike", 2, 1, 0, 6, 3, 1],
+  ["Syringer Ammo", 2, 1, 0, 4, 2, 1],
+  [".44 Magnum", 3, 3, 0, 4, 2, 1],
+  [".50", 3, 4, 0, 4, 2, 1],
+  ["5.56mm", 3, 2, 0, 8, 4, 1],
+  ["5mm", 3, 1, 0, 12, 6, 10],
+  ["Fusion Core", 3, 200, 4, 1, 0, 1],
+  ["Missile", 3, 25, 7, 2, 1, 1],
+  ["Plasma Cartridge", 4, 5, 0, 10, 5, 1],
+  ["2mm EC", 5, 10, 0, 6, 3, 1],
+  ["Mini-Nuke", 6, 100, 12, 1, 1, 1],
 ];
 
 const ammosmithRankForRarity = (rarity) => {
@@ -221,7 +222,7 @@ const ammosmithRankForRarity = (rarity) => {
 
 const AMMO_RECIPES = AMMO_CRAFTING_ROWS
   .filter(([, rarity]) => Number(rarity) <= 5)
-  .map(([name, rarity, cost, weight]) => ({
+  .map(([name, rarity, cost, weight, quantityBase, quantityDice, quantityMultiplier]) => ({
   id: slug(`weapons-ammunition-${name}`),
   category: "ammo",
   workbench: "weapons",
@@ -239,6 +240,9 @@ const AMMO_RECIPES = AMMO_CRAFTING_ROWS
   ammoRarity: rarity,
   ammoCost: cost,
   ammoWeight: weight,
+  ammoQuantityBase: quantityBase,
+  ammoQuantityDice: quantityDice,
+  ammoQuantityMultiplier: quantityMultiplier,
 }));
 
 export const CRAFTING_RECIPES = [

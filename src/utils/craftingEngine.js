@@ -164,17 +164,58 @@ export function getAmmosmithRank(character) {
 function resolveAmmosmithQuantity(character, recipe) {
   const perkRank = getAmmosmithRank(character);
   const rarity = Math.max(0, Number(recipe?.ammoRarity ?? recipe?.rarity ?? 0));
+
+  // The ammunition table's Quantity Found expression is also the base craft output
+  // for this app: static amount + the total from the listed Combat Dice.
+  const quantityBase = Math.max(1, Number(recipe?.ammoQuantityBase ?? 1));
+  const quantityDice = Math.max(0, Number(recipe?.ammoQuantityDice ?? 0));
+  const quantityMultiplier = Math.max(1, Number(recipe?.ammoQuantityMultiplier ?? 1));
+  const quantityRoll = quantityDice > 0
+    ? rollFalloutD6({ diceCount: quantityDice, effects: [] })
+    : null;
+  const quantityRollTotal = Math.max(0, Number(quantityRoll?.totalDamage || 0));
+  const baseCraftQuantity = Math.max(
+    1,
+    (quantityBase + quantityRollTotal) * quantityMultiplier
+  );
+
   if (perkRank < 3) {
-    return { quantity: 1, perkRank, rarity, diceCount: 0, hits: 0, effects: 0 };
+    return {
+      quantity: baseCraftQuantity,
+      baseCraftQuantity,
+      perkRank,
+      rarity,
+      quantityBase,
+      quantityDice,
+      quantityMultiplier,
+      quantityRollTotal,
+      diceCount: 0,
+      hits: 0,
+      effects: 0,
+    };
   }
 
+  // Ammosmith rank 3 adds a second hidden Combat Dice roll on top of the
+  // normal batch quantity. Each hit adds +1; each Effect doubles the batch.
   const diceCount = Math.max(1, 6 - rarity);
   const hiddenRoll = rollFalloutD6({ diceCount, effects: [] });
-  const hits = Math.max(0, Number(hiddenRoll?.baseDamage || 0));
+  const hits = Math.max(0, Number(hiddenRoll?.totalDamage || 0));
   const effects = Math.max(0, Number(hiddenRoll?.totalEffects || 0));
-  const quantity = Math.max(1, (1 + hits) * (2 ** effects));
+  const quantity = Math.max(1, (baseCraftQuantity + hits) * (2 ** effects));
 
-  return { quantity, perkRank, rarity, diceCount, hits, effects };
+  return {
+    quantity,
+    baseCraftQuantity,
+    perkRank,
+    rarity,
+    quantityBase,
+    quantityDice,
+    quantityMultiplier,
+    quantityRollTotal,
+    diceCount,
+    hits,
+    effects,
+  };
 }
 
 
