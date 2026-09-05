@@ -14,9 +14,16 @@ import {
   getBobbleheadSkillBonus,
   getEffectiveSpecialValue,
   getEffectiveSkillRank,
+  hasActivePowerArmorFrame,
 } from "../../data/inventory/bobbleheads.js";
 
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
+const POWER_ARMOR_LABEL = {
+  en: "POWER ARMOR",
+  ru: "СИЛОВАЯ БРОНЯ",
+  uk: "СИЛОВА БРОНЯ",
+  pl: "PANCERZ WSPOMAGANY",
+};
 
 export default function SpecialScreen({
   form,
@@ -33,6 +40,7 @@ export default function SpecialScreen({
 
   const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
   const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
+  const powerArmorActive = hasActivePowerArmorFrame(form);
 
   const handleSkillRoll = (skillName, skill, testValue, effectiveRank) => {
     if (!onRoll) return;
@@ -89,6 +97,12 @@ export default function SpecialScreen({
                   : 10;
             const bobbleheadBonus = getBobbleheadSpecialBonus(form, key);
             const effectiveValue = getEffectiveSpecialValue(form, key);
+            const baseWithBobblehead = Number(form.special?.[key] || 0) + bobbleheadBonus;
+            const powerArmorStrength = key === "S" && powerArmorActive && effectiveValue !== baseWithBobblehead;
+            const effectiveNotes = [
+              powerArmorStrength ? (POWER_ARMOR_LABEL[language] || POWER_ARMOR_LABEL.en) : null,
+              bobbleheadBonus ? `+${bobbleheadBonus} BOBBLEHEAD` : null,
+            ].filter(Boolean);
 
             return (
               <div className="pip-special-card" key={key}>
@@ -98,9 +112,9 @@ export default function SpecialScreen({
                   value={form.special[key]}
                   onChange={(e) => onSpecialChange(key, e.target.value)}
                 />
-                {bobbleheadBonus ? (
+                {effectiveNotes.length ? (
                   <div style={{ fontSize: "0.68em", marginTop: "3px", textAlign: "center" }}>
-                    {effectiveValue} <span style={{ opacity: 0.72 }}>(+{bobbleheadBonus} BOBBLEHEAD)</span>
+                    {effectiveValue} <span style={{ opacity: 0.72 }}>({effectiveNotes.join(" · ")})</span>
                   </div>
                 ) : null}
                 <div
