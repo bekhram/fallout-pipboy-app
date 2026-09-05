@@ -8,6 +8,7 @@ import magazineRows3 from "./inventory/magazines-3.js";
 import toolRows from "./inventory/tools.js";
 import { BOBBLEHEAD_ITEMS } from "./inventory/bobbleheads.js";
 import { CRAFTING_MATERIAL_ITEMS } from "./inventory/craftingMaterials.js";
+import { STEALTH_BOY_ITEM } from "./inventory/stealthBoy.js";
 import {
   translateInventoryItemEffect,
   translateInventoryItemName,
@@ -121,17 +122,22 @@ export const INVENTORY_DATABASE = [
   ...toolItems,
   ...BOBBLEHEAD_ITEMS,
   ...CRAFTING_MATERIAL_ITEMS,
+  STEALTH_BOY_ITEM,
 ];
 
 export function getInventoryArchiveItems(category) {
-  const language = i18n.resolvedLanguage || i18n.language || "en";
+  const language = String(i18n.resolvedLanguage || i18n.language || "en").toLowerCase().split("-")[0];
   return INVENTORY_DATABASE
     .filter((item) => item.category === category)
     .map((item) => ({
       ...item,
       canonicalName: item.name,
       canonicalEffect: item.effect,
-      name: translateInventoryItemName(item.name, language),
-      effect: translateInventoryItemEffect(item.effect, language),
+      name: item.localizedName?.[language]
+        || item.localizedName?.en
+        || translateInventoryItemName(item.name, language),
+      effect: item.localizedEffect?.[language]
+        || item.localizedEffect?.en
+        || translateInventoryItemEffect(item.effect, language),
     }));
 }
