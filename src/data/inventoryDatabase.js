@@ -7,6 +7,7 @@ import magazineRows2 from "./inventory/magazines-2.js";
 import magazineRows3 from "./inventory/magazines-3.js";
 import toolRows from "./inventory/tools.js";
 import { BOBBLEHEAD_ITEMS } from "./inventory/bobbleheads.js";
+import { CRAFTING_MATERIAL_ITEMS } from "./inventory/craftingMaterials.js";
 import {
   translateInventoryItemEffect,
   translateInventoryItemName,
@@ -119,6 +120,7 @@ export const INVENTORY_DATABASE = [
   ...magazineItems,
   ...toolItems,
   ...BOBBLEHEAD_ITEMS,
+  ...CRAFTING_MATERIAL_ITEMS,
 ];
 
 export function getInventoryArchiveItems(category) {
