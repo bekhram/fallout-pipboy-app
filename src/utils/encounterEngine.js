@@ -1,29 +1,63 @@
 import {
-  COMMONWEALTH_ENCOUNTERS,
-  WEIRD_WASTELAND_ENCOUNTERS,
+  APP_CUSTOM_ENCOUNTERS,
+  OFFICIAL_COMMONWEALTH_ENCOUNTERS,
+  OFFICIAL_WEIRD_WASTELAND_ENCOUNTERS,
 } from "../data/map/encounterTables.js";
 import { LOCATION_TYPES } from "../data/map/locationTypes.js";
 
 function weightedPick(list) {
-  const total = list.reduce((sum, item) => sum + item.weight, 0);
+  const total = list.reduce((sum, item) => sum + Number(item.weight || 0), 0);
   let roll = Math.random() * total;
 
   for (const item of list) {
-    if (roll < item.weight) return item;
-    roll -= item.weight;
+    if (roll < Number(item.weight || 0)) return item;
+    roll -= Number(item.weight || 0);
   }
 
-  return list[0];
+  return list[0] || null;
 }
 
-export function rollTravelEncounter() {
-  const result = weightedPick(COMMONWEALTH_ENCOUNTERS);
+function rollD20() {
+  return Math.floor(Math.random() * 20) + 1;
+}
 
-  if (result.id === "weird_wasteland") {
-    return weightedPick(WEIRD_WASTELAND_ENCOUNTERS);
+function byD20(table, roll) {
+  return table.find((entry) => roll >= Number(entry.rollMin) && roll <= Number(entry.rollMax)) || null;
+}
+
+function localizeOfficialEncounter(entry, language = "en", roll = null, weirdRoll = null) {
+  if (!entry) return null;
+  const lang = ["en", "ru", "uk", "pl"].includes(String(language || "").split("-")[0])
+    ? String(language).split("-")[0]
+    : "en";
+  return {
+    ...entry,
+    text: entry.texts?.[lang] || entry.texts?.en || entry.id,
+    roll,
+    weirdRoll,
+  };
+}
+
+export function rollTravelEncounter(options = {}) {
+  const regionId = options?.regionId || "commonwealth";
+  const language = options?.language || "en";
+
+  if (regionId === "commonwealth") {
+    const roll = rollD20();
+    const result = byD20(OFFICIAL_COMMONWEALTH_ENCOUNTERS, roll);
+    if (!result) return null;
+
+    if (result.id === "official_weird_wasteland") {
+      const weirdRoll = rollD20();
+      const weirdResult = byD20(OFFICIAL_WEIRD_WASTELAND_ENCOUNTERS, weirdRoll);
+      return localizeOfficialEncounter(weirdResult, language, roll, weirdRoll);
+    }
+
+    return localizeOfficialEncounter(result, language, roll, null);
   }
 
-  return result;
+  const custom = weightedPick(APP_CUSTOM_ENCOUNTERS);
+  return custom ? { ...custom, generationSource: "app_custom", regionId } : null;
 }
 
 export function getEncounterChanceByTerrain(terrainId) {
@@ -45,9 +79,9 @@ export function shouldTriggerEncounter(terrainId) {
   return Math.random() < getEncounterChanceByTerrain(terrainId);
 }
 
-export function maybeRollTravelEncounter(terrainId) {
+export function maybeRollTravelEncounter(terrainId, options = {}) {
   if (!shouldTriggerEncounter(terrainId)) return null;
-  return rollTravelEncounter();
+  return rollTravelEncounter(options && typeof options === "object" ? options : {});
 }
 
 export function getLocationChanceByTerrain(terrainId) {
