@@ -1,0 +1,42 @@
+name: Apply travel GM survival patch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/apply-travel-gm-survival.yml
+      - scripts/apply-travel-gm-survival.py
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply source patch
+        run: python3 scripts/apply-travel-gm-survival.py
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify build
+        run: npm run build
+
+      - name: Commit integration
+        run: |
+          git config user.name "Bekhram Salimov"
+          git config user.email "bahramsalimov89@gmail.com"
+          git add src/components/map/MapScreen.jsx src/components/map/MapGrid.jsx src/components/map/LocalGmChat.jsx src/hooks/useCharacterStorage.js api/auto-gm.js
+          if git diff --cached --quiet; then
+            echo "No source changes to commit"
+            exit 0
+          fi
+          git commit -m "Integrate global travel encounters with Auto GM"
+          git push origin main
