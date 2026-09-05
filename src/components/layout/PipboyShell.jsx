@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
+import CraftingScreen from "../crafting/CraftingScreen.jsx";
 import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
@@ -20,6 +21,7 @@ const INTERACTIVE_SELECTOR = [
   ".pip-map-screen",
   ".games-screen",
   ".bestiary-screen",
+  ".crafting-screen",
   ".pip-active-combat",
   ".combat-turn-sequence",
 ].join(",");
@@ -95,6 +97,14 @@ export default function PipboyShell({
   let screenContent = children;
   if (activeTab === "companion") screenContent = <CompanionPresetHub />;
   if (activeTab === "bestiary") screenContent = <BestiaryScreen />;
+  if (activeTab === "crafting") {
+    screenContent = (
+      <CraftingScreen
+        character={resolvedCharacter}
+        setCharacter={resolvedSetCharacter}
+      />
+    );
+  }
 
   return (
     <div className="pip-app">
