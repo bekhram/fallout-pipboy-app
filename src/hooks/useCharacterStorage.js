@@ -21,6 +21,8 @@ import {
   removeStartingEquipmentGrant,
 } from "../data/startingEquipment.js";
 
+import { buildPowerArmorInventoryItems } from "../utils/powerArmorInventory.js";
+
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 const ORIGIN_EQUIPMENT_CHOICE_EVENT = "pipboy:set-origin-equipment-choices";
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
@@ -546,6 +548,42 @@ export function useCharacterStorage(initialForm) {
       return changed ? { ...prev, inventoryItems } : prev;
     });
   }, [form.armor?._equipment?.slots, armorInventoryDatabase]);
+
+  useEffect(() => {
+    const desiredPowerArmorItems = buildPowerArmorInventoryItems(
+      form.armor?._power?.loadout || {}
+    );
+
+    setForm((prev) => {
+      const previousItems = Array.isArray(prev.inventoryItems)
+        ? prev.inventoryItems
+        : [];
+      const regularItems = previousItems.filter(
+        (item) => item?.sourceType !== "power_armor"
+      );
+      const previousPowerItems = previousItems.filter(
+        (item) => item?.sourceType === "power_armor"
+      );
+
+      const nextPowerItems = desiredPowerArmorItems.map((desired) => {
+        const current = previousPowerItems.find(
+          (item) => item?.sourceId === desired.sourceId
+        );
+        return {
+          ...(current || {}),
+          ...desired,
+          quantity: "1",
+        };
+      });
+
+      const inventoryItems = [...regularItems, ...nextPowerItems];
+      if (JSON.stringify(inventoryItems) === JSON.stringify(previousItems)) {
+        return prev;
+      }
+
+      return { ...prev, inventoryItems };
+    });
+  }, [form.armor?._power?.loadout]);
 
   useEffect(() => {
     const handleUseItem = (event) => {
