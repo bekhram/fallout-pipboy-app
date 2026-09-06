@@ -750,7 +750,7 @@
 
 .companion-card-actions {
   position: absolute;
-  top: 0;
+  top: -52px;
   right: 0;
   z-index: 2;
   display: flex;
@@ -770,8 +770,13 @@
   line-height: 1;
 }
 
-.companion-summary-row {
+.companion-roster {
   padding-right: 112px;
+  box-sizing: border-box;
+}
+
+.companion-summary-row {
+  padding-right: 0;
 }
 
 @media (max-width: 520px) {
@@ -787,9 +792,17 @@
     font-size: 0.95rem;
   }
 
+  .companion-card-actions {
+    top: -50px;
+  }
+
+  .companion-roster {
+    padding-right: 101px;
+  }
+
   .companion-summary-row,
   .companion-content.is-readonly .companion-summary-row {
     grid-template-columns: minmax(0, 1fr);
-    padding-right: 101px;
+    padding-right: 0;
   }
 }
