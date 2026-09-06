@@ -33,6 +33,11 @@ function safeWriteJson(key, value) {
   try { window.localStorage.setItem(key, JSON.stringify(value)); } catch { /* optional */ }
 }
 
+function sameList(previous, next) {
+  if (previous.length !== next.length) return false;
+  return previous.every((item, index) => item.id === next[index]?.id && item.name === next[index]?.name);
+}
+
 function getSessionCode() {
   return document.querySelector(".session-gm-code")?.textContent?.trim() || "offline";
 }
@@ -97,14 +102,16 @@ export default function GmSessionMap({ character = null }) {
 
   useEffect(() => {
     const refresh = () => {
-      setRoster(getConnectedPlayers());
-      setNpcs(getNpcTokens());
+      const nextRoster = getConnectedPlayers();
+      const nextNpcs = getNpcTokens();
+      setRoster((previous) => sameList(previous, nextRoster) ? previous : nextRoster);
+      setNpcs((previous) => sameList(previous, nextNpcs) ? previous : nextNpcs);
       const code = getSessionCode();
       if (code !== sessionCode) setSessionCode(code);
     };
     refresh();
     const observer = new MutationObserver(refresh);
-    const target = document.querySelector(".session-gm-host") || document.body;
+    const target = document.querySelector(".session-gm-roster-strip__list") || document.querySelector(".session-gm-host") || document.body;
     observer.observe(target, { childList: true, subtree: true, characterData: true });
     const timer = window.setInterval(refresh, 1200);
     return () => {
