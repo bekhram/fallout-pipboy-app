@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Peer } from "peerjs";
-import { getDerivedStats } from "../utils/characterMath.js";
+import { getDerivedStats, getTotalResistanceForPart } from "../utils/characterMath.js";
 
 export const SESSION_CODE_LENGTH = 6;
 
@@ -58,6 +58,21 @@ function createCharacterSnapshot(form) {
     .map(([key]) => key)
     .slice(0, 12);
 
+  const torsoArmor = {
+    physical: Math.max(0, getTotalResistanceForPart({
+      armor: form?.armor || {},
+      part: "Torso",
+      damageType: "physical",
+      derived,
+    })),
+    energy: Math.max(0, getTotalResistanceForPart({
+      armor: form?.armor || {},
+      part: "Torso",
+      damageType: "energy",
+      derived,
+    })),
+  };
+
   return {
     name: characterName || "Unnamed",
     origin: String(form?.origin || ""),
@@ -65,6 +80,7 @@ function createCharacterSnapshot(form) {
     currentHp: Math.max(0, Number(form?.currentHp || 0)),
     maxHp: Math.max(0, Number(derived?.effectiveMaxHp || derived?.maxHp || 0)),
     defense: Math.max(0, Number(derived?.defense || 0)),
+    armor: torsoArmor,
     initiative: Math.max(0, Number(derived?.initiative || 0)),
     statuses,
     updatedAt: new Date().toISOString(),
@@ -137,10 +153,15 @@ function sanitizeNpc(npc) {
   if (!npc || typeof npc !== "object") return null;
   const name = cleanText(npc.name, 60);
   if (!name) return null;
+  const maxHp = clampNumber(npc.maxHp ?? npc.currentHp ?? 10, 0, 9999);
   return {
     id: cleanText(npc.id, 100) || makeId("npc"),
     name,
     initiative: clampNumber(npc.initiative, 0, 99),
+    maxHp,
+    currentHp: clampNumber(npc.currentHp ?? maxHp, 0, maxHp || 9999),
+    armorPhysical: clampNumber(npc.armorPhysical, 0, 99),
+    armorEnergy: clampNumber(npc.armorEnergy, 0, 99),
   };
 }
 
@@ -149,12 +170,18 @@ function sanitizeActor(actor) {
   const id = cleanText(actor.id, 140);
   const name = cleanText(actor.name, 60);
   if (!id || !name) return null;
+  const maxHp = clampNumber(actor.maxHp, 0, 9999);
   return {
     id,
     kind: actor.kind === "npc" ? "npc" : "player",
     name,
     initiative: clampNumber(actor.initiative, 0, 99),
     peerId: actor.kind === "npc" ? null : cleanText(actor.peerId, 140),
+    maxHp,
+    currentHp: clampNumber(actor.currentHp, 0, maxHp || 9999),
+    defense: clampNumber(actor.defense, 0, 99),
+    armorPhysical: clampNumber(actor.armorPhysical, 0, 99),
+    armorEnergy: clampNumber(actor.armorEnergy, 0, 99),
   };
 }
 
@@ -456,9 +483,9 @@ export default function useSharedSession(form) {
     return true;
   };
 
-  const addCombatNpc = ({ name, initiative = 0 } = {}) => {
+  const addCombatNpc = ({ name, initiative = 0, maxHp = 10, currentHp = maxHp, armorPhysical = 0, armorEnergy = 0 } = {}) => {
     if (mode !== "host" || combatRef.current.active) return false;
-    const npc = sanitizeNpc({ id: makeId("npc"), name, initiative });
+    const npc = sanitizeNpc({ id: makeId("npc"), name, initiative, maxHp, currentHp, armorPhysical, armorEnergy });
     if (!npc) return false;
     return Boolean(setHostCombat({ ...combatRef.current, npcs: [...combatRef.current.npcs, npc] }));
   };
@@ -489,6 +516,11 @@ export default function useSharedSession(form) {
         peerId: player.peerId,
         name: player.character?.name || player.name || "Player",
         initiative: clampNumber(player.character?.initiative, 0, 99),
+        currentHp: clampNumber(player.character?.currentHp, 0, 9999),
+        maxHp: clampNumber(player.character?.maxHp, 0, 9999),
+        defense: clampNumber(player.character?.defense, 0, 99),
+        armorPhysical: clampNumber(player.character?.armor?.physical, 0, 99),
+        armorEnergy: clampNumber(player.character?.armor?.energy, 0, 99),
       }));
     const npcActors = combatRef.current.npcs.map((npc) => ({
       id: `npc:${npc.id}`,
@@ -496,6 +528,10 @@ export default function useSharedSession(form) {
       peerId: null,
       name: npc.name,
       initiative: clampNumber(npc.initiative, 0, 99),
+      currentHp: clampNumber(npc.currentHp, 0, npc.maxHp || 9999),
+      maxHp: clampNumber(npc.maxHp, 0, 9999),
+      armorPhysical: clampNumber(npc.armorPhysical, 0, 99),
+      armorEnergy: clampNumber(npc.armorEnergy, 0, 99),
     }));
     const order = sortActors([...playerActors, ...npcActors]);
     if (!order.length) return false;
@@ -515,7 +551,7 @@ export default function useSharedSession(form) {
 
   const actorAvailable = (actor) => {
     if (!actor) return false;
-    if (actor.kind === "npc") return true;
+    if (actor.kind === "npc") return Number(actor.currentHp || 0) > 0;
     const player = playersRef.current.find((item) => item.peerId === actor.peerId);
     return Boolean(player?.character && Number(player.character.currentHp || 0) > 0);
   };
@@ -540,6 +576,20 @@ export default function useSharedSession(form) {
     if (!nextActor) return false;
     const next = { ...current, round, index, activeActorId: nextActor.id };
     setHostCombat(next, makeFeedItem({ type: "combat", sender: "GM", event: "combat_turn", text: nextActor.name }));
+    return true;
+  };
+
+  const setCombatNpcHp = (actorId, value) => {
+    if (mode !== "host" || !combatRef.current.active) return false;
+    const targetId = String(actorId || "").startsWith("npc:") ? String(actorId) : `npc:${actorId}`;
+    const npcId = targetId.replace(/^npc:/, "");
+    const current = combatRef.current;
+    const actor = current.order.find((item) => item.id === targetId && item.kind === "npc");
+    if (!actor) return false;
+    const nextHp = clampNumber(value, 0, actor.maxHp || 9999);
+    const order = current.order.map((item) => item.id === targetId ? { ...item, currentHp: nextHp } : item);
+    const npcs = current.npcs.map((npc) => npc.id === npcId ? { ...npc, currentHp: nextHp } : npc);
+    setHostCombat({ ...current, order, npcs });
     return true;
   };
 
@@ -599,6 +649,7 @@ export default function useSharedSession(form) {
     removeCombatNpc,
     startCombat,
     nextCombatTurn,
+    setCombatNpcHp,
     setCombatAp,
     endCombat,
   };
