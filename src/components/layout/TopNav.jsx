@@ -21,12 +21,6 @@ const EXTRA_TAB_LABELS = {
     uk: "КРАФТ",
     pl: "RZEMIOSŁO",
   },
-  gm: {
-    en: "GM",
-    ru: "ГМ",
-    uk: "ГМ",
-    pl: "MG",
-  },
 };
 
 export const PIPBOY_TABS = [
@@ -41,7 +35,6 @@ export const PIPBOY_TABS = [
   { key: "bestiary" },
   { key: "notes", labelKey: "tabs.notes" },
   { key: "map", labelKey: "tabs.map" },
-  { key: "gm" },
   { key: "games", labelKey: "tabs.games" },
 ];
 
