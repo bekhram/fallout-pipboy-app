@@ -199,3 +199,151 @@
     order: 3;
   }
 }
+
+
+.session-top-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-status-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 7px;
+}
+
+.session-status-tags span {
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.session-live-sync-note {
+  margin: 8px 0 10px;
+}
+
+.session-feed-panel {
+  min-width: 0;
+}
+
+.session-feed {
+  display: grid;
+  gap: 7px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.session-feed-item {
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.session-feed-item.is-scene {
+  border-width: 2px;
+}
+
+.session-feed-item.is-system {
+  opacity: 0.72;
+}
+
+.session-feed-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.7rem;
+  opacity: 0.76;
+  text-transform: uppercase;
+}
+
+.session-feed-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.session-feed-scene {
+  font-weight: 700;
+}
+
+.session-roll-card {
+  display: grid;
+  gap: 6px;
+}
+
+.session-roll-title {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.session-roll-dice,
+.session-roll-stats {
+  display: flex;
+  gap: 5px 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.session-roll-dice span {
+  min-width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  font-weight: 800;
+}
+
+.session-roll-stats {
+  font-size: 0.76rem;
+}
+
+.session-chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.session-chat-field {
+  min-width: 0;
+}
+
+.floating-session-button {
+  position: fixed;
+  right: 12px;
+  bottom: 76px;
+  z-index: 999997;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: rgba(8, 18, 10, 0.96);
+  color: var(--pip-accent);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.floating-session-button:hover {
+  filter: brightness(1.12);
+}
+
+@media (max-width: 760px) {
+  .session-chat-form {
+    grid-template-columns: 1fr;
+  }
+  .floating-session-button {
+    right: 8px;
+    bottom: 66px;
+  }
+}

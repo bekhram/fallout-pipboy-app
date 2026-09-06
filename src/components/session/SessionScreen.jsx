@@ -1,181 +1,83 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Peer } from "peerjs";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getDerivedStats } from "../../utils/characterMath.js";
+import {
+  normalizeSessionCode,
+  SESSION_CODE_LENGTH,
+} from "../../hooks/useSharedSession.js";
 import "./session.css";
-
-const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-const CODE_LENGTH = 6;
-const HOST_PREFIX = "pip2d20-session-";
 
 const COPY = {
   en: {
-    title: "GM / SESSION",
-    subtitle: "Shared tabletop session",
-    back: "BACK",
-    hostTitle: "GAME MASTER",
-    hostDesc: "Create a room and keep this screen open while players are connected.",
-    create: "CREATE SESSION",
-    joinTitle: "PLAYER",
-    joinDesc: "Enter the session code from the GM.",
-    code: "SESSION CODE",
-    name: "PLAYER NAME",
-    join: "JOIN SESSION",
-    status: "STATUS",
-    waiting: "Waiting",
-    connecting: "Connecting",
-    online: "Online",
-    disconnected: "Disconnected",
-    error: "Connection error",
-    copy: "COPY CODE",
-    copied: "COPIED",
-    end: "END SESSION",
-    leave: "LEAVE SESSION",
-    roster: "CONNECTED PLAYERS",
-    emptyRoster: "Waiting for players...",
-    scene: "GM BROADCAST",
-    scenePlaceholder: "Scene status, objective, warning, location...",
-    broadcast: "BROADCAST",
-    sharedScene: "CURRENT GM MESSAGE",
-    noScene: "No GM message yet.",
-    sync: "SYNC CHARACTER",
-    synced: "Character synced",
-    hp: "HP",
-    level: "LVL",
-    defense: "DEF",
-    origin: "Origin",
-    noCharacter: "No character data",
-    beta: "P2P beta · session exists while the GM remains online",
-    invalidCode: "Enter a 6-character session code.",
-    invalidName: "Enter a player name.",
-    roomUnavailable: "This session code is already in use. Create another session.",
-    hostNotFound: "GM session not found or is offline.",
+    title: "GM / SESSION", subtitle: "Shared tabletop session", back: "BACK", hostTitle: "GAME MASTER",
+    hostDesc: "Create a room and keep the GM online while the group is connected.", create: "CREATE SESSION",
+    joinTitle: "PLAYER", joinDesc: "Enter the session code from the GM.", code: "SESSION CODE", name: "PLAYER NAME",
+    join: "JOIN SESSION", status: "STATUS", waiting: "Waiting", connecting: "Connecting", online: "Online",
+    disconnected: "Disconnected", error: "Connection error", copy: "COPY CODE", copied: "COPIED", end: "END SESSION",
+    leave: "LEAVE SESSION", roster: "CONNECTED PLAYERS", emptyRoster: "Waiting for players...", scene: "GM BROADCAST",
+    scenePlaceholder: "Scene status, objective, warning, location...", broadcast: "BROADCAST", sharedScene: "CURRENT GM MESSAGE",
+    noScene: "No GM message yet.", sync: "SYNC NOW", synced: "Synced", hp: "HP", level: "LVL", defense: "DEF",
+    origin: "Origin", statuses: "STATUS", noCharacter: "No character data", beta: "P2P beta · the session lives while the GM is online",
+    invalidCode: "Enter a 6-character session code.", invalidName: "Enter a player name.", roomUnavailable: "This code is already in use. Create another session.",
+    hostNotFound: "GM session not found or is offline.", networkError: "Network error", openSheet: "OPEN CHARACTER",
+    liveSync: "Character HP, Defense and statuses sync automatically while you use the sheet.", activity: "SESSION LOG",
+    noActivity: "No session activity yet.", chat: "GROUP CHAT", chatPlaceholder: "Message the group...", send: "SEND",
+    joined: "joined the session", left: "left the session", success: "SUCCESS", failure: "FAILURE", successes: "Suc",
+    complications: "Comp", damage: "Damage", effects: "Effects", difficulty: "Diff", target: "TN", hit: "Hit",
+    sessionActive: "SESSION", live: "LIVE"
   },
   ru: {
-    title: "ГМ / СЕССИЯ",
-    subtitle: "Общая игровая сессия",
-    back: "НАЗАД",
-    hostTitle: "GAME MASTER",
-    hostDesc: "Создайте комнату и держите этот экран открытым, пока игроки подключены.",
-    create: "СОЗДАТЬ СЕССИЮ",
-    joinTitle: "ИГРОК",
-    joinDesc: "Введите код сессии, который дал ГМ.",
-    code: "КОД СЕССИИ",
-    name: "ИМЯ ИГРОКА",
-    join: "ПОДКЛЮЧИТЬСЯ",
-    status: "СТАТУС",
-    waiting: "Ожидание",
-    connecting: "Подключение",
-    online: "Онлайн",
-    disconnected: "Отключено",
-    error: "Ошибка соединения",
-    copy: "КОПИРОВАТЬ КОД",
-    copied: "СКОПИРОВАНО",
-    end: "ЗАВЕРШИТЬ СЕССИЮ",
-    leave: "ВЫЙТИ ИЗ СЕССИИ",
-    roster: "ПОДКЛЮЧЕННЫЕ ИГРОКИ",
-    emptyRoster: "Ожидаю игроков...",
-    scene: "СООБЩЕНИЕ ГМ",
-    scenePlaceholder: "Состояние сцены, цель, предупреждение, локация...",
-    broadcast: "ОТПРАВИТЬ ВСЕМ",
-    sharedScene: "ТЕКУЩЕЕ СООБЩЕНИЕ ГМ",
-    noScene: "ГМ пока ничего не отправил.",
-    sync: "СИНХРОНИЗИРОВАТЬ ПЕРСОНАЖА",
-    synced: "Персонаж синхронизирован",
-    hp: "HP",
-    level: "УР",
-    defense: "ЗАЩ",
-    origin: "Происхождение",
-    noCharacter: "Нет данных персонажа",
-    beta: "P2P beta · сессия существует, пока ГМ остаётся онлайн",
-    invalidCode: "Введите 6-символьный код сессии.",
-    invalidName: "Введите имя игрока.",
-    roomUnavailable: "Этот код уже занят. Создайте другую сессию.",
-    hostNotFound: "Сессия ГМ не найдена или ГМ не в сети.",
+    title: "ГМ / СЕССИЯ", subtitle: "Общая игровая сессия", back: "НАЗАД", hostTitle: "GAME MASTER",
+    hostDesc: "Создайте комнату и оставайтесь онлайн, пока группа подключена.", create: "СОЗДАТЬ СЕССИЮ",
+    joinTitle: "ИГРОК", joinDesc: "Введите код сессии, который дал ГМ.", code: "КОД СЕССИИ", name: "ИМЯ ИГРОКА",
+    join: "ПОДКЛЮЧИТЬСЯ", status: "СТАТУС", waiting: "Ожидание", connecting: "Подключение", online: "Онлайн",
+    disconnected: "Отключено", error: "Ошибка соединения", copy: "КОПИРОВАТЬ КОД", copied: "СКОПИРОВАНО", end: "ЗАВЕРШИТЬ СЕССИЮ",
+    leave: "ВЫЙТИ ИЗ СЕССИИ", roster: "ПОДКЛЮЧЕННЫЕ ИГРОКИ", emptyRoster: "Ожидаю игроков...", scene: "СООБЩЕНИЕ ГМ",
+    scenePlaceholder: "Состояние сцены, цель, предупреждение, локация...", broadcast: "ОТПРАВИТЬ ВСЕМ", sharedScene: "ТЕКУЩЕЕ СООБЩЕНИЕ ГМ",
+    noScene: "ГМ пока ничего не отправил.", sync: "СИНХРОНИЗИРОВАТЬ", synced: "Синхронизировано", hp: "HP", level: "УР", defense: "ЗАЩ",
+    origin: "Происхождение", statuses: "СТАТУС", noCharacter: "Нет данных персонажа", beta: "P2P beta · сессия существует, пока ГМ онлайн",
+    invalidCode: "Введите 6-символьный код сессии.", invalidName: "Введите имя игрока.", roomUnavailable: "Этот код уже занят. Создайте другую сессию.",
+    hostNotFound: "Сессия ГМ не найдена или ГМ не в сети.", networkError: "Ошибка сети", openSheet: "ОТКРЫТЬ ПЕРСОНАЖА",
+    liveSync: "HP, Защита и статусы персонажа синхронизируются автоматически, пока вы пользуетесь листом.", activity: "ЖУРНАЛ СЕССИИ",
+    noActivity: "В сессии пока нет событий.", chat: "ОБЩИЙ ЧАТ", chatPlaceholder: "Сообщение группе...", send: "ОТПРАВИТЬ",
+    joined: "подключился к сессии", left: "вышел из сессии", success: "УСПЕХ", failure: "ПРОВАЛ", successes: "Усп",
+    complications: "Осл", damage: "Урон", effects: "Эффекты", difficulty: "Сложн", target: "ЦЧ", hit: "Попадание",
+    sessionActive: "СЕССИЯ", live: "LIVE"
   },
   uk: {
-    title: "ГМ / СЕСІЯ",
-    subtitle: "Спільна ігрова сесія",
-    back: "НАЗАД",
-    hostTitle: "GAME MASTER",
-    hostDesc: "Створіть кімнату й тримайте цей екран відкритим, поки гравці підключені.",
-    create: "СТВОРИТИ СЕСІЮ",
-    joinTitle: "ГРАВЕЦЬ",
-    joinDesc: "Введіть код сесії, який дав ГМ.",
-    code: "КОД СЕСІЇ",
-    name: "ІМ'Я ГРАВЦЯ",
-    join: "ПІДКЛЮЧИТИСЯ",
-    status: "СТАТУС",
-    waiting: "Очікування",
-    connecting: "Підключення",
-    online: "Онлайн",
-    disconnected: "Відключено",
-    error: "Помилка з'єднання",
-    copy: "КОПІЮВАТИ КОД",
-    copied: "СКОПІЙОВАНО",
-    end: "ЗАВЕРШИТИ СЕСІЮ",
-    leave: "ВИЙТИ ІЗ СЕСІЇ",
-    roster: "ПІДКЛЮЧЕНІ ГРАВЦІ",
-    emptyRoster: "Очікую гравців...",
-    scene: "ПОВІДОМЛЕННЯ ГМ",
-    scenePlaceholder: "Стан сцени, мета, попередження, локація...",
-    broadcast: "НАДІСЛАТИ ВСІМ",
-    sharedScene: "ПОТОЧНЕ ПОВІДОМЛЕННЯ ГМ",
-    noScene: "ГМ ще нічого не надіслав.",
-    sync: "СИНХРОНІЗУВАТИ ПЕРСОНАЖА",
-    synced: "Персонажа синхронізовано",
-    hp: "HP",
-    level: "РІВ",
-    defense: "ЗАХ",
-    origin: "Походження",
-    noCharacter: "Немає даних персонажа",
-    beta: "P2P beta · сесія існує, поки ГМ залишається онлайн",
-    invalidCode: "Введіть 6-символьний код сесії.",
-    invalidName: "Введіть ім'я гравця.",
-    roomUnavailable: "Цей код уже використовується. Створіть іншу сесію.",
-    hostNotFound: "Сесію ГМ не знайдено або ГМ не в мережі.",
+    title: "ГМ / СЕСІЯ", subtitle: "Спільна ігрова сесія", back: "НАЗАД", hostTitle: "GAME MASTER",
+    hostDesc: "Створіть кімнату й залишайтеся онлайн, поки група підключена.", create: "СТВОРИТИ СЕСІЮ",
+    joinTitle: "ГРАВЕЦЬ", joinDesc: "Введіть код сесії, який дав ГМ.", code: "КОД СЕСІЇ", name: "ІМ'Я ГРАВЦЯ",
+    join: "ПІДКЛЮЧИТИСЯ", status: "СТАТУС", waiting: "Очікування", connecting: "Підключення", online: "Онлайн",
+    disconnected: "Відключено", error: "Помилка з'єднання", copy: "КОПІЮВАТИ КОД", copied: "СКОПІЙОВАНО", end: "ЗАВЕРШИТИ СЕСІЮ",
+    leave: "ВИЙТИ ІЗ СЕСІЇ", roster: "ПІДКЛЮЧЕНІ ГРАВЦІ", emptyRoster: "Очікую гравців...", scene: "ПОВІДОМЛЕННЯ ГМ",
+    scenePlaceholder: "Стан сцени, мета, попередження, локація...", broadcast: "НАДІСЛАТИ ВСІМ", sharedScene: "ПОТОЧНЕ ПОВІДОМЛЕННЯ ГМ",
+    noScene: "ГМ ще нічого не надіслав.", sync: "СИНХРОНІЗУВАТИ", synced: "Синхронізовано", hp: "HP", level: "РІВ", defense: "ЗАХ",
+    origin: "Походження", statuses: "СТАТУС", noCharacter: "Немає даних персонажа", beta: "P2P beta · сесія існує, поки ГМ онлайн",
+    invalidCode: "Введіть 6-символьний код сесії.", invalidName: "Введіть ім'я гравця.", roomUnavailable: "Цей код уже зайнятий. Створіть іншу сесію.",
+    hostNotFound: "Сесію ГМ не знайдено або ГМ не в мережі.", networkError: "Помилка мережі", openSheet: "ВІДКРИТИ ПЕРСОНАЖА",
+    liveSync: "HP, Захист і статуси персонажа синхронізуються автоматично, поки ви користуєтесь листом.", activity: "ЖУРНАЛ СЕСІЇ",
+    noActivity: "У сесії ще немає подій.", chat: "СПІЛЬНИЙ ЧАТ", chatPlaceholder: "Повідомлення групі...", send: "НАДІСЛАТИ",
+    joined: "приєднався до сесії", left: "вийшов із сесії", success: "УСПІХ", failure: "НЕВДАЧА", successes: "Усп",
+    complications: "Ускл", damage: "Шкода", effects: "Ефекти", difficulty: "Складн", target: "ЦЧ", hit: "Влучання",
+    sessionActive: "СЕСІЯ", live: "LIVE"
   },
   pl: {
-    title: "GM / SESJA",
-    subtitle: "Wspólna sesja gry",
-    back: "WSTECZ",
-    hostTitle: "GAME MASTER",
-    hostDesc: "Utwórz pokój i pozostaw ten ekran otwarty, gdy gracze są połączeni.",
-    create: "UTWÓRZ SESJĘ",
-    joinTitle: "GRACZ",
-    joinDesc: "Wpisz kod sesji otrzymany od GM.",
-    code: "KOD SESJI",
-    name: "NAZWA GRACZA",
-    join: "DOŁĄCZ",
-    status: "STATUS",
-    waiting: "Oczekiwanie",
-    connecting: "Łączenie",
-    online: "Online",
-    disconnected: "Rozłączono",
-    error: "Błąd połączenia",
-    copy: "KOPIUJ KOD",
-    copied: "SKOPIOWANO",
-    end: "ZAKOŃCZ SESJĘ",
-    leave: "OPUŚĆ SESJĘ",
-    roster: "POŁĄCZENI GRACZE",
-    emptyRoster: "Oczekiwanie na graczy...",
-    scene: "KOMUNIKAT GM",
-    scenePlaceholder: "Stan sceny, cel, ostrzeżenie, lokacja...",
-    broadcast: "WYŚLIJ WSZYSTKIM",
-    sharedScene: "AKTUALNY KOMUNIKAT GM",
-    noScene: "GM nie wysłał jeszcze komunikatu.",
-    sync: "SYNCHRONIZUJ POSTAĆ",
-    synced: "Postać zsynchronizowana",
-    hp: "HP",
-    level: "POZ",
-    defense: "OBR",
-    origin: "Pochodzenie",
-    noCharacter: "Brak danych postaci",
-    beta: "P2P beta · sesja istnieje, dopóki GM pozostaje online",
-    invalidCode: "Wpisz 6-znakowy kod sesji.",
-    invalidName: "Wpisz nazwę gracza.",
-    roomUnavailable: "Ten kod jest już używany. Utwórz inną sesję.",
-    hostNotFound: "Sesja GM nie istnieje lub GM jest offline.",
+    title: "GM / SESJA", subtitle: "Wspólna sesja gry", back: "WSTECZ", hostTitle: "GAME MASTER",
+    hostDesc: "Utwórz pokój i pozostań online, gdy grupa jest połączona.", create: "UTWÓRZ SESJĘ",
+    joinTitle: "GRACZ", joinDesc: "Wpisz kod sesji otrzymany od GM.", code: "KOD SESJI", name: "NAZWA GRACZA",
+    join: "DOŁĄCZ", status: "STATUS", waiting: "Oczekiwanie", connecting: "Łączenie", online: "Online",
+    disconnected: "Rozłączono", error: "Błąd połączenia", copy: "KOPIUJ KOD", copied: "SKOPIOWANO", end: "ZAKOŃCZ SESJĘ",
+    leave: "OPUŚĆ SESJĘ", roster: "POŁĄCZENI GRACZE", emptyRoster: "Oczekiwanie na graczy...", scene: "KOMUNIKAT GM",
+    scenePlaceholder: "Stan sceny, cel, ostrzeżenie, lokacja...", broadcast: "WYŚLIJ WSZYSTKIM", sharedScene: "AKTUALNY KOMUNIKAT GM",
+    noScene: "GM nie wysłał jeszcze komunikatu.", sync: "SYNCHRONIZUJ", synced: "Zsynchronizowano", hp: "HP", level: "POZ", defense: "OBR",
+    origin: "Pochodzenie", statuses: "STATUS", noCharacter: "Brak danych postaci", beta: "P2P beta · sesja istnieje, dopóki GM jest online",
+    invalidCode: "Wpisz 6-znakowy kod sesji.", invalidName: "Wpisz nazwę gracza.", roomUnavailable: "Ten kod jest już używany. Utwórz inną sesję.",
+    hostNotFound: "Sesja GM nie istnieje lub GM jest offline.", networkError: "Błąd sieci", openSheet: "OTWÓRZ POSTAĆ",
+    liveSync: "HP, Obrona i statusy postaci synchronizują się automatycznie podczas używania karty.", activity: "DZIENNIK SESJI",
+    noActivity: "Brak aktywności w sesji.", chat: "CZAT GRUPOWY", chatPlaceholder: "Wiadomość do grupy...", send: "WYŚLIJ",
+    joined: "dołączył do sesji", left: "opuścił sesję", success: "SUKCES", failure: "PORAŻKA", successes: "Suk",
+    complications: "Kompl", damage: "Obrażenia", effects: "Efekty", difficulty: "Trudn", target: "TN", hit: "Trafienie",
+    sessionActive: "SESJA", live: "LIVE"
   },
 };
 
@@ -184,66 +86,22 @@ function getLanguage(value) {
   return COPY[code] ? code : "en";
 }
 
-function normalizeCode(value) {
-  return String(value || "")
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "")
-    .slice(0, CODE_LENGTH);
-}
-
-function makeSessionCode() {
-  const values = new Uint32Array(CODE_LENGTH);
-  if (globalThis.crypto?.getRandomValues) {
-    globalThis.crypto.getRandomValues(values);
-  } else {
-    for (let i = 0; i < values.length; i += 1) values[i] = Math.floor(Math.random() * 0xffffffff);
-  }
-  return Array.from(values, (value) => CODE_ALPHABET[value % CODE_ALPHABET.length]).join("");
-}
-
-function getHostPeerId(code) {
-  return `${HOST_PREFIX}${String(code || "").toLowerCase()}`;
-}
-
 function getCharacterName(form) {
   return String(form?.characterName || form?.name || form?.playerName || "").trim();
 }
 
-function createCharacterSnapshot(form) {
-  if (!form) return null;
-  const derived = getDerivedStats(form);
-  const characterName = getCharacterName(form);
-  const hasCharacter = Boolean(characterName || form?.origin || form?.level);
-  if (!hasCharacter) return null;
-
-  return {
-    name: characterName || "Unnamed",
-    origin: String(form?.origin || ""),
-    level: Math.max(1, Number(form?.level || 1)),
-    currentHp: Math.max(0, Number(form?.currentHp || 0)),
-    maxHp: Math.max(0, Number(derived?.effectiveMaxHp || derived?.maxHp || 0)),
-    defense: Math.max(0, Number(derived?.defense || 0)),
-    updatedAt: new Date().toISOString(),
-  };
-}
-
-function makePlayerPacket(name, form) {
-  return {
-    name: String(name || "Player").trim().slice(0, 40) || "Player",
-    character: createCharacterSnapshot(form),
-  };
-}
-
-function safeClose(connection) {
+function formatTime(timestamp) {
+  if (!timestamp) return "";
   try {
-    connection?.close?.();
+    return new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   } catch {
-    // ignore cleanup errors
+    return "";
   }
 }
 
 function PlayerCard({ player, copy }) {
   const character = player?.character;
+  const statuses = Array.isArray(character?.statuses) ? character.statuses : [];
   return (
     <div className="session-player-card">
       <div className="session-player-head">
@@ -259,237 +117,117 @@ function PlayerCard({ player, copy }) {
             <span>{copy.defense}: {character.defense}</span>
           </div>
           {character.origin && <div className="stat-sub">{copy.origin}: {character.origin}</div>}
+          {statuses.length > 0 && (
+            <div className="session-status-tags">
+              {statuses.slice(0, 5).map((status) => <span key={status}>{status}</span>)}
+              {statuses.length > 5 && <span>+{statuses.length - 5}</span>}
+            </div>
+          )}
         </>
-      ) : (
-        <div className="stat-sub">{copy.noCharacter}</div>
-      )}
+      ) : <div className="stat-sub">{copy.noCharacter}</div>}
     </div>
   );
 }
 
-export default function SessionScreen({ form, onBack }) {
+function RollEntry({ item, copy }) {
+  const roll = item?.roll || {};
+  const values = Array.isArray(roll.diceValues) ? roll.diceValues : [];
+  if (roll.diceType === "d6") {
+    return (
+      <div className="session-roll-card">
+        <div className="session-roll-title">{roll.reroll ? "↻ " : ""}{roll.label || "D6"}</div>
+        <div className="session-roll-dice">{values.map((value, index) => <span key={`${index}-${value}`}>{String(value)}</span>)}</div>
+        <div className="session-roll-stats">
+          <strong>{copy.damage}: {roll.totalDamage ?? 0}</strong>
+          <span>{copy.effects}: {roll.totalEffects ?? 0}</span>
+          {roll.effects?.length > 0 && <span>{roll.effects.join(" · ")}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="session-roll-card">
+      <div className="session-roll-title">{roll.reroll ? "↻ " : ""}{roll.label || "D20"}</div>
+      <div className="session-roll-dice">{values.map((value, index) => <span key={`${index}-${value}`}>{value}</span>)}</div>
+      <div className="session-roll-stats">
+        {roll.outcome && <strong>{roll.outcome === "success" ? copy.success : copy.failure}</strong>}
+        {roll.successes !== null && <span>{copy.successes}: {roll.successes}</span>}
+        <span>{copy.complications}: {roll.complications || 0}</span>
+        {roll.targetNumber !== null && <span>{copy.target}: {roll.targetNumber}</span>}
+        {roll.difficulty !== null && <span>{copy.difficulty}: {roll.difficulty}</span>}
+        {roll.hitLocation?.label && <span>{copy.hit}: {roll.hitLocation.label} ({roll.hitLocation.value})</span>}
+      </div>
+    </div>
+  );
+}
+
+function FeedItem({ item, copy }) {
+  return (
+    <div className={`session-feed-item is-${item.type}`}>
+      <div className="session-feed-meta">
+        <span>{formatTime(item.timestamp)}</span>
+        {item.sender && <strong>{item.sender}</strong>}
+      </div>
+      {item.type === "system" && <div>{item.event === "join" ? copy.joined : copy.left}</div>}
+      {item.type === "chat" && <div className="session-feed-text">{item.text}</div>}
+      {item.type === "scene" && <div className="session-feed-text session-feed-scene">{item.text}</div>}
+      {item.type === "roll" && <RollEntry item={item} copy={copy} />}
+    </div>
+  );
+}
+
+export function SessionFloatingButton({ session, onOpen }) {
+  const { i18n } = useTranslation();
+  const copy = COPY[getLanguage(i18n.resolvedLanguage || i18n.language)];
+  if (!session?.isActive) return null;
+  return (
+    <button type="button" className="floating-session-button" onClick={onOpen}>
+      <span className={`session-status-dot is-${session.status}`} />
+      <strong>{copy.sessionActive}</strong>
+      <span>{session.sessionCode}</span>
+      {session.mode === "host" && <span>{session.players.length}</span>}
+    </button>
+  );
+}
+
+export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   const { i18n } = useTranslation();
   const copy = COPY[getLanguage(i18n.resolvedLanguage || i18n.language)];
   const defaultPlayerName = useMemo(() => getCharacterName(form) || "Player", [form]);
-
-  const [mode, setMode] = useState("lobby");
-  const [status, setStatus] = useState("waiting");
-  const [error, setError] = useState("");
-  const [sessionCode, setSessionCode] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [playerName, setPlayerName] = useState(defaultPlayerName);
-  const [players, setPlayers] = useState([]);
-  const [sceneMessage, setSceneMessage] = useState("");
   const [sceneDraft, setSceneDraft] = useState("");
+  const [chatDraft, setChatDraft] = useState("");
   const [copyState, setCopyState] = useState(false);
   const [syncState, setSyncState] = useState(false);
+  const [localError, setLocalError] = useState("");
 
-  const peerRef = useRef(null);
-  const hostConnectionRef = useRef(null);
-  const connectionsRef = useRef(new Map());
-  const playersRef = useRef([]);
-  const sceneRef = useRef("");
-  const codeRef = useRef("");
+  const mode = session?.mode || "lobby";
+  const status = session?.status || "waiting";
+  const players = session?.players || [];
+  const sceneMessage = session?.sceneMessage || "";
+  const feed = session?.feed || [];
+  const sessionCode = session?.sessionCode || "";
+  const statusLabel = copy[status] || status;
+  const sessionError = session?.error?.key
+    ? (copy[session.error.key] || session.error.message || copy.networkError)
+    : (session?.error?.message || "");
+  const error = localError || sessionError;
 
-  useEffect(() => {
-    playersRef.current = players;
-  }, [players]);
-
-  useEffect(() => {
-    sceneRef.current = sceneMessage;
-  }, [sceneMessage]);
-
-  const destroyNetwork = () => {
-    connectionsRef.current.forEach((connection) => safeClose(connection));
-    connectionsRef.current.clear();
-    safeClose(hostConnectionRef.current);
-    hostConnectionRef.current = null;
-    try {
-      peerRef.current?.destroy?.();
-    } catch {
-      // ignore cleanup errors
-    }
-    peerRef.current = null;
-  };
-
-  useEffect(() => () => destroyNetwork(), []);
-
-  const broadcastState = () => {
-    const payload = {
-      type: "session_state",
-      sessionCode: codeRef.current,
-      players: playersRef.current,
-      sceneMessage: sceneRef.current,
-      sentAt: new Date().toISOString(),
-    };
-
-    connectionsRef.current.forEach((connection) => {
-      if (connection?.open) connection.send(payload);
-    });
-  };
-
-  const upsertPlayer = (peerId, packet) => {
-    setPlayers((previous) => {
-      const nextPlayer = {
-        peerId,
-        name: packet?.name || "Player",
-        character: packet?.character || null,
-        updatedAt: new Date().toISOString(),
-      };
-      const exists = previous.some((item) => item.peerId === peerId);
-      const next = exists
-        ? previous.map((item) => (item.peerId === peerId ? { ...item, ...nextPlayer } : item))
-        : [...previous, nextPlayer];
-      playersRef.current = next;
-      window.setTimeout(broadcastState, 0);
-      return next;
-    });
-  };
-
-  const removePlayer = (peerId) => {
-    setPlayers((previous) => {
-      const next = previous.filter((item) => item.peerId !== peerId);
-      playersRef.current = next;
-      window.setTimeout(broadcastState, 0);
-      return next;
-    });
-  };
-
-  const bindHostConnection = (connection) => {
-    connectionsRef.current.set(connection.peer, connection);
-
-    connection.on("open", () => {
-      connection.send({
-        type: "session_state",
-        sessionCode: codeRef.current,
-        players: playersRef.current,
-        sceneMessage: sceneRef.current,
-      });
-    });
-
-    connection.on("data", (data) => {
-      if (!data || typeof data !== "object") return;
-      if (data.type === "join" || data.type === "player_update") {
-        upsertPlayer(connection.peer, data.player);
-      }
-    });
-
-    connection.on("close", () => {
-      connectionsRef.current.delete(connection.peer);
-      removePlayer(connection.peer);
-    });
-
-    connection.on("error", () => {
-      connectionsRef.current.delete(connection.peer);
-      removePlayer(connection.peer);
-    });
-  };
-
-  const startHost = () => {
-    destroyNetwork();
-    setError("");
-    setPlayers([]);
-    setSceneMessage("");
-    setSceneDraft("");
-    playersRef.current = [];
-    sceneRef.current = "";
-
-    const code = makeSessionCode();
-    codeRef.current = code;
-    setSessionCode(code);
-    setMode("host");
-    setStatus("connecting");
-
-    const peer = new Peer(getHostPeerId(code), { debug: 1 });
-    peerRef.current = peer;
-
-    peer.on("open", () => {
-      setStatus("online");
-    });
-
-    peer.on("connection", bindHostConnection);
-
-    peer.on("disconnected", () => setStatus("disconnected"));
-    peer.on("close", () => setStatus("disconnected"));
-    peer.on("error", (peerError) => {
-      setStatus("error");
-      if (peerError?.type === "unavailable-id") setError(copy.roomUnavailable);
-      else setError(peerError?.message || copy.error);
-    });
-  };
-
-  const joinSession = () => {
-    const normalized = normalizeCode(joinCode);
+  const handleJoin = () => {
+    const normalized = normalizeSessionCode(joinCode);
     const cleanName = String(playerName || "").trim();
-    if (normalized.length !== CODE_LENGTH) {
-      setError(copy.invalidCode);
+    if (normalized.length !== SESSION_CODE_LENGTH) {
+      setLocalError(copy.invalidCode);
       return;
     }
     if (!cleanName) {
-      setError(copy.invalidName);
+      setLocalError(copy.invalidName);
       return;
     }
-
-    destroyNetwork();
-    setError("");
-    setPlayers([]);
-    setSceneMessage("");
-    setSessionCode(normalized);
-    codeRef.current = normalized;
-    setMode("player");
-    setStatus("connecting");
-
-    const peer = new Peer(undefined, { debug: 1 });
-    peerRef.current = peer;
-
-    peer.on("open", () => {
-      const connection = peer.connect(getHostPeerId(normalized), { reliable: true });
-      hostConnectionRef.current = connection;
-
-      connection.on("open", () => {
-        setStatus("online");
-        connection.send({ type: "join", player: makePlayerPacket(cleanName, form) });
-      });
-
-      connection.on("data", (data) => {
-        if (!data || typeof data !== "object") return;
-        if (data.type === "session_state") {
-          setPlayers(Array.isArray(data.players) ? data.players : []);
-          setSceneMessage(String(data.sceneMessage || ""));
-        }
-      });
-
-      connection.on("close", () => setStatus("disconnected"));
-      connection.on("error", () => {
-        setStatus("error");
-        setError(copy.hostNotFound);
-      });
-    });
-
-    peer.on("error", (peerError) => {
-      setStatus("error");
-      if (peerError?.type === "peer-unavailable") setError(copy.hostNotFound);
-      else setError(peerError?.message || copy.error);
-    });
-  };
-
-  const exitSession = () => {
-    destroyNetwork();
-    setMode("lobby");
-    setStatus("waiting");
-    setError("");
-    setSessionCode("");
-    setPlayers([]);
-    setSceneMessage("");
-    setSceneDraft("");
-    codeRef.current = "";
-    playersRef.current = [];
-    sceneRef.current = "";
-  };
-
-  const handleBack = () => {
-    destroyNetwork();
-    onBack?.();
+    setLocalError("");
+    session.joinSession({ code: normalized, name: cleanName });
   };
 
   const copyCode = async () => {
@@ -502,79 +240,43 @@ export default function SessionScreen({ form, onBack }) {
     }
   };
 
-  const broadcastScene = () => {
-    const nextMessage = String(sceneDraft || "").trim().slice(0, 600);
-    sceneRef.current = nextMessage;
-    setSceneMessage(nextMessage);
-    broadcastState();
+  const handleBroadcast = () => {
+    if (session.broadcastScene(sceneDraft)) setSceneDraft("");
   };
 
-  const syncCharacter = () => {
-    const connection = hostConnectionRef.current;
-    if (!connection?.open) return;
-    connection.send({ type: "player_update", player: makePlayerPacket(playerName, form) });
+  const handleChatSubmit = (event) => {
+    event.preventDefault();
+    if (session.sendChat(chatDraft)) setChatDraft("");
+  };
+
+  const handleSync = () => {
+    if (!session.syncCharacter()) return;
     setSyncState(true);
-    window.setTimeout(() => setSyncState(false), 1200);
+    window.setTimeout(() => setSyncState(false), 1000);
   };
-
-  const statusLabel = copy[status] || status;
 
   if (mode === "lobby") {
     return (
       <section className="session-screen pip-screen-grid">
         <section className="pip-panel pip-block session-hero">
           <div className="session-topline">
-            <div>
-              <div className="pip-bootline">PIP 2D20 NETWORK</div>
-              <h1 className="pip-title">{copy.title}</h1>
-              <p className="pip-subtitle">{copy.subtitle}</p>
-            </div>
-            <button type="button" className="pip-btn" onClick={handleBack}>{copy.back}</button>
+            <div><div className="pip-bootline">PIP 2D20 NETWORK</div><h1 className="pip-title">{copy.title}</h1><p className="pip-subtitle">{copy.subtitle}</p></div>
+            <button type="button" className="pip-btn" onClick={onBack}>{copy.back}</button>
           </div>
         </section>
-
         <div className="session-role-grid">
           <section className="pip-panel pip-block session-role-card">
-            <div className="session-role-icon" aria-hidden="true">GM</div>
-            <h2>[ {copy.hostTitle} ]</h2>
-            <p className="stat-sub">{copy.hostDesc}</p>
-            <button type="button" className="pip-btn is-primary session-main-button" onClick={startHost}>
-              {copy.create}
-            </button>
+            <div className="session-role-icon">GM</div><h2>[ {copy.hostTitle} ]</h2><p className="stat-sub">{copy.hostDesc}</p>
+            <button type="button" className="pip-btn is-primary session-main-button" onClick={() => session.startHost()}>{copy.create}</button>
           </section>
-
           <section className="pip-panel pip-block session-role-card">
-            <div className="session-role-icon" aria-hidden="true">P</div>
-            <h2>[ {copy.joinTitle} ]</h2>
-            <p className="stat-sub">{copy.joinDesc}</p>
-            <label className="session-field">
-              <span>{copy.code}</span>
-              <input
-                className="pip-input session-code-input"
-                value={joinCode}
-                maxLength={CODE_LENGTH}
-                autoCapitalize="characters"
-                autoComplete="off"
-                onChange={(event) => setJoinCode(normalizeCode(event.target.value))}
-                placeholder="ABC234"
-              />
-            </label>
-            <label className="session-field">
-              <span>{copy.name}</span>
-              <input
-                className="pip-input"
-                value={playerName}
-                maxLength={40}
-                onChange={(event) => setPlayerName(event.target.value)}
-              />
-            </label>
-            <button type="button" className="pip-btn is-primary session-main-button" onClick={joinSession}>
-              {copy.join}
-            </button>
+            <div className="session-role-icon">P</div><h2>[ {copy.joinTitle} ]</h2><p className="stat-sub">{copy.joinDesc}</p>
+            <label className="session-field"><span>{copy.code}</span><input className="pip-input session-code-input" value={joinCode} maxLength={SESSION_CODE_LENGTH} autoCapitalize="characters" autoComplete="off" onChange={(event) => setJoinCode(normalizeSessionCode(event.target.value))} placeholder="ABC234" /></label>
+            <label className="session-field"><span>{copy.name}</span><input className="pip-input" value={playerName} maxLength={40} onChange={(event) => setPlayerName(event.target.value)} /></label>
+            <button type="button" className="pip-btn is-primary session-main-button" onClick={handleJoin}>{copy.join}</button>
             {error && <div className="session-error">{error}</div>}
           </section>
         </div>
-
         <div className="stat-sub session-beta-note">{copy.beta}</div>
       </section>
     );
@@ -584,86 +286,51 @@ export default function SessionScreen({ form, onBack }) {
     <section className="session-screen pip-screen-grid">
       <section className="pip-panel pip-block session-hero">
         <div className="session-topline">
-          <div>
-            <div className="pip-bootline">{mode === "host" ? "GAME MASTER ONLINE" : "PLAYER LINK"}</div>
-            <h1 className="pip-title">{mode === "host" ? copy.hostTitle : copy.joinTitle}</h1>
+          <div><div className="pip-bootline">{mode === "host" ? "GAME MASTER ONLINE" : "PLAYER LINK"}</div><h1 className="pip-title">{mode === "host" ? copy.hostTitle : copy.joinTitle}</h1></div>
+          <div className="session-top-actions">
+            <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
+            <button type="button" className="pip-btn" onClick={() => session.exitSession()}>{mode === "host" ? copy.end : copy.leave}</button>
           </div>
-          <button type="button" className="pip-btn" onClick={exitSession}>
-            {mode === "host" ? copy.end : copy.leave}
-          </button>
         </div>
-
         <div className="session-status-strip">
-          <div>
-            <span className={`session-status-dot is-${status}`} />
-            <span>{copy.status}: <strong>{statusLabel}</strong></span>
-          </div>
+          <div><span className={`session-status-dot is-${status}`} /><span>{copy.status}: <strong>{statusLabel}</strong></span></div>
           <div className="session-code-display">{sessionCode}</div>
-          {mode === "host" && (
-            <button type="button" className="pip-btn" onClick={copyCode}>
-              {copyState ? copy.copied : copy.copy}
-            </button>
-          )}
+          {mode === "host" && <button type="button" className="pip-btn" onClick={copyCode}>{copyState ? copy.copied : copy.copy}</button>}
         </div>
         {error && <div className="session-error">{error}</div>}
       </section>
 
-      {mode === "host" ? (
-        <div className="session-dashboard-grid">
-          <section className="pip-panel pip-block">
-            <div className="pip-head"><h2>[ {copy.roster} ]</h2><span>{players.length}</span></div>
-            <div className="session-roster">
-              {players.length ? players.map((player) => (
-                <PlayerCard key={player.peerId} player={player} copy={copy} />
-              )) : <div className="pip-logbox">{copy.emptyRoster}</div>}
-            </div>
-          </section>
+      <div className="session-dashboard-grid">
+        <section className="pip-panel pip-block">
+          <div className="pip-head"><h2>[ {copy.roster} ]</h2><span>{players.length}</span></div>
+          <div className="session-roster">{players.length ? players.map((player) => <PlayerCard key={player.peerId} player={player} copy={copy} />) : <div className="pip-logbox">{copy.emptyRoster}</div>}</div>
+        </section>
 
+        {mode === "host" ? (
           <section className="pip-panel pip-block">
             <div className="pip-head"><h2>[ {copy.scene} ]</h2></div>
-            <textarea
-              className="pip-input session-scene-input"
-              rows={7}
-              maxLength={600}
-              value={sceneDraft}
-              placeholder={copy.scenePlaceholder}
-              onChange={(event) => setSceneDraft(event.target.value)}
-            />
-            <button type="button" className="pip-btn is-primary session-main-button" onClick={broadcastScene}>
-              {copy.broadcast}
-            </button>
-            <div className="pip-logbox session-current-message">
-              {sceneMessage || copy.noScene}
-            </div>
+            <textarea className="pip-input session-scene-input" rows={6} maxLength={600} value={sceneDraft} placeholder={copy.scenePlaceholder} onChange={(event) => setSceneDraft(event.target.value)} />
+            <button type="button" className="pip-btn is-primary session-main-button" onClick={handleBroadcast}>{copy.broadcast}</button>
+            <div className="pip-logbox session-current-message">{sceneMessage || copy.noScene}</div>
           </section>
-        </div>
-      ) : (
-        <div className="session-dashboard-grid">
+        ) : (
           <section className="pip-panel pip-block">
             <div className="pip-head"><h2>[ {copy.sharedScene} ]</h2></div>
-            <div className="pip-logbox session-current-message session-current-message-large">
-              {sceneMessage || copy.noScene}
-            </div>
-            <button
-              type="button"
-              className="pip-btn"
-              disabled={status !== "online"}
-              onClick={syncCharacter}
-            >
-              {syncState ? copy.synced : copy.sync}
-            </button>
+            <div className="pip-logbox session-current-message session-current-message-large">{sceneMessage || copy.noScene}</div>
+            <div className="stat-sub session-live-sync-note">{copy.liveSync}</div>
+            <button type="button" className="pip-btn" disabled={status !== "online"} onClick={handleSync}>{syncState ? copy.synced : copy.sync}</button>
           </section>
+        )}
+      </div>
 
-          <section className="pip-panel pip-block">
-            <div className="pip-head"><h2>[ {copy.roster} ]</h2><span>{players.length}</span></div>
-            <div className="session-roster">
-              {players.length ? players.map((player) => (
-                <PlayerCard key={player.peerId} player={player} copy={copy} />
-              )) : <div className="pip-logbox">{copy.emptyRoster}</div>}
-            </div>
-          </section>
-        </div>
-      )}
+      <section className="pip-panel pip-block session-feed-panel">
+        <div className="pip-head"><h2>[ {copy.activity} ]</h2><span>{feed.length}</span></div>
+        <div className="session-feed">{feed.length ? feed.slice().reverse().map((item) => <FeedItem key={item.id} item={item} copy={copy} />) : <div className="pip-logbox">{copy.noActivity}</div>}</div>
+        <form className="session-chat-form" onSubmit={handleChatSubmit}>
+          <label className="session-field session-chat-field"><span>{copy.chat}</span><input className="pip-input" maxLength={500} value={chatDraft} placeholder={copy.chatPlaceholder} onChange={(event) => setChatDraft(event.target.value)} /></label>
+          <button type="submit" className="pip-btn is-primary" disabled={status !== "online" || !String(chatDraft).trim()}>{copy.send}</button>
+        </form>
+      </section>
 
       <div className="stat-sub session-beta-note">{copy.beta}</div>
     </section>

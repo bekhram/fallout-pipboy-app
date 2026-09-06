@@ -9,7 +9,8 @@ import PerksScreen from "./components/perks/PerksScreen.jsx";
 import NotesScreen from "./components/notes/NotesScreen.jsx";
 import DataScreen from "./components/data/DataScreen.jsx";
 import MenuScreen from "./components/menu/MenuScreen.jsx";
-import SessionScreen from "./components/session/SessionScreen.jsx";
+import SessionScreen, { SessionFloatingButton } from "./components/session/SessionScreen.jsx";
+import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
 import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
@@ -226,6 +227,8 @@ export default function App() {
     continueLastCharacter,
     changeOrigin,
   } = useCharacterStorage(buildDefaultForm());
+
+  const sharedSession = useSharedSession(form);
 
   useEffect(() => {
     setForm((prev) => {
@@ -902,7 +905,12 @@ const updateSkill = (skillName, field, value) =>
     content = (
       <SessionScreen
         form={form}
+        session={sharedSession}
         onBack={() => setScreen("menu")}
+        onOpenSheet={() => {
+          setScreen("sheet");
+          setActiveTab("status");
+        }}
       />
     );
   } else {
@@ -1468,6 +1476,13 @@ const SkillsEditorModal = () => {
         <FloatingDiceButton onOpen={openFreeDiceRoll} />
       )}
 
+      {screen === "sheet" && !isDiceOpen && sharedSession.isActive && (
+        <SessionFloatingButton
+          session={sharedSession}
+          onOpen={() => setScreen("session")}
+        />
+      )}
+
       <DiceRollModal
         isOpen={isDiceOpen}
         onClose={closeDiceRoll}
@@ -1479,6 +1494,7 @@ const SkillsEditorModal = () => {
         currentLuckPoints={currentLuckPoints}
         onSpendCombatLuck={spendCombatLuck}
         onMarkCombatUse={markCombatUse}
+        onDiceResult={sharedSession.sendDiceResult}
       />
 
       <input

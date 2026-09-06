@@ -59,6 +59,7 @@ export default function FalloutD6Roller({
   currentLuckPoints = 0,
   onSpendCombatLuck,
   onMarkCombatUse,
+  onResult,
 }) {
   const [isRolling, setIsRolling] = useState(false);
   const [rerollingDieIndex, setRerollingDieIndex] = useState(null);
@@ -181,7 +182,23 @@ export default function FalloutD6Roller({
     tick();
   };
 
-  const performRoll = (count) => {
+  const reportResult = (result, meta = {}) => {
+    if (!result) return;
+    onResult?.({
+      diceType: "d6",
+      rollType: weapon ? "weapon-damage" : "damage",
+      label: weapon?.name || "D6 Damage",
+      diceValues: Array.isArray(result.rolls) ? result.rolls.map((die) => die.label ?? die.value) : [],
+      totalDamage: result.totalDamage ?? 0,
+      totalEffects: result.totalEffects ?? 0,
+      effects: Array.isArray(result.rawEffects) ? result.rawEffects : [],
+      reroll: Boolean(meta.reroll),
+      source: meta.source || "roll",
+      timestamp: new Date().toISOString(),
+    });
+  };
+
+  const performRoll = (count, meta = {}) => {
     const finalResult = rollFalloutD6({
       diceCount: count,
       effects: weaponEffects,
@@ -189,6 +206,7 @@ export default function FalloutD6Roller({
 
     setLastRoll(finalResult);
     setHistory((prev) => [finalResult, ...prev].slice(0, MAX_HISTORY));
+    reportResult(finalResult, meta);
   };
 
   const doRoll = () => {
@@ -211,7 +229,7 @@ export default function FalloutD6Roller({
     playSound("diceRoll");
     setIsRolling(true);
     animateDice(600, () => {
-      performRoll(count);
+      performRoll(count, { reroll: true, source: "finesse-reroll" });
       setIsRolling(false);
     });
   };
@@ -252,6 +270,7 @@ export default function FalloutD6Roller({
         next[0] = finalUpdatedResult;
         return next.slice(0, MAX_HISTORY);
       });
+      reportResult(finalUpdatedResult, { reroll: true, source: "single-reroll" });
 
       setRerollingDieIndex(null);
     });
@@ -270,7 +289,7 @@ useEffect(() => {
   setIsRolling(true);
 
   animateDice(600, () => {
-    performRoll(totalCount);
+    performRoll(totalCount, { source: "auto-damage" });
     setIsRolling(false);
     onAutoRollHandled?.();
   });

@@ -13,6 +13,7 @@ export default function DiceRollModal({
   currentLuckPoints,
   onSpendCombatLuck,
   onMarkCombatUse,
+  onDiceResult,
 }) {
   const [activeTab, setActiveTab] = useState("d20");
 
@@ -96,6 +97,7 @@ export default function DiceRollModal({
                     id: Date.now(),
                   });
                 }}
+                onResult={onDiceResult}
               />
             ) : (
               <FalloutD6Roller
@@ -111,6 +113,7 @@ export default function DiceRollModal({
                 currentLuckPoints={currentLuckPoints}
                 onSpendCombatLuck={onSpendCombatLuck}
                 onMarkCombatUse={onMarkCombatUse}
+                onResult={onDiceResult}
                 weaponEffects={[
                   ...(Array.isArray(rollConfig?.weapon?.effects)
                     ? rollConfig.weapon.effects

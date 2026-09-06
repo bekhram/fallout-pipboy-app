@@ -99,6 +99,7 @@ export default function FalloutD20Roller({
   rollConfig = null,
   form = null,
   onAutoRollDamage,
+  onResult,
 }) {
   const [diceCount, setDiceCount] = useState(2);
   const [isRolling, setIsRolling] = useState(false);
@@ -189,6 +190,25 @@ export default function FalloutD20Roller({
   const resultStats = buildRollSummary(lastRoll);
   const difficulty = Number(rollConfig?.difficulty || 1);
 
+  const reportResult = (result, meta = {}) => {
+    if (!result) return;
+    onResult?.({
+      diceType: "d20",
+      rollType: meta.rollType || (isWeaponRoll ? "weapon" : isSkillRoll ? "skill" : "free"),
+      label: meta.label || rollLabel,
+      diceValues: Array.isArray(result.rolls) ? result.rolls.map((die) => die.value) : [],
+      successes: result.totalSuccesses ?? null,
+      complications: result.complications ?? 0,
+      difficulty: isContextRoll ? difficulty : null,
+      targetNumber: isContextRoll ? targetNumber : null,
+      outcome: isContextRoll ? ((result.totalSuccesses || 0) >= difficulty ? "success" : "failure") : "",
+      hitLocation: result.hitLocation || meta.hitLocation || null,
+      reroll: Boolean(meta.reroll),
+      source: meta.source || "roll",
+      timestamp: new Date().toISOString(),
+    });
+  };
+
   useEffect(() => {
     damageRolledForAttackRef.current = false;
   }, [rollConfig]);
@@ -271,6 +291,21 @@ export default function FalloutD20Roller({
       };
 
       setHistory((prev) => [historyEntry, ...prev].slice(0, MAX_HISTORY));
+      onResult?.({
+        diceType: "d20",
+        rollType: "hit-location",
+        label: "Hit Location",
+        diceValues: [result.value],
+        successes: null,
+        complications: 0,
+        difficulty: null,
+        targetNumber: null,
+        outcome: "",
+        hitLocation: result,
+        reroll: false,
+        source: "hit-location",
+        timestamp: new Date().toISOString(),
+      });
       setIsHitRolling(false);
     });
   };
@@ -308,6 +343,7 @@ export default function FalloutD20Roller({
             next[0] = nextResult;
             return next.slice(0, MAX_HISTORY);
           });
+          reportResult(nextResult);
 
           setIsHitRolling(false);
         });
@@ -317,6 +353,7 @@ export default function FalloutD20Roller({
 
       setLastRoll(result);
       setHistory((prev) => [result, ...prev].slice(0, MAX_HISTORY));
+      reportResult(result);
       autoRollWeaponDamage(result);
       setIsRolling(false);
     });
@@ -351,7 +388,10 @@ export default function FalloutD20Roller({
         setRerollingDieIndex(null);
         autoRollWeaponDamage(resultWithLocation);
 
-        if (previousHitLocation) return;
+        if (previousHitLocation) {
+          reportResult(resultWithLocation, { reroll: true, source: "single-reroll" });
+          return;
+        }
 
         setIsHitRolling(true);
         animateHitDie(500, () => {
@@ -370,6 +410,7 @@ export default function FalloutD20Roller({
             next[0] = nextUpdatedResult;
             return next.slice(0, MAX_HISTORY);
           });
+          reportResult(nextUpdatedResult, { reroll: true, source: "single-reroll" });
 
           setIsHitRolling(false);
         });
@@ -385,6 +426,7 @@ export default function FalloutD20Roller({
         return next.slice(0, MAX_HISTORY);
       });
 
+      reportResult(updatedResult, { reroll: true, source: "single-reroll" });
       autoRollWeaponDamage(updatedResult);
       setRerollingDieIndex(null);
     });
