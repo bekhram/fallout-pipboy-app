@@ -1,11 +1,21 @@
 import { getPerkRank } from "./perkEffects.js";
 
 const RANGED_NON_HEAVY_SKILLS = new Set(["Small Guns", "Energy Weapons"]);
+const RANGED_SKILLS = new Set(["Small Guns", "Energy Weapons", "Big Guns", "Explosives", "Throwing"]);
 const UNARMED_WEAPON_NAMES = [
   "boxing glove",
   "deathclaw gauntlet",
   "knuckles",
   "power fist",
+];
+const BLADED_WEAPON_NAMES = [
+  "sword",
+  "knife",
+  "machete",
+  "ripper",
+  "shishkebab",
+  "switchblade",
+  "blade",
 ];
 const FIRE_WEAPON_NAMES = [
   "flamer",
@@ -38,14 +48,32 @@ function hasTrait(items = [], trait) {
   );
 }
 
+function hasTraitInCustom(value, trait) {
+  const wanted = normalizeTrait(trait);
+  return String(value || "")
+    .split(/[,;]/)
+    .some((item) => normalizeTrait(item) === wanted);
+}
+
 function isTwoHanded(weapon) {
   return hasTrait(weapon?.qualities, "two handed")
-    || /(?:^|[,;])\s*two[- ]handed\s*(?:$|[,;])/i.test(String(weapon?.qualitiesCustom || ""));
+    || hasTraitInCustom(weapon?.qualitiesCustom, "two handed");
+}
+
+function isAccurate(weapon) {
+  return hasTrait(weapon?.qualities, "accurate")
+    || hasTraitInCustom(weapon?.qualitiesCustom, "accurate");
+}
+
+function isSuppressed(weapon) {
+  return hasTrait(weapon?.qualities, "suppressed")
+    || hasTrait(weapon?.qualities, "supressed")
+    || /(?:^|[,;])\s*sup+p?ressed\s*(?:$|[,;])/i.test(String(weapon?.qualitiesCustom || ""));
 }
 
 function isBlastWeapon(weapon) {
   return hasTrait(weapon?.qualities, "blast")
-    || /(?:^|[,;])\s*blast\s*(?:$|[,;])/i.test(String(weapon?.qualitiesCustom || ""));
+    || hasTraitInCustom(weapon?.qualitiesCustom, "blast");
 }
 
 function isShotgun(weapon) {
@@ -58,6 +86,21 @@ function isUnarmedWeapon(weapon) {
   return UNARMED_WEAPON_NAMES.some((entry) => name.includes(entry));
 }
 
+function isBladedMeleeWeapon(weapon) {
+  if (normalize(weapon?.skill) !== "melee weapons") return false;
+  const name = normalize(weapon?.name);
+  return BLADED_WEAPON_NAMES.some((entry) => name.includes(entry));
+}
+
+function isMeleeLikeWeapon(weapon) {
+  const skill = normalize(weapon?.skill);
+  return skill === "melee weapons" || isUnarmedWeapon(weapon);
+}
+
+function isRangedWeapon(weapon) {
+  return RANGED_SKILLS.has(String(weapon?.skill || "").trim());
+}
+
 function isFireBasedWeapon(weapon) {
   const name = normalize(weapon?.name);
   if (FIRE_WEAPON_NAMES.some((entry) => name.includes(entry))) return true;
@@ -66,6 +109,13 @@ function isFireBasedWeapon(weapon) {
     .map((mod) => `${mod?.name || ""} ${mod?.prefix || ""}`)
     .join(" ");
   return /(incendiary|flamer barrel|ignition module|napalm|vaporization nozzle|flaming)/i.test(modText);
+}
+
+function hasPowerArmorEquipped(form) {
+  const loadout = form?.armor?._power?.loadout;
+  if (!loadout) return false;
+  if (loadout.setId) return true;
+  return Object.values(loadout.slots || {}).some((slot) => Boolean(slot?.setId));
 }
 
 function addUniqueEffect(effects, effect) {
@@ -185,6 +235,10 @@ export function applyPassiveWeaponPerks(form, weapon = {}) {
     addPiercing(state, "Shotgun Surgeon", 1);
   }
 
+  if (getPerkRank(form, "piercing_strike") > 0 && (isUnarmedWeapon(weapon) || isBladedMeleeWeapon(weapon))) {
+    addPiercing(state, "Piercing Strike", 1);
+  }
+
   if (getPerkRank(form, "demolition_expert") > 0 && isBlastWeapon(weapon)) {
     addVicious(state, "Demolition Expert");
   }
@@ -226,5 +280,160 @@ export function applyPassiveWeaponPerks(form, weapon = {}) {
     viciousSources: [...state.viciousSources],
     hitLocationRerolls: state.hitLocationRerolls,
     notes: [...next.perkEffectNotes],
+  };
+}
+
+export function getConditionalWeaponPerkAvailability(form, weapon = {}) {
+  const ranged = isRangedWeapon(weapon);
+  const meleeLike = isMeleeLikeWeapon(weapon);
+  const unarmed = isUnarmedWeapon(weapon);
+
+  const availability = {
+    aim: ranged && ["awareness", "sniper", "steady_aim"].some((id) => getPerkRank(form, id) > 0),
+    sneakAttack: ["ninja", "mister_sandman"].some((id) => getPerkRank(form, id) > 0),
+    targetLocation: (
+      (ranged && ["center_mass", "sniper"].some((id) => getPerkRank(form, id) > 0))
+      || (unarmed && getPerkRank(form, "paralyzing_palm") > 0)
+    ),
+    targetType: ["hunter", "entomologist"].some((id) => getPerkRank(form, id) > 0),
+    movedIntoReach: meleeLike && getPerkRank(form, "blitz") > 0,
+    ammoBoosted: ranged && getPerkRank(form, "concentrated_fire") > 0,
+    steadyAim: ranged && getPerkRank(form, "steady_aim") > 0,
+  };
+
+  availability.hasAny = Object.entries(availability)
+    .some(([key, value]) => key !== "hasAny" && Boolean(value));
+  return availability;
+}
+
+export function applyConditionalWeaponPerks(form, weapon = {}, context = {}) {
+  const state = {
+    damageBonus: 0,
+    piercingBonus: 0,
+    viciousSources: [],
+    extraEffects: [],
+    difficultyDelta: 0,
+    rerollD20: 0,
+    damageRerollAllowed: false,
+    notes: [],
+  };
+
+  const aimed = Boolean(context.aimed);
+  const sneakAttack = Boolean(context.sneakAttack);
+  const targetLocation = String(context.targetLocation || "");
+  const targetType = String(context.targetType || "");
+  const movedIntoReach = Boolean(context.movedIntoReach);
+  const ammoBoosted = Boolean(context.ammoBoosted);
+  const powerArmorEquipped = hasPowerArmorEquipped(form);
+  const ranged = isRangedWeapon(weapon);
+  const meleeLike = isMeleeLikeWeapon(weapon);
+  const unarmed = isUnarmedWeapon(weapon);
+
+  if (aimed && getPerkRank(form, "awareness") > 0 && ranged) {
+    addPiercing(state, "Awareness", 1);
+  }
+
+  if (targetType === "mutated_animal" && getPerkRank(form, "hunter") > 0) {
+    addVicious(state, "Hunter");
+  }
+
+  if (targetType === "insect" && getPerkRank(form, "entomologist") > 0) {
+    addPiercing(state, "Entomologist", 1);
+  }
+
+  if (sneakAttack && !powerArmorEquipped && meleeLike && getPerkRank(form, "ninja") > 0) {
+    addDamageBonus(state, "Ninja", 2);
+  }
+
+  if (
+    sneakAttack
+    && !powerArmorEquipped
+    && ranged
+    && isSuppressed(weapon)
+    && getPerkRank(form, "mister_sandman") > 0
+  ) {
+    addDamageBonus(state, "Mister Sandman", 2);
+  }
+
+  if (movedIntoReach && meleeLike && getPerkRank(form, "blitz") > 0) {
+    state.rerollD20 += 1;
+    state.notes.push("Blitz: re-roll 1d20");
+  }
+
+  if (aimed && ranged && getPerkRank(form, "steady_aim") > 0) {
+    const firstAttack = context.steadyAimMode !== "all";
+    state.rerollD20 += firstAttack ? 2 : 1;
+    state.notes.push(firstAttack
+      ? "Steady Aim: re-roll up to 2d20 on first attack"
+      : "Steady Aim: re-roll 1d20 on attacks this turn");
+  }
+
+  if (ammoBoosted && ranged && getPerkRank(form, "concentrated_fire") > 0) {
+    state.damageRerollAllowed = true;
+    state.notes.push("Concentrated Fire: damage dice re-roll available");
+  }
+
+  let targetedPenaltyWaived = false;
+  if (targetLocation && ranged) {
+    if (targetLocation === "torso" && getPerkRank(form, "center_mass") > 0) {
+      targetedPenaltyWaived = true;
+      state.rerollD20 += 1;
+      state.notes.push("Center Mass: no targeted-shot difficulty + re-roll 1d20");
+    }
+
+    if (
+      aimed
+      && isAccurate(weapon)
+      && isTwoHanded(weapon)
+      && getPerkRank(form, "sniper") > 0
+    ) {
+      targetedPenaltyWaived = true;
+      state.notes.push("Sniper: targeted-shot difficulty ignored");
+    }
+
+    if (!targetedPenaltyWaived) state.difficultyDelta += 1;
+  }
+
+  if (targetLocation && unarmed && getPerkRank(form, "paralyzing_palm") > 0) {
+    state.extraEffects.push("stun");
+    state.notes.push("Paralyzing Palm: Stun");
+  }
+
+  const next = {
+    ...weapon,
+    damage: String(getDamageDiceCount(weapon?.damage) + state.damageBonus),
+    effects: Array.isArray(weapon?.effects) ? [...weapon.effects] : [],
+    customEffect: weapon?.customEffect || "",
+    conditionalPerkDamageBonus: state.damageBonus,
+    conditionalPerkNotes: [...state.notes],
+  };
+
+  if (state.piercingBonus > 0) {
+    const piercing = increasePiercing(
+      next.effects,
+      next.customEffect,
+      state.piercingBonus
+    );
+    next.effects = piercing.effects;
+    next.customEffect = piercing.customEffect;
+  }
+
+  for (const source of state.viciousSources) {
+    next.effects = addUniqueEffect(next.effects, "vicious");
+    next.conditionalPerkNotes.push(`${source} Vicious`);
+  }
+
+  for (const effect of state.extraEffects) {
+    next.effects = addUniqueEffect(next.effects, effect);
+  }
+
+  return {
+    weapon: next,
+    damageBonus: state.damageBonus,
+    piercingBonus: state.piercingBonus,
+    difficultyDelta: state.difficultyDelta,
+    rerollD20: state.rerollD20,
+    damageRerollAllowed: state.damageRerollAllowed,
+    notes: [...next.conditionalPerkNotes],
   };
 }
