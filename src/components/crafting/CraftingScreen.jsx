@@ -80,7 +80,7 @@ const WORKBENCHES = {
   armor: ["armor", "power_armor", "robot"],
   mods: ["weapons", "armor", "power_armor", "robot"],
   explosives: ["chemistry"],
-  items: ["chemistry", "cooking", "robot"],
+  items: ["chemistry", "cooking"],
 };
 
 const WORKBENCH_LABELS = {
