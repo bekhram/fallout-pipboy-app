@@ -3,13 +3,13 @@ import { useTranslation } from "react-i18next";
 
 const COPY = {
   en: {
-    title: "GROUP CHAT",
+    title: "GROUP LOG",
     online: "ONLINE",
     connecting: "CONNECTING",
     offline: "OFFLINE",
     placeholder: "Message the group...",
     send: "SEND",
-    noMessages: "No group messages yet.",
+    noMessages: "No session activity yet.",
     gm: "GM",
     joined: "joined",
     left: "left",
@@ -18,15 +18,27 @@ const COPY = {
     reconnect: "RECONNECT",
     hostNotFound: "GM session not found or is offline.",
     networkError: "Network connection error.",
+    success: "SUCCESS",
+    failure: "FAILURE",
+    successes: "Suc",
+    complications: "Comp",
+    damage: "Damage",
+    effects: "Effects",
+    difficulty: "Diff",
+    target: "TN",
+    hit: "Hit",
+    combatStart: "COMBAT START",
+    combatEnd: "COMBAT END",
+    turn: "TURN",
   },
   ru: {
-    title: "ЧАТ ГРУППЫ",
+    title: "ОБЩИЙ ЖУРНАЛ",
     online: "ОНЛАЙН",
     connecting: "ПОДКЛЮЧЕНИЕ",
     offline: "ОФЛАЙН",
     placeholder: "Сообщение группе...",
     send: "ОТПРАВИТЬ",
-    noMessages: "В чате пока нет сообщений.",
+    noMessages: "В журнале пока нет событий.",
     gm: "ГМ",
     joined: "подключился",
     left: "вышел",
@@ -35,15 +47,27 @@ const COPY = {
     reconnect: "ПЕРЕПОДКЛЮЧИТЬСЯ",
     hostNotFound: "Сессия ГМ не найдена или ГМ не в сети.",
     networkError: "Ошибка сетевого соединения.",
+    success: "УСПЕХ",
+    failure: "ПРОВАЛ",
+    successes: "Усп",
+    complications: "Осл",
+    damage: "Урон",
+    effects: "Эффекты",
+    difficulty: "Сложн",
+    target: "ЦЧ",
+    hit: "Попадание",
+    combatStart: "НАЧАЛО БОЯ",
+    combatEnd: "КОНЕЦ БОЯ",
+    turn: "ХОД",
   },
   uk: {
-    title: "ЧАТ ГРУПИ",
+    title: "СПІЛЬНИЙ ЖУРНАЛ",
     online: "ОНЛАЙН",
     connecting: "ПІДКЛЮЧЕННЯ",
     offline: "ОФЛАЙН",
     placeholder: "Повідомлення групі...",
     send: "НАДІСЛАТИ",
-    noMessages: "У чаті ще немає повідомлень.",
+    noMessages: "У журналі ще немає подій.",
     gm: "ГМ",
     joined: "підключився",
     left: "вийшов",
@@ -52,15 +76,27 @@ const COPY = {
     reconnect: "ПЕРЕПІДКЛЮЧИТИСЯ",
     hostNotFound: "Сесію ГМ не знайдено або ГМ не в мережі.",
     networkError: "Помилка мережевого з’єднання.",
+    success: "УСПІХ",
+    failure: "НЕВДАЧА",
+    successes: "Усп",
+    complications: "Ускл",
+    damage: "Шкода",
+    effects: "Ефекти",
+    difficulty: "Складн",
+    target: "ЦЧ",
+    hit: "Влучання",
+    combatStart: "ПОЧАТОК БОЮ",
+    combatEnd: "КІНЕЦЬ БОЮ",
+    turn: "ХІД",
   },
   pl: {
-    title: "CZAT GRUPY",
+    title: "DZIENNIK GRUPY",
     online: "ONLINE",
     connecting: "ŁĄCZENIE",
     offline: "OFFLINE",
     placeholder: "Wiadomość do grupy...",
     send: "WYŚLIJ",
-    noMessages: "Brak wiadomości grupowych.",
+    noMessages: "Brak aktywności sesji.",
     gm: "GM",
     joined: "dołączył",
     left: "wyszedł",
@@ -69,6 +105,18 @@ const COPY = {
     reconnect: "POŁĄCZ PONOWNIE",
     hostNotFound: "Sesja GM nie istnieje lub GM jest offline.",
     networkError: "Błąd połączenia sieciowego.",
+    success: "SUKCES",
+    failure: "PORAŻKA",
+    successes: "Suk",
+    complications: "Kompl",
+    damage: "Obrażenia",
+    effects: "Efekty",
+    difficulty: "Trudn",
+    target: "TN",
+    hit: "Trafienie",
+    combatStart: "START WALKI",
+    combatEnd: "KONIEC WALKI",
+    turn: "TURA",
   },
 };
 
@@ -89,7 +137,73 @@ function getConnectionState(status) {
   return "offline";
 }
 
-function ChatItem({ item, copy }) {
+function RollItem({ item, copy }) {
+  const roll = item?.roll || {};
+  const values = Array.isArray(roll.diceValues) ? roll.diceValues : [];
+  const isD6 = roll.diceType === "d6";
+  const outcomeLabel = roll.outcome === "success"
+    ? copy.success
+    : roll.outcome === "failure"
+      ? copy.failure
+      : "";
+
+  return (
+    <div className="session-drawer-message session-drawer-roll">
+      <div className="session-drawer-message-meta">
+        <strong>{item.sender || copy.gm} · {String(roll.diceType || "D20").toUpperCase()}</strong>
+        <span>{formatTime(item.timestamp)}</span>
+      </div>
+
+      <div className="session-roll-card">
+        <div className="session-roll-title">
+          {roll.label || roll.rollType || String(roll.diceType || "D20").toUpperCase()}
+          {outcomeLabel ? ` · ${outcomeLabel}` : ""}
+        </div>
+
+        {values.length > 0 && (
+          <div className="session-roll-dice">
+            {values.map((value, index) => <span key={`${item.id}-die-${index}`}>{String(value)}</span>)}
+          </div>
+        )}
+
+        <div className="session-roll-stats">
+          {!isD6 && Number.isFinite(Number(roll.successes)) && <span>{copy.successes}: {roll.successes}</span>}
+          {!isD6 && Number(roll.complications || 0) > 0 && <span>{copy.complications}: {roll.complications}</span>}
+          {!isD6 && Number.isFinite(Number(roll.targetNumber)) && <span>{copy.target}: {roll.targetNumber}</span>}
+          {!isD6 && Number.isFinite(Number(roll.difficulty)) && <span>{copy.difficulty}: {roll.difficulty}</span>}
+          {!isD6 && roll.hitLocation?.label && <span>{copy.hit}: {roll.hitLocation.label}</span>}
+          {isD6 && Number.isFinite(Number(roll.totalDamage)) && <span>{copy.damage}: {roll.totalDamage}</span>}
+          {isD6 && Number.isFinite(Number(roll.totalEffects)) && <span>{copy.effects}: {roll.totalEffects}</span>}
+        </div>
+
+        {isD6 && Array.isArray(roll.effects) && roll.effects.length > 0 && (
+          <div className="session-feed-text">{roll.effects.join(" · ")}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CombatItem({ item, copy }) {
+  const label = item.event === "combat_start"
+    ? copy.combatStart
+    : item.event === "combat_end"
+      ? copy.combatEnd
+      : copy.turn;
+
+  return (
+    <div className="session-drawer-system">
+      <span>{formatTime(item.timestamp)}</span>
+      <strong>{label}</strong>
+      {item.text && <span>{item.text}</span>}
+    </div>
+  );
+}
+
+function LogItem({ item, copy }) {
+  if (item.type === "roll") return <RollItem item={item} copy={copy} />;
+  if (item.type === "combat") return <CombatItem item={item} copy={copy} />;
+
   if (item.type === "system") {
     return (
       <div className="session-drawer-system">
@@ -107,7 +221,7 @@ function ChatItem({ item, copy }) {
         <strong>{isScene ? copy.scene : (item.sender || copy.gm)}</strong>
         <span>{formatTime(item.timestamp)}</span>
       </div>
-      <div>{item.text}</div>
+      <div>{item.text || ""}</div>
     </div>
   );
 }
@@ -120,9 +234,7 @@ export default function SessionChatDrawer({ session }) {
   const listRef = useRef(null);
 
   const items = useMemo(
-    () => (session?.feed || [])
-      .filter((item) => item && ["chat", "scene", "system"].includes(item.type))
-      .slice(-50),
+    () => (session?.feed || []).filter(Boolean).slice(-120),
     [session?.feed]
   );
 
@@ -157,7 +269,7 @@ export default function SessionChatDrawer({ session }) {
         aria-label={copy.title}
       >
         <span className={`session-status-dot is-${session.status}`} />
-        <span className="session-chat-toggle-label">CHAT</span>
+        <span className="session-chat-toggle-label">LOG</span>
         <span className="session-chat-toggle-code">{session.sessionCode}</span>
       </button>
 
@@ -202,7 +314,7 @@ export default function SessionChatDrawer({ session }) {
 
         <div ref={listRef} className="session-chat-drawer-list">
           {items.length
-            ? items.map((item) => <ChatItem key={item.id} item={item} copy={copy} />)
+            ? items.map((item) => <LogItem key={item.id} item={item} copy={copy} />)
             : <div className="pip-logbox">{copy.noMessages}</div>}
         </div>
 
