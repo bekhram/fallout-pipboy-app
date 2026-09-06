@@ -1,0 +1,107 @@
+.session-bestiary-picker {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 14px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+
+.session-bestiary-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.session-bestiary-picker-search {
+  width: 100%;
+}
+
+.session-bestiary-picker-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 8px;
+  max-height: 430px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.session-bestiary-entry {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.session-bestiary-entry-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.session-bestiary-entry-name {
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.session-bestiary-entry-type {
+  margin-top: 2px;
+  font-size: 0.7rem;
+  opacity: 0.72;
+}
+
+.session-bestiary-entry-level {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.session-bestiary-entry-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.session-bestiary-entry-stat {
+  min-width: 0;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  text-align: center;
+}
+
+.session-bestiary-entry-stat span {
+  display: block;
+  font-size: 0.62rem;
+  opacity: 0.68;
+}
+
+.session-bestiary-entry-stat strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.86rem;
+}
+
+.session-bestiary-entry .pip-btn {
+  width: 100%;
+}
+
+.session-bestiary-picker-empty {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 620px) {
+  .session-bestiary-picker-list {
+    grid-template-columns: 1fr;
+    max-height: 55vh;
+  }
+
+  .session-bestiary-entry-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
