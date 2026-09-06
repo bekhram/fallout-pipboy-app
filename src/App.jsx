@@ -1335,6 +1335,7 @@ const SkillsEditorModal = () => {
           onToggleMenu={() => setSideMenuOpen(true)}
           character={form}
           setCharacter={setForm}
+          onRoll={openContextDiceRoll}
         >
           {content}
           <SideMenu

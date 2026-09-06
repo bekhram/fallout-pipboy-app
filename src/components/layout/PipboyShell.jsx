@@ -32,6 +32,7 @@ export default function PipboyShell({
   onToggleMenu,
   character = null,
   setCharacter = null,
+  onRoll = null,
   children,
 }) {
   const touchStart = useRef(null);
@@ -95,7 +96,7 @@ export default function PipboyShell({
   };
 
   let screenContent = children;
-  if (activeTab === "companion") screenContent = <CompanionPresetHub />;
+  if (activeTab === "companion") screenContent = <CompanionPresetHub onRoll={onRoll} />;
   if (activeTab === "bestiary") screenContent = <BestiaryScreen />;
   if (activeTab === "crafting") {
     screenContent = (

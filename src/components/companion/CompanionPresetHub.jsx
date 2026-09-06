@@ -200,7 +200,7 @@ function buildPreset(id, kind, copy) {
   return base;
 }
 
-export default function CompanionPresetHub() {
+export default function CompanionPresetHub({ onRoll = null }) {
   const { i18n } = useTranslation();
   const lang = languageCode(i18n.resolvedLanguage || i18n.language);
   const copy = COPY[lang];
@@ -265,7 +265,7 @@ export default function CompanionPresetHub() {
         ) : null}
       </div>
 
-      <CompanionTab key={revision} />
+      <CompanionTab key={revision} onRoll={onRoll} />
     </div>
   );
 }

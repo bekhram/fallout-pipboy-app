@@ -1,7 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { rollFalloutD20, rollFalloutD6, rollHitLocationD20 } from "../../utils/dice.js";
-import { playSound } from "../../utils/soundManager.js";
 import "./companion.css";
 
 const STORAGE_KEY = "fallout_pipboy_companions_v2";
@@ -40,6 +38,8 @@ const COPY = {
     notesPlaceholder: "Equipment, behavior and useful reminders...",
     copy: "COPY",
     remove: "DELETE",
+    editCard: "EDIT",
+    doneEditing: "DONE",
     emptyTitle: "NO COMPANIONS YET",
     emptyText: "Add a companion or pet to create the first card.",
     addAttack: "+ ATTACK",
@@ -101,6 +101,8 @@ const COPY = {
     notesPlaceholder: "Снаряжение, поведение и важные заметки...",
     copy: "КОПИЯ",
     remove: "УДАЛИТЬ",
+    editCard: "РЕДАКТИРОВАТЬ",
+    doneEditing: "ГОТОВО",
     emptyTitle: "КОМПАНЬОНОВ ПОКА НЕТ",
     emptyText: "Добавь компаньона или питомца, чтобы создать первую карточку.",
     addAttack: "+ АТАКА",
@@ -162,6 +164,8 @@ const COPY = {
     notesPlaceholder: "Спорядження, поведінка та важливі нотатки...",
     copy: "КОПІЯ",
     remove: "ВИДАЛИТИ",
+    editCard: "РЕДАГУВАТИ",
+    doneEditing: "ГОТОВО",
     emptyTitle: "КОМПАНЬЙОНІВ ЩЕ НЕМАЄ",
     emptyText: "Додай компаньйона або улюбленця, щоб створити першу картку.",
     addAttack: "+ АТАКА",
@@ -223,6 +227,8 @@ const COPY = {
     notesPlaceholder: "Ekwipunek, zachowanie i ważne notatki...",
     copy: "KOPIUJ",
     remove: "USUŃ",
+    editCard: "EDYTUJ",
+    doneEditing: "GOTOWE",
     emptyTitle: "BRAK TOWARZYSZY",
     emptyText: "Dodaj towarzysza lub pupila, aby utworzyć pierwszą kartę.",
     addAttack: "+ ATAK",
@@ -340,7 +346,7 @@ function clamp(value, min = 0, max = 999) {
   return String(Math.max(min, Math.min(max, numeric)));
 }
 
-function NumberField({ label, value, onChange, min = 0, max = 999 }) {
+function NumberField({ label, value, onChange, min = 0, max = 999, readOnly = false }) {
   return (
     <label className="pip-top-field companion-stat-cell">
       <span>{label}</span>
@@ -348,7 +354,8 @@ function NumberField({ label, value, onChange, min = 0, max = 999 }) {
         className="pip-inline-input"
         inputMode="numeric"
         value={value}
-        onChange={(event) => onChange(clamp(event.target.value, min, max))}
+        readOnly={readOnly}
+        onChange={readOnly ? undefined : (event) => onChange(clamp(event.target.value, min, max))}
       />
     </label>
   );
@@ -367,15 +374,14 @@ function attackTargetNumber(companion, attack) {
   return Math.max(0, Math.min(20, attribute + skill));
 }
 
-export default function CompanionTab() {
+export default function CompanionTab({ onRoll = null }) {
   const { i18n } = useTranslation();
   const language = getLanguage(i18n.resolvedLanguage || i18n.language);
   const copy = COPY[language];
-  const hitLabels = HIT_LOCATION_LABELS[language] || HIT_LOCATION_LABELS.en;
   const [state, setState] = useState({ items: [], activeId: null });
   const [ready, setReady] = useState(false);
-  const [attackResults, setAttackResults] = useState({});
   const [editingAttackId, setEditingAttackId] = useState(null);
+  const [isEditingCard, setIsEditingCard] = useState(false);
 
   useEffect(() => {
     try {
@@ -408,6 +414,7 @@ export default function CompanionTab() {
 
   useEffect(() => {
     setEditingAttackId(null);
+    setIsEditingCard(false);
   }, [active?.id]);
 
   const add = (kind) => {
@@ -479,47 +486,35 @@ export default function CompanionTab() {
     if (!active) return;
     updateActive({ attacks: (active.attacks || []).filter((attack) => attack.id !== attackId) });
     if (editingAttackId === attackId) setEditingAttackId(null);
-    setAttackResults((prev) => {
-      const next = { ...prev };
-      delete next[`${active.id}:${attackId}`];
-      return next;
-    });
   };
 
   const rollAttack = (attack) => {
-    if (!active) return;
-    playSound("diceRoll");
+    if (!active || typeof onRoll !== "function") return;
 
     const targetNumber = attackTargetNumber(active, attack);
     const diceCount = Math.max(1, Math.min(5, Number(attack.diceCount) || 2));
     const difficulty = Math.max(0, Math.min(10, Number(attack.difficulty) || 1));
+    const damageDice = Math.max(0, Math.min(50, Number(attack.damage) || 0));
     const effects = parseEffects(attack.effects);
-    const attackRoll = rollFalloutD20({
-      diceCount,
+
+    onRoll({
+      id: `companion-attack-${active.id}-${attack.id}-${Date.now()}`,
+      type: "weapon",
+      title: `${active.name || copy.unnamed}: ${attack.name || copy.attackName}`,
       targetNumber,
       criticalRange: 1,
-      label: `${active.name || copy.unnamed}: ${attack.name || copy.attackName}`,
-    });
-    const passed = attackRoll.totalSuccesses >= difficulty;
-    const damageDice = Math.max(0, Math.min(50, Number(attack.damage) || 0));
-    const damageRoll = passed && damageDice > 0
-      ? rollFalloutD6({ diceCount: damageDice, effects })
-      : null;
-    const hitLocation = passed ? rollHitLocationD20() : null;
-
-    setAttackResults((prev) => ({
-      ...prev,
-      [`${active.id}:${attack.id}`]: {
-        attackRoll,
-        passed,
-        difficulty,
-        targetNumber,
-        damageRoll,
-        hitLocation,
-        damageType: attack.damageType,
-        at: Date.now(),
+      diceCount,
+      difficulty,
+      useRate: false,
+      weapon: {
+        name: attack.name || copy.attackName,
+        damage: String(damageDice),
+        effects,
+        customEffect: "",
+        type: attack.damageType,
+        ammo: "",
       },
-    }));
+    });
   };
 
   const hpPercent = active
@@ -569,36 +564,48 @@ export default function CompanionTab() {
             <span>{copy.emptyText}</span>
           </div>
         ) : (
-          <div className="companion-content">
-            <div className="pip-inline-stats companion-summary push-bottom">
-              <span>{active.name || copy.unnamed}</span>
-              <span>{active.creatureType || (active.kind === "pet" ? copy.pet : copy.companion)}</span>
-              <span>LV {active.level || "1"}</span>
+          <div className={`companion-content ${isEditingCard ? "is-editing" : "is-readonly"}`}>
+            <div className="companion-summary-row push-bottom">
+              <div className="pip-inline-stats companion-summary">
+                <span>{active.name || copy.unnamed}</span>
+                <span>{active.creatureType || (active.kind === "pet" ? copy.pet : copy.companion)}</span>
+                <span>LV {active.level || "1"}</span>
+              </div>
+              <button
+                type="button"
+                className={`pip-btn ${isEditingCard ? "is-primary" : ""}`}
+                onClick={() => {
+                  setIsEditingCard((value) => !value);
+                  if (isEditingCard) setEditingAttackId(null);
+                }}
+              >
+                {isEditingCard ? copy.doneEditing : copy.editCard}
+              </button>
             </div>
 
             <div className="companion-identity-grid push-bottom">
               <label className="pip-top-field companion-name-field">
                 <span>{copy.name}</span>
-                <input className="pip-inline-input" value={active.name} placeholder={copy.unnamed} onChange={(event) => updateActive({ name: event.target.value })} />
+                <input className="pip-inline-input" value={active.name} readOnly={!isEditingCard} placeholder={copy.unnamed} onChange={isEditingCard ? (event) => updateActive({ name: event.target.value }) : undefined} />
               </label>
               <label className="pip-top-field companion-type-field">
                 <span>{copy.type}</span>
-                <input className="pip-inline-input" value={active.creatureType} placeholder={active.kind === "pet" ? copy.pet : copy.companion} onChange={(event) => updateActive({ creatureType: event.target.value })} />
+                <input className="pip-inline-input" value={active.creatureType} readOnly={!isEditingCard} placeholder={active.kind === "pet" ? copy.pet : copy.companion} onChange={isEditingCard ? (event) => updateActive({ creatureType: event.target.value }) : undefined} />
               </label>
-              <NumberField label={copy.level} value={active.level} min={1} max={999} onChange={(value) => updateActive({ level: value || "1" })} />
+              <NumberField label={copy.level} value={active.level} min={1} max={999} readOnly={!isEditingCard} onChange={(value) => updateActive({ level: value || "1" })} />
             </div>
 
             <div className="pip-tagrow is-wrap push-bottom companion-kind-row">
-              <button type="button" className={`pip-tag ${active.kind === "companion" ? "is-selected" : ""}`} onClick={() => updateActive({ kind: "companion" })}>{copy.companion}</button>
-              <button type="button" className={`pip-tag ${active.kind === "pet" ? "is-selected" : ""}`} onClick={() => updateActive({ kind: "pet" })}>{copy.pet}</button>
+              <button type="button" className={`pip-tag ${active.kind === "companion" ? "is-selected" : ""}`} disabled={!isEditingCard} onClick={() => updateActive({ kind: "companion" })}>{copy.companion}</button>
+              <button type="button" className={`pip-tag ${active.kind === "pet" ? "is-selected" : ""}`} disabled={!isEditingCard} onClick={() => updateActive({ kind: "pet" })}>{copy.pet}</button>
             </div>
 
             <div className="companion-stat-grid companion-main-stats push-bottom">
-              <NumberField label={copy.body} value={active.body} min={0} max={20} onChange={(body) => updateActive({ body })} />
-              <NumberField label={copy.mind} value={active.mind} min={0} max={20} onChange={(mind) => updateActive({ mind })} />
-              <NumberField label={copy.melee} value={active.melee} min={0} max={20} onChange={(melee) => updateActive({ melee })} />
-              <NumberField label={copy.guns} value={active.guns} min={0} max={20} onChange={(guns) => updateActive({ guns })} />
-              <NumberField label={copy.other} value={active.other} min={0} max={20} onChange={(other) => updateActive({ other })} />
+              <NumberField label={copy.body} value={active.body} min={0} max={20} readOnly={!isEditingCard} onChange={(body) => updateActive({ body })} />
+              <NumberField label={copy.mind} value={active.mind} min={0} max={20} readOnly={!isEditingCard} onChange={(mind) => updateActive({ mind })} />
+              <NumberField label={copy.melee} value={active.melee} min={0} max={20} readOnly={!isEditingCard} onChange={(melee) => updateActive({ melee })} />
+              <NumberField label={copy.guns} value={active.guns} min={0} max={20} readOnly={!isEditingCard} onChange={(guns) => updateActive({ guns })} />
+              <NumberField label={copy.other} value={active.other} min={0} max={20} readOnly={!isEditingCard} onChange={(other) => updateActive({ other })} />
             </div>
 
             <div className="pip-logbox companion-hp-section push-bottom">
@@ -611,29 +618,29 @@ export default function CompanionTab() {
                 <button type="button" className="pip-btn" onClick={() => updateHp(-1)}>−</button>
                 <input className="pip-inline-input" inputMode="numeric" value={active.currentHp} onChange={(event) => updateActive({ currentHp: clamp(event.target.value, 0, Math.max(1, Number(active.maxHp || 1))) })} />
                 <span>/</span>
-                <input className="pip-inline-input" inputMode="numeric" value={active.maxHp} onChange={(event) => updateMaxHp(event.target.value)} />
+                <input className="pip-inline-input" inputMode="numeric" value={active.maxHp} readOnly={!isEditingCard} onChange={isEditingCard ? (event) => updateMaxHp(event.target.value) : undefined} />
                 <button type="button" className="pip-btn" onClick={() => updateHp(1)}>+</button>
               </div>
             </div>
 
             <div className="companion-stat-grid companion-combat-stats push-bottom">
-              <NumberField label={copy.initiative} value={active.initiative} min={0} max={999} onChange={(initiative) => updateActive({ initiative })} />
-              <NumberField label={copy.defense} value={active.defense} min={0} max={99} onChange={(defense) => updateActive({ defense })} />
-              <NumberField label={copy.carryWeight} value={active.carryWeight} min={0} max={9999} onChange={(carryWeight) => updateActive({ carryWeight })} />
-              <NumberField label={copy.meleeBonus} value={active.meleeBonus} min={0} max={99} onChange={(meleeBonus) => updateActive({ meleeBonus })} />
+              <NumberField label={copy.initiative} value={active.initiative} min={0} max={999} readOnly={!isEditingCard} onChange={(initiative) => updateActive({ initiative })} />
+              <NumberField label={copy.defense} value={active.defense} min={0} max={99} readOnly={!isEditingCard} onChange={(defense) => updateActive({ defense })} />
+              <NumberField label={copy.carryWeight} value={active.carryWeight} min={0} max={9999} readOnly={!isEditingCard} onChange={(carryWeight) => updateActive({ carryWeight })} />
+              <NumberField label={copy.meleeBonus} value={active.meleeBonus} min={0} max={99} readOnly={!isEditingCard} onChange={(meleeBonus) => updateActive({ meleeBonus })} />
             </div>
 
             <div className="companion-stat-grid companion-dr-stats push-bottom">
-              <NumberField label={copy.physDr} value={active.physDr} min={0} max={99} onChange={(physDr) => updateActive({ physDr })} />
-              <NumberField label={copy.energyDr} value={active.energyDr} min={0} max={99} onChange={(energyDr) => updateActive({ energyDr })} />
-              <NumberField label={copy.radDr} value={active.radDr} min={0} max={99} onChange={(radDr) => updateActive({ radDr })} />
-              <NumberField label={copy.poisonDr} value={active.poisonDr} min={0} max={99} onChange={(poisonDr) => updateActive({ poisonDr })} />
+              <NumberField label={copy.physDr} value={active.physDr} min={0} max={99} readOnly={!isEditingCard} onChange={(physDr) => updateActive({ physDr })} />
+              <NumberField label={copy.energyDr} value={active.energyDr} min={0} max={99} readOnly={!isEditingCard} onChange={(energyDr) => updateActive({ energyDr })} />
+              <NumberField label={copy.radDr} value={active.radDr} min={0} max={99} readOnly={!isEditingCard} onChange={(radDr) => updateActive({ radDr })} />
+              <NumberField label={copy.poisonDr} value={active.poisonDr} min={0} max={99} readOnly={!isEditingCard} onChange={(poisonDr) => updateActive({ poisonDr })} />
             </div>
 
             <div className="pip-logbox companion-attacks-block push-bottom">
               <div className="companion-section-head">
                 <strong>[ {copy.attacks} ]</strong>
-                <button type="button" className="pip-btn is-primary" onClick={addAttack}>{copy.addAttack}</button>
+                {isEditingCard ? <button type="button" className="pip-btn is-primary" onClick={addAttack}>{copy.addAttack}</button> : null}
               </div>
 
               {(active.attacks || []).length === 0 ? (
@@ -641,7 +648,6 @@ export default function CompanionTab() {
               ) : (
                 <div className="companion-attack-list">
                   {(active.attacks || []).map((attack) => {
-                    const result = attackResults[`${active.id}:${attack.id}`];
                     const tn = attackTargetNumber(active, attack);
                     const damageTypeLabel = copy[attack.damageType] || attack.damageType;
                     const isEditing = editingAttackId === attack.id;
@@ -724,40 +730,33 @@ export default function CompanionTab() {
                           <>
                             <button
                               type="button"
-                              className="pip-btn is-primary"
+                              className="pip-btn is-primary companion-attack-roll"
                               onClick={() => rollAttack(attack)}
-                              style={{ width: "100%", display: "grid", gap: "5px", textAlign: "left" }}
                               title={copy.roll}
                             >
                               <strong>{attack.name || copy.attackName}</strong>
-                              <span style={{ fontSize: "0.78em", opacity: 0.82 }}>
-                                {copy.target}: {tn} · {attack.diceCount || 2}d20 · D{attack.difficulty || 1} · {attack.damage || 0} CD · {damageTypeLabel}
+                              <span className="companion-attack-roll-meta">
+                                <span>{copy.target}: {tn}</span>
+                                <span>{attack.diceCount || 2}d20</span>
+                                <span>D{attack.difficulty || 1}</span>
+                                <span>{attack.damage || 0} CD</span>
+                                <span>{damageTypeLabel}</span>
                               </span>
+                              {attack.effects ? <span className="companion-attack-roll-effects">{copy.effects}: {attack.effects}</span> : null}
                             </button>
 
-                            <div className="companion-attack-footer">
-                              <div className="pip-inline-stats companion-attack-summary">
-                                {attack.effects ? <span>{copy.effects}: {attack.effects}</span> : <span>{copy.roll}</span>}
+                            {isEditingCard ? (
+                              <div className="companion-attack-footer">
+                                <div className="pip-inline-stats companion-attack-summary" />
+                                <div className="companion-attack-actions">
+                                  <button type="button" className="pip-btn" onClick={() => setEditingAttackId(attack.id)} title={copy.attackName}>✎</button>
+                                  <button type="button" className="pip-btn" onClick={() => removeAttack(attack.id)}>{copy.removeAttack}</button>
+                                </div>
                               </div>
-                              <div style={{ display: "flex", gap: "6px" }}>
-                                <button type="button" className="pip-btn" onClick={() => setEditingAttackId(attack.id)} title={copy.attackName}>✎</button>
-                                <button type="button" className="pip-btn" onClick={() => removeAttack(attack.id)}>{copy.removeAttack}</button>
-                              </div>
-                            </div>
+                            ) : null}
                           </>
                         )}
 
-                        {result ? (
-                          <div className={`companion-attack-result ${result.passed ? "is-success" : "is-failure"}`}>
-                            <strong>{result.passed ? copy.success : copy.failure}</strong>
-                            <span>d20: {result.attackRoll.rolls.map((die) => die.value).join(", ")}</span>
-                            <span>{copy.target}: {result.targetNumber}</span>
-                            <span>{copy.successes}: {result.attackRoll.totalSuccesses}</span>
-                            <span>{copy.complications}: {result.attackRoll.complications}</span>
-                            {result.hitLocation ? <span>{copy.hit}: {hitLabels[result.hitLocation.location] || result.hitLocation.label}</span> : null}
-                            {result.damageRoll ? <span>{copy.damage}: {result.damageRoll.totalDamage} · {copy.effectTriggers}: {result.damageRoll.totalEffects}</span> : null}
-                          </div>
-                        ) : null}
                       </div>
                     );
                   })}
@@ -771,7 +770,8 @@ export default function CompanionTab() {
                   rows={2}
                   value={active.attackNotes || ""}
                   placeholder={copy.attackNotesPlaceholder}
-                  onChange={(event) => updateActive({ attackNotes: event.target.value })}
+                  readOnly={!isEditingCard}
+                  onChange={isEditingCard ? (event) => updateActive({ attackNotes: event.target.value }) : undefined}
                 />
               </label>
             </div>
@@ -779,12 +779,12 @@ export default function CompanionTab() {
             <div className="companion-long-grid">
               <label className="pip-logbox companion-long-field">
                 <span>[ {copy.abilities} ]</span>
-                <textarea className="pip-input" rows={6} value={active.specialAbilities} placeholder={copy.abilitiesPlaceholder} onChange={(event) => updateActive({ specialAbilities: event.target.value })} />
+                <textarea className="pip-input" rows={6} value={active.specialAbilities} readOnly={!isEditingCard} placeholder={copy.abilitiesPlaceholder} onChange={isEditingCard ? (event) => updateActive({ specialAbilities: event.target.value }) : undefined} />
               </label>
 
               <label className="pip-logbox companion-long-field companion-notes-field">
                 <span>[ {copy.notes} ]</span>
-                <textarea className="pip-input" rows={3} value={active.notes} placeholder={copy.notesPlaceholder} onChange={(event) => updateActive({ notes: event.target.value })} />
+                <textarea className="pip-input" rows={3} value={active.notes} readOnly={!isEditingCard} placeholder={copy.notesPlaceholder} onChange={isEditingCard ? (event) => updateActive({ notes: event.target.value }) : undefined} />
               </label>
             </div>
           </div>
