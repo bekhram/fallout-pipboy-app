@@ -1,0 +1,36 @@
+name: Apply GM mini panel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-gm-mini-panel.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply patch
+        run: python .github/scripts/apply_gm_mini_panel.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit source changes
+        shell: bash
+        run: |
+          rm -f .github/scripts/apply_gm_mini_panel.py
+          rm -f .github/workflows/apply-gm-mini-panel.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hooks/useSharedSession.js src/components/session/SessionCombatBoard.jsx src/components/session/SessionScreen.jsx src/components/session/SessionGmCombatPanel.jsx src/components/session/sessionGmCombatPanel.css .github/scripts/apply_gm_mini_panel.py .github/workflows/apply-gm-mini-panel.yml
+          git commit -m "feat: add GM mini turn panel and NPC stat editor"
+          git push
