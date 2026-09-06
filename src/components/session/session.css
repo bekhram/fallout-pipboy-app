@@ -1064,3 +1064,46 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* GM NPC HP editor */
+.session-npc-hp-editor {
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.session-npc-hp-field {
+  display: grid;
+  gap: 4px;
+  min-width: 72px;
+}
+
+.session-npc-hp-field > span {
+  font-size: 10px;
+  opacity: 0.72;
+  letter-spacing: 0.08em;
+}
+
+.session-npc-hp-field .pip-input {
+  width: 82px;
+}
+
+.session-npc-hp-divider {
+  align-self: center;
+  opacity: 0.7;
+  padding-bottom: 8px;
+}
+
+@media (max-width: 640px) {
+  .session-npc-hp-editor {
+    display: grid;
+    grid-template-columns: auto minmax(68px, 1fr) auto minmax(68px, 1fr) auto;
+    align-items: end;
+  }
+
+  .session-npc-hp-field,
+  .session-npc-hp-field .pip-input {
+    width: 100%;
+    min-width: 0;
+  }
+}

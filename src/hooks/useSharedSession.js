@@ -629,6 +629,25 @@ export default function useSharedSession(form) {
     return true;
   };
 
+  const setCombatNpcMaxHp = (actorId, value) => {
+    if (mode !== "host" || !combatRef.current.active) return false;
+    const targetId = String(actorId || "").startsWith("npc:") ? String(actorId) : `npc:${actorId}`;
+    const npcId = targetId.replace(/^npc:/, "");
+    const current = combatRef.current;
+    const actor = current.order.find((item) => item.id === targetId && item.kind === "npc");
+    if (!actor) return false;
+    const nextMaxHp = clampNumber(value, 1, 9999);
+    const nextCurrentHp = clampNumber(actor.currentHp, 0, nextMaxHp);
+    const order = current.order.map((item) => item.id === targetId
+      ? { ...item, maxHp: nextMaxHp, currentHp: nextCurrentHp }
+      : item);
+    const npcs = current.npcs.map((npc) => npc.id === npcId
+      ? { ...npc, maxHp: nextMaxHp, currentHp: nextCurrentHp }
+      : npc);
+    setHostCombat({ ...current, order, npcs });
+    return true;
+  };
+
   const setCombatAp = (value) => {
     if (mode !== "host") return false;
     const current = combatRef.current;
@@ -686,6 +705,7 @@ export default function useSharedSession(form) {
     startCombat,
     nextCombatTurn,
     setCombatNpcHp,
+    setCombatNpcMaxHp,
     setCombatAp,
     endCombat,
   };

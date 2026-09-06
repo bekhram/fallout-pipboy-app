@@ -155,9 +155,32 @@ function ActorCard({ actor, active, copy, mode, session, onOpenProfile }) {
       </div>
 
       {isNpc && mode === "host" && session.combat?.active && (
-        <div className="session-npc-hp-controls">
-          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent - 1)} disabled={hpCurrent <= 0}>− HP</button>
-          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent + 1)} disabled={hpMax > 0 && hpCurrent >= hpMax}>+ HP</button>
+        <div className="session-npc-hp-controls session-npc-hp-editor">
+          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent - 1)} disabled={hpCurrent <= 0}>−1</button>
+          <label className="session-npc-hp-field">
+            <span>HP</span>
+            <input
+              className="pip-input"
+              type="number"
+              min="0"
+              max={Math.max(1, hpMax)}
+              value={hpCurrent}
+              onChange={(event) => session.setCombatNpcHp(actor.id, event.target.value)}
+            />
+          </label>
+          <span className="session-npc-hp-divider">/</span>
+          <label className="session-npc-hp-field">
+            <span>MAX</span>
+            <input
+              className="pip-input"
+              type="number"
+              min="1"
+              max="9999"
+              value={Math.max(1, hpMax)}
+              onChange={(event) => session.setCombatNpcMaxHp(actor.id, event.target.value)}
+            />
+          </label>
+          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent + 1)} disabled={hpMax > 0 && hpCurrent >= hpMax}>+1</button>
         </div>
       )}
     </article>
