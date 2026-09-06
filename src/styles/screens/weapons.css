@@ -646,3 +646,17 @@ button.pip-weapon-property-button:focus-visible,
   opacity: 0.6;
   font-size: 0.85em;
 }
+
+
+/* ===== CUSTOM COMBAT D6 ===== */
+.pip-weapon-combat-die {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+}
+
+.pip-weapon-footer--ammo-only {
+  justify-content: flex-end;
+}

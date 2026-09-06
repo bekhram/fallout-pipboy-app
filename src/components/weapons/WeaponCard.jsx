@@ -108,11 +108,6 @@ export default function WeaponCard({
     effectMap
   );
   const allTags = [...processedQualities, ...processedEffects];
-  const weaponMetadata = {
-    cost: modifiedWeapon.cost,
-    weight: modifiedWeapon.weight,
-    rarity: baseMetadata.rarity,
-  };
   const activeProperty = activePropertyIndex === null
     ? null
     : allTags[activePropertyIndex];
@@ -169,7 +164,7 @@ export default function WeaponCard({
         weapon: modifiedWeapon,
         diceCount: 2,
         difficulty: 1,
-        useRate,
+        useRate: Number(modifiedWeapon.rate || 0) > 0 && useRate,
       })
     );
   };
@@ -208,19 +203,21 @@ export default function WeaponCard({
       <div className="pip-weapon-stats-grid">
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">
           <div className="stat-label">Damage Dice</div>
-          <div className="stat-value"><span>🎲</span> {modifiedWeapon.damage || "0"}</div>
+          <div className="stat-value"><img src="/combat-d6.png" alt="" aria-hidden="true" className="pip-weapon-combat-die" /> {modifiedWeapon.damage || "0"}</div>
           <div className="stat-sub">{damageTypeLabel}</div>
         </div>
 
-        <div 
-          className={`pip-stat-box is-clickable ${useRate ? 'is-active' : ''}`}
-          onClick={(e) => { e.stopPropagation(); setUseRate((prev) => !prev); }}
-          title="Click to toggle Burst"
-        >
-          <div className="stat-label">Rate of Fire</div>
-          <div className="stat-value">{modifiedWeapon.rate || "0"}</div>
-          <div className="stat-sub">{useRate ? "ACTIVE" : "OFF"}</div>
-        </div>
+        {Number(modifiedWeapon.rate || 0) > 0 && (
+          <div 
+            className={`pip-stat-box is-clickable ${useRate ? 'is-active' : ''}`}
+            onClick={(e) => { e.stopPropagation(); setUseRate((prev) => !prev); }}
+            title="Click to toggle Burst"
+          >
+            <div className="stat-label">Rate of Fire</div>
+            <div className="stat-value">{modifiedWeapon.rate}</div>
+            <div className="stat-sub">{useRate ? "ACTIVE" : "OFF"}</div>
+          </div>
+        )}
 
         <div className="pip-stat-box">
           <div className="stat-label">Range</div>
@@ -316,22 +313,7 @@ export default function WeaponCard({
         </div>
       )}
 
-      <footer className="pip-weapon-footer">
-        <div className="pip-weapon-meta">
-          <div className="pip-weapon-meta-item">
-            <span className="meta-label">{t("weapons.cost")}</span>
-            <span className="meta-value">{weaponMetadata.cost === "" ? "—" : weaponMetadata.cost}</span>
-          </div>
-          <div className="pip-weapon-meta-item">
-            <span className="meta-label">{t("weapons.weight")}</span>
-            <span className="meta-value">{weaponMetadata.weight === "" ? "—" : weaponMetadata.weight}</span>
-          </div>
-          <div className="pip-weapon-meta-item">
-            <span className="meta-label">{t("weapons.rarity")}</span>
-            <span className="meta-value">{weaponMetadata.rarity === "" ? "—" : weaponMetadata.rarity}</span>
-          </div>
-        </div>
-
+      <footer className="pip-weapon-footer pip-weapon-footer--ammo-only">
         <div className="pip-ammo-tab">
           {modifiedWeapon.ammo || "NO AMMO"}
         </div>
