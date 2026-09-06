@@ -129,3 +129,5 @@ jobs:
           git add src/hooks/useSharedSession.js src/components/session/SessionCombatBoard.jsx .github/workflows/apply-npc-hp-editor.yml
           git commit -m "feat: edit NPC current and max HP in GM combat"
           git push
+
+# trigger
