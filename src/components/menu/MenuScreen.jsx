@@ -5,8 +5,30 @@ import QuickCharacterWizard, {
   getCreationCopy,
 } from "../characterCreation/QuickCharacterWizard.jsx";
 import AppDownloadPanel from "./AppDownloadPanel.jsx";
+import GmWorkspace from "../gm/GmWorkspace.jsx";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
+
+const GM_MENU_COPY = {
+  en: { open: "GM PANEL", back: "BACK TO MENU", workspace: "GAME MASTER WORKSPACE" },
+  ru: { open: "ПАНЕЛЬ ГМ", back: "НАЗАД В МЕНЮ", workspace: "РАБОЧЕЕ МЕСТО ГМ" },
+  uk: { open: "ПАНЕЛЬ ГМ", back: "НАЗАД У МЕНЮ", workspace: "РОБОЧЕ МІСЦЕ ГМ" },
+  pl: { open: "PANEL MG", back: "WRÓĆ DO MENU", workspace: "STANOWISKO MG" },
+};
+
+function getMenuLanguage(value) {
+  const language = String(value || "en").split("-")[0];
+  return GM_MENU_COPY[language] ? language : "en";
+}
+
+function readSavedCharacter() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw)?.data || null : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function MenuScreen({
   hasCharacter,
@@ -18,8 +40,11 @@ export default function MenuScreen({
 }) {
   const { t, i18n } = useTranslation();
   const copy = getCreationCopy(i18n.resolvedLanguage || i18n.language);
+  const gmCopy = GM_MENU_COPY[getMenuLanguage(i18n.resolvedLanguage || i18n.language)];
   const [showCreationMode, setShowCreationMode] = useState(false);
   const [showQuickCreation, setShowQuickCreation] = useState(false);
+  const [showGmWorkspace, setShowGmWorkspace] = useState(false);
+  const [gmCharacter, setGmCharacter] = useState(null);
 
   const handleNewCharacterClick = () => {
     setShowCreationMode(true);
@@ -57,6 +82,35 @@ export default function MenuScreen({
     }
   };
 
+  const handleOpenGmWorkspace = () => {
+    setGmCharacter(readSavedCharacter());
+    setShowGmWorkspace(true);
+  };
+
+  const updateGmCharacter = (updater) => {
+    setGmCharacter((previous) => {
+      const next = typeof updater === "function" ? updater(previous) : updater;
+      if (!next || typeof next !== "object") return previous;
+
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const saved = raw ? JSON.parse(raw) : {};
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            ...(saved && typeof saved === "object" ? saved : {}),
+            updatedAt: new Date().toISOString(),
+            data: next,
+          })
+        );
+      } catch {
+        // GM workspace can still work without persistent local storage.
+      }
+
+      return next;
+    });
+  };
+
   return (
     <>
       <section className="pip-screen-grid">
@@ -91,6 +145,15 @@ export default function MenuScreen({
               id="btn_gm_session"
             >
               GM / SESSION
+            </TrackedButton>
+
+            <TrackedButton
+              type="button"
+              className="pip-btn is-primary"
+              onClick={handleOpenGmWorkspace}
+              id="btn_gm_panel"
+            >
+              {gmCopy.open}
             </TrackedButton>
           </div>
         </section>
@@ -189,6 +252,53 @@ export default function MenuScreen({
         onCancel={handleQuickCancel}
         onComplete={handleQuickComplete}
       />
+
+      {showGmWorkspace && (
+        <div
+          className="gm-menu-workspace"
+          role="dialog"
+          aria-modal="true"
+          aria-label={gmCopy.workspace}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 12000,
+            overflow: "auto",
+            background: "var(--pip-bg, #071008)",
+            padding: "12px",
+          }}
+        >
+          <style>{`.gm-menu-workspace .gm-panel__map-button { display: none !important; }`}</style>
+          <div
+            className="pip-panel"
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 2,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "12px",
+              marginBottom: "12px",
+              padding: "10px 12px",
+            }}
+          >
+            <strong>[ {gmCopy.workspace} ]</strong>
+            <button
+              type="button"
+              className="pip-btn is-primary"
+              onClick={() => setShowGmWorkspace(false)}
+            >
+              ← {gmCopy.back}
+            </button>
+          </div>
+
+          <GmWorkspace
+            character={gmCharacter}
+            setCharacter={updateGmCharacter}
+          />
+        </div>
+      )}
     </>
   );
 }
