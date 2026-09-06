@@ -1,0 +1,148 @@
+.armor-repair-panel {
+  padding: 10px;
+}
+
+.armor-repair-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.armor-repair-panel__head h3 {
+  margin: 0;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+}
+
+.armor-repair-panel__head span {
+  font-size: 0.64rem;
+  opacity: 0.62;
+  white-space: nowrap;
+}
+
+.armor-repair-panel__list {
+  display: grid;
+  gap: 6px;
+}
+
+.armor-repair-card {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid rgba(20, 255, 0, 0.2);
+  border-left-width: 3px;
+  background: rgba(0, 14, 0, 0.16);
+}
+
+.armor-repair-card.is-broken {
+  border-color: rgba(255, 130, 80, 0.65);
+}
+
+.armor-repair-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.armor-repair-card__title {
+  min-width: 0;
+}
+
+.armor-repair-card__title small {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.58rem;
+  letter-spacing: 0.07em;
+  opacity: 0.56;
+}
+
+.armor-repair-card__title strong {
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.armor-repair-card__status {
+  flex: 0 0 auto;
+  padding: 2px 5px;
+  border: 1px solid currentColor;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+}
+
+.armor-repair-card.is-broken .armor-repair-card__status {
+  color: #ffb08d;
+}
+
+.armor-repair-card__meta,
+.armor-repair-card__materials,
+.armor-repair-card__perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.armor-repair-card__meta span,
+.armor-repair-card__materials span,
+.armor-repair-card__perks span {
+  padding: 3px 5px;
+  border: 1px solid rgba(20, 255, 0, 0.18);
+  font-size: 0.62rem;
+}
+
+.armor-repair-card__materials .is-missing,
+.armor-repair-card__perks .is-missing {
+  border-color: rgba(255, 130, 80, 0.65);
+  color: #ffb08d;
+}
+
+.armor-repair-card__button {
+  min-height: 34px;
+}
+
+.armor-repair-panel__empty {
+  padding: 10px;
+  border: 1px dashed rgba(20, 255, 0, 0.24);
+  text-align: center;
+  font-size: 0.68rem;
+  opacity: 0.66;
+}
+
+.armor-repair-result {
+  padding: 6px 7px;
+  border: 1px solid rgba(20, 255, 0, 0.35);
+  font-size: 0.64rem;
+}
+
+.armor-repair-result.is-failure {
+  border-color: rgba(255, 130, 80, 0.65);
+  color: #ffb08d;
+}
+
+.crafting-workspace {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 430px) {
+  .armor-repair-panel {
+    padding: 7px;
+  }
+
+  .armor-repair-panel__head {
+    align-items: flex-start;
+  }
+
+  .armor-repair-panel__head span {
+    white-space: normal;
+    text-align: right;
+  }
+
+  .armor-repair-card {
+    padding: 8px;
+  }
+}
