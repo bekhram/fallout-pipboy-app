@@ -23,6 +23,43 @@ const MOD_SLOTS = Object.entries(MOD_SLOT_LABELS).map(([key, label]) => ({
   label,
 }));
 
+function normalizePerkId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function getPerkRank(form, perkId) {
+  const wanted = normalizePerkId(perkId);
+  let best = 0;
+
+  for (const perk of form?.perksAndTraits || []) {
+    if (perk?.isOriginTrait) continue;
+    if (normalizePerkId(perk?.id) !== wanted) continue;
+    best = Math.max(best, Math.max(1, Number(perk?.rank || 1)));
+  }
+
+  return best;
+}
+
+function getDamageDiceCount(value) {
+  const match = String(value ?? "").match(/\d+/);
+  return match ? Math.max(0, Number(match[0]) || 0) : 0;
+}
+
+function getCommandoDamageBonus(form, weapon) {
+  const rank = getPerkRank(form, "commando");
+  if (rank <= 0) return 0;
+
+  const fireRate = Number(weapon?.rate || 0);
+  const isHeavyWeapon = String(weapon?.skill || "").trim().toLowerCase() === "big guns";
+
+  if (fireRate < 3 || isHeavyWeapon) return 0;
+  return rank;
+}
+
 export default function WeaponCard({
   weapon,
   index,
@@ -30,6 +67,7 @@ export default function WeaponCard({
   onCopy,
   onRemove,
   onRoll,
+  form,
   globalWeapons,
 }) {
   const { t, i18n } = useTranslation();
@@ -59,7 +97,6 @@ export default function WeaponCard({
     return value === key ? fallback : value;
   };
 
-  // Розумна функція для об'єднання масивів і видалення дублікатів
   const processTags = (presetArray, customString, dictMap) => {
     const rawList = [
       ...(Array.isArray(presetArray) ? presetArray : []),
@@ -70,7 +107,6 @@ export default function WeaponCard({
     const seen = new Set();
 
     rawList.forEach(tag => {
-      // Нормалізуємо для порівняння: прибираємо пробіли, тире, підкреслення і робимо lowercase
       const norm = tag.toLowerCase().replace(/[\s_-]/g, '');
       if (!seen.has(norm)) {
         seen.add(norm);
@@ -80,7 +116,6 @@ export default function WeaponCard({
 
     return uniqueTags.map(tag => {
       const normTag = tag.toLowerCase().replace(/[\s_-]/g, '');
-      // Шукаємо або за точним ключем, або за нормалізованим
       const option = dictMap[tag] || Object.values(dictMap).find(o => o.key.toLowerCase().replace(/[\s_-]/g, '') === normTag);
 
       if (option) {
@@ -90,21 +125,27 @@ export default function WeaponCard({
           title: translateSafe(option.descriptionKey, option.description),
         };
       }
-      // Якщо це кастомний тег, якого немає в базі
       return { key: tag, label: tag, title: "" };
     });
   };
 
   const baseMetadata = getWeaponMetadata(weapon, globalWeapons);
   const modifiedWeapon = applyWeaponMods({ ...weapon, ...baseMetadata });
+  const commandoDamageBonus = getCommandoDamageBonus(form, modifiedWeapon);
+  const baseDamageDice = getDamageDiceCount(modifiedWeapon.damage);
+  const calculatedDamageDice = baseDamageDice + commandoDamageBonus;
+  const calculatedWeapon = commandoDamageBonus > 0
+    ? { ...modifiedWeapon, damage: String(calculatedDamageDice) }
+    : modifiedWeapon;
+
   const processedQualities = processTags(
-    modifiedWeapon.qualities,
-    modifiedWeapon.qualitiesCustom,
+    calculatedWeapon.qualities,
+    calculatedWeapon.qualitiesCustom,
     qualityMap
   );
   const processedEffects = processTags(
-    modifiedWeapon.effects,
-    modifiedWeapon.customEffect,
+    calculatedWeapon.effects,
+    calculatedWeapon.customEffect,
     effectMap
   );
   const allTags = [...processedQualities, ...processedEffects];
@@ -140,16 +181,16 @@ export default function WeaponCard({
     };
   }, [activePropertyIndex]);
 
-  const skillLabel = weapon.skill
-    ? translateSafe(SKILL_LABEL_KEYS?.[weapon.skill], weapon.skill)
+  const skillLabel = calculatedWeapon.skill
+    ? translateSafe(SKILL_LABEL_KEYS?.[calculatedWeapon.skill], calculatedWeapon.skill)
     : "—";
 
-  const damageTypeLabel = modifiedWeapon.type
-    ? translateSafe(`weaponDamageTypes.${modifiedWeapon.type}`, modifiedWeapon.type)
+  const damageTypeLabel = calculatedWeapon.type
+    ? translateSafe(`weaponDamageTypes.${calculatedWeapon.type}`, calculatedWeapon.type)
     : "—";
 
-  const rangeLabel = modifiedWeapon.range
-    ? translateSafe(`weaponRanges.${modifiedWeapon.range}`, modifiedWeapon.range)
+  const rangeLabel = calculatedWeapon.range
+    ? translateSafe(`weaponRanges.${calculatedWeapon.range}`, calculatedWeapon.range)
     : "—";
 
   const getRangeShort = (rLabel) => {
@@ -161,10 +202,10 @@ export default function WeaponCard({
     e.stopPropagation();
     onRoll?.(
       createWeaponRoll({
-        weapon: modifiedWeapon,
+        weapon: calculatedWeapon,
         diceCount: 2,
         difficulty: 1,
-        useRate: Number(modifiedWeapon.rate || 0) > 0 && useRate,
+        useRate: Number(calculatedWeapon.rate || 0) > 0 && useRate,
       })
     );
   };
@@ -173,8 +214,6 @@ export default function WeaponCard({
 
   return (
     <article className="pip-panel pip-item-card pip-weapon-card">
-      
-      {/* Шапка: Назва та Мета дані */}
       <div className="pip-weapon-header">
         <div className="pip-weapon-header-left">
           <h3>{weapon.name || t("weapons.unnamedWeapon")}</h3>
@@ -199,22 +238,23 @@ export default function WeaponCard({
         </div>
       )}
 
-      {/* Центральна сітка статів */}
       <div className="pip-weapon-stats-grid">
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">
           <div className="stat-label">Damage Dice</div>
-          <div className="stat-value"><span aria-hidden="true">⌖</span> {modifiedWeapon.damage || "0"}</div>
-          <div className="stat-sub">{damageTypeLabel}</div>
+          <div className="stat-value"><span aria-hidden="true">⌖</span> {calculatedWeapon.damage || "0"}</div>
+          <div className="stat-sub">
+            {damageTypeLabel}{commandoDamageBonus > 0 ? ` · COMMANDO +${commandoDamageBonus}` : ""}
+          </div>
         </div>
 
-        {Number(modifiedWeapon.rate || 0) > 0 && (
+        {Number(calculatedWeapon.rate || 0) > 0 && (
           <div 
             className={`pip-stat-box is-clickable ${useRate ? 'is-active' : ''}`}
             onClick={(e) => { e.stopPropagation(); setUseRate((prev) => !prev); }}
             title="Click to toggle Burst"
           >
             <div className="stat-label">Rate of Fire</div>
-            <div className="stat-value">{modifiedWeapon.rate}</div>
+            <div className="stat-value">{calculatedWeapon.rate}</div>
             <div className="stat-sub">{useRate ? "ACTIVE" : "OFF"}</div>
           </div>
         )}
@@ -226,7 +266,6 @@ export default function WeaponCard({
         </div>
       </div>
 
-      {/* Властивості (без дублікатів!) */}
       {allTags.length > 0 && (
         <div className="pip-weapon-properties" ref={propertiesRef}>
           <ul className="pip-weapon-property-list">
@@ -290,7 +329,6 @@ export default function WeaponCard({
         </div>
       )}
 
-      {/* Креслення модифікацій */}
       {hasMods && (
         <div className="pip-weapon-mods-blueprint">
           <div style={{ opacity: 0.6, marginBottom: "10px", textTransform: "uppercase", fontSize: "0.8em", letterSpacing: "1px" }}>
@@ -315,7 +353,7 @@ export default function WeaponCard({
 
       <footer className="pip-weapon-footer pip-weapon-footer--ammo-only">
         <div className="pip-ammo-tab">
-          {modifiedWeapon.ammo || "NO AMMO"}
+          {calculatedWeapon.ammo || "NO AMMO"}
         </div>
       </footer>
     </article>
