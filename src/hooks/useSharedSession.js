@@ -8,6 +8,7 @@ const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 const HOST_PREFIX = "pip2d20-session-";
 const MAX_FEED = 120;
 const DEFAULT_AP_MAX = 6;
+const PORTRAIT_STORAGE_KEY = "fallout_pipboy_v4_portrait_preview";
 
 const EMPTY_COMBAT = {
   active: false,
@@ -46,6 +47,16 @@ function getCharacterName(form) {
   return String(form?.characterName || form?.name || form?.playerName || "").trim();
 }
 
+function readPortraitSnapshot() {
+  try {
+    const value = localStorage.getItem(PORTRAIT_STORAGE_KEY) || "";
+    if (!value.startsWith("data:image/")) return "";
+    return value.length <= 220000 ? value : "";
+  } catch {
+    return "";
+  }
+}
+
 function createCharacterSnapshot(form) {
   if (!form) return null;
   const derived = getDerivedStats(form);
@@ -58,20 +69,39 @@ function createCharacterSnapshot(form) {
     .map(([key]) => key)
     .slice(0, 12);
 
-  const torsoArmor = {
-    physical: Math.max(0, getTotalResistanceForPart({
-      armor: form?.armor || {},
-      part: "Torso",
-      damageType: "physical",
-      derived,
-    })),
-    energy: Math.max(0, getTotalResistanceForPart({
-      armor: form?.armor || {},
-      part: "Torso",
-      damageType: "energy",
-      derived,
-    })),
-  };
+  const torsoArmor = Object.fromEntries(
+    ["physical", "energy", "radiation", "poison"].map((damageType) => [
+      damageType,
+      Math.max(0, getTotalResistanceForPart({
+        armor: form?.armor || {},
+        part: "Torso",
+        damageType,
+        derived,
+      })),
+    ])
+  );
+
+  const weapons = (Array.isArray(form?.weapons) ? form.weapons : [])
+    .filter((weapon) => String(weapon?.name || "").trim())
+    .slice(0, 12)
+    .map((weapon) => ({
+      name: String(weapon?.name || "").slice(0, 80),
+      skill: String(weapon?.skill || "").slice(0, 40),
+      damage: weapon?.damage ?? "",
+      damageType: String(weapon?.type || weapon?.damageType || "").slice(0, 40),
+      rate: weapon?.rate ?? "",
+      range: String(weapon?.range || "").slice(0, 40),
+      effects: (Array.isArray(weapon?.effects) ? weapon.effects.join(", ") : String(weapon?.effects || weapon?.customEffect || "")).slice(0, 240),
+      qualities: (Array.isArray(weapon?.qualities) ? weapon.qualities.join(", ") : String(weapon?.qualities || weapon?.qualitiesCustom || "")).slice(0, 240),
+    }));
+
+  const perks = (Array.isArray(form?.perksAndTraits) ? form.perksAndTraits : [])
+    .filter((perk) => String(perk?.name || "").trim())
+    .slice(0, 24)
+    .map((perk) => ({
+      name: String(perk?.name || "").slice(0, 80),
+      rank: Math.max(1, Number(perk?.rank || 1)),
+    }));
 
   return {
     name: characterName || "Unnamed",
@@ -81,7 +111,13 @@ function createCharacterSnapshot(form) {
     maxHp: Math.max(0, Number(derived?.effectiveMaxHp || derived?.maxHp || 0)),
     defense: Math.max(0, Number(derived?.defense || 0)),
     armor: torsoArmor,
+    resistances: torsoArmor,
     initiative: Math.max(0, Number(derived?.initiative || 0)),
+    luck: Math.max(0, Number(derived?.luckPoints || 0)),
+    special: { ...(derived?.effectiveSpecial || {}) },
+    weapons,
+    perks,
+    avatar: readPortraitSnapshot(),
     statuses,
     updatedAt: new Date().toISOString(),
   };

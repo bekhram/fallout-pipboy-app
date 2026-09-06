@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import SessionActorProfile from "./SessionActorProfile.jsx";
 
 function clampPercent(current, max) {
   const safeMax = Math.max(1, Number(max || 1));
@@ -12,6 +13,10 @@ function sortActors(actors) {
     || (a.kind === b.kind ? 0 : a.kind === "player" ? -1 : 1)
     || String(a.name || "").localeCompare(String(b.name || ""))
   );
+}
+
+function actorInitials(name) {
+  return String(name || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase() || "?";
 }
 
 function mergeLiveActor(actor, players) {
@@ -28,10 +33,12 @@ function mergeLiveActor(actor, players) {
     armorPhysical: character.armor?.physical ?? actor.armorPhysical ?? 0,
     armorEnergy: character.armor?.energy ?? actor.armorEnergy ?? 0,
     initiative: character.initiative ?? actor.initiative ?? 0,
+    avatar: character.avatar || actor.avatar || "",
+    profile: character,
   };
 }
 
-function ActorCard({ actor, active, copy, mode, session }) {
+function ActorCard({ actor, active, copy, mode, session, onOpenProfile }) {
   const hpCurrent = Math.max(0, Number(actor.currentHp || 0));
   const hpMax = Math.max(0, Number(actor.maxHp || 0));
   const hpPercent = clampPercent(hpCurrent, hpMax);
@@ -43,7 +50,13 @@ function ActorCard({ actor, active, copy, mode, session }) {
         <span className="session-turn-kind">{isNpc ? copy.npc : copy.player}</span>
         <span className="session-actor-init">{copy.initiative} <strong>{actor.initiative ?? 0}</strong></span>
       </div>
-      <div className="session-actor-name">{actor.name || "—"}</div>
+
+      <div className="session-actor-identity">
+        <button type="button" className={`session-actor-avatar${isNpc ? " is-npc" : ""}`} onClick={() => onOpenProfile?.(actor.id)} aria-label={actor.name}>
+          {actor.avatar ? <img src={actor.avatar} alt="" /> : <span>{actorInitials(actor.name)}</span>}
+        </button>
+        <button type="button" className="session-actor-name session-actor-name-button" onClick={() => onOpenProfile?.(actor.id)}>{actor.name || "—"}</button>
+      </div>
 
       <div className="session-actor-primary-stats">
         <div className="session-actor-stat">
@@ -76,6 +89,7 @@ function ActorCard({ actor, active, copy, mode, session }) {
 
 export default function SessionCombatBoard({ session, players, mode, copy }) {
   const combat = session?.combat || {};
+  const [selectedActorId, setSelectedActorId] = useState(null);
   const [npcName, setNpcName] = useState("");
   const [npcInitiative, setNpcInitiative] = useState("10");
   const [npcHp, setNpcHp] = useState("10");
@@ -96,6 +110,8 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
         armorPhysical: player.character.armor?.physical ?? 0,
         armorEnergy: player.character.armor?.energy ?? 0,
         initiative: player.character.initiative ?? 0,
+        avatar: player.character.avatar || "",
+        profile: player.character,
       }));
     const npcActors = (combat.npcs || []).map((npc) => ({
       id: `npc:${npc.id}`,
@@ -114,6 +130,7 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
   const actors = (combat.active ? combat.order || [] : previewActors)
     .map((actor) => mergeLiveActor(actor, players));
   const activeActor = actors.find((actor) => actor.id === combat.activeActorId) || null;
+  const selectedActor = actors.find((actor) => actor.id === selectedActorId) || null;
 
   const handleAddNpc = (event) => {
     event.preventDefault();
@@ -146,7 +163,10 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
           {actors.length ? actors.map((actor, index) => (
             <div key={actor.id} className={`session-initiative-token${actor.id === combat.activeActorId ? " is-active" : ""}${actor.kind === "npc" ? " is-npc" : " is-player"}`}>
               <span className="session-initiative-order">{index + 1}</span>
-              <span className="session-initiative-name">{actor.name}</span>
+              <button type="button" className={`session-initiative-avatar${actor.kind === "npc" ? " is-npc" : ""}`} onClick={() => setSelectedActorId(actor.id)} aria-label={actor.name}>
+                {actor.avatar ? <img src={actor.avatar} alt="" /> : <span>{actorInitials(actor.name)}</span>}
+              </button>
+              <button type="button" className="session-initiative-name session-initiative-name-button" onClick={() => setSelectedActorId(actor.id)}>{actor.name}</button>
               <strong>{actor.initiative ?? 0}</strong>
             </div>
           )) : <div className="pip-logbox">{copy.noActors}</div>}
@@ -174,7 +194,7 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
         <div className="pip-head"><h2>[ {copy.combatants} ]</h2><span>{actors.length}</span></div>
         <div className="session-actor-grid">
           {actors.map((actor) => (
-            <ActorCard key={actor.id} actor={actor} active={actor.id === combat.activeActorId} copy={copy} mode={mode} session={session} />
+            <ActorCard key={actor.id} actor={actor} active={actor.id === combat.activeActorId} copy={copy} mode={mode} session={session} onOpenProfile={setSelectedActorId} />
           ))}
         </div>
       </section>
@@ -214,6 +234,8 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
           <button type="button" className="pip-btn" onClick={() => session.endCombat()}>{copy.endCombat}</button>
         </section>
       )}
+
+      {selectedActor && <SessionActorProfile actor={selectedActor} onClose={() => setSelectedActorId(null)} />}
     </section>
   );
 }
