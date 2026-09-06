@@ -16,6 +16,40 @@ const PLAYER_GRACE_MS = 30000;
 const HEARTBEAT_MS = 10000;
 const HEARTBEAT_TIMEOUT_MS = 45000;
 const MAX_QUEUED_EVENTS = 40;
+const DATA_CHANNEL_OPEN_TIMEOUT_MS = 15000;
+
+// PeerJS Cloud handles signalling. TURN gives WebRTC a relay path when two
+// devices cannot connect directly through mobile CGNAT / restrictive NAT.
+const PEER_OPTIONS = {
+  debug: 1,
+  pingInterval: 5000,
+  config: {
+    iceCandidatePoolSize: 4,
+    iceServers: [
+      { urls: [
+        "stun:stun.l.google.com:19302",
+        "stun:stun1.l.google.com:19302",
+        "stun:stun.relay.metered.ca:80",
+      ] },
+      {
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443?transport=tcp",
+        username: "openrelayproject",
+        credential: "openrelayproject",
+      },
+    ],
+    sdpSemantics: "unified-plan",
+  },
+};
 
 const EMPTY_COMBAT = {
   active: false,
@@ -655,7 +689,7 @@ export default function useSharedSession(form) {
     try { oldPeer?.destroy?.(); } catch { /* ignore */ }
 
     setStatus("connecting");
-    const peer = new Peer(getHostPeerId(codeRef.current), { debug: 1, pingInterval: 5000 });
+    const peer = new Peer(getHostPeerId(codeRef.current), PEER_OPTIONS);
     peerRef.current = peer;
 
     peer.on("open", () => {
@@ -707,7 +741,7 @@ export default function useSharedSession(form) {
     try { oldPeer?.destroy?.(); } catch { /* ignore */ }
 
     setStatus("connecting");
-    const peer = new Peer(getPlayerPeerId(playerClientIdRef.current), { debug: 1, pingInterval: 5000 });
+    const peer = new Peer(getPlayerPeerId(playerClientIdRef.current), PEER_OPTIONS);
     peerRef.current = peer;
 
     peer.on("open", () => {
@@ -715,7 +749,15 @@ export default function useSharedSession(form) {
       const connection = peer.connect(getHostPeerId(codeRef.current), { reliable: true, serialization: "json" });
       hostConnectionRef.current = connection;
 
+      const openTimeout = window.setTimeout(() => {
+        if (connection.open || generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+        setError({ key: "networkError", message: "WebRTC connection timed out. Retrying through relay..." });
+        safeClose(connection);
+        scheduleReconnect();
+      }, DATA_CHANNEL_OPEN_TIMEOUT_MS);
+
       connection.on("open", () => {
+        window.clearTimeout(openTimeout);
         if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
         clearReconnectTimer();
         reconnectAttemptRef.current = 0;
@@ -734,6 +776,7 @@ export default function useSharedSession(form) {
 
       connection.on("data", applyPlayerInbound);
       const handleClosed = () => {
+        window.clearTimeout(openTimeout);
         if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
         stopHeartbeat();
         setStatus("connecting");
