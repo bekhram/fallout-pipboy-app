@@ -3,6 +3,7 @@ import {
   applyEffectModifiersToDerived,
 } from "./effects.js";
 import { applyActiveConsumableEffects } from "./consumableEffects.js";
+import { getPerkCalculationState } from "./perkEffects.js";
 import { ORIGINS } from "../components/data/origins.js";
 import {
   getBobbleheadBonuses,
@@ -121,7 +122,33 @@ export function getDerivedStats(form) {
     effectMods
   );
 
-  const maxHp = Math.max(1, toNumber(derivedWithEffects.maxHp, 1));
+  const effectiveSpecial = {
+    S: strength,
+    P: perception,
+    E: endurance,
+    C: getEffectiveSpecialValue(form, "C"),
+    I: getEffectiveSpecialValue(form, "I"),
+    A: agility,
+    L: luck,
+  };
+
+  const perkState = getPerkCalculationState(form, {
+    effectiveSpecial,
+    currentHp: form.currentHp,
+    baseMaxHp: derivedWithEffects.maxHp,
+  });
+
+  const derivedWithPerks = {
+    ...derivedWithEffects,
+    maxHp:
+      toNumber(derivedWithEffects.maxHp) +
+      toNumber(perkState.derived.maxHpBonus),
+    carryWeight:
+      toNumber(derivedWithEffects.carryWeight) +
+      toNumber(perkState.derived.carryWeightBonus),
+  };
+
+  const maxHp = Math.max(1, toNumber(derivedWithPerks.maxHp, 1));
   const radiationHp = Math.max(0, toNumber(form.radiationHp));
   const effectiveMaxHp = Math.max(0, maxHp - radiationHp);
   const currentHp = Math.max(
@@ -134,32 +161,39 @@ export function getDerivedStats(form) {
   }, 0);
 
   return {
-    defense: toNumber(derivedWithEffects.defense),
-    initiative: toNumber(derivedWithEffects.initiative),
-    md: toNumber(derivedWithEffects.md),
-    luckPoints: toNumber(derivedWithEffects.luckPoints),
+    defense: toNumber(derivedWithPerks.defense),
+    initiative: toNumber(derivedWithPerks.initiative),
+    md: toNumber(derivedWithPerks.md),
+    luckPoints: toNumber(derivedWithPerks.luckPoints),
     maxHp,
     radiationHp,
     effectiveMaxHp,
     currentHp,
-    carryWeight: toNumber(derivedWithEffects.carryWeight),
+    carryWeight: toNumber(derivedWithPerks.carryWeight),
     currentCarryWeight: Number(currentCarryWeight.toFixed(2)),
 
-    effectiveSpecial: {
-      S: getEffectiveSpecialValue(form, "S"),
-      P: getEffectiveSpecialValue(form, "P"),
-      E: getEffectiveSpecialValue(form, "E"),
-      C: getEffectiveSpecialValue(form, "C"),
-      I: getEffectiveSpecialValue(form, "I"),
-      A: getEffectiveSpecialValue(form, "A"),
-      L: getEffectiveSpecialValue(form, "L"),
-    },
+    effectiveSpecial,
     bobbleheadBonuses,
 
-    physicalResistBonus: toNumber(effectMods.derived.physicalResistBonus),
-    energyResistBonus: toNumber(effectMods.derived.energyResistBonus),
-    radiationResistBonus: toNumber(effectMods.derived.radiationResistBonus),
-    poisonResistBonus: toNumber(effectMods.derived.poisonResistBonus),
+    physicalResistBonus:
+      toNumber(effectMods.derived.physicalResistBonus) +
+      toNumber(perkState.derived.physicalResistBonus),
+    energyResistBonus:
+      toNumber(effectMods.derived.energyResistBonus) +
+      toNumber(perkState.derived.energyResistBonus),
+    radiationResistBonus:
+      toNumber(effectMods.derived.radiationResistBonus) +
+      toNumber(perkState.derived.radiationResistBonus),
+    poisonResistBonus:
+      toNumber(effectMods.derived.poisonResistBonus) +
+      toNumber(perkState.derived.poisonResistBonus),
+
+    criticalHitThreshold: toNumber(perkState.contextual.criticalHitThreshold, 5),
+    groupApMax: toNumber(perkState.contextual.groupApMax, 6),
+    healingModifiers: perkState.healing,
+    perkContextualModifiers: perkState.contextual,
+    perkDerivedBonuses: perkState.derived,
+    perkState: perkState.state,
 
     effectDerivedBonuses: effectMods.derived,
     testModifiers: effectMods.tests,
@@ -167,7 +201,7 @@ export function getDerivedStats(form) {
     conditionFlags: effectMods.flags,
     activeStatuses: effectMods.activeStatuses,
     activeAddictions: effectMods.activeAddictions,
-    activeEffectNotes: effectMods.notes,
+    activeEffectNotes: [...effectMods.notes, ...perkState.notes],
     activeConsumableEffects: Array.isArray(form.activeConsumableEffects)
       ? form.activeConsumableEffects
       : [],
