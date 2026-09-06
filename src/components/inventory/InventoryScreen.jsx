@@ -300,13 +300,26 @@ export default function InventoryScreen({
       </section>
 
       {editingIndex !== null && (
-        <InventoryEditor
-          draft={itemDraft}
-          setDraft={setItemDraft}
-          onSave={() => onSaveEdit(editingIndex)}
-          onCancel={onCancelEdit}
-          globalAmmo={globalAmmo}
-        />
+        <div className="pip-editor-fullscreen" role="dialog" aria-modal="true" aria-label={t("inventory.itemEditor")}>
+          <div className="pip-editor-fullscreen__body">
+            <button
+              type="button"
+              className="pip-btn pip-editor-fullscreen__close"
+              onClick={onCancelEdit}
+              aria-label={t("common.cancel")}
+              title={t("common.cancel")}
+            >
+              ×
+            </button>
+            <InventoryEditor
+              draft={itemDraft}
+              setDraft={setItemDraft}
+              onSave={() => onSaveEdit(editingIndex)}
+              onCancel={onCancelEdit}
+              globalAmmo={globalAmmo}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

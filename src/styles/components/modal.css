@@ -127,3 +127,79 @@
     padding: 10px;
   }
 }
+
+/* ===== FULLSCREEN ITEM EDITORS ===== */
+.pip-editor-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  width: 100vw;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  background:
+    linear-gradient(rgba(20, 255, 0, 0.025) 1px, transparent 1px),
+    #020a04;
+  background-size: 14px 14px;
+}
+
+.pip-editor-fullscreen__body {
+  position: relative;
+  width: 100%;
+  min-height: calc(100dvh - 16px);
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding-top: 48px;
+}
+
+.pip-editor-fullscreen__body > .pip-panel {
+  width: 100%;
+  min-height: calc(100dvh - 64px);
+  box-sizing: border-box;
+  margin: 0;
+}
+
+.pip-editor-fullscreen__close {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 10003;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1.55rem;
+  line-height: 1;
+  background: #020a04;
+}
+
+.companion-preset-fullscreen {
+  display: grid;
+  align-content: start;
+}
+
+.companion-preset-fullscreen .companion-preset-picker {
+  width: min(900px, 100%);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .pip-editor-fullscreen {
+    padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+  }
+
+  .pip-editor-fullscreen__body {
+    min-height: calc(100dvh - 8px);
+    padding-top: 44px;
+  }
+
+  .pip-editor-fullscreen__body > .pip-panel {
+    min-height: calc(100dvh - 52px);
+    border-radius: 0;
+  }
+}

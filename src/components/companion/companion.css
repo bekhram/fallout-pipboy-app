@@ -806,3 +806,41 @@
     padding-right: 0;
   }
 }
+
+
+/* ===== FULLSCREEN COMPANION EDITOR ===== */
+.companion-content.is-editing {
+  position: fixed !important;
+  inset: 0;
+  z-index: 10000;
+  width: 100vw;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: max(58px, calc(env(safe-area-inset-top) + 50px)) max(10px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background:
+    linear-gradient(rgba(20, 255, 0, 0.025) 1px, transparent 1px),
+    #020a04;
+  background-size: 14px 14px;
+}
+
+.companion-content.is-editing .companion-card-actions {
+  position: fixed !important;
+  top: max(10px, env(safe-area-inset-top)) !important;
+  right: max(10px, env(safe-area-inset-right)) !important;
+  z-index: 10003;
+}
+
+.companion-content.is-editing .companion-icon-btn:first-child {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+}
+
+@media (max-width: 520px) {
+  .companion-content.is-editing {
+    padding-left: max(6px, env(safe-area-inset-left));
+    padding-right: max(6px, env(safe-area-inset-right));
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./companion.css";
 
@@ -374,7 +374,7 @@ function attackTargetNumber(companion, attack) {
   return Math.max(0, Math.min(20, attribute + skill));
 }
 
-export default function CompanionTab({ onRoll = null }) {
+export default function CompanionTab({ onRoll = null, startInEditMode = false }) {
   const { i18n } = useTranslation();
   const language = getLanguage(i18n.resolvedLanguage || i18n.language);
   const copy = COPY[language];
@@ -382,6 +382,7 @@ export default function CompanionTab({ onRoll = null }) {
   const [ready, setReady] = useState(false);
   const [editingAttackId, setEditingAttackId] = useState(null);
   const [isEditingCard, setIsEditingCard] = useState(false);
+  const initialEditorOpenedRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -416,6 +417,12 @@ export default function CompanionTab({ onRoll = null }) {
     setEditingAttackId(null);
     setIsEditingCard(false);
   }, [active?.id]);
+
+  useEffect(() => {
+    if (initialEditorOpenedRef.current || !ready || !startInEditMode || !active?.id) return;
+    initialEditorOpenedRef.current = true;
+    setIsEditingCard(true);
+  }, [ready, startInEditMode, active?.id]);
 
   const add = (kind) => {
     const item = createCompanion(kind);

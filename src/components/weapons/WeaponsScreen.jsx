@@ -50,13 +50,26 @@ export default function WeaponsScreen({
       </section>
 
       {editingIndex !== null && (
-        <WeaponEditor
-          draft={weaponDraft}
-          setDraft={setWeaponDraft}
-          onSave={() => onSaveEdit(editingIndex)}
-          onCancel={onCancelEdit}
-          globalWeapons={globalWeapons} // <-- 2. Передаємо базу в твій редактор
-        />
+        <div className="pip-editor-fullscreen" role="dialog" aria-modal="true" aria-label={t("weapons.editorTitle")}>
+          <div className="pip-editor-fullscreen__body">
+            <button
+              type="button"
+              className="pip-btn pip-editor-fullscreen__close"
+              onClick={onCancelEdit}
+              aria-label={t("common.cancel")}
+              title={t("common.cancel")}
+            >
+              ×
+            </button>
+            <WeaponEditor
+              draft={weaponDraft}
+              setDraft={setWeaponDraft}
+              onSave={() => onSaveEdit(editingIndex)}
+              onCancel={onCancelEdit}
+              globalWeapons={globalWeapons}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

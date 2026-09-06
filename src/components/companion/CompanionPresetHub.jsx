@@ -206,6 +206,7 @@ export default function CompanionPresetHub({ onRoll = null }) {
   const copy = COPY[lang];
   const [pickerKind, setPickerKind] = useState(null);
   const [revision, setRevision] = useState(0);
+  const [startEditorOnMount, setStartEditorOnMount] = useState(false);
 
   const presets = useMemo(
     () => [
@@ -225,6 +226,7 @@ export default function CompanionPresetHub({ onRoll = null }) {
       activeId: item.id,
     });
     setPickerKind(null);
+    setStartEditorOnMount(true);
     setRevision((value) => value + 1);
   };
 
@@ -241,31 +243,41 @@ export default function CompanionPresetHub({ onRoll = null }) {
         </div>
 
         {pickerKind ? (
-          <div className="pip-logbox companion-preset-picker">
-            <div className="companion-preset-picker-head">
-              <strong>[ {copy.choose} ]</strong>
-              <button type="button" className="pip-btn" onClick={() => setPickerKind(null)}>
-                {copy.cancel}
+          <div className="pip-editor-fullscreen" role="dialog" aria-modal="true" aria-label={copy.choose}>
+            <div className="pip-editor-fullscreen__body companion-preset-fullscreen">
+              <button
+                type="button"
+                className="pip-btn pip-editor-fullscreen__close"
+                onClick={() => setPickerKind(null)}
+                aria-label={copy.cancel}
+                title={copy.cancel}
+              >
+                ×
               </button>
-            </div>
-            <div className="companion-preset-options">
-              {presets.map((preset) => (
-                <button
-                  key={preset.id}
-                  type="button"
-                  className="pip-btn companion-preset-option"
-                  onClick={() => addPreset(preset.id)}
-                >
-                  <strong>{preset.title}</strong>
-                  {preset.description ? <span>{preset.description}</span> : null}
-                </button>
-              ))}
+              <div className="pip-logbox companion-preset-picker">
+                <div className="companion-preset-picker-head">
+                  <strong>[ {copy.choose} ]</strong>
+                </div>
+                <div className="companion-preset-options">
+                  {presets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className="pip-btn companion-preset-option"
+                      onClick={() => addPreset(preset.id)}
+                    >
+                      <strong>{preset.title}</strong>
+                      {preset.description ? <span>{preset.description}</span> : null}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         ) : null}
       </div>
 
-      <CompanionTab key={revision} onRoll={onRoll} />
+      <CompanionTab key={revision} onRoll={onRoll} startInEditMode={startEditorOnMount} />
     </div>
   );
 }
