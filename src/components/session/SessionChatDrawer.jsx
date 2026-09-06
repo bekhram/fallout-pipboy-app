@@ -16,6 +16,8 @@ const COPY = {
     scene: "GM MESSAGE",
     close: "CLOSE",
     reconnect: "RECONNECT",
+    hostNotFound: "GM session not found or is offline.",
+    networkError: "Network connection error.",
   },
   ru: {
     title: "ЧАТ ГРУППЫ",
@@ -31,6 +33,8 @@ const COPY = {
     scene: "СООБЩЕНИЕ ГМ",
     close: "ЗАКРЫТЬ",
     reconnect: "ПЕРЕПОДКЛЮЧИТЬСЯ",
+    hostNotFound: "Сессия ГМ не найдена или ГМ не в сети.",
+    networkError: "Ошибка сетевого соединения.",
   },
   uk: {
     title: "ЧАТ ГРУПИ",
@@ -46,6 +50,8 @@ const COPY = {
     scene: "ПОВІДОМЛЕННЯ ГМ",
     close: "ЗАКРИТИ",
     reconnect: "ПЕРЕПІДКЛЮЧИТИСЯ",
+    hostNotFound: "Сесію ГМ не знайдено або ГМ не в мережі.",
+    networkError: "Помилка мережевого з’єднання.",
   },
   pl: {
     title: "CZAT GRUPY",
@@ -61,6 +67,8 @@ const COPY = {
     scene: "WIADOMOŚĆ GM",
     close: "ZAMKNIJ",
     reconnect: "POŁĄCZ PONOWNIE",
+    hostNotFound: "Sesja GM nie istnieje lub GM jest offline.",
+    networkError: "Błąd połączenia sieciowego.",
   },
 };
 
@@ -120,6 +128,9 @@ export default function SessionChatDrawer({ session }) {
 
   const connectionState = getConnectionState(session?.status);
   const connectionLabel = copy[connectionState];
+  const errorText = session?.error?.key
+    ? (copy[session.error.key] || session.error.message || "")
+    : (session?.error?.message || "");
 
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -167,13 +178,16 @@ export default function SessionChatDrawer({ session }) {
         </div>
 
         {connectionState !== "online" && (
-          <button
-            type="button"
-            className="pip-btn is-primary"
-            onClick={() => session.reconnectNow?.()}
-          >
-            ↻ {copy.reconnect}
-          </button>
+          <>
+            {errorText && <div className="session-error">{errorText}</div>}
+            <button
+              type="button"
+              className="pip-btn is-primary"
+              onClick={() => session.reconnectNow?.()}
+            >
+              ↻ {copy.reconnect}
+            </button>
+          </>
         )}
 
         {session.sceneMessage && (

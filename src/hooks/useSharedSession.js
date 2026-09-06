@@ -187,8 +187,9 @@ function createLiveCharacterSnapshot(form) {
   };
 }
 
-function makePlayerPacket(name, form, full = true) {
+function makePlayerPacket(name, form, full = true, clientId = "") {
   return {
+    clientId: cleanText(clientId, 140),
     name: String(name || "Player").trim().slice(0, 40) || "Player",
     character: full ? createCharacterSnapshot(form) : createLiveCharacterSnapshot(form),
   };
@@ -537,6 +538,21 @@ export default function useSharedSession(form) {
     connectionsRef.current.set(connection.peer, connection);
     clearDisconnectTimer(connection.peer);
 
+    const assignLogicalPlayerId = (packet) => {
+      const logicalId = cleanText(packet?.clientId, 140) || connection.peer;
+      const previousLogicalConnection = connectionsRef.current.get(logicalId);
+      if (previousLogicalConnection && previousLogicalConnection !== connection) {
+        safeClose(previousLogicalConnection);
+      }
+      if (logicalId !== connection.peer && connectionsRef.current.get(connection.peer) === connection) {
+        connectionsRef.current.delete(connection.peer);
+      }
+      connection.__pipPlayerId = logicalId;
+      connectionsRef.current.set(logicalId, connection);
+      clearDisconnectTimer(logicalId);
+      return logicalId;
+    };
+
     connection.on("open", () => {
       if (desiredModeRef.current !== "host") return;
       connectionsRef.current.set(connection.peer, connection);
@@ -551,10 +567,12 @@ export default function useSharedSession(form) {
         return;
       }
       if (data.type === "join" || data.type === "player_update") {
-        upsertPlayer(connection.peer, data.player);
+        const logicalPlayerId = assignLogicalPlayerId(data.player);
+        upsertPlayer(logicalPlayerId, data.player);
         return;
       }
-      const player = playersRef.current.find((item) => item.peerId === connection.peer);
+      const logicalPlayerId = connection.__pipPlayerId || connection.peer;
+      const player = playersRef.current.find((item) => item.peerId === logicalPlayerId);
       const sender = player?.name || cleanText(data?.sender, 40) || "Player";
       if (data.type === "chat_message") {
         const text = cleanText(data.text, 500);
@@ -568,9 +586,13 @@ export default function useSharedSession(form) {
     });
 
     const handleClosed = () => {
-      if (connectionsRef.current.get(connection.peer) === connection) {
+      const logicalPlayerId = connection.__pipPlayerId || connection.peer;
+      if (connectionsRef.current.get(logicalPlayerId) === connection) {
+        connectionsRef.current.delete(logicalPlayerId);
+        if (connection.__pipPlayerId) markPlayerDisconnected(logicalPlayerId);
+      }
+      if (logicalPlayerId !== connection.peer && connectionsRef.current.get(connection.peer) === connection) {
         connectionsRef.current.delete(connection.peer);
-        markPlayerDisconnected(connection.peer);
       }
     };
     connection.on("close", handleClosed);
@@ -592,9 +614,10 @@ export default function useSharedSession(form) {
   function scheduleReconnect() {
     if (desiredModeRef.current === "lobby" || reconnectTimerRef.current) return;
     reconnectAttemptRef.current += 1;
+    const reconnectBaseMs = desiredModeRef.current === "host" ? 7000 : RECONNECT_BASE_MS;
     const delay = Math.min(
       RECONNECT_MAX_MS,
-      RECONNECT_BASE_MS * Math.pow(1.65, Math.max(0, reconnectAttemptRef.current - 1))
+      reconnectBaseMs * Math.pow(1.65, Math.max(0, reconnectAttemptRef.current - 1))
     );
     setStatus("connecting");
     reconnectTimerRef.current = window.setTimeout(() => {
@@ -741,7 +764,9 @@ export default function useSharedSession(form) {
     try { oldPeer?.destroy?.(); } catch { /* ignore */ }
 
     setStatus("connecting");
-    const peer = new Peer(getPlayerPeerId(playerClientIdRef.current), PEER_OPTIONS);
+    // Let PeerServer allocate a fresh signalling ID for every connection attempt.
+    // The app-level clientId remains stable and is what the GM uses to identify the player.
+    const peer = new Peer(undefined, PEER_OPTIONS);
     peerRef.current = peer;
 
     peer.on("open", () => {
@@ -765,7 +790,10 @@ export default function useSharedSession(form) {
         setStatus("online");
         lastPongRef.current = Date.now();
         try {
-          connection.send({ type: "join", player: makePlayerPacket(playerNameRef.current, formRef.current, true) });
+          connection.send({
+            type: "join",
+            player: makePlayerPacket(playerNameRef.current, formRef.current, true, playerClientIdRef.current),
+          });
         } catch {
           scheduleReconnect();
           return;
@@ -901,7 +929,7 @@ export default function useSharedSession(form) {
     try {
       connection.send({
         type: "player_update",
-        player: makePlayerPacket(playerNameRef.current, formRef.current, full),
+        player: makePlayerPacket(playerNameRef.current, formRef.current, full, playerClientIdRef.current),
       });
       return true;
     } catch {
