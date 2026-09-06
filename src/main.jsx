@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 
 import App from "./App.jsx";
+import { initFullscreenEditorUx } from "./utils/fullscreenEditorUx.js";
 
 import "./styles/pipboy.css";
 import "./i18n";
@@ -28,6 +29,8 @@ window.dataLayer = window.dataLayer || [];
 
   f.parentNode.insertBefore(j, f);
 })(window, document, "script", "dataLayer", "GTM-KZF6HS2F");
+
+initFullscreenEditorUx();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
