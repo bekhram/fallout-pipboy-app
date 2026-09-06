@@ -32,7 +32,9 @@ const MOD_SLOTS = Object.entries(MOD_SLOT_LABELS).map(([key, label]) => ({
 const CONTEXT_COPY = {
   en: {
     title: "ATTACK CONTEXT",
+    minorAction: "MINOR ACTION",
     aim: "AIM",
+    aimNoBenefit: "No Aim re-roll: Inaccurate",
     sneak: "SNEAK",
     moveReach: "MOVE + ATTACK",
     ammoBoost: "AMMO BOOST",
@@ -48,11 +50,13 @@ const CONTEXT_COPY = {
     firstAttack: "First attack: re-roll up to 2d20",
     allAttacks: "All attacks this turn: re-roll 1d20",
     difficulty: "Difficulty",
-    rerolls: "Perk rerolls",
+    rerolls: "Re-rolls",
   },
   ru: {
     title: "КОНТЕКСТ АТАКИ",
-    aim: "ПРИЦЕЛ",
+    minorAction: "МАЛОЕ ДЕЙСТВИЕ",
+    aim: "AIM",
+    aimNoBenefit: "Нет переброса AIM: Неточное",
     sneak: "СКРЫТАЯ АТАКА",
     moveReach: "ПОДОЙТИ + АТАКА",
     ammoBoost: "УСИЛЕНИЕ БОЕПРИПАСАМИ",
@@ -68,11 +72,13 @@ const CONTEXT_COPY = {
     firstAttack: "Первая атака: до 2 перебросов d20",
     allAttacks: "Все атаки хода: 1 переброс d20",
     difficulty: "Сложность",
-    rerolls: "Перебросы от перков",
+    rerolls: "Перебросы",
   },
   uk: {
     title: "КОНТЕКСТ АТАКИ",
-    aim: "ПРИЦІЛ",
+    minorAction: "МАЛА ДІЯ",
+    aim: "AIM",
+    aimNoBenefit: "Немає перекидання AIM: Неточна",
     sneak: "ПРИХОВАНА АТАКА",
     moveReach: "ПІДІЙТИ + АТАКА",
     ammoBoost: "ПІДСИЛЕННЯ БОЄПРИПАСАМИ",
@@ -88,11 +94,13 @@ const CONTEXT_COPY = {
     firstAttack: "Перша атака: до 2 перекидань d20",
     allAttacks: "Усі атаки ходу: 1 перекидання d20",
     difficulty: "Складність",
-    rerolls: "Перекидання від перків",
+    rerolls: "Перекидання",
   },
   pl: {
     title: "KONTEKST ATAKU",
-    aim: "CELOWANIE",
+    minorAction: "MAŁA AKCJA",
+    aim: "AIM",
+    aimNoBenefit: "Brak przerzutu AIM: Niecelna",
     sneak: "ATAK Z UKRYCIA",
     moveReach: "RUCH + ATAK",
     ammoBoost: "WZMOCNIENIE AMUNICJĄ",
@@ -108,7 +116,7 @@ const CONTEXT_COPY = {
     firstAttack: "Pierwszy atak: do 2 przerzutów k20",
     allAttacks: "Wszystkie ataki tury: 1 przerzut k20",
     difficulty: "Trudność",
-    rerolls: "Przerzuty z atutów",
+    rerolls: "Przerzuty",
   },
 };
 
@@ -127,6 +135,18 @@ function makeDefaultAttackContext() {
 function getLanguageCode(value) {
   const code = String(value || "en").toLowerCase().split("-")[0];
   return CONTEXT_COPY[code] ? code : "en";
+}
+
+function hasWeaponQuality(weapon, quality) {
+  const wanted = String(quality || "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+  const values = [
+    ...(Array.isArray(weapon?.qualities) ? weapon.qualities : []),
+    ...String(weapon?.qualitiesCustom || "").split(/[,;]/),
+  ];
+
+  return values.some((value) => (
+    String(value || "").trim().toLowerCase().replace(/[\s_-]+/g, "") === wanted
+  ));
 }
 
 export default function WeaponCard({
@@ -218,22 +238,44 @@ export default function WeaponCard({
   );
   const calculatedWeapon = conditionalPerkResult.weapon;
   const attackDifficulty = Math.max(0, 1 + Number(conditionalPerkResult.difficultyDelta || 0));
+  const isInaccurateWeapon = hasWeaponQuality(calculatedWeapon, "inaccurate");
+  const hasSteadyAim = attackContext.aimed
+    && !isInaccurateWeapon
+    && getPerkRank(form, "steady_aim") > 0;
+  const baseAimReroll = attackContext.aimed && !isInaccurateWeapon && !hasSteadyAim ? 1 : 0;
+  const totalAttackRerolls = Number(conditionalPerkResult.rerollD20 || 0) + baseAimReroll;
+  const aimNote = attackContext.aimed
+    ? isInaccurateWeapon
+      ? "Aim: no re-roll (Inaccurate)"
+      : !hasSteadyAim
+        ? "Aim: re-roll 1d20 on first attack"
+        : null
+    : null;
   const allPerkNotes = [
     ...passivePerkResult.notes,
     ...conditionalPerkResult.notes,
+    ...(aimNote ? [aimNote] : []),
   ];
 
   const hasHunter = getPerkRank(form, "hunter") > 0;
   const hasEntomologist = getPerkRank(form, "entomologist") > 0;
 
   const activeContextCount = [
-    attackContext.aimed,
     attackContext.sneakAttack,
     attackContext.targetLocation,
     attackContext.targetType,
     attackContext.movedIntoReach,
     attackContext.ammoBoosted,
   ].filter(Boolean).length;
+
+  const hasSecondaryAttackContext = Boolean(
+    contextAvailability.sneakAttack
+    || contextAvailability.targetLocation
+    || contextAvailability.targetType
+    || contextAvailability.movedIntoReach
+    || contextAvailability.ammoBoosted
+    || (contextAvailability.steadyAim && attackContext.aimed)
+  );
 
   const processedQualities = processTags(
     calculatedWeapon.qualities,
@@ -306,7 +348,7 @@ export default function WeaponCard({
         ...calculatedWeapon,
         attackContext: { ...attackContext },
         attackDifficulty,
-        perkRerollD20: conditionalPerkResult.rerollD20,
+        perkRerollD20: totalAttackRerolls,
         damageRerollAllowed: conditionalPerkResult.damageRerollAllowed,
         perkEffectNotes: allPerkNotes,
       },
@@ -317,11 +359,16 @@ export default function WeaponCard({
 
     onRoll?.({
       ...roll,
-      perkRerollD20: conditionalPerkResult.rerollD20,
+      perkRerollD20: totalAttackRerolls,
       damageRerollAllowed: conditionalPerkResult.damageRerollAllowed,
       perkNotes: allPerkNotes,
       attackContext: { ...attackContext },
     });
+
+    if (attackContext.aimed && !(contextAvailability.steadyAim && attackContext.steadyAimMode === "all")) {
+      setAttackContext((prev) => ({ ...prev, aimed: false }));
+      setShowAttackContext(false);
+    }
   };
 
   const hasMods = MOD_SLOTS.some(
@@ -383,7 +430,38 @@ export default function WeaponCard({
         </div>
       </div>
 
-      {contextAvailability.hasAny && (
+      <div
+        className="pip-panel"
+        style={{
+          marginTop: 8,
+          padding: 7,
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+          flexWrap: "wrap",
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <span className="stat-sub" style={{ fontWeight: 700, letterSpacing: "0.06em" }}>
+          {contextCopy.minorAction}
+        </span>
+        <button
+          type="button"
+          className={`pip-btn ${attackContext.aimed ? "is-primary" : ""}`}
+          onClick={() => toggleContext("aimed")}
+        >
+          {contextCopy.aim}
+        </button>
+        {attackContext.aimed && (
+          <span className="stat-sub">
+            {isInaccurateWeapon
+              ? contextCopy.aimNoBenefit
+              : `${contextCopy.rerolls}: ${Math.max(1, totalAttackRerolls)}d20`}
+          </span>
+        )}
+      </div>
+
+      {hasSecondaryAttackContext && (
         <div style={{ marginTop: 8 }}>
           <button
             type="button"
@@ -409,16 +487,6 @@ export default function WeaponCard({
               onClick={(event) => event.stopPropagation()}
             >
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {contextAvailability.aim && (
-                  <button
-                    type="button"
-                    className={`pip-btn ${attackContext.aimed ? "is-primary" : ""}`}
-                    onClick={() => toggleContext("aimed")}
-                  >
-                    {contextCopy.aim}
-                  </button>
-                )}
-
                 {contextAvailability.sneakAttack && (
                   <button
                     type="button"
@@ -505,8 +573,8 @@ export default function WeaponCard({
 
               <div className="stat-sub" style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
                 <strong>{contextCopy.difficulty}: {attackDifficulty}</strong>
-                {conditionalPerkResult.rerollD20 > 0 && (
-                  <strong>{contextCopy.rerolls}: {conditionalPerkResult.rerollD20}d20</strong>
+                {totalAttackRerolls > 0 && (
+                  <strong>{contextCopy.rerolls}: {totalAttackRerolls}d20</strong>
                 )}
               </div>
             </div>
