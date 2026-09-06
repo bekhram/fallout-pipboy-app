@@ -9,7 +9,8 @@ import PerksScreen from "./components/perks/PerksScreen.jsx";
 import NotesScreen from "./components/notes/NotesScreen.jsx";
 import DataScreen from "./components/data/DataScreen.jsx";
 import MenuScreen from "./components/menu/MenuScreen.jsx";
-import SessionScreen, { SessionFloatingButton } from "./components/session/SessionScreen.jsx";
+import SessionScreen from "./components/session/SessionScreen.jsx";
+import SessionChatDrawer from "./components/session/SessionChatDrawer.jsx";
 import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
@@ -229,6 +230,17 @@ export default function App() {
   } = useCharacterStorage(buildDefaultForm());
 
   const sharedSession = useSharedSession(form);
+
+  useEffect(() => {
+    if (
+      screen === "session"
+      && sharedSession.mode === "player"
+      && sharedSession.status === "online"
+    ) {
+      setScreen("sheet");
+      setActiveTab("status");
+    }
+  }, [screen, sharedSession.mode, sharedSession.status]);
 
   useEffect(() => {
     setForm((prev) => {
@@ -1476,11 +1488,8 @@ const SkillsEditorModal = () => {
         <FloatingDiceButton onOpen={openFreeDiceRoll} />
       )}
 
-      {screen === "sheet" && !isDiceOpen && sharedSession.isActive && (
-        <SessionFloatingButton
-          session={sharedSession}
-          onOpen={() => setScreen("session")}
-        />
+      {screen === "sheet" && sharedSession.isActive && sharedSession.mode === "player" && (
+        <SessionChatDrawer session={sharedSession} />
       )}
 
       <DiceRollModal
