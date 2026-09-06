@@ -1,0 +1,131 @@
+name: Apply NPC HP editor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/apply-npc-hp-editor.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Patch NPC HP controls
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          hook_path = Path('src/hooks/useSharedSession.js')
+          hook = hook_path.read_text()
+          old = '''  const setCombatAp = (value) => {
+    if (mode !== "host") return false;
+    const current = combatRef.current;
+    setHostCombat({ ...current, ap: clampNumber(value, 0, current.apMax || DEFAULT_AP_MAX) });
+    return true;
+  };
+'''
+          new = '''  const setCombatNpcMaxHp = (actorId, value) => {
+    if (mode !== "host" || !combatRef.current.active) return false;
+    const targetId = String(actorId || "").startsWith("npc:") ? String(actorId) : `npc:${actorId}`;
+    const npcId = targetId.replace(/^npc:/, "");
+    const current = combatRef.current;
+    const actor = current.order.find((item) => item.id === targetId && item.kind === "npc");
+    if (!actor) return false;
+    const nextMaxHp = clampNumber(value, 1, 9999);
+    const nextCurrentHp = clampNumber(actor.currentHp, 0, nextMaxHp);
+    const order = current.order.map((item) => item.id === targetId
+      ? { ...item, maxHp: nextMaxHp, currentHp: nextCurrentHp }
+      : item);
+    const npcs = current.npcs.map((npc) => npc.id === npcId
+      ? { ...npc, maxHp: nextMaxHp, currentHp: nextCurrentHp }
+      : npc);
+    setHostCombat({ ...current, order, npcs });
+    return true;
+  };
+
+  const setCombatAp = (value) => {
+    if (mode !== "host") return false;
+    const current = combatRef.current;
+    setHostCombat({ ...current, ap: clampNumber(value, 0, current.apMax || DEFAULT_AP_MAX) });
+    return true;
+  };
+'''
+          if old not in hook:
+              raise SystemExit('setCombatAp anchor not found')
+          hook = hook.replace(old, new, 1)
+          old_return = '''    setCombatNpcHp,
+    setCombatAp,
+'''
+          new_return = '''    setCombatNpcHp,
+    setCombatNpcMaxHp,
+    setCombatAp,
+'''
+          if old_return not in hook:
+              raise SystemExit('return anchor not found')
+          hook = hook.replace(old_return, new_return, 1)
+          hook_path.write_text(hook)
+
+          board_path = Path('src/components/session/SessionCombatBoard.jsx')
+          board = board_path.read_text()
+          old_controls = '''      {isNpc && mode === "host" && session.combat?.active && (
+        <div className="session-npc-hp-controls">
+          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent - 1)} disabled={hpCurrent <= 0}>− HP</button>
+          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent + 1)} disabled={hpMax > 0 && hpCurrent >= hpMax}>+ HP</button>
+        </div>
+      )}
+'''
+          new_controls = '''      {isNpc && mode === "host" && session.combat?.active && (
+        <div className="session-npc-hp-controls session-npc-hp-editor">
+          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent - 1)} disabled={hpCurrent <= 0}>−1</button>
+          <label className="session-npc-hp-field">
+            <span>HP</span>
+            <input
+              className="pip-input"
+              type="number"
+              min="0"
+              max={Math.max(1, hpMax)}
+              value={hpCurrent}
+              onChange={(event) => session.setCombatNpcHp(actor.id, event.target.value)}
+            />
+          </label>
+          <span className="session-npc-hp-divider">/</span>
+          <label className="session-npc-hp-field">
+            <span>MAX</span>
+            <input
+              className="pip-input"
+              type="number"
+              min="1"
+              max="9999"
+              value={Math.max(1, hpMax)}
+              onChange={(event) => session.setCombatNpcMaxHp(actor.id, event.target.value)}
+            />
+          </label>
+          <button type="button" className="pip-btn" onClick={() => session.setCombatNpcHp(actor.id, hpCurrent + 1)} disabled={hpMax > 0 && hpCurrent >= hpMax}>+1</button>
+        </div>
+      )}
+'''
+          if old_controls not in board:
+              raise SystemExit('NPC HP controls anchor not found')
+          board = board.replace(old_controls, new_controls, 1)
+          board_path.write_text(board)
+          PY
+      - run: npm ci
+      - run: npm run build
+      - name: Commit changes
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-npc-hp-editor.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hooks/useSharedSession.js src/components/session/SessionCombatBoard.jsx .github/workflows/apply-npc-hp-editor.yml
+          git commit -m "feat: edit NPC current and max HP in GM combat"
+          git push
