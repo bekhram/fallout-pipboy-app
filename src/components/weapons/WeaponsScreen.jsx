@@ -15,7 +15,8 @@ export default function WeaponsScreen({
   onSaveEdit,
   onCancelEdit,
   onRoll,
-  globalWeapons // <-- 1. Приймаємо базу
+  form,
+  globalWeapons
 }) {
   const { t } = useTranslation();
 
@@ -43,6 +44,7 @@ export default function WeaponsScreen({
               onCopy={onCopy}
               onRemove={onRemove}
               onRoll={onRoll}
+              form={form}
               globalWeapons={globalWeapons}
             />
           ))}
