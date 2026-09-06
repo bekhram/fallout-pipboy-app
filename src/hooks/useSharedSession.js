@@ -793,6 +793,28 @@ export default function useSharedSession(form) {
     createPlayerPeer(false);
   };
 
+  const reconnectNow = () => {
+    if (
+      desiredModeRef.current !== "player"
+      || !codeRef.current
+      || !playerClientIdRef.current
+    ) return false;
+
+    clearReconnectTimer();
+    reconnectAttemptRef.current = 0;
+    setError(null);
+    setStatus("connecting");
+
+    // Invalidate callbacks from the old channel before closing it so a stale
+    // close/error event cannot schedule a second reconnect in parallel.
+    destroyCurrentPeer();
+
+    window.setTimeout(() => {
+      if (desiredModeRef.current === "player") createPlayerPeer(false);
+    }, 150);
+    return true;
+  };
+
   const exitSession = () => {
     destroyNetwork();
     setMode("lobby");
@@ -1013,6 +1035,7 @@ export default function useSharedSession(form) {
     isActive: mode === "host" || mode === "player",
     startHost,
     joinSession,
+    reconnectNow,
     exitSession,
     broadcastScene,
     sendChat,

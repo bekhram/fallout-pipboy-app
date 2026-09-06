@@ -15,6 +15,7 @@ const COPY = {
     left: "left",
     scene: "GM MESSAGE",
     close: "CLOSE",
+    reconnect: "RECONNECT",
   },
   ru: {
     title: "ЧАТ ГРУППЫ",
@@ -29,6 +30,7 @@ const COPY = {
     left: "вышел",
     scene: "СООБЩЕНИЕ ГМ",
     close: "ЗАКРЫТЬ",
+    reconnect: "ПЕРЕПОДКЛЮЧИТЬСЯ",
   },
   uk: {
     title: "ЧАТ ГРУПИ",
@@ -43,6 +45,7 @@ const COPY = {
     left: "вийшов",
     scene: "ПОВІДОМЛЕННЯ ГМ",
     close: "ЗАКРИТИ",
+    reconnect: "ПЕРЕПІДКЛЮЧИТИСЯ",
   },
   pl: {
     title: "CZAT GRUPY",
@@ -57,6 +60,7 @@ const COPY = {
     left: "wyszedł",
     scene: "WIADOMOŚĆ GM",
     close: "ZAMKNIJ",
+    reconnect: "POŁĄCZ PONOWNIE",
   },
 };
 
@@ -161,6 +165,16 @@ export default function SessionChatDrawer({ session }) {
           </div>
           <span>{session.sessionCode}</span>
         </div>
+
+        {connectionState !== "online" && (
+          <button
+            type="button"
+            className="pip-btn is-primary"
+            onClick={() => session.reconnectNow?.()}
+          >
+            ↻ {copy.reconnect}
+          </button>
+        )}
 
         {session.sceneMessage && (
           <div className="session-chat-scene-banner">
