@@ -194,6 +194,7 @@ function sanitizeNpc(npc) {
     id: cleanText(npc.id, 100) || makeId("npc"),
     name,
     initiative: clampNumber(npc.initiative, 0, 99),
+    defense: clampNumber(npc.defense, 0, 99),
     maxHp,
     currentHp: clampNumber(npc.currentHp ?? maxHp, 0, maxHp || 9999),
     armorPhysical: clampNumber(npc.armorPhysical, 0, 99),
@@ -519,9 +520,9 @@ export default function useSharedSession(form) {
     return true;
   };
 
-  const addCombatNpc = ({ name, initiative = 0, maxHp = 10, currentHp = maxHp, armorPhysical = 0, armorEnergy = 0 } = {}) => {
+  const addCombatNpc = ({ name, initiative = 0, defense = 0, maxHp = 10, currentHp = maxHp, armorPhysical = 0, armorEnergy = 0 } = {}) => {
     if (mode !== "host" || combatRef.current.active) return false;
-    const npc = sanitizeNpc({ id: makeId("npc"), name, initiative, maxHp, currentHp, armorPhysical, armorEnergy });
+    const npc = sanitizeNpc({ id: makeId("npc"), name, initiative, defense, maxHp, currentHp, armorPhysical, armorEnergy });
     if (!npc) return false;
     return Boolean(setHostCombat({ ...combatRef.current, npcs: [...combatRef.current.npcs, npc] }));
   };
@@ -564,6 +565,7 @@ export default function useSharedSession(form) {
       peerId: null,
       name: npc.name,
       initiative: clampNumber(npc.initiative, 0, 99),
+      defense: clampNumber(npc.defense, 0, 99),
       currentHp: clampNumber(npc.currentHp, 0, npc.maxHp || 9999),
       maxHp: clampNumber(npc.maxHp, 0, 9999),
       armorPhysical: clampNumber(npc.armorPhysical, 0, 99),
@@ -648,6 +650,35 @@ export default function useSharedSession(form) {
     return true;
   };
 
+  const updateCombatNpcStats = (actorId, patch = {}) => {
+    if (mode !== "host") return false;
+    const targetId = String(actorId || "").startsWith("npc:") ? String(actorId) : `npc:${actorId}`;
+    const npcId = targetId.replace(/^npc:/, "");
+    const current = combatRef.current;
+    const sourceNpc = current.npcs.find((npc) => npc.id === npcId);
+    if (!sourceNpc) return false;
+
+    const nextNpc = sanitizeNpc({ ...sourceNpc, ...patch, id: npcId });
+    if (!nextNpc) return false;
+
+    const npcs = current.npcs.map((npc) => npc.id === npcId ? nextNpc : npc);
+    const order = current.order.map((actor) => actor.id === targetId && actor.kind === "npc"
+      ? {
+          ...actor,
+          name: nextNpc.name,
+          initiative: nextNpc.initiative,
+          defense: nextNpc.defense,
+          currentHp: nextNpc.currentHp,
+          maxHp: nextNpc.maxHp,
+          armorPhysical: nextNpc.armorPhysical,
+          armorEnergy: nextNpc.armorEnergy,
+        }
+      : actor);
+
+    setHostCombat({ ...current, npcs, order });
+    return true;
+  };
+
   const setCombatAp = (value) => {
     if (mode !== "host") return false;
     const current = combatRef.current;
@@ -706,6 +737,7 @@ export default function useSharedSession(form) {
     nextCombatTurn,
     setCombatNpcHp,
     setCombatNpcMaxHp,
+    updateCombatNpcStats,
     setCombatAp,
     endCombat,
   };

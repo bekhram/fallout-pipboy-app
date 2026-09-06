@@ -5,6 +5,7 @@ import {
   SESSION_CODE_LENGTH,
 } from "../../hooks/useSharedSession.js";
 import SessionCombatBoard from "./SessionCombatBoard.jsx";
+import SessionGmCombatPanel from "./SessionGmCombatPanel.jsx";
 import "./session.css";
 
 const COPY = {
@@ -24,7 +25,7 @@ const COPY = {
     noActivity: "No session activity yet.", chat: "GROUP CHAT", chatPlaceholder: "Message the group...", send: "SEND",
     joined: "joined the session", left: "left the session", success: "SUCCESS", failure: "FAILURE", successes: "Suc",
     complications: "Comp", damage: "Damage", effects: "Effects", difficulty: "Diff", target: "TN", hit: "Hit",
-    sessionActive: "SESSION", live: "LIVE", combat: "COMBAT", combatIdle: "Combat has not started.", round: "ROUND", currentTurn: "CURRENT TURN", groupAp: "GROUP AP", nextTurn: "NEXT TURN", startCombat: "START COMBAT", endCombat: "END COMBAT", initiative: "INIT", npc: "NPC", addNpc: "ADD NPC", npcName: "NPC name", remove: "REMOVE", player: "PLAYER", combatStarted: "combat started", combatEnded: "combat ended", turnChanged: "turn", overview: "OVERVIEW", combatBoard: "COMBAT BOARD", logScreen: "CHAT / LOG", initiativeTrack: "INITIATIVE", preview: "PREVIEW", combatants: "COMBATANTS", noActors: "No combatants yet.", armor: "ARMOR"
+    sessionActive: "SESSION", live: "LIVE", combat: "COMBAT", combatIdle: "Combat has not started.", round: "ROUND", currentTurn: "CURRENT TURN", groupAp: "GROUP AP", nextTurn: "NEXT TURN", startCombat: "START COMBAT", endCombat: "END COMBAT", initiative: "INIT", npc: "NPC", addNpc: "ADD NPC", npcName: "NPC name", remove: "REMOVE", player: "PLAYER", combatStarted: "combat started", combatEnded: "combat ended", turnChanged: "turn", overview: "OVERVIEW", gmPanel: "GM PANEL", combatBoard: "COMBAT BOARD", logScreen: "CHAT / LOG", initiativeTrack: "INITIATIVE", preview: "PREVIEW", combatants: "COMBATANTS", noActors: "No combatants yet.", armor: "ARMOR"
   },
   ru: {
     title: "ГМ / СЕССИЯ", subtitle: "Общая игровая сессия", back: "НАЗАД", hostTitle: "GAME MASTER",
@@ -42,7 +43,7 @@ const COPY = {
     noActivity: "В сессии пока нет событий.", chat: "ОБЩИЙ ЧАТ", chatPlaceholder: "Сообщение группе...", send: "ОТПРАВИТЬ",
     joined: "подключился к сессии", left: "вышел из сессии", success: "УСПЕХ", failure: "ПРОВАЛ", successes: "Усп",
     complications: "Осл", damage: "Урон", effects: "Эффекты", difficulty: "Сложн", target: "ЦЧ", hit: "Попадание",
-    sessionActive: "СЕССИЯ", live: "LIVE", combat: "БОЙ", combatIdle: "Бой ещё не начат.", round: "РАУНД", currentTurn: "ТЕКУЩИЙ ХОД", groupAp: "ОБЩИЕ AP", nextTurn: "СЛЕДУЮЩИЙ ХОД", startCombat: "НАЧАТЬ БОЙ", endCombat: "ЗАВЕРШИТЬ БОЙ", initiative: "ИНИЦ", npc: "NPC", addNpc: "ДОБАВИТЬ NPC", npcName: "Имя NPC", remove: "УДАЛИТЬ", player: "ИГРОК", combatStarted: "бой начался", combatEnded: "бой завершён", turnChanged: "ход", overview: "ОБЗОР", combatBoard: "БОЕВОЙ ЭКРАН", logScreen: "ЧАТ / ЖУРНАЛ", initiativeTrack: "ИНИЦИАТИВА", preview: "ПРЕДПРОСМОТР", combatants: "УЧАСТНИКИ", noActors: "Пока нет участников.", armor: "БРОНЯ"
+    sessionActive: "СЕССИЯ", live: "LIVE", combat: "БОЙ", combatIdle: "Бой ещё не начат.", round: "РАУНД", currentTurn: "ТЕКУЩИЙ ХОД", groupAp: "ОБЩИЕ AP", nextTurn: "СЛЕДУЮЩИЙ ХОД", startCombat: "НАЧАТЬ БОЙ", endCombat: "ЗАВЕРШИТЬ БОЙ", initiative: "ИНИЦ", npc: "NPC", addNpc: "ДОБАВИТЬ NPC", npcName: "Имя NPC", remove: "УДАЛИТЬ", player: "ИГРОК", combatStarted: "бой начался", combatEnded: "бой завершён", turnChanged: "ход", overview: "ОБЗОР", gmPanel: "ПАНЕЛЬ ГМ", combatBoard: "БОЕВОЙ ЭКРАН", logScreen: "ЧАТ / ЖУРНАЛ", initiativeTrack: "ИНИЦИАТИВА", preview: "ПРЕДПРОСМОТР", combatants: "УЧАСТНИКИ", noActors: "Пока нет участников.", armor: "БРОНЯ"
   },
   uk: {
     title: "ГМ / СЕСІЯ", subtitle: "Спільна ігрова сесія", back: "НАЗАД", hostTitle: "GAME MASTER",
@@ -60,7 +61,7 @@ const COPY = {
     noActivity: "У сесії ще немає подій.", chat: "СПІЛЬНИЙ ЧАТ", chatPlaceholder: "Повідомлення групі...", send: "НАДІСЛАТИ",
     joined: "приєднався до сесії", left: "вийшов із сесії", success: "УСПІХ", failure: "НЕВДАЧА", successes: "Усп",
     complications: "Ускл", damage: "Шкода", effects: "Ефекти", difficulty: "Складн", target: "ЦЧ", hit: "Влучання",
-    sessionActive: "СЕСІЯ", live: "LIVE", combat: "БІЙ", combatIdle: "Бій ще не розпочато.", round: "РАУНД", currentTurn: "ПОТОЧНИЙ ХІД", groupAp: "СПІЛЬНІ AP", nextTurn: "НАСТУПНИЙ ХІД", startCombat: "ПОЧАТИ БІЙ", endCombat: "ЗАВЕРШИТИ БІЙ", initiative: "ІНІЦ", npc: "NPC", addNpc: "ДОДАТИ NPC", npcName: "Імʼя NPC", remove: "ВИДАЛИТИ", player: "ГРАВЕЦЬ", combatStarted: "бій розпочато", combatEnded: "бій завершено", turnChanged: "хід", overview: "ОГЛЯД", combatBoard: "БОЙОВИЙ ЕКРАН", logScreen: "ЧАТ / ЖУРНАЛ", initiativeTrack: "ІНІЦІАТИВА", preview: "ПЕРЕГЛЯД", combatants: "УЧАСНИКИ", noActors: "Поки немає учасників.", armor: "БРОНЯ"
+    sessionActive: "СЕСІЯ", live: "LIVE", combat: "БІЙ", combatIdle: "Бій ще не розпочато.", round: "РАУНД", currentTurn: "ПОТОЧНИЙ ХІД", groupAp: "СПІЛЬНІ AP", nextTurn: "НАСТУПНИЙ ХІД", startCombat: "ПОЧАТИ БІЙ", endCombat: "ЗАВЕРШИТИ БІЙ", initiative: "ІНІЦ", npc: "NPC", addNpc: "ДОДАТИ NPC", npcName: "Імʼя NPC", remove: "ВИДАЛИТИ", player: "ГРАВЕЦЬ", combatStarted: "бій розпочато", combatEnded: "бій завершено", turnChanged: "хід", overview: "ОГЛЯД", gmPanel: "ПАНЕЛЬ ГМ", combatBoard: "БОЙОВИЙ ЕКРАН", logScreen: "ЧАТ / ЖУРНАЛ", initiativeTrack: "ІНІЦІАТИВА", preview: "ПЕРЕГЛЯД", combatants: "УЧАСНИКИ", noActors: "Поки немає учасників.", armor: "БРОНЯ"
   },
   pl: {
     title: "GM / SESJA", subtitle: "Wspólna sesja gry", back: "WSTECZ", hostTitle: "GAME MASTER",
@@ -78,7 +79,7 @@ const COPY = {
     noActivity: "Brak aktywności w sesji.", chat: "CZAT GRUPOWY", chatPlaceholder: "Wiadomość do grupy...", send: "WYŚLIJ",
     joined: "dołączył do sesji", left: "opuścił sesję", success: "SUKCES", failure: "PORAŻKA", successes: "Suk",
     complications: "Kompl", damage: "Obrażenia", effects: "Efekty", difficulty: "Trudn", target: "TN", hit: "Trafienie",
-    sessionActive: "SESJA", live: "LIVE", combat: "WALKA", combatIdle: "Walka jeszcze się nie rozpoczęła.", round: "RUNDA", currentTurn: "AKTUALNA TURA", groupAp: "WSPÓLNE AP", nextTurn: "NASTĘPNA TURA", startCombat: "ROZPOCZNIJ WALKĘ", endCombat: "ZAKOŃCZ WALKĘ", initiative: "INIC", npc: "NPC", addNpc: "DODAJ NPC", npcName: "Nazwa NPC", remove: "USUŃ", player: "GRACZ", combatStarted: "walka rozpoczęta", combatEnded: "walka zakończona", turnChanged: "tura", overview: "PRZEGLĄD", combatBoard: "EKRAN WALKI", logScreen: "CZAT / DZIENNIK", initiativeTrack: "INICJATYWA", preview: "PODGLĄD", combatants: "UCZESTNICY", noActors: "Brak uczestników.", armor: "PANCERZ"
+    sessionActive: "SESJA", live: "LIVE", combat: "WALKA", combatIdle: "Walka jeszcze się nie rozpoczęła.", round: "RUNDA", currentTurn: "AKTUALNA TURA", groupAp: "WSPÓLNE AP", nextTurn: "NASTĘPNA TURA", startCombat: "ROZPOCZNIJ WALKĘ", endCombat: "ZAKOŃCZ WALKĘ", initiative: "INIC", npc: "NPC", addNpc: "DODAJ NPC", npcName: "Nazwa NPC", remove: "USUŃ", player: "GRACZ", combatStarted: "walka rozpoczęta", combatEnded: "walka zakończona", turnChanged: "tura", overview: "PRZEGLĄD", gmPanel: "PANEL GM", combatBoard: "EKRAN WALKI", logScreen: "CZAT / DZIENNIK", initiativeTrack: "INICJATYWA", preview: "PODGLĄD", combatants: "UCZESTNICY", noActors: "Brak uczestników.", armor: "PANCERZ"
   },
 };
 
@@ -216,6 +217,9 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   const [npcInitiative, setNpcInitiative] = useState("10");
 
   const mode = session?.mode || "lobby";
+  React.useEffect(() => {
+    if (mode !== "host" && activeView === "gm") setActiveView("overview");
+  }, [mode, activeView]);
   const status = session?.status || "waiting";
   const players = session?.players || [];
   const sceneMessage = session?.sceneMessage || "";
@@ -325,6 +329,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
 
       <nav className="session-view-nav" aria-label="Session screens">
         <button type="button" className={`pip-btn${activeView === "overview" ? " is-primary" : ""}`} onClick={() => setActiveView("overview")}>{copy.overview}</button>
+        {mode === "host" && <button type="button" className={`pip-btn${activeView === "gm" ? " is-primary" : ""}`} onClick={() => setActiveView("gm")}>{copy.gmPanel}</button>}
         <button type="button" className={`pip-btn${activeView === "combat" ? " is-primary" : ""}`} onClick={() => setActiveView("combat")}>{copy.combatBoard}</button>
         <button type="button" className={`pip-btn${activeView === "log" ? " is-primary" : ""}`} onClick={() => setActiveView("log")}>{copy.logScreen}</button>
       </nav>
@@ -354,6 +359,10 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
       </div>
 
 
+      )}
+
+      {activeView === "gm" && mode === "host" && (
+        <SessionGmCombatPanel session={session} players={players} />
       )}
 
       {activeView === "combat" && (

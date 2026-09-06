@@ -243,6 +243,7 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
       armorPhysical: npc.armorPhysical,
       armorEnergy: npc.armorEnergy,
       initiative: npc.initiative,
+      defense: npc.defense ?? 0,
     }));
     return sortActors([...playerActors, ...npcActors]);
   }, [players, combat.npcs]);
@@ -278,6 +279,7 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
     session.addCombatNpc({
       name: entry?.name,
       initiative,
+      defense: Math.max(0, firstNumber(entry?.defense, 0)),
       maxHp: hp,
       currentHp: hp,
       armorPhysical: armor.physical,
