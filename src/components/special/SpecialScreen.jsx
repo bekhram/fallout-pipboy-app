@@ -9,6 +9,7 @@ import {
 import { ORIGINS } from "../data/origins.js";
 import { getTagSkillEquipmentGrant } from "../../data/startingEquipment.js";
 import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
+import { getDerivedStats } from "../../utils/characterMath.js";
 import {
   getBobbleheadSpecialBonus,
   getBobbleheadSkillBonus,
@@ -41,6 +42,8 @@ export default function SpecialScreen({
   const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
   const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
   const powerArmorActive = hasActivePowerArmorFrame(form);
+  const derived = getDerivedStats(form);
+  const perkContext = derived?.perkContextualModifiers || {};
 
   const handleSkillRoll = (skillName, skill, testValue, effectiveRank) => {
     if (!onRoll) return;
@@ -157,7 +160,14 @@ export default function SpecialScreen({
 
             const effectiveRank = getEffectiveSkillRank(form, skillName);
             const skillBobbleheadBonus = getBobbleheadSkillBonus(form, skillName);
-            const attrValue = getEffectiveSpecialValue(form, skill.attribute || "A");
+            const baseAttrValue = getEffectiveSpecialValue(form, skill.attribute || "A");
+            const perkStrength = skill.attribute === "S"
+              ? Number(perkContext.strengthForStrengthTests)
+              : NaN;
+            const attrValue = Number.isFinite(perkStrength)
+              ? Math.max(baseAttrValue, perkStrength)
+              : baseAttrValue;
+            const perkAttrBonus = Math.max(0, attrValue - baseAttrValue);
             const tagBonus = skill.tagged ? 2 : 0;
             const bonus = Number(skill.bonus || 0);
             const testValue = effectiveRank + attrValue + tagBonus + bonus;
@@ -176,6 +186,7 @@ export default function SpecialScreen({
                 >
                   {t(SKILL_LABEL_KEYS?.[skillName] || skillName)}
                   {skillBobbleheadBonus ? <small style={{ marginLeft: "5px", opacity: 0.72 }}>+1 BOBBLEHEAD</small> : null}
+                  {perkAttrBonus ? <small style={{ marginLeft: "5px", opacity: 0.72 }}>+{perkAttrBonus} PERK</small> : null}
                 </button>
 
                 <div className="pip-skill-attr-simple">
