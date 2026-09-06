@@ -18,7 +18,7 @@ const TEXT = {
     title: "CRAFTING", subtitle: "WORKBENCH // RECIPES",
     weapons: "WEAPON RECIPES", ammo: "AMMO", armor: "ARMOR RECIPES", mods: "MODS", explosives: "EXPLOSIVES", items: "OTHER",
     search: "Search recipes, mods, workbenches...", skill: "SKILL", complexity: "COMPLEXITY", difficulty: "DIFFICULTY", materials: "MATERIALS",
-    requirements: "PERKS", rarity: "RARITY", craft: "CRAFT", recipeFound: "RECIPE FOUND", forgetRecipe: "REMOVE RECIPE", unknownRare: "RARE RECIPE NOT LEARNED",
+    requirements: "PERKS", rarity: "RARITY", craft: "CRAFT", learnRecipe: "LEARN RECIPE", recipeLearned: "RECIPE LEARNED", unknownRare: "RARE RECIPE NOT LEARNED",
     inventory: "INVENTORY ITEMS", source: "SOURCE", page: "p.", workbench: "WORKBENCH", benchReady: "ACCESS", benchMissing: "NO ACCESS",
     result: "LAST ATTEMPT", success: "SUCCESS", failure: "FAILURE", automatic: "AUTOMATIC SUCCESS (D0)", successes: "successes", complications: "complications",
     duration: "TIME", minutes: "min", apHint: "On success, 2 AP may halve crafting time.", failedConsumed: "Failure consumed all ingredients at this station.",
@@ -32,7 +32,7 @@ const TEXT = {
     title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ",
     weapons: "РЕЦЕПТЫ ОРУЖИЯ", ammo: "ПАТРОНЫ", armor: "РЕЦЕПТЫ БРОНИ", mods: "МОДЫ", explosives: "ВЗРЫВЧАТКА", items: "ДРУГОЕ",
     search: "Поиск рецептов, модов, верстаков...", skill: "НАВЫК", complexity: "СЛОЖНОСТЬ", difficulty: "ТРУДНОСТЬ", materials: "МАТЕРИАЛЫ",
-    requirements: "ПЕРКИ", rarity: "РЕДКОСТЬ", craft: "СОЗДАТЬ", recipeFound: "РЕЦЕПТ НАЙДЕН", forgetRecipe: "УБРАТЬ РЕЦЕПТ", unknownRare: "РЕДКИЙ РЕЦЕПТ НЕ ИЗУЧЕН",
+    requirements: "ПЕРКИ", rarity: "РЕДКОСТЬ", craft: "СОЗДАТЬ", learnRecipe: "ВЫУЧИТЬ РЕЦЕПТ", recipeLearned: "РЕЦЕПТ ИЗУЧЕН", unknownRare: "РЕДКИЙ РЕЦЕПТ НЕ ИЗУЧЕН",
     inventory: "ПРЕДМЕТОВ В ИНВЕНТАРЕ", source: "ИСТОЧНИК", page: "стр.", workbench: "ВЕРСТАК", benchReady: "ДОСТУП ЕСТЬ", benchMissing: "НЕТ ДОСТУПА",
     result: "ПОСЛЕДНЯЯ ПОПЫТКА", success: "УСПЕХ", failure: "ПРОВАЛ", automatic: "АВТОУСПЕХ (D0)", successes: "успехов", complications: "осложнений",
     duration: "ВРЕМЯ", minutes: "мин", apHint: "При успехе 2 AP могут уменьшить время вдвое.", failedConsumed: "При провале эта станция расходует все ингредиенты.",
@@ -46,7 +46,7 @@ const TEXT = {
     title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ",
     weapons: "РЕЦЕПТИ ЗБРОЇ", ammo: "ПАТРОНИ", armor: "РЕЦЕПТИ БРОНІ", mods: "МОДИ", explosives: "ВИБУХІВКА", items: "ІНШЕ",
     search: "Пошук рецептів, модів, верстатів...", skill: "НАВИЧКА", complexity: "СКЛАДНІСТЬ", difficulty: "ТРУДНІСТЬ", materials: "МАТЕРІАЛИ",
-    requirements: "ПЕРКИ", rarity: "РІДКІСТЬ", craft: "СТВОРИТИ", recipeFound: "РЕЦЕПТ ЗНАЙДЕНО", forgetRecipe: "ПРИБРАТИ РЕЦЕПТ", unknownRare: "РІДКІСНИЙ РЕЦЕПТ НЕ ВИВЧЕНО",
+    requirements: "ПЕРКИ", rarity: "РІДКІСТЬ", craft: "СТВОРИТИ", learnRecipe: "ВИВЧИТИ РЕЦЕПТ", recipeLearned: "РЕЦЕПТ ВИВЧЕНО", unknownRare: "РІДКІСНИЙ РЕЦЕПТ НЕ ВИВЧЕНО",
     inventory: "ПРЕДМЕТІВ В ІНВЕНТАРІ", source: "ДЖЕРЕЛО", page: "стор.", workbench: "ВЕРСТАТ", benchReady: "ДОСТУП Є", benchMissing: "НЕМАЄ ДОСТУПУ",
     result: "ОСТАННЯ СПРОБА", success: "УСПІХ", failure: "НЕВДАЧА", automatic: "АВТОУСПІХ (D0)", successes: "успіхів", complications: "ускладнень",
     duration: "ЧАС", minutes: "хв", apHint: "За успіху 2 AP можуть удвічі скоротити час.", failedConsumed: "За невдачі ця станція витрачає всі інгредієнти.",
@@ -60,7 +60,7 @@ const TEXT = {
     title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY",
     weapons: "RECEPTURY BRONI", ammo: "AMUNICJA", armor: "RECEPTURY PANCERZA", mods: "MODY", explosives: "MATERIAŁY WYBUCHOWE", items: "INNE",
     search: "Szukaj receptur, modyfikacji, warsztatów...", skill: "UMIEJĘTNOŚĆ", complexity: "ZŁOŻONOŚĆ", difficulty: "TRUDNOŚĆ", materials: "MATERIAŁY",
-    requirements: "ATUTY", rarity: "RZADKOŚĆ", craft: "WYTWÓRZ", recipeFound: "RECEPTURA ZNALEZIONA", forgetRecipe: "USUŃ RECEPTURĘ", unknownRare: "RZADKA RECEPTURA NIEPOZNANA",
+    requirements: "ATUTY", rarity: "RZADKOŚĆ", craft: "WYTWÓRZ", learnRecipe: "NAUCZ SIĘ RECEPTURY", recipeLearned: "RECEPTURA POZNANA", unknownRare: "RZADKA RECEPTURA NIEPOZNANA",
     inventory: "PRZEDMIOTY W EKWIPUNKU", source: "ŹRÓDŁO", page: "s.", workbench: "WARSZTAT", benchReady: "DOSTĘP", benchMissing: "BRAK DOSTĘPU",
     result: "OSTATNIA PRÓBA", success: "SUKCES", failure: "PORAŻKA", automatic: "AUTOMATYCZNY SUKCES (D0)", successes: "sukcesów", complications: "komplikacji",
     duration: "CZAS", minutes: "min", apHint: "Po sukcesie 2 AP może skrócić czas o połowę.", failedConsumed: "Porażka zużywa wszystkie składniki na tej stacji.",
@@ -205,12 +205,11 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     });
   }, [baseRecipes, category, modFilter, workbench, search, language]);
 
-  const toggleKnownRecipe = (recipe) => {
+  const learnRareRecipe = (recipe) => {
     if (!setCharacter) return;
     setCharacter((prev) => {
       const known = new Set(prev?.craftingKnownRecipes || []);
-      if (known.has(recipe.id)) known.delete(recipe.id);
-      else known.add(recipe.id);
+      known.add(recipe.id);
       return { ...prev, craftingKnownRecipes: [...known] };
     });
   };
@@ -481,7 +480,11 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                       </div>
                     </div>
                     <span className={`craft-rarity is-${String(recipe.rarity).toLowerCase()}`}>
-                      {recipe.ammoCrafting ? `R${recipe.ammoRarity}` : rarityLabel(recipe.rarity, copy)}
+                      {recipe.appGeneratedBaseRecipe
+                        ? `R${recipe.itemRarity ?? recipe.outputTemplate?.rarity ?? 0}`
+                        : recipe.ammoCrafting
+                          ? `R${recipe.ammoRarity}`
+                          : rarityLabel(recipe.rarity, copy)}
                     </span>
                   </button>
 
@@ -531,10 +534,10 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                         <button
                           type="button"
                           className={`pip-btn ${state.knownRare ? "is-primary" : ""}`}
-                          onClick={() => toggleKnownRecipe(recipe)}
-                          disabled={!setCharacter}
+                          onClick={() => learnRareRecipe(recipe)}
+                          disabled={!setCharacter || state.knownRare}
                         >
-                          {state.knownRare ? copy.forgetRecipe : copy.recipeFound}
+                          {state.knownRare ? copy.recipeLearned : copy.learnRecipe}
                         </button>
                       ) : null}
 

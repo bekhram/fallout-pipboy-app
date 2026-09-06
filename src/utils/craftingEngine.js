@@ -54,6 +54,77 @@ export function parsePerkRequirements(value) {
   });
 }
 
+function mergePerkRequirements(requirements = []) {
+  const merged = new Map();
+  requirements.forEach((requirement) => {
+    if (!requirement?.id) return;
+    const current = merged.get(requirement.id);
+    if (!current || Number(requirement.rank || 1) > Number(current.rank || 1)) {
+      merged.set(requirement.id, { ...requirement });
+    }
+  });
+  return [...merged.values()];
+}
+
+function getRecipeItemRarity(recipe) {
+  const candidates = [
+    recipe?.itemRarity,
+    recipe?.outputTemplate?.rarity,
+    recipe?.ammoRarity,
+  ];
+  for (const candidate of candidates) {
+    const value = Number.parseInt(String(candidate ?? ''), 10);
+    if (Number.isFinite(value)) return Math.max(0, Math.min(7, value));
+  }
+  return 0;
+}
+
+function requiredPerkRankForItemRarity(rarity) {
+  const value = Math.max(0, Math.min(7, Number(rarity) || 0));
+  if (value <= 1) return 0;
+  if (value === 2) return 2;
+  if (value === 3) return 3;
+  // Rarity 4 appears in both user-defined ranges; the stricter rank 4 wins.
+  return 4;
+}
+
+function automaticCraftingPerkRequirements(recipe) {
+  const requirements = [];
+  const group = normalize(recipe?.group);
+  const category = normalize(recipe?.category);
+
+  if (group === 'explosives') {
+    requirements.push({ id: 'demolition_expert', label: 'Demolition Expert', rank: 1 });
+  }
+
+  if (recipe?.appGeneratedBaseRecipe) {
+    const rank = requiredPerkRankForItemRarity(getRecipeItemRarity(recipe));
+    if (rank > 0) {
+      if (category === 'armor') {
+        requirements.push({ id: 'armorer', label: 'Armorer', rank });
+      } else if (category === 'weapons') {
+        const skill = normalize(recipe?.outputTemplate?.skill);
+        if (skill === 'melee weapons' || skill === 'unarmed') {
+          requirements.push({ id: 'blacksmith', label: 'Blacksmith', rank });
+        } else if (skill === 'explosives') {
+          requirements.push({ id: 'demolition_expert', label: 'Demolition Expert', rank });
+        } else {
+          requirements.push({ id: 'gun_nut', label: 'Gun Nut', rank });
+        }
+      }
+    }
+  }
+
+  return requirements;
+}
+
+export function getRecipePerkRequirements(recipe) {
+  return mergePerkRequirements([
+    ...parsePerkRequirements(recipe?.perks),
+    ...automaticCraftingPerkRequirements(recipe),
+  ]);
+}
+
 export function getCharacterPerkRank(character, requirement) {
   const requiredId = requirement?.id;
   const requiredLabel = normalize(requirement?.label);
@@ -107,7 +178,7 @@ export function getCraftingRecipeState(character, recipe) {
       enough: available >= Number(required || 0),
     };
   });
-  const perkRequirements = parsePerkRequirements(recipe?.perks);
+  const perkRequirements = getRecipePerkRequirements(recipe);
   const perkState = perkRequirements.map((requirement) => {
     const currentRank = getCharacterPerkRank(character, requirement);
     return {
