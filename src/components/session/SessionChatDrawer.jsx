@@ -180,13 +180,15 @@ export default function SessionChatDrawer({ session }) {
         {connectionState !== "online" && (
           <>
             {errorText && <div className="session-error">{errorText}</div>}
-            <button
-              type="button"
-              className="pip-btn is-primary"
-              onClick={() => session.reconnectNow?.()}
-            >
-              ↻ {copy.reconnect}
-            </button>
+            {session.reconnectNow && (
+              <button
+                type="button"
+                className="pip-btn is-primary"
+                onClick={() => session.reconnectNow()}
+              >
+                ↻ {copy.reconnect}
+              </button>
+            )}
           </>
         )}
 
