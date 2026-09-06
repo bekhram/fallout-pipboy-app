@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
 import CraftingScreen from "../crafting/CraftingScreen.jsx";
+import ArmorRepairPanel from "../crafting/ArmorRepairPanel.jsx";
 import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
@@ -22,6 +24,7 @@ const INTERACTIVE_SELECTOR = [
   ".games-screen",
   ".bestiary-screen",
   ".crafting-screen",
+  ".armor-repair-panel",
   ".pip-active-combat",
   ".combat-turn-sequence",
 ].join(",");
@@ -35,6 +38,8 @@ export default function PipboyShell({
   onRoll = null,
   children,
 }) {
+  const { i18n } = useTranslation();
+  const language = String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
   const touchStart = useRef(null);
   const previousTab = useRef(activeTab);
   const previousIndex = PIPBOY_TABS.findIndex((tab) => tab.key === previousTab.current);
@@ -100,10 +105,17 @@ export default function PipboyShell({
   if (activeTab === "bestiary") screenContent = <BestiaryScreen />;
   if (activeTab === "crafting") {
     screenContent = (
-      <CraftingScreen
-        character={resolvedCharacter}
-        setCharacter={resolvedSetCharacter}
-      />
+      <div className="crafting-workspace">
+        <ArmorRepairPanel
+          character={resolvedCharacter}
+          setCharacter={resolvedSetCharacter}
+          language={language}
+        />
+        <CraftingScreen
+          character={resolvedCharacter}
+          setCharacter={resolvedSetCharacter}
+        />
+      </div>
     );
   }
 
