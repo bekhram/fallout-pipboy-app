@@ -741,3 +741,55 @@
     font-size: 0.82rem;
   }
 }
+
+
+/* companion card corner actions */
+.companion-content {
+  position: relative;
+}
+
+.companion-card-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.companion-icon-btn {
+  width: 34px;
+  min-width: 34px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.companion-summary-row {
+  padding-right: 112px;
+}
+
+@media (max-width: 520px) {
+  .companion-card-actions {
+    gap: 4px;
+  }
+
+  .companion-icon-btn {
+    width: 31px;
+    min-width: 31px;
+    height: 30px;
+    min-height: 30px;
+    font-size: 0.95rem;
+  }
+
+  .companion-summary-row,
+  .companion-content.is-readonly .companion-summary-row {
+    grid-template-columns: minmax(0, 1fr);
+    padding-right: 101px;
+  }
+}

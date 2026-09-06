@@ -536,8 +536,6 @@ export default function CompanionTab({ onRoll = null }) {
 
         <div className="pip-inventory-actions push-bottom companion-actions">
           <button type="button" className="pip-btn" onClick={() => add("pet")}>{copy.addPet}</button>
-          <button type="button" className="pip-btn" onClick={copyActive} disabled={!active}>{copy.copy}</button>
-          <button type="button" className="pip-btn companion-delete-btn" onClick={removeActive} disabled={!active}>{copy.remove}</button>
         </div>
 
         {state.items.length > 0 && (
@@ -565,22 +563,45 @@ export default function CompanionTab({ onRoll = null }) {
           </div>
         ) : (
           <div className={`companion-content ${isEditingCard ? "is-editing" : "is-readonly"}`}>
+            <div className="companion-card-actions" aria-label={copy.title}>
+              <button
+                type="button"
+                className={`pip-btn companion-icon-btn ${isEditingCard ? "is-primary" : ""}`}
+                onClick={() => {
+                  setIsEditingCard((value) => !value);
+                  if (isEditingCard) setEditingAttackId(null);
+                }}
+                title={isEditingCard ? copy.doneEditing : copy.editCard}
+                aria-label={isEditingCard ? copy.doneEditing : copy.editCard}
+              >
+                {isEditingCard ? "✓" : "✎"}
+              </button>
+              <button
+                type="button"
+                className="pip-btn companion-icon-btn"
+                onClick={copyActive}
+                title={copy.copy}
+                aria-label={copy.copy}
+              >
+                ⧉
+              </button>
+              <button
+                type="button"
+                className="pip-btn companion-icon-btn companion-delete-btn"
+                onClick={removeActive}
+                title={copy.remove}
+                aria-label={copy.remove}
+              >
+                ⌫
+              </button>
+            </div>
+
             <div className="companion-summary-row push-bottom">
               <div className="pip-inline-stats companion-summary">
                 <span>{active.name || copy.unnamed}</span>
                 <span>{active.creatureType || (active.kind === "pet" ? copy.pet : copy.companion)}</span>
                 <span>LV {active.level || "1"}</span>
               </div>
-              <button
-                type="button"
-                className={`pip-btn ${isEditingCard ? "is-primary" : ""}`}
-                onClick={() => {
-                  setIsEditingCard((value) => !value);
-                  if (isEditingCard) setEditingAttackId(null);
-                }}
-              >
-                {isEditingCard ? copy.doneEditing : copy.editCard}
-              </button>
             </div>
 
             <div className="companion-identity-grid push-bottom">
