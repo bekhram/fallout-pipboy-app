@@ -151,6 +151,7 @@ export default function SessionChatDrawer({ session }) {
       <button
         type="button"
         className="session-chat-drawer-toggle"
+        style={{ top: "24%" }}
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-label={copy.title}
