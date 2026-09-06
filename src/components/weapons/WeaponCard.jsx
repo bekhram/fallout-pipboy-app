@@ -9,7 +9,12 @@ import {
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
 import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";
-import { applyPassiveWeaponPerks } from "../../utils/weaponPerkEffects.js";
+import { getPerkRank } from "../../utils/perkEffects.js";
+import {
+  applyConditionalWeaponPerks,
+  applyPassiveWeaponPerks,
+  getConditionalWeaponPerkAvailability,
+} from "../../utils/weaponPerkEffects.js";
 
 const qualityMap = Object.fromEntries(
   WEAPON_QUALITY_OPTIONS.map((item) => [item.key, item])
@@ -24,6 +29,106 @@ const MOD_SLOTS = Object.entries(MOD_SLOT_LABELS).map(([key, label]) => ({
   label,
 }));
 
+const CONTEXT_COPY = {
+  en: {
+    title: "ATTACK CONTEXT",
+    aim: "AIM",
+    sneak: "SNEAK",
+    moveReach: "MOVE + ATTACK",
+    ammoBoost: "AMMO BOOST",
+    location: "Target location",
+    noLocation: "No called shot",
+    torso: "Torso",
+    other: "Other location",
+    target: "Target type",
+    noTarget: "Any target",
+    insect: "Insect",
+    mutatedAnimal: "Mutated animal",
+    steadyAim: "Steady Aim",
+    firstAttack: "First attack: re-roll up to 2d20",
+    allAttacks: "All attacks this turn: re-roll 1d20",
+    difficulty: "Difficulty",
+    rerolls: "Perk rerolls",
+  },
+  ru: {
+    title: "КОНТЕКСТ АТАКИ",
+    aim: "ПРИЦЕЛ",
+    sneak: "СКРЫТАЯ АТАКА",
+    moveReach: "ПОДОЙТИ + АТАКА",
+    ammoBoost: "УСИЛЕНИЕ БОЕПРИПАСАМИ",
+    location: "Выбор зоны",
+    noLocation: "Без прицельной зоны",
+    torso: "Торс",
+    other: "Другая зона",
+    target: "Тип цели",
+    noTarget: "Любая цель",
+    insect: "Насекомое",
+    mutatedAnimal: "Мутировавшее животное",
+    steadyAim: "Steady Aim",
+    firstAttack: "Первая атака: до 2 перебросов d20",
+    allAttacks: "Все атаки хода: 1 переброс d20",
+    difficulty: "Сложность",
+    rerolls: "Перебросы от перков",
+  },
+  uk: {
+    title: "КОНТЕКСТ АТАКИ",
+    aim: "ПРИЦІЛ",
+    sneak: "ПРИХОВАНА АТАКА",
+    moveReach: "ПІДІЙТИ + АТАКА",
+    ammoBoost: "ПІДСИЛЕННЯ БОЄПРИПАСАМИ",
+    location: "Вибір зони",
+    noLocation: "Без прицільної зони",
+    torso: "Торс",
+    other: "Інша зона",
+    target: "Тип цілі",
+    noTarget: "Будь-яка ціль",
+    insect: "Комаха",
+    mutatedAnimal: "Мутована тварина",
+    steadyAim: "Steady Aim",
+    firstAttack: "Перша атака: до 2 перекидань d20",
+    allAttacks: "Усі атаки ходу: 1 перекидання d20",
+    difficulty: "Складність",
+    rerolls: "Перекидання від перків",
+  },
+  pl: {
+    title: "KONTEKST ATAKU",
+    aim: "CELOWANIE",
+    sneak: "ATAK Z UKRYCIA",
+    moveReach: "RUCH + ATAK",
+    ammoBoost: "WZMOCNIENIE AMUNICJĄ",
+    location: "Wybrana lokacja",
+    noLocation: "Bez celowania w lokację",
+    torso: "Tułów",
+    other: "Inna lokacja",
+    target: "Typ celu",
+    noTarget: "Dowolny cel",
+    insect: "Owad",
+    mutatedAnimal: "Zmutowane zwierzę",
+    steadyAim: "Steady Aim",
+    firstAttack: "Pierwszy atak: do 2 przerzutów k20",
+    allAttacks: "Wszystkie ataki tury: 1 przerzut k20",
+    difficulty: "Trudność",
+    rerolls: "Przerzuty z atutów",
+  },
+};
+
+function makeDefaultAttackContext() {
+  return {
+    aimed: false,
+    sneakAttack: false,
+    targetLocation: "",
+    targetType: "",
+    movedIntoReach: false,
+    ammoBoosted: false,
+    steadyAimMode: "first",
+  };
+}
+
+function getLanguageCode(value) {
+  const code = String(value || "en").toLowerCase().split("-")[0];
+  return CONTEXT_COPY[code] ? code : "en";
+}
+
 export default function WeaponCard({
   weapon,
   index,
@@ -37,7 +142,12 @@ export default function WeaponCard({
   const { t, i18n } = useTranslation();
   const [useRate, setUseRate] = useState(false);
   const [activePropertyIndex, setActivePropertyIndex] = useState(null);
+  const [showAttackContext, setShowAttackContext] = useState(false);
+  const [attackContext, setAttackContext] = useState(makeDefaultAttackContext);
   const propertiesRef = useRef(null);
+
+  const language = getLanguageCode(i18n.resolvedLanguage || i18n.language);
+  const contextCopy = CONTEXT_COPY[language];
 
   const weaponImageSlug = String(weapon.name || "")
     .trim()
@@ -99,8 +209,31 @@ export default function WeaponCard({
 
   const baseMetadata = getWeaponMetadata(weapon, globalWeapons);
   const modifiedWeapon = applyWeaponMods({ ...weapon, ...baseMetadata });
-  const perkResult = applyPassiveWeaponPerks(form, modifiedWeapon);
-  const calculatedWeapon = perkResult.weapon;
+  const passivePerkResult = applyPassiveWeaponPerks(form, modifiedWeapon);
+  const contextAvailability = getConditionalWeaponPerkAvailability(form, passivePerkResult.weapon);
+  const conditionalPerkResult = applyConditionalWeaponPerks(
+    form,
+    passivePerkResult.weapon,
+    attackContext
+  );
+  const calculatedWeapon = conditionalPerkResult.weapon;
+  const attackDifficulty = Math.max(0, 1 + Number(conditionalPerkResult.difficultyDelta || 0));
+  const allPerkNotes = [
+    ...passivePerkResult.notes,
+    ...conditionalPerkResult.notes,
+  ];
+
+  const hasHunter = getPerkRank(form, "hunter") > 0;
+  const hasEntomologist = getPerkRank(form, "entomologist") > 0;
+
+  const activeContextCount = [
+    attackContext.aimed,
+    attackContext.sneakAttack,
+    attackContext.targetLocation,
+    attackContext.targetType,
+    attackContext.movedIntoReach,
+    attackContext.ammoBoosted,
+  ].filter(Boolean).length;
 
   const processedQualities = processTags(
     calculatedWeapon.qualities,
@@ -119,6 +252,8 @@ export default function WeaponCard({
 
   useEffect(() => {
     setActivePropertyIndex(null);
+    setShowAttackContext(false);
+    setAttackContext(makeDefaultAttackContext());
   }, [weapon]);
 
   useEffect(() => {
@@ -160,16 +295,33 @@ export default function WeaponCard({
     return match ? match[1] : label;
   };
 
+  const toggleContext = (key) => {
+    setAttackContext((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const handleRoll = (event) => {
     event.stopPropagation();
-    onRoll?.(
-      createWeaponRoll({
-        weapon: calculatedWeapon,
-        diceCount: 2,
-        difficulty: 1,
-        useRate: Number(calculatedWeapon.rate || 0) > 0 && useRate,
-      })
-    );
+    const roll = createWeaponRoll({
+      weapon: {
+        ...calculatedWeapon,
+        attackContext: { ...attackContext },
+        attackDifficulty,
+        perkRerollD20: conditionalPerkResult.rerollD20,
+        damageRerollAllowed: conditionalPerkResult.damageRerollAllowed,
+        perkEffectNotes: allPerkNotes,
+      },
+      diceCount: 2,
+      difficulty: attackDifficulty,
+      useRate: Number(calculatedWeapon.rate || 0) > 0 && useRate,
+    });
+
+    onRoll?.({
+      ...roll,
+      perkRerollD20: conditionalPerkResult.rerollD20,
+      damageRerollAllowed: conditionalPerkResult.damageRerollAllowed,
+      perkNotes: allPerkNotes,
+      attackContext: { ...attackContext },
+    });
   };
 
   const hasMods = MOD_SLOTS.some(
@@ -207,8 +359,8 @@ export default function WeaponCard({
           <div className="stat-label">Damage Dice</div>
           <div className="stat-value"><span aria-hidden="true">⌖</span> {calculatedWeapon.damage || "0"}</div>
           <div className="stat-sub">{damageTypeLabel}</div>
-          {perkResult.notes.length > 0 && (
-            <div className="stat-sub">{perkResult.notes.join(" · ")}</div>
+          {allPerkNotes.length > 0 && (
+            <div className="stat-sub">{allPerkNotes.join(" · ")}</div>
           )}
         </div>
 
@@ -230,6 +382,137 @@ export default function WeaponCard({
           <div className="stat-sub">{rangeLabel.replace(/\s*\(.*?\)/, "")}</div>
         </div>
       </div>
+
+      {contextAvailability.hasAny && (
+        <div style={{ marginTop: 8 }}>
+          <button
+            type="button"
+            className={`pip-btn ${showAttackContext ? "is-primary" : ""}`}
+            style={{ width: "100%" }}
+            onClick={(event) => {
+              event.stopPropagation();
+              setShowAttackContext((prev) => !prev);
+            }}
+          >
+            {contextCopy.title}{activeContextCount > 0 ? ` [${activeContextCount}]` : ""}
+          </button>
+
+          {showAttackContext && (
+            <div
+              className="pip-panel"
+              style={{
+                marginTop: 6,
+                padding: 8,
+                display: "grid",
+                gap: 6,
+              }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {contextAvailability.aim && (
+                  <button
+                    type="button"
+                    className={`pip-btn ${attackContext.aimed ? "is-primary" : ""}`}
+                    onClick={() => toggleContext("aimed")}
+                  >
+                    {contextCopy.aim}
+                  </button>
+                )}
+
+                {contextAvailability.sneakAttack && (
+                  <button
+                    type="button"
+                    className={`pip-btn ${attackContext.sneakAttack ? "is-primary" : ""}`}
+                    onClick={() => toggleContext("sneakAttack")}
+                  >
+                    {contextCopy.sneak}
+                  </button>
+                )}
+
+                {contextAvailability.movedIntoReach && (
+                  <button
+                    type="button"
+                    className={`pip-btn ${attackContext.movedIntoReach ? "is-primary" : ""}`}
+                    onClick={() => toggleContext("movedIntoReach")}
+                  >
+                    {contextCopy.moveReach}
+                  </button>
+                )}
+
+                {contextAvailability.ammoBoosted && (
+                  <button
+                    type="button"
+                    className={`pip-btn ${attackContext.ammoBoosted ? "is-primary" : ""}`}
+                    onClick={() => toggleContext("ammoBoosted")}
+                  >
+                    {contextCopy.ammoBoost}
+                  </button>
+                )}
+              </div>
+
+              {contextAvailability.targetLocation && (
+                <label style={{ display: "grid", gap: 3 }}>
+                  <span className="stat-sub">{contextCopy.location}</span>
+                  <select
+                    className="pip-input"
+                    value={attackContext.targetLocation}
+                    onChange={(event) => setAttackContext((prev) => ({
+                      ...prev,
+                      targetLocation: event.target.value,
+                    }))}
+                  >
+                    <option value="">{contextCopy.noLocation}</option>
+                    <option value="torso">{contextCopy.torso}</option>
+                    <option value="other">{contextCopy.other}</option>
+                  </select>
+                </label>
+              )}
+
+              {contextAvailability.targetType && (
+                <label style={{ display: "grid", gap: 3 }}>
+                  <span className="stat-sub">{contextCopy.target}</span>
+                  <select
+                    className="pip-input"
+                    value={attackContext.targetType}
+                    onChange={(event) => setAttackContext((prev) => ({
+                      ...prev,
+                      targetType: event.target.value,
+                    }))}
+                  >
+                    <option value="">{contextCopy.noTarget}</option>
+                    {hasEntomologist && <option value="insect">{contextCopy.insect}</option>}
+                    {hasHunter && <option value="mutated_animal">{contextCopy.mutatedAnimal}</option>}
+                  </select>
+                </label>
+              )}
+
+              {contextAvailability.steadyAim && attackContext.aimed && (
+                <label style={{ display: "grid", gap: 3 }}>
+                  <span className="stat-sub">{contextCopy.steadyAim}</span>
+                  <select
+                    className="pip-input"
+                    value={attackContext.steadyAimMode}
+                    onChange={(event) => setAttackContext((prev) => ({
+                      ...prev,
+                      steadyAimMode: event.target.value,
+                    }))}
+                  >
+                    <option value="first">{contextCopy.firstAttack}</option>
+                    <option value="all">{contextCopy.allAttacks}</option>
+                  </select>
+                </label>
+              )}
+
+              <div className="stat-sub" style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                <strong>{contextCopy.difficulty}: {attackDifficulty}</strong>
+                {conditionalPerkResult.rerollD20 > 0 && (
+                  <strong>{contextCopy.rerolls}: {conditionalPerkResult.rerollD20}d20</strong>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {allTags.length > 0 && (
         <div className="pip-weapon-properties" ref={propertiesRef}>
