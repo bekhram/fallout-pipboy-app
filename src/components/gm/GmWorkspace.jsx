@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import GmPanel from "./GmPanel.jsx";
 import GmToolkit from "./GmToolkit.jsx";
+import "./gmWorkspace.css";
 
 export default function GmWorkspace({ character = null, setCharacter = null, onOpenMap }) {
   const [panelVersion, setPanelVersion] = useState(0);
