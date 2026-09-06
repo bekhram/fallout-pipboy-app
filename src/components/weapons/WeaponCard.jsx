@@ -203,7 +203,7 @@ export default function WeaponCard({
       <div className="pip-weapon-stats-grid">
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">
           <div className="stat-label">Damage Dice</div>
-          <div className="stat-value"><img src="/combat-d6.png" alt="" aria-hidden="true" className="pip-weapon-combat-die" /> {modifiedWeapon.damage || "0"}</div>
+          <div className="stat-value"><span aria-hidden="true">⌖</span> {modifiedWeapon.damage || "0"}</div>
           <div className="stat-sub">{damageTypeLabel}</div>
         </div>
 
