@@ -1,0 +1,35 @@
+name: Apply companion card actions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-companion-card-actions.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply patch
+        run: node scripts/patch-companion-card-actions.mjs
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit application patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/companion/CompanionTab.jsx src/components/companion/companion.css
+          git diff --cached --quiet && exit 0
+          git commit -m "ui: move companion card actions to corner icons"
+          git push origin main
