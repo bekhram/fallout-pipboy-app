@@ -9,6 +9,7 @@ import {
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
 import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";
+import { applyPassiveWeaponPerks } from "../../utils/weaponPerkEffects.js";
 
 const qualityMap = Object.fromEntries(
   WEAPON_QUALITY_OPTIONS.map((item) => [item.key, item])
@@ -22,43 +23,6 @@ const MOD_SLOTS = Object.entries(MOD_SLOT_LABELS).map(([key, label]) => ({
   key,
   label,
 }));
-
-function normalizePerkId(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-}
-
-function getPerkRank(form, perkId) {
-  const wanted = normalizePerkId(perkId);
-  let best = 0;
-
-  for (const perk of form?.perksAndTraits || []) {
-    if (perk?.isOriginTrait) continue;
-    if (normalizePerkId(perk?.id) !== wanted) continue;
-    best = Math.max(best, Math.max(1, Number(perk?.rank || 1)));
-  }
-
-  return best;
-}
-
-function getDamageDiceCount(value) {
-  const match = String(value ?? "").match(/\d+/);
-  return match ? Math.max(0, Number(match[0]) || 0) : 0;
-}
-
-function getCommandoDamageBonus(form, weapon) {
-  const rank = getPerkRank(form, "commando");
-  if (rank <= 0) return 0;
-
-  const fireRate = Number(weapon?.rate || 0);
-  const isHeavyWeapon = String(weapon?.skill || "").trim().toLowerCase() === "big guns";
-
-  if (fireRate < 3 || isHeavyWeapon) return 0;
-  return rank;
-}
 
 export default function WeaponCard({
   weapon,
@@ -100,23 +64,26 @@ export default function WeaponCard({
   const processTags = (presetArray, customString, dictMap) => {
     const rawList = [
       ...(Array.isArray(presetArray) ? presetArray : []),
-      ...(customString ? customString.split(",") : [])
-    ].map(s => s.trim()).filter(Boolean);
+      ...(customString ? customString.split(",") : []),
+    ].map((s) => s.trim()).filter(Boolean);
 
     const uniqueTags = [];
     const seen = new Set();
 
-    rawList.forEach(tag => {
-      const norm = tag.toLowerCase().replace(/[\s_-]/g, '');
+    rawList.forEach((tag) => {
+      const norm = tag.toLowerCase().replace(/[\s_-]/g, "");
       if (!seen.has(norm)) {
         seen.add(norm);
         uniqueTags.push(tag);
       }
     });
 
-    return uniqueTags.map(tag => {
-      const normTag = tag.toLowerCase().replace(/[\s_-]/g, '');
-      const option = dictMap[tag] || Object.values(dictMap).find(o => o.key.toLowerCase().replace(/[\s_-]/g, '') === normTag);
+    return uniqueTags.map((tag) => {
+      const normTag = tag.toLowerCase().replace(/[\s_-]/g, "");
+      const option = dictMap[tag]
+        || Object.values(dictMap).find(
+          (candidate) => candidate.key.toLowerCase().replace(/[\s_-]/g, "") === normTag
+        );
 
       if (option) {
         return {
@@ -125,18 +92,15 @@ export default function WeaponCard({
           title: translateSafe(option.descriptionKey, option.description),
         };
       }
+
       return { key: tag, label: tag, title: "" };
     });
   };
 
   const baseMetadata = getWeaponMetadata(weapon, globalWeapons);
   const modifiedWeapon = applyWeaponMods({ ...weapon, ...baseMetadata });
-  const commandoDamageBonus = getCommandoDamageBonus(form, modifiedWeapon);
-  const baseDamageDice = getDamageDiceCount(modifiedWeapon.damage);
-  const calculatedDamageDice = baseDamageDice + commandoDamageBonus;
-  const calculatedWeapon = commandoDamageBonus > 0
-    ? { ...modifiedWeapon, damage: String(calculatedDamageDice) }
-    : modifiedWeapon;
+  const perkResult = applyPassiveWeaponPerks(form, modifiedWeapon);
+  const calculatedWeapon = perkResult.weapon;
 
   const processedQualities = processTags(
     calculatedWeapon.qualities,
@@ -167,9 +131,7 @@ export default function WeaponCard({
     };
 
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setActivePropertyIndex(null);
-      }
+      if (event.key === "Escape") setActivePropertyIndex(null);
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -193,13 +155,13 @@ export default function WeaponCard({
     ? translateSafe(`weaponRanges.${calculatedWeapon.range}`, calculatedWeapon.range)
     : "—";
 
-  const getRangeShort = (rLabel) => {
-    const match = rLabel.match(/\((.*?)\)/);
-    return match ? match[1] : rLabel;
+  const getRangeShort = (label) => {
+    const match = label.match(/\((.*?)\)/);
+    return match ? match[1] : label;
   };
 
-  const handleRoll = (e) => {
-    e.stopPropagation();
+  const handleRoll = (event) => {
+    event.stopPropagation();
     onRoll?.(
       createWeaponRoll({
         weapon: calculatedWeapon,
@@ -210,7 +172,9 @@ export default function WeaponCard({
     );
   };
 
-  const hasMods = MOD_SLOTS.some(slot => weapon.mods?.[slot.key] && weapon.mods?.[slot.key].trim() !== "");
+  const hasMods = MOD_SLOTS.some(
+    (slot) => weapon.mods?.[slot.key] && weapon.mods?.[slot.key].trim() !== ""
+  );
 
   return (
     <article className="pip-panel pip-item-card pip-weapon-card">
@@ -221,9 +185,9 @@ export default function WeaponCard({
         </div>
 
         <div className="pip-weapon-card-actions">
-          <button type="button" className="pip-btn" onClick={(e) => { e.stopPropagation(); onEdit(index); }}>✎</button>
-          <button type="button" className="pip-btn" onClick={(e) => { e.stopPropagation(); onCopy(index); }}>⎘</button>
-          <button type="button" className="pip-btn is-danger" onClick={(e) => { e.stopPropagation(); onRemove(index); }}>✕</button>
+          <button type="button" className="pip-btn" onClick={(event) => { event.stopPropagation(); onEdit(index); }}>✎</button>
+          <button type="button" className="pip-btn" onClick={(event) => { event.stopPropagation(); onCopy(index); }}>⎘</button>
+          <button type="button" className="pip-btn is-danger" onClick={(event) => { event.stopPropagation(); onRemove(index); }}>✕</button>
         </div>
       </div>
 
@@ -242,15 +206,16 @@ export default function WeaponCard({
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">
           <div className="stat-label">Damage Dice</div>
           <div className="stat-value"><span aria-hidden="true">⌖</span> {calculatedWeapon.damage || "0"}</div>
-          <div className="stat-sub">
-            {damageTypeLabel}{commandoDamageBonus > 0 ? ` · COMMANDO +${commandoDamageBonus}` : ""}
-          </div>
+          <div className="stat-sub">{damageTypeLabel}</div>
+          {perkResult.notes.length > 0 && (
+            <div className="stat-sub">{perkResult.notes.join(" · ")}</div>
+          )}
         </div>
 
         {Number(calculatedWeapon.rate || 0) > 0 && (
-          <div 
-            className={`pip-stat-box is-clickable ${useRate ? 'is-active' : ''}`}
-            onClick={(e) => { e.stopPropagation(); setUseRate((prev) => !prev); }}
+          <div
+            className={`pip-stat-box is-clickable ${useRate ? "is-active" : ""}`}
+            onClick={(event) => { event.stopPropagation(); setUseRate((prev) => !prev); }}
             title="Click to toggle Burst"
           >
             <div className="stat-label">Rate of Fire</div>
@@ -262,19 +227,19 @@ export default function WeaponCard({
         <div className="pip-stat-box">
           <div className="stat-label">Range</div>
           <div className="stat-value">{getRangeShort(rangeLabel)}</div>
-          <div className="stat-sub">{rangeLabel.replace(/\s*\(.*?\)/, '')}</div>
+          <div className="stat-sub">{rangeLabel.replace(/\s*\(.*?\)/, "")}</div>
         </div>
       </div>
 
       {allTags.length > 0 && (
         <div className="pip-weapon-properties" ref={propertiesRef}>
           <ul className="pip-weapon-property-list">
-            {allTags.map((tag, i) => {
-              const isActive = activePropertyIndex === i;
-              const tooltipId = `weapon-${index}-property-${i}-tooltip`;
+            {allTags.map((tag, tagIndex) => {
+              const isActive = activePropertyIndex === tagIndex;
+              const tooltipId = `weapon-${index}-property-${tagIndex}-tooltip`;
 
               return (
-                <li key={`trait-${index}-${i}`}>
+                <li key={`trait-${index}-${tagIndex}`}>
                   {tag.title ? (
                     <button
                       type="button"
@@ -284,7 +249,7 @@ export default function WeaponCard({
                       aria-describedby={isActive ? tooltipId : undefined}
                       onClick={(event) => {
                         event.stopPropagation();
-                        setActivePropertyIndex(isActive ? null : i);
+                        setActivePropertyIndex(isActive ? null : tagIndex);
                       }}
                     >
                       <span className="pip-weapon-property-indicator" aria-hidden="true">
@@ -337,13 +302,14 @@ export default function WeaponCard({
           <div className="pip-weapon-mods-grid">
             {MOD_SLOTS.map((slot) => {
               const modName = weapon.mods?.[slot.key];
-              const isModded = !!modName && modName.trim() !== "";
-              if (!isModded) return null; 
-              
+              if (!modName || modName.trim() === "") return null;
+
               return (
                 <div key={slot.key} style={{ display: "flex", gap: "5px" }}>
                   <span style={{ opacity: 0.5, textTransform: "uppercase" }}>{t(`weaponMods.slots.${slot.key}`, slot.label)}:</span>
-                  <span style={{ fontWeight: "bold", color: "var(--pip-color-highlight, #fff)" }}>{localizeWeaponModName(modName, i18n.resolvedLanguage)}</span>
+                  <span style={{ fontWeight: "bold", color: "var(--pip-color-highlight, #fff)" }}>
+                    {localizeWeaponModName(modName, i18n.resolvedLanguage)}
+                  </span>
                 </div>
               );
             })}
