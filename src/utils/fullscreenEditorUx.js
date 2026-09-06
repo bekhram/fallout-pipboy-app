@@ -42,6 +42,10 @@ function findInlineEditors() {
     });
   });
 
+  document.querySelectorAll(".pip-perk-editor").forEach((editor) => {
+    targets.add(editor);
+  });
+
   return targets;
 }
 
