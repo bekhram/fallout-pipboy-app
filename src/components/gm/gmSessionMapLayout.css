@@ -1,0 +1,54 @@
+@media (min-width: 1181px) {
+  .session-gm-workspace-wrap > .gm-workspace {
+    grid-template-areas:
+      "status status status"
+      "scene map library"
+      "initiative map library"
+      "initiative autogm dice"
+      "ap autogm journal"
+      "encounter log loot";
+  }
+
+  .session-gm-workspace-wrap > .gm-workspace > .gm-session-map {
+    grid-area: map;
+    align-self: stretch;
+    min-height: 100%;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) {
+    grid-area: log;
+    min-height: 0;
+    grid-template-rows: auto auto auto;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2)::before {
+    display: none;
+    content: none;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .gm-card__head,
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .gm-travel-log,
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .pip-btn {
+    grid-row: auto;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .gm-travel-log {
+    max-height: 190px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .gm-workspace > .gm-session-map {
+    order: -1;
+  }
+
+  .gm-workspace .gm-panel__column--wide > .gm-card:nth-child(2)::before {
+    display: none;
+    content: none;
+  }
+
+  .gm-workspace .gm-panel__column--wide > .gm-card:nth-child(2) {
+    min-height: 0;
+    grid-template-rows: auto auto auto;
+  }
+}
