@@ -9,6 +9,13 @@ const HOST_PREFIX = "pip2d20-session-";
 const MAX_FEED = 120;
 const DEFAULT_AP_MAX = 6;
 const PORTRAIT_STORAGE_KEY = "fallout_pipboy_v4_portrait_preview";
+const PLAYER_PREFIX = "pip2d20-player-";
+const RECONNECT_BASE_MS = 1200;
+const RECONNECT_MAX_MS = 10000;
+const PLAYER_GRACE_MS = 30000;
+const HEARTBEAT_MS = 10000;
+const HEARTBEAT_TIMEOUT_MS = 45000;
+const MAX_QUEUED_EVENTS = 40;
 
 const EMPTY_COMBAT = {
   active: false,
@@ -43,6 +50,10 @@ function getHostPeerId(code) {
   return `${HOST_PREFIX}${String(code || "").toLowerCase()}`;
 }
 
+function getPlayerPeerId(clientId) {
+  return `${PLAYER_PREFIX}${String(clientId || "").toLowerCase().replace(/[^a-z0-9-]/g, "")}`;
+}
+
 function getCharacterName(form) {
   return String(form?.characterName || form?.name || form?.playerName || "").trim();
 }
@@ -51,7 +62,7 @@ function readPortraitSnapshot() {
   try {
     const value = localStorage.getItem(PORTRAIT_STORAGE_KEY) || "";
     if (!value.startsWith("data:image/")) return "";
-    return value.length <= 220000 ? value : "";
+    return value.length <= 80000 ? value : "";
   } catch {
     return "";
   }
@@ -123,10 +134,53 @@ function createCharacterSnapshot(form) {
   };
 }
 
-function makePlayerPacket(name, form) {
+function createLiveCharacterSnapshot(form) {
+  const full = createCharacterSnapshot(form);
+  if (!full) return null;
+  return {
+    name: full.name,
+    origin: full.origin,
+    level: full.level,
+    currentHp: full.currentHp,
+    maxHp: full.maxHp,
+    defense: full.defense,
+    armor: full.armor,
+    resistances: full.resistances,
+    initiative: full.initiative,
+    luck: full.luck,
+    statuses: full.statuses,
+    updatedAt: full.updatedAt,
+  };
+}
+
+function makePlayerPacket(name, form, full = true) {
   return {
     name: String(name || "Player").trim().slice(0, 40) || "Player",
-    character: createCharacterSnapshot(form),
+    character: full ? createCharacterSnapshot(form) : createLiveCharacterSnapshot(form),
+  };
+}
+
+function toLightPlayer(player) {
+  const character = player?.character;
+  return {
+    peerId: player?.peerId || "",
+    name: player?.name || "Player",
+    connected: player?.connected !== false,
+    updatedAt: player?.updatedAt || null,
+    character: character ? {
+      name: character.name,
+      origin: character.origin,
+      level: character.level,
+      currentHp: character.currentHp,
+      maxHp: character.maxHp,
+      defense: character.defense,
+      armor: character.armor,
+      resistances: character.resistances,
+      initiative: character.initiative,
+      luck: character.luck,
+      statuses: character.statuses,
+      updatedAt: character.updatedAt,
+    } : null,
   };
 }
 
@@ -265,7 +319,16 @@ export default function useSharedSession(form) {
   const codeRef = useRef("");
   const formRef = useRef(form);
   const playerNameRef = useRef("");
+  const playerClientIdRef = useRef("");
+  const desiredModeRef = useRef("lobby");
   const autoSyncTimerRef = useRef(null);
+  const reconnectTimerRef = useRef(null);
+  const reconnectAttemptRef = useRef(0);
+  const heartbeatTimerRef = useRef(null);
+  const lastPongRef = useRef(Date.now());
+  const pendingOutboundRef = useRef([]);
+  const networkGenerationRef = useRef(0);
+  const playerDisconnectTimersRef = useRef(new Map());
 
   useEffect(() => { formRef.current = form; }, [form]);
   useEffect(() => { playersRef.current = players; }, [players]);
@@ -273,94 +336,186 @@ export default function useSharedSession(form) {
   useEffect(() => { feedRef.current = feed; }, [feed]);
   useEffect(() => { combatRef.current = combat; }, [combat]);
 
-  const destroyNetwork = () => {
+  function clearReconnectTimer() {
+    if (!reconnectTimerRef.current) return;
+    window.clearTimeout(reconnectTimerRef.current);
+    reconnectTimerRef.current = null;
+  }
+
+  function stopHeartbeat() {
+    if (!heartbeatTimerRef.current) return;
+    window.clearInterval(heartbeatTimerRef.current);
+    heartbeatTimerRef.current = null;
+  }
+
+  function clearDisconnectTimer(peerId) {
+    const timer = playerDisconnectTimersRef.current.get(peerId);
+    if (timer) window.clearTimeout(timer);
+    playerDisconnectTimersRef.current.delete(peerId);
+  }
+
+  function destroyCurrentPeer() {
+    networkGenerationRef.current += 1;
+    stopHeartbeat();
+    safeClose(hostConnectionRef.current);
+    hostConnectionRef.current = null;
+    const peer = peerRef.current;
+    peerRef.current = null;
+    try { peer?.destroy?.(); } catch { /* Ignore cleanup errors. */ }
+  }
+
+  function destroyNetwork() {
+    desiredModeRef.current = "lobby";
+    clearReconnectTimer();
+    stopHeartbeat();
     if (autoSyncTimerRef.current) {
       window.clearTimeout(autoSyncTimerRef.current);
       autoSyncTimerRef.current = null;
     }
+    playerDisconnectTimersRef.current.forEach((timer) => window.clearTimeout(timer));
+    playerDisconnectTimersRef.current.clear();
+    pendingOutboundRef.current = [];
     connectionsRef.current.forEach((connection) => safeClose(connection));
     connectionsRef.current.clear();
-    safeClose(hostConnectionRef.current);
-    hostConnectionRef.current = null;
-    try { peerRef.current?.destroy?.(); } catch { /* Ignore cleanup errors. */ }
-    peerRef.current = null;
-  };
+    destroyCurrentPeer();
+  }
 
   useEffect(() => () => destroyNetwork(), []);
 
-  const broadcastState = () => {
-    const payload = {
-      type: "session_state",
-      sessionCode: codeRef.current,
-      players: playersRef.current,
-      sceneMessage: sceneRef.current,
-      feed: feedRef.current,
-      combat: combatRef.current,
-      sentAt: new Date().toISOString(),
-    };
+  function sendToPlayers(payload) {
     connectionsRef.current.forEach((connection) => {
-      if (connection?.open) connection.send(payload);
+      try {
+        if (connection?.open) connection.send(payload);
+      } catch {
+        // A single broken data channel must not interrupt the rest of the group.
+      }
     });
-  };
+  }
 
-  const setHostFeed = (nextFeed) => {
+  function broadcastPlayers() {
+    sendToPlayers({
+      type: "players_state",
+      players: playersRef.current.map(toLightPlayer),
+      sentAt: new Date().toISOString(),
+    });
+  }
+
+  function broadcastCombat() {
+    sendToPlayers({ type: "combat_state", combat: combatRef.current, sentAt: new Date().toISOString() });
+  }
+
+  function broadcastSceneState() {
+    sendToPlayers({ type: "scene_state", sceneMessage: sceneRef.current, sentAt: new Date().toISOString() });
+  }
+
+  function sendSnapshot(connection) {
+    if (!connection?.open) return;
+    try {
+      connection.send({
+        type: "session_state",
+        sessionCode: codeRef.current,
+        players: playersRef.current.map(toLightPlayer),
+        sceneMessage: sceneRef.current,
+        feed: feedRef.current,
+        combat: combatRef.current,
+        sentAt: new Date().toISOString(),
+      });
+    } catch {
+      // Reconnect logic will retry the connection if the channel closes.
+    }
+  }
+
+  function setHostFeed(nextFeed) {
     const capped = nextFeed.slice(-MAX_FEED);
     feedRef.current = capped;
     setFeed(capped);
-    window.setTimeout(broadcastState, 0);
-  };
+  }
 
-  const appendHostFeed = (item) => setHostFeed([...feedRef.current, item]);
+  function appendHostFeed(item) {
+    setHostFeed([...feedRef.current, item]);
+    sendToPlayers({ type: "feed_item", item, sentAt: new Date().toISOString() });
+  }
 
-  const setHostCombat = (nextCombat, feedItem = null) => {
+  function setHostCombat(nextCombat, feedItem = null) {
     const safe = sanitizeCombatState(nextCombat);
     combatRef.current = safe;
     setCombat(safe);
+    broadcastCombat();
     if (feedItem) appendHostFeed(feedItem);
-    else window.setTimeout(broadcastState, 0);
     return safe;
-  };
+  }
 
-  const upsertPlayer = (peerId, packet) => {
+  function upsertPlayer(peerId, packet) {
+    clearDisconnectTimer(peerId);
+    const existing = playersRef.current.find((item) => item.peerId === peerId);
+    const incomingCharacter = packet?.character || null;
     const nextPlayer = {
       peerId,
-      name: cleanText(packet?.name || "Player", 40) || "Player",
-      character: packet?.character || null,
+      name: cleanText(packet?.name || existing?.name || "Player", 40) || "Player",
+      connected: true,
+      character: incomingCharacter
+        ? { ...(existing?.character || {}), ...incomingCharacter }
+        : existing?.character || null,
       updatedAt: new Date().toISOString(),
     };
-    const existed = playersRef.current.some((item) => item.peerId === peerId);
+    const existed = Boolean(existing);
     const next = existed
       ? playersRef.current.map((item) => (item.peerId === peerId ? { ...item, ...nextPlayer } : item))
       : [...playersRef.current, nextPlayer];
     playersRef.current = next;
     setPlayers(next);
+    broadcastPlayers();
     if (!existed) appendHostFeed(makeFeedItem({ type: "system", sender: nextPlayer.name, event: "join" }));
-    else window.setTimeout(broadcastState, 0);
-  };
+  }
 
-  const removePlayer = (peerId) => {
+  function removePlayer(peerId) {
+    clearDisconnectTimer(peerId);
     const previous = playersRef.current.find((item) => item.peerId === peerId);
     const next = playersRef.current.filter((item) => item.peerId !== peerId);
     playersRef.current = next;
     setPlayers(next);
+    broadcastPlayers();
     if (previous) appendHostFeed(makeFeedItem({ type: "system", sender: previous.name, event: "leave" }));
-    else window.setTimeout(broadcastState, 0);
-  };
+  }
 
-  const bindHostConnection = (connection) => {
+  function markPlayerDisconnected(peerId) {
+    if (!peerId || desiredModeRef.current !== "host") return;
+    if (!playersRef.current.some((item) => item.peerId === peerId)) return;
+    const next = playersRef.current.map((item) =>
+      item.peerId === peerId ? { ...item, connected: false, updatedAt: new Date().toISOString() } : item
+    );
+    playersRef.current = next;
+    setPlayers(next);
+    broadcastPlayers();
+    clearDisconnectTimer(peerId);
+    const timer = window.setTimeout(() => {
+      playerDisconnectTimersRef.current.delete(peerId);
+      const connection = connectionsRef.current.get(peerId);
+      if (connection?.open) return;
+      removePlayer(peerId);
+    }, PLAYER_GRACE_MS);
+    playerDisconnectTimersRef.current.set(peerId, timer);
+  }
+
+  function bindHostConnection(connection) {
+    const previous = connectionsRef.current.get(connection.peer);
+    if (previous && previous !== connection) safeClose(previous);
     connectionsRef.current.set(connection.peer, connection);
+    clearDisconnectTimer(connection.peer);
+
     connection.on("open", () => {
-      connection.send({
-        type: "session_state",
-        sessionCode: codeRef.current,
-        players: playersRef.current,
-        sceneMessage: sceneRef.current,
-        feed: feedRef.current,
-        combat: combatRef.current,
-      });
+      if (desiredModeRef.current !== "host") return;
+      connectionsRef.current.set(connection.peer, connection);
+      clearDisconnectTimer(connection.peer);
+      sendSnapshot(connection);
     });
+
     connection.on("data", (data) => {
       if (!data || typeof data !== "object") return;
+      if (data.type === "ping") {
+        try { if (connection.open) connection.send({ type: "pong", at: Date.now() }); } catch { /* ignore */ }
+        return;
+      }
       if (data.type === "join" || data.type === "player_update") {
         upsertPlayer(connection.peer, data.player);
         return;
@@ -377,17 +532,18 @@ export default function useSharedSession(form) {
         if (roll) appendHostFeed(makeFeedItem({ type: "roll", sender, roll }));
       }
     });
-    connection.on("close", () => {
-      connectionsRef.current.delete(connection.peer);
-      removePlayer(connection.peer);
-    });
-    connection.on("error", () => {
-      connectionsRef.current.delete(connection.peer);
-      removePlayer(connection.peer);
-    });
-  };
 
-  const resetState = () => {
+    const handleClosed = () => {
+      if (connectionsRef.current.get(connection.peer) === connection) {
+        connectionsRef.current.delete(connection.peer);
+        markPlayerDisconnected(connection.peer);
+      }
+    };
+    connection.on("close", handleClosed);
+    connection.on("error", handleClosed);
+  }
+
+  function resetState() {
     const emptyCombat = { ...EMPTY_COMBAT };
     setPlayers([]);
     setSceneMessage("");
@@ -397,7 +553,216 @@ export default function useSharedSession(form) {
     sceneRef.current = "";
     feedRef.current = [];
     combatRef.current = emptyCombat;
-  };
+  }
+
+  function scheduleReconnect() {
+    if (desiredModeRef.current === "lobby" || reconnectTimerRef.current) return;
+    reconnectAttemptRef.current += 1;
+    const delay = Math.min(
+      RECONNECT_MAX_MS,
+      RECONNECT_BASE_MS * Math.pow(1.65, Math.max(0, reconnectAttemptRef.current - 1))
+    );
+    setStatus("connecting");
+    reconnectTimerRef.current = window.setTimeout(() => {
+      reconnectTimerRef.current = null;
+      if (desiredModeRef.current === "host") createHostPeer(true);
+      if (desiredModeRef.current === "player") createPlayerPeer(true);
+    }, delay);
+  }
+
+  function flushPendingOutbound() {
+    const connection = hostConnectionRef.current;
+    if (!connection?.open || !pendingOutboundRef.current.length) return;
+    const pending = pendingOutboundRef.current.splice(0, MAX_QUEUED_EVENTS);
+    pending.forEach((payload) => {
+      try { connection.send(payload); } catch { pendingOutboundRef.current.unshift(payload); }
+    });
+  }
+
+  function queuePlayerPayload(payload) {
+    const connection = hostConnectionRef.current;
+    if (connection?.open) {
+      try {
+        connection.send(payload);
+        return true;
+      } catch {
+        // Fall through and queue it.
+      }
+    }
+    pendingOutboundRef.current = [...pendingOutboundRef.current, payload].slice(-MAX_QUEUED_EVENTS);
+    scheduleReconnect();
+    return true;
+  }
+
+  function applyPlayerInbound(data) {
+    if (!data || typeof data !== "object") return;
+    if (data.type === "pong") {
+      lastPongRef.current = Date.now();
+      return;
+    }
+    if (data.type === "session_state") {
+      setPlayers(Array.isArray(data.players) ? data.players : []);
+      setSceneMessage(cleanText(data.sceneMessage, 600));
+      setFeed(Array.isArray(data.feed) ? data.feed.slice(-MAX_FEED) : []);
+      setCombat(sanitizeCombatState(data.combat));
+      return;
+    }
+    if (data.type === "players_state") {
+      setPlayers(Array.isArray(data.players) ? data.players : []);
+      return;
+    }
+    if (data.type === "scene_state") {
+      setSceneMessage(cleanText(data.sceneMessage, 600));
+      return;
+    }
+    if (data.type === "combat_state") {
+      setCombat(sanitizeCombatState(data.combat));
+      return;
+    }
+    if (data.type === "feed_item" && data.item?.id) {
+      setFeed((prev) => {
+        if (prev.some((item) => item.id === data.item.id)) return prev;
+        return [...prev, data.item].slice(-MAX_FEED);
+      });
+    }
+  }
+
+  function startPlayerHeartbeat() {
+    stopHeartbeat();
+    lastPongRef.current = Date.now();
+    heartbeatTimerRef.current = window.setInterval(() => {
+      if (desiredModeRef.current !== "player") return;
+      const connection = hostConnectionRef.current;
+      if (!connection?.open) {
+        scheduleReconnect();
+        return;
+      }
+      if (!document.hidden && Date.now() - lastPongRef.current > HEARTBEAT_TIMEOUT_MS) {
+        safeClose(connection);
+        scheduleReconnect();
+        return;
+      }
+      try { connection.send({ type: "ping", at: Date.now() }); } catch { scheduleReconnect(); }
+    }, HEARTBEAT_MS);
+  }
+
+  function createHostPeer(isRecovery = false) {
+    if (desiredModeRef.current !== "host" || !codeRef.current) return;
+    const generation = networkGenerationRef.current + 1;
+    networkGenerationRef.current = generation;
+    const oldPeer = peerRef.current;
+    peerRef.current = null;
+    try { oldPeer?.destroy?.(); } catch { /* ignore */ }
+
+    setStatus("connecting");
+    const peer = new Peer(getHostPeerId(codeRef.current), { debug: 1, pingInterval: 5000 });
+    peerRef.current = peer;
+
+    peer.on("open", () => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "host") return;
+      clearReconnectTimer();
+      reconnectAttemptRef.current = 0;
+      setError(null);
+      setStatus("online");
+    });
+    peer.on("connection", (connection) => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "host") {
+        safeClose(connection);
+        return;
+      }
+      bindHostConnection(connection);
+    });
+    peer.on("disconnected", () => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "host") return;
+      setStatus("connecting");
+      try { peer.reconnect(); } catch { /* recreate below */ }
+      scheduleReconnect();
+    });
+    peer.on("close", () => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "host") return;
+      scheduleReconnect();
+    });
+    peer.on("error", (peerError) => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "host") return;
+      if (peerError?.type === "unavailable-id" && !isRecovery) {
+        setStatus("error");
+        setError({ key: "roomUnavailable" });
+        return;
+      }
+      setError({ key: "networkError", message: peerError?.message || "Network error" });
+      scheduleReconnect();
+    });
+  }
+
+  function createPlayerPeer() {
+    if (desiredModeRef.current !== "player" || !codeRef.current || !playerClientIdRef.current) return;
+    const generation = networkGenerationRef.current + 1;
+    networkGenerationRef.current = generation;
+
+    stopHeartbeat();
+    safeClose(hostConnectionRef.current);
+    hostConnectionRef.current = null;
+    const oldPeer = peerRef.current;
+    peerRef.current = null;
+    try { oldPeer?.destroy?.(); } catch { /* ignore */ }
+
+    setStatus("connecting");
+    const peer = new Peer(getPlayerPeerId(playerClientIdRef.current), { debug: 1, pingInterval: 5000 });
+    peerRef.current = peer;
+
+    peer.on("open", () => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+      const connection = peer.connect(getHostPeerId(codeRef.current), { reliable: true, serialization: "json" });
+      hostConnectionRef.current = connection;
+
+      connection.on("open", () => {
+        if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+        clearReconnectTimer();
+        reconnectAttemptRef.current = 0;
+        setError(null);
+        setStatus("online");
+        lastPongRef.current = Date.now();
+        try {
+          connection.send({ type: "join", player: makePlayerPacket(playerNameRef.current, formRef.current, true) });
+        } catch {
+          scheduleReconnect();
+          return;
+        }
+        flushPendingOutbound();
+        startPlayerHeartbeat();
+      });
+
+      connection.on("data", applyPlayerInbound);
+      const handleClosed = () => {
+        if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+        stopHeartbeat();
+        setStatus("connecting");
+        scheduleReconnect();
+      };
+      connection.on("close", handleClosed);
+      connection.on("error", handleClosed);
+    });
+
+    peer.on("disconnected", () => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+      const connection = hostConnectionRef.current;
+      try { peer.reconnect(); } catch { /* reconnect below if needed */ }
+      if (!connection?.open) scheduleReconnect();
+    });
+    peer.on("close", () => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+      scheduleReconnect();
+    });
+    peer.on("error", (peerError) => {
+      if (generation !== networkGenerationRef.current || desiredModeRef.current !== "player") return;
+      if (peerError?.type === "peer-unavailable") {
+        setError({ key: "hostNotFound" });
+      } else if (peerError?.type !== "unavailable-id") {
+        setError({ key: "networkError", message: peerError?.message || "Network error" });
+      }
+      scheduleReconnect();
+    });
+  }
 
   const startHost = () => {
     destroyNetwork();
@@ -406,19 +771,10 @@ export default function useSharedSession(form) {
     const code = makeSessionCode();
     codeRef.current = code;
     setSessionCode(code);
+    desiredModeRef.current = "host";
     setMode("host");
-    setStatus("connecting");
-    const peer = new Peer(getHostPeerId(code), { debug: 1 });
-    peerRef.current = peer;
-    peer.on("open", () => setStatus("online"));
-    peer.on("connection", bindHostConnection);
-    peer.on("disconnected", () => setStatus("disconnected"));
-    peer.on("close", () => setStatus("disconnected"));
-    peer.on("error", (peerError) => {
-      setStatus("error");
-      if (peerError?.type === "unavailable-id") setError({ key: "roomUnavailable" });
-      else setError({ key: "networkError", message: peerError?.message || "Network error" });
-    });
+    reconnectAttemptRef.current = 0;
+    createHostPeer(false);
   };
 
   const joinSession = ({ code, name }) => {
@@ -428,39 +784,13 @@ export default function useSharedSession(form) {
     resetState();
     setError(null);
     playerNameRef.current = cleanName || "Player";
+    playerClientIdRef.current = makeId("client");
     codeRef.current = normalized;
     setSessionCode(normalized);
+    desiredModeRef.current = "player";
     setMode("player");
-    setStatus("connecting");
-    const peer = new Peer(undefined, { debug: 1 });
-    peerRef.current = peer;
-    peer.on("open", () => {
-      const connection = peer.connect(getHostPeerId(normalized), { reliable: true });
-      hostConnectionRef.current = connection;
-      connection.on("open", () => {
-        setStatus("online");
-        connection.send({ type: "join", player: makePlayerPacket(playerNameRef.current, formRef.current) });
-      });
-      connection.on("data", (data) => {
-        if (!data || typeof data !== "object") return;
-        if (data.type === "session_state") {
-          setPlayers(Array.isArray(data.players) ? data.players : []);
-          setSceneMessage(cleanText(data.sceneMessage, 600));
-          setFeed(Array.isArray(data.feed) ? data.feed.slice(-MAX_FEED) : []);
-          setCombat(sanitizeCombatState(data.combat));
-        }
-      });
-      connection.on("close", () => setStatus("disconnected"));
-      connection.on("error", () => {
-        setStatus("error");
-        setError({ key: "hostNotFound" });
-      });
-    });
-    peer.on("error", (peerError) => {
-      setStatus("error");
-      if (peerError?.type === "peer-unavailable") setError({ key: "hostNotFound" });
-      else setError({ key: "networkError", message: peerError?.message || "Network error" });
-    });
+    reconnectAttemptRef.current = 0;
+    createPlayerPeer(false);
   };
 
   const exitSession = () => {
@@ -471,63 +801,71 @@ export default function useSharedSession(form) {
     setSessionCode("");
     codeRef.current = "";
     playerNameRef.current = "";
+    playerClientIdRef.current = "";
     resetState();
   };
 
   const broadcastScene = (value) => {
-    if (mode !== "host") return false;
+    if (desiredModeRef.current !== "host") return false;
     const text = cleanText(value, 600);
     sceneRef.current = text;
     setSceneMessage(text);
+    broadcastSceneState();
     if (text) appendHostFeed(makeFeedItem({ type: "scene", sender: "GM", text }));
-    else broadcastState();
     return true;
   };
 
   const sendChat = (value) => {
     const text = cleanText(value, 500);
-    if (!text || status !== "online") return false;
-    if (mode === "host") {
+    if (!text) return false;
+    if (desiredModeRef.current === "host") {
       appendHostFeed(makeFeedItem({ type: "chat", sender: "GM", text }));
       return true;
     }
-    const connection = hostConnectionRef.current;
-    if (!connection?.open) return false;
-    connection.send({ type: "chat_message", text, sender: playerNameRef.current });
-    return true;
+    if (desiredModeRef.current !== "player") return false;
+    return queuePlayerPayload({ type: "chat_message", text, sender: playerNameRef.current });
   };
 
-  const syncCharacter = () => {
-    if (mode !== "player" || status !== "online") return false;
+  const syncCharacter = (full = true) => {
+    if (desiredModeRef.current !== "player") return false;
     const connection = hostConnectionRef.current;
-    if (!connection?.open) return false;
-    connection.send({ type: "player_update", player: makePlayerPacket(playerNameRef.current, formRef.current) });
-    return true;
+    if (!connection?.open) {
+      scheduleReconnect();
+      return false;
+    }
+    try {
+      connection.send({
+        type: "player_update",
+        player: makePlayerPacket(playerNameRef.current, formRef.current, full),
+      });
+      return true;
+    } catch {
+      scheduleReconnect();
+      return false;
+    }
   };
 
   const sendDiceResult = (payload) => {
-    if (!payload || status !== "online") return false;
+    if (!payload) return false;
     const roll = sanitizeRollPayload(payload);
     if (!roll) return false;
-    if (mode === "host") {
+    if (desiredModeRef.current === "host") {
       appendHostFeed(makeFeedItem({ type: "roll", sender: "GM", roll }));
       return true;
     }
-    const connection = hostConnectionRef.current;
-    if (!connection?.open) return false;
-    connection.send({ type: "roll_event", roll, sender: playerNameRef.current });
-    return true;
+    if (desiredModeRef.current !== "player") return false;
+    return queuePlayerPayload({ type: "roll_event", roll, sender: playerNameRef.current });
   };
 
   const addCombatNpc = ({ name, initiative = 0, maxHp = 10, currentHp = maxHp, armorPhysical = 0, armorEnergy = 0 } = {}) => {
-    if (mode !== "host" || combatRef.current.active) return false;
+    if (desiredModeRef.current !== "host" || combatRef.current.active) return false;
     const npc = sanitizeNpc({ id: makeId("npc"), name, initiative, maxHp, currentHp, armorPhysical, armorEnergy });
     if (!npc) return false;
     return Boolean(setHostCombat({ ...combatRef.current, npcs: [...combatRef.current.npcs, npc] }));
   };
 
   const updateCombatNpc = (id, patch = {}) => {
-    if (mode !== "host" || combatRef.current.active) return false;
+    if (desiredModeRef.current !== "host" || combatRef.current.active) return false;
     const npcs = combatRef.current.npcs.map((npc) => {
       if (npc.id !== id) return npc;
       return sanitizeNpc({ ...npc, ...patch }) || npc;
@@ -537,15 +875,15 @@ export default function useSharedSession(form) {
   };
 
   const removeCombatNpc = (id) => {
-    if (mode !== "host" || combatRef.current.active) return false;
+    if (desiredModeRef.current !== "host" || combatRef.current.active) return false;
     setHostCombat({ ...combatRef.current, npcs: combatRef.current.npcs.filter((npc) => npc.id !== id) });
     return true;
   };
 
   const startCombat = () => {
-    if (mode !== "host" || combatRef.current.active) return false;
+    if (desiredModeRef.current !== "host" || combatRef.current.active) return false;
     const playerActors = playersRef.current
-      .filter((player) => player?.character && Number(player.character.currentHp || 0) > 0)
+      .filter((player) => player?.connected !== false && player?.character && Number(player.character.currentHp || 0) > 0)
       .map((player) => ({
         id: `player:${player.peerId}`,
         kind: "player",
@@ -589,11 +927,11 @@ export default function useSharedSession(form) {
     if (!actor) return false;
     if (actor.kind === "npc") return Number(actor.currentHp || 0) > 0;
     const player = playersRef.current.find((item) => item.peerId === actor.peerId);
-    return Boolean(player?.character && Number(player.character.currentHp || 0) > 0);
+    return Boolean(player?.connected !== false && player?.character && Number(player.character.currentHp || 0) > 0);
   };
 
   const nextCombatTurn = () => {
-    if (mode !== "host" || !combatRef.current.active || !combatRef.current.order.length) return false;
+    if (desiredModeRef.current !== "host" || !combatRef.current.active || !combatRef.current.order.length) return false;
     const current = combatRef.current;
     const order = current.order;
     let index = current.index;
@@ -616,7 +954,7 @@ export default function useSharedSession(form) {
   };
 
   const setCombatNpcHp = (actorId, value) => {
-    if (mode !== "host" || !combatRef.current.active) return false;
+    if (desiredModeRef.current !== "host" || !combatRef.current.active) return false;
     const targetId = String(actorId || "").startsWith("npc:") ? String(actorId) : `npc:${actorId}`;
     const npcId = targetId.replace(/^npc:/, "");
     const current = combatRef.current;
@@ -630,14 +968,14 @@ export default function useSharedSession(form) {
   };
 
   const setCombatAp = (value) => {
-    if (mode !== "host") return false;
+    if (desiredModeRef.current !== "host") return false;
     const current = combatRef.current;
     setHostCombat({ ...current, ap: clampNumber(value, 0, current.apMax || DEFAULT_AP_MAX) });
     return true;
   };
 
   const endCombat = () => {
-    if (mode !== "host") return false;
+    if (desiredModeRef.current !== "host") return false;
     const next = {
       ...EMPTY_COMBAT,
       npcs: combatRef.current.npcs,
@@ -647,14 +985,14 @@ export default function useSharedSession(form) {
     return true;
   };
 
-  const snapshotSignature = useMemo(() => JSON.stringify(createCharacterSnapshot(form)), [form]);
+  const snapshotSignature = useMemo(() => JSON.stringify(createLiveCharacterSnapshot(form)), [form]);
   useEffect(() => {
     if (mode !== "player" || status !== "online") return undefined;
     if (autoSyncTimerRef.current) window.clearTimeout(autoSyncTimerRef.current);
     autoSyncTimerRef.current = window.setTimeout(() => {
-      syncCharacter();
+      syncCharacter(false);
       autoSyncTimerRef.current = null;
-    }, 350);
+    }, 900);
     return () => {
       if (autoSyncTimerRef.current) {
         window.clearTimeout(autoSyncTimerRef.current);
