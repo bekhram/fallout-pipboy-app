@@ -74,6 +74,45 @@ function fill(template, name) {
   return String(template || "").replace("{{name}}", name);
 }
 
+function normalizePerkId(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+export function getIntenseTrainingBonuses(form = {}) {
+  const bonuses = {};
+
+  for (const perk of form.perksAndTraits || []) {
+    if (perk?.isOriginTrait || normalizePerkId(perk?.id) !== "intense_training") continue;
+    const rank = Math.max(1, Number(perk?.rank || 1));
+    const choices = Array.isArray(perk?.specialChoices)
+      ? perk.specialChoices
+      : [perk?.selectedSpecial].filter(Boolean);
+
+    for (let index = 0; index < rank; index += 1) {
+      const key = String(choices[index] || "").trim().toUpperCase();
+      if (!BOBBLEHEAD_SPECIALS.some(([candidate]) => candidate === key)) continue;
+      bonuses[key] = Number(bonuses[key] || 0) + 1;
+    }
+  }
+
+  return bonuses;
+}
+
+export function isSkillTaggedByPerk(form = {}, skillName) {
+  const wanted = String(skillName || "").trim();
+  if (!wanted) return false;
+
+  return (form.perksAndTraits || []).some((perk) => {
+    if (perk?.isOriginTrait || normalizePerkId(perk?.id) !== "tag") return false;
+    const selected = String(perk?.tagSkill || perk?.selectedSkill || "").trim();
+    return selected === wanted;
+  });
+}
+
 export const BOBBLEHEAD_ITEMS = [
   ...BOBBLEHEAD_SPECIALS.map(([key, name]) => ({
     name: `Bobblehead: ${name}`,
@@ -159,7 +198,10 @@ export function hasActivePowerArmorFrame(form = {}) {
 }
 
 export function getEffectiveSpecialValue(form, key) {
-  const value = Number(form?.special?.[key] || 0) + getBobbleheadSpecialBonus(form, key);
+  const base = Number(form?.special?.[key] || 0);
+  const trained = Number(getIntenseTrainingBonuses(form)[key] || 0);
+  const trainedBase = base >= 10 ? base : Math.min(10, base + trained);
+  const value = trainedBase + getBobbleheadSpecialBonus(form, key);
   if (key === "S" && hasActivePowerArmorFrame(form)) {
     return Math.max(11, value);
   }
