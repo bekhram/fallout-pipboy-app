@@ -1,0 +1,44 @@
+name: Apply live session chat and rolls
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: "${{ github.event.head_commit.message == 'chore: trigger live session chat and rolls' }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Apply live session patch
+        run: python3 .github/scripts/apply_live_session_chat_rolls.py
+
+      - name: Build
+        run: npm ci && npm run build
+
+      - name: Commit changes
+        run: |
+          rm -f .github/scripts/apply_live_session_chat_rolls.py
+          rm -f .github/workflows/apply-live-session-chat-rolls.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "feat: add live GM session chat and dice feed"
+          git push origin main
