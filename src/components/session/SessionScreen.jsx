@@ -23,7 +23,7 @@ const COPY = {
     noActivity: "No session activity yet.", chat: "GROUP CHAT", chatPlaceholder: "Message the group...", send: "SEND",
     joined: "joined the session", left: "left the session", success: "SUCCESS", failure: "FAILURE", successes: "Suc",
     complications: "Comp", damage: "Damage", effects: "Effects", difficulty: "Diff", target: "TN", hit: "Hit",
-    sessionActive: "SESSION", live: "LIVE"
+    sessionActive: "SESSION", live: "LIVE", combat: "COMBAT", combatIdle: "Combat has not started.", round: "ROUND", currentTurn: "CURRENT TURN", groupAp: "GROUP AP", nextTurn: "NEXT TURN", startCombat: "START COMBAT", endCombat: "END COMBAT", initiative: "INIT", npc: "NPC", addNpc: "ADD NPC", npcName: "NPC name", remove: "REMOVE", player: "PLAYER", combatStarted: "combat started", combatEnded: "combat ended", turnChanged: "turn"
   },
   ru: {
     title: "ГМ / СЕССИЯ", subtitle: "Общая игровая сессия", back: "НАЗАД", hostTitle: "GAME MASTER",
@@ -41,7 +41,7 @@ const COPY = {
     noActivity: "В сессии пока нет событий.", chat: "ОБЩИЙ ЧАТ", chatPlaceholder: "Сообщение группе...", send: "ОТПРАВИТЬ",
     joined: "подключился к сессии", left: "вышел из сессии", success: "УСПЕХ", failure: "ПРОВАЛ", successes: "Усп",
     complications: "Осл", damage: "Урон", effects: "Эффекты", difficulty: "Сложн", target: "ЦЧ", hit: "Попадание",
-    sessionActive: "СЕССИЯ", live: "LIVE"
+    sessionActive: "СЕССИЯ", live: "LIVE", combat: "БОЙ", combatIdle: "Бой ещё не начат.", round: "РАУНД", currentTurn: "ТЕКУЩИЙ ХОД", groupAp: "ОБЩИЕ AP", nextTurn: "СЛЕДУЮЩИЙ ХОД", startCombat: "НАЧАТЬ БОЙ", endCombat: "ЗАВЕРШИТЬ БОЙ", initiative: "ИНИЦ", npc: "NPC", addNpc: "ДОБАВИТЬ NPC", npcName: "Имя NPC", remove: "УДАЛИТЬ", player: "ИГРОК", combatStarted: "бой начался", combatEnded: "бой завершён", turnChanged: "ход"
   },
   uk: {
     title: "ГМ / СЕСІЯ", subtitle: "Спільна ігрова сесія", back: "НАЗАД", hostTitle: "GAME MASTER",
@@ -59,7 +59,7 @@ const COPY = {
     noActivity: "У сесії ще немає подій.", chat: "СПІЛЬНИЙ ЧАТ", chatPlaceholder: "Повідомлення групі...", send: "НАДІСЛАТИ",
     joined: "приєднався до сесії", left: "вийшов із сесії", success: "УСПІХ", failure: "НЕВДАЧА", successes: "Усп",
     complications: "Ускл", damage: "Шкода", effects: "Ефекти", difficulty: "Складн", target: "ЦЧ", hit: "Влучання",
-    sessionActive: "СЕСІЯ", live: "LIVE"
+    sessionActive: "СЕСІЯ", live: "LIVE", combat: "БІЙ", combatIdle: "Бій ще не розпочато.", round: "РАУНД", currentTurn: "ПОТОЧНИЙ ХІД", groupAp: "СПІЛЬНІ AP", nextTurn: "НАСТУПНИЙ ХІД", startCombat: "ПОЧАТИ БІЙ", endCombat: "ЗАВЕРШИТИ БІЙ", initiative: "ІНІЦ", npc: "NPC", addNpc: "ДОДАТИ NPC", npcName: "Імʼя NPC", remove: "ВИДАЛИТИ", player: "ГРАВЕЦЬ", combatStarted: "бій розпочато", combatEnded: "бій завершено", turnChanged: "хід"
   },
   pl: {
     title: "GM / SESJA", subtitle: "Wspólna sesja gry", back: "WSTECZ", hostTitle: "GAME MASTER",
@@ -77,7 +77,7 @@ const COPY = {
     noActivity: "Brak aktywności w sesji.", chat: "CZAT GRUPOWY", chatPlaceholder: "Wiadomość do grupy...", send: "WYŚLIJ",
     joined: "dołączył do sesji", left: "opuścił sesję", success: "SUKCES", failure: "PORAŻKA", successes: "Suk",
     complications: "Kompl", damage: "Obrażenia", effects: "Efekty", difficulty: "Trudn", target: "TN", hit: "Trafienie",
-    sessionActive: "SESJA", live: "LIVE"
+    sessionActive: "SESJA", live: "LIVE", combat: "WALKA", combatIdle: "Walka jeszcze się nie rozpoczęła.", round: "RUNDA", currentTurn: "AKTUALNA TURA", groupAp: "WSPÓLNE AP", nextTurn: "NASTĘPNA TURA", startCombat: "ROZPOCZNIJ WALKĘ", endCombat: "ZAKOŃCZ WALKĘ", initiative: "INIC", npc: "NPC", addNpc: "DODAJ NPC", npcName: "Nazwa NPC", remove: "USUŃ", player: "GRACZ", combatStarted: "walka rozpoczęta", combatEnded: "walka zakończona", turnChanged: "tura"
   },
 };
 
@@ -115,6 +115,7 @@ function PlayerCard({ player, copy }) {
             <span>{copy.level}: {character.level}</span>
             <span>{copy.hp}: {character.currentHp}/{character.maxHp}</span>
             <span>{copy.defense}: {character.defense}</span>
+            <span>{copy.initiative}: {character.initiative ?? 0}</span>
           </div>
           {character.origin && <div className="stat-sub">{copy.origin}: {character.origin}</div>}
           {statuses.length > 0 && (
@@ -170,6 +171,13 @@ function FeedItem({ item, copy }) {
         {item.sender && <strong>{item.sender}</strong>}
       </div>
       {item.type === "system" && <div>{item.event === "join" ? copy.joined : copy.left}</div>}
+      {item.type === "combat" && (
+        <div className="session-feed-text session-feed-combat">
+          {item.event === "combat_start" && `${copy.combatStarted}${item.text ? ` · ${copy.currentTurn}: ${item.text}` : ""}`}
+          {item.event === "combat_end" && copy.combatEnded}
+          {item.event === "combat_turn" && `${copy.turnChanged}: ${item.text}`}
+        </div>
+      )}
       {item.type === "chat" && <div className="session-feed-text">{item.text}</div>}
       {item.type === "scene" && <div className="session-feed-text session-feed-scene">{item.text}</div>}
       {item.type === "roll" && <RollEntry item={item} copy={copy} />}
@@ -202,12 +210,16 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   const [copyState, setCopyState] = useState(false);
   const [syncState, setSyncState] = useState(false);
   const [localError, setLocalError] = useState("");
+  const [npcName, setNpcName] = useState("");
+  const [npcInitiative, setNpcInitiative] = useState("10");
 
   const mode = session?.mode || "lobby";
   const status = session?.status || "waiting";
   const players = session?.players || [];
   const sceneMessage = session?.sceneMessage || "";
   const feed = session?.feed || [];
+  const combat = session?.combat || { active: false, round: 0, index: -1, order: [], npcs: [], ap: 0, apMax: 6 };
+  const activeActor = combat.order?.find((actor) => actor.id === combat.activeActorId) || null;
   const sessionCode = session?.sessionCode || "";
   const statusLabel = copy[status] || status;
   const sessionError = session?.error?.key
@@ -253,6 +265,15 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
     if (!session.syncCharacter()) return;
     setSyncState(true);
     window.setTimeout(() => setSyncState(false), 1000);
+  };
+
+  const handleAddNpc = (event) => {
+    event.preventDefault();
+    if (!String(npcName).trim()) return;
+    if (session.addCombatNpc({ name: npcName, initiative: Number(npcInitiative || 0) })) {
+      setNpcName("");
+      setNpcInitiative("10");
+    }
   };
 
   if (mode === "lobby") {
@@ -322,6 +343,89 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
           </section>
         )}
       </div>
+
+
+      <section className="pip-panel pip-block session-combat-panel">
+        <div className="pip-head">
+          <h2>[ {copy.combat} ]</h2>
+          <span>{combat.active ? `${copy.round}: ${combat.round}` : copy.combatIdle}</span>
+        </div>
+
+        {combat.active ? (
+          <>
+            <div className="session-combat-summary">
+              <div><span>{copy.currentTurn}</span><strong>{activeActor?.name || "—"}</strong></div>
+              <div><span>{copy.round}</span><strong>{combat.round}</strong></div>
+              <div className="session-ap-box">
+                <span>{copy.groupAp}</span>
+                {mode === "host" ? (
+                  <div className="session-ap-controls">
+                    <button type="button" className="pip-btn" onClick={() => session.setCombatAp(combat.ap - 1)} disabled={combat.ap <= 0}>−</button>
+                    <strong>{combat.ap}/{combat.apMax}</strong>
+                    <button type="button" className="pip-btn" onClick={() => session.setCombatAp(combat.ap + 1)} disabled={combat.ap >= combat.apMax}>+</button>
+                  </div>
+                ) : <strong>{combat.ap}/{combat.apMax}</strong>}
+              </div>
+            </div>
+
+            <div className="session-turn-order">
+              {combat.order.map((actor, index) => (
+                <div key={actor.id} className={`session-turn-row${actor.id === combat.activeActorId ? " is-active" : ""}`}>
+                  <span className="session-turn-number">{index + 1}</span>
+                  <span className="session-turn-kind">{actor.kind === "npc" ? copy.npc : copy.player}</span>
+                  <strong>{actor.name}</strong>
+                  <span>{copy.initiative}: {actor.initiative}</span>
+                </div>
+              ))}
+            </div>
+
+            {mode === "host" && (
+              <div className="session-combat-actions">
+                <button type="button" className="pip-btn is-primary" onClick={() => session.nextCombatTurn()}>{copy.nextTurn}</button>
+                <button type="button" className="pip-btn" onClick={() => session.endCombat()}>{copy.endCombat}</button>
+              </div>
+            )}
+          </>
+        ) : mode === "host" ? (
+          <>
+            <div className="session-precombat-grid">
+              <div>
+                <div className="stat-sub session-precombat-label">{copy.roster}</div>
+                <div className="session-turn-order">
+                  {players.filter((player) => player.character).map((player) => (
+                    <div key={player.peerId} className="session-turn-row">
+                      <span className="session-turn-kind">{copy.player}</span>
+                      <strong>{player.character?.name || player.name}</strong>
+                      <span>{copy.initiative}: {player.character?.initiative ?? 0}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="stat-sub session-precombat-label">NPC</div>
+                <div className="session-turn-order">
+                  {combat.npcs.map((npc) => (
+                    <div key={npc.id} className="session-turn-row session-npc-row">
+                      <span className="session-turn-kind">{copy.npc}</span>
+                      <input className="pip-input" value={npc.name} maxLength={60} onChange={(event) => session.updateCombatNpc(npc.id, { name: event.target.value })} />
+                      <input className="pip-input session-init-input" type="number" min="0" max="99" value={npc.initiative} onChange={(event) => session.updateCombatNpc(npc.id, { initiative: event.target.value })} />
+                      <button type="button" className="pip-btn" onClick={() => session.removeCombatNpc(npc.id)}>{copy.remove}</button>
+                    </div>
+                  ))}
+                </div>
+                <form className="session-npc-form" onSubmit={handleAddNpc}>
+                  <input className="pip-input" maxLength={60} value={npcName} placeholder={copy.npcName} onChange={(event) => setNpcName(event.target.value)} />
+                  <input className="pip-input session-init-input" type="number" min="0" max="99" value={npcInitiative} onChange={(event) => setNpcInitiative(event.target.value)} />
+                  <button type="submit" className="pip-btn">{copy.addNpc}</button>
+                </form>
+              </div>
+            </div>
+            <button type="button" className="pip-btn is-primary session-main-button" onClick={() => session.startCombat()} disabled={!players.some((player) => player.character) && !combat.npcs.length}>{copy.startCombat}</button>
+          </>
+        ) : (
+          <div className="pip-logbox">{copy.combatIdle}</div>
+        )}
+      </section>
 
       <section className="pip-panel pip-block session-feed-panel">
         <div className="pip-head"><h2>[ {copy.activity} ]</h2><span>{feed.length}</span></div>
