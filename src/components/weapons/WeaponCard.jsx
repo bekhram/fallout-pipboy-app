@@ -51,6 +51,7 @@ const CONTEXT_COPY = {
     allAttacks: "All attacks this turn: re-roll 1d20",
     difficulty: "Difficulty",
     rerolls: "Re-rolls",
+    quickHands: "QUICK HANDS · 2 AP",
   },
   ru: {
     title: "КОНТЕКСТ АТАКИ",
@@ -73,6 +74,7 @@ const CONTEXT_COPY = {
     allAttacks: "Все атаки хода: 1 переброс d20",
     difficulty: "Сложность",
     rerolls: "Перебросы",
+    quickHands: "БЫСТРЫЕ РУКИ · 2 ОД",
   },
   uk: {
     title: "КОНТЕКСТ АТАКИ",
@@ -95,6 +97,7 @@ const CONTEXT_COPY = {
     allAttacks: "Усі атаки ходу: 1 перекидання d20",
     difficulty: "Складність",
     rerolls: "Перекидання",
+    quickHands: "ШВИДКІ РУКИ · 2 ОД",
   },
   pl: {
     title: "KONTEKST ATAKU",
@@ -117,6 +120,7 @@ const CONTEXT_COPY = {
     allAttacks: "Wszystkie ataki tury: 1 przerzut k20",
     difficulty: "Trudność",
     rerolls: "Przerzuty",
+    quickHands: "SZYBKIE RĘCE · 2 PA",
   },
 };
 
@@ -158,12 +162,15 @@ export default function WeaponCard({
   onRoll,
   form,
   globalWeapons,
+  combatState,
+  onSpendCombatAp,
 }) {
   const { t, i18n } = useTranslation();
   const [useRate, setUseRate] = useState(false);
   const [activePropertyIndex, setActivePropertyIndex] = useState(null);
   const [showAttackContext, setShowAttackContext] = useState(false);
   const [attackContext, setAttackContext] = useState(makeDefaultAttackContext);
+  const [quickHandsArmed, setQuickHandsArmed] = useState(false);
   const propertiesRef = useRef(null);
 
   const language = getLanguageCode(i18n.resolvedLanguage || i18n.language);
@@ -237,6 +244,13 @@ export default function WeaponCard({
     attackContext
   );
   const calculatedWeapon = conditionalPerkResult.weapon;
+  const isRangedWeapon = ["Small Guns", "Energy Weapons", "Big Guns", "Explosives", "Throwing"]
+    .includes(String(calculatedWeapon?.skill || "").trim());
+  const hasQuickHands = isRangedWeapon && getPerkRank(form, "quick_hands") > 0;
+  const quickHandsRateBonus = quickHandsArmed ? 2 : 0;
+  const attackWeapon = quickHandsRateBonus > 0
+    ? { ...calculatedWeapon, rate: Number(calculatedWeapon.rate || 0) + quickHandsRateBonus }
+    : calculatedWeapon;
   const attackDifficulty = Math.max(0, 1 + Number(conditionalPerkResult.difficultyDelta || 0));
   const isInaccurateWeapon = hasWeaponQuality(calculatedWeapon, "inaccurate");
   const hasSteadyAim = attackContext.aimed
@@ -296,6 +310,7 @@ export default function WeaponCard({
     setActivePropertyIndex(null);
     setShowAttackContext(false);
     setAttackContext(makeDefaultAttackContext());
+    setQuickHandsArmed(false);
   }, [weapon]);
 
   useEffect(() => {
@@ -341,11 +356,20 @@ export default function WeaponCard({
     setAttackContext((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const handleQuickHands = () => {
+    if (quickHandsArmed) {
+      setQuickHandsArmed(false);
+      return;
+    }
+    if (!hasQuickHands || !combatState?.active) return;
+    if (onSpendCombatAp?.(2)) setQuickHandsArmed(true);
+  };
+
   const handleRoll = (event) => {
     event.stopPropagation();
     const roll = createWeaponRoll({
       weapon: {
-        ...calculatedWeapon,
+        ...attackWeapon,
         attackContext: { ...attackContext },
         attackDifficulty,
         perkRerollD20: totalAttackRerolls,
@@ -354,7 +378,7 @@ export default function WeaponCard({
       },
       diceCount: 2,
       difficulty: attackDifficulty,
-      useRate: Number(calculatedWeapon.rate || 0) > 0 && useRate,
+      useRate: Number(attackWeapon.rate || 0) > 0 && useRate,
     });
 
     onRoll?.({
@@ -364,6 +388,8 @@ export default function WeaponCard({
       perkNotes: allPerkNotes,
       attackContext: { ...attackContext },
     });
+
+    if (quickHandsArmed) setQuickHandsArmed(false);
 
     if (attackContext.aimed && !(contextAvailability.steadyAim && attackContext.steadyAimMode === "all")) {
       setAttackContext((prev) => ({ ...prev, aimed: false }));
@@ -411,15 +437,15 @@ export default function WeaponCard({
           )}
         </div>
 
-        {Number(calculatedWeapon.rate || 0) > 0 && (
+        {Number(attackWeapon.rate || 0) > 0 && (
           <div
             className={`pip-stat-box is-clickable ${useRate ? "is-active" : ""}`}
             onClick={(event) => { event.stopPropagation(); setUseRate((prev) => !prev); }}
             title="Click to toggle Burst"
           >
             <div className="stat-label">Rate of Fire</div>
-            <div className="stat-value">{calculatedWeapon.rate}</div>
-            <div className="stat-sub">{useRate ? "ACTIVE" : "OFF"}</div>
+            <div className="stat-value">{attackWeapon.rate}</div>
+            <div className="stat-sub">{quickHandsArmed ? "QUICK HANDS +2" : (useRate ? "ACTIVE" : "OFF")}</div>
           </div>
         )}
 
@@ -458,6 +484,16 @@ export default function WeaponCard({
               ? contextCopy.aimNoBenefit
               : `${contextCopy.rerolls}: ${Math.max(1, totalAttackRerolls)}d20`}
           </span>
+        )}
+        {hasQuickHands && (
+          <button
+            type="button"
+            className={`pip-btn ${quickHandsArmed ? "is-primary" : ""}`}
+            disabled={!quickHandsArmed && (!combatState?.active || Number(combatState?.ap || 0) < 2)}
+            onClick={handleQuickHands}
+          >
+            {contextCopy.quickHands}
+          </button>
         )}
       </div>
 

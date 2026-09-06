@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { playSound } from "../../utils/soundManager";
 import {
   rollHitLocationD20,
@@ -107,6 +107,7 @@ export default function FalloutD20Roller({
   const [hitLocation, setHitLocation] = useState(null);
   const [isHitRolling, setIsHitRolling] = useState(false);
   const [animatedHitValue, setAnimatedHitValue] = useState(1);
+  const damageRolledForAttackRef = useRef(false);
 
   const isSkillRoll = rollConfig?.type === "skill";
   const isWeaponRoll = rollConfig?.type === "weapon";
@@ -188,8 +189,13 @@ export default function FalloutD20Roller({
   const resultStats = buildRollSummary(lastRoll);
   const difficulty = Number(rollConfig?.difficulty || 1);
 
+  useEffect(() => {
+    damageRolledForAttackRef.current = false;
+  }, [rollConfig]);
+
   const autoRollWeaponDamage = (attackResult) => {
   if (!isWeaponRoll) return;
+  if (damageRolledForAttackRef.current) return;
 
   const didHit = (attackResult?.totalSuccesses || 0) >= difficulty;
   if (!didHit) return;
@@ -202,6 +208,7 @@ export default function FalloutD20Roller({
   const totalDamageDiceCount = baseDamageDiceCount + extraRateDiceCount;
   if (totalDamageDiceCount <= 0) return;
 
+  damageRolledForAttackRef.current = true;
   onAutoRollDamage?.(totalDamageDiceCount);
 };
 
@@ -271,6 +278,7 @@ export default function FalloutD20Roller({
   const doRoll = () => {
     if (isRolling || isHitRolling) return;
 
+    damageRolledForAttackRef.current = false;
     playSound("diceRoll");
     setIsRolling(true);
 
@@ -328,15 +336,22 @@ export default function FalloutD20Roller({
       });
 
       if (isWeaponRoll && updatedResult.totalSuccesses >= difficulty) {
-        setLastRoll(updatedResult);
+        const previousHitLocation = lastRoll?.hitLocation || hitLocation || null;
+        const resultWithLocation = previousHitLocation
+          ? { ...updatedResult, hitLocation: previousHitLocation }
+          : updatedResult;
+
+        setLastRoll(resultWithLocation);
         setHistory((prev) => {
-          if (prev.length === 0) return [updatedResult];
+          if (prev.length === 0) return [resultWithLocation];
           const next = [...prev];
-          next[0] = updatedResult;
+          next[0] = resultWithLocation;
           return next.slice(0, MAX_HISTORY);
         });
         setRerollingDieIndex(null);
-        autoRollWeaponDamage(updatedResult);
+        autoRollWeaponDamage(resultWithLocation);
+
+        if (previousHitLocation) return;
 
         setIsHitRolling(true);
         animateHitDie(500, () => {

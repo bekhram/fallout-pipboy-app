@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { playSound } from "../../utils/soundManager";
 import { rollFalloutD6, rerollOneFalloutD6 } from "../../utils/dice";
+import { getPerkRank } from "../../utils/perkEffects.js";
 
 const MAX_HISTORY = 5;
 const MOBILE_VISIBLE_LIMIT = 25;
@@ -52,6 +53,12 @@ export default function FalloutD6Roller({
   autoRollRequest = null,
   onAutoRollHandled,
   weaponEffects = [],
+  form = null,
+  weapon = null,
+  combatState = null,
+  currentLuckPoints = 0,
+  onSpendCombatLuck,
+  onMarkCombatUse,
 }) {
   const [isRolling, setIsRolling] = useState(false);
   const [rerollingDieIndex, setRerollingDieIndex] = useState(null);
@@ -74,6 +81,25 @@ export default function FalloutD6Roller({
     damage: lastRoll?.totalDamage ?? 0,
     effects: lastRoll?.totalEffects ?? 0,
   };
+
+  const finesseAvailable = Boolean(
+    lastRoll
+    && combatState?.active
+    && getPerkRank(form, "finesse") > 0
+    && !combatState?.usedThisCombat?.finesse
+  );
+  const weaponSkill = String(weapon?.skill || "").trim();
+  const slayerEligible = weaponSkill === "Melee Weapons" || weaponSkill === "Unarmed";
+  const criticalPerkSource = getPerkRank(form, "better_criticals") > 0
+    ? "Better Criticals"
+    : (slayerEligible && getPerkRank(form, "slayer") > 0 ? "Slayer" : "");
+  const forceCriticalAvailable = Boolean(
+    lastRoll
+    && Number(lastRoll?.totalDamage || 0) > 0
+    && criticalPerkSource
+    && Number(currentLuckPoints || 0) > 0
+    && !lastRoll?.forcedCritical
+  );
 
   const sortedRolls = lastRoll
     ? lastRoll.rolls
@@ -178,6 +204,35 @@ export default function FalloutD6Roller({
     });
   };
 
+  const handleFinesseReroll = () => {
+    if (!finesseAvailable || isRolling || !lastRoll) return;
+    onMarkCombatUse?.("combat", "finesse");
+    const count = Math.max(1, Number(lastRoll.diceCount || lastRoll.rolls?.length || diceCount || 1));
+    playSound("diceRoll");
+    setIsRolling(true);
+    animateDice(600, () => {
+      performRoll(count);
+      setIsRolling(false);
+    });
+  };
+
+  const handleForceCritical = () => {
+    if (!forceCriticalAvailable) return;
+    if (!onSpendCombatLuck?.(1)) return;
+    const updated = {
+      ...lastRoll,
+      forcedCritical: true,
+      forcedCriticalSource: criticalPerkSource,
+    };
+    setLastRoll(updated);
+    setHistory((prev) => {
+      if (!prev.length) return [updated];
+      const next = [...prev];
+      next[0] = updated;
+      return next.slice(0, MAX_HISTORY);
+    });
+  };
+
   const handleRerollOne = (dieIndex) => {
     if (!lastRoll || isRolling || rerollingDieIndex !== null) return;
 
@@ -246,6 +301,27 @@ useEffect(() => {
             <span className="dice-result-stat-value">{resultStats.effects}</span>
           </div>
         </div>
+
+        {(finesseAvailable || forceCriticalAvailable || lastRoll?.forcedCritical) && (
+          <div className="dice-actions" style={{ marginBottom: 10, flexWrap: "wrap" }}>
+            {finesseAvailable && (
+              <button type="button" className="dice-roll-button dice-roll-button-secondary" onClick={handleFinesseReroll} disabled={isRolling}>
+                FINESSE · REROLL ALL
+              </button>
+            )}
+            {forceCriticalAvailable && (
+              <button type="button" className="dice-roll-button dice-roll-button-secondary" onClick={handleForceCritical} disabled={isRolling}>
+                {criticalPerkSource.toUpperCase()} · 1 LUCK
+              </button>
+            )}
+            {lastRoll?.forcedCritical && (
+              <div className="dice-context-stat">
+                <span className="dice-context-stat-label">CRITICAL:</span>
+                <span className="dice-context-stat-value">{lastRoll.forcedCriticalSource}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="dice-top-layout">
           <div className="dice-field-group">

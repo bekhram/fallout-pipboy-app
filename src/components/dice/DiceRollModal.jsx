@@ -9,6 +9,10 @@ export default function DiceRollModal({
   form = null,
   pendingAutoD6,
   setPendingAutoD6,
+  combatState,
+  currentLuckPoints,
+  onSpendCombatLuck,
+  onMarkCombatUse,
 }) {
   const [activeTab, setActiveTab] = useState("d20");
 
@@ -101,6 +105,12 @@ export default function DiceRollModal({
                 setLastRoll={setD6LastRoll}
                 autoRollRequest={pendingAutoD6}
                 onAutoRollHandled={() => setPendingAutoD6(null)}
+                form={form}
+                weapon={rollConfig?.weapon || null}
+                combatState={combatState}
+                currentLuckPoints={currentLuckPoints}
+                onSpendCombatLuck={onSpendCombatLuck}
+                onMarkCombatUse={onMarkCombatUse}
                 weaponEffects={[
                   ...(Array.isArray(rollConfig?.weapon?.effects)
                     ? rollConfig.weapon.effects
