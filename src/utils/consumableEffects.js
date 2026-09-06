@@ -4,7 +4,8 @@ import {
   translateInventoryItemEffect,
   translateInventoryItemName,
 } from "../data/inventoryLocalization.js";
-import { rollFalloutD6 } from "./dice.js";
+import { rerollOneFalloutD6, rollFalloutD6 } from "./dice.js";
+import { showConsumableResultPopup } from "./consumableResultUi.js";
 
 const CONSUMABLE_CATEGORIES = new Set(["aid", "food", "beverages"]);
 const UTILITY_CONSUMABLE_NAMES = new Set([
@@ -79,6 +80,26 @@ const ATTRIBUTE_KEYS = {
 
 const ALL_TEST_KEYS = Object.values(ATTRIBUTE_KEYS);
 const sessionDoseCounts = new Map();
+
+function normalizePerkId(value) {
+  return clean(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function getCharacterPerkRank(character, perkId) {
+  const wanted = normalizePerkId(perkId);
+  let best = 0;
+  for (const perk of character?.perksAndTraits || []) {
+    if (perk?.isOriginTrait) continue;
+    const id = normalizePerkId(perk?.id);
+    const name = normalizePerkId(perk?.name);
+    if (id !== wanted && name !== wanted) continue;
+    best = Math.max(best, Math.max(1, Number(perk?.rank || 1)));
+  }
+  return best;
+}
 
 function clean(value) {
   return String(value ?? "").trim();
@@ -280,16 +301,62 @@ function getRadiationDiceCount(item, effectText) {
   return diceCount;
 }
 
-function rollRadiationRisk(item, effectText) {
+
+function rollRadiationRisk(item, effectText, character) {
   const diceCount = getRadiationDiceCount(item, effectText);
+  const canUseLeadBelly = item?.category === "food" || item?.category === "beverages";
+  const leadBellyRank = canUseLeadBelly
+    ? getCharacterPerkRank(character, "lead_belly")
+    : 0;
+
   if (diceCount <= 0) {
-    return { diceCount: 0, damage: 0, roll: null };
+    return {
+      baseDiceCount: 0,
+      diceCount: 0,
+      baseDamage: 0,
+      damage: 0,
+      preventedDamage: 0,
+      leadBellyRank,
+      rerolled: false,
+      roll: null,
+    };
   }
 
-  const roll = rollFalloutD6({ diceCount, effects: [] });
+  if (leadBellyRank >= 2) {
+    return {
+      baseDiceCount: diceCount,
+      diceCount,
+      baseDamage: 0,
+      damage: 0,
+      preventedDamage: 0,
+      leadBellyRank,
+      immune: true,
+      rerolled: false,
+      roll: null,
+    };
+  }
+
+  let roll = rollFalloutD6({ diceCount, effects: [] });
+  const baseDamage = Math.max(0, Number(roll?.totalEffects || 0));
+  let rerolled = false;
+
+  if (leadBellyRank >= 1 && baseDamage > 0) {
+    const effectIndex = (roll?.rolls || []).findIndex((die) => Number(die?.effect || 0) > 0);
+    if (effectIndex >= 0) {
+      roll = rerollOneFalloutD6(roll, effectIndex, { effects: [] });
+      rerolled = true;
+    }
+  }
+
+  const damage = Math.max(0, Number(roll?.totalEffects || 0));
   return {
+    baseDiceCount: diceCount,
     diceCount,
-    damage: Math.max(0, Number(roll?.totalEffects || 0)),
+    baseDamage,
+    damage,
+    preventedDamage: Math.max(0, baseDamage - damage),
+    leadBellyRank,
+    rerolled,
     roll,
   };
 }
@@ -323,17 +390,53 @@ function buildAddictionModifiers(addictionKey) {
   return modifiers;
 }
 
-function rollAddictionRisk(item, canonicalName, language) {
+
+function rollAddictionRisk(item, canonicalName, language, character) {
   const threshold = getAddictionThreshold(item);
   const addictionKey = ADDICTION_STATUS_BY_NAME[normalizeName(canonicalName)] || null;
   if (!threshold || !addictionKey || !CHEM_ADDICTION_RULES[addictionKey]) {
     return null;
   }
 
+  const chemResistantRank = getCharacterPerkRank(character, "chem_resistant");
   const doseCount = Math.max(1, Number(sessionDoseCounts.get(addictionKey) || 0) + 1);
   sessionDoseCounts.set(addictionKey, doseCount);
+  const baseDiceCount = doseCount;
 
-  const roll = rollFalloutD6({ diceCount: doseCount, effects: [] });
+  if (chemResistantRank >= 2) {
+    return {
+      addictionKey,
+      threshold,
+      doseCount,
+      baseDiceCount,
+      diceCount: 0,
+      effectCount: 0,
+      addicted: false,
+      immune: true,
+      chemResistantRank,
+      roll: null,
+      activeEffect: null,
+    };
+  }
+
+  const diceCount = Math.max(0, baseDiceCount - (chemResistantRank >= 1 ? 1 : 0));
+  if (diceCount <= 0) {
+    return {
+      addictionKey,
+      threshold,
+      doseCount,
+      baseDiceCount,
+      diceCount: 0,
+      effectCount: 0,
+      addicted: false,
+      immune: false,
+      chemResistantRank,
+      roll: null,
+      activeEffect: null,
+    };
+  }
+
+  const roll = rollFalloutD6({ diceCount, effects: [] });
   const effectCount = Math.max(0, Number(roll?.totalEffects || 0));
   const addicted = effectCount >= threshold;
   if (!addicted) {
@@ -341,8 +444,12 @@ function rollAddictionRisk(item, canonicalName, language) {
       addictionKey,
       threshold,
       doseCount,
+      baseDiceCount,
+      diceCount,
       effectCount,
       addicted: false,
+      immune: false,
+      chemResistantRank,
       roll,
       activeEffect: null,
     };
@@ -356,8 +463,12 @@ function rollAddictionRisk(item, canonicalName, language) {
     addictionKey,
     threshold,
     doseCount,
+    baseDiceCount,
+    diceCount,
     effectCount,
     addicted: true,
+    immune: false,
+    chemResistantRank,
     roll,
     activeEffect: {
       id: `addiction:${addictionKey}`,
@@ -397,7 +508,8 @@ export function isConsumableItem(item) {
     || UTILITY_CONSUMABLE_NAMES.has(normalizeName(getCanonicalName(item)));
 }
 
-export function getConsumableUsePlan(item) {
+
+export function getConsumableUsePlan(item, character = null, options = {}) {
   const canonicalName = getCanonicalName(item);
   const effectText = getCanonicalEffect(item);
   const lower = effectText.toLowerCase();
@@ -409,12 +521,13 @@ export function getConsumableUsePlan(item) {
     : (healingFromText ? Number(healingFromText[1]) : 0);
   const radiationHealMatch = effectText.match(/heals?\s*(\d+)\s*radiation damage/i);
   const baseRadiationHealing = radiationHealMatch ? Number(radiationHealMatch[1]) : 0;
-  const radiationRisk = rollRadiationRisk(item, effectText);
+  const radiationRisk = rollRadiationRisk(item, effectText, character);
   const healingRadiation = baseRadiationHealing - radiationRisk.damage;
   const cureAddictions = /(?:removes?|cures?) all addictions/i.test(effectText);
   const cureDiseases = /cure all illnesses/i.test(effectText);
   const language = i18n.resolvedLanguage || i18n.language || "en";
-  const addictionRisk = rollAddictionRisk(item, canonicalName, language);
+  const addictionRisk = rollAddictionRisk(item, canonicalName, language, character);
+  const displayEffect = translateInventoryItemEffect(effectText, language) || effectText;
 
   let activeEffect = null;
   if (cureAddictions) {
@@ -427,7 +540,7 @@ export function getConsumableUsePlan(item) {
       activeEffect = {
         id: makeEffectId(item),
         sourceName: translateInventoryItemName(canonicalName, language) || "Consumable",
-        effectText: translateInventoryItemEffect(effectText, language) || effectText,
+        effectText: displayEffect,
         canonicalSourceName: canonicalName,
         canonicalEffect: effectText,
         duration: inferDuration(item, effectText),
@@ -437,15 +550,17 @@ export function getConsumableUsePlan(item) {
     }
   }
 
-  return {
+  const plan = {
     statusKey,
     healingHp,
     healingRadiation,
+    radiationHealing: baseRadiationHealing,
     radiationRisk,
     addictionRisk,
     cureAddictions,
     cureDiseases,
     activeEffect,
+    displayEffect,
     hasImmediateEffect:
       healingHp > 0
       || healingRadiation !== 0
@@ -455,6 +570,19 @@ export function getConsumableUsePlan(item) {
       || cureDiseases
       || /immediately/i.test(lower),
   };
+
+  if (options?.showResult) {
+    showConsumableResultPopup({
+      item: {
+        ...item,
+        name: translateInventoryItemName(canonicalName, language) || item?.name || canonicalName,
+      },
+      plan,
+      language,
+    });
+  }
+
+  return plan;
 }
 
 function effectTimestamp(effect) {

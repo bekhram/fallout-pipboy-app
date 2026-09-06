@@ -358,7 +358,7 @@ export default function App() {
         return;
       }
 
-      const plan = getConsumableUsePlan(item);
+      const plan = getConsumableUsePlan(item, form, { showResult: true });
       setForm((prev) => {
         const statuses = { ...(prev.statuses || {}) };
         if (plan.statusKey) statuses[plan.statusKey] = true;
