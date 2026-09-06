@@ -22,6 +22,9 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Install dependencies
+        run: npm ci
+
       - name: Apply shared combat patch
         run: python3 .github/scripts/apply_session_combat.py
 
