@@ -1,5 +1,64 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
 import SessionActorProfile from "./SessionActorProfile.jsx";
+import "./sessionBestiaryPicker.css";
+
+const BESTIARY_COPY = {
+  en: {
+    open: "ADD FROM BESTIARY",
+    close: "CLOSE BESTIARY",
+    title: "BESTIARY ENEMIES",
+    search: "Search by name, type or tag...",
+    add: "ADD",
+    noResults: "No matching creatures.",
+    level: "LVL",
+    defense: "DEF",
+    initiative: "INIT",
+    armor: "DR P/E",
+  },
+  ru: {
+    open: "ДОБАВИТЬ ИЗ БЕСТИАРИЯ",
+    close: "ЗАКРЫТЬ БЕСТИАРИЙ",
+    title: "ПРОТИВНИКИ ИЗ БЕСТИАРИЯ",
+    search: "Поиск по имени, типу или тегу...",
+    add: "ДОБАВИТЬ",
+    noResults: "Подходящих существ нет.",
+    level: "УР",
+    defense: "ЗАЩ",
+    initiative: "ИНИЦ",
+    armor: "DR P/E",
+  },
+  uk: {
+    open: "ДОДАТИ З БЕСТІАРІЮ",
+    close: "ЗАКРИТИ БЕСТІАРІЙ",
+    title: "ПРОТИВНИКИ З БЕСТІАРІЮ",
+    search: "Пошук за ім’ям, типом або тегом...",
+    add: "ДОДАТИ",
+    noResults: "Відповідних істот немає.",
+    level: "РІВ",
+    defense: "ЗАХ",
+    initiative: "ІНІЦ",
+    armor: "DR P/E",
+  },
+  pl: {
+    open: "DODAJ Z BESTIARIUSZA",
+    close: "ZAMKNIJ BESTIARIUSZ",
+    title: "PRZECIWNICY Z BESTIARIUSZA",
+    search: "Szukaj po nazwie, typie lub tagu...",
+    add: "DODAJ",
+    noResults: "Brak pasujących stworzeń.",
+    level: "POZ",
+    defense: "OBR",
+    initiative: "INIC",
+    armor: "DR P/E",
+  },
+};
+
+function languageOf(value) {
+  const code = String(value || "en").toLowerCase().split("-")[0];
+  return BESTIARY_COPY[code] ? code : "en";
+}
 
 function clampPercent(current, max) {
   const safeMax = Math.max(1, Number(max || 1));
@@ -17,6 +76,24 @@ function sortActors(actors) {
 
 function actorInitials(name) {
   return String(name || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase() || "?";
+}
+
+function firstNumber(value, fallback = 0) {
+  const match = String(value ?? "").match(/-?\d+(?:\.\d+)?/);
+  if (!match) return fallback;
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function bestiaryArmor(entry) {
+  const text = String(entry?.drBlock || "");
+  const physicalMatch = text.match(/Physical\s*:?\s*(\d+)/i);
+  const energyMatch = text.match(/Energy\s*:?\s*(\d+)/i);
+  const allNumbers = text.match(/\d+/g) || [];
+  return {
+    physical: physicalMatch ? Number(physicalMatch[1]) : Number(allNumbers[0] || 0),
+    energy: energyMatch ? Number(energyMatch[1]) : Number(allNumbers[1] || 0),
+  };
 }
 
 function mergeLiveActor(actor, players) {
@@ -88,6 +165,8 @@ function ActorCard({ actor, active, copy, mode, session, onOpenProfile }) {
 }
 
 export default function SessionCombatBoard({ session, players, mode, copy }) {
+  const { i18n } = useTranslation();
+  const bestiaryCopy = BESTIARY_COPY[languageOf(i18n.resolvedLanguage || i18n.language)];
   const combat = session?.combat || {};
   const [selectedActorId, setSelectedActorId] = useState(null);
   const [npcName, setNpcName] = useState("");
@@ -95,6 +174,24 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
   const [npcHp, setNpcHp] = useState("10");
   const [npcArmorPhysical, setNpcArmorPhysical] = useState("0");
   const [npcArmorEnergy, setNpcArmorEnergy] = useState("0");
+  const [bestiaryOpen, setBestiaryOpen] = useState(false);
+  const [bestiarySearch, setBestiarySearch] = useState("");
+
+  const bestiaryEntries = useMemo(() => {
+    const query = String(bestiarySearch || "").trim().toLowerCase();
+    return BESTIARY_ENTRIES
+      .filter((entry) => entry?.statKind === "creature" && String(entry?.name || "").trim() && firstNumber(entry?.hp, 0) > 0)
+      .filter((entry) => {
+        if (!query) return true;
+        const haystack = [entry.name, entry.creatureType, entry.category, ...(Array.isArray(entry.tags) ? entry.tags : [])]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      })
+      .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")))
+      .slice(0, 120);
+  }, [bestiarySearch]);
 
   const previewActors = useMemo(() => {
     const playerActors = players
@@ -151,6 +248,20 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
     setNpcArmorEnergy("0");
   };
 
+  const handleAddBestiaryNpc = (entry) => {
+    const hp = Math.max(1, firstNumber(entry?.hp, 10));
+    const initiative = Math.max(0, firstNumber(entry?.initiative, 0));
+    const armor = bestiaryArmor(entry);
+    session.addCombatNpc({
+      name: entry?.name,
+      initiative,
+      maxHp: hp,
+      currentHp: hp,
+      armorPhysical: armor.physical,
+      armorEnergy: armor.energy,
+    });
+  };
+
   return (
     <section className="session-combat-board">
       <section className="pip-panel pip-block session-initiative-panel">
@@ -201,7 +312,51 @@ export default function SessionCombatBoard({ session, players, mode, copy }) {
 
       {mode === "host" && !combat.active && (
         <section className="pip-panel pip-block session-npc-builder">
-          <div className="pip-head"><h2>[ {copy.addNpc} ]</h2></div>
+          <div className="pip-head">
+            <h2>[ {copy.addNpc} ]</h2>
+            <button type="button" className="pip-btn is-primary" onClick={() => setBestiaryOpen((value) => !value)}>
+              {bestiaryOpen ? bestiaryCopy.close : bestiaryCopy.open}
+            </button>
+          </div>
+
+          {bestiaryOpen && (
+            <section className="session-bestiary-picker">
+              <div className="session-bestiary-picker-head">
+                <strong>[ {bestiaryCopy.title} ]</strong>
+                <span>{bestiaryEntries.length}</span>
+              </div>
+              <input
+                className="pip-input session-bestiary-picker-search"
+                value={bestiarySearch}
+                placeholder={bestiaryCopy.search}
+                onChange={(event) => setBestiarySearch(event.target.value)}
+              />
+              <div className="session-bestiary-picker-list">
+                {bestiaryEntries.length ? bestiaryEntries.map((entry) => {
+                  const armor = bestiaryArmor(entry);
+                  return (
+                    <article className="session-bestiary-entry" key={entry.id || entry.name}>
+                      <div className="session-bestiary-entry-head">
+                        <div>
+                          <div className="session-bestiary-entry-name">{entry.name}</div>
+                          <div className="session-bestiary-entry-type">{entry.creatureType || entry.category || "NPC"}</div>
+                        </div>
+                        <span className="session-bestiary-entry-level">{bestiaryCopy.level} {entry.level || "—"}</span>
+                      </div>
+                      <div className="session-bestiary-entry-stats">
+                        <div className="session-bestiary-entry-stat"><span>HP</span><strong>{firstNumber(entry.hp, 0)}</strong></div>
+                        <div className="session-bestiary-entry-stat"><span>{bestiaryCopy.defense}</span><strong>{firstNumber(entry.defense, 0)}</strong></div>
+                        <div className="session-bestiary-entry-stat"><span>{bestiaryCopy.initiative}</span><strong>{firstNumber(entry.initiative, 0)}</strong></div>
+                        <div className="session-bestiary-entry-stat"><span>{bestiaryCopy.armor}</span><strong>{armor.physical}/{armor.energy}</strong></div>
+                      </div>
+                      <button type="button" className="pip-btn" onClick={() => handleAddBestiaryNpc(entry)}>+ {bestiaryCopy.add}</button>
+                    </article>
+                  );
+                }) : <div className="pip-logbox session-bestiary-picker-empty">{bestiaryCopy.noResults}</div>}
+              </div>
+            </section>
+          )}
+
           <div className="session-precombat-npc-list">
             {(combat.npcs || []).map((npc) => (
               <div key={npc.id} className="session-precombat-npc-row">
