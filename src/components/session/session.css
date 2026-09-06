@@ -1,0 +1,201 @@
+.session-screen {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.session-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.session-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -15% -70px 40%;
+  height: 150px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.08;
+  pointer-events: none;
+}
+
+.session-topline,
+.session-status-strip,
+.session-player-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.session-role-grid,
+.session-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.session-role-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.session-role-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  box-shadow: 0 0 14px color-mix(in srgb, currentColor 24%, transparent);
+}
+
+.session-field {
+  display: grid;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.session-code-input,
+.session-code-display {
+  font-family: inherit;
+  font-size: clamp(1.2rem, 4vw, 1.75rem);
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.session-code-input {
+  text-align: center;
+}
+
+.session-code-display {
+  padding: 5px 10px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.session-main-button {
+  width: 100%;
+  min-height: 42px;
+}
+
+.session-status-strip {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+
+.session-status-strip > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.session-status-dot,
+.session-online-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  background: currentColor;
+  box-shadow: 0 0 9px currentColor;
+}
+
+.session-status-dot.is-connecting,
+.session-status-dot.is-waiting {
+  opacity: 0.45;
+  animation: sessionPulse 1.25s ease-in-out infinite;
+}
+
+.session-status-dot.is-disconnected,
+.session-status-dot.is-error {
+  opacity: 0.28;
+  box-shadow: none;
+}
+
+@keyframes sessionPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.session-roster {
+  display: grid;
+  gap: 8px;
+}
+
+.session-player-card {
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+
+.session-character-name {
+  margin-top: 5px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.session-player-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin: 5px 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.session-scene-input {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+}
+
+.session-current-message {
+  margin-top: 8px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.session-current-message-large {
+  min-height: 120px;
+  margin-bottom: 10px;
+}
+
+.session-error {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px solid currentColor;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.session-beta-note {
+  text-align: center;
+  opacity: 0.68;
+  padding: 4px 8px 14px;
+}
+
+@media (max-width: 760px) {
+  .session-role-grid,
+  .session-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .session-status-strip {
+    align-items: stretch;
+  }
+
+  .session-code-display {
+    width: 100%;
+    text-align: center;
+    order: 3;
+  }
+}

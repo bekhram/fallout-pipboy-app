@@ -9,6 +9,7 @@ import PerksScreen from "./components/perks/PerksScreen.jsx";
 import NotesScreen from "./components/notes/NotesScreen.jsx";
 import DataScreen from "./components/data/DataScreen.jsx";
 import MenuScreen from "./components/menu/MenuScreen.jsx";
+import SessionScreen from "./components/session/SessionScreen.jsx";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
 import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
@@ -894,6 +895,14 @@ const updateSkill = (skillName, field, value) =>
         onNewCharacter={handleNewCharacter}
         onContinue={handleContinue}
         onImportClick={handleImportClick}
+        onOpenSession={() => setScreen("session")}
+      />
+    );
+  } else if (screen === "session") {
+    content = (
+      <SessionScreen
+        form={form}
+        onBack={() => setScreen("menu")}
       />
     );
   } else {
@@ -1398,15 +1407,17 @@ const SkillsEditorModal = () => {
         onChange={handleImport}
       />
 
-      {screen === "menu" ? (
+      {(screen === "menu" || screen === "session") ? (
         <div className="pip-app">
           <div className="pip-vignette" />
           <div className="pip-container">
             <main className="pip-main">
               {content}
-              <div className="pip-actions-inline push-top">
-                <PwaInstallButton />
-              </div>
+              {screen === "menu" && (
+                <div className="pip-actions-inline push-top">
+                  <PwaInstallButton />
+                </div>
+              )}
             </main>
           </div>
         </div>
@@ -1453,7 +1464,7 @@ const SkillsEditorModal = () => {
       <DerivedModal />
       <SkillsEditorModal />
 
-      {screen !== "menu" && !isDiceOpen && (
+      {screen === "sheet" && !isDiceOpen && (
         <FloatingDiceButton onOpen={openFreeDiceRoll} />
       )}
 

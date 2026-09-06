@@ -13,6 +13,7 @@ export default function MenuScreen({
   onNewCharacter,
   onContinue,
   onImportClick,
+  onOpenSession,
   saveMeta
 }) {
   const { t, i18n } = useTranslation();
@@ -81,6 +82,15 @@ export default function MenuScreen({
               id="btn_import_json"
             >
               {t("menuScreen.importJson")}
+            </TrackedButton>
+
+            <TrackedButton
+              type="button"
+              className="pip-btn is-primary"
+              onClick={onOpenSession}
+              id="btn_gm_session"
+            >
+              GM / SESSION
             </TrackedButton>
           </div>
         </section>
