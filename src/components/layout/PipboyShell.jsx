@@ -4,7 +4,7 @@ import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
 import CraftingHub from "../crafting/CraftingHub.jsx";
 import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
-import GmPanel from "../gm/GmPanel.jsx";
+import GmWorkspace from "../gm/GmWorkspace.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 import { installBestiaryCombatGmBridge } from "../../utils/bestiaryCombatGmBridge.js";
@@ -24,6 +24,7 @@ const INTERACTIVE_SELECTOR = [
   ".bestiary-screen",
   ".crafting-screen",
   ".gm-panel",
+  ".gm-toolkit",
   ".armor-repair-panel",
   ".pip-active-combat",
   ".combat-turn-sequence",
@@ -111,8 +112,9 @@ export default function PipboyShell({
   }
   if (activeTab === "gm") {
     screenContent = (
-      <GmPanel
+      <GmWorkspace
         character={resolvedCharacter}
+        setCharacter={resolvedSetCharacter}
         onOpenMap={() => onTabChange("map")}
       />
     );
