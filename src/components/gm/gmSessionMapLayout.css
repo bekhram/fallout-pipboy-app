@@ -41,6 +41,49 @@
   box-shadow: inset 0 0 10px color-mix(in srgb, currentColor 10%, transparent);
 }
 
+.gm-session-map__live-roster {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+}
+
+.gm-session-map__live-roster > .pip-btn {
+  flex: 0 0 auto;
+  min-width: 110px;
+  font-size: .58rem;
+}
+
+.gm-session-map__follow {
+  flex: 0 0 min(230px, 72vw);
+  display: grid;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gm-session-map__follow:hover,
+.gm-session-map__follow.is-active {
+  border-color: color-mix(in srgb, currentColor 72%, transparent);
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+.gm-session-map__follow strong {
+  font-size: .68rem;
+}
+
+.gm-session-map__follow span {
+  font-size: .52rem;
+  opacity: .7;
+}
+
 .gm-session-token.is-live {
   cursor: default;
   border-style: double;
