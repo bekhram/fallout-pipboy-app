@@ -23,10 +23,15 @@ const COPY={
 function copy(){const code=languageCode();return COPY[code]||COPY.en;}
 function option(group,key){return <option key={key} value={key}>{labelFor(group,key)}</option>;}
 
-export function TacticalEnvironmentSummary({scene,compact=false}){
+export function TacticalEnvironmentSummary({scene,compact=false,effectsOnly=false}){
   const env=normalizeTacticalEnvironment(scene?.environment);
   const effects=useMemo(()=>environmentEffects(env),[env.locationType,env.terrain,env.zoneType,env.zoneSubtype,env.timeOfDay,env.weather,env.hazardBaseCd,env.hazardGrowthCd]);
   const text=copy();
+  if(effectsOnly){
+    return <section className="tactical-environment-summary is-effects-only">
+      <div className="tactical-environment-summary__effects"><strong>[ {text.effects} ]</strong>{effects.map((effect,index)=><span key={`${effect}-${index}`}>{effect}</span>)}</div>
+    </section>;
+  }
   return <section className={`tactical-environment-summary${compact?" is-compact":""}`}>
     <div className="tactical-environment-summary__chips">
       <span><b>{text.location}</b>{labelFor("locationType",env.locationType)}</span>
