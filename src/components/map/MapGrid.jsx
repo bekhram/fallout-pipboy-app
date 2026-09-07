@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import MapCell from "./MapCell.jsx";
 import CombatAwareLocalGmChat from "./CombatAwareLocalGmChat.jsx";
 import WorldOverview from "./WorldOverview.jsx";
+import SessionMapPositionSync from "./SessionMapPositionSync.jsx";
 import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
 import "./localMapMode.css";
@@ -126,6 +127,12 @@ function MapGrid({
 
   return (
     <div className={`pip-map-mode-shell ${mapMode === "local" ? "is-local" : mapMode === "overview" ? "is-overview" : "is-world"}`}>
+      <SessionMapPositionSync
+        character={character}
+        mapData={mapData}
+        playerPosition={playerPosition}
+        region={region}
+      />
       {mapMode === "local" ? (
         <div className="pip-map-local-fullscreen" role="dialog" aria-modal="true" aria-label="Auto GM">
           <div className="pip-map-local-fullscreen__bar">

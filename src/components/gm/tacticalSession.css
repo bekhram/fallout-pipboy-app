@@ -1,0 +1,368 @@
+.tactical-map {
+  position: relative;
+  min-width: 0;
+}
+
+.tactical-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.tactical-toolbar .pip-btn {
+  min-height: 34px;
+  font-size: .66rem;
+}
+
+.tactical-size-select {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .6rem;
+  letter-spacing: .08em;
+}
+
+.tactical-size-select .pip-input {
+  width: auto;
+  min-width: 82px;
+  padding: 5px 7px;
+}
+
+.tactical-generator {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 170px) minmax(120px, 170px) auto auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, currentColor 42%, transparent);
+}
+
+.tactical-generator__title {
+  align-self: center;
+  padding-right: 4px;
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.tactical-generator label {
+  display: grid;
+  gap: 4px;
+  font-size: .54rem;
+  letter-spacing: .08em;
+  opacity: .9;
+}
+
+.tactical-generator .pip-input {
+  min-height: 32px;
+  padding: 5px 7px;
+}
+
+.tactical-generator .pip-btn {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: .6rem;
+}
+
+.tactical-generator__stats {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-self: center;
+  font-size: .52rem;
+}
+
+.tactical-generator__stats span {
+  padding: 4px 5px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.tactical-live {
+  border-color: currentColor !important;
+  box-shadow: inset 0 0 12px color-mix(in srgb, currentColor 10%, transparent), 0 0 10px color-mix(in srgb, currentColor 10%, transparent);
+  text-shadow: 0 0 9px currentColor;
+}
+
+.tactical-grid {
+  min-height: 560px;
+  aspect-ratio: auto;
+  background:
+    radial-gradient(circle at center, color-mix(in srgb, currentColor 5%, transparent), transparent 66%),
+    #050c06;
+}
+
+.tactical-cell {
+  background: color-mix(in srgb, currentColor 2.5%, transparent);
+}
+
+.tactical-cell:nth-child(2n) {
+  background: color-mix(in srgb, currentColor 3.5%, transparent);
+}
+
+.tactical-cell.is-start-zone {
+  background: color-mix(in srgb, currentColor 11%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 36%, transparent);
+}
+
+.tactical-cell.is-start-edit {
+  cursor: cell;
+}
+
+.tactical-cell.is-start-edit:hover {
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
+.tactical-cell.is-wall {
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, currentColor 16%, #030703) 0 4px, #030603 4px 8px);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 48%, transparent);
+  cursor: not-allowed;
+}
+
+.tactical-cell.is-door {
+  background: color-mix(in srgb, currentColor 10%, #030703);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 58%, transparent);
+}
+
+.tactical-cell.is-door.is-door-open {
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 32%, transparent);
+}
+
+.tactical-cell.is-obstacle {
+  background: radial-gradient(circle at center, color-mix(in srgb, currentColor 13%, transparent), transparent 70%);
+  cursor: not-allowed;
+}
+
+.tactical-cell.is-cover {
+  background: linear-gradient(135deg, color-mix(in srgb, currentColor 12%, transparent), color-mix(in srgb, currentColor 3%, transparent));
+  cursor: not-allowed;
+}
+
+.tactical-cell.is-hazard {
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, currentColor 9%, transparent) 0 5px, transparent 5px 10px);
+}
+
+.tactical-cell.is-blocked:hover {
+  outline-color: color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.tactical-object {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-size: clamp(.72rem, 1.35vw, 1.3rem);
+  font-weight: 900;
+  line-height: 1;
+  opacity: .74;
+  pointer-events: none;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.tactical-cell.is-wall .tactical-object {
+  font-size: clamp(.78rem, 1.55vw, 1.45rem);
+  opacity: .86;
+}
+
+.tactical-cell.is-door .tactical-object {
+  opacity: .95;
+}
+
+.tactical-cell.is-door.is-door-open .tactical-object {
+  opacity: .52;
+}
+
+.tactical-cell.is-hazard .tactical-object {
+  opacity: .55;
+}
+
+.tactical-start-mark {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  z-index: 3;
+  font-size: .5rem;
+  font-weight: 900;
+  opacity: .55;
+}
+
+.gm-session-map__hint.is-editing {
+  border-style: solid;
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+.gm-session-token.is-own {
+  width: 34px;
+  height: 34px;
+  border-width: 2px;
+  box-shadow: 0 0 14px color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.gm-session-token.is-own b {
+  font-size: .5rem;
+}
+
+.session-tactical-toggle {
+  position: fixed;
+  right: 12px;
+  top: 38%;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid currentColor;
+  background: var(--pip-bg, #071008);
+  color: inherit;
+  font: inherit;
+  font-size: .66rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  box-shadow: inset 0 0 14px color-mix(in srgb, currentColor 8%, transparent), 0 0 12px rgba(0,0,0,.45);
+  cursor: pointer;
+}
+
+.session-tactical-toggle:hover {
+  background: color-mix(in srgb, currentColor 9%, var(--pip-bg, #071008));
+}
+
+.session-tactical-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: stretch;
+  padding: 12px;
+  background: rgba(0, 6, 2, .94);
+  backdrop-filter: blur(3px);
+}
+
+.session-tactical-player {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  width: min(1500px, 100%);
+  height: calc(100dvh - 24px);
+  margin: 0 auto;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.session-tactical-player__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+}
+
+.session-tactical-player__head h2 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.session-tactical-player__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session-tactical-player__actions .tactical-live {
+  padding: 6px 9px;
+  border: 1px solid currentColor;
+  font-size: .62rem;
+}
+
+.session-tactical-player .tactical-grid {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.session-tactical-player .tactical-cell:disabled {
+  opacity: .72;
+  cursor: default;
+}
+
+.session-tactical-player .tactical-cell.is-blocked:disabled {
+  opacity: .9;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1180px) {
+  .tactical-generator {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tactical-generator__title,
+  .tactical-generator__stats {
+    grid-column: 1 / -1;
+  }
+
+  .tactical-generator__stats {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 780px) {
+  .tactical-grid {
+    min-height: 460px;
+    overflow: auto;
+  }
+
+  .tactical-generator {
+    grid-template-columns: 1fr;
+  }
+
+  .tactical-generator__title,
+  .tactical-generator__stats {
+    grid-column: auto;
+  }
+
+  .session-tactical-overlay {
+    padding: 4px;
+  }
+
+  .session-tactical-player {
+    height: calc(100dvh - 8px);
+    padding: 7px;
+  }
+
+  .session-tactical-player__head {
+    align-items: flex-start;
+  }
+
+  .session-tactical-player__head .pip-bootline {
+    font-size: .52rem;
+  }
+
+  .session-tactical-player__head h2 {
+    font-size: .78rem;
+  }
+
+  .session-tactical-player .tactical-grid {
+    min-width: 720px;
+  }
+
+  .session-tactical-player {
+    overflow: auto;
+  }
+
+  .session-tactical-toggle {
+    right: 8px;
+    top: 36%;
+    min-height: 38px;
+    padding: 6px 8px;
+    font-size: .58rem;
+  }
+}

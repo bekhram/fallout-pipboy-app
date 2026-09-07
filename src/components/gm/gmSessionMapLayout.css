@@ -1,0 +1,124 @@
+@media (min-width: 1181px) {
+  .session-gm-workspace-wrap > .gm-workspace {
+    grid-template-areas:
+      "status status status"
+      "scene map library"
+      "initiative map library"
+      "initiative autogm dice"
+      "ap autogm journal"
+      "encounter log loot";
+  }
+
+  .session-gm-workspace-wrap > .gm-workspace > .gm-session-map {
+    grid-area: map;
+    align-self: stretch;
+    min-height: 100%;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) {
+    grid-area: log;
+    min-height: 0;
+    grid-template-rows: auto auto auto;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2)::before {
+    display: none;
+    content: none;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .gm-card__head,
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .gm-travel-log,
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .pip-btn {
+    grid-row: auto;
+  }
+
+  .session-gm-workspace-wrap .gm-panel__column--wide > .gm-card:nth-child(2) > .gm-travel-log {
+    max-height: 190px;
+  }
+}
+
+.gm-session-map__live-stat {
+  box-shadow: inset 0 0 10px color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.gm-session-map__live-roster {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+}
+
+.gm-session-map__live-roster > .pip-btn {
+  flex: 0 0 auto;
+  min-width: 110px;
+  font-size: .58rem;
+}
+
+.gm-session-map__follow {
+  flex: 0 0 min(230px, 72vw);
+  display: grid;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gm-session-map__follow:hover,
+.gm-session-map__follow.is-active {
+  border-color: color-mix(in srgb, currentColor 72%, transparent);
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+.gm-session-map__follow strong {
+  font-size: .68rem;
+}
+
+.gm-session-map__follow span {
+  font-size: .52rem;
+  opacity: .7;
+}
+
+.gm-session-token.is-live {
+  cursor: default;
+  border-style: double;
+  border-width: 3px;
+  box-shadow: 0 0 14px color-mix(in srgb, currentColor 34%, transparent);
+}
+
+.gm-session-token.is-live:active {
+  cursor: default;
+}
+
+.gm-session-token__live-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--pip-bg, #071008);
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+@media (max-width: 1180px) {
+  .gm-workspace > .gm-session-map {
+    order: -1;
+  }
+
+  .gm-workspace .gm-panel__column--wide > .gm-card:nth-child(2)::before {
+    display: none;
+    content: none;
+  }
+
+  .gm-workspace .gm-panel__column--wide > .gm-card:nth-child(2) {
+    min-height: 0;
+    grid-template-rows: auto auto auto;
+  }
+}
