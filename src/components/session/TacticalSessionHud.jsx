@@ -42,14 +42,19 @@ function readCollapsed() {
   try { return localStorage.getItem(INIT_COLLAPSED_KEY) === "1"; } catch { return false; }
 }
 
+function tokenAvatarForPlayer(player, tokens) {
+  const clientId = String(player?.clientId || player?.peerId || "");
+  if (!clientId) return "";
+  const token = (tokens || []).find((item) => item?.kind === "player" && String(item?.ownerClientId || "") === clientId && item?.avatar);
+  return String(token?.avatar || "");
+}
+
 export default function TacticalSessionHud({ session }) {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const players = Array.isArray(session?.players) ? session.players : [];
   const scene = session?.tacticalScene || null;
   const rawTokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
 
-  // Defense in depth: a hidden NPC never enters the player's initiative list,
-  // even if an older cached scene briefly contains it before the next manifest.
   const tokens = useMemo(
     () => session?.mode === "player" ? rawTokens.filter((token) => !isHiddenNpc(token)) : rawTokens,
     [rawTokens, session?.mode]
@@ -107,7 +112,7 @@ export default function TacticalSessionHud({ session }) {
           {players.map((player) => {
             const character = player?.character || {};
             const name = character.name || player?.name || "Player";
-            const avatar = character.avatar || "";
+            const avatar = character.avatar || tokenAvatarForPlayer(player, tokens) || "";
             return <div className="session-player-dock__item" key={player.clientId || player.peerId || name} title={name}>
               <div className="session-player-dock__avatar">
                 {avatar ? <img src={avatar} alt="" /> : <span>{initials(name)}</span>}
