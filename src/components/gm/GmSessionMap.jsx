@@ -1,5 +1,6 @@
 import React from "react";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
+import GmPlayerTokenAssignments from "./GmPlayerTokenAssignments.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 
 export default function GmSessionMap(props) {
@@ -14,5 +15,10 @@ export default function GmSessionMap(props) {
     );
   }
 
-  return <GmSessionMapV2 {...props} session={session} />;
+  return (
+    <>
+      <GmPlayerTokenAssignments session={session} />
+      <GmSessionMapV2 {...props} session={session} />
+    </>
+  );
 }
