@@ -1,3 +1,5 @@
+@import "./tacticalSession.css";
+
 .gm-session-map {
   display: grid;
   gap: 10px;
