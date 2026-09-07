@@ -53,8 +53,8 @@
   padding: 12px !important;
   transform: translateX(102%);
   transition: transform .2s ease;
-  display: grid !important;
-  grid-template-rows: auto auto auto minmax(0, 1fr);
+  display: flex !important;
+  flex-direction: column;
   gap: 9px;
   overflow: hidden !important;
   border-left: 1px solid currentColor;
@@ -71,6 +71,7 @@
 }
 
 .session-utility-tabs {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
@@ -82,21 +83,24 @@
   font-size: .58rem;
 }
 
-.session-utility-content {
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 8px;
-  overflow: hidden;
+.session-utility-drawer .session-chat-drawer-head,
+.session-utility-drawer .session-chat-connection-strip,
+.session-utility-drawer .session-chat-scene-banner,
+.session-utility-drawer .session-chat-drawer-form,
+.session-utility-drawer > .session-error,
+.session-utility-drawer > .pip-btn {
+  flex: 0 0 auto;
 }
 
 .session-utility-list {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto !important;
   overscroll-behavior: contain;
 }
 
 .session-utility-dice {
+  flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   display: grid;
