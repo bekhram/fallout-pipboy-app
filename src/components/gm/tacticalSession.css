@@ -86,8 +86,194 @@
   font-size: .62rem;
 }
 
-.tactical-background-error {
+.tactical-background-error,
+.tactical-enemy-error {
   margin: 0;
+}
+
+.tactical-enemy-manager {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.tactical-enemy-manager__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  font-size: .68rem;
+  letter-spacing: .08em;
+}
+
+.tactical-enemy-manager__head > span {
+  min-width: 28px;
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  text-align: center;
+}
+
+.tactical-enemy-create {
+  display: grid;
+  grid-template-columns: minmax(150px, .8fr) minmax(180px, 1.2fr) minmax(140px, .8fr) auto auto;
+  gap: 7px;
+  align-items: end;
+}
+
+.tactical-enemy-create .pip-input,
+.tactical-enemy-card__actions .pip-input {
+  min-height: 34px;
+}
+
+.tactical-enemy-size-label {
+  display: grid;
+  gap: 3px;
+  font-size: .52rem;
+  letter-spacing: .1em;
+  opacity: .82;
+}
+
+.tactical-enemy-size-label .pip-input {
+  min-width: 82px;
+}
+
+.tactical-enemy-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.tactical-enemy-card {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 8px;
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: rgba(0, 0, 0, .18);
+}
+
+.tactical-enemy-card.is-selected {
+  border-color: currentColor;
+  box-shadow: inset 3px 0 0 currentColor;
+}
+
+.tactical-enemy-avatar {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  background: var(--pip-bg, #071008);
+  color: inherit;
+  cursor: pointer;
+}
+
+.tactical-enemy-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tactical-enemy-avatar span {
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+
+.tactical-enemy-card__body {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.tactical-enemy-card__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.tactical-enemy-card__title button {
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tactical-enemy-card__title span {
+  flex: 0 0 auto;
+  font-size: .48rem;
+  opacity: .5;
+}
+
+.tactical-enemy-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: .55rem;
+  opacity: .8;
+}
+
+.tactical-enemy-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.tactical-enemy-card__actions .pip-btn,
+.tactical-avatar-upload {
+  min-height: 28px;
+  padding: 4px 7px;
+  font-size: .52rem;
+}
+
+.tactical-enemy-card__actions .pip-input {
+  width: 72px;
+  min-height: 28px;
+  padding: 3px 5px;
+  font-size: .55rem;
+}
+
+.tactical-avatar-upload {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.tactical-avatar-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tactical-enemy-details {
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  border-left: 2px solid color-mix(in srgb, currentColor 45%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  font-size: .55rem;
+  line-height: 1.35;
+  white-space: pre-line;
 }
 
 .tactical-grid {
@@ -108,7 +294,7 @@
 }
 
 .tactical-grid.has-background .tactical-cell {
-  background: rgba(0, 8, 2, .03) !important;
+  background: rgba(0, 8, 2, .025) !important;
 }
 
 .tactical-grid .tactical-cell:hover {
@@ -128,29 +314,90 @@
   background: color-mix(in srgb, currentColor 20%, transparent) !important;
 }
 
-.tactical-start-mark {
-  position: absolute;
-  top: 3px;
-  right: 4px;
-  z-index: 1;
-  font-size: .5rem;
-  font-weight: 900;
-  opacity: .55;
-}
-
 .gm-session-map__hint.is-editing {
   border-style: solid;
   box-shadow: inset 3px 0 0 currentColor;
 }
 
-.gm-session-token.is-own {
-  width: 34px;
-  height: 34px;
+.tactical-grid .gm-session-map__tokens {
+  inset: 0;
+  overflow: visible;
+}
+
+.tactical-grid .gm-session-token {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(72%, 52px);
+  height: min(72%, 52px);
+  max-width: none;
+  max-height: none;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+  z-index: 5;
+}
+
+.tactical-grid .gm-session-token.is-enemy {
+  border-style: solid;
+  border-width: 2px;
+  outline: 1px dashed color-mix(in srgb, currentColor 55%, transparent);
+  outline-offset: 2px;
+}
+
+.tactical-grid .gm-session-token.is-size-2 {
+  left: 3px;
+  top: 3px;
+  width: calc(200% - 6px);
+  height: calc(200% - 6px);
+  transform: none;
+  border-radius: 14%;
+  z-index: 8;
+}
+
+.tactical-grid .gm-session-token.is-size-1.is-selected,
+.tactical-grid .gm-session-token.is-size-1.is-own.is-selected {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.tactical-grid .gm-session-token.is-size-2.is-selected {
+  transform: none;
+  box-shadow: 0 0 18px currentColor, inset 0 0 12px color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.tactical-grid .gm-session-token img {
+  position: absolute;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
+  border-radius: inherit;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.tactical-grid .gm-session-token b {
+  position: relative;
+  z-index: 2;
+}
+
+.tactical-grid .gm-session-token small {
+  z-index: 10;
+}
+
+.tactical-grid .gm-session-token.is-size-2 small {
+  top: auto;
+  bottom: 4px;
+  max-width: calc(100% - 10px);
+  opacity: .92;
+}
+
+.tactical-grid .gm-session-token.is-own {
+  width: min(78%, 56px);
+  height: min(78%, 56px);
   border-width: 2px;
   box-shadow: 0 0 14px color-mix(in srgb, currentColor 45%, transparent);
 }
 
-.gm-session-token.is-own b {
+.tactical-grid .gm-session-token.is-own b {
   font-size: .5rem;
 }
 
@@ -235,8 +482,22 @@
 }
 
 .session-tactical-player .tactical-cell:disabled {
-  opacity: .78;
+  opacity: .84;
   cursor: default;
+}
+
+@media (max-width: 1100px) {
+  .tactical-enemy-create {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tactical-enemy-create > .pip-btn {
+    grid-column: span 2;
+  }
+
+  .tactical-enemy-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 780px) {
@@ -251,6 +512,25 @@
 
   .tactical-background-actions {
     justify-content: flex-start;
+  }
+
+  .tactical-enemy-manager {
+    padding: 7px;
+  }
+
+  .tactical-enemy-create {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tactical-enemy-create > input:first-child,
+  .tactical-enemy-create > select:nth-child(2),
+  .tactical-enemy-create > input:nth-child(3),
+  .tactical-enemy-create > .pip-btn {
+    grid-column: span 2;
+  }
+
+  .tactical-enemy-list {
+    max-height: 210px;
   }
 
   .tactical-grid {
