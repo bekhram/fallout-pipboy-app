@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import SessionTacticalMapV2 from "./SessionTacticalMapV2.jsx";
+import PlayerTokenAssignmentBridge from "./PlayerTokenAssignmentBridge.jsx";
 
 function findMapModeSwitch() {
   if (typeof document === "undefined") return null;
@@ -65,6 +66,7 @@ export default function SessionTacticalMap({ session }) {
   return (
     <>
       <SessionTacticalMapV2 session={tacticalSession} />
+      <PlayerTokenAssignmentBridge session={tacticalSession} />
       {shortcut}
     </>
   );
