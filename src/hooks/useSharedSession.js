@@ -13,8 +13,9 @@ export default function useSharedSession(form) {
 
   useEffect(() => {
     setLiveSessionBridge(session);
-    return () => setLiveSessionBridge(null);
   }, [session]);
+
+  useEffect(() => () => setLiveSessionBridge(null), []);
 
   return session;
 }
