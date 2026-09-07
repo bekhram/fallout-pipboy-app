@@ -11,10 +11,10 @@ const VIEW_COLS = 8;
 const VIEW_ROWS = 8;
 
 const COPY = {
-  en: { title: "SESSION MAP", region: "REGION", players: "PLAYERS", live: "LIVE", npc: "NPC", move: "NPC and fallback tokens can be moved. Player LIVE tokens follow their own maps automatically.", noMap: "No sector map loaded. Showing fallback session grid.", location: "LOCATION", selected: "SELECTED", reset: "RESET TOKENS", offMap: "player(s) are in another sector" },
-  ru: { title: "КАРТА СЕССИИ", region: "РЕГИОН", players: "ИГРОКИ", live: "LIVE", npc: "NPC", move: "NPC и резервные токены можно двигать. LIVE-токены игроков следуют за их картой автоматически.", noMap: "Карта сектора не загружена. Показана резервная сетка сессии.", location: "ЛОКАЦИЯ", selected: "ВЫБРАН", reset: "СБРОСИТЬ ТОКЕНЫ", offMap: "игрок(а) находятся в другом секторе" },
-  uk: { title: "МАПА СЕСІЇ", region: "РЕГІОН", players: "ГРАВЦІ", live: "LIVE", npc: "NPC", move: "NPC та резервні токени можна рухати. LIVE-токени гравців автоматично слідують за їхньою мапою.", noMap: "Мапу сектора не завантажено. Показано резервну сітку сесії.", location: "ЛОКАЦІЯ", selected: "ОБРАНО", reset: "СКИНУТИ ТОКЕНИ", offMap: "гравець(ці) знаходяться в іншому секторі" },
-  pl: { title: "MAPA SESJI", region: "REGION", players: "GRACZE", live: "LIVE", npc: "NPC", move: "NPC i tokeny zapasowe można przesuwać. Tokeny LIVE graczy automatycznie śledzą ich mapę.", noMap: "Mapa sektora nie jest wczytana. Pokazano zapasową siatkę sesji.", location: "LOKACJA", selected: "WYBRANO", reset: "RESETUJ TOKENY", offMap: "gracz(e) znajdują się w innym sektorze" },
+  en: { title: "SESSION MAP", region: "REGION", players: "PLAYERS", live: "LIVE", npc: "NPC", move: "NPC and fallback tokens can be moved. Player LIVE tokens follow their own maps automatically.", noMap: "No sector map loaded. Showing fallback session grid.", location: "LOCATION", selected: "SELECTED", reset: "RESET TOKENS", offMap: "player(s) are in another sector", gmView: "GM SECTOR", follow: "FOLLOW" },
+  ru: { title: "КАРТА СЕССИИ", region: "РЕГИОН", players: "ИГРОКИ", live: "LIVE", npc: "NPC", move: "NPC и резервные токены можно двигать. LIVE-токены игроков следуют за их картой автоматически.", noMap: "Карта сектора не загружена. Показана резервная сетка сессии.", location: "ЛОКАЦИЯ", selected: "ВЫБРАН", reset: "СБРОСИТЬ ТОКЕНЫ", offMap: "игрок(а) находятся в другом секторе", gmView: "СЕКТОР ГМ", follow: "СЛЕДИТЬ" },
+  uk: { title: "МАПА СЕСІЇ", region: "РЕГІОН", players: "ГРАВЦІ", live: "LIVE", npc: "NPC", move: "NPC та резервні токени можна рухати. LIVE-токени гравців автоматично слідують за їхньою мапою.", noMap: "Мапу сектора не завантажено. Показано резервну сітку сесії.", location: "ЛОКАЦІЯ", selected: "ОБРАНО", reset: "СКИНУТИ ТОКЕНИ", offMap: "гравець(ці) знаходяться в іншому секторі", gmView: "СЕКТОР ГМ", follow: "СТЕЖИТИ" },
+  pl: { title: "MAPA SESJI", region: "REGION", players: "GRACZE", live: "LIVE", npc: "NPC", move: "NPC i tokeny zapasowe można przesuwać. Tokeny LIVE graczy automatycznie śledzą ich mapę.", noMap: "Mapa sektora nie jest wczytana. Pokazano zapasową siatkę sesji.", location: "LOKACJA", selected: "WYBRANO", reset: "RESETUJ TOKENY", offMap: "gracz(e) znajdują się w innym sektorze", gmView: "SEKTOR GM", follow: "ŚLEDŹ" },
 };
 
 function languageCode(value) {
@@ -111,24 +111,32 @@ export default function GmSessionMap({ character = null }) {
   const text = COPY[language];
 
   const mapState = character?.mapData || {};
-  const worldOffset = mapState.worldOffset || { x: 0, y: 0 };
-  const sectorKey = `${Number(worldOffset.x || 0)},${Number(worldOffset.y || 0)}`;
-  const currentSector = mapState.sectorCache?.[sectorKey] || {};
-  const cols = Math.max(1, Number(currentSector.cols || VIEW_COLS));
-  const rows = Math.max(1, Number(currentSector.rows || VIEW_ROWS));
-  const playerPosition = mapState.playerPosition || currentSector.start || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) };
-  const region = getMapRegion(mapState.regionId);
-  const regionName = getRegionName(region, language);
+  const gmWorldOffset = mapState.worldOffset || { x: 0, y: 0 };
+  const gmRegionId = mapState.regionId || "commonwealth";
 
   const [roster, setRoster] = useState(() => getConnectedPlayers());
   const [npcs, setNpcs] = useState(() => getNpcTokens());
   const [livePlayers, setLivePlayers] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
+  const [focusedPeerId, setFocusedPeerId] = useState(null);
   const [sessionCode, setSessionCode] = useState(() => getSessionCode());
   const mapPeerRef = useRef(null);
   const mapConnectionsRef = useRef(new Map());
 
-  const storageKey = `fallout_pipboy_gm_token_positions_${sessionCode}`;
+  const focusedPlayer = livePlayers.find((player) => player.peerId === focusedPeerId) || null;
+  const viewRegionId = focusedPlayer?.regionId || gmRegionId;
+  const viewWorldOffset = focusedPlayer?.worldOffset || gmWorldOffset;
+  const sectorKey = `${Number(viewWorldOffset.x || 0)},${Number(viewWorldOffset.y || 0)}`;
+  const currentSector = viewRegionId === gmRegionId ? (mapState.sectorCache?.[sectorKey] || {}) : {};
+  const cols = Math.max(1, Number(currentSector.cols || focusedPlayer?.cols || VIEW_COLS));
+  const rows = Math.max(1, Number(currentSector.rows || focusedPlayer?.rows || VIEW_ROWS));
+  const playerPosition = !focusedPlayer && sectorKey === `${Number(gmWorldOffset.x || 0)},${Number(gmWorldOffset.y || 0)}`
+    ? (mapState.playerPosition || currentSector.start || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) })
+    : (focusedPlayer?.position || currentSector.start || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) });
+  const region = getMapRegion(viewRegionId);
+  const regionName = getRegionName(region, language);
+
+  const storageKey = `fallout_pipboy_gm_token_positions_${sessionCode}_${viewRegionId}_${sectorKey}`;
   const [tokenPositions, setTokenPositions] = useState(() => safeReadJson(storageKey, {}));
 
   useEffect(() => {
@@ -146,12 +154,19 @@ export default function GmSessionMap({ character = null }) {
   }, [sessionCode]);
 
   useEffect(() => {
-    setTokenPositions(safeReadJson(`fallout_pipboy_gm_token_positions_${sessionCode}`, {}));
-  }, [sessionCode]);
+    setTokenPositions(safeReadJson(storageKey, {}));
+    setSelectedToken(null);
+  }, [storageKey]);
 
   useEffect(() => {
     safeWriteJson(storageKey, tokenPositions);
   }, [storageKey, tokenPositions]);
+
+  useEffect(() => {
+    if (focusedPeerId && !livePlayers.some((player) => player.peerId === focusedPeerId)) {
+      setFocusedPeerId(null);
+    }
+  }, [focusedPeerId, livePlayers]);
 
   useEffect(() => {
     if (!sessionCode || sessionCode === "offline") return undefined;
@@ -213,19 +228,19 @@ export default function GmSessionMap({ character = null }) {
   const locationsByCell = useMemo(() => {
     const result = new Map();
     (region?.locations || []).forEach((location) => {
-      const localX = Number(location.worldX) - Number(worldOffset.x || 0) * cols;
-      const localY = Number(location.worldY) - Number(worldOffset.y || 0) * rows;
+      const localX = Number(location.worldX) - Number(viewWorldOffset.x || 0) * cols;
+      const localY = Number(location.worldY) - Number(viewWorldOffset.y || 0) * rows;
       if (localX >= 0 && localX < cols && localY >= 0 && localY < rows) result.set(`${localX}:${localY}`, location);
     });
     return result;
-  }, [region, worldOffset.x, worldOffset.y, cols, rows]);
+  }, [region, viewWorldOffset.x, viewWorldOffset.y, cols, rows]);
 
   const liveNames = useMemo(() => new Set(livePlayers.map((player) => player.name.toLowerCase())), [livePlayers]);
   const liveOnCurrentSector = useMemo(() => livePlayers.filter((player) =>
     player.regionId === region.id
-    && Number(player.worldOffset.x) === Number(worldOffset.x || 0)
-    && Number(player.worldOffset.y) === Number(worldOffset.y || 0)
-  ), [livePlayers, region.id, worldOffset.x, worldOffset.y]);
+    && Number(player.worldOffset.x) === Number(viewWorldOffset.x || 0)
+    && Number(player.worldOffset.y) === Number(viewWorldOffset.y || 0)
+  ), [livePlayers, region.id, viewWorldOffset.x, viewWorldOffset.y]);
   const liveOffMapCount = Math.max(0, livePlayers.length - liveOnCurrentSector.length);
 
   const tokens = useMemo(() => {
@@ -276,12 +291,30 @@ export default function GmSessionMap({ character = null }) {
         </div>
         <div className="gm-session-map__meta">
           <span>{text.region}: <strong>{regionName}</strong></span>
+          <span>SEC: <strong>{sectorKey}</strong></span>
           <span>{text.players}: <strong>{roster.length}</strong></span>
           <span className="gm-session-map__live-stat">{text.live}: <strong>{livePlayers.length}</strong></span>
           <span>{text.npc}: <strong>{npcs.length}</strong></span>
           <button type="button" className="pip-btn" onClick={resetTokens}>{text.reset}</button>
         </div>
       </div>
+
+      {livePlayers.length ? (
+        <div className="gm-session-map__live-roster">
+          <button type="button" className={`pip-btn${!focusedPeerId ? " is-primary" : ""}`} onClick={() => setFocusedPeerId(null)}>{text.gmView}</button>
+          {livePlayers.map((player) => (
+            <button
+              type="button"
+              key={player.peerId}
+              className={`gm-session-map__follow${focusedPeerId === player.peerId ? " is-active" : ""}`}
+              onClick={() => setFocusedPeerId(player.peerId)}
+            >
+              <strong>{player.name}</strong>
+              <span>{text.follow} · {player.regionId} · {player.worldOffset.x},{player.worldOffset.y} / {player.position.x},{player.position.y}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <div className="gm-session-map__hint">
         {selected ? `${text.selected}: ${selected.name}${selected.live ? " · LIVE" : ""}` : text.move}
