@@ -1,122 +1,51 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import DiceRollModal from "../dice/DiceRollModal.jsx";
+import SessionTacticalMap from "./SessionTacticalMap.jsx";
+import "./sessionUtilityDrawer.css";
+
+const SAVE_KEY = "fallout_pipboy_v4_last_character";
 
 const COPY = {
   en: {
-    title: "GROUP LOG",
-    online: "ONLINE",
-    connecting: "CONNECTING",
-    offline: "OFFLINE",
-    placeholder: "Message the group...",
-    send: "SEND",
-    noMessages: "No session activity yet.",
-    gm: "GM",
-    joined: "joined",
-    left: "left",
-    scene: "GM MESSAGE",
-    close: "CLOSE",
-    reconnect: "RECONNECT",
-    hostNotFound: "GM session not found or is offline.",
-    networkError: "Network connection error.",
-    success: "SUCCESS",
-    failure: "FAILURE",
-    successes: "Suc",
-    complications: "Comp",
-    damage: "Damage",
-    effects: "Effects",
-    difficulty: "Diff",
-    target: "TN",
-    hit: "Hit",
-    combatStart: "COMBAT START",
-    combatEnd: "COMBAT END",
-    turn: "TURN",
+    title: "SESSION PANEL", online: "ONLINE", connecting: "CONNECTING", offline: "OFFLINE",
+    placeholder: "Message the group...", send: "SEND", noMessages: "No session activity yet.", gm: "GM",
+    joined: "joined", left: "left", scene: "GM MESSAGE", close: "CLOSE", reconnect: "RECONNECT",
+    hostNotFound: "GM session not found or is offline.", networkError: "Network connection error.",
+    success: "SUCCESS", failure: "FAILURE", successes: "Suc", complications: "Comp", damage: "Damage",
+    effects: "Effects", difficulty: "Diff", target: "TN", hit: "Hit", combatStart: "COMBAT START",
+    combatEnd: "COMBAT END", turn: "TURN", chatTab: "CHAT", logTab: "LOG", diceTab: "DICE",
+    noChat: "No chat messages yet.", drawer: "CHAT / LOG / DICE", players: "PLAYERS",
   },
   ru: {
-    title: "ОБЩИЙ ЖУРНАЛ",
-    online: "ОНЛАЙН",
-    connecting: "ПОДКЛЮЧЕНИЕ",
-    offline: "ОФЛАЙН",
-    placeholder: "Сообщение группе...",
-    send: "ОТПРАВИТЬ",
-    noMessages: "В журнале пока нет событий.",
-    gm: "ГМ",
-    joined: "подключился",
-    left: "вышел",
-    scene: "СООБЩЕНИЕ ГМ",
-    close: "ЗАКРЫТЬ",
-    reconnect: "ПЕРЕПОДКЛЮЧИТЬСЯ",
-    hostNotFound: "Сессия ГМ не найдена или ГМ не в сети.",
-    networkError: "Ошибка сетевого соединения.",
-    success: "УСПЕХ",
-    failure: "ПРОВАЛ",
-    successes: "Усп",
-    complications: "Осл",
-    damage: "Урон",
-    effects: "Эффекты",
-    difficulty: "Сложн",
-    target: "ЦЧ",
-    hit: "Попадание",
-    combatStart: "НАЧАЛО БОЯ",
-    combatEnd: "КОНЕЦ БОЯ",
-    turn: "ХОД",
+    title: "ПАНЕЛЬ СЕССИИ", online: "ОНЛАЙН", connecting: "ПОДКЛЮЧЕНИЕ", offline: "ОФЛАЙН",
+    placeholder: "Сообщение группе...", send: "ОТПРАВИТЬ", noMessages: "В журнале пока нет событий.", gm: "ГМ",
+    joined: "подключился", left: "вышел", scene: "СООБЩЕНИЕ ГМ", close: "ЗАКРЫТЬ", reconnect: "ПЕРЕПОДКЛЮЧИТЬСЯ",
+    hostNotFound: "Сессия ГМ не найдена или ГМ не в сети.", networkError: "Ошибка сетевого соединения.",
+    success: "УСПЕХ", failure: "ПРОВАЛ", successes: "Усп", complications: "Осл", damage: "Урон",
+    effects: "Эффекты", difficulty: "Сложн", target: "ЦЧ", hit: "Попадание", combatStart: "НАЧАЛО БОЯ",
+    combatEnd: "КОНЕЦ БОЯ", turn: "ХОД", chatTab: "ЧАТ", logTab: "ЛОГ", diceTab: "КУБИКИ",
+    noChat: "В чате пока нет сообщений.", drawer: "ЧАТ / ЛОГ / КУБИКИ", players: "ИГРОКИ",
   },
   uk: {
-    title: "СПІЛЬНИЙ ЖУРНАЛ",
-    online: "ОНЛАЙН",
-    connecting: "ПІДКЛЮЧЕННЯ",
-    offline: "ОФЛАЙН",
-    placeholder: "Повідомлення групі...",
-    send: "НАДІСЛАТИ",
-    noMessages: "У журналі ще немає подій.",
-    gm: "ГМ",
-    joined: "підключився",
-    left: "вийшов",
-    scene: "ПОВІДОМЛЕННЯ ГМ",
-    close: "ЗАКРИТИ",
-    reconnect: "ПЕРЕПІДКЛЮЧИТИСЯ",
-    hostNotFound: "Сесію ГМ не знайдено або ГМ не в мережі.",
-    networkError: "Помилка мережевого з’єднання.",
-    success: "УСПІХ",
-    failure: "НЕВДАЧА",
-    successes: "Усп",
-    complications: "Ускл",
-    damage: "Шкода",
-    effects: "Ефекти",
-    difficulty: "Складн",
-    target: "ЦЧ",
-    hit: "Влучання",
-    combatStart: "ПОЧАТОК БОЮ",
-    combatEnd: "КІНЕЦЬ БОЮ",
-    turn: "ХІД",
+    title: "ПАНЕЛЬ СЕСІЇ", online: "ОНЛАЙН", connecting: "ПІДКЛЮЧЕННЯ", offline: "ОФЛАЙН",
+    placeholder: "Повідомлення групі...", send: "НАДІСЛАТИ", noMessages: "У журналі ще немає подій.", gm: "ГМ",
+    joined: "підключився", left: "вийшов", scene: "ПОВІДОМЛЕННЯ ГМ", close: "ЗАКРИТИ", reconnect: "ПЕРЕПІДКЛЮЧИТИСЯ",
+    hostNotFound: "Сесію ГМ не знайдено або ГМ не в мережі.", networkError: "Помилка мережевого з’єднання.",
+    success: "УСПІХ", failure: "НЕВДАЧА", successes: "Усп", complications: "Ускл", damage: "Шкода",
+    effects: "Ефекти", difficulty: "Складн", target: "ЦЧ", hit: "Влучання", combatStart: "ПОЧАТОК БОЮ",
+    combatEnd: "КІНЕЦЬ БОЮ", turn: "ХІД", chatTab: "ЧАТ", logTab: "ЛОГ", diceTab: "КУБИКИ",
+    noChat: "У чаті ще немає повідомлень.", drawer: "ЧАТ / ЛОГ / КУБИКИ", players: "ГРАВЦІ",
   },
   pl: {
-    title: "DZIENNIK GRUPY",
-    online: "ONLINE",
-    connecting: "ŁĄCZENIE",
-    offline: "OFFLINE",
-    placeholder: "Wiadomość do grupy...",
-    send: "WYŚLIJ",
-    noMessages: "Brak aktywności sesji.",
-    gm: "GM",
-    joined: "dołączył",
-    left: "wyszedł",
-    scene: "WIADOMOŚĆ GM",
-    close: "ZAMKNIJ",
-    reconnect: "POŁĄCZ PONOWNIE",
-    hostNotFound: "Sesja GM nie istnieje lub GM jest offline.",
-    networkError: "Błąd połączenia sieciowego.",
-    success: "SUKCES",
-    failure: "PORAŻKA",
-    successes: "Suk",
-    complications: "Kompl",
-    damage: "Obrażenia",
-    effects: "Efekty",
-    difficulty: "Trudn",
-    target: "TN",
-    hit: "Trafienie",
-    combatStart: "START WALKI",
-    combatEnd: "KONIEC WALKI",
-    turn: "TURA",
+    title: "PANEL SESJI", online: "ONLINE", connecting: "ŁĄCZENIE", offline: "OFFLINE",
+    placeholder: "Wiadomość do grupy...", send: "WYŚLIJ", noMessages: "Brak aktywności sesji.", gm: "GM",
+    joined: "dołączył", left: "wyszedł", scene: "WIADOMOŚĆ GM", close: "ZAMKNIJ", reconnect: "POŁĄCZ PONOWNIE",
+    hostNotFound: "Sesja GM nie istnieje lub GM jest offline.", networkError: "Błąd połączenia sieciowego.",
+    success: "SUKCES", failure: "PORAŻKA", successes: "Suk", complications: "Kompl", damage: "Obrażenia",
+    effects: "Efekty", difficulty: "Trudn", target: "TN", hit: "Trafienie", combatStart: "START WALKI",
+    combatEnd: "KONIEC WALKI", turn: "TURA", chatTab: "CZAT", logTab: "LOG", diceTab: "KOŚCI",
+    noChat: "Brak wiadomości na czacie.", drawer: "CZAT / LOG / KOŚCI", players: "GRACZE",
   },
 };
 
@@ -137,15 +66,30 @@ function getConnectionState(status) {
   return "offline";
 }
 
+function readLocalForm() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+    return saved?.data || saved || null;
+  } catch {
+    return null;
+  }
+}
+
+function initials(value) {
+  return String(value || "?")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0] || "")
+    .join("")
+    .toUpperCase() || "?";
+}
+
 function RollItem({ item, copy }) {
   const roll = item?.roll || {};
   const values = Array.isArray(roll.diceValues) ? roll.diceValues : [];
   const isD6 = roll.diceType === "d6";
-  const outcomeLabel = roll.outcome === "success"
-    ? copy.success
-    : roll.outcome === "failure"
-      ? copy.failure
-      : "";
+  const outcomeLabel = roll.outcome === "success" ? copy.success : roll.outcome === "failure" ? copy.failure : "";
 
   return (
     <div className="session-drawer-message session-drawer-roll">
@@ -153,19 +97,16 @@ function RollItem({ item, copy }) {
         <strong>{item.sender || copy.gm} · {String(roll.diceType || "D20").toUpperCase()}</strong>
         <span>{formatTime(item.timestamp)}</span>
       </div>
-
       <div className="session-roll-card">
         <div className="session-roll-title">
           {roll.label || roll.rollType || String(roll.diceType || "D20").toUpperCase()}
           {outcomeLabel ? ` · ${outcomeLabel}` : ""}
         </div>
-
         {values.length > 0 && (
           <div className="session-roll-dice">
             {values.map((value, index) => <span key={`${item.id}-die-${index}`}>{String(value)}</span>)}
           </div>
         )}
-
         <div className="session-roll-stats">
           {!isD6 && Number.isFinite(Number(roll.successes)) && <span>{copy.successes}: {roll.successes}</span>}
           {!isD6 && Number(roll.complications || 0) > 0 && <span>{copy.complications}: {roll.complications}</span>}
@@ -175,10 +116,6 @@ function RollItem({ item, copy }) {
           {isD6 && Number.isFinite(Number(roll.totalDamage)) && <span>{copy.damage}: {roll.totalDamage}</span>}
           {isD6 && Number.isFinite(Number(roll.totalEffects)) && <span>{copy.effects}: {roll.totalEffects}</span>}
         </div>
-
-        {isD6 && Array.isArray(roll.effects) && roll.effects.length > 0 && (
-          <div className="session-feed-text">{roll.effects.join(" · ")}</div>
-        )}
       </div>
     </div>
   );
@@ -226,30 +163,58 @@ function LogItem({ item, copy }) {
   );
 }
 
-export default function SessionChatDrawer({ session }) {
+function PlayerDock({ players, copy }) {
+  const connected = Array.isArray(players) ? players.filter(Boolean) : [];
+  if (!connected.length) return null;
+
+  return (
+    <div className="session-player-dock" aria-label={copy.players}>
+      <div className="session-player-dock__rail">
+        {connected.map((player) => {
+          const character = player?.character || {};
+          const name = character.name || player?.name || "Player";
+          const avatar = character.avatar || "";
+          return (
+            <div className="session-player-dock__item" key={player.peerId || name} title={name}>
+              <div className="session-player-dock__avatar">
+                {avatar ? <img src={avatar} alt="" /> : <span>{initials(name)}</span>}
+                <i className="session-player-dock__online" />
+              </div>
+              <small>{name}</small>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function SessionChatDrawer({ session, form = null }) {
   const { i18n } = useTranslation();
   const copy = getCopy(i18n.resolvedLanguage || i18n.language);
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState("chat");
   const [draft, setDraft] = useState("");
+  const [diceOpen, setDiceOpen] = useState(false);
+  const [pendingAutoD6, setPendingAutoD6] = useState(null);
   const listRef = useRef(null);
 
-  const items = useMemo(
-    () => (session?.feed || []).filter(Boolean).slice(-120),
-    [session?.feed]
-  );
-
+  const items = useMemo(() => (session?.feed || []).filter(Boolean).slice(-120), [session?.feed]);
+  const chatItems = useMemo(() => items.filter((item) => item.type === "chat" || item.type === "scene"), [items]);
+  const visibleItems = tab === "chat" ? chatItems : items;
   const connectionState = getConnectionState(session?.status);
   const connectionLabel = copy[connectionState];
   const errorText = session?.error?.key
     ? (copy[session.error.key] || session.error.message || "")
     : (session?.error?.message || "");
+  const diceForm = form || readLocalForm();
 
   useEffect(() => {
     if (!open || !listRef.current) return;
     listRef.current.scrollTop = listRef.current.scrollHeight;
-  }, [open, items.length]);
+  }, [open, tab, visibleItems.length]);
 
-  if (!session?.isActive || session?.mode !== "player") return null;
+  if (!session?.isActive) return null;
 
   const submit = (event) => {
     event.preventDefault();
@@ -258,77 +223,103 @@ export default function SessionChatDrawer({ session }) {
     if (session.sendChat(text)) setDraft("");
   };
 
+  const openMainDice = () => {
+    setOpen(false);
+    setDiceOpen(true);
+  };
+
   return (
-    <div className={`session-chat-drawer-shell${open ? " is-open" : ""}`}>
-      <button
-        type="button"
-        className="session-chat-drawer-toggle"
-        style={{ top: "24%" }}
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open}
-        aria-label={copy.title}
-      >
-        <span className={`session-status-dot is-${session.status}`} />
-        <span className="session-chat-toggle-label">LOG</span>
-        <span className="session-chat-toggle-code">{session.sessionCode}</span>
-      </button>
+    <>
+      <div className={`session-chat-drawer-shell session-utility-drawer-shell${open ? " is-open" : ""}`}>
+        <button
+          type="button"
+          className="session-chat-drawer-toggle session-utility-drawer-toggle"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-label={copy.drawer}
+        >
+          <span className={`session-status-dot is-${session.status}`} />
+          <span className="session-chat-toggle-label">☰</span>
+          <span className="session-chat-toggle-code">{session.sessionCode}</span>
+        </button>
 
-      <aside className="session-chat-drawer" aria-hidden={!open}>
-        <header className="session-chat-drawer-head">
-          <div>
-            <div className="pip-bootline">PIP 2D20 NETWORK</div>
-            <h2>[ {copy.title} ]</h2>
+        <aside className="session-chat-drawer session-utility-drawer" aria-hidden={!open}>
+          <header className="session-chat-drawer-head">
+            <div>
+              <div className="pip-bootline">PIP 2D20 NETWORK</div>
+              <h2>[ {copy.title} ]</h2>
+            </div>
+            <button type="button" className="pip-btn" onClick={() => setOpen(false)}>{copy.close}</button>
+          </header>
+
+          <div className="session-chat-connection-strip">
+            <div>
+              <span className={`session-status-dot is-${session.status}`} />
+              <strong>{connectionLabel}</strong>
+            </div>
+            <span>{session.sessionCode}</span>
           </div>
-          <button type="button" className="pip-btn" onClick={() => setOpen(false)}>{copy.close}</button>
-        </header>
 
-        <div className="session-chat-connection-strip">
-          <div>
-            <span className={`session-status-dot is-${session.status}`} />
-            <strong>{connectionLabel}</strong>
-          </div>
-          <span>{session.sessionCode}</span>
-        </div>
+          <nav className="session-utility-tabs">
+            <button type="button" className={`pip-btn${tab === "chat" ? " is-primary" : ""}`} onClick={() => setTab("chat")}>{copy.chatTab}</button>
+            <button type="button" className={`pip-btn${tab === "log" ? " is-primary" : ""}`} onClick={() => setTab("log")}>{copy.logTab}</button>
+            <button type="button" className="pip-btn" onClick={openMainDice}>{copy.diceTab}</button>
+          </nav>
 
-        {connectionState !== "online" && (
-          <>
-            {errorText && <div className="session-error">{errorText}</div>}
-            {session.reconnectNow && (
-              <button
-                type="button"
-                className="pip-btn is-primary"
-                onClick={() => session.reconnectNow()}
-              >
-                ↻ {copy.reconnect}
-              </button>
+          {connectionState !== "online" && (
+            <>
+              {errorText && <div className="session-error">{errorText}</div>}
+              {session.reconnectNow && (
+                <button type="button" className="pip-btn is-primary" onClick={() => session.reconnectNow()}>↻ {copy.reconnect}</button>
+              )}
+            </>
+          )}
+
+          <div className="session-utility-body">
+            {tab === "chat" && session.sceneMessage && (
+              <div className="session-chat-scene-banner">
+                <strong>{copy.scene}</strong>
+                <span>{session.sceneMessage}</span>
+              </div>
             )}
-          </>
-        )}
 
-        {session.sceneMessage && (
-          <div className="session-chat-scene-banner">
-            <strong>{copy.scene}</strong>
-            <span>{session.sceneMessage}</span>
+            <div ref={listRef} className="session-chat-drawer-list session-utility-list">
+              {visibleItems.length
+                ? visibleItems.map((item) => <LogItem key={item.id} item={item} copy={copy} />)
+                : <div className="pip-logbox">{tab === "chat" ? copy.noChat : copy.noMessages}</div>}
+            </div>
           </div>
-        )}
 
-        <div ref={listRef} className="session-chat-drawer-list">
-          {items.length
-            ? items.map((item) => <LogItem key={item.id} item={item} copy={copy} />)
-            : <div className="pip-logbox">{copy.noMessages}</div>}
-        </div>
+          <form className="session-chat-drawer-form" onSubmit={submit}>
+            <input
+              className="pip-input"
+              value={draft}
+              maxLength={500}
+              placeholder={copy.placeholder}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+            <button type="submit" className="pip-btn is-primary" disabled={connectionState !== "online" || !String(draft).trim()}>{copy.send}</button>
+          </form>
+        </aside>
 
-        <form className="session-chat-drawer-form" onSubmit={submit}>
-          <input
-            className="pip-input"
-            value={draft}
-            maxLength={500}
-            placeholder={copy.placeholder}
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <button type="submit" className="pip-btn is-primary" disabled={!String(draft).trim()}>{copy.send}</button>
-        </form>
-      </aside>
-    </div>
+        {session.mode === "player" ? <SessionTacticalMap session={session} /> : null}
+      </div>
+
+      <PlayerDock players={session.players} copy={copy} />
+
+      <DiceRollModal
+        isOpen={diceOpen}
+        onClose={() => setDiceOpen(false)}
+        rollConfig={null}
+        form={diceForm}
+        pendingAutoD6={pendingAutoD6}
+        setPendingAutoD6={setPendingAutoD6}
+        combatState={session?.combat || null}
+        currentLuckPoints={undefined}
+        onSpendCombatLuck={undefined}
+        onMarkCombatUse={undefined}
+        onDiceResult={session?.sendDiceResult}
+      />
+    </>
   );
 }
