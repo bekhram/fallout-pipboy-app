@@ -1,7 +1,7 @@
 import React from "react";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
-import GmPlayerTokenAssignments from "./GmPlayerTokenAssignments.jsx";
-import GmPlayerTokenHpLayer from "./GmPlayerTokenHpLayer.jsx";
+import GmUnifiedTokenManager from "./GmUnifiedTokenManager.jsx";
+import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 
 export default function GmSessionMap(props) {
@@ -18,9 +18,9 @@ export default function GmSessionMap(props) {
 
   return (
     <>
-      <GmPlayerTokenAssignments session={session} />
       <GmSessionMapV2 {...props} session={session} />
-      <GmPlayerTokenHpLayer session={session} />
+      <GmTokenStatusLayer session={session} />
+      <GmUnifiedTokenManager session={session} />
     </>
   );
 }
