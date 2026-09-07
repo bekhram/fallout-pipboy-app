@@ -9,26 +9,26 @@ const COPY = {
   en: {
     button: "TACTICAL", title: "TACTICAL MAP", back: "BACK TO PLAYER", connecting: "Connecting to tactical scene...",
     move: "Drag your token to a free cell, or select it and click a destination cell.", live: "LIVE", own: "YOUR TOKEN",
-    addToken: "ADD MY TOKEN", uploadAvatar: "UPLOAD AVATAR", replaceAvatar: "CHANGE AVATAR",
-    tokenHint: "Add your token to enter the scene. It will appear inside the GM start zone.", avatarError: "Could not prepare this avatar.", adding: "ADDING TOKEN...",
+    addToken: "ADD MY TOKEN", uploadAvatar: "UPLOAD AVATAR", replaceAvatar: "CHANGE AVATAR", tokenName: "TOKEN NAME",
+    tokenHint: "Create your own token with a name and avatar. It will appear inside the GM start zone.", avatarError: "Could not prepare this avatar.", adding: "ADDING TOKEN...",
   },
   ru: {
     button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", back: "НАЗАД К ИГРОКУ", connecting: "Подключение к тактической сцене...",
     move: "Перетащите свой токен на свободную клетку или выберите его и нажмите клетку назначения.", live: "LIVE", own: "ВАШ ТОКЕН",
-    addToken: "ДОБАВИТЬ МОЙ ТОКЕН", uploadAvatar: "ЗАГРУЗИТЬ АВАТАР", replaceAvatar: "СМЕНИТЬ АВАТАР",
-    tokenHint: "Добавьте свой токен. Сервер разместит его внутри стартовой зоны ГМ.", avatarError: "Не удалось подготовить аватар.", adding: "ДОБАВЛЕНИЕ ТОКЕНА...",
+    addToken: "ДОБАВИТЬ МОЙ ТОКЕН", uploadAvatar: "ЗАГРУЗИТЬ АВАТАР", replaceAvatar: "СМЕНИТЬ АВАТАР", tokenName: "ИМЯ ТОКЕНА",
+    tokenHint: "Создайте свой токен с именем и аватаром. Сервер разместит его внутри стартовой зоны ГМ.", avatarError: "Не удалось подготовить аватар.", adding: "ДОБАВЛЕНИЕ ТОКЕНА...",
   },
   uk: {
     button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", back: "НАЗАД ДО ГРАВЦЯ", connecting: "Підключення до тактичної сцени...",
     move: "Перетягніть свій токен на вільну клітинку або оберіть його й натисніть клітинку призначення.", live: "LIVE", own: "ВАШ ТОКЕН",
-    addToken: "ДОДАТИ МІЙ ТОКЕН", uploadAvatar: "ЗАВАНТАЖИТИ АВАТАР", replaceAvatar: "ЗМІНИТИ АВАТАР",
-    tokenHint: "Додайте свій токен. Сервер розмістить його у стартовій зоні ГМ.", avatarError: "Не вдалося підготувати аватар.", adding: "ДОДАВАННЯ ТОКЕНА...",
+    addToken: "ДОДАТИ МІЙ ТОКЕН", uploadAvatar: "ЗАВАНТАЖИТИ АВАТАР", replaceAvatar: "ЗМІНИТИ АВАТАР", tokenName: "ІМ'Я ТОКЕНА",
+    tokenHint: "Створіть власний токен з ім'ям та аватаром. Сервер розмістить його у стартовій зоні ГМ.", avatarError: "Не вдалося підготувати аватар.", adding: "ДОДАВАННЯ ТОКЕНА...",
   },
   pl: {
     button: "TAKTYKA", title: "MAPA TAKTYCZNA", back: "WRÓĆ DO GRACZA", connecting: "Łączenie ze sceną taktyczną...",
     move: "Przeciągnij swój token na wolne pole albo wybierz go i kliknij pole docelowe.", live: "LIVE", own: "TWÓJ TOKEN",
-    addToken: "DODAJ MÓJ TOKEN", uploadAvatar: "WGRAJ AWATAR", replaceAvatar: "ZMIEŃ AWATAR",
-    tokenHint: "Dodaj swój token. Serwer umieści go w strefie startowej GM.", avatarError: "Nie udało się przygotować awatara.", adding: "DODAWANIE TOKENA...",
+    addToken: "DODAJ MÓJ TOKEN", uploadAvatar: "WGRAJ AWATAR", replaceAvatar: "ZMIEŃ AWATAR", tokenName: "NAZWA TOKENA",
+    tokenHint: "Utwórz własny token z nazwą i awatarem. Serwer umieści go w strefie startowej GM.", avatarError: "Nie udało się przygotować awatara.", adding: "DODAWANIE TOKENA...",
   },
 };
 
@@ -93,6 +93,7 @@ export default function SessionTacticalMap({ session }) {
   const [avatar, setAvatar] = useState("");
   const [avatarError, setAvatarError] = useState("");
   const [addingToken, setAddingToken] = useState(false);
+  const [tokenName, setTokenName] = useState("");
   const gridRef = useRef(null);
   const dragRef = useRef(null);
   const avatarInputRef = useRef(null);
@@ -107,6 +108,10 @@ export default function SessionTacticalMap({ session }) {
     try { stored = localStorage.getItem(avatarKey(session?.sessionCode)) || ""; } catch { /* noop */ }
     setAvatar(stored || player?.character?.avatar || readDefaultAvatar() || "");
   }, [session?.sessionCode, player?.character?.avatar]);
+
+  useEffect(() => {
+    setTokenName(playerName);
+  }, [session?.sessionCode, playerName]);
 
   useEffect(() => {
     if (!scene?.active) {
@@ -158,7 +163,8 @@ export default function SessionTacticalMap({ session }) {
   const createOwnToken = async () => {
     if (addingToken || ownToken || session.status !== "online") return;
     setAddingToken(true);
-    const response = await session.createPlayerToken?.({ name: playerName, avatar });
+    const customName = String(tokenName || playerName || "Player").trim().slice(0, 80) || playerName;
+    const response = await session.createPlayerToken?.({ name: customName, avatar });
     if (!response?.ok) setAddingToken(false);
   };
 
@@ -240,12 +246,17 @@ export default function SessionTacticalMap({ session }) {
 
         <div className={`tactical-player-token-setup${ownToken ? " has-token" : ""}`}>
           <button type="button" className="tactical-player-token-avatar" onClick={() => avatarInputRef.current?.click()}>
-            {(ownToken?.avatar || avatar) ? <img src={ownToken?.avatar || avatar} alt="" /> : <span>{String(playerName || "P").slice(0, 1).toUpperCase()}</span>}
+            {(ownToken?.avatar || avatar) ? <img src={ownToken?.avatar || avatar} alt="" /> : <span>{String(tokenName || playerName || "P").slice(0, 1).toUpperCase()}</span>}
           </button>
-          <div className="tactical-player-token-copy"><strong>{ownToken?.name || playerName}</strong><span>{ownToken ? text.move : text.tokenHint}</span></div>
+          <div className="tactical-player-token-copy">
+            {ownToken
+              ? <strong>{ownToken.name || playerName}</strong>
+              : <input className="pip-input tactical-player-token-name" value={tokenName} maxLength={80} placeholder={text.tokenName} onChange={(event) => setTokenName(event.target.value)} />}
+            <span>{ownToken ? text.move : text.tokenHint}</span>
+          </div>
           <input ref={avatarInputRef} className="tactical-background-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatarFile} />
           <button type="button" className="pip-btn" onClick={() => avatarInputRef.current?.click()}>{ownToken?.avatar || avatar ? text.replaceAvatar : text.uploadAvatar}</button>
-          {!ownToken ? <button type="button" className="pip-btn is-primary" disabled={addingToken || session.status !== "online"} onClick={createOwnToken}>{addingToken ? text.adding : text.addToken}</button> : null}
+          {!ownToken ? <button type="button" className="pip-btn is-primary" disabled={addingToken || session.status !== "online" || !String(tokenName || playerName).trim()} onClick={createOwnToken}>{addingToken ? text.adding : text.addToken}</button> : null}
         </div>
         {avatarError ? <div className="session-error">{avatarError}</div> : null}
         <div className="gm-session-map__hint">{ownToken ? text.move : text.tokenHint}</div>
