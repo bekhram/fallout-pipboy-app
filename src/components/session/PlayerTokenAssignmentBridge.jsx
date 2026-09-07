@@ -35,9 +35,16 @@ export default function PlayerTokenAssignmentBridge({ session }) {
   const [avatarState, setAvatarState] = useState("");
   const [preview, setPreview] = useState("");
 
-  const ownToken = useMemo(
-    () => (scene?.tokens || []).find((token) => token.kind === "player" && token.ownerClientId === session?.clientId) || null,
+  const ownedTokens = useMemo(
+    () => (scene?.tokens || []).filter((token) => token.kind === "player" && token.ownerClientId === session?.clientId),
     [scene?.tokens, session?.clientId]
+  );
+
+  // Old sessions can still contain a legacy player-created token. Always use
+  // the GM-assigned token for control/avatar updates when one exists.
+  const ownToken = useMemo(
+    () => ownedTokens.find((token) => token.assignedByGm) || ownedTokens[0] || null,
+    [ownedTokens]
   );
 
   const player = useMemo(
@@ -74,9 +81,10 @@ export default function PlayerTokenAssignmentBridge({ session }) {
       const dataUrl = await readAsDataUrl(file);
       setPreview(dataUrl);
       const response = await session.updateAssignedPlayerAvatar?.(ownToken.id, dataUrl);
-      setAvatarState(response?.ok ? text.saved : text.failed);
-    } catch {
-      setAvatarState(text.failed);
+      if (response?.ok) setAvatarState(text.saved);
+      else setAvatarState(`${text.failed}${response?.error ? ` [${response.error}]` : ""}`);
+    } catch (error) {
+      setAvatarState(`${text.failed}${error?.message ? ` [${error.message}]` : ""}`);
     }
   };
 
