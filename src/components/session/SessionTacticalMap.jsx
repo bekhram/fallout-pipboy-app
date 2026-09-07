@@ -1,20 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Peer } from "peerjs";
-import {
-  getTacticalTile,
-  isTacticalCellBlocked,
-  tacticalTileGlyph,
-} from "../../utils/tacticalLocationGenerator.js";
 import "../gm/gmSessionMap.css";
 
 const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
 const SAVE_KEY = "fallout_pipboy_v4_last_character";
 
 const COPY = {
-  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Select your token, then click a free cell to move it.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
-  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Выберите свой токен и нажмите на свободную клетку. Стены, препятствия и закрытые двери блокируют ход.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Оберіть свій токен і натисніть вільну клітинку. Стіни, перешкоди та зачинені двері блокують рух.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Wybierz swój token, a następnie kliknij wolne pole. Ściany, przeszkody i zamknięte drzwi blokują ruch.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
+  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Select your token, then click a cell to move it.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
+  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Выберите свой токен и нажмите на клетку, чтобы переместить его.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
+  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Оберіть свій токен і натисніть клітинку, щоб перемістити його.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
+  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Wybierz swój token, a następnie kliknij pole, aby go przenieść.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
 };
 
 function getLanguage() {
@@ -41,6 +36,16 @@ function findSessionIdentity(session) {
     mainPeerId: fallback?.peerId || "",
     characterName: characterName || fallback?.character?.name || fallback?.name || "Player",
     playerName: fallback?.name || characterName || "Player",
+  };
+}
+
+function mergeScene(previous, incoming) {
+  if (!incoming || typeof incoming !== "object") return previous;
+  const hasBackground = Object.prototype.hasOwnProperty.call(incoming, "backgroundImage") && incoming.backgroundImage !== undefined;
+  return {
+    ...(previous || {}),
+    ...incoming,
+    backgroundImage: hasBackground ? (incoming.backgroundImage || "") : (previous?.backgroundImage || ""),
   };
 }
 
@@ -94,7 +99,7 @@ export default function SessionTacticalMap({ session }) {
         });
         connection.on("data", (packet) => {
           if (packet?.type !== "tactical_state") return;
-          setScene(packet.state || null);
+          setScene((previous) => mergeScene(previous, packet.state));
           setYouTokenId(packet.youTokenId || null);
         });
         connection.on("close", retry);
@@ -129,10 +134,9 @@ export default function SessionTacticalMap({ session }) {
 
   const ownToken = scene?.tokens?.find((token) => token.id === youTokenId) || null;
   const canMove = Boolean(scene?.active && ownToken && connectionRef.current?.open);
-  const tileIndex = new Map((scene?.layout?.tiles || []).map((tile) => [`${tile.x}:${tile.y}`, tile]));
 
   const moveOwnToken = (x, y) => {
-    if (!canMove || !selected || isTacticalCellBlocked(scene?.layout, x, y)) return;
+    if (!canMove || !selected) return;
     connectionRef.current.send({ type: "tactical_move", tokenId: ownToken.id, x, y });
   };
 
@@ -164,27 +168,27 @@ export default function SessionTacticalMap({ session }) {
 
             {scene ? (
               <div
-                className="gm-session-map__grid tactical-grid is-player-view"
-                style={{ gridTemplateColumns: `repeat(${scene.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${scene.rows}, minmax(0, 1fr))` }}
+                className={`gm-session-map__grid tactical-grid is-player-view${scene.backgroundImage ? " has-background" : ""}`}
+                style={{
+                  gridTemplateColumns: `repeat(${scene.cols}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${scene.rows}, minmax(0, 1fr))`,
+                  backgroundImage: scene.backgroundImage ? `url(${scene.backgroundImage})` : undefined,
+                }}
               >
                 {Array.from({ length: scene.rows * scene.cols }, (_, index) => {
                   const x = index % scene.cols;
                   const y = Math.floor(index / scene.cols);
-                  const key = `${x}:${y}`;
                   const inStart = (scene.startZone || []).some((cell) => cell.x === x && cell.y === y);
-                  const tile = tileIndex.get(key) || getTacticalTile(scene.layout, x, y);
-                  const blocked = isTacticalCellBlocked(scene.layout, x, y);
                   const tokens = (scene.tokens || []).filter((token) => token.x === x && token.y === y);
                   return (
                     <button
                       type="button"
-                      key={key}
-                      className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${tile ? ` is-${tile.kind}` : ""}${blocked ? " is-blocked" : ""}${tile?.kind === "door" && tile.open ? " is-door-open" : ""}`}
-                      disabled={!scene.active || blocked}
+                      key={`${x}:${y}`}
+                      className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}`}
+                      disabled={!scene.active}
                       onClick={() => moveOwnToken(x, y)}
                     >
                       <span className="gm-session-map__coords">{x},{y}</span>
-                      {tile ? <span className="tactical-object" aria-hidden="true">{tacticalTileGlyph(tile)}</span> : null}
                       <span className="gm-session-map__tokens">
                         {tokens.map((token) => {
                           const isOwn = token.id === youTokenId;
