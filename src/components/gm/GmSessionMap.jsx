@@ -12,8 +12,8 @@ const COPY = {
   en: {
     title: "TACTICAL MAP", waiting: "Waiting for an active GM session...", players: "PLAYERS", startZone: "START ZONE",
     editStart: "EDIT START ZONE", finishEdit: "FINISH EDITING", startScene: "START SCENE", resetPlayers: "RETURN ALL TO START",
-    endScene: "END SCENE", inactive: "Upload a background if needed, mark the start zone and launch the scene.",
-    active: "LIVE TACTICAL SCENE", move: "Select a token and click any free cell to move it.",
+    endScene: "END SCENE", inactive: "Upload a background if needed, place NPC tokens, mark the start zone and launch the scene.",
+    active: "LIVE TACTICAL SCENE", move: "Drag any token to a free cell, or select it and click a destination cell.",
     editHint: "Click cells to add or remove them from the forced player start zone.", size: "GRID", resetMap: "RESET MAP",
     uploadBackground: "UPLOAD BACKGROUND", replaceBackground: "REPLACE BACKGROUND", removeBackground: "REMOVE BACKGROUND",
     background: "BACKGROUND", noBackground: "No background image", processing: "PROCESSING IMAGE...",
@@ -23,8 +23,8 @@ const COPY = {
     title: "ТАКТИЧЕСКАЯ КАРТА", waiting: "Ожидаю активную сессию ГМ...", players: "ИГРОКИ", startZone: "СТАРТОВАЯ ЗОНА",
     editStart: "ИЗМЕНИТЬ СТАРТОВУЮ ЗОНУ", finishEdit: "ЗАКОНЧИТЬ РЕДАКТИРОВАНИЕ", startScene: "НАЧАТЬ СЦЕНУ",
     resetPlayers: "ВЕРНУТЬ ВСЕХ В СТАРТ", endScene: "ЗАВЕРШИТЬ СЦЕНУ",
-    inactive: "При необходимости загрузите фон, отметьте стартовую зону и запустите сцену.", active: "ТАКТИЧЕСКАЯ СЦЕНА LIVE",
-    move: "Выберите токен и нажмите на свободную клетку, чтобы переместить его.",
+    inactive: "При необходимости загрузите фон, расставьте NPC, отметьте стартовую зону и запустите сцену.", active: "ТАКТИЧЕСКАЯ СЦЕНА LIVE",
+    move: "Перетягивайте токены на свободные клетки или выберите токен и нажмите клетку назначения.",
     editHint: "Нажимайте на клетки, чтобы добавить или убрать их из стартовой зоны игроков.", size: "СЕТКА", resetMap: "СБРОСИТЬ КАРТУ",
     uploadBackground: "ЗАГРУЗИТЬ ФОН", replaceBackground: "ЗАМЕНИТЬ ФОН", removeBackground: "УДАЛИТЬ ФОН", background: "ФОН",
     noBackground: "Фоновая картинка не загружена", processing: "ОБРАБОТКА ИЗОБРАЖЕНИЯ...", imageError: "Не удалось загрузить это изображение.",
@@ -34,8 +34,8 @@ const COPY = {
     title: "ТАКТИЧНА МАПА", waiting: "Очікую активну сесію ГМ...", players: "ГРАВЦІ", startZone: "СТАРТОВА ЗОНА",
     editStart: "ЗМІНИТИ СТАРТОВУ ЗОНУ", finishEdit: "ЗАКІНЧИТИ РЕДАГУВАННЯ", startScene: "ПОЧАТИ СЦЕНУ",
     resetPlayers: "ПОВЕРНУТИ ВСІХ НА СТАРТ", endScene: "ЗАВЕРШИТИ СЦЕНУ",
-    inactive: "За потреби завантажте фон, позначте стартову зону та запустіть сцену.", active: "ТАКТИЧНА СЦЕНА LIVE",
-    move: "Оберіть токен і натисніть вільну клітинку, щоб перемістити його.",
+    inactive: "За потреби завантажте фон, розставте NPC, позначте стартову зону та запустіть сцену.", active: "ТАКТИЧНА СЦЕНА LIVE",
+    move: "Перетягуйте токени на вільні клітинки або оберіть токен і натисніть клітинку призначення.",
     editHint: "Натискайте клітинки, щоб додати або прибрати їх зі стартової зони гравців.", size: "СІТКА", resetMap: "СКИНУТИ МАПУ",
     uploadBackground: "ЗАВАНТАЖИТИ ФОН", replaceBackground: "ЗАМІНИТИ ФОН", removeBackground: "ВИДАЛИТИ ФОН", background: "ФОН",
     noBackground: "Фонове зображення не завантажено", processing: "ОБРОБКА ЗОБРАЖЕННЯ...", imageError: "Не вдалося завантажити це зображення.",
@@ -45,8 +45,8 @@ const COPY = {
     title: "MAPA TAKTYCZNA", waiting: "Oczekiwanie na aktywną sesję GM...", players: "GRACZE", startZone: "STREFA STARTOWA",
     editStart: "EDYTUJ STREFĘ STARTOWĄ", finishEdit: "ZAKOŃCZ EDYCJĘ", startScene: "ROZPOCZNIJ SCENĘ",
     resetPlayers: "PRZENIEŚ WSZYSTKICH NA START", endScene: "ZAKOŃCZ SCENĘ",
-    inactive: "W razie potrzeby wgraj tło, zaznacz strefę startową i uruchom scenę.", active: "SCENA TAKTYCZNA LIVE",
-    move: "Wybierz token i kliknij wolne pole, aby go przenieść.",
+    inactive: "W razie potrzeby wgraj tło, rozstaw NPC, zaznacz strefę startową i uruchom scenę.", active: "SCENA TAKTYCZNA LIVE",
+    move: "Przeciągnij token na wolne pole albo wybierz token i kliknij pole docelowe.",
     editHint: "Klikaj pola, aby dodać lub usunąć je ze strefy startowej graczy.", size: "SIATKA", resetMap: "RESETUJ MAPĘ",
     uploadBackground: "WGRAJ TŁO", replaceBackground: "ZMIEŃ TŁO", removeBackground: "USUŃ TŁO", background: "TŁO",
     noBackground: "Brak obrazu tła", processing: "PRZETWARZANIE OBRAZU...", imageError: "Nie udało się wczytać tego obrazu.",
@@ -245,7 +245,10 @@ export default function GmSessionMap() {
   const [editingStart, setEditingStart] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [dragState, setDragState] = useState(null);
   const fileInputRef = useRef(null);
+  const gridRef = useRef(null);
+  const dragRef = useRef(null);
   const peerRef = useRef(null);
   const connectionsRef = useRef(new Map());
   const identityRef = useRef(new Map());
@@ -360,6 +363,8 @@ export default function GmSessionMap() {
   const resetMap = () => {
     setEditingStart(false);
     setSelectedToken(null);
+    setDragState(null);
+    dragRef.current = null;
     setUploadError("");
     setState(makeEmptyState(state.cols, state.rows));
   };
@@ -368,6 +373,8 @@ export default function GmSessionMap() {
     const [cols, rows] = value.split("x").map(Number);
     setEditingStart(false);
     setSelectedToken(null);
+    setDragState(null);
+    dragRef.current = null;
     setState((previous) => ({ ...makeEmptyState(cols, rows), backgroundImage: previous.backgroundImage, backgroundName: previous.backgroundName }));
   };
 
@@ -379,10 +386,10 @@ export default function GmSessionMap() {
     });
   };
 
-  const moveSelectedToken = (x, y) => {
-    if (!selectedToken || editingStart || !state.active) return;
+  const moveTokenTo = (tokenId, x, y) => {
+    if (!tokenId || editingStart) return;
     setState((previous) => {
-      const token = previous.tokens.find((item) => item.id === selectedToken);
+      const token = previous.tokens.find((item) => item.id === tokenId);
       if (!token) return previous;
       const size = tokenSize(token);
       const target = normalizeTokenCell({ x, y }, size, previous.cols, previous.rows);
@@ -393,6 +400,69 @@ export default function GmSessionMap() {
         revision: Number(previous.revision || 0) + 1,
       };
     });
+  };
+
+  const moveSelectedToken = (x, y) => {
+    if (!selectedToken || editingStart) return;
+    moveTokenTo(selectedToken, x, y);
+  };
+
+  const beginTokenDrag = (event, token) => {
+    if (editingStart || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const size = tokenSize(token);
+    const anchorX = Math.max(0, Math.min(size - 1, Math.floor(((event.clientX - rect.left) / Math.max(1, rect.width)) * size)));
+    const anchorY = Math.max(0, Math.min(size - 1, Math.floor(((event.clientY - rect.top) / Math.max(1, rect.height)) * size)));
+    dragRef.current = {
+      tokenId: token.id,
+      startX: event.clientX,
+      startY: event.clientY,
+      anchorX,
+      anchorY,
+      moved: false,
+      pointerId: event.pointerId,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragState({ tokenId: token.id, x: event.clientX, y: event.clientY, moved: false, size, avatar: token.avatar || "", name: token.name || "" });
+    event.stopPropagation();
+  };
+
+  const moveTokenDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 6;
+    drag.moved = moved;
+    if (moved) event.preventDefault();
+    setDragState((current) => current ? { ...current, x: event.clientX, y: event.clientY, moved } : current);
+  };
+
+  const finishTokenDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragState(null);
+    event.stopPropagation();
+
+    if (!drag.moved) {
+      setSelectedToken((current) => current === drag.tokenId ? null : drag.tokenId);
+      return;
+    }
+
+    event.preventDefault();
+    const grid = gridRef.current;
+    if (!grid) return;
+    const rect = grid.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return;
+    const cellX = Math.floor(((event.clientX - rect.left) / Math.max(1, rect.width)) * stateRef.current.cols);
+    const cellY = Math.floor(((event.clientY - rect.top) / Math.max(1, rect.height)) * stateRef.current.rows);
+    moveTokenTo(drag.tokenId, cellX - drag.anchorX, cellY - drag.anchorY);
+    setSelectedToken(drag.tokenId);
+  };
+
+  const cancelTokenDrag = (event) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragState(null);
   };
 
   const addEnemyToken = ({ entry, name, size }) => {
@@ -529,7 +599,8 @@ export default function GmSessionMap() {
       </div>
 
       <div
-        className={`gm-session-map__grid tactical-grid${state.backgroundImage ? " has-background" : ""}`}
+        ref={gridRef}
+        className={`gm-session-map__grid tactical-grid${state.backgroundImage ? " has-background" : ""}${dragState?.moved ? " is-drag-active" : ""}`}
         style={{ gridTemplateColumns: `repeat(${state.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${state.rows}, minmax(0, 1fr))`, backgroundImage: state.backgroundImage ? `url(${state.backgroundImage})` : undefined }}
       >
         {Array.from({ length: state.rows * state.cols }, (_, index) => {
@@ -544,12 +615,17 @@ export default function GmSessionMap() {
                 {tokens.map((token) => {
                   const enemy = token.kind === "enemy";
                   const selected = selectedToken === token.id;
+                  const dragging = dragState?.tokenId === token.id && dragState?.moved;
                   return (
                     <span
                       key={token.id}
-                      className={`gm-session-token ${enemy ? "is-enemy" : "is-player"} is-size-${tokenSize(token)}${selected ? " is-selected" : ""}`}
+                      className={`gm-session-token ${enemy ? "is-enemy" : "is-player"} is-size-${tokenSize(token)}${selected ? " is-selected" : ""}${dragging ? " is-dragging" : ""}`}
                       title={token.name}
-                      onClick={(event) => { event.stopPropagation(); if (!editingStart && state.active) setSelectedToken((current) => current === token.id ? null : token.id); }}
+                      onPointerDown={(event) => beginTokenDrag(event, token)}
+                      onPointerMove={moveTokenDrag}
+                      onPointerUp={finishTokenDrag}
+                      onPointerCancel={cancelTokenDrag}
+                      onClick={(event) => event.stopPropagation()}
                     >
                       {token.avatar ? <img src={token.avatar} alt="" /> : <b>{enemy ? String(token.name || "E").slice(0, 1).toUpperCase() : "P"}</b>}
                       <small>{token.name}</small>
@@ -561,6 +637,16 @@ export default function GmSessionMap() {
           );
         })}
       </div>
+
+      {dragState?.moved ? (
+        <div
+          className={`tactical-drag-ghost is-size-${dragState.size}`}
+          style={{ left: dragState.x, top: dragState.y }}
+          aria-hidden="true"
+        >
+          {dragState.avatar ? <img src={dragState.avatar} alt="" /> : <b>{String(dragState.name || "T").slice(0, 1).toUpperCase()}</b>}
+        </div>
+      ) : null}
     </article>
   );
 }
