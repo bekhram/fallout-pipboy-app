@@ -215,7 +215,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
       <section className="session-gm-host">
         <header className="pip-panel session-gm-hostbar">
           <div className="session-gm-hostbar__brand"><div className="pip-bootline">GAME MASTER // LIVE SESSION</div><strong>{copy.workspace}</strong></div>
-          <div className="session-gm-hostbar__session"><span className={`session-status-dot is-${status}`} /><span>{copy.status}: <strong>{copy[status] || status}</strong></span><button type="button" className="session-gm-code" onClick={handleCopy} title={copy.copy}>{copyState ? copy.copied : sessionCode}</button><span>{copy.players}: <strong>{players.length}</strong></span></div>
+          <div className="session-gm-hostbar__session"><span className={`session-status-dot is-${status}`} /><span>{copy.status}: <strong>{copy[status] || status}</strong></span><button type="button" className="session-gm-code" onClick={handleCopy} title={copyState ? copy.copied : copy.copy}>{sessionCode}</button><span>{copy.players}: <strong>{players.length}</strong></span></div>
           <div className="session-gm-hostbar__actions"><button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button><button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.end}</button></div>
         </header>
 
