@@ -4,12 +4,13 @@ import "./playerTokenAssignment.css";
 
 const MAX_AVATAR_BYTES = 500 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ASSIGNMENT_MAX_AGE = 2 * 60 * 1000;
 
 const COPY = {
-  en: { waiting: "WAITING FOR GM TOKEN ASSIGNMENT", assigning: "GM ASSIGNED A TOKEN — CREATING...", assigned: "TOKEN CONTROL ACTIVE", upload: "UPLOAD AVATAR ≤500 KB", replace: "CHANGE AVATAR ≤500 KB", saved: "AVATAR SAVED", tooLarge: "Avatar must be 500 KB or smaller.", type: "Use JPEG, PNG or WebP.", failed: "Could not save avatar.", assignFailed: "Could not create the GM-assigned token. Ask the GM to assign it again." },
-  ru: { waiting: "ОЖИДАНИЕ НАЗНАЧЕНИЯ ТОКЕНА ГМ", assigning: "ГМ НАЗНАЧИЛ ТОКЕН — СОЗДАНИЕ...", assigned: "УПРАВЛЕНИЕ ТОКЕНОМ АКТИВНО", upload: "ЗАГРУЗИТЬ АВАТАР ≤500 КБ", replace: "СМЕНИТЬ АВАТАР ≤500 КБ", saved: "АВАТАР СОХРАНЁН", tooLarge: "Размер аватара должен быть не больше 500 КБ.", type: "Используйте JPEG, PNG или WebP.", failed: "Не удалось сохранить аватар.", assignFailed: "Не удалось создать назначенный ГМ токен. Попросите ГМ назначить его ещё раз." },
-  uk: { waiting: "ОЧІКУВАННЯ ПРИЗНАЧЕННЯ ТОКЕНА ГМ", assigning: "ГМ ПРИЗНАЧИВ ТОКЕН — СТВОРЕННЯ...", assigned: "КЕРУВАННЯ ТОКЕНОМ АКТИВНЕ", upload: "ЗАВАНТАЖИТИ АВАТАР ≤500 КБ", replace: "ЗМІНИТИ АВАТАР ≤500 КБ", saved: "АВАТАР ЗБЕРЕЖЕНО", tooLarge: "Розмір аватара має бути не більше 500 КБ.", type: "Використовуйте JPEG, PNG або WebP.", failed: "Не вдалося зберегти аватар.", assignFailed: "Не вдалося створити призначений ГМ токен. Попросіть ГМ призначити його ще раз." },
-  pl: { waiting: "OCZEKIWANIE NA PRZYDZIELENIE TOKENA PRZEZ GM", assigning: "GM PRZYDZIELIŁ TOKEN — TWORZENIE...", assigned: "STEROWANIE TOKENEM AKTYWNE", upload: "WGRAJ AWATAR ≤500 KB", replace: "ZMIEŃ AWATAR ≤500 KB", saved: "AWATAR ZAPISANY", tooLarge: "Awatar musi mieć maksymalnie 500 KB.", type: "Użyj JPEG, PNG lub WebP.", failed: "Nie udało się zapisać awatara.", assignFailed: "Nie udało się utworzyć tokena przypisanego przez GM. Poproś GM o ponowne przypisanie." },
+  en: { waiting: "WAITING FOR GM TOKEN ASSIGNMENT", assigning: "GM ASSIGNED A TOKEN — CREATING...", assigned: "TOKEN CONTROL ACTIVE", upload: "UPLOAD AVATAR ≤500 KB", replace: "CHANGE AVATAR ≤500 KB", saved: "AVATAR SAVED", tooLarge: "Avatar must be 500 KB or smaller.", type: "Use JPEG, PNG or WebP.", failed: "Could not save avatar.", assignFailed: "Could not create the GM-assigned token. The app will retry automatically." },
+  ru: { waiting: "ОЖИДАНИЕ НАЗНАЧЕНИЯ ТОКЕНА ГМ", assigning: "ГМ НАЗНАЧИЛ ТОКЕН — СОЗДАНИЕ...", assigned: "УПРАВЛЕНИЕ ТОКЕНОМ АКТИВНО", upload: "ЗАГРУЗИТЬ АВАТАР ≤500 КБ", replace: "СМЕНИТЬ АВАТАР ≤500 КБ", saved: "АВАТАР СОХРАНЁН", tooLarge: "Размер аватара должен быть не больше 500 КБ.", type: "Используйте JPEG, PNG или WebP.", failed: "Не удалось сохранить аватар.", assignFailed: "Не удалось создать назначенный ГМ токен. Приложение попробует ещё раз автоматически." },
+  uk: { waiting: "ОЧІКУВАННЯ ПРИЗНАЧЕННЯ ТОКЕНА ГМ", assigning: "ГМ ПРИЗНАЧИВ ТОКЕН — СТВОРЕННЯ...", assigned: "КЕРУВАННЯ ТОКЕНОМ АКТИВНЕ", upload: "ЗАВАНТАЖИТИ АВАТАР ≤500 КБ", replace: "ЗМІНИТИ АВАТАР ≤500 КБ", saved: "АВАТАР ЗБЕРЕЖЕНО", tooLarge: "Розмір аватара має бути не більше 500 КБ.", type: "Використовуйте JPEG, PNG або WebP.", failed: "Не вдалося зберегти аватар.", assignFailed: "Не вдалося створити призначений ГМ токен. Застосунок спробує ще раз автоматично." },
+  pl: { waiting: "OCZEKIWANIE NA PRZYDZIELENIE TOKENA PRZEZ GM", assigning: "GM PRZYDZIELIŁ TOKEN — TWORZENIE...", assigned: "STEROWANIE TOKENEM AKTYWNE", upload: "WGRAJ AWATAR ≤500 KB", replace: "ZMIEŃ AWATAR ≤500 KB", saved: "AWATAR ZAPISANY", tooLarge: "Awatar musi mieć maksymalnie 500 KB.", type: "Użyj JPEG, PNG lub WebP.", failed: "Nie udało się zapisać awatara.", assignFailed: "Nie udało się utworzyć tokena. Aplikacja spróbuje ponownie automatycznie." },
 };
 
 function languageCode() {
@@ -25,6 +26,10 @@ function readAsDataUrl(file) {
     reader.onerror = () => reject(reader.error || new Error("read"));
     reader.readAsDataURL(file);
   });
+}
+
+function delay(ms) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 function processedKey(campaignId, messageId) {
@@ -65,25 +70,33 @@ export default function PlayerTokenAssignmentBridge({ session }) {
   }, []);
 
   useEffect(() => {
-    if (!session?.isActive || session?.mode !== "player" || !scene?.sceneId || !session?.clientId) return;
-    const command = [...commands].reverse().find((item) => item.targetClientId === session.clientId && item.sceneId === scene.sceneId);
+    if (!session?.isActive || session?.mode !== "player" || !scene?.sceneId || !session?.clientId || ownToken) return;
+
+    const now = Date.now();
+    const command = [...commands].reverse().find((item) =>
+      item.targetClientId === session.clientId
+      && now - Number(item.requestedAt || 0) <= ASSIGNMENT_MAX_AGE
+    );
+
     if (!command?.messageId) return;
     const key = processedKey(session.campaignId, command.messageId);
     try { if (sessionStorage.getItem(key) === "1") return; } catch { /* noop */ }
     if (processingRef.current === command.messageId) return;
 
+    let cancelled = false;
     const apply = async () => {
       processingRef.current = command.messageId;
       setAssignmentState(text.assigning);
-      let response;
-      if (ownToken) {
-        response = Number(ownToken.size) === command.size
-          ? { ok: true }
-          : await session.updateToken?.(ownToken.id, { size: command.size });
-      } else {
-        response = await session.createPlayerToken?.({ name: displayName, size: command.size });
+
+      let response = null;
+      for (let attempt = 0; attempt < 3 && !cancelled; attempt += 1) {
+        response = await session.createPlayerToken?.({ name: displayName, size: command.size, avatar: "" });
+        if (response?.ok) break;
+        await delay(500 + attempt * 500);
       }
+
       processingRef.current = "";
+      if (cancelled) return;
       if (response?.ok) {
         try { sessionStorage.setItem(key, "1"); } catch { /* noop */ }
         setAssignmentState(text.assigned);
@@ -91,8 +104,10 @@ export default function PlayerTokenAssignmentBridge({ session }) {
         setAssignmentState(text.assignFailed);
       }
     };
+
     apply();
-  }, [commands, scene?.sceneId, ownToken?.id, ownToken?.size, session?.clientId, session?.campaignId, session?.isActive, session?.mode, displayName]);
+    return () => { cancelled = true; };
+  }, [commands, scene?.sceneId, ownToken?.id, session?.clientId, session?.campaignId, session?.isActive, session?.mode, displayName]);
 
   useEffect(() => {
     if (ownToken) setAssignmentState(text.assigned);
