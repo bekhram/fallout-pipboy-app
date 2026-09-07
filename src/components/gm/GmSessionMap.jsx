@@ -1,18 +1,20 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Peer } from "peerjs";
 import { getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
 import { TERRAIN_TYPES } from "../../data/map/terrainTypes.js";
 import "./gmSessionMap.css";
 
 const GM_STATE_KEY = "fallout_pipboy_gm_panel_v1";
+const MAP_HOST_PREFIX = "pip2d20-map-";
 const VIEW_COLS = 8;
 const VIEW_ROWS = 8;
 
 const COPY = {
-  en: { title: "SESSION MAP", region: "REGION", players: "PLAYERS", npc: "NPC", move: "Select a token, then click a cell to move it", noMap: "No character map loaded. Showing session grid.", location: "LOCATION", selected: "SELECTED", reset: "RESET TOKENS" },
-  ru: { title: "КАРТА СЕССИИ", region: "РЕГИОН", players: "ИГРОКИ", npc: "NPC", move: "Выберите токен, затем нажмите на клетку для перемещения", noMap: "Карта персонажа не загружена. Показана сетка сессии.", location: "ЛОКАЦИЯ", selected: "ВЫБРАН", reset: "СБРОСИТЬ ТОКЕНЫ" },
-  uk: { title: "МАПА СЕСІЇ", region: "РЕГІОН", players: "ГРАВЦІ", npc: "NPC", move: "Оберіть токен, потім натисніть клітинку для переміщення", noMap: "Мапу персонажа не завантажено. Показано сітку сесії.", location: "ЛОКАЦІЯ", selected: "ОБРАНО", reset: "СКИНУТИ ТОКЕНИ" },
-  pl: { title: "MAPA SESJI", region: "REGION", players: "GRACZE", npc: "NPC", move: "Wybierz token, a następnie kliknij pole, aby go przenieść", noMap: "Mapa postaci nie jest wczytana. Pokazano siatkę sesji.", location: "LOKACJA", selected: "WYBRANO", reset: "RESETUJ TOKENY" },
+  en: { title: "SESSION MAP", region: "REGION", players: "PLAYERS", live: "LIVE", npc: "NPC", move: "NPC and fallback tokens can be moved. Player LIVE tokens follow their own maps automatically.", noMap: "No sector map loaded. Showing fallback session grid.", location: "LOCATION", selected: "SELECTED", reset: "RESET TOKENS", offMap: "player(s) are in another sector" },
+  ru: { title: "КАРТА СЕССИИ", region: "РЕГИОН", players: "ИГРОКИ", live: "LIVE", npc: "NPC", move: "NPC и резервные токены можно двигать. LIVE-токены игроков следуют за их картой автоматически.", noMap: "Карта сектора не загружена. Показана резервная сетка сессии.", location: "ЛОКАЦИЯ", selected: "ВЫБРАН", reset: "СБРОСИТЬ ТОКЕНЫ", offMap: "игрок(а) находятся в другом секторе" },
+  uk: { title: "МАПА СЕСІЇ", region: "РЕГІОН", players: "ГРАВЦІ", live: "LIVE", npc: "NPC", move: "NPC та резервні токени можна рухати. LIVE-токени гравців автоматично слідують за їхньою мапою.", noMap: "Мапу сектора не завантажено. Показано резервну сітку сесії.", location: "ЛОКАЦІЯ", selected: "ОБРАНО", reset: "СКИНУТИ ТОКЕНИ", offMap: "гравець(ці) знаходяться в іншому секторі" },
+  pl: { title: "MAPA SESJI", region: "REGION", players: "GRACZE", live: "LIVE", npc: "NPC", move: "NPC i tokeny zapasowe można przesuwać. Tokeny LIVE graczy automatycznie śledzą ich mapę.", noMap: "Mapa sektora nie jest wczytana. Pokazano zapasową siatkę sesji.", location: "LOKACJA", selected: "WYBRANO", reset: "RESETUJ TOKENY", offMap: "gracz(e) znajdują się w innym sektorze" },
 };
 
 function languageCode(value) {
@@ -39,7 +41,7 @@ function sameList(previous, next) {
 }
 
 function getSessionCode() {
-  return document.querySelector(".session-gm-code")?.textContent?.trim() || "offline";
+  return document.querySelector(".session-gm-code")?.textContent?.trim()?.toUpperCase() || "offline";
 }
 
 function getConnectedPlayers() {
@@ -81,22 +83,51 @@ function tokenDefaultPosition(index, center, cols, rows) {
   };
 }
 
+function sanitizeLivePacket(packet, peerId) {
+  if (!packet || packet.type !== "map_position") return null;
+  const cols = Math.max(1, Math.min(64, Number(packet.cols || VIEW_COLS)));
+  const rows = Math.max(1, Math.min(64, Number(packet.rows || VIEW_ROWS)));
+  const x = Math.max(0, Math.min(cols - 1, Number(packet.playerPosition?.x || 0)));
+  const y = Math.max(0, Math.min(rows - 1, Number(packet.playerPosition?.y || 0)));
+  return {
+    id: `live-${peerId}`,
+    peerId,
+    name: String(packet.name || "Player").trim().slice(0, 60) || "Player",
+    regionId: String(packet.regionId || "commonwealth").slice(0, 60),
+    worldOffset: {
+      x: Number(packet.worldOffset?.x || 0),
+      y: Number(packet.worldOffset?.y || 0),
+    },
+    position: { x, y },
+    cols,
+    rows,
+    updatedAt: packet.updatedAt || new Date().toISOString(),
+  };
+}
+
 export default function GmSessionMap({ character = null }) {
   const { i18n } = useTranslation();
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
   const text = COPY[language];
-  const mapData = character?.mapData || {};
-  const cols = Math.max(1, Number(mapData.cols || VIEW_COLS));
-  const rows = Math.max(1, Number(mapData.rows || VIEW_ROWS));
-  const playerPosition = mapData.playerPosition || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) };
-  const worldOffset = mapData.worldOffset || { x: 0, y: 0 };
-  const region = getMapRegion(mapData.regionId);
+
+  const mapState = character?.mapData || {};
+  const worldOffset = mapState.worldOffset || { x: 0, y: 0 };
+  const sectorKey = `${Number(worldOffset.x || 0)},${Number(worldOffset.y || 0)}`;
+  const currentSector = mapState.sectorCache?.[sectorKey] || {};
+  const cols = Math.max(1, Number(currentSector.cols || VIEW_COLS));
+  const rows = Math.max(1, Number(currentSector.rows || VIEW_ROWS));
+  const playerPosition = mapState.playerPosition || currentSector.start || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) };
+  const region = getMapRegion(mapState.regionId);
   const regionName = getRegionName(region, language);
 
   const [roster, setRoster] = useState(() => getConnectedPlayers());
   const [npcs, setNpcs] = useState(() => getNpcTokens());
+  const [livePlayers, setLivePlayers] = useState([]);
   const [selectedToken, setSelectedToken] = useState(null);
   const [sessionCode, setSessionCode] = useState(() => getSessionCode());
+  const mapPeerRef = useRef(null);
+  const mapConnectionsRef = useRef(new Map());
+
   const storageKey = `fallout_pipboy_gm_token_positions_${sessionCode}`;
   const [tokenPositions, setTokenPositions] = useState(() => safeReadJson(storageKey, {}));
 
@@ -110,14 +141,8 @@ export default function GmSessionMap({ character = null }) {
       if (code !== sessionCode) setSessionCode(code);
     };
     refresh();
-    const observer = new MutationObserver(refresh);
-    const target = document.querySelector(".session-gm-roster-strip__list") || document.querySelector(".session-gm-host") || document.body;
-    observer.observe(target, { childList: true, subtree: true, characterData: true });
-    const timer = window.setInterval(refresh, 1200);
-    return () => {
-      observer.disconnect();
-      window.clearInterval(timer);
-    };
+    const timer = window.setInterval(refresh, 900);
+    return () => window.clearInterval(timer);
   }, [sessionCode]);
 
   useEffect(() => {
@@ -128,9 +153,54 @@ export default function GmSessionMap({ character = null }) {
     safeWriteJson(storageKey, tokenPositions);
   }, [storageKey, tokenPositions]);
 
+  useEffect(() => {
+    if (!sessionCode || sessionCode === "offline") return undefined;
+    let disposed = false;
+
+    const removeLivePlayer = (peerId) => {
+      setLivePlayers((previous) => previous.filter((player) => player.peerId !== peerId));
+    };
+
+    const peer = new Peer(`${MAP_HOST_PREFIX}${sessionCode.toLowerCase()}`, { debug: 0 });
+    mapPeerRef.current = peer;
+
+    peer.on("connection", (connection) => {
+      mapConnectionsRef.current.set(connection.peer, connection);
+      connection.on("data", (packet) => {
+        const live = sanitizeLivePacket(packet, connection.peer);
+        if (!live || disposed) return;
+        setLivePlayers((previous) => {
+          const exists = previous.some((player) => player.peerId === live.peerId);
+          return exists
+            ? previous.map((player) => player.peerId === live.peerId ? live : player)
+            : [...previous, live];
+        });
+      });
+      connection.on("close", () => {
+        mapConnectionsRef.current.delete(connection.peer);
+        removeLivePlayer(connection.peer);
+      });
+      connection.on("error", () => {
+        mapConnectionsRef.current.delete(connection.peer);
+        removeLivePlayer(connection.peer);
+      });
+    });
+
+    return () => {
+      disposed = true;
+      mapConnectionsRef.current.forEach((connection) => {
+        try { connection?.close?.(); } catch { /* best effort */ }
+      });
+      mapConnectionsRef.current.clear();
+      try { peer.destroy(); } catch { /* best effort */ }
+      if (mapPeerRef.current === peer) mapPeerRef.current = null;
+      setLivePlayers([]);
+    };
+  }, [sessionCode]);
+
   const cells = useMemo(() => {
     const index = new Map();
-    (Array.isArray(mapData.cells) ? mapData.cells : []).forEach((cell) => index.set(`${cell.x}:${cell.y}`, cell));
+    (Array.isArray(currentSector.cells) ? currentSector.cells : []).forEach((cell) => index.set(`${cell.x}:${cell.y}`, cell));
     const result = [];
     for (let y = 0; y < rows; y += 1) {
       for (let x = 0; x < cols; x += 1) {
@@ -138,7 +208,7 @@ export default function GmSessionMap({ character = null }) {
       }
     }
     return result;
-  }, [mapData.cells, cols, rows]);
+  }, [currentSector.cells, cols, rows]);
 
   const locationsByCell = useMemo(() => {
     const result = new Map();
@@ -150,25 +220,46 @@ export default function GmSessionMap({ character = null }) {
     return result;
   }, [region, worldOffset.x, worldOffset.y, cols, rows]);
 
+  const liveNames = useMemo(() => new Set(livePlayers.map((player) => player.name.toLowerCase())), [livePlayers]);
+  const liveOnCurrentSector = useMemo(() => livePlayers.filter((player) =>
+    player.regionId === region.id
+    && Number(player.worldOffset.x) === Number(worldOffset.x || 0)
+    && Number(player.worldOffset.y) === Number(worldOffset.y || 0)
+  ), [livePlayers, region.id, worldOffset.x, worldOffset.y]);
+  const liveOffMapCount = Math.max(0, livePlayers.length - liveOnCurrentSector.length);
+
   const tokens = useMemo(() => {
-    const all = [
-      ...roster.map((player) => ({ ...player, kind: "player" })),
-      ...npcs.map((npc) => ({ ...npc, kind: "npc" })),
-    ];
+    const fallbackPlayers = roster
+      .filter((player) => !liveNames.has(String(player.name || "").toLowerCase()))
+      .map((player) => ({ ...player, kind: "player", live: false, movable: true }));
+    const liveTokens = liveOnCurrentSector.map((player) => ({
+      ...player,
+      kind: "player",
+      live: true,
+      movable: false,
+    }));
+    const npcTokens = npcs.map((npc) => ({ ...npc, kind: "npc", live: false, movable: true }));
+    const all = [...liveTokens, ...fallbackPlayers, ...npcTokens];
     return all.map((token, index) => ({
       ...token,
-      position: tokenPositions[token.id] || tokenDefaultPosition(index, playerPosition, cols, rows),
+      position: token.live
+        ? token.position
+        : (tokenPositions[token.id] || tokenDefaultPosition(index, playerPosition, cols, rows)),
     }));
-  }, [roster, npcs, tokenPositions, playerPosition.x, playerPosition.y, cols, rows]);
+  }, [roster, npcs, liveNames, liveOnCurrentSector, tokenPositions, playerPosition.x, playerPosition.y, cols, rows]);
+
+  const selected = tokens.find((token) => token.id === selectedToken) || null;
 
   const moveToken = (tokenId, x, y) => {
+    const token = tokens.find((item) => item.id === tokenId);
+    if (!token?.movable) return;
     setTokenPositions((previous) => ({ ...previous, [tokenId]: { x, y } }));
     setSelectedToken(tokenId);
   };
 
   const handleCellClick = (cell) => {
-    if (!selectedToken) return;
-    moveToken(selectedToken, cell.x, cell.y);
+    if (!selected?.movable) return;
+    moveToken(selected.id, cell.x, cell.y);
   };
 
   const resetTokens = () => {
@@ -186,14 +277,16 @@ export default function GmSessionMap({ character = null }) {
         <div className="gm-session-map__meta">
           <span>{text.region}: <strong>{regionName}</strong></span>
           <span>{text.players}: <strong>{roster.length}</strong></span>
+          <span className="gm-session-map__live-stat">{text.live}: <strong>{livePlayers.length}</strong></span>
           <span>{text.npc}: <strong>{npcs.length}</strong></span>
           <button type="button" className="pip-btn" onClick={resetTokens}>{text.reset}</button>
         </div>
       </div>
 
       <div className="gm-session-map__hint">
-        {selectedToken ? `${text.selected}: ${tokens.find((token) => token.id === selectedToken)?.name || "-"}` : text.move}
-        {!Array.isArray(mapData.cells) || !mapData.cells.length ? <span> · {text.noMap}</span> : null}
+        {selected ? `${text.selected}: ${selected.name}${selected.live ? " · LIVE" : ""}` : text.move}
+        {!Array.isArray(currentSector.cells) || !currentSector.cells.length ? <span> · {text.noMap}</span> : null}
+        {liveOffMapCount > 0 ? <span> · {liveOffMapCount} {text.offMap}</span> : null}
       </div>
 
       <div
@@ -212,7 +305,9 @@ export default function GmSessionMap({ character = null }) {
               className={`gm-session-map__cell is-${terrain.id}${location ? " has-location" : ""}`}
               title={`${terrain.label}${location ? ` · ${location.name}` : ""}`}
               onClick={() => handleCellClick(cell)}
-              onDragOver={(event) => event.preventDefault()}
+              onDragOver={(event) => {
+                if (selected?.movable) event.preventDefault();
+              }}
               onDrop={(event) => {
                 event.preventDefault();
                 const tokenId = event.dataTransfer.getData("text/gm-token");
@@ -226,20 +321,25 @@ export default function GmSessionMap({ character = null }) {
                 {cellTokens.map((token) => (
                   <span
                     key={token.id}
-                    draggable
-                    className={`gm-session-token is-${token.kind}${selectedToken === token.id ? " is-selected" : ""}`}
-                    title={token.name}
+                    draggable={token.movable}
+                    className={`gm-session-token is-${token.kind}${token.live ? " is-live" : ""}${selectedToken === token.id ? " is-selected" : ""}`}
+                    title={`${token.name}${token.live ? " · LIVE" : ""}`}
                     onClick={(event) => {
                       event.stopPropagation();
                       setSelectedToken((current) => current === token.id ? null : token.id);
                     }}
                     onDragStart={(event) => {
+                      if (!token.movable) {
+                        event.preventDefault();
+                        return;
+                      }
                       event.dataTransfer.setData("text/gm-token", token.id);
                       event.dataTransfer.effectAllowed = "move";
                       setSelectedToken(token.id);
                     }}
                   >
                     <b>{token.kind === "player" ? "P" : "N"}</b>
+                    {token.live ? <i className="gm-session-token__live-dot" aria-hidden="true" /> : null}
                     <small>{token.name}</small>
                   </span>
                 ))}
