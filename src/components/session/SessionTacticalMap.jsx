@@ -6,10 +6,10 @@ const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
 const SAVE_KEY = "fallout_pipboy_v4_last_character";
 
 const COPY = {
-  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Select your token, then click a cell to move it.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
-  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Выберите свой токен и нажмите на клетку, чтобы переместить его.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Оберіть свій токен і натисніть клітинку, щоб перемістити його.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Wybierz swój token, a następnie kliknij pole, aby go przenieść.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
+  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Select your token, then click a free cell to move it.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
+  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Выберите свой токен и нажмите на свободную клетку, чтобы переместить его.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
+  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Оберіть свій токен і натисніть вільну клітинку, щоб перемістити його.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
+  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Wybierz swój token, a następnie kliknij wolne pole, aby go przenieść.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
 };
 
 function getLanguage() {
@@ -49,6 +49,10 @@ function mergeScene(previous, incoming) {
   };
 }
 
+function tokenSize(token) {
+  return Number(token?.size) === 2 ? 2 : 1;
+}
+
 export default function SessionTacticalMap({ session }) {
   const text = COPY[getLanguage()];
   const [open, setOpen] = useState(false);
@@ -77,10 +81,7 @@ export default function SessionTacticalMap({ session }) {
     const retry = () => {
       if (disposed || retryRef.current) return;
       setConnectionState("connecting");
-      retryRef.current = window.setTimeout(() => {
-        retryRef.current = null;
-        connect();
-      }, 1400);
+      retryRef.current = window.setTimeout(() => { retryRef.current = null; connect(); }, 1400);
     };
 
     const connect = () => {
@@ -111,10 +112,7 @@ export default function SessionTacticalMap({ session }) {
     };
 
     connect();
-    return () => {
-      disposed = true;
-      cleanup();
-    };
+    return () => { disposed = true; cleanup(); };
   }, [session?.isActive, session?.mode, session?.sessionCode, identity.mainPeerId, identity.characterName, identity.playerName]);
 
   useEffect(() => {
@@ -181,28 +179,23 @@ export default function SessionTacticalMap({ session }) {
                   const inStart = (scene.startZone || []).some((cell) => cell.x === x && cell.y === y);
                   const tokens = (scene.tokens || []).filter((token) => token.x === x && token.y === y);
                   return (
-                    <button
-                      type="button"
-                      key={`${x}:${y}`}
-                      className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}`}
-                      disabled={!scene.active}
-                      onClick={() => moveOwnToken(x, y)}
-                    >
-                      <span className="gm-session-map__coords">{x},{y}</span>
+                    <button type="button" key={`${x}:${y}`} className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}`} disabled={!scene.active} onClick={() => moveOwnToken(x, y)}>
                       <span className="gm-session-map__tokens">
                         {tokens.map((token) => {
                           const isOwn = token.id === youTokenId;
+                          const enemy = token.kind === "enemy";
                           return (
                             <span
                               key={token.id}
-                              className={`gm-session-token is-player${isOwn ? " is-own" : ""}${isOwn && selected ? " is-selected" : ""}`}
+                              className={`gm-session-token ${enemy ? "is-enemy" : "is-player"} is-size-${tokenSize(token)}${isOwn ? " is-own" : ""}${isOwn && selected ? " is-selected" : ""}`}
                               title={token.name}
                               onClick={(event) => {
                                 event.stopPropagation();
                                 if (isOwn && scene.active) setSelected((value) => !value);
                               }}
                             >
-                              <b>{isOwn ? "YOU" : "P"}</b><small>{token.name}</small>
+                              {token.avatar ? <img src={token.avatar} alt="" /> : <b>{isOwn ? "YOU" : enemy ? String(token.name || "E").slice(0, 1).toUpperCase() : "P"}</b>}
+                              <small>{token.name}</small>
                             </span>
                           );
                         })}
