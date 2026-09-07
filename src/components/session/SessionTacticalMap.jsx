@@ -8,7 +8,7 @@ function findMapModeSwitch() {
   return document.querySelector(".pip-map-mode-switch--external");
 }
 
-export default function SessionTacticalMap({ session }) {
+export default function SessionTacticalMap({ session, openRequest = 0 }) {
   const [mapModeSwitch, setMapModeSwitch] = useState(null);
   const isPlayerSession = Boolean(session?.isActive && session?.mode === "player");
   const hasLiveScene = Boolean(session?.tacticalScene || session?.liveSceneId);
@@ -32,7 +32,7 @@ export default function SessionTacticalMap({ session }) {
 
   const openBattlemap = () => {
     if (!hasLiveScene || typeof document === "undefined") return;
-    document.querySelector(".session-tactical-toggle.is-live")?.click();
+    document.dispatchEvent(new CustomEvent("pip2d20:open-battlemap"));
   };
 
   const shortcut = isPlayerSession && mapModeSwitch ? createPortal(
@@ -41,7 +41,7 @@ export default function SessionTacticalMap({ session }) {
   ) : null;
 
   return <>
-    <SessionTacticalMapV3 session={tacticalSession} />
+    <SessionTacticalMapV3 session={tacticalSession} openRequest={openRequest} />
     <PlayerTokenAssignmentBridge session={tacticalSession} />
     {shortcut}
   </>;
