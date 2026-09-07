@@ -1,379 +1,384 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Peer } from "peerjs";
-import { getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
-import { TERRAIN_TYPES } from "../../data/map/terrainTypes.js";
 import "./gmSessionMap.css";
 
-const GM_STATE_KEY = "fallout_pipboy_gm_panel_v1";
-const MAP_HOST_PREFIX = "pip2d20-map-";
-const VIEW_COLS = 8;
-const VIEW_ROWS = 8;
+const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
+const DEFAULT_COLS = 12;
+const DEFAULT_ROWS = 12;
 
 const COPY = {
-  en: { title: "SESSION MAP", region: "REGION", players: "PLAYERS", live: "LIVE", npc: "NPC", move: "NPC and fallback tokens can be moved. Player LIVE tokens follow their own maps automatically.", noMap: "No sector map loaded. Showing fallback session grid.", location: "LOCATION", selected: "SELECTED", reset: "RESET TOKENS", offMap: "player(s) are in another sector", gmView: "GM SECTOR", follow: "FOLLOW" },
-  ru: { title: "КАРТА СЕССИИ", region: "РЕГИОН", players: "ИГРОКИ", live: "LIVE", npc: "NPC", move: "NPC и резервные токены можно двигать. LIVE-токены игроков следуют за их картой автоматически.", noMap: "Карта сектора не загружена. Показана резервная сетка сессии.", location: "ЛОКАЦИЯ", selected: "ВЫБРАН", reset: "СБРОСИТЬ ТОКЕНЫ", offMap: "игрок(а) находятся в другом секторе", gmView: "СЕКТОР ГМ", follow: "СЛЕДИТЬ" },
-  uk: { title: "МАПА СЕСІЇ", region: "РЕГІОН", players: "ГРАВЦІ", live: "LIVE", npc: "NPC", move: "NPC та резервні токени можна рухати. LIVE-токени гравців автоматично слідують за їхньою мапою.", noMap: "Мапу сектора не завантажено. Показано резервну сітку сесії.", location: "ЛОКАЦІЯ", selected: "ОБРАНО", reset: "СКИНУТИ ТОКЕНИ", offMap: "гравець(ці) знаходяться в іншому секторі", gmView: "СЕКТОР ГМ", follow: "СТЕЖИТИ" },
-  pl: { title: "MAPA SESJI", region: "REGION", players: "GRACZE", live: "LIVE", npc: "NPC", move: "NPC i tokeny zapasowe można przesuwać. Tokeny LIVE graczy automatycznie śledzą ich mapę.", noMap: "Mapa sektora nie jest wczytana. Pokazano zapasową siatkę sesji.", location: "LOKACJA", selected: "WYBRANO", reset: "RESETUJ TOKENY", offMap: "gracz(e) znajdują się w innym sektorze", gmView: "SEKTOR GM", follow: "ŚLEDŹ" },
+  en: {
+    title: "TACTICAL MAP",
+    waiting: "Waiting for an active GM session...",
+    players: "PLAYERS",
+    startZone: "START ZONE",
+    editStart: "EDIT START ZONE",
+    finishEdit: "FINISH EDITING",
+    startScene: "START SCENE",
+    resetPlayers: "RETURN ALL TO START",
+    endScene: "END SCENE",
+    inactive: "Scene is not active. Mark the start zone and launch it.",
+    active: "LIVE TACTICAL SCENE",
+    move: "Select any token, then click a cell to move it.",
+    editHint: "Click cells to add/remove them from the forced player start zone.",
+    size: "GRID",
+    resetMap: "RESET MAP",
+  },
+  ru: {
+    title: "ТАКТИЧЕСКАЯ КАРТА",
+    waiting: "Ожидаю активную сессию ГМ...",
+    players: "ИГРОКИ",
+    startZone: "СТАРТОВАЯ ЗОНА",
+    editStart: "ИЗМЕНИТЬ СТАРТОВУЮ ЗОНУ",
+    finishEdit: "ЗАКОНЧИТЬ РЕДАКТИРОВАНИЕ",
+    startScene: "НАЧАТЬ СЦЕНУ",
+    resetPlayers: "ВЕРНУТЬ ВСЕХ В СТАРТ",
+    endScene: "ЗАВЕРШИТЬ СЦЕНУ",
+    inactive: "Сцена не активна. Отметьте стартовую зону и запустите её.",
+    active: "ТАКТИЧЕСКАЯ СЦЕНА LIVE",
+    move: "Выберите любой токен и нажмите на клетку, чтобы переместить его.",
+    editHint: "Нажимайте на клетки, чтобы добавить или убрать их из стартовой зоны игроков.",
+    size: "СЕТКА",
+    resetMap: "СБРОСИТЬ КАРТУ",
+  },
+  uk: {
+    title: "ТАКТИЧНА МАПА",
+    waiting: "Очікую активну сесію ГМ...",
+    players: "ГРАВЦІ",
+    startZone: "СТАРТОВА ЗОНА",
+    editStart: "ЗМІНИТИ СТАРТОВУ ЗОНУ",
+    finishEdit: "ЗАКІНЧИТИ РЕДАГУВАННЯ",
+    startScene: "ПОЧАТИ СЦЕНУ",
+    resetPlayers: "ПОВЕРНУТИ ВСІХ НА СТАРТ",
+    endScene: "ЗАВЕРШИТИ СЦЕНУ",
+    inactive: "Сцена не активна. Позначте стартову зону та запустіть її.",
+    active: "ТАКТИЧНА СЦЕНА LIVE",
+    move: "Оберіть будь-який токен і натисніть клітинку, щоб перемістити його.",
+    editHint: "Натискайте клітинки, щоб додати або прибрати їх зі стартової зони гравців.",
+    size: "СІТКА",
+    resetMap: "СКИНУТИ МАПУ",
+  },
+  pl: {
+    title: "MAPA TAKTYCZNA",
+    waiting: "Oczekiwanie na aktywną sesję GM...",
+    players: "GRACZE",
+    startZone: "STREFA STARTOWA",
+    editStart: "EDYTUJ STREFĘ STARTOWĄ",
+    finishEdit: "ZAKOŃCZ EDYCJĘ",
+    startScene: "ROZPOCZNIJ SCENĘ",
+    resetPlayers: "PRZENIEŚ WSZYSTKICH NA START",
+    endScene: "ZAKOŃCZ SCENĘ",
+    inactive: "Scena nie jest aktywna. Zaznacz strefę startową i uruchom scenę.",
+    active: "SCENA TAKTYCZNA LIVE",
+    move: "Wybierz dowolny token, a następnie kliknij pole, aby go przenieść.",
+    editHint: "Klikaj pola, aby dodać lub usunąć je ze strefy startowej graczy.",
+    size: "SIATKA",
+    resetMap: "RESETUJ MAPĘ",
+  },
 };
 
-function languageCode(value) {
-  const code = String(value || "en").split("-")[0];
+function languageCode() {
+  const html = document.documentElement.lang || "en";
+  const code = String(html).toLowerCase().split("-")[0];
   return COPY[code] ? code : "en";
 }
 
-function safeReadJson(key, fallback) {
-  try {
-    const value = JSON.parse(window.localStorage.getItem(key) || "null");
-    return value && typeof value === "object" ? value : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function safeWriteJson(key, value) {
-  try { window.localStorage.setItem(key, JSON.stringify(value)); } catch { /* optional */ }
-}
-
-function sameList(previous, next) {
-  if (previous.length !== next.length) return false;
-  return previous.every((item, index) => item.id === next[index]?.id && item.name === next[index]?.name);
-}
-
 function getSessionCode() {
-  return document.querySelector(".session-gm-code")?.textContent?.trim()?.toUpperCase() || "offline";
+  return document.querySelector(".session-gm-code")?.textContent?.trim()?.toUpperCase() || "";
 }
 
-function getConnectedPlayers() {
+function getRoster() {
   return Array.from(document.querySelectorAll(".session-gm-roster-strip__list .session-gm-player-card"))
     .map((node, index) => ({
-      id: `player-${index}-${node.querySelector("strong")?.textContent?.trim() || "player"}`,
+      id: `player-${index}-${String(node.querySelector("strong")?.textContent || "player").toLowerCase().replace(/[^a-z0-9а-яіїє]+/gi, "-")}`,
       name: node.querySelector("strong")?.textContent?.trim() || `Player ${index + 1}`,
     }));
 }
 
-function getNpcTokens() {
-  const state = safeReadJson(GM_STATE_KEY, {});
-  return (Array.isArray(state.initiative) ? state.initiative : [])
-    .filter((entry) => entry?.type !== "player")
-    .map((entry, index) => ({ id: `npc-${entry.id || index}`, name: entry.name || `NPC ${index + 1}` }));
+function sameRoster(a, b) {
+  return a.length === b.length && a.every((item, index) => item.id === b[index]?.id && item.name === b[index]?.name);
 }
 
-function terrainSymbol(terrainId) {
-  const symbols = {
-    road: "═",
-    urban: "▦",
-    ruins: "⌁",
-    swamp: "≈",
-    forest: "♠",
-    industrial: "⚙",
-    water: "~",
-    mountains: "▲",
-    blocked_ruins: "▓",
-  };
-  return symbols[terrainId] || "·";
+function makeDefaultStartZone(cols, rows) {
+  const result = [];
+  const startY = Math.max(0, rows - 3);
+  for (let y = startY; y < rows; y += 1) {
+    for (let x = 0; x < Math.min(3, cols); x += 1) result.push({ x, y });
+  }
+  return result;
 }
 
-function tokenDefaultPosition(index, center, cols, rows) {
-  const offsets = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
-  const [dx, dy] = offsets[index % offsets.length];
+function normalizeCell(cell, cols, rows) {
+  const x = Math.max(0, Math.min(cols - 1, Number(cell?.x || 0)));
+  const y = Math.max(0, Math.min(rows - 1, Number(cell?.y || 0)));
+  return { x, y };
+}
+
+function makeEmptyState(cols = DEFAULT_COLS, rows = DEFAULT_ROWS) {
   return {
-    x: Math.max(0, Math.min(cols - 1, Number(center.x || 0) + dx)),
-    y: Math.max(0, Math.min(rows - 1, Number(center.y || 0) + dy)),
-  };
-}
-
-function sanitizeLivePacket(packet, peerId) {
-  if (!packet || packet.type !== "map_position") return null;
-  const cols = Math.max(1, Math.min(64, Number(packet.cols || VIEW_COLS)));
-  const rows = Math.max(1, Math.min(64, Number(packet.rows || VIEW_ROWS)));
-  const x = Math.max(0, Math.min(cols - 1, Number(packet.playerPosition?.x || 0)));
-  const y = Math.max(0, Math.min(rows - 1, Number(packet.playerPosition?.y || 0)));
-  return {
-    id: `live-${peerId}`,
-    peerId,
-    name: String(packet.name || "Player").trim().slice(0, 60) || "Player",
-    regionId: String(packet.regionId || "commonwealth").slice(0, 60),
-    worldOffset: {
-      x: Number(packet.worldOffset?.x || 0),
-      y: Number(packet.worldOffset?.y || 0),
-    },
-    position: { x, y },
+    active: false,
+    sceneId: `scene-${Date.now()}`,
     cols,
     rows,
-    updatedAt: packet.updatedAt || new Date().toISOString(),
+    startZone: makeDefaultStartZone(cols, rows),
+    tokens: [],
+    revision: 1,
   };
 }
 
-export default function GmSessionMap({ character = null }) {
-  const { i18n } = useTranslation();
-  const language = languageCode(i18n.resolvedLanguage || i18n.language);
-  const text = COPY[language];
+function placePlayers(state, roster) {
+  const startZone = state.startZone?.length ? state.startZone : makeDefaultStartZone(state.cols, state.rows);
+  const previousByName = new Map((state.tokens || []).map((token) => [token.name, token]));
+  const tokens = roster.map((player, index) => {
+    const cell = startZone[index % startZone.length] || { x: 0, y: state.rows - 1 };
+    const previous = previousByName.get(player.name);
+    return {
+      id: player.id,
+      kind: "player",
+      name: player.name,
+      x: cell.x,
+      y: cell.y,
+      connected: true,
+      previousId: previous?.id || null,
+    };
+  });
+  return { ...state, tokens, revision: Number(state.revision || 0) + 1 };
+}
 
-  const mapState = character?.mapData || {};
-  const gmWorldOffset = mapState.worldOffset || { x: 0, y: 0 };
-  const gmRegionId = mapState.regionId || "commonwealth";
+function findTokenForHello(state, packet) {
+  const mainName = String(packet?.characterName || packet?.playerName || "").trim().toLowerCase();
+  if (!mainName) return null;
+  return (state.tokens || []).find((token) => String(token.name || "").trim().toLowerCase() === mainName)
+    || (state.tokens || []).find((token) => String(token.name || "").trim().toLowerCase().includes(mainName) || mainName.includes(String(token.name || "").trim().toLowerCase()))
+    || null;
+}
 
-  const [roster, setRoster] = useState(() => getConnectedPlayers());
-  const [npcs, setNpcs] = useState(() => getNpcTokens());
-  const [livePlayers, setLivePlayers] = useState([]);
-  const [selectedToken, setSelectedToken] = useState(null);
-  const [focusedPeerId, setFocusedPeerId] = useState(null);
+export default function GmSessionMap() {
+  const text = COPY[languageCode()];
   const [sessionCode, setSessionCode] = useState(() => getSessionCode());
-  const mapPeerRef = useRef(null);
-  const mapConnectionsRef = useRef(new Map());
+  const [roster, setRoster] = useState(() => getRoster());
+  const [state, setState] = useState(() => makeEmptyState());
+  const [selectedToken, setSelectedToken] = useState(null);
+  const [editingStart, setEditingStart] = useState(false);
+  const peerRef = useRef(null);
+  const connectionsRef = useRef(new Map());
+  const identityRef = useRef(new Map());
+  const stateRef = useRef(state);
+  const rosterRef = useRef(roster);
 
-  const focusedPlayer = livePlayers.find((player) => player.peerId === focusedPeerId) || null;
-  const viewRegionId = focusedPlayer?.regionId || gmRegionId;
-  const viewWorldOffset = focusedPlayer?.worldOffset || gmWorldOffset;
-  const sectorKey = `${Number(viewWorldOffset.x || 0)},${Number(viewWorldOffset.y || 0)}`;
-  const currentSector = viewRegionId === gmRegionId ? (mapState.sectorCache?.[sectorKey] || {}) : {};
-  const cols = Math.max(1, Number(currentSector.cols || focusedPlayer?.cols || VIEW_COLS));
-  const rows = Math.max(1, Number(currentSector.rows || focusedPlayer?.rows || VIEW_ROWS));
-  const playerPosition = !focusedPlayer && sectorKey === `${Number(gmWorldOffset.x || 0)},${Number(gmWorldOffset.y || 0)}`
-    ? (mapState.playerPosition || currentSector.start || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) })
-    : (focusedPlayer?.position || currentSector.start || { x: Math.floor(cols / 2), y: Math.floor(rows / 2) });
-  const region = getMapRegion(viewRegionId);
-  const regionName = getRegionName(region, language);
+  useEffect(() => { stateRef.current = state; }, [state]);
+  useEffect(() => { rosterRef.current = roster; }, [roster]);
 
-  const storageKey = `fallout_pipboy_gm_token_positions_${sessionCode}_${viewRegionId}_${sectorKey}`;
-  const [tokenPositions, setTokenPositions] = useState(() => safeReadJson(storageKey, {}));
+  const sendState = (connection) => {
+    if (!connection?.open) return;
+    const tokenId = identityRef.current.get(connection.peer) || null;
+    connection.send({ type: "tactical_state", state: stateRef.current, youTokenId: tokenId });
+  };
+
+  const broadcastState = () => {
+    connectionsRef.current.forEach((connection) => sendState(connection));
+  };
 
   useEffect(() => {
-    const refresh = () => {
-      const nextRoster = getConnectedPlayers();
-      const nextNpcs = getNpcTokens();
-      setRoster((previous) => sameList(previous, nextRoster) ? previous : nextRoster);
-      setNpcs((previous) => sameList(previous, nextNpcs) ? previous : nextNpcs);
+    const timer = window.setInterval(() => {
       const code = getSessionCode();
-      if (code !== sessionCode) setSessionCode(code);
-    };
-    refresh();
-    const timer = window.setInterval(refresh, 900);
+      if (code && code !== sessionCode) setSessionCode(code);
+      const nextRoster = getRoster();
+      setRoster((previous) => sameRoster(previous, nextRoster) ? previous : nextRoster);
+    }, 700);
     return () => window.clearInterval(timer);
   }, [sessionCode]);
 
   useEffect(() => {
-    setTokenPositions(safeReadJson(storageKey, {}));
-    setSelectedToken(null);
-  }, [storageKey]);
+    if (!state.active) return;
+    const currentNames = new Set((state.tokens || []).map((token) => token.name));
+    const rosterNames = new Set(roster.map((player) => player.name));
+    const changed = roster.some((player) => !currentNames.has(player.name)) || (state.tokens || []).some((token) => token.kind === "player" && !rosterNames.has(token.name));
+    if (!changed) return;
+    setState((previous) => placePlayers(previous, roster));
+  }, [roster, state.active]);
 
   useEffect(() => {
-    safeWriteJson(storageKey, tokenPositions);
-  }, [storageKey, tokenPositions]);
+    broadcastState();
+  }, [state]);
 
   useEffect(() => {
-    if (focusedPeerId && !livePlayers.some((player) => player.peerId === focusedPeerId)) {
-      setFocusedPeerId(null);
-    }
-  }, [focusedPeerId, livePlayers]);
-
-  useEffect(() => {
-    if (!sessionCode || sessionCode === "offline") return undefined;
+    if (!sessionCode) return undefined;
     let disposed = false;
-
-    const removeLivePlayer = (peerId) => {
-      setLivePlayers((previous) => previous.filter((player) => player.peerId !== peerId));
+    const cleanup = () => {
+      connectionsRef.current.forEach((connection) => { try { connection.close(); } catch { /* noop */ } });
+      connectionsRef.current.clear();
+      identityRef.current.clear();
+      try { peerRef.current?.destroy?.(); } catch { /* noop */ }
+      peerRef.current = null;
     };
 
-    const peer = new Peer(`${MAP_HOST_PREFIX}${sessionCode.toLowerCase()}`, { debug: 0 });
-    mapPeerRef.current = peer;
-
+    cleanup();
+    const peer = new Peer(`${TACTICAL_HOST_PREFIX}${sessionCode.toLowerCase()}`, { debug: 0 });
+    peerRef.current = peer;
     peer.on("connection", (connection) => {
-      mapConnectionsRef.current.set(connection.peer, connection);
+      connectionsRef.current.set(connection.peer, connection);
+      connection.on("open", () => sendState(connection));
       connection.on("data", (packet) => {
-        const live = sanitizeLivePacket(packet, connection.peer);
-        if (!live || disposed) return;
-        setLivePlayers((previous) => {
-          const exists = previous.some((player) => player.peerId === live.peerId);
-          return exists
-            ? previous.map((player) => player.peerId === live.peerId ? live : player)
-            : [...previous, live];
-        });
+        if (!packet || typeof packet !== "object") return;
+        if (packet.type === "tactical_hello") {
+          const token = findTokenForHello(stateRef.current, packet);
+          if (token) identityRef.current.set(connection.peer, token.id);
+          sendState(connection);
+          return;
+        }
+        if (packet.type === "tactical_move") {
+          const allowedTokenId = identityRef.current.get(connection.peer);
+          if (!allowedTokenId || packet.tokenId !== allowedTokenId || !stateRef.current.active) return;
+          const target = normalizeCell(packet, stateRef.current.cols, stateRef.current.rows);
+          setState((previous) => ({
+            ...previous,
+            tokens: previous.tokens.map((token) => token.id === allowedTokenId ? { ...token, ...target } : token),
+            revision: Number(previous.revision || 0) + 1,
+          }));
+        }
       });
       connection.on("close", () => {
-        mapConnectionsRef.current.delete(connection.peer);
-        removeLivePlayer(connection.peer);
+        connectionsRef.current.delete(connection.peer);
+        identityRef.current.delete(connection.peer);
       });
       connection.on("error", () => {
-        mapConnectionsRef.current.delete(connection.peer);
-        removeLivePlayer(connection.peer);
+        connectionsRef.current.delete(connection.peer);
+        identityRef.current.delete(connection.peer);
       });
     });
+    peer.on("error", () => {});
 
     return () => {
       disposed = true;
-      mapConnectionsRef.current.forEach((connection) => {
-        try { connection?.close?.(); } catch { /* best effort */ }
-      });
-      mapConnectionsRef.current.clear();
-      try { peer.destroy(); } catch { /* best effort */ }
-      if (mapPeerRef.current === peer) mapPeerRef.current = null;
-      setLivePlayers([]);
+      if (disposed) cleanup();
     };
   }, [sessionCode]);
 
-  const cells = useMemo(() => {
-    const index = new Map();
-    (Array.isArray(currentSector.cells) ? currentSector.cells : []).forEach((cell) => index.set(`${cell.x}:${cell.y}`, cell));
-    const result = [];
-    for (let y = 0; y < rows; y += 1) {
-      for (let x = 0; x < cols; x += 1) {
-        result.push(index.get(`${x}:${y}`) || { x, y, terrain: "road" });
-      }
-    }
-    return result;
-  }, [currentSector.cells, cols, rows]);
-
-  const locationsByCell = useMemo(() => {
-    const result = new Map();
-    (region?.locations || []).forEach((location) => {
-      const localX = Number(location.worldX) - Number(viewWorldOffset.x || 0) * cols;
-      const localY = Number(location.worldY) - Number(viewWorldOffset.y || 0) * rows;
-      if (localX >= 0 && localX < cols && localY >= 0 && localY < rows) result.set(`${localX}:${localY}`, location);
-    });
-    return result;
-  }, [region, viewWorldOffset.x, viewWorldOffset.y, cols, rows]);
-
-  const liveNames = useMemo(() => new Set(livePlayers.map((player) => player.name.toLowerCase())), [livePlayers]);
-  const liveOnCurrentSector = useMemo(() => livePlayers.filter((player) =>
-    player.regionId === region.id
-    && Number(player.worldOffset.x) === Number(viewWorldOffset.x || 0)
-    && Number(player.worldOffset.y) === Number(viewWorldOffset.y || 0)
-  ), [livePlayers, region.id, viewWorldOffset.x, viewWorldOffset.y]);
-  const liveOffMapCount = Math.max(0, livePlayers.length - liveOnCurrentSector.length);
-
-  const tokens = useMemo(() => {
-    const fallbackPlayers = roster
-      .filter((player) => !liveNames.has(String(player.name || "").toLowerCase()))
-      .map((player) => ({ ...player, kind: "player", live: false, movable: true }));
-    const liveTokens = liveOnCurrentSector.map((player) => ({
-      ...player,
-      kind: "player",
-      live: true,
-      movable: false,
-    }));
-    const npcTokens = npcs.map((npc) => ({ ...npc, kind: "npc", live: false, movable: true }));
-    const all = [...liveTokens, ...fallbackPlayers, ...npcTokens];
-    return all.map((token, index) => ({
-      ...token,
-      position: token.live
-        ? token.position
-        : (tokenPositions[token.id] || tokenDefaultPosition(index, playerPosition, cols, rows)),
-    }));
-  }, [roster, npcs, liveNames, liveOnCurrentSector, tokenPositions, playerPosition.x, playerPosition.y, cols, rows]);
-
-  const selected = tokens.find((token) => token.id === selectedToken) || null;
-
-  const moveToken = (tokenId, x, y) => {
-    const token = tokens.find((item) => item.id === tokenId);
-    if (!token?.movable) return;
-    setTokenPositions((previous) => ({ ...previous, [tokenId]: { x, y } }));
-    setSelectedToken(tokenId);
-  };
-
-  const handleCellClick = (cell) => {
-    if (!selected?.movable) return;
-    moveToken(selected.id, cell.x, cell.y);
-  };
-
-  const resetTokens = () => {
-    setTokenPositions({});
+  const startScene = () => {
+    setEditingStart(false);
     setSelectedToken(null);
+    setState((previous) => ({
+      ...placePlayers({ ...previous, active: true, sceneId: `scene-${Date.now()}` }, rosterRef.current),
+      active: true,
+    }));
   };
+
+  const resetPlayers = () => {
+    setSelectedToken(null);
+    setState((previous) => placePlayers({ ...previous, active: true }, rosterRef.current));
+  };
+
+  const endScene = () => {
+    setSelectedToken(null);
+    setState((previous) => ({ ...previous, active: false, revision: Number(previous.revision || 0) + 1 }));
+  };
+
+  const resetMap = () => {
+    setEditingStart(false);
+    setSelectedToken(null);
+    setState(makeEmptyState(state.cols, state.rows));
+  };
+
+  const changeSize = (value) => {
+    const [cols, rows] = value.split("x").map(Number);
+    setEditingStart(false);
+    setSelectedToken(null);
+    setState(makeEmptyState(cols, rows));
+  };
+
+  const toggleStartCell = (x, y) => {
+    setState((previous) => {
+      const exists = previous.startZone.some((cell) => cell.x === x && cell.y === y);
+      const nextZone = exists
+        ? previous.startZone.filter((cell) => !(cell.x === x && cell.y === y))
+        : [...previous.startZone, { x, y }];
+      return { ...previous, startZone: nextZone, revision: Number(previous.revision || 0) + 1 };
+    });
+  };
+
+  const moveSelectedToken = (x, y) => {
+    if (!selectedToken || editingStart) return;
+    setState((previous) => ({
+      ...previous,
+      tokens: previous.tokens.map((token) => token.id === selectedToken ? { ...token, x, y } : token),
+      revision: Number(previous.revision || 0) + 1,
+    }));
+  };
+
+  const startKeys = useMemo(() => new Set(state.startZone.map((cell) => `${cell.x}:${cell.y}`)), [state.startZone]);
+
+  if (!sessionCode) {
+    return <article className="pip-panel gm-session-map"><div className="pip-logbox">{text.waiting}</div></article>;
+  }
 
   return (
-    <article className="pip-panel gm-session-map">
+    <article className="pip-panel gm-session-map tactical-map">
       <div className="gm-session-map__head">
         <div>
-          <div className="gm-session-map__eyebrow">ROBCO // LIVE TACTICAL DISPLAY</div>
+          <div className="gm-session-map__eyebrow">ROBCO // GM TACTICAL LINK // {sessionCode}</div>
           <h2>[ {text.title} ]</h2>
         </div>
         <div className="gm-session-map__meta">
-          <span>{text.region}: <strong>{regionName}</strong></span>
-          <span>SEC: <strong>{sectorKey}</strong></span>
           <span>{text.players}: <strong>{roster.length}</strong></span>
-          <span className="gm-session-map__live-stat">{text.live}: <strong>{livePlayers.length}</strong></span>
-          <span>{text.npc}: <strong>{npcs.length}</strong></span>
-          <button type="button" className="pip-btn" onClick={resetTokens}>{text.reset}</button>
+          <span className={state.active ? "tactical-live" : ""}>{state.active ? text.active : "OFFLINE"}</span>
+          <label className="tactical-size-select">{text.size}
+            <select className="pip-input" value={`${state.cols}x${state.rows}`} onChange={(event) => changeSize(event.target.value)}>
+              <option value="8x8">8×8</option>
+              <option value="12x12">12×12</option>
+              <option value="16x12">16×12</option>
+              <option value="16x16">16×16</option>
+            </select>
+          </label>
         </div>
       </div>
 
-      {livePlayers.length ? (
-        <div className="gm-session-map__live-roster">
-          <button type="button" className={`pip-btn${!focusedPeerId ? " is-primary" : ""}`} onClick={() => setFocusedPeerId(null)}>{text.gmView}</button>
-          {livePlayers.map((player) => (
-            <button
-              type="button"
-              key={player.peerId}
-              className={`gm-session-map__follow${focusedPeerId === player.peerId ? " is-active" : ""}`}
-              onClick={() => setFocusedPeerId(player.peerId)}
-            >
-              <strong>{player.name}</strong>
-              <span>{text.follow} · {player.regionId} · {player.worldOffset.x},{player.worldOffset.y} / {player.position.x},{player.position.y}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div className="tactical-toolbar">
+        <button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>
+          {editingStart ? text.finishEdit : text.editStart}
+        </button>
+        <button type="button" className="pip-btn is-primary" disabled={!state.startZone.length || !roster.length} onClick={startScene}>{text.startScene}</button>
+        <button type="button" className="pip-btn" disabled={!state.active || !roster.length} onClick={resetPlayers}>{text.resetPlayers}</button>
+        <button type="button" className="pip-btn" disabled={!state.active} onClick={endScene}>{text.endScene}</button>
+        <button type="button" className="pip-btn" onClick={resetMap}>{text.resetMap}</button>
+      </div>
 
-      <div className="gm-session-map__hint">
-        {selected ? `${text.selected}: ${selected.name}${selected.live ? " · LIVE" : ""}` : text.move}
-        {!Array.isArray(currentSector.cells) || !currentSector.cells.length ? <span> · {text.noMap}</span> : null}
-        {liveOffMapCount > 0 ? <span> · {liveOffMapCount} {text.offMap}</span> : null}
+      <div className={`gm-session-map__hint${editingStart ? " is-editing" : ""}`}>
+        {editingStart ? text.editHint : state.active ? text.move : text.inactive}
+        <span> · {text.startZone}: {state.startZone.length}</span>
       </div>
 
       <div
-        className="gm-session-map__grid"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
+        className="gm-session-map__grid tactical-grid"
+        style={{ gridTemplateColumns: `repeat(${state.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${state.rows}, minmax(0, 1fr))` }}
       >
-        {cells.map((cell) => {
-          const key = `${cell.x}:${cell.y}`;
-          const location = locationsByCell.get(key);
-          const terrain = TERRAIN_TYPES[cell.terrain] || TERRAIN_TYPES.road;
-          const cellTokens = tokens.filter((token) => token.position.x === cell.x && token.position.y === cell.y);
+        {Array.from({ length: state.rows * state.cols }, (_, index) => {
+          const x = index % state.cols;
+          const y = Math.floor(index / state.cols);
+          const key = `${x}:${y}`;
+          const inStart = startKeys.has(key);
+          const tokens = state.tokens.filter((token) => token.x === x && token.y === y);
           return (
             <button
               type="button"
               key={key}
-              className={`gm-session-map__cell is-${terrain.id}${location ? " has-location" : ""}`}
-              title={`${terrain.label}${location ? ` · ${location.name}` : ""}`}
-              onClick={() => handleCellClick(cell)}
-              onDragOver={(event) => {
-                if (selected?.movable) event.preventDefault();
-              }}
-              onDrop={(event) => {
-                event.preventDefault();
-                const tokenId = event.dataTransfer.getData("text/gm-token");
-                if (tokenId) moveToken(tokenId, cell.x, cell.y);
-              }}
+              className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}`}
+              onClick={() => editingStart ? toggleStartCell(x, y) : moveSelectedToken(x, y)}
             >
-              <span className="gm-session-map__terrain">{terrainSymbol(terrain.id)}</span>
-              {location ? <span className="gm-session-map__location" title={`${text.location}: ${location.name}`}>{location.icon || "◆"}</span> : null}
-              <span className="gm-session-map__coords">{cell.x},{cell.y}</span>
+              <span className="gm-session-map__coords">{x},{y}</span>
+              {inStart ? <span className="tactical-start-mark">S</span> : null}
               <span className="gm-session-map__tokens">
-                {cellTokens.map((token) => (
+                {tokens.map((token) => (
                   <span
                     key={token.id}
-                    draggable={token.movable}
-                    className={`gm-session-token is-${token.kind}${token.live ? " is-live" : ""}${selectedToken === token.id ? " is-selected" : ""}`}
-                    title={`${token.name}${token.live ? " · LIVE" : ""}`}
+                    className={`gm-session-token is-player${selectedToken === token.id ? " is-selected" : ""}`}
+                    title={token.name}
                     onClick={(event) => {
                       event.stopPropagation();
-                      setSelectedToken((current) => current === token.id ? null : token.id);
-                    }}
-                    onDragStart={(event) => {
-                      if (!token.movable) {
-                        event.preventDefault();
-                        return;
-                      }
-                      event.dataTransfer.setData("text/gm-token", token.id);
-                      event.dataTransfer.effectAllowed = "move";
-                      setSelectedToken(token.id);
+                      if (!editingStart) setSelectedToken((current) => current === token.id ? null : token.id);
                     }}
                   >
-                    <b>{token.kind === "player" ? "P" : "N"}</b>
-                    {token.live ? <i className="gm-session-token__live-dot" aria-hidden="true" /> : null}
-                    <small>{token.name}</small>
+                    <b>P</b><small>{token.name}</small>
                   </span>
                 ))}
               </span>
