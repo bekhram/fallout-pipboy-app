@@ -1,0 +1,57 @@
+.gm-session-token__hp {
+  position: absolute;
+  left: 50%;
+  top: -13px;
+  z-index: 20;
+  width: max(42px, 100%);
+  height: 7px;
+  overflow: visible;
+  transform: translateX(-50%);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .76);
+  box-shadow: 0 0 8px rgba(0, 0, 0, .72);
+  pointer-events: none;
+}
+
+.gm-session-token__hp-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  max-width: 100%;
+  border-radius: inherit;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+}
+
+.gm-session-token__hp-value {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(-50%);
+  padding: 1px 3px;
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+  background: var(--pip-bg, #071008);
+  font-size: .42rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: .88;
+}
+
+.tactical-grid .gm-session-token.is-size-2 .gm-session-token__hp {
+  top: -12px;
+  width: 72%;
+}
+
+@media (max-width: 640px) {
+  .gm-session-token__hp {
+    top: -11px;
+    width: max(36px, 100%);
+    height: 6px;
+  }
+
+  .gm-session-token__hp-value {
+    font-size: .36rem;
+  }
+}
