@@ -5,7 +5,7 @@ import GmSessionMap from "./GmSessionMap.jsx";
 import "./gmWorkspace.css";
 import "./gmSessionMapLayout.css";
 
-export default function GmWorkspace({ character = null, setCharacter = null }) {
+export default function GmWorkspace({ character = null, setCharacter = null, session = null }) {
   const [panelVersion, setPanelVersion] = useState(0);
   const tacticalMapRef = useRef(null);
 
@@ -19,7 +19,7 @@ export default function GmWorkspace({ character = null, setCharacter = null }) {
   return (
     <div className="gm-workspace">
       <div ref={tacticalMapRef} className="gm-workspace__tactical-anchor">
-        <GmSessionMap character={character} />
+        <GmSessionMap character={character} session={session} />
       </div>
       <GmPanel
         key={`gm-panel-${panelVersion}`}
