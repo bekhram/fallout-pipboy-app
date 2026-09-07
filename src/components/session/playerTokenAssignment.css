@@ -1,0 +1,157 @@
+.gm-player-assignments {
+  margin: 0 0 12px;
+  padding: 12px;
+}
+
+.gm-player-assignments__head {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.gm-player-assignments__head > span,
+.gm-player-assignments__empty {
+  opacity: .72;
+  font-size: 12px;
+}
+
+.gm-player-assignments__list {
+  display: grid;
+  gap: 8px;
+}
+
+.gm-player-assignment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid rgba(130,255,155,.28);
+  background: rgba(0,24,8,.42);
+}
+
+.gm-player-assignment__identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.gm-player-assignment__identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gm-player-assignment__identity small {
+  opacity: .72;
+}
+
+.gm-player-assignment__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* The old player-side avatar pipeline uses canvas/WebP conversion and the old
+   self-create button. In GM-assigned mode those direct controls are replaced by
+   the lightweight uploader below. */
+.tactical-player-token-setup-v2 > .tactical-player-token-avatar,
+.tactical-player-token-setup-v2 > .tactical-background-input,
+.tactical-player-token-setup-v2 > .pip-btn {
+  display: none !important;
+}
+
+.tactical-player-token-setup-v2 .tactical-player-size-field {
+  display: none !important;
+}
+
+.player-assigned-token-controls {
+  display: grid;
+  grid-template-columns: 64px minmax(0,1fr);
+  gap: 10px;
+  align-items: center;
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid rgba(130,255,155,.32);
+  background: rgba(0,20,7,.56);
+}
+
+.player-assigned-token-avatar {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(0,0,0,.35);
+  color: inherit;
+  cursor: pointer;
+}
+
+.player-assigned-token-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-assigned-token-avatar span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.player-assigned-token-controls__body {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.player-assigned-token-controls__body > strong {
+  flex-basis: 100%;
+  font-size: 12px;
+}
+
+.player-assigned-token-controls__body small.is-ok {
+  opacity: .8;
+}
+
+.player-assigned-token-controls__body small.is-error {
+  text-decoration: underline;
+}
+
+.player-assigned-avatar-input {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  .gm-player-assignment {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gm-player-assignment__actions {
+    justify-content: flex-start;
+  }
+
+  .player-assigned-token-controls {
+    grid-template-columns: 56px minmax(0,1fr);
+  }
+
+  .player-assigned-token-avatar {
+    width: 56px;
+    height: 56px;
+  }
+}
