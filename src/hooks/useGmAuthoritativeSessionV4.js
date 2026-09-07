@@ -179,26 +179,43 @@ export default function useGmAuthoritativeSessionV4(form) {
 
   const moveToken = (tokenId, x, y) => {
     if (base.mode !== "player") return base.moveToken?.(tokenId, x, y);
-    const token = (tacticalScene?.tokens || []).find((item) => item.id === tokenId);
+    const tokens = tacticalScene?.tokens || [];
+    const requested = tokens.find((item) => item.id === tokenId);
+    const token = requested?.assignedByGm
+      ? requested
+      : tokens.find((item) => item.assignedByGm && item.ownerClientId === base.clientId);
     if (!token?.assignedByGm || token.ownerClientId !== base.clientId) return base.moveToken?.(tokenId, x, y);
-    return Promise.resolve(sendAssignedControl("MOVE", { tokenId, x, y })
+    return Promise.resolve(sendAssignedControl("MOVE", { tokenId: token.id, x, y })
       ? { ok: true }
       : { ok: false, error: "CONTROL_SEND_FAILED" });
   };
 
   const updateAssignedPlayerAvatar = async (tokenId, avatar) => {
     if (base.mode !== "player") return { ok: false, error: "PLAYER_ONLY" };
-    const token = (tacticalScene?.tokens || []).find((item) => item.id === tokenId);
-    if (!token?.assignedByGm || token.ownerClientId !== base.clientId) return { ok: false, error: "TOKEN_FORBIDDEN" };
-    const profileResult = await base.updatePlayerTokenProfile?.({ avatar });
-    const profile = profileResult?.profile;
-    if (!profile?.avatarAssetId || !profile?.avatarHash) return { ok: false, error: "AVATAR_NOT_SAVED" };
-    const sent = sendAssignedControl("AVATAR", {
-      tokenId,
-      assetId: profile.avatarAssetId,
-      hash: profile.avatarHash,
-    });
-    return sent ? { ok: true, profile } : { ok: false, error: "CONTROL_SEND_FAILED" };
+    const tokens = tacticalScene?.tokens || [];
+    const requested = tokens.find((item) => item.id === tokenId);
+    const token = requested?.assignedByGm
+      ? requested
+      : tokens.find((item) => item.assignedByGm && item.ownerClientId === base.clientId);
+    if (!token?.assignedByGm || token.ownerClientId !== base.clientId) {
+      return { ok: false, error: "GM_ASSIGNED_TOKEN_NOT_FOUND" };
+    }
+
+    try {
+      const profileResult = await base.updatePlayerTokenProfile?.({ avatar });
+      const profile = profileResult?.profile;
+      if (!profile?.avatarAssetId || !profile?.avatarHash) {
+        return { ok: false, error: "AVATAR_PROFILE_NOT_SAVED" };
+      }
+      const sent = sendAssignedControl("AVATAR", {
+        tokenId: token.id,
+        assetId: profile.avatarAssetId,
+        hash: profile.avatarHash,
+      });
+      return sent ? { ok: true, profile, tokenId: token.id } : { ok: false, error: "CONTROL_SEND_FAILED" };
+    } catch (error) {
+      return { ok: false, error: error?.message || "AVATAR_SAVE_FAILED" };
+    }
   };
 
   useEffect(() => {
@@ -218,7 +235,7 @@ export default function useGmAuthoritativeSessionV4(form) {
       if (control.type === "AVATAR" && control.assetId && control.hash) {
         (async () => {
           let resource = null;
-          for (let attempt = 0; attempt < 12; attempt += 1) {
+          for (let attempt = 0; attempt < 18; attempt += 1) {
             resource = await getResource(base.campaignId, control.assetId).catch(() => null);
             if (resource?.hash === control.hash && resource?.data) break;
             await delay(350);
