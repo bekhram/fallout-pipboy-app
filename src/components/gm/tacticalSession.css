@@ -28,6 +28,60 @@
   padding: 5px 7px;
 }
 
+.tactical-generator {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 170px) minmax(120px, 170px) auto auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, currentColor 42%, transparent);
+}
+
+.tactical-generator__title {
+  align-self: center;
+  padding-right: 4px;
+  font-size: .64rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.tactical-generator label {
+  display: grid;
+  gap: 4px;
+  font-size: .54rem;
+  letter-spacing: .08em;
+  opacity: .9;
+}
+
+.tactical-generator .pip-input {
+  min-height: 32px;
+  padding: 5px 7px;
+}
+
+.tactical-generator .pip-btn {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: .6rem;
+}
+
+.tactical-generator__stats {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-self: center;
+  font-size: .52rem;
+}
+
+.tactical-generator__stats span {
+  padding: 4px 5px;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
 .tactical-live {
   border-color: currentColor !important;
   box-shadow: inset 0 0 12px color-mix(in srgb, currentColor 10%, transparent), 0 0 10px color-mix(in srgb, currentColor 10%, transparent);
@@ -63,11 +117,77 @@
   background: color-mix(in srgb, currentColor 18%, transparent);
 }
 
+.tactical-cell.is-wall {
+  background:
+    repeating-linear-gradient(135deg, color-mix(in srgb, currentColor 16%, #030703) 0 4px, #030603 4px 8px);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 48%, transparent);
+  cursor: not-allowed;
+}
+
+.tactical-cell.is-door {
+  background: color-mix(in srgb, currentColor 10%, #030703);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, currentColor 58%, transparent);
+}
+
+.tactical-cell.is-door.is-door-open {
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 32%, transparent);
+}
+
+.tactical-cell.is-obstacle {
+  background: radial-gradient(circle at center, color-mix(in srgb, currentColor 13%, transparent), transparent 70%);
+  cursor: not-allowed;
+}
+
+.tactical-cell.is-cover {
+  background: linear-gradient(135deg, color-mix(in srgb, currentColor 12%, transparent), color-mix(in srgb, currentColor 3%, transparent));
+  cursor: not-allowed;
+}
+
+.tactical-cell.is-hazard {
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, currentColor 9%, transparent) 0 5px, transparent 5px 10px);
+}
+
+.tactical-cell.is-blocked:hover {
+  outline-color: color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.tactical-object {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  font-size: clamp(.72rem, 1.35vw, 1.3rem);
+  font-weight: 900;
+  line-height: 1;
+  opacity: .74;
+  pointer-events: none;
+  text-shadow: 0 0 8px currentColor;
+}
+
+.tactical-cell.is-wall .tactical-object {
+  font-size: clamp(.78rem, 1.55vw, 1.45rem);
+  opacity: .86;
+}
+
+.tactical-cell.is-door .tactical-object {
+  opacity: .95;
+}
+
+.tactical-cell.is-door.is-door-open .tactical-object {
+  opacity: .52;
+}
+
+.tactical-cell.is-hazard .tactical-object {
+  opacity: .55;
+}
+
 .tactical-start-mark {
   position: absolute;
   top: 3px;
   right: 4px;
-  z-index: 1;
+  z-index: 3;
   font-size: .5rem;
   font-weight: 900;
   opacity: .55;
@@ -174,10 +294,39 @@
   cursor: default;
 }
 
+.session-tactical-player .tactical-cell.is-blocked:disabled {
+  opacity: .9;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1180px) {
+  .tactical-generator {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tactical-generator__title,
+  .tactical-generator__stats {
+    grid-column: 1 / -1;
+  }
+
+  .tactical-generator__stats {
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 780px) {
   .tactical-grid {
     min-height: 460px;
     overflow: auto;
+  }
+
+  .tactical-generator {
+    grid-template-columns: 1fr;
+  }
+
+  .tactical-generator__title,
+  .tactical-generator__stats {
+    grid-column: auto;
   }
 
   .session-tactical-overlay {
