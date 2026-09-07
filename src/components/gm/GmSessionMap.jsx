@@ -1,17 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Peer } from "peerjs";
-import {
-  generateTacticalLocation,
-  getTacticalTile,
-  isTacticalCellBlocked,
-  tacticalTileGlyph,
-  toggleTacticalDoor,
-} from "../../utils/tacticalLocationGenerator.js";
 import "./gmSessionMap.css";
 
 const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
 const DEFAULT_COLS = 12;
 const DEFAULT_ROWS = 12;
+const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
 
 const COPY = {
   en: {
@@ -24,29 +18,20 @@ const COPY = {
     startScene: "START SCENE",
     resetPlayers: "RETURN ALL TO START",
     endScene: "END SCENE",
-    inactive: "Scene is not active. Generate a location, mark the start zone and launch it.",
+    inactive: "Upload a background if needed, mark the start zone and launch the scene.",
     active: "LIVE TACTICAL SCENE",
-    move: "Select any token, then click a free cell to move it. Click a door with no token selected to open/close it.",
-    editHint: "Click cells to add/remove them from the forced player start zone.",
+    move: "Select a token and click any cell to move it.",
+    editHint: "Click cells to add or remove them from the forced player start zone.",
     size: "GRID",
     resetMap: "RESET MAP",
-    generator: "LOCATION GENERATOR",
-    preset: "TYPE",
-    density: "DENSITY",
-    generate: "GENERATE LOCATION",
-    clearLayout: "CLEAR OBJECTS",
-    sparse: "SPARSE",
-    normal: "NORMAL",
-    dense: "DENSE",
-    ruins: "RUINS",
-    vault: "VAULT",
-    warehouse: "WAREHOUSE",
-    camp: "CAMP",
-    walls: "WALLS",
-    doors: "DOORS",
-    obstacles: "OBSTACLES",
-    cover: "COVER",
-    hazards: "HAZARDS",
+    uploadBackground: "UPLOAD BACKGROUND",
+    replaceBackground: "REPLACE BACKGROUND",
+    removeBackground: "REMOVE BACKGROUND",
+    background: "BACKGROUND",
+    noBackground: "No background image",
+    processing: "PROCESSING IMAGE...",
+    imageError: "Could not load this image.",
+    imageTooLarge: "Image is too large. Maximum source file size is 12 MB.",
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -58,29 +43,20 @@ const COPY = {
     startScene: "НАЧАТЬ СЦЕНУ",
     resetPlayers: "ВЕРНУТЬ ВСЕХ В СТАРТ",
     endScene: "ЗАВЕРШИТЬ СЦЕНУ",
-    inactive: "Сцена не активна. Сгенерируйте локацию, отметьте стартовую зону и запустите её.",
+    inactive: "При необходимости загрузите фон, отметьте стартовую зону и запустите сцену.",
     active: "ТАКТИЧЕСКАЯ СЦЕНА LIVE",
-    move: "Выберите токен и нажмите на свободную клетку. Чтобы открыть или закрыть дверь, снимите выбор токена и нажмите на дверь.",
+    move: "Выберите токен и нажмите на любую клетку, чтобы переместить его.",
     editHint: "Нажимайте на клетки, чтобы добавить или убрать их из стартовой зоны игроков.",
     size: "СЕТКА",
     resetMap: "СБРОСИТЬ КАРТУ",
-    generator: "ГЕНЕРАТОР ЛОКАЦИИ",
-    preset: "ТИП",
-    density: "ПЛОТНОСТЬ",
-    generate: "СГЕНЕРИРОВАТЬ",
-    clearLayout: "УБРАТЬ ОБЪЕКТЫ",
-    sparse: "РЕДКО",
-    normal: "НОРМАЛЬНО",
-    dense: "ПЛОТНО",
-    ruins: "РУИНЫ",
-    vault: "УБЕЖИЩЕ",
-    warehouse: "СКЛАД",
-    camp: "ЛАГЕРЬ",
-    walls: "СТЕНЫ",
-    doors: "ДВЕРИ",
-    obstacles: "ПРЕПЯТСТВИЯ",
-    cover: "УКРЫТИЯ",
-    hazards: "ОПАСНОСТИ",
+    uploadBackground: "ЗАГРУЗИТЬ ФОН",
+    replaceBackground: "ЗАМЕНИТЬ ФОН",
+    removeBackground: "УДАЛИТЬ ФОН",
+    background: "ФОН",
+    noBackground: "Фоновая картинка не загружена",
+    processing: "ОБРАБОТКА ИЗОБРАЖЕНИЯ...",
+    imageError: "Не удалось загрузить это изображение.",
+    imageTooLarge: "Файл слишком большой. Максимальный размер исходного изображения — 12 МБ.",
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -92,29 +68,20 @@ const COPY = {
     startScene: "ПОЧАТИ СЦЕНУ",
     resetPlayers: "ПОВЕРНУТИ ВСІХ НА СТАРТ",
     endScene: "ЗАВЕРШИТИ СЦЕНУ",
-    inactive: "Сцена не активна. Згенеруйте локацію, позначте стартову зону та запустіть її.",
+    inactive: "За потреби завантажте фон, позначте стартову зону та запустіть сцену.",
     active: "ТАКТИЧНА СЦЕНА LIVE",
-    move: "Оберіть токен і натисніть вільну клітинку. Щоб відкрити або закрити двері, зніміть вибір токена та натисніть двері.",
+    move: "Оберіть токен і натисніть будь-яку клітинку, щоб перемістити його.",
     editHint: "Натискайте клітинки, щоб додати або прибрати їх зі стартової зони гравців.",
     size: "СІТКА",
     resetMap: "СКИНУТИ МАПУ",
-    generator: "ГЕНЕРАТОР ЛОКАЦІЇ",
-    preset: "ТИП",
-    density: "ЩІЛЬНІСТЬ",
-    generate: "ЗГЕНЕРУВАТИ",
-    clearLayout: "ПРИБРАТИ ОБ'ЄКТИ",
-    sparse: "РІДКО",
-    normal: "НОРМАЛЬНО",
-    dense: "ЩІЛЬНО",
-    ruins: "РУЇНИ",
-    vault: "СХОВИЩЕ",
-    warehouse: "СКЛАД",
-    camp: "ТАБІР",
-    walls: "СТІНИ",
-    doors: "ДВЕРІ",
-    obstacles: "ПЕРЕШКОДИ",
-    cover: "УКРИТТЯ",
-    hazards: "НЕБЕЗПЕКИ",
+    uploadBackground: "ЗАВАНТАЖИТИ ФОН",
+    replaceBackground: "ЗАМІНИТИ ФОН",
+    removeBackground: "ВИДАЛИТИ ФОН",
+    background: "ФОН",
+    noBackground: "Фонове зображення не завантажено",
+    processing: "ОБРОБКА ЗОБРАЖЕННЯ...",
+    imageError: "Не вдалося завантажити це зображення.",
+    imageTooLarge: "Файл завеликий. Максимальний розмір вихідного зображення — 12 МБ.",
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -126,29 +93,20 @@ const COPY = {
     startScene: "ROZPOCZNIJ SCENĘ",
     resetPlayers: "PRZENIEŚ WSZYSTKICH NA START",
     endScene: "ZAKOŃCZ SCENĘ",
-    inactive: "Scena nie jest aktywna. Wygeneruj lokację, zaznacz strefę startową i uruchom scenę.",
+    inactive: "W razie potrzeby wgraj tło, zaznacz strefę startową i uruchom scenę.",
     active: "SCENA TAKTYCZNA LIVE",
-    move: "Wybierz token i kliknij wolne pole. Aby otworzyć lub zamknąć drzwi, odznacz token i kliknij drzwi.",
+    move: "Wybierz token i kliknij dowolne pole, aby go przenieść.",
     editHint: "Klikaj pola, aby dodać lub usunąć je ze strefy startowej graczy.",
     size: "SIATKA",
     resetMap: "RESETUJ MAPĘ",
-    generator: "GENERATOR LOKACJI",
-    preset: "TYP",
-    density: "GĘSTOŚĆ",
-    generate: "GENERUJ",
-    clearLayout: "USUŃ OBIEKTY",
-    sparse: "RZADKO",
-    normal: "NORMALNIE",
-    dense: "GĘSTO",
-    ruins: "RUINY",
-    vault: "KRYPTA",
-    warehouse: "MAGAZYN",
-    camp: "OBÓZ",
-    walls: "ŚCIANY",
-    doors: "DRZWI",
-    obstacles: "PRZESZKODY",
-    cover: "OSŁONY",
-    hazards: "ZAGROŻENIA",
+    uploadBackground: "WGRAJ TŁO",
+    replaceBackground: "ZMIEŃ TŁO",
+    removeBackground: "USUŃ TŁO",
+    background: "TŁO",
+    noBackground: "Brak obrazu tła",
+    processing: "PRZETWARZANIE OBRAZU...",
+    imageError: "Nie udało się wczytać tego obrazu.",
+    imageTooLarge: "Plik jest za duży. Maksymalny rozmiar obrazu źródłowego to 12 MB.",
   },
 };
 
@@ -162,12 +120,24 @@ function getSessionCode() {
   return document.querySelector(".session-gm-code")?.textContent?.trim()?.toUpperCase() || "";
 }
 
+function slug(value) {
+  return String(value || "player")
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яіїє]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 42) || "player";
+}
+
 function getRoster() {
+  const seen = new Map();
   return Array.from(document.querySelectorAll(".session-gm-roster-strip__list .session-gm-player-card"))
-    .map((node, index) => ({
-      id: `player-${index}-${String(node.querySelector("strong")?.textContent || "player").toLowerCase().replace(/[^a-z0-9а-яіїє]+/gi, "-")}`,
-      name: node.querySelector("strong")?.textContent?.trim() || `Player ${index + 1}`,
-    }));
+    .map((node) => {
+      const name = node.querySelector("strong")?.textContent?.trim() || "Player";
+      const base = slug(name);
+      const count = seen.get(base) || 0;
+      seen.set(base, count + 1);
+      return { id: count ? `player-${base}-${count + 1}` : `player-${base}`, name };
+    });
 }
 
 function sameRoster(a, b) {
@@ -184,9 +154,10 @@ function makeDefaultStartZone(cols, rows) {
 }
 
 function normalizeCell(cell, cols, rows) {
-  const x = Math.max(0, Math.min(cols - 1, Number(cell?.x || 0)));
-  const y = Math.max(0, Math.min(rows - 1, Number(cell?.y || 0)));
-  return { x, y };
+  return {
+    x: Math.max(0, Math.min(cols - 1, Number(cell?.x || 0))),
+    y: Math.max(0, Math.min(rows - 1, Number(cell?.y || 0))),
+  };
 }
 
 function makeEmptyState(cols = DEFAULT_COLS, rows = DEFAULT_ROWS) {
@@ -197,20 +168,16 @@ function makeEmptyState(cols = DEFAULT_COLS, rows = DEFAULT_ROWS) {
     rows,
     startZone: makeDefaultStartZone(cols, rows),
     tokens: [],
-    layout: null,
+    backgroundImage: "",
+    backgroundName: "",
     revision: 1,
   };
 }
 
-function placePlayers(state, roster) {
+function forcePlayersToStart(state, roster) {
   const startZone = state.startZone?.length ? state.startZone : makeDefaultStartZone(state.cols, state.rows);
   const tokens = roster.map((player, index) => {
-    const fallback = { x: 0, y: state.rows - 1 };
-    const cell = startZone.find((candidate, offset) => {
-      const candidateIndex = (index + offset) % startZone.length;
-      const target = startZone[candidateIndex];
-      return target && !isTacticalCellBlocked(state.layout, target.x, target.y);
-    }) || startZone[index % startZone.length] || fallback;
+    const cell = startZone[index % startZone.length] || { x: 0, y: state.rows - 1 };
     return {
       id: player.id,
       kind: "player",
@@ -223,20 +190,76 @@ function placePlayers(state, roster) {
   return { ...state, tokens, revision: Number(state.revision || 0) + 1 };
 }
 
+function reconcileRoster(state, roster) {
+  const previousByName = new Map((state.tokens || []).map((token) => [String(token.name).toLowerCase(), token]));
+  const occupied = new Set();
+  const startZone = state.startZone?.length ? state.startZone : makeDefaultStartZone(state.cols, state.rows);
+
+  const tokens = roster.map((player, index) => {
+    const previous = previousByName.get(String(player.name).toLowerCase());
+    if (previous) {
+      occupied.add(`${previous.x}:${previous.y}`);
+      return { ...previous, id: player.id, name: player.name, connected: true };
+    }
+    const preferred = startZone.find((cell) => !occupied.has(`${cell.x}:${cell.y}`))
+      || startZone[index % startZone.length]
+      || { x: 0, y: state.rows - 1 };
+    occupied.add(`${preferred.x}:${preferred.y}`);
+    return { id: player.id, kind: "player", name: player.name, x: preferred.x, y: preferred.y, connected: true };
+  });
+
+  return { ...state, tokens, revision: Number(state.revision || 0) + 1 };
+}
+
 function findTokenForHello(state, packet) {
-  const mainName = String(packet?.characterName || packet?.playerName || "").trim().toLowerCase();
-  if (!mainName) return null;
-  return (state.tokens || []).find((token) => String(token.name || "").trim().toLowerCase() === mainName)
-    || (state.tokens || []).find((token) => String(token.name || "").trim().toLowerCase().includes(mainName) || mainName.includes(String(token.name || "").trim().toLowerCase()))
+  const names = [packet?.characterName, packet?.playerName]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean);
+  if (!names.length) return null;
+  return (state.tokens || []).find((token) => names.includes(String(token.name || "").trim().toLowerCase()))
+    || (state.tokens || []).find((token) => names.some((name) => {
+      const tokenName = String(token.name || "").trim().toLowerCase();
+      return tokenName && (tokenName.includes(name) || name.includes(tokenName));
+    }))
     || null;
 }
 
-function countKinds(layout) {
-  const result = { wall: 0, door: 0, obstacle: 0, cover: 0, hazard: 0 };
-  (layout?.tiles || []).forEach((tile) => {
-    if (Object.prototype.hasOwnProperty.call(result, tile.kind)) result[tile.kind] += 1;
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = url;
   });
-  return result;
+}
+
+function renderCompressed(image, maxDimension, quality) {
+  const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth || image.width, image.naturalHeight || image.height));
+  const width = Math.max(1, Math.round((image.naturalWidth || image.width) * scale));
+  const height = Math.max(1, Math.round((image.naturalHeight || image.height) * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d", { alpha: true });
+  if (!context) throw new Error("Canvas unavailable");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(image, 0, 0, width, height);
+  return canvas.toDataURL("image/webp", quality);
+}
+
+async function compressBackground(file) {
+  if (!file?.type?.startsWith("image/")) throw new Error("image");
+  if (file.size > MAX_SOURCE_BYTES) throw new Error("too-large");
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await loadImage(objectUrl);
+    let dataUrl = renderCompressed(image, 1800, 0.8);
+    if (dataUrl.length > 2_700_000) dataUrl = renderCompressed(image, 1400, 0.7);
+    return dataUrl;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 export default function GmSessionMap() {
@@ -246,25 +269,31 @@ export default function GmSessionMap() {
   const [state, setState] = useState(() => makeEmptyState());
   const [selectedToken, setSelectedToken] = useState(null);
   const [editingStart, setEditingStart] = useState(false);
-  const [generatorPreset, setGeneratorPreset] = useState("ruins");
-  const [generatorDensity, setGeneratorDensity] = useState("normal");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const fileInputRef = useRef(null);
   const peerRef = useRef(null);
   const connectionsRef = useRef(new Map());
   const identityRef = useRef(new Map());
   const stateRef = useRef(state);
   const rosterRef = useRef(roster);
+  const previousBackgroundRef = useRef(state.backgroundImage);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { rosterRef.current = roster; }, [roster]);
 
-  const sendState = (connection) => {
+  const sendState = (connection, includeBackground = false) => {
     if (!connection?.open) return;
     const tokenId = identityRef.current.get(connection.peer) || null;
-    connection.send({ type: "tactical_state", state: stateRef.current, youTokenId: tokenId });
+    const current = stateRef.current;
+    const packetState = includeBackground
+      ? current
+      : { ...current, backgroundImage: undefined };
+    connection.send({ type: "tactical_state", state: packetState, youTokenId: tokenId });
   };
 
-  const broadcastState = () => {
-    connectionsRef.current.forEach((connection) => sendState(connection));
+  const broadcastState = (includeBackground = false) => {
+    connectionsRef.current.forEach((connection) => sendState(connection, includeBackground));
   };
 
   useEffect(() => {
@@ -279,19 +308,22 @@ export default function GmSessionMap() {
 
   useEffect(() => {
     if (!state.active) return;
-    const currentNames = new Set((state.tokens || []).map((token) => token.name));
-    const rosterNames = new Set(roster.map((player) => player.name));
-    const changed = roster.some((player) => !currentNames.has(player.name)) || (state.tokens || []).some((token) => token.kind === "player" && !rosterNames.has(token.name));
-    if (!changed) return;
-    setState((previous) => placePlayers(previous, roster));
+    const currentNames = new Set((state.tokens || []).map((token) => String(token.name).toLowerCase()));
+    const rosterNames = new Set(roster.map((player) => String(player.name).toLowerCase()));
+    const changed = roster.some((player) => !currentNames.has(String(player.name).toLowerCase()))
+      || (state.tokens || []).some((token) => !rosterNames.has(String(token.name).toLowerCase()));
+    if (changed) setState((previous) => reconcileRoster(previous, roster));
   }, [roster, state.active]);
 
   useEffect(() => {
-    broadcastState();
+    const backgroundChanged = previousBackgroundRef.current !== state.backgroundImage;
+    previousBackgroundRef.current = state.backgroundImage;
+    broadcastState(backgroundChanged);
   }, [state]);
 
   useEffect(() => {
     if (!sessionCode) return undefined;
+
     const cleanup = () => {
       connectionsRef.current.forEach((connection) => { try { connection.close(); } catch { /* noop */ } });
       connectionsRef.current.clear();
@@ -303,22 +335,22 @@ export default function GmSessionMap() {
     cleanup();
     const peer = new Peer(`${TACTICAL_HOST_PREFIX}${sessionCode.toLowerCase()}`, { debug: 0 });
     peerRef.current = peer;
+
     peer.on("connection", (connection) => {
       connectionsRef.current.set(connection.peer, connection);
-      connection.on("open", () => sendState(connection));
+      connection.on("open", () => sendState(connection, true));
       connection.on("data", (packet) => {
         if (!packet || typeof packet !== "object") return;
         if (packet.type === "tactical_hello") {
           const token = findTokenForHello(stateRef.current, packet);
           if (token) identityRef.current.set(connection.peer, token.id);
-          sendState(connection);
+          sendState(connection, true);
           return;
         }
         if (packet.type === "tactical_move") {
           const allowedTokenId = identityRef.current.get(connection.peer);
           if (!allowedTokenId || packet.tokenId !== allowedTokenId || !stateRef.current.active) return;
           const target = normalizeCell(packet, stateRef.current.cols, stateRef.current.rows);
-          if (isTacticalCellBlocked(stateRef.current.layout, target.x, target.y)) return;
           setState((previous) => ({
             ...previous,
             tokens: previous.tokens.map((token) => token.id === allowedTokenId ? { ...token, ...target } : token),
@@ -344,14 +376,14 @@ export default function GmSessionMap() {
     setEditingStart(false);
     setSelectedToken(null);
     setState((previous) => ({
-      ...placePlayers({ ...previous, active: true, sceneId: `scene-${Date.now()}` }, rosterRef.current),
+      ...forcePlayersToStart({ ...previous, active: true, sceneId: `scene-${Date.now()}` }, rosterRef.current),
       active: true,
     }));
   };
 
   const resetPlayers = () => {
     setSelectedToken(null);
-    setState((previous) => placePlayers({ ...previous, active: true }, rosterRef.current));
+    setState((previous) => forcePlayersToStart({ ...previous, active: true }, rosterRef.current));
   };
 
   const endScene = () => {
@@ -362,6 +394,7 @@ export default function GmSessionMap() {
   const resetMap = () => {
     setEditingStart(false);
     setSelectedToken(null);
+    setUploadError("");
     setState(makeEmptyState(state.cols, state.rows));
   };
 
@@ -369,31 +402,11 @@ export default function GmSessionMap() {
     const [cols, rows] = value.split("x").map(Number);
     setEditingStart(false);
     setSelectedToken(null);
-    setState(makeEmptyState(cols, rows));
-  };
-
-  const generateLocation = () => {
-    setEditingStart(false);
-    setSelectedToken(null);
     setState((previous) => ({
-      ...previous,
-      active: false,
-      tokens: [],
-      sceneId: `scene-${Date.now()}`,
-      layout: generateTacticalLocation({
-        cols: previous.cols,
-        rows: previous.rows,
-        preset: generatorPreset,
-        density: generatorDensity,
-        startZone: previous.startZone,
-      }),
-      revision: Number(previous.revision || 0) + 1,
+      ...makeEmptyState(cols, rows),
+      backgroundImage: previous.backgroundImage,
+      backgroundName: previous.backgroundName,
     }));
-  };
-
-  const clearLayout = () => {
-    setSelectedToken(null);
-    setState((previous) => ({ ...previous, layout: null, revision: Number(previous.revision || 0) + 1 }));
   };
 
   const toggleStartCell = (x, y) => {
@@ -402,23 +415,12 @@ export default function GmSessionMap() {
       const nextZone = exists
         ? previous.startZone.filter((cell) => !(cell.x === x && cell.y === y))
         : [...previous.startZone, { x, y }];
-      const nextLayout = !exists && previous.layout
-        ? { ...previous.layout, tiles: (previous.layout.tiles || []).filter((tile) => !(tile.x === x && tile.y === y)) }
-        : previous.layout;
-      return { ...previous, startZone: nextZone, layout: nextLayout, revision: Number(previous.revision || 0) + 1 };
+      return { ...previous, startZone: nextZone, revision: Number(previous.revision || 0) + 1 };
     });
   };
 
-  const toggleDoorAt = (x, y) => {
-    setState((previous) => ({
-      ...previous,
-      layout: toggleTacticalDoor(previous.layout, x, y),
-      revision: Number(previous.revision || 0) + 1,
-    }));
-  };
-
   const moveSelectedToken = (x, y) => {
-    if (!selectedToken || editingStart || isTacticalCellBlocked(state.layout, x, y)) return;
+    if (!selectedToken || editingStart || !state.active) return;
     setState((previous) => ({
       ...previous,
       tokens: previous.tokens.map((token) => token.id === selectedToken ? { ...token, x, y } : token),
@@ -426,21 +428,38 @@ export default function GmSessionMap() {
     }));
   };
 
-  const handleCellClick = (x, y, tile) => {
-    if (editingStart) {
-      toggleStartCell(x, y);
-      return;
+  const handleBackgroundFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setUploadError("");
+    setUploading(true);
+    try {
+      const backgroundImage = await compressBackground(file);
+      setState((previous) => ({
+        ...previous,
+        backgroundImage,
+        backgroundName: String(file.name || "map").slice(0, 100),
+        revision: Number(previous.revision || 0) + 1,
+      }));
+    } catch (error) {
+      setUploadError(error?.message === "too-large" ? text.imageTooLarge : text.imageError);
+    } finally {
+      setUploading(false);
     }
-    if (!selectedToken && tile?.kind === "door") {
-      toggleDoorAt(x, y);
-      return;
-    }
-    moveSelectedToken(x, y);
+  };
+
+  const removeBackground = () => {
+    setUploadError("");
+    setState((previous) => ({
+      ...previous,
+      backgroundImage: "",
+      backgroundName: "",
+      revision: Number(previous.revision || 0) + 1,
+    }));
   };
 
   const startKeys = useMemo(() => new Set(state.startZone.map((cell) => `${cell.x}:${cell.y}`)), [state.startZone]);
-  const tileIndex = useMemo(() => new Map((state.layout?.tiles || []).map((tile) => [`${tile.x}:${tile.y}`, tile])), [state.layout]);
-  const layoutCounts = useMemo(() => countKinds(state.layout), [state.layout]);
 
   if (!sessionCode) {
     return <article className="pip-panel gm-session-map"><div className="pip-logbox">{text.waiting}</div></article>;
@@ -448,6 +467,14 @@ export default function GmSessionMap() {
 
   return (
     <article className="pip-panel gm-session-map tactical-map">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="tactical-background-input"
+        onChange={handleBackgroundFile}
+      />
+
       <div className="gm-session-map__head">
         <div>
           <div className="gm-session-map__eyebrow">ROBCO // GM TACTICAL LINK // {sessionCode}</div>
@@ -467,35 +494,21 @@ export default function GmSessionMap() {
         </div>
       </div>
 
-      <div className="tactical-generator">
-        <div className="tactical-generator__title">[ {text.generator} ]</div>
-        <label>{text.preset}
-          <select className="pip-input" value={generatorPreset} onChange={(event) => setGeneratorPreset(event.target.value)}>
-            <option value="ruins">{text.ruins}</option>
-            <option value="vault">{text.vault}</option>
-            <option value="warehouse">{text.warehouse}</option>
-            <option value="camp">{text.camp}</option>
-          </select>
-        </label>
-        <label>{text.density}
-          <select className="pip-input" value={generatorDensity} onChange={(event) => setGeneratorDensity(event.target.value)}>
-            <option value="sparse">{text.sparse}</option>
-            <option value="normal">{text.normal}</option>
-            <option value="dense">{text.dense}</option>
-          </select>
-        </label>
-        <button type="button" className="pip-btn is-primary" onClick={generateLocation}>{text.generate}</button>
-        <button type="button" className="pip-btn" disabled={!state.layout} onClick={clearLayout}>{text.clearLayout}</button>
-        {state.layout ? (
-          <div className="tactical-generator__stats">
-            <span>{text.walls}: {layoutCounts.wall}</span>
-            <span>{text.doors}: {layoutCounts.door}</span>
-            <span>{text.obstacles}: {layoutCounts.obstacle}</span>
-            <span>{text.cover}: {layoutCounts.cover}</span>
-            <span>{text.hazards}: {layoutCounts.hazard}</span>
-          </div>
-        ) : null}
+      <div className="tactical-background-bar">
+        <div className="tactical-background-info">
+          <span>{text.background}</span>
+          <strong>{uploading ? text.processing : (state.backgroundName || text.noBackground)}</strong>
+        </div>
+        <div className="tactical-background-actions">
+          <button type="button" className="pip-btn" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+            {state.backgroundImage ? text.replaceBackground : text.uploadBackground}
+          </button>
+          {state.backgroundImage ? (
+            <button type="button" className="pip-btn" disabled={uploading} onClick={removeBackground}>{text.removeBackground}</button>
+          ) : null}
+        </div>
       </div>
+      {uploadError ? <div className="session-error tactical-background-error">{uploadError}</div> : null}
 
       <div className="tactical-toolbar">
         <button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>
@@ -513,28 +526,28 @@ export default function GmSessionMap() {
       </div>
 
       <div
-        className="gm-session-map__grid tactical-grid"
-        style={{ gridTemplateColumns: `repeat(${state.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${state.rows}, minmax(0, 1fr))` }}
+        className={`gm-session-map__grid tactical-grid${state.backgroundImage ? " has-background" : ""}`}
+        style={{
+          gridTemplateColumns: `repeat(${state.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${state.rows}, minmax(0, 1fr))`,
+          backgroundImage: state.backgroundImage ? `url(${state.backgroundImage})` : undefined,
+        }}
       >
         {Array.from({ length: state.rows * state.cols }, (_, index) => {
           const x = index % state.cols;
           const y = Math.floor(index / state.cols);
           const key = `${x}:${y}`;
           const inStart = startKeys.has(key);
-          const tile = tileIndex.get(key) || getTacticalTile(state.layout, x, y);
-          const blocked = isTacticalCellBlocked(state.layout, x, y);
           const tokens = state.tokens.filter((token) => token.x === x && token.y === y);
           return (
             <button
               type="button"
               key={key}
-              className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}${tile ? ` is-${tile.kind}` : ""}${blocked ? " is-blocked" : ""}${tile?.kind === "door" && tile.open ? " is-door-open" : ""}`}
-              title={tile?.kind || "floor"}
-              onClick={() => handleCellClick(x, y, tile)}
+              className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}`}
+              onClick={() => editingStart ? toggleStartCell(x, y) : moveSelectedToken(x, y)}
             >
               <span className="gm-session-map__coords">{x},{y}</span>
               {inStart ? <span className="tactical-start-mark">S</span> : null}
-              {tile ? <span className="tactical-object" aria-hidden="true">{tacticalTileGlyph(tile)}</span> : null}
               <span className="gm-session-map__tokens">
                 {tokens.map((token) => (
                   <span
@@ -543,7 +556,7 @@ export default function GmSessionMap() {
                     title={token.name}
                     onClick={(event) => {
                       event.stopPropagation();
-                      if (!editingStart) setSelectedToken((current) => current === token.id ? null : token.id);
+                      if (!editingStart && state.active) setSelectedToken((current) => current === token.id ? null : token.id);
                     }}
                   >
                     <b>P</b><small>{token.name}</small>
