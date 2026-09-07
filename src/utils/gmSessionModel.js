@@ -120,7 +120,19 @@ export function normalizeCampaignState(raw, campaignId) {
 
 export function commitSelectedScene(state) {
   const normalized = normalizeCampaignState(state, state?.campaignId);
-  const scene = normalizeScene(normalized.scene || normalized.scenes.find((item) => item.sceneId === normalized.selectedSceneId));
+  const selectedFromList = normalized.scenes.find((item) => item.sceneId === normalized.selectedSceneId) || null;
+  const selectedSnapshot = normalized.scene?.sceneId === normalized.selectedSceneId
+    ? normalizeScene(normalized.scene)
+    : null;
+
+  const listRevision = Number(selectedFromList?.revision || 0);
+  const snapshotRevision = Number(selectedSnapshot?.revision || 0);
+  const scene = normalizeScene(
+    selectedFromList && listRevision > snapshotRevision
+      ? selectedFromList
+      : (selectedSnapshot || selectedFromList)
+  );
+
   scene.sceneId = normalized.selectedSceneId || scene.sceneId;
   const index = normalized.scenes.findIndex((item) => item.sceneId === scene.sceneId);
   if (index >= 0) normalized.scenes[index] = scene;
