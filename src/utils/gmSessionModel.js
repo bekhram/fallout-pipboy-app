@@ -320,7 +320,7 @@ export async function loadPlayerTokenProfile(clientId, fallbackName = "Player") 
   return {
     name: String(stored.name || fallbackName).trim().slice(0, 80) || fallbackName,
     size: Number(stored.size) === 2 ? 2 : 1,
-    avatar: resource?.hash === stored.avatarHash ? (resource.data || "") : "",
+    avatar: resource && resource.hash === stored.avatarHash ? (resource.data || "") : "",
     avatarAssetId: stored.avatarHash ? assetId : "",
     avatarHash: stored.avatarHash || "",
   };
