@@ -1,0 +1,185 @@
+.session-utility-drawer-shell {
+  position: relative;
+  z-index: 520;
+}
+
+.session-utility-drawer-toggle {
+  position: fixed !important;
+  right: 0 !important;
+  top: 22% !important;
+  z-index: 561 !important;
+  min-width: 46px;
+  min-height: 92px;
+  padding: 8px 7px !important;
+  border-radius: 12px 0 0 12px;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(3, 13, 5, .96) !important;
+  box-shadow: -6px 0 18px rgba(0, 0, 0, .38), inset 0 0 16px color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.session-utility-drawer-toggle .session-chat-toggle-label {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.session-utility-drawer-toggle .session-chat-toggle-code {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: .5rem;
+  letter-spacing: .12em;
+  opacity: .7;
+}
+
+.session-utility-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: auto !important;
+  z-index: 560 !important;
+  width: min(430px, 92vw) !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  padding: 12px !important;
+  transform: translateX(102%);
+  transition: transform .2s ease;
+  display: grid !important;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 9px;
+  overflow: hidden !important;
+  border-left: 1px solid currentColor;
+  background: rgba(3, 12, 5, .985) !important;
+  box-shadow: -14px 0 34px rgba(0, 0, 0, .52), inset 0 0 30px color-mix(in srgb, currentColor 4%, transparent);
+}
+
+.session-utility-drawer-shell.is-open .session-utility-drawer {
+  transform: translateX(0);
+}
+
+.session-utility-drawer-shell.is-open .session-utility-drawer-toggle {
+  right: min(430px, 92vw) !important;
+}
+
+.session-utility-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.session-utility-tabs .pip-btn {
+  min-height: 34px;
+  padding: 5px 7px;
+  font-size: .58rem;
+}
+
+.session-utility-list {
+  min-height: 0;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+
+.session-utility-dice {
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding-right: 2px;
+}
+
+.session-utility-dice-card,
+.session-utility-last-roll {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.session-utility-dice-card .pip-head {
+  min-height: auto;
+  margin: 0;
+}
+
+.session-utility-dice-card h3 {
+  margin: 0;
+  font-size: .68rem;
+  letter-spacing: .08em;
+}
+
+.session-utility-dice-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.session-utility-dice-fields label,
+.session-utility-single-field {
+  display: grid;
+  gap: 4px;
+  font-size: .52rem;
+  letter-spacing: .08em;
+}
+
+.session-utility-dice-fields .pip-input,
+.session-utility-single-field .pip-input {
+  min-width: 0;
+  min-height: 36px;
+  padding: 6px 8px;
+}
+
+.session-utility-single-field {
+  width: 110px;
+}
+
+.session-utility-roll-button {
+  width: 100%;
+  min-height: 40px;
+}
+
+.session-utility-last-roll > strong {
+  font-size: .55rem;
+  letter-spacing: .1em;
+  opacity: .7;
+}
+
+.session-utility-last-roll .session-roll-dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.session-utility-last-roll .session-roll-dice > span {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  font-weight: 800;
+}
+
+@media (max-width: 780px) {
+  .session-utility-drawer {
+    width: min(360px, 92vw) !important;
+    padding: 8px !important;
+  }
+
+  .session-utility-drawer-shell.is-open .session-utility-drawer-toggle {
+    right: min(360px, 92vw) !important;
+  }
+
+  .session-utility-drawer-toggle {
+    top: 18% !important;
+    min-width: 40px;
+    min-height: 78px;
+  }
+
+  .session-utility-dice-fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
