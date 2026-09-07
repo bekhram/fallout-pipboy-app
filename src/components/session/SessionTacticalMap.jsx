@@ -4,12 +4,33 @@ import "../gm/gmSessionMap.css";
 
 const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
 const SAVE_KEY = "fallout_pipboy_v4_last_character";
+const MAX_AVATAR_SOURCE_BYTES = 6 * 1024 * 1024;
 
 const COPY = {
-  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Drag your token to a free cell, or select it and click a destination cell.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
-  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Перетащите свой токен на свободную клетку или выберите его и нажмите клетку назначения.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Перетягніть свій токен на вільну клітинку або оберіть його й натисніть клітинку призначення.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Przeciągnij swój token na wolne pole albo wybierz go i kliknij pole docelowe.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
+  en: {
+    button: "TACTICAL", title: "TACTICAL MAP", back: "BACK TO PLAYER", connecting: "Connecting to tactical scene...",
+    move: "Drag your token to a free cell, or select it and click a destination cell.", live: "LIVE", own: "YOUR TOKEN",
+    addToken: "ADD MY TOKEN", uploadAvatar: "UPLOAD AVATAR", replaceAvatar: "CHANGE AVATAR",
+    tokenHint: "Add your token to enter the scene. The GM will place it inside the start zone.", avatarError: "Could not prepare this avatar.", adding: "ADDING TOKEN...",
+  },
+  ru: {
+    button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", back: "НАЗАД К ИГРОКУ", connecting: "Подключение к тактической сцене...",
+    move: "Перетащите свой токен на свободную клетку или выберите его и нажмите клетку назначения.", live: "LIVE", own: "ВАШ ТОКЕН",
+    addToken: "ДОБАВИТЬ МОЙ ТОКЕН", uploadAvatar: "ЗАГРУЗИТЬ АВАТАР", replaceAvatar: "СМЕНИТЬ АВАТАР",
+    tokenHint: "Добавьте свой токен, чтобы войти в сцену. ГМ разместит его внутри стартовой зоны.", avatarError: "Не удалось подготовить аватар.", adding: "ДОБАВЛЕНИЕ ТОКЕНА...",
+  },
+  uk: {
+    button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", back: "НАЗАД ДО ГРАВЦЯ", connecting: "Підключення до тактичної сцени...",
+    move: "Перетягніть свій токен на вільну клітинку або оберіть його й натисніть клітинку призначення.", live: "LIVE", own: "ВАШ ТОКЕН",
+    addToken: "ДОДАТИ МІЙ ТОКЕН", uploadAvatar: "ЗАВАНТАЖИТИ АВАТАР", replaceAvatar: "ЗМІНИТИ АВАТАР",
+    tokenHint: "Додайте свій токен, щоб увійти в сцену. ГМ розмістить його всередині стартової зони.", avatarError: "Не вдалося підготувати аватар.", adding: "ДОДАВАННЯ ТОКЕНА...",
+  },
+  pl: {
+    button: "TAKTYKA", title: "MAPA TAKTYCZNA", back: "WRÓĆ DO GRACZA", connecting: "Łączenie ze sceną taktyczną...",
+    move: "Przeciągnij swój token na wolne pole albo wybierz go i kliknij pole docelowe.", live: "LIVE", own: "TWÓJ TOKEN",
+    addToken: "DODAJ MÓJ TOKEN", uploadAvatar: "WGRAJ AWATAR", replaceAvatar: "ZMIEŃ AWATAR",
+    tokenHint: "Dodaj swój token, aby wejść na scenę. GM umieści go w strefie startowej.", avatarError: "Nie udało się przygotować awatara.", adding: "DODAWANIE TOKENA...",
+  },
 };
 
 function getLanguage() {
@@ -17,18 +38,18 @@ function getLanguage() {
   return COPY[code] ? code : "en";
 }
 
-function readLocalCharacterName() {
+function readLocalCharacter() {
   try {
     const value = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
-    const form = value?.data || value || {};
-    return String(form?.characterName || form?.name || form?.playerName || "").trim();
+    return value?.data || value || {};
   } catch {
-    return "";
+    return {};
   }
 }
 
 function findSessionIdentity(session) {
-  const characterName = readLocalCharacterName();
+  const local = readLocalCharacter();
+  const characterName = String(local?.characterName || local?.name || local?.playerName || "").trim();
   const players = Array.isArray(session?.players) ? session.players : [];
   const exact = players.find((player) => String(player?.character?.name || "").trim().toLowerCase() === characterName.toLowerCase());
   const fallback = exact || players.find((player) => String(player?.name || "").trim().toLowerCase() === characterName.toLowerCase()) || null;
@@ -36,6 +57,7 @@ function findSessionIdentity(session) {
     mainPeerId: fallback?.peerId || "",
     characterName: characterName || fallback?.character?.name || fallback?.name || "Player",
     playerName: fallback?.name || characterName || "Player",
+    defaultAvatar: String(local?.avatar || fallback?.character?.avatar || ""),
   };
 }
 
@@ -53,6 +75,47 @@ function tokenSize(token) {
   return Number(token?.size) === 2 ? 2 : 1;
 }
 
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = url;
+  });
+}
+
+async function compressAvatar(file) {
+  if (!file?.type?.startsWith("image/") || file.size > MAX_AVATAR_SOURCE_BYTES) throw new Error("avatar");
+  const objectUrl = URL.createObjectURL(file);
+  try {
+    const image = await loadImage(objectUrl);
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    const side = Math.max(1, Math.min(sourceWidth, sourceHeight));
+    const sx = Math.max(0, Math.floor((sourceWidth - side) / 2));
+    const sy = Math.max(0, Math.floor((sourceHeight - side) / 2));
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 320;
+    const context = canvas.getContext("2d", { alpha: true });
+    if (!context) throw new Error("avatar");
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+    context.drawImage(image, sx, sy, side, side, 0, 0, 320, 320);
+    return canvas.toDataURL("image/webp", 0.8);
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+function avatarStorageKey(sessionCode) {
+  return `pip2d20-tactical-player-avatar-${String(sessionCode || "offline").toLowerCase()}`;
+}
+
+function dismissedSceneKey(sessionCode) {
+  return `pip2d20-tactical-dismissed-scene-${String(sessionCode || "offline").toLowerCase()}`;
+}
+
 export default function SessionTacticalMap({ session }) {
   const text = COPY[getLanguage()];
   const [open, setOpen] = useState(false);
@@ -61,15 +124,27 @@ export default function SessionTacticalMap({ session }) {
   const [youTokenId, setYouTokenId] = useState(null);
   const [selected, setSelected] = useState(false);
   const [dragState, setDragState] = useState(null);
+  const [avatar, setAvatar] = useState("");
+  const [avatarError, setAvatarError] = useState("");
+  const [addingToken, setAddingToken] = useState(false);
   const peerRef = useRef(null);
   const connectionRef = useRef(null);
   const retryRef = useRef(null);
   const gridRef = useRef(null);
   const dragRef = useRef(null);
+  const avatarInputRef = useRef(null);
   const sceneRef = useRef(scene);
+  const lastSceneIdRef = useRef("");
   const identity = useMemo(() => findSessionIdentity(session), [session?.players, session?.sessionCode]);
 
   useEffect(() => { sceneRef.current = scene; }, [scene]);
+
+  useEffect(() => {
+    const key = avatarStorageKey(session?.sessionCode);
+    let stored = "";
+    try { stored = localStorage.getItem(key) || ""; } catch { /* noop */ }
+    setAvatar(stored || identity.defaultAvatar || "");
+  }, [session?.sessionCode, identity.defaultAvatar]);
 
   useEffect(() => {
     if (!session?.isActive || session?.mode !== "player" || !session?.sessionCode) return undefined;
@@ -126,22 +201,67 @@ export default function SessionTacticalMap({ session }) {
   }, [identity.mainPeerId, identity.characterName, identity.playerName]);
 
   useEffect(() => {
-    if (!scene?.active || youTokenId || !connectionRef.current?.open) return;
-    connectionRef.current.send({ type: "tactical_hello", ...identity });
-  }, [scene?.active, scene?.revision, youTokenId, identity.mainPeerId, identity.characterName, identity.playerName]);
-
-  useEffect(() => {
     if (!scene?.active) {
+      setOpen(false);
       setSelected(false);
       setDragState(null);
+      setAddingToken(false);
       dragRef.current = null;
+      lastSceneIdRef.current = "";
+      return;
     }
-  }, [scene?.active, scene?.sceneId]);
+
+    const sceneId = String(scene.sceneId || "scene");
+    if (lastSceneIdRef.current !== sceneId) {
+      lastSceneIdRef.current = sceneId;
+      let dismissed = "";
+      try { dismissed = sessionStorage.getItem(dismissedSceneKey(session?.sessionCode)) || ""; } catch { /* noop */ }
+      if (dismissed !== sceneId) setOpen(true);
+    }
+  }, [scene?.active, scene?.sceneId, session?.sessionCode]);
+
+  useEffect(() => {
+    if (youTokenId) setAddingToken(false);
+  }, [youTokenId]);
 
   if (!session?.isActive || session?.mode !== "player") return null;
 
   const ownToken = scene?.tokens?.find((token) => token.id === youTokenId) || null;
   const canMove = Boolean(scene?.active && ownToken && connectionRef.current?.open);
+  const sceneAvailable = Boolean(scene?.active);
+
+  const closeTactical = () => {
+    setOpen(false);
+    if (!scene?.sceneId) return;
+    try { sessionStorage.setItem(dismissedSceneKey(session?.sessionCode), String(scene.sceneId)); } catch { /* noop */ }
+  };
+
+  const handleAvatarFile = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setAvatarError("");
+    try {
+      const nextAvatar = await compressAvatar(file);
+      setAvatar(nextAvatar);
+      try { localStorage.setItem(avatarStorageKey(session?.sessionCode), nextAvatar); } catch { /* noop */ }
+      if (ownToken && connectionRef.current?.open) {
+        connectionRef.current.send({ type: "tactical_update_token", avatar: nextAvatar });
+      }
+    } catch {
+      setAvatarError(text.avatarError);
+    }
+  };
+
+  const createOwnToken = () => {
+    if (!scene?.active || !connectionRef.current?.open || addingToken) return;
+    setAddingToken(true);
+    connectionRef.current.send({
+      type: "tactical_create_token",
+      ...identity,
+      avatar,
+    });
+  };
 
   const sendMove = (x, y) => {
     if (!canMove || !ownToken) return;
@@ -214,12 +334,16 @@ export default function SessionTacticalMap({ session }) {
 
   return (
     <>
-      <button type="button" className="session-tactical-toggle" onClick={() => setOpen(true)}>
-        <span className={`session-status-dot is-${connectionState === "online" ? "online" : "connecting"}`} />
-        {text.button}
-      </button>
+      <input ref={avatarInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="tactical-background-input" onChange={handleAvatarFile} />
 
-      {open ? (
+      {sceneAvailable ? (
+        <button type="button" className="session-tactical-toggle is-live" onClick={() => setOpen(true)}>
+          <span className={`session-status-dot is-${connectionState === "online" ? "online" : "connecting"}`} />
+          {text.button}
+        </button>
+      ) : null}
+
+      {open && sceneAvailable ? (
         <div className="session-tactical-overlay" role="dialog" aria-modal="true" aria-label={text.title}>
           <section className="pip-panel session-tactical-player tactical-map">
             <header className="session-tactical-player__head">
@@ -228,15 +352,32 @@ export default function SessionTacticalMap({ session }) {
                 <h2>[ {text.title} ]</h2>
               </div>
               <div className="session-tactical-player__actions">
-                {scene?.active ? <span className="tactical-live">{text.live}</span> : null}
-                <button type="button" className="pip-btn" onClick={() => setOpen(false)}>{text.close}</button>
+                <span className="tactical-live">{text.live}</span>
+                <button type="button" className="pip-btn" onClick={closeTactical}>{text.back}</button>
               </div>
             </header>
 
             <div className="gm-session-map__hint">
-              {connectionState !== "online" ? text.connecting : !scene?.active ? text.waiting : !ownToken ? text.notLinked : text.move}
+              {connectionState !== "online" ? text.connecting : ownToken ? text.move : text.tokenHint}
               {ownToken ? <span> · {text.own}: {ownToken.name}</span> : null}
             </div>
+
+            <div className={`tactical-player-token-setup${ownToken ? " has-token" : ""}`}>
+              <button type="button" className="tactical-player-token-avatar" onClick={() => avatarInputRef.current?.click()} title={avatar ? text.replaceAvatar : text.uploadAvatar}>
+                {(ownToken?.avatar || avatar) ? <img src={ownToken?.avatar || avatar} alt="" /> : <span>{String(identity.characterName || "P").slice(0, 1).toUpperCase()}</span>}
+              </button>
+              <div className="tactical-player-token-copy">
+                <strong>{ownToken ? `${text.own}: ${ownToken.name}` : identity.characterName}</strong>
+                <span>{ownToken ? text.move : text.tokenHint}</span>
+              </div>
+              <button type="button" className="pip-btn" onClick={() => avatarInputRef.current?.click()}>{avatar ? text.replaceAvatar : text.uploadAvatar}</button>
+              {!ownToken ? (
+                <button type="button" className="pip-btn is-primary" disabled={connectionState !== "online" || addingToken} onClick={createOwnToken}>
+                  {addingToken ? text.adding : text.addToken}
+                </button>
+              ) : null}
+            </div>
+            {avatarError ? <div className="session-error">{avatarError}</div> : null}
 
             {scene ? (
               <div
@@ -254,7 +395,7 @@ export default function SessionTacticalMap({ session }) {
                   const inStart = (scene.startZone || []).some((cell) => cell.x === x && cell.y === y);
                   const tokens = (scene.tokens || []).filter((token) => token.x === x && token.y === y);
                   return (
-                    <button type="button" key={`${x}:${y}`} className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}`} disabled={!scene.active} onClick={() => moveOwnToken(x, y)}>
+                    <button type="button" key={`${x}:${y}`} className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}`} onClick={() => moveOwnToken(x, y)}>
                       <span className="gm-session-map__tokens">
                         {tokens.map((token) => {
                           const isOwn = token.id === youTokenId;

@@ -305,7 +305,7 @@ export default function SessionChatDrawer({ session, form = null }) {
         {session.mode === "player" ? <SessionTacticalMap session={session} /> : null}
       </div>
 
-      <PlayerDock players={session.players} copy={copy} />
+      {session.mode === "host" ? <PlayerDock players={session.players} copy={copy} /> : null}
 
       <DiceRollModal
         isOpen={diceOpen}

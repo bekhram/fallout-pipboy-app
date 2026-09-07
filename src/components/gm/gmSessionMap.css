@@ -1,4 +1,5 @@
 @import "./tacticalSession.css";
+@import "./tacticalPlayerToken.css";
 
 .gm-session-map {
   display: grid;
