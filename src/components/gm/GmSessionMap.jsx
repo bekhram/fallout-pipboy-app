@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Peer } from "peerjs";
+import {
+  generateTacticalLocation,
+  getTacticalTile,
+  isTacticalCellBlocked,
+  tacticalTileGlyph,
+  toggleTacticalDoor,
+} from "../../utils/tacticalLocationGenerator.js";
 import "./gmSessionMap.css";
 
 const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
@@ -17,12 +24,29 @@ const COPY = {
     startScene: "START SCENE",
     resetPlayers: "RETURN ALL TO START",
     endScene: "END SCENE",
-    inactive: "Scene is not active. Mark the start zone and launch it.",
+    inactive: "Scene is not active. Generate a location, mark the start zone and launch it.",
     active: "LIVE TACTICAL SCENE",
-    move: "Select any token, then click a cell to move it.",
+    move: "Select any token, then click a free cell to move it. Click a door with no token selected to open/close it.",
     editHint: "Click cells to add/remove them from the forced player start zone.",
     size: "GRID",
     resetMap: "RESET MAP",
+    generator: "LOCATION GENERATOR",
+    preset: "TYPE",
+    density: "DENSITY",
+    generate: "GENERATE LOCATION",
+    clearLayout: "CLEAR OBJECTS",
+    sparse: "SPARSE",
+    normal: "NORMAL",
+    dense: "DENSE",
+    ruins: "RUINS",
+    vault: "VAULT",
+    warehouse: "WAREHOUSE",
+    camp: "CAMP",
+    walls: "WALLS",
+    doors: "DOORS",
+    obstacles: "OBSTACLES",
+    cover: "COVER",
+    hazards: "HAZARDS",
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -34,12 +58,29 @@ const COPY = {
     startScene: "НАЧАТЬ СЦЕНУ",
     resetPlayers: "ВЕРНУТЬ ВСЕХ В СТАРТ",
     endScene: "ЗАВЕРШИТЬ СЦЕНУ",
-    inactive: "Сцена не активна. Отметьте стартовую зону и запустите её.",
+    inactive: "Сцена не активна. Сгенерируйте локацию, отметьте стартовую зону и запустите её.",
     active: "ТАКТИЧЕСКАЯ СЦЕНА LIVE",
-    move: "Выберите любой токен и нажмите на клетку, чтобы переместить его.",
+    move: "Выберите токен и нажмите на свободную клетку. Чтобы открыть или закрыть дверь, снимите выбор токена и нажмите на дверь.",
     editHint: "Нажимайте на клетки, чтобы добавить или убрать их из стартовой зоны игроков.",
     size: "СЕТКА",
     resetMap: "СБРОСИТЬ КАРТУ",
+    generator: "ГЕНЕРАТОР ЛОКАЦИИ",
+    preset: "ТИП",
+    density: "ПЛОТНОСТЬ",
+    generate: "СГЕНЕРИРОВАТЬ",
+    clearLayout: "УБРАТЬ ОБЪЕКТЫ",
+    sparse: "РЕДКО",
+    normal: "НОРМАЛЬНО",
+    dense: "ПЛОТНО",
+    ruins: "РУИНЫ",
+    vault: "УБЕЖИЩЕ",
+    warehouse: "СКЛАД",
+    camp: "ЛАГЕРЬ",
+    walls: "СТЕНЫ",
+    doors: "ДВЕРИ",
+    obstacles: "ПРЕПЯТСТВИЯ",
+    cover: "УКРЫТИЯ",
+    hazards: "ОПАСНОСТИ",
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -51,12 +92,29 @@ const COPY = {
     startScene: "ПОЧАТИ СЦЕНУ",
     resetPlayers: "ПОВЕРНУТИ ВСІХ НА СТАРТ",
     endScene: "ЗАВЕРШИТИ СЦЕНУ",
-    inactive: "Сцена не активна. Позначте стартову зону та запустіть її.",
+    inactive: "Сцена не активна. Згенеруйте локацію, позначте стартову зону та запустіть її.",
     active: "ТАКТИЧНА СЦЕНА LIVE",
-    move: "Оберіть будь-який токен і натисніть клітинку, щоб перемістити його.",
+    move: "Оберіть токен і натисніть вільну клітинку. Щоб відкрити або закрити двері, зніміть вибір токена та натисніть двері.",
     editHint: "Натискайте клітинки, щоб додати або прибрати їх зі стартової зони гравців.",
     size: "СІТКА",
     resetMap: "СКИНУТИ МАПУ",
+    generator: "ГЕНЕРАТОР ЛОКАЦІЇ",
+    preset: "ТИП",
+    density: "ЩІЛЬНІСТЬ",
+    generate: "ЗГЕНЕРУВАТИ",
+    clearLayout: "ПРИБРАТИ ОБ'ЄКТИ",
+    sparse: "РІДКО",
+    normal: "НОРМАЛЬНО",
+    dense: "ЩІЛЬНО",
+    ruins: "РУЇНИ",
+    vault: "СХОВИЩЕ",
+    warehouse: "СКЛАД",
+    camp: "ТАБІР",
+    walls: "СТІНИ",
+    doors: "ДВЕРІ",
+    obstacles: "ПЕРЕШКОДИ",
+    cover: "УКРИТТЯ",
+    hazards: "НЕБЕЗПЕКИ",
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -68,12 +126,29 @@ const COPY = {
     startScene: "ROZPOCZNIJ SCENĘ",
     resetPlayers: "PRZENIEŚ WSZYSTKICH NA START",
     endScene: "ZAKOŃCZ SCENĘ",
-    inactive: "Scena nie jest aktywna. Zaznacz strefę startową i uruchom scenę.",
+    inactive: "Scena nie jest aktywna. Wygeneruj lokację, zaznacz strefę startową i uruchom scenę.",
     active: "SCENA TAKTYCZNA LIVE",
-    move: "Wybierz dowolny token, a następnie kliknij pole, aby go przenieść.",
+    move: "Wybierz token i kliknij wolne pole. Aby otworzyć lub zamknąć drzwi, odznacz token i kliknij drzwi.",
     editHint: "Klikaj pola, aby dodać lub usunąć je ze strefy startowej graczy.",
     size: "SIATKA",
     resetMap: "RESETUJ MAPĘ",
+    generator: "GENERATOR LOKACJI",
+    preset: "TYP",
+    density: "GĘSTOŚĆ",
+    generate: "GENERUJ",
+    clearLayout: "USUŃ OBIEKTY",
+    sparse: "RZADKO",
+    normal: "NORMALNIE",
+    dense: "GĘSTO",
+    ruins: "RUINY",
+    vault: "KRYPTA",
+    warehouse: "MAGAZYN",
+    camp: "OBÓZ",
+    walls: "ŚCIANY",
+    doors: "DRZWI",
+    obstacles: "PRZESZKODY",
+    cover: "OSŁONY",
+    hazards: "ZAGROŻENIA",
   },
 };
 
@@ -122,16 +197,20 @@ function makeEmptyState(cols = DEFAULT_COLS, rows = DEFAULT_ROWS) {
     rows,
     startZone: makeDefaultStartZone(cols, rows),
     tokens: [],
+    layout: null,
     revision: 1,
   };
 }
 
 function placePlayers(state, roster) {
   const startZone = state.startZone?.length ? state.startZone : makeDefaultStartZone(state.cols, state.rows);
-  const previousByName = new Map((state.tokens || []).map((token) => [token.name, token]));
   const tokens = roster.map((player, index) => {
-    const cell = startZone[index % startZone.length] || { x: 0, y: state.rows - 1 };
-    const previous = previousByName.get(player.name);
+    const fallback = { x: 0, y: state.rows - 1 };
+    const cell = startZone.find((candidate, offset) => {
+      const candidateIndex = (index + offset) % startZone.length;
+      const target = startZone[candidateIndex];
+      return target && !isTacticalCellBlocked(state.layout, target.x, target.y);
+    }) || startZone[index % startZone.length] || fallback;
     return {
       id: player.id,
       kind: "player",
@@ -139,7 +218,6 @@ function placePlayers(state, roster) {
       x: cell.x,
       y: cell.y,
       connected: true,
-      previousId: previous?.id || null,
     };
   });
   return { ...state, tokens, revision: Number(state.revision || 0) + 1 };
@@ -153,6 +231,14 @@ function findTokenForHello(state, packet) {
     || null;
 }
 
+function countKinds(layout) {
+  const result = { wall: 0, door: 0, obstacle: 0, cover: 0, hazard: 0 };
+  (layout?.tiles || []).forEach((tile) => {
+    if (Object.prototype.hasOwnProperty.call(result, tile.kind)) result[tile.kind] += 1;
+  });
+  return result;
+}
+
 export default function GmSessionMap() {
   const text = COPY[languageCode()];
   const [sessionCode, setSessionCode] = useState(() => getSessionCode());
@@ -160,6 +246,8 @@ export default function GmSessionMap() {
   const [state, setState] = useState(() => makeEmptyState());
   const [selectedToken, setSelectedToken] = useState(null);
   const [editingStart, setEditingStart] = useState(false);
+  const [generatorPreset, setGeneratorPreset] = useState("ruins");
+  const [generatorDensity, setGeneratorDensity] = useState("normal");
   const peerRef = useRef(null);
   const connectionsRef = useRef(new Map());
   const identityRef = useRef(new Map());
@@ -204,7 +292,6 @@ export default function GmSessionMap() {
 
   useEffect(() => {
     if (!sessionCode) return undefined;
-    let disposed = false;
     const cleanup = () => {
       connectionsRef.current.forEach((connection) => { try { connection.close(); } catch { /* noop */ } });
       connectionsRef.current.clear();
@@ -231,6 +318,7 @@ export default function GmSessionMap() {
           const allowedTokenId = identityRef.current.get(connection.peer);
           if (!allowedTokenId || packet.tokenId !== allowedTokenId || !stateRef.current.active) return;
           const target = normalizeCell(packet, stateRef.current.cols, stateRef.current.rows);
+          if (isTacticalCellBlocked(stateRef.current.layout, target.x, target.y)) return;
           setState((previous) => ({
             ...previous,
             tokens: previous.tokens.map((token) => token.id === allowedTokenId ? { ...token, ...target } : token),
@@ -249,10 +337,7 @@ export default function GmSessionMap() {
     });
     peer.on("error", () => {});
 
-    return () => {
-      disposed = true;
-      if (disposed) cleanup();
-    };
+    return cleanup;
   }, [sessionCode]);
 
   const startScene = () => {
@@ -287,18 +372,53 @@ export default function GmSessionMap() {
     setState(makeEmptyState(cols, rows));
   };
 
+  const generateLocation = () => {
+    setEditingStart(false);
+    setSelectedToken(null);
+    setState((previous) => ({
+      ...previous,
+      active: false,
+      tokens: [],
+      sceneId: `scene-${Date.now()}`,
+      layout: generateTacticalLocation({
+        cols: previous.cols,
+        rows: previous.rows,
+        preset: generatorPreset,
+        density: generatorDensity,
+        startZone: previous.startZone,
+      }),
+      revision: Number(previous.revision || 0) + 1,
+    }));
+  };
+
+  const clearLayout = () => {
+    setSelectedToken(null);
+    setState((previous) => ({ ...previous, layout: null, revision: Number(previous.revision || 0) + 1 }));
+  };
+
   const toggleStartCell = (x, y) => {
     setState((previous) => {
       const exists = previous.startZone.some((cell) => cell.x === x && cell.y === y);
       const nextZone = exists
         ? previous.startZone.filter((cell) => !(cell.x === x && cell.y === y))
         : [...previous.startZone, { x, y }];
-      return { ...previous, startZone: nextZone, revision: Number(previous.revision || 0) + 1 };
+      const nextLayout = !exists && previous.layout
+        ? { ...previous.layout, tiles: (previous.layout.tiles || []).filter((tile) => !(tile.x === x && tile.y === y)) }
+        : previous.layout;
+      return { ...previous, startZone: nextZone, layout: nextLayout, revision: Number(previous.revision || 0) + 1 };
     });
   };
 
+  const toggleDoorAt = (x, y) => {
+    setState((previous) => ({
+      ...previous,
+      layout: toggleTacticalDoor(previous.layout, x, y),
+      revision: Number(previous.revision || 0) + 1,
+    }));
+  };
+
   const moveSelectedToken = (x, y) => {
-    if (!selectedToken || editingStart) return;
+    if (!selectedToken || editingStart || isTacticalCellBlocked(state.layout, x, y)) return;
     setState((previous) => ({
       ...previous,
       tokens: previous.tokens.map((token) => token.id === selectedToken ? { ...token, x, y } : token),
@@ -306,7 +426,21 @@ export default function GmSessionMap() {
     }));
   };
 
+  const handleCellClick = (x, y, tile) => {
+    if (editingStart) {
+      toggleStartCell(x, y);
+      return;
+    }
+    if (!selectedToken && tile?.kind === "door") {
+      toggleDoorAt(x, y);
+      return;
+    }
+    moveSelectedToken(x, y);
+  };
+
   const startKeys = useMemo(() => new Set(state.startZone.map((cell) => `${cell.x}:${cell.y}`)), [state.startZone]);
+  const tileIndex = useMemo(() => new Map((state.layout?.tiles || []).map((tile) => [`${tile.x}:${tile.y}`, tile])), [state.layout]);
+  const layoutCounts = useMemo(() => countKinds(state.layout), [state.layout]);
 
   if (!sessionCode) {
     return <article className="pip-panel gm-session-map"><div className="pip-logbox">{text.waiting}</div></article>;
@@ -333,6 +467,36 @@ export default function GmSessionMap() {
         </div>
       </div>
 
+      <div className="tactical-generator">
+        <div className="tactical-generator__title">[ {text.generator} ]</div>
+        <label>{text.preset}
+          <select className="pip-input" value={generatorPreset} onChange={(event) => setGeneratorPreset(event.target.value)}>
+            <option value="ruins">{text.ruins}</option>
+            <option value="vault">{text.vault}</option>
+            <option value="warehouse">{text.warehouse}</option>
+            <option value="camp">{text.camp}</option>
+          </select>
+        </label>
+        <label>{text.density}
+          <select className="pip-input" value={generatorDensity} onChange={(event) => setGeneratorDensity(event.target.value)}>
+            <option value="sparse">{text.sparse}</option>
+            <option value="normal">{text.normal}</option>
+            <option value="dense">{text.dense}</option>
+          </select>
+        </label>
+        <button type="button" className="pip-btn is-primary" onClick={generateLocation}>{text.generate}</button>
+        <button type="button" className="pip-btn" disabled={!state.layout} onClick={clearLayout}>{text.clearLayout}</button>
+        {state.layout ? (
+          <div className="tactical-generator__stats">
+            <span>{text.walls}: {layoutCounts.wall}</span>
+            <span>{text.doors}: {layoutCounts.door}</span>
+            <span>{text.obstacles}: {layoutCounts.obstacle}</span>
+            <span>{text.cover}: {layoutCounts.cover}</span>
+            <span>{text.hazards}: {layoutCounts.hazard}</span>
+          </div>
+        ) : null}
+      </div>
+
       <div className="tactical-toolbar">
         <button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>
           {editingStart ? text.finishEdit : text.editStart}
@@ -357,16 +521,20 @@ export default function GmSessionMap() {
           const y = Math.floor(index / state.cols);
           const key = `${x}:${y}`;
           const inStart = startKeys.has(key);
+          const tile = tileIndex.get(key) || getTacticalTile(state.layout, x, y);
+          const blocked = isTacticalCellBlocked(state.layout, x, y);
           const tokens = state.tokens.filter((token) => token.x === x && token.y === y);
           return (
             <button
               type="button"
               key={key}
-              className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}`}
-              onClick={() => editingStart ? toggleStartCell(x, y) : moveSelectedToken(x, y)}
+              className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}${tile ? ` is-${tile.kind}` : ""}${blocked ? " is-blocked" : ""}${tile?.kind === "door" && tile.open ? " is-door-open" : ""}`}
+              title={tile?.kind || "floor"}
+              onClick={() => handleCellClick(x, y, tile)}
             >
               <span className="gm-session-map__coords">{x},{y}</span>
               {inStart ? <span className="tactical-start-mark">S</span> : null}
+              {tile ? <span className="tactical-object" aria-hidden="true">{tacticalTileGlyph(tile)}</span> : null}
               <span className="gm-session-map__tokens">
                 {tokens.map((token) => (
                   <span
