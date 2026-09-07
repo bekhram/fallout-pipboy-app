@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import SessionTacticalMapV2 from "./SessionTacticalMapV2.jsx";
 
@@ -9,11 +9,19 @@ function findMapModeSwitch() {
 
 export default function SessionTacticalMap({ session }) {
   const [mapModeSwitch, setMapModeSwitch] = useState(null);
-  const hasLiveScene = Boolean(
-    session?.isActive
-      && session?.mode === "player"
-      && session?.tacticalScene?.active
-  );
+  const isPlayerSession = Boolean(session?.isActive && session?.mode === "player");
+  const hasLiveScene = Boolean(session?.tacticalScene || session?.liveSceneId);
+
+  const tacticalSession = useMemo(() => {
+    if (!hasLiveScene || !session?.tacticalScene || session.tacticalScene.active) return session;
+    return {
+      ...session,
+      tacticalScene: {
+        ...session.tacticalScene,
+        active: true,
+      },
+    };
+  }, [session, hasLiveScene]);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -36,13 +44,16 @@ export default function SessionTacticalMap({ session }) {
     tacticalButton?.click();
   };
 
-  const shortcut = hasLiveScene && mapModeSwitch
+  const shortcut = isPlayerSession && mapModeSwitch
     ? createPortal(
         <button
           type="button"
           role="tab"
           aria-selected="false"
-          className="pip-map-battlemap-shortcut"
+          aria-disabled={!hasLiveScene}
+          disabled={!hasLiveScene}
+          className={`pip-map-battlemap-shortcut${hasLiveScene ? " is-live" : ""}`}
+          title={hasLiveScene ? "Open active battlemap" : "GM has not activated a battlemap yet"}
           onClick={openBattlemap}
         >
           BATTLEMAP
@@ -53,7 +64,7 @@ export default function SessionTacticalMap({ session }) {
 
   return (
     <>
-      <SessionTacticalMapV2 session={session} />
+      <SessionTacticalMapV2 session={tacticalSession} />
       {shortcut}
     </>
   );
