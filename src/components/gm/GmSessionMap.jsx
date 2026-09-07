@@ -7,50 +7,52 @@ const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
 const DEFAULT_COLS = 12;
 const DEFAULT_ROWS = 12;
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
+const MAX_PLAYER_AVATAR_LENGTH = 950000;
 
 const COPY = {
   en: {
-    title: "TACTICAL MAP", waiting: "Waiting for an active GM session...", players: "PLAYERS", startZone: "START ZONE",
-    editStart: "EDIT START ZONE", finishEdit: "FINISH EDITING", startScene: "START SCENE", resetPlayers: "RETURN ALL TO START",
-    endScene: "END SCENE", inactive: "Upload a background if needed, place NPC tokens, mark the start zone and launch the scene.",
-    active: "LIVE TACTICAL SCENE", move: "Drag any token to a free cell, or select it and click a destination cell.",
-    editHint: "Click cells to add or remove them from the forced player start zone.", size: "GRID", resetMap: "RESET MAP",
+    title: "TACTICAL MAP", waiting: "Waiting for an active GM session...", players: "PLAYER TOKENS", startZone: "START ZONE",
+    editStart: "EDIT START ZONE", finishEdit: "FINISH EDITING", startScene: "ENABLE SCENE", resetPlayers: "RETURN PLAYERS TO START",
+    endScene: "END SCENE", inactive: "Prepare the battlemap, mark the start zone and enable the scene when the players should enter.",
+    active: "SCENE ENABLED", move: "Drag any token to a free cell, or select it and click a destination cell.",
+    editHint: "Click cells to add or remove them from the player start zone.", size: "GRID", resetMap: "RESET MAP",
     uploadBackground: "UPLOAD BACKGROUND", replaceBackground: "REPLACE BACKGROUND", removeBackground: "REMOVE BACKGROUND",
     background: "BACKGROUND", noBackground: "No background image", processing: "PROCESSING IMAGE...",
     imageError: "Could not load this image.", imageTooLarge: "Image is too large. Maximum source file size is 12 MB.",
+    connected: "TACTICAL LINKS",
   },
   ru: {
-    title: "ТАКТИЧЕСКАЯ КАРТА", waiting: "Ожидаю активную сессию ГМ...", players: "ИГРОКИ", startZone: "СТАРТОВАЯ ЗОНА",
-    editStart: "ИЗМЕНИТЬ СТАРТОВУЮ ЗОНУ", finishEdit: "ЗАКОНЧИТЬ РЕДАКТИРОВАНИЕ", startScene: "НАЧАТЬ СЦЕНУ",
-    resetPlayers: "ВЕРНУТЬ ВСЕХ В СТАРТ", endScene: "ЗАВЕРШИТЬ СЦЕНУ",
-    inactive: "При необходимости загрузите фон, расставьте NPC, отметьте стартовую зону и запустите сцену.", active: "ТАКТИЧЕСКАЯ СЦЕНА LIVE",
-    move: "Перетягивайте токены на свободные клетки или выберите токен и нажмите клетку назначения.",
+    title: "ТАКТИЧЕСКАЯ КАРТА", waiting: "Ожидаю активную сессию ГМ...", players: "ТОКЕНЫ ИГРОКОВ", startZone: "СТАРТОВАЯ ЗОНА",
+    editStart: "ИЗМЕНИТЬ СТАРТОВУЮ ЗОНУ", finishEdit: "ЗАКОНЧИТЬ РЕДАКТИРОВАНИЕ", startScene: "ВКЛЮЧИТЬ СЦЕНУ",
+    resetPlayers: "ВЕРНУТЬ ИГРОКОВ В СТАРТ", endScene: "ЗАВЕРШИТЬ СЦЕНУ",
+    inactive: "Подготовьте карту, отметьте стартовую зону и включите сцену, когда игрокам нужно перейти в тактический режим.",
+    active: "СЦЕНА ВКЛЮЧЕНА", move: "Перетягивайте токены на свободные клетки или выберите токен и нажмите клетку назначения.",
     editHint: "Нажимайте на клетки, чтобы добавить или убрать их из стартовой зоны игроков.", size: "СЕТКА", resetMap: "СБРОСИТЬ КАРТУ",
     uploadBackground: "ЗАГРУЗИТЬ ФОН", replaceBackground: "ЗАМЕНИТЬ ФОН", removeBackground: "УДАЛИТЬ ФОН", background: "ФОН",
     noBackground: "Фоновая картинка не загружена", processing: "ОБРАБОТКА ИЗОБРАЖЕНИЯ...", imageError: "Не удалось загрузить это изображение.",
-    imageTooLarge: "Файл слишком большой. Максимальный размер исходного изображения — 12 МБ.",
+    imageTooLarge: "Файл слишком большой. Максимальный размер исходного изображения — 12 МБ.", connected: "ТАКТИЧЕСКИЕ ПОДКЛЮЧЕНИЯ",
   },
   uk: {
-    title: "ТАКТИЧНА МАПА", waiting: "Очікую активну сесію ГМ...", players: "ГРАВЦІ", startZone: "СТАРТОВА ЗОНА",
-    editStart: "ЗМІНИТИ СТАРТОВУ ЗОНУ", finishEdit: "ЗАКІНЧИТИ РЕДАГУВАННЯ", startScene: "ПОЧАТИ СЦЕНУ",
-    resetPlayers: "ПОВЕРНУТИ ВСІХ НА СТАРТ", endScene: "ЗАВЕРШИТИ СЦЕНУ",
-    inactive: "За потреби завантажте фон, розставте NPC, позначте стартову зону та запустіть сцену.", active: "ТАКТИЧНА СЦЕНА LIVE",
-    move: "Перетягуйте токени на вільні клітинки або оберіть токен і натисніть клітинку призначення.",
+    title: "ТАКТИЧНА МАПА", waiting: "Очікую активну сесію ГМ...", players: "ТОКЕНИ ГРАВЦІВ", startZone: "СТАРТОВА ЗОНА",
+    editStart: "ЗМІНИТИ СТАРТОВУ ЗОНУ", finishEdit: "ЗАКІНЧИТИ РЕДАГУВАННЯ", startScene: "УВІМКНУТИ СЦЕНУ",
+    resetPlayers: "ПОВЕРНУТИ ГРАВЦІВ НА СТАРТ", endScene: "ЗАВЕРШИТИ СЦЕНУ",
+    inactive: "Підготуйте карту, позначте стартову зону й увімкніть сцену, коли гравцям потрібно перейти в тактичний режим.",
+    active: "СЦЕНУ УВІМКНЕНО", move: "Перетягуйте токени на вільні клітинки або оберіть токен і натисніть клітинку призначення.",
     editHint: "Натискайте клітинки, щоб додати або прибрати їх зі стартової зони гравців.", size: "СІТКА", resetMap: "СКИНУТИ МАПУ",
     uploadBackground: "ЗАВАНТАЖИТИ ФОН", replaceBackground: "ЗАМІНИТИ ФОН", removeBackground: "ВИДАЛИТИ ФОН", background: "ФОН",
     noBackground: "Фонове зображення не завантажено", processing: "ОБРОБКА ЗОБРАЖЕННЯ...", imageError: "Не вдалося завантажити це зображення.",
-    imageTooLarge: "Файл завеликий. Максимальний розмір вихідного зображення — 12 МБ.",
+    imageTooLarge: "Файл завеликий. Максимальний розмір вихідного зображення — 12 МБ.", connected: "ТАКТИЧНІ ПІДКЛЮЧЕННЯ",
   },
   pl: {
-    title: "MAPA TAKTYCZNA", waiting: "Oczekiwanie na aktywną sesję GM...", players: "GRACZE", startZone: "STREFA STARTOWA",
-    editStart: "EDYTUJ STREFĘ STARTOWĄ", finishEdit: "ZAKOŃCZ EDYCJĘ", startScene: "ROZPOCZNIJ SCENĘ",
-    resetPlayers: "PRZENIEŚ WSZYSTKICH NA START", endScene: "ZAKOŃCZ SCENĘ",
-    inactive: "W razie potrzeby wgraj tło, rozstaw NPC, zaznacz strefę startową i uruchom scenę.", active: "SCENA TAKTYCZNA LIVE",
-    move: "Przeciągnij token na wolne pole albo wybierz token i kliknij pole docelowe.",
+    title: "MAPA TAKTYCZNA", waiting: "Oczekiwanie na aktywną sesję GM...", players: "TOKENY GRACZY", startZone: "STREFA STARTOWA",
+    editStart: "EDYTUJ STREFĘ STARTOWĄ", finishEdit: "ZAKOŃCZ EDYCJĘ", startScene: "WŁĄCZ SCENĘ",
+    resetPlayers: "PRZENIEŚ GRACZY NA START", endScene: "ZAKOŃCZ SCENĘ",
+    inactive: "Przygotuj mapę, zaznacz strefę startową i włącz scenę, gdy gracze mają przejść do trybu taktycznego.",
+    active: "SCENA WŁĄCZONA", move: "Przeciągnij token na wolne pole albo wybierz token i kliknij pole docelowe.",
     editHint: "Klikaj pola, aby dodać lub usunąć je ze strefy startowej graczy.", size: "SIATKA", resetMap: "RESETUJ MAPĘ",
     uploadBackground: "WGRAJ TŁO", replaceBackground: "ZMIEŃ TŁO", removeBackground: "USUŃ TŁO", background: "TŁO",
     noBackground: "Brak obrazu tła", processing: "PRZETWARZANIE OBRAZU...", imageError: "Nie udało się wczytać tego obrazu.",
-    imageTooLarge: "Plik jest za duży. Maksymalny rozmiar obrazu źródłowego to 12 MB.",
+    imageTooLarge: "Plik jest za duży. Maksymalny rozmiar obrazu źródłowego to 12 MB.", connected: "POŁĄCZENIA TAKTYCZNE",
   },
 };
 
@@ -65,21 +67,6 @@ function getSessionCode() {
 
 function slug(value) {
   return String(value || "player").toLowerCase().replace(/[^a-z0-9а-яіїє]+/gi, "-").replace(/^-+|-+$/g, "").slice(0, 42) || "player";
-}
-
-function getRoster() {
-  const seen = new Map();
-  return Array.from(document.querySelectorAll(".session-gm-roster-strip__list .session-gm-player-card")).map((node) => {
-    const name = node.querySelector("strong")?.textContent?.trim() || "Player";
-    const base = slug(name);
-    const count = seen.get(base) || 0;
-    seen.set(base, count + 1);
-    return { id: count ? `player-${base}-${count + 1}` : `player-${base}`, name };
-  });
-}
-
-function sameRoster(a, b) {
-  return a.length === b.length && a.every((item, index) => item.id === b[index]?.id && item.name === b[index]?.name);
 }
 
 function makeDefaultStartZone(cols, rows) {
@@ -146,44 +133,24 @@ function makeEmptyState(cols = DEFAULT_COLS, rows = DEFAULT_ROWS) {
   };
 }
 
-function forcePlayersToStart(state, roster) {
+function moveExistingPlayersToStart(state) {
   const startZone = state.startZone?.length ? state.startZone : makeDefaultStartZone(state.cols, state.rows);
-  const preserved = (state.tokens || []).filter((token) => token.kind !== "player");
-  const placed = [...preserved];
-  const players = roster.map((player) => {
-    const cell = findFreePlacement(placed, 1, state.cols, state.rows, startZone);
-    const token = { id: player.id, kind: "player", name: player.name, x: cell.x, y: cell.y, size: 1, connected: true };
-    placed.push(token);
-    return token;
-  });
-  return { ...state, tokens: [...preserved, ...players], revision: Number(state.revision || 0) + 1 };
-}
-
-function reconcileRoster(state, roster) {
   const enemies = (state.tokens || []).filter((token) => token.kind !== "player");
-  const previousPlayers = (state.tokens || []).filter((token) => token.kind === "player");
-  const previousByName = new Map(previousPlayers.map((token) => [String(token.name).toLowerCase(), token]));
+  const existingPlayers = (state.tokens || []).filter((token) => token.kind === "player");
   const placed = [...enemies];
-  const startZone = state.startZone?.length ? state.startZone : makeDefaultStartZone(state.cols, state.rows);
-
-  const players = roster.map((player) => {
-    const previous = previousByName.get(String(player.name).toLowerCase());
-    if (previous && canPlaceToken(placed, null, previous.x, previous.y, 1, state.cols, state.rows)) {
-      const next = { ...previous, id: player.id, name: player.name, size: 1, connected: true };
-      placed.push(next);
-      return next;
-    }
+  const players = existingPlayers.map((player) => {
     const cell = findFreePlacement(placed, 1, state.cols, state.rows, startZone);
-    const next = { id: player.id, kind: "player", name: player.name, x: cell.x, y: cell.y, size: 1, connected: true };
+    const next = { ...player, x: cell.x, y: cell.y, size: 1, connected: true };
     placed.push(next);
     return next;
   });
-
   return { ...state, tokens: [...enemies, ...players], revision: Number(state.revision || 0) + 1 };
 }
 
 function findTokenForHello(state, packet) {
-  const names = [packet?.characterName, packet?.playerName].map((value) => String(value || "").trim().toLowerCase()).filter(Boolean);
+  const names = [packet?.characterName, packet?.playerName]
+    .map((value) => String(value || "").trim().toLowerCase())
+    .filter(Boolean);
   if (!names.length) return null;
   const players = (state.tokens || []).filter((token) => token.kind === "player");
   return players.find((token) => names.includes(String(token.name || "").trim().toLowerCase()))
@@ -191,6 +158,17 @@ function findTokenForHello(state, packet) {
       const tokenName = String(token.name || "").trim().toLowerCase();
       return tokenName && (tokenName.includes(name) || name.includes(tokenName));
     })) || null;
+}
+
+function safePlayerAvatar(value) {
+  const avatar = String(value || "");
+  if (!avatar || avatar.length > MAX_PLAYER_AVATAR_LENGTH) return "";
+  return /^data:image\/(?:png|jpe?g|webp);base64,/i.test(avatar) ? avatar : "";
+}
+
+function playerTokenId(packet, peerId) {
+  const name = String(packet?.characterName || packet?.playerName || "Player").trim() || "Player";
+  return `player-${slug(name)}-${String(peerId || "link").slice(-6)}`;
 }
 
 function loadImage(url) {
@@ -239,13 +217,13 @@ function numberOrNull(value) {
 export default function GmSessionMap() {
   const text = COPY[languageCode()];
   const [sessionCode, setSessionCode] = useState(() => getSessionCode());
-  const [roster, setRoster] = useState(() => getRoster());
   const [state, setState] = useState(() => makeEmptyState());
   const [selectedToken, setSelectedToken] = useState(null);
   const [editingStart, setEditingStart] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [dragState, setDragState] = useState(null);
+  const [connectedLinks, setConnectedLinks] = useState(0);
   const fileInputRef = useRef(null);
   const gridRef = useRef(null);
   const dragRef = useRef(null);
@@ -253,11 +231,9 @@ export default function GmSessionMap() {
   const connectionsRef = useRef(new Map());
   const identityRef = useRef(new Map());
   const stateRef = useRef(state);
-  const rosterRef = useRef(roster);
   const previousBackgroundRef = useRef(state.backgroundImage);
 
   useEffect(() => { stateRef.current = state; }, [state]);
-  useEffect(() => { rosterRef.current = roster; }, [roster]);
 
   const sendState = (connection, includeBackground = false) => {
     if (!connection?.open) return;
@@ -275,21 +251,9 @@ export default function GmSessionMap() {
     const timer = window.setInterval(() => {
       const code = getSessionCode();
       if (code && code !== sessionCode) setSessionCode(code);
-      const nextRoster = getRoster();
-      setRoster((previous) => sameRoster(previous, nextRoster) ? previous : nextRoster);
     }, 700);
     return () => window.clearInterval(timer);
   }, [sessionCode]);
-
-  useEffect(() => {
-    if (!state.active) return;
-    const playerTokens = (state.tokens || []).filter((token) => token.kind === "player");
-    const currentNames = new Set(playerTokens.map((token) => String(token.name).toLowerCase()));
-    const rosterNames = new Set(roster.map((player) => String(player.name).toLowerCase()));
-    const changed = roster.some((player) => !currentNames.has(String(player.name).toLowerCase()))
-      || playerTokens.some((token) => !rosterNames.has(String(token.name).toLowerCase()));
-    if (changed) setState((previous) => reconcileRoster(previous, roster));
-  }, [roster, state.active]);
 
   useEffect(() => {
     const backgroundChanged = previousBackgroundRef.current !== state.backgroundImage;
@@ -299,10 +263,12 @@ export default function GmSessionMap() {
 
   useEffect(() => {
     if (!sessionCode) return undefined;
+
     const cleanup = () => {
       connectionsRef.current.forEach((connection) => { try { connection.close(); } catch { /* noop */ } });
       connectionsRef.current.clear();
       identityRef.current.clear();
+      setConnectedLinks(0);
       try { peerRef.current?.destroy?.(); } catch { /* noop */ }
       peerRef.current = null;
     };
@@ -313,15 +279,77 @@ export default function GmSessionMap() {
 
     peer.on("connection", (connection) => {
       connectionsRef.current.set(connection.peer, connection);
+      setConnectedLinks(connectionsRef.current.size);
+
       connection.on("open", () => sendState(connection, true));
       connection.on("data", (packet) => {
         if (!packet || typeof packet !== "object") return;
+
         if (packet.type === "tactical_hello") {
           const token = findTokenForHello(stateRef.current, packet);
           if (token) identityRef.current.set(connection.peer, token.id);
           sendState(connection, true);
           return;
         }
+
+        if (packet.type === "tactical_create_token") {
+          if (!stateRef.current.active) return;
+          const alreadyLinkedId = identityRef.current.get(connection.peer);
+          const alreadyLinked = alreadyLinkedId
+            ? stateRef.current.tokens.find((token) => token.id === alreadyLinkedId && token.kind === "player")
+            : findTokenForHello(stateRef.current, packet);
+
+          if (alreadyLinked) {
+            identityRef.current.set(connection.peer, alreadyLinked.id);
+            const avatar = safePlayerAvatar(packet.avatar);
+            if (avatar && avatar !== alreadyLinked.avatar) {
+              setState((previous) => ({
+                ...previous,
+                tokens: previous.tokens.map((token) => token.id === alreadyLinked.id ? { ...token, avatar } : token),
+                revision: Number(previous.revision || 0) + 1,
+              }));
+            } else {
+              sendState(connection, true);
+            }
+            return;
+          }
+
+          const current = stateRef.current;
+          const startZone = current.startZone?.length ? current.startZone : makeDefaultStartZone(current.cols, current.rows);
+          const cell = findFreePlacement(current.tokens, 1, current.cols, current.rows, startZone);
+          const name = String(packet.characterName || packet.playerName || "Player").trim().slice(0, 80) || "Player";
+          const token = {
+            id: playerTokenId(packet, connection.peer),
+            kind: "player",
+            name,
+            x: cell.x,
+            y: cell.y,
+            size: 1,
+            avatar: safePlayerAvatar(packet.avatar),
+            connected: true,
+          };
+          identityRef.current.set(connection.peer, token.id);
+          setState((previous) => ({
+            ...previous,
+            tokens: [...previous.tokens, token],
+            revision: Number(previous.revision || 0) + 1,
+          }));
+          return;
+        }
+
+        if (packet.type === "tactical_update_token") {
+          const allowedTokenId = identityRef.current.get(connection.peer);
+          if (!allowedTokenId) return;
+          const avatar = safePlayerAvatar(packet.avatar);
+          if (!avatar) return;
+          setState((previous) => ({
+            ...previous,
+            tokens: previous.tokens.map((token) => token.id === allowedTokenId && token.kind === "player" ? { ...token, avatar } : token),
+            revision: Number(previous.revision || 0) + 1,
+          }));
+          return;
+        }
+
         if (packet.type === "tactical_move") {
           const allowedTokenId = identityRef.current.get(connection.peer);
           if (!allowedTokenId || packet.tokenId !== allowedTokenId || !stateRef.current.active) return;
@@ -337,9 +365,16 @@ export default function GmSessionMap() {
           }));
         }
       });
-      connection.on("close", () => { connectionsRef.current.delete(connection.peer); identityRef.current.delete(connection.peer); });
-      connection.on("error", () => { connectionsRef.current.delete(connection.peer); identityRef.current.delete(connection.peer); });
+
+      const removeConnection = () => {
+        connectionsRef.current.delete(connection.peer);
+        identityRef.current.delete(connection.peer);
+        setConnectedLinks(connectionsRef.current.size);
+      };
+      connection.on("close", removeConnection);
+      connection.on("error", removeConnection);
     });
+
     peer.on("error", () => {});
     return cleanup;
   }, [sessionCode]);
@@ -347,12 +382,15 @@ export default function GmSessionMap() {
   const startScene = () => {
     setEditingStart(false);
     setSelectedToken(null);
-    setState((previous) => ({ ...forcePlayersToStart({ ...previous, active: true, sceneId: `scene-${Date.now()}` }, rosterRef.current), active: true }));
+    setState((previous) => ({
+      ...moveExistingPlayersToStart({ ...previous, active: true, sceneId: `scene-${Date.now()}` }),
+      active: true,
+    }));
   };
 
   const resetPlayers = () => {
     setSelectedToken(null);
-    setState((previous) => forcePlayersToStart({ ...previous, active: true }, rosterRef.current));
+    setState((previous) => moveExistingPlayersToStart({ ...previous, active: true }));
   };
 
   const endScene = () => {
@@ -375,13 +413,21 @@ export default function GmSessionMap() {
     setSelectedToken(null);
     setDragState(null);
     dragRef.current = null;
-    setState((previous) => ({ ...makeEmptyState(cols, rows), backgroundImage: previous.backgroundImage, backgroundName: previous.backgroundName }));
+    setState((previous) => ({
+      ...makeEmptyState(cols, rows),
+      backgroundImage: previous.backgroundImage,
+      backgroundName: previous.backgroundName,
+      tokens: previous.tokens.filter((token) => token.kind === "enemy"),
+    }));
+    identityRef.current.clear();
   };
 
   const toggleStartCell = (x, y) => {
     setState((previous) => {
       const exists = previous.startZone.some((cell) => cell.x === x && cell.y === y);
-      const nextZone = exists ? previous.startZone.filter((cell) => !(cell.x === x && cell.y === y)) : [...previous.startZone, { x, y }];
+      const nextZone = exists
+        ? previous.startZone.filter((cell) => !(cell.x === x && cell.y === y))
+        : [...previous.startZone, { x, y }];
       return { ...previous, startZone: nextZone, revision: Number(previous.revision || 0) + 1 };
     });
   };
@@ -530,7 +576,12 @@ export default function GmSessionMap() {
     setUploading(true);
     try {
       const backgroundImage = await compressBackground(file);
-      setState((previous) => ({ ...previous, backgroundImage, backgroundName: String(file.name || "map").slice(0, 100), revision: Number(previous.revision || 0) + 1 }));
+      setState((previous) => ({
+        ...previous,
+        backgroundImage,
+        backgroundName: String(file.name || "map").slice(0, 100),
+        revision: Number(previous.revision || 0) + 1,
+      }));
     } catch (error) {
       setUploadError(error?.message === "too-large" ? text.imageTooLarge : text.imageError);
     } finally {
@@ -545,8 +596,11 @@ export default function GmSessionMap() {
 
   const startKeys = useMemo(() => new Set(state.startZone.map((cell) => `${cell.x}:${cell.y}`)), [state.startZone]);
   const enemyTokens = useMemo(() => state.tokens.filter((token) => token.kind === "enemy"), [state.tokens]);
+  const playerTokens = useMemo(() => state.tokens.filter((token) => token.kind === "player"), [state.tokens]);
 
-  if (!sessionCode) return <article className="pip-panel gm-session-map"><div className="pip-logbox">{text.waiting}</div></article>;
+  if (!sessionCode) {
+    return <article className="pip-panel gm-session-map"><div className="pip-logbox">{text.waiting}</div></article>;
+  }
 
   return (
     <article className="pip-panel gm-session-map tactical-map">
@@ -558,20 +612,29 @@ export default function GmSessionMap() {
           <h2>[ {text.title} ]</h2>
         </div>
         <div className="gm-session-map__meta">
-          <span>{text.players}: <strong>{roster.length}</strong></span>
+          <span>{text.players}: <strong>{playerTokens.length}</strong></span>
+          <span>{text.connected}: <strong>{connectedLinks}</strong></span>
           <span className={state.active ? "tactical-live" : ""}>{state.active ? text.active : "OFFLINE"}</span>
           <label className="tactical-size-select">{text.size}
             <select className="pip-input" value={`${state.cols}x${state.rows}`} onChange={(event) => changeSize(event.target.value)}>
-              <option value="8x8">8×8</option><option value="12x12">12×12</option><option value="16x12">16×12</option><option value="16x16">16×16</option>
+              <option value="8x8">8×8</option>
+              <option value="12x12">12×12</option>
+              <option value="16x12">16×12</option>
+              <option value="16x16">16×16</option>
             </select>
           </label>
         </div>
       </div>
 
       <div className="tactical-background-bar">
-        <div className="tactical-background-info"><span>{text.background}</span><strong>{uploading ? text.processing : (state.backgroundName || text.noBackground)}</strong></div>
+        <div className="tactical-background-info">
+          <span>{text.background}</span>
+          <strong>{uploading ? text.processing : (state.backgroundName || text.noBackground)}</strong>
+        </div>
         <div className="tactical-background-actions">
-          <button type="button" className="pip-btn" disabled={uploading} onClick={() => fileInputRef.current?.click()}>{state.backgroundImage ? text.replaceBackground : text.uploadBackground}</button>
+          <button type="button" className="pip-btn" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+            {state.backgroundImage ? text.replaceBackground : text.uploadBackground}
+          </button>
           {state.backgroundImage ? <button type="button" className="pip-btn" disabled={uploading} onClick={removeBackground}>{text.removeBackground}</button> : null}
         </div>
       </div>
@@ -587,21 +650,31 @@ export default function GmSessionMap() {
       />
 
       <div className="tactical-toolbar">
-        <button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>{editingStart ? text.finishEdit : text.editStart}</button>
-        <button type="button" className="pip-btn is-primary" disabled={!state.startZone.length || !roster.length} onClick={startScene}>{text.startScene}</button>
-        <button type="button" className="pip-btn" disabled={!state.active || !roster.length} onClick={resetPlayers}>{text.resetPlayers}</button>
-        <button type="button" className="pip-btn" disabled={!state.active} onClick={endScene}>{text.endScene}</button>
+        <button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>
+          {editingStart ? text.finishEdit : text.editStart}
+        </button>
+        {!state.active ? (
+          <button type="button" className="pip-btn is-primary tactical-scene-toggle" disabled={!state.startZone.length} onClick={startScene}>{text.startScene}</button>
+        ) : (
+          <button type="button" className="pip-btn is-primary tactical-scene-toggle is-live" onClick={endScene}>{text.endScene}</button>
+        )}
+        <button type="button" className="pip-btn" disabled={!state.active || !playerTokens.length} onClick={resetPlayers}>{text.resetPlayers}</button>
         <button type="button" className="pip-btn" onClick={resetMap}>{text.resetMap}</button>
       </div>
 
       <div className={`gm-session-map__hint${editingStart ? " is-editing" : ""}`}>
-        {editingStart ? text.editHint : state.active ? text.move : text.inactive}<span> · {text.startZone}: {state.startZone.length}</span>
+        {editingStart ? text.editHint : state.active ? text.move : text.inactive}
+        <span> · {text.startZone}: {state.startZone.length}</span>
       </div>
 
       <div
         ref={gridRef}
         className={`gm-session-map__grid tactical-grid${state.backgroundImage ? " has-background" : ""}${dragState?.moved ? " is-drag-active" : ""}`}
-        style={{ gridTemplateColumns: `repeat(${state.cols}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${state.rows}, minmax(0, 1fr))`, backgroundImage: state.backgroundImage ? `url(${state.backgroundImage})` : undefined }}
+        style={{
+          gridTemplateColumns: `repeat(${state.cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${state.rows}, minmax(0, 1fr))`,
+          backgroundImage: state.backgroundImage ? `url(${state.backgroundImage})` : undefined,
+        }}
       >
         {Array.from({ length: state.rows * state.cols }, (_, index) => {
           const x = index % state.cols;
@@ -610,7 +683,12 @@ export default function GmSessionMap() {
           const inStart = startKeys.has(key);
           const tokens = state.tokens.filter((token) => token.x === x && token.y === y);
           return (
-            <button type="button" key={key} className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}`} onClick={() => editingStart ? toggleStartCell(x, y) : moveSelectedToken(x, y)}>
+            <button
+              type="button"
+              key={key}
+              className={`gm-session-map__cell tactical-cell${inStart ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}`}
+              onClick={() => editingStart ? toggleStartCell(x, y) : moveSelectedToken(x, y)}
+            >
               <span className="gm-session-map__tokens">
                 {tokens.map((token) => {
                   const enemy = token.kind === "enemy";
@@ -639,11 +717,7 @@ export default function GmSessionMap() {
       </div>
 
       {dragState?.moved ? (
-        <div
-          className={`tactical-drag-ghost is-size-${dragState.size}`}
-          style={{ left: dragState.x, top: dragState.y }}
-          aria-hidden="true"
-        >
+        <div className={`tactical-drag-ghost is-size-${dragState.size}`} style={{ left: dragState.x, top: dragState.y }} aria-hidden="true">
           {dragState.avatar ? <img src={dragState.avatar} alt="" /> : <b>{String(dragState.name || "T").slice(0, 1).toUpperCase()}</b>}
         </div>
       ) : null}
