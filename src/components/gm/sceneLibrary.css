@@ -36,6 +36,34 @@
   box-shadow: 0 0 10px color-mix(in srgb, currentColor 18%, transparent);
 }
 
+.tactical-player-token-setup-v2 {
+  grid-template-columns: 64px minmax(180px, 1fr) auto auto;
+}
+
+.tactical-player-token-editor {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(90px, 120px);
+  gap: 7px;
+  align-items: end;
+  min-width: 0;
+}
+
+.tactical-player-size-field {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tactical-player-size-field > span {
+  font-size: .5rem;
+  opacity: .7;
+  letter-spacing: .06em;
+}
+
+.tactical-player-token-editor .pip-input {
+  min-width: 0;
+}
+
 @media (max-width: 980px) {
   .gm-scene-library {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
@@ -44,6 +72,21 @@
   .gm-scene-library__live {
     justify-self: stretch;
     text-align: center;
+  }
+}
+
+@media (max-width: 780px) {
+  .tactical-player-token-setup-v2 {
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+  }
+
+  .tactical-player-token-editor {
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 5px;
+  }
+
+  .tactical-player-size-field > span {
+    display: none;
   }
 }
 
@@ -61,5 +104,17 @@
 
   .gm-scene-library__live {
     grid-column: 1 / -1;
+  }
+
+  .tactical-player-token-setup-v2 {
+    grid-template-columns: 42px minmax(0, 1fr);
+  }
+
+  .tactical-player-token-setup-v2 > .pip-btn {
+    grid-column: span 1;
+  }
+
+  .tactical-player-token-editor {
+    grid-template-columns: minmax(0, 1fr) 74px;
   }
 }
