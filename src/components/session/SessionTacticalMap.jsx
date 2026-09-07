@@ -6,10 +6,10 @@ const TACTICAL_HOST_PREFIX = "pip2d20-tactical-";
 const SAVE_KEY = "fallout_pipboy_v4_last_character";
 
 const COPY = {
-  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Select your token, then click a free cell to move it.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
-  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Выберите свой токен и нажмите на свободную клетку, чтобы переместить его.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Оберіть свій токен і натисніть вільну клітинку, щоб перемістити його.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
-  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Wybierz swój token, a następnie kliknij wolne pole, aby go przenieść.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
+  en: { button: "TACTICAL", title: "TACTICAL MAP", close: "CLOSE", waiting: "GM has not started a tactical scene yet.", connecting: "Connecting to tactical scene...", move: "Drag your token to a free cell, or select it and click a destination cell.", notLinked: "Your token is not linked yet. Wait for GM to start/reset the scene.", live: "LIVE", own: "YOUR TOKEN" },
+  ru: { button: "ТАКТИКА", title: "ТАКТИЧЕСКАЯ КАРТА", close: "ЗАКРЫТЬ", waiting: "ГМ ещё не запустил тактическую сцену.", connecting: "Подключение к тактической сцене...", move: "Перетащите свой токен на свободную клетку или выберите его и нажмите клетку назначения.", notLinked: "Ваш токен ещё не привязан. Дождитесь запуска или сброса сцены ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
+  uk: { button: "ТАКТИКА", title: "ТАКТИЧНА МАПА", close: "ЗАКРИТИ", waiting: "ГМ ще не запустив тактичну сцену.", connecting: "Підключення до тактичної сцени...", move: "Перетягніть свій токен на вільну клітинку або оберіть його й натисніть клітинку призначення.", notLinked: "Ваш токен ще не прив'язаний. Дочекайтеся запуску або скидання сцени ГМ.", live: "LIVE", own: "ВАШ ТОКЕН" },
+  pl: { button: "TAKTYKA", title: "MAPA TAKTYCZNA", close: "ZAMKNIJ", waiting: "GM nie uruchomił jeszcze sceny taktycznej.", connecting: "Łączenie ze sceną taktyczną...", move: "Przeciągnij swój token na wolne pole albo wybierz go i kliknij pole docelowe.", notLinked: "Twój token nie jest jeszcze połączony. Poczekaj na uruchomienie lub reset sceny przez GM.", live: "LIVE", own: "TWÓJ TOKEN" },
 };
 
 function getLanguage() {
@@ -60,10 +60,16 @@ export default function SessionTacticalMap({ session }) {
   const [scene, setScene] = useState(null);
   const [youTokenId, setYouTokenId] = useState(null);
   const [selected, setSelected] = useState(false);
+  const [dragState, setDragState] = useState(null);
   const peerRef = useRef(null);
   const connectionRef = useRef(null);
   const retryRef = useRef(null);
+  const gridRef = useRef(null);
+  const dragRef = useRef(null);
+  const sceneRef = useRef(scene);
   const identity = useMemo(() => findSessionIdentity(session), [session?.players, session?.sessionCode]);
+
+  useEffect(() => { sceneRef.current = scene; }, [scene]);
 
   useEffect(() => {
     if (!session?.isActive || session?.mode !== "player" || !session?.sessionCode) return undefined;
@@ -125,7 +131,11 @@ export default function SessionTacticalMap({ session }) {
   }, [scene?.active, scene?.revision, youTokenId, identity.mainPeerId, identity.characterName, identity.playerName]);
 
   useEffect(() => {
-    if (!scene?.active) setSelected(false);
+    if (!scene?.active) {
+      setSelected(false);
+      setDragState(null);
+      dragRef.current = null;
+    }
   }, [scene?.active, scene?.sceneId]);
 
   if (!session?.isActive || session?.mode !== "player") return null;
@@ -133,9 +143,73 @@ export default function SessionTacticalMap({ session }) {
   const ownToken = scene?.tokens?.find((token) => token.id === youTokenId) || null;
   const canMove = Boolean(scene?.active && ownToken && connectionRef.current?.open);
 
+  const sendMove = (x, y) => {
+    if (!canMove || !ownToken) return;
+    connectionRef.current.send({ type: "tactical_move", tokenId: ownToken.id, x, y });
+  };
+
   const moveOwnToken = (x, y) => {
     if (!canMove || !selected) return;
-    connectionRef.current.send({ type: "tactical_move", tokenId: ownToken.id, x, y });
+    sendMove(x, y);
+  };
+
+  const beginOwnDrag = (event, token) => {
+    if (!canMove || token.id !== youTokenId || (event.pointerType === "mouse" && event.button !== 0)) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const size = tokenSize(token);
+    const anchorX = Math.max(0, Math.min(size - 1, Math.floor(((event.clientX - rect.left) / Math.max(1, rect.width)) * size)));
+    const anchorY = Math.max(0, Math.min(size - 1, Math.floor(((event.clientY - rect.top) / Math.max(1, rect.height)) * size)));
+    dragRef.current = {
+      tokenId: token.id,
+      startX: event.clientX,
+      startY: event.clientY,
+      anchorX,
+      anchorY,
+      moved: false,
+      pointerId: event.pointerId,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragState({ tokenId: token.id, x: event.clientX, y: event.clientY, moved: false, avatar: token.avatar || "", name: token.name || "" });
+    event.stopPropagation();
+  };
+
+  const moveOwnDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 6;
+    drag.moved = moved;
+    if (moved) event.preventDefault();
+    setDragState((current) => current ? { ...current, x: event.clientX, y: event.clientY, moved } : current);
+  };
+
+  const finishOwnDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragState(null);
+    event.stopPropagation();
+
+    if (!drag.moved) {
+      setSelected((value) => !value);
+      return;
+    }
+
+    event.preventDefault();
+    const grid = gridRef.current;
+    const currentScene = sceneRef.current;
+    if (!grid || !currentScene?.active) return;
+    const rect = grid.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) return;
+    const cellX = Math.floor(((event.clientX - rect.left) / Math.max(1, rect.width)) * currentScene.cols);
+    const cellY = Math.floor(((event.clientY - rect.top) / Math.max(1, rect.height)) * currentScene.rows);
+    sendMove(cellX - drag.anchorX, cellY - drag.anchorY);
+    setSelected(true);
+  };
+
+  const cancelOwnDrag = (event) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragState(null);
   };
 
   return (
@@ -166,7 +240,8 @@ export default function SessionTacticalMap({ session }) {
 
             {scene ? (
               <div
-                className={`gm-session-map__grid tactical-grid is-player-view${scene.backgroundImage ? " has-background" : ""}`}
+                ref={gridRef}
+                className={`gm-session-map__grid tactical-grid is-player-view${scene.backgroundImage ? " has-background" : ""}${dragState?.moved ? " is-drag-active" : ""}`}
                 style={{
                   gridTemplateColumns: `repeat(${scene.cols}, minmax(0, 1fr))`,
                   gridTemplateRows: `repeat(${scene.rows}, minmax(0, 1fr))`,
@@ -184,15 +259,17 @@ export default function SessionTacticalMap({ session }) {
                         {tokens.map((token) => {
                           const isOwn = token.id === youTokenId;
                           const enemy = token.kind === "enemy";
+                          const dragging = isOwn && dragState?.tokenId === token.id && dragState?.moved;
                           return (
                             <span
                               key={token.id}
-                              className={`gm-session-token ${enemy ? "is-enemy" : "is-player"} is-size-${tokenSize(token)}${isOwn ? " is-own" : ""}${isOwn && selected ? " is-selected" : ""}`}
+                              className={`gm-session-token ${enemy ? "is-enemy" : "is-player"} is-size-${tokenSize(token)}${isOwn ? " is-own" : ""}${isOwn && selected ? " is-selected" : ""}${dragging ? " is-dragging" : ""}`}
                               title={token.name}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                if (isOwn && scene.active) setSelected((value) => !value);
-                              }}
+                              onPointerDown={isOwn ? (event) => beginOwnDrag(event, token) : undefined}
+                              onPointerMove={isOwn ? moveOwnDrag : undefined}
+                              onPointerUp={isOwn ? finishOwnDrag : undefined}
+                              onPointerCancel={isOwn ? cancelOwnDrag : undefined}
+                              onClick={(event) => event.stopPropagation()}
                             >
                               {token.avatar ? <img src={token.avatar} alt="" /> : <b>{isOwn ? "YOU" : enemy ? String(token.name || "E").slice(0, 1).toUpperCase() : "P"}</b>}
                               <small>{token.name}</small>
@@ -205,6 +282,12 @@ export default function SessionTacticalMap({ session }) {
                 })}
               </div>
             ) : <div className="pip-logbox">{text.connecting}</div>}
+
+            {dragState?.moved ? (
+              <div className="tactical-drag-ghost is-size-1" style={{ left: dragState.x, top: dragState.y }} aria-hidden="true">
+                {dragState.avatar ? <img src={dragState.avatar} alt="" /> : <b>YOU</b>}
+              </div>
+            ) : null}
           </section>
         </div>
       ) : null}
