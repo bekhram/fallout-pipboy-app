@@ -37,6 +37,33 @@
   }
 }
 
+.gm-session-map__live-stat {
+  box-shadow: inset 0 0 10px color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.gm-session-token.is-live {
+  cursor: default;
+  border-style: double;
+  border-width: 3px;
+  box-shadow: 0 0 14px color-mix(in srgb, currentColor 34%, transparent);
+}
+
+.gm-session-token.is-live:active {
+  cursor: default;
+}
+
+.gm-session-token__live-dot {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--pip-bg, #071008);
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
 @media (max-width: 1180px) {
   .gm-workspace > .gm-session-map {
     order: -1;
