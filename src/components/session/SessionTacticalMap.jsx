@@ -111,6 +111,15 @@ export default function SessionTacticalMap({ session }) {
     if (connectionRef.current?.open) connectionRef.current.send({ type: "tactical_hello", ...identity });
   }, [identity.mainPeerId, identity.characterName, identity.playerName]);
 
+  useEffect(() => {
+    if (!scene?.active || youTokenId || !connectionRef.current?.open) return;
+    connectionRef.current.send({ type: "tactical_hello", ...identity });
+  }, [scene?.active, scene?.revision, youTokenId, identity.mainPeerId, identity.characterName, identity.playerName]);
+
+  useEffect(() => {
+    if (!scene?.active) setSelected(false);
+  }, [scene?.active, scene?.sceneId]);
+
   if (!session?.isActive || session?.mode !== "player") return null;
 
   const ownToken = scene?.tokens?.find((token) => token.id === youTokenId) || null;
