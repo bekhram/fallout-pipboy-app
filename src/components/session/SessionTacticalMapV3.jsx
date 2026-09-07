@@ -9,6 +9,7 @@ function tokenSize(token){return Number(token?.size)===2?2:1;}
 function dismissedKey(campaignId,sceneId){return `pip2d20-tactical-dismissed-${String(campaignId||"campaign")}-${String(sceneId||"scene")}`;}
 function playerFor(token,players){const id=String(token?.ownerClientId||"");return (players||[]).find((p)=>String(p?.clientId||p?.peerId||"")===id)||null;}
 function hpFor(token,players){if(token?.kind==="player"){const p=playerFor(token,players);return{hp:Math.max(0,Number(p?.character?.currentHp??token?.stats?.hp??0)),maxHp:Math.max(0,Number(p?.character?.maxHp??token?.stats?.maxHp??0))};}return{hp:Math.max(0,Number(token?.stats?.hp??0)),maxHp:Math.max(0,Number(token?.stats?.maxHp??0))};}
+function hiddenForPlayers(token){return token?.kind!=="player"&&token?.stats?.visibleToPlayers===false;}
 
 export default function SessionTacticalMapV3({session}){
   const scene=session?.tacticalScene||null;
@@ -20,7 +21,8 @@ export default function SessionTacticalMapV3({session}){
   const dragRef=useRef(null);
   const lastSceneIdRef=useRef("");
 
-  const tokens=Array.isArray(scene?.tokens)?scene.tokens:[];
+  const rawTokens=Array.isArray(scene?.tokens)?scene.tokens:[];
+  const tokens=useMemo(()=>rawTokens.filter((token)=>!hiddenForPlayers(token)),[rawTokens]);
   const ownedTokens=useMemo(()=>tokens.filter((token)=>String(token?.ownerClientId||"")===String(session?.clientId||"")),[tokens,session?.clientId]);
   const selectedToken=ownedTokens.find((token)=>token.id===selectedTokenId)||ownedTokens[0]||null;
 
