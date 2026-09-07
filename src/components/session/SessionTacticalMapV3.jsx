@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { TacticalEnvironmentSummary } from "../gm/TacticalEnvironmentPanel.jsx";
 import "../gm/gmSessionMap.css";
 import "../gm/sceneLibrary.css";
 import "../gm/gmTokenStatusLayer.css";
@@ -65,6 +66,7 @@ export default function SessionTacticalMapV3({session}){
   for(let y=0;y<rows;y+=1){for(let x=0;x<cols;x+=1){const anchored=tokens.filter((token)=>Number(token.x)===x&&Number(token.y)===y);cells.push(<button type="button" key={`${x}:${y}`} className={`gm-session-map__cell tactical-cell${startSet.has(`${x}:${y}`)?" is-start-zone":""}`} onClick={()=>moveTo(x,y)}>{anchored.length?<span className="gm-session-map__tokens">{anchored.map((token)=>{const owned=ownedTokens.some((item)=>item.id===token.id),selected=selectedToken?.id===token.id,size=tokenSize(token),hp=hpFor(token,session.players||[]),down=hp.maxHp>0&&hp.hp<=0,percent=hp.maxHp>0?Math.max(0,Math.min(100,hp.hp/hp.maxHp*100)):0;return <span key={token.id} className={`gm-session-token ${token.kind==="player"?"is-player":"is-npc is-enemy"} is-size-${size}${owned?" is-own":""}${selected?" is-selected":""}${dragState?.tokenId===token.id?" is-dragging":""}`} onPointerDown={owned?(event)=>beginDrag(event,token):undefined} onPointerMove={owned?moveDrag:undefined} onPointerUp={owned?finishDrag:undefined} onPointerCancel={owned?finishDrag:undefined} onClick={(event)=>{if(owned){event.stopPropagation();setSelectedTokenId(token.id);}}}>{token.kind==="player"&&hp.maxHp>0?<span className="gm-token-status-hp"><span style={{width:`${percent}%`}}/><b>{Math.round(hp.hp)}/{Math.round(hp.maxHp)}</b></span>:null}{down?<span className="gm-token-zero-marker"/>:null}{token.avatar?<img src={token.avatar} alt=""/>:<b>{String(token.name||"T").slice(0,1).toUpperCase()}</b>}<small>{token.name}</small></span>;})}</span>:null}</button>);}}
 
   const overlay=open?<div className="session-tactical-overlay"><section className="pip-panel session-tactical-player"><header className="session-tactical-player__head"><div><div className="pip-bootline">PIP 2D20 // {scene.name||"TACTICAL"}</div><h2>[ TACTICAL MAP ]</h2></div><div className="session-tactical-player__actions"><span className="tactical-live">{session.status==="online"?"LIVE":"CONNECTING"}</span><button type="button" className="pip-btn" onClick={close}>BACK TO PLAYER</button></div></header>
+    <TacticalEnvironmentSummary scene={scene}/>
     <div className="tactical-player-token-setup tactical-player-token-setup-v2">
       <div className="tactical-owned-token-picker">{ownedTokens.map((token)=><button type="button" key={token.id} className={`pip-btn${selectedToken?.id===token.id?" is-primary":""}`} onClick={()=>setSelectedTokenId(token.id)}>{token.avatar?<img src={token.avatar} alt=""/>:null}<span>{token.name}</span></button>)}</div>
     </div>
