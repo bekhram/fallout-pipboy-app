@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import SessionTacticalMap from "./SessionTacticalMap.jsx";
 
 const COPY = {
   en: {
@@ -329,6 +330,7 @@ export default function SessionChatDrawer({ session }) {
           <button type="submit" className="pip-btn is-primary" disabled={!String(draft).trim()}>{copy.send}</button>
         </form>
       </aside>
+      <SessionTacticalMap session={session} />
     </div>
   );
 }
