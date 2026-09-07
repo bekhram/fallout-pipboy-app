@@ -1,8 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import "./tacticalSessionHud.css";
 
+const INIT_COLLAPSED_KEY = "pip2d20_initiative_collapsed_v1";
+
 function initials(value) {
-  return String(value || "?").trim().split(/\s+/).slice(0,2).map((part) => part[0] || "").join("").toUpperCase() || "?";
+  return String(value || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase() || "?";
 }
 
 function playerForToken(token, players) {
@@ -13,9 +15,9 @@ function playerForToken(token, players) {
 function initiativeFor(token, players) {
   if (token?.kind === "player") {
     const player = playerForToken(token, players);
-    return Math.max(0, Number(player?.character?.initiative || token?.stats?.initiative || 0));
+    return Math.max(0, Number(player?.character?.initiative ?? token?.stats?.initiative ?? 0));
   }
-  return Math.max(0, Number(token?.stats?.initiative || 0));
+  return Math.max(0, Number(token?.stats?.initiative ?? 0));
 }
 
 function hpFor(token, players) {
@@ -32,17 +34,33 @@ function hpFor(token, players) {
   };
 }
 
+function isHiddenNpc(token) {
+  return token?.kind !== "player" && token?.stats?.visibleToPlayers === false;
+}
+
+function readCollapsed() {
+  try { return localStorage.getItem(INIT_COLLAPSED_KEY) === "1"; } catch { return false; }
+}
+
 export default function TacticalSessionHud({ session }) {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
   const players = Array.isArray(session?.players) ? session.players : [];
   const scene = session?.tacticalScene || null;
-  const tokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
+  const rawTokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
+
+  // Defense in depth: a hidden NPC never enters the player's initiative list,
+  // even if an older cached scene briefly contains it before the next manifest.
+  const tokens = useMemo(
+    () => session?.mode === "player" ? rawTokens.filter((token) => !isHiddenNpc(token)) : rawTokens,
+    [rawTokens, session?.mode]
+  );
 
   const order = useMemo(() => tokens.map((token, index) => ({
     token,
     index,
     initiative: initiativeFor(token, players),
     hp: hpFor(token, players),
-  })).sort((a,b) => {
+  })).sort((a, b) => {
     if (b.initiative !== a.initiative) return b.initiative - a.initiative;
     if (a.token.kind !== b.token.kind) return a.token.kind === "player" ? -1 : 1;
     const nameSort = String(a.token.name || "").localeCompare(String(b.token.name || ""));
@@ -51,13 +69,30 @@ export default function TacticalSessionHud({ session }) {
 
   if (!session?.isActive) return null;
 
+  const toggleCollapsed = () => {
+    setCollapsed((value) => {
+      const next = !value;
+      try { localStorage.setItem(INIT_COLLAPSED_KEY, next ? "1" : "0"); } catch { /* best effort */ }
+      return next;
+    });
+  };
+
   return (
     <>
-      {scene ? <aside className="tactical-initiative-rail" aria-label="Initiative order">
+      {scene ? <aside className={`tactical-initiative-rail${collapsed ? " is-collapsed" : ""}`} aria-label="Initiative order">
+        <button
+          type="button"
+          className="tactical-initiative-rail__toggle"
+          onClick={toggleCollapsed}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Show initiative" : "Hide initiative"}
+        >
+          {collapsed ? "▶" : "◀"}
+        </button>
         <div className="tactical-initiative-rail__title">INIT</div>
         <div className="tactical-initiative-rail__list">
           {order.map(({ token, initiative, hp }) => {
-            const hidden = token.kind !== "player" && token?.stats?.visibleToPlayers === false;
+            const hidden = isHiddenNpc(token);
             return <div key={token.id} className={`tactical-initiative-entry${hidden && session.mode === "host" ? " is-hidden" : ""}${hp.maxHp > 0 && hp.hp <= 0 ? " is-down" : ""}`} title={`${token.name} · INIT ${initiative}`}>
               <div className="tactical-initiative-entry__avatar">{token.avatar ? <img src={token.avatar} alt="" /> : <span>{initials(token.name)}</span>}</div>
               <div className="tactical-initiative-entry__meta"><strong>{initiative}</strong><small>{token.name}</small></div>
