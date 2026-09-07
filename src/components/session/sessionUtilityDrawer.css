@@ -85,11 +85,19 @@
 
 .session-utility-drawer .session-chat-drawer-head,
 .session-utility-drawer .session-chat-connection-strip,
-.session-utility-drawer .session-chat-scene-banner,
 .session-utility-drawer .session-chat-drawer-form,
 .session-utility-drawer > .session-error,
 .session-utility-drawer > .pip-btn {
   flex: 0 0 auto;
+}
+
+.session-utility-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .session-utility-list {
@@ -99,86 +107,98 @@
   overscroll-behavior: contain;
 }
 
-.session-utility-dice {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding-right: 2px;
+.session-player-dock {
+  position: fixed;
+  left: 50%;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 545;
+  max-width: min(760px, calc(100vw - 110px));
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
-.session-utility-dice-card,
-.session-utility-last-roll {
-  display: grid;
-  gap: 9px;
-  padding: 10px;
-  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
-  background: color-mix(in srgb, currentColor 3%, transparent);
-}
-
-.session-utility-dice-card .pip-head {
-  min-height: auto;
-  margin: 0;
-}
-
-.session-utility-dice-card h3 {
-  margin: 0;
-  font-size: .68rem;
-  letter-spacing: .08em;
-}
-
-.session-utility-dice-fields {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 7px;
-}
-
-.session-utility-dice-fields label,
-.session-utility-single-field {
-  display: grid;
-  gap: 4px;
-  font-size: .52rem;
-  letter-spacing: .08em;
-}
-
-.session-utility-dice-fields .pip-input,
-.session-utility-single-field .pip-input {
-  min-width: 0;
-  min-height: 36px;
-  padding: 6px 8px;
-}
-
-.session-utility-single-field {
-  width: 110px;
-}
-
-.session-utility-roll-button {
-  width: 100%;
-  min-height: 40px;
-}
-
-.session-utility-last-roll > strong {
-  font-size: .55rem;
-  letter-spacing: .1em;
-  opacity: .7;
-}
-
-.session-utility-last-roll .session-roll-dice {
+.session-player-dock__rail {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 6px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: auto;
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+  border-radius: 14px;
+  background: rgba(2, 12, 4, .88);
+  box-shadow: 0 -7px 22px rgba(0, 0, 0, .38), inset 0 0 18px color-mix(in srgb, currentColor 5%, transparent);
+  backdrop-filter: blur(5px);
 }
 
-.session-utility-last-roll .session-roll-dice > span {
+.session-player-dock__rail::-webkit-scrollbar {
+  display: none;
+}
+
+.session-player-dock__item {
+  flex: 0 0 auto;
+  width: 58px;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+
+.session-player-dock__avatar {
+  position: relative;
+  width: 46px;
+  height: 46px;
   display: grid;
   place-items: center;
-  min-width: 34px;
-  height: 34px;
+  overflow: visible;
   border: 1px solid currentColor;
-  background: color-mix(in srgb, currentColor 6%, transparent);
+  border-radius: 50%;
+  background: rgba(0, 20, 6, .96);
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 13%, transparent);
+  font-size: .72rem;
   font-weight: 800;
+}
+
+.session-player-dock__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.session-player-dock__online {
+  position: absolute;
+  right: -1px;
+  bottom: 2px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(2, 12, 4, .95);
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+}
+
+.session-player-dock__item small {
+  display: block;
+  width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: .48rem;
+  line-height: 1.1;
+  opacity: .82;
+}
+
+.session-gm-host--single-workspace,
+.session-player-live--simple {
+  padding-bottom: 78px;
+}
+
+.session-gm-workspace-wrap--single {
+  margin-top: 8px;
 }
 
 @media (max-width: 780px) {
@@ -197,7 +217,35 @@
     min-height: 78px;
   }
 
-  .session-utility-dice-fields {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .session-player-dock {
+    bottom: max(6px, env(safe-area-inset-bottom));
+    max-width: calc(100vw - 68px);
+  }
+
+  .session-player-dock__rail {
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 5px 7px;
+    border-radius: 12px;
+  }
+
+  .session-player-dock__item {
+    width: 48px;
+  }
+
+  .session-player-dock__avatar {
+    width: 38px;
+    height: 38px;
+    font-size: .6rem;
+  }
+
+  .session-player-dock__item small {
+    width: 48px;
+    font-size: .42rem;
+  }
+
+  .session-gm-host--single-workspace,
+  .session-player-live--simple {
+    padding-bottom: 68px;
   }
 }
