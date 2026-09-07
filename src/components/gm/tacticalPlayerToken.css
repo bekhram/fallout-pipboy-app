@@ -71,22 +71,114 @@
   box-shadow: 0 0 13px color-mix(in srgb, currentColor 24%, transparent), inset 0 0 10px color-mix(in srgb, currentColor 9%, transparent);
 }
 
+/* Tactical player view must always win over the session utility drawer. */
+.session-tactical-overlay {
+  inset: 0 !important;
+  z-index: 900 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.session-tactical-player {
+  grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 10px !important;
+  overflow: hidden !important;
+}
+
+.session-tactical-player .tactical-grid {
+  align-self: start;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  overflow: visible !important;
+}
+
 @media (max-width: 780px) {
   .tactical-player-token-setup {
-    grid-template-columns: 54px minmax(0, 1fr);
-    gap: 7px;
-    padding: 7px;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 6px;
   }
 
   .tactical-player-token-avatar {
-    width: 50px;
-    height: 50px;
-    grid-row: span 2;
+    width: 42px;
+    height: 42px;
+    grid-row: auto;
+  }
+
+  .tactical-player-token-copy span {
+    display: none;
   }
 
   .tactical-player-token-setup .pip-btn {
     min-height: 30px;
     padding: 5px 7px;
-    font-size: .54rem;
+    font-size: .52rem;
+  }
+
+  .tactical-player-token-setup > .pip-btn:not(.is-primary) {
+    display: none;
+  }
+
+  .session-tactical-player {
+    gap: 6px !important;
+    padding: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .session-tactical-player__head {
+    gap: 6px;
+    padding-bottom: 5px;
+  }
+
+  .session-tactical-player__head .pip-bootline {
+    display: none;
+  }
+
+  .session-tactical-player__head h2 {
+    font-size: .72rem;
+    margin: 0;
+  }
+
+  .session-tactical-player__actions {
+    gap: 5px;
+  }
+
+  .session-tactical-player__actions .tactical-live {
+    padding: 4px 6px;
+    font-size: .5rem;
+  }
+
+  .session-tactical-player__actions .pip-btn {
+    min-height: 30px;
+    padding: 4px 6px;
+    font-size: .5rem;
+  }
+
+  .session-tactical-player > .gm-session-map__hint {
+    min-height: 0;
+    padding: 4px 6px;
+    font-size: .52rem;
+  }
+
+  .session-tactical-player .tactical-grid {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    overflow: visible !important;
   }
 }
