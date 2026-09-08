@@ -51,34 +51,47 @@ function languageCode(value) {
   return COPY[code] ? code : "en";
 }
 
-function numberValue(value, fallback = 0) {
-  const number = Number(String(value ?? "").trim().replace(",", "."));
-  return Number.isFinite(number) ? number : fallback;
-}
-
 function clampRarity(value, fallback = 0) {
-  return Math.max(0, Math.min(7, Math.round(numberValue(value, fallback))));
+  const text = String(value ?? "").trim().replace(",", ".");
+  if (!text) return Math.max(0, Math.min(7, fallback));
+  const number = Number(text);
+  const resolved = Number.isFinite(number) ? number : fallback;
+  return Math.max(0, Math.min(7, Math.round(resolved)));
 }
 
 function stableId(prefix, name, index) {
   return `${prefix}:${String(name || "loot").toLowerCase().replace(/[^a-z0-9а-яіїєąćęłńóśźż]+/gi, "-")}:${index}`;
 }
 
+function inventoryLootType(category) {
+  if (["aid", "food", "beverages"].includes(category)) return "aid";
+  if (category === "junk") return "junk";
+  if (["magazines", "tools", "misc"].includes(category)) return "special";
+  return null;
+}
+
+function inventoryRarity(item, lootType, category) {
+  const raw = String(item?.rarity ?? "").trim();
+  const numeric = Number(raw.replace(",", "."));
+  const hasNumericRarity = raw !== "" && Number.isFinite(numeric);
+
+  // Fallout 2d20 special finds that omit rarity in the source tables are R5.
+  // This covers bobbleheads, magazines and unrated tools such as the Pip-Boy.
+  if (lootType === "special" && !hasNumericRarity) return 5;
+
+  return clampRarity(raw, category === "junk" ? 0 : 1);
+}
+
 function normalizeInventoryItem(item, index, language) {
   const category = String(item?.category || "").toLowerCase();
-  let lootType = "special";
-  if (["aid", "food", "beverages"].includes(category)) lootType = "aid";
-  else if (category === "junk") lootType = "junk";
-  else if (["magazines", "tools", "misc"].includes(category)) lootType = "special";
-  else return null;
+  const lootType = inventoryLootType(category);
+  if (!lootType) return null;
 
   const canonicalName = String(item?.name || "Loot");
   const localizedName = item?.localizedName?.[language]
     || item?.localizedName?.en
     || translateInventoryItemName(canonicalName, language)
     || canonicalName;
-  const isPipBoy = canonicalName.toLowerCase() === "pip-boy";
-  const rarity = isPipBoy ? 7 : clampRarity(item?.rarity, category === "junk" ? 0 : 1);
 
   return {
     id: stableId("inventory", canonicalName, index),
@@ -88,7 +101,7 @@ function normalizeInventoryItem(item, index, language) {
     quantity: 1,
     weight: String(item?.weight ?? "0"),
     cost: String(item?.cost ?? "-"),
-    rarity,
+    rarity: inventoryRarity(item, lootType, category),
     category: item?.category || "misc",
     sourceType: item?.sourceType || "loot",
   };
@@ -128,9 +141,7 @@ function rollFoundQuantity(value) {
   const text = String(value || "1").trim();
   const match = text.match(/^(\d+)\s*\+\s*(\d+)$/);
   if (!match) return Math.max(1, Number.parseInt(text, 10) || 1);
-  const base = Number(match[1]);
-  const bonus = Number(match[2]);
-  return Math.max(1, base + Math.floor(Math.random() * (bonus + 1)));
+  return Math.max(1, Number(match[1]) + Math.floor(Math.random() * (Number(match[2]) + 1)));
 }
 
 function normalizeAmmo(rows) {
@@ -273,6 +284,7 @@ export default function GmLootGenerator({ session = null }) {
     setMinRarity(next);
     if (next > maxRarity) setMaxRarity(next);
   };
+
   const changeMax = (value) => {
     const next = clampRarity(value, 7);
     setMaxRarity(next);
@@ -302,9 +314,7 @@ export default function GmLootGenerator({ session = null }) {
 
     if (typeof session?.sendChat === "function") {
       try {
-        for (const item of next) {
-          await session.sendChat(formatLootChatMessage(item, language));
-        }
+        for (const item of next) await session.sendChat(formatLootChatMessage(item, language));
         setStatus(copy.sent);
       } catch {
         setStatus(copy.localOnly);
