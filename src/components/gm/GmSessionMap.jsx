@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
-import GmUnifiedTokenManagerV5 from "./GmUnifiedTokenManagerV5.jsx";
+import GmUnifiedTokenManagerV6 from "./GmUnifiedTokenManagerV6.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
 import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
@@ -84,7 +84,7 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
-        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV5 session={session} /></div>
+        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV6 session={session} /></div>
       </div>
     </section>
   );
