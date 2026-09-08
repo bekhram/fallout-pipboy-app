@@ -3,6 +3,7 @@ import GmSessionMapV2 from "./GmSessionMapV2.jsx";
 import GmUnifiedTokenManagerV4 from "./GmUnifiedTokenManagerV4.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
+import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
@@ -11,12 +12,12 @@ import "./gmNpcCardEditor.css";
 import "./gmTacticalTabs.css";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["battle", "custom", "encounter", "scenes", "tokens"];
+const TABS = ["battle", "autogm", "custom", "encounter", "scenes", "tokens"];
 const COPY = {
-  en: { battle: "BATTLEMAP", custom: "CUSTOM", encounter: "ENCOUNTER", scenes: "SCENES", tokens: "TOKENS" },
-  ru: { battle: "БЕТЛМАП", custom: "КАСТОМ", encounter: "ЭНКАУНТЕР", scenes: "СЦЕНЫ", tokens: "ТОКЕНЫ" },
-  uk: { battle: "БЕТЛМАП", custom: "КАСТОМ", encounter: "ЕНКАУНТЕР", scenes: "СЦЕНИ", tokens: "ТОКЕНИ" },
-  pl: { battle: "BATTLEMAP", custom: "WŁASNE", encounter: "ENCOUNTER", scenes: "SCENY", tokens: "TOKENY" },
+  en: { battle: "BATTLEMAP", autogm: "AUTO GM", custom: "CUSTOM", encounter: "ENCOUNTER", scenes: "SCENES", tokens: "TOKENS" },
+  ru: { battle: "БЕТЛМАП", autogm: "AUTO GM", custom: "КАСТОМ", encounter: "ЭНКАУНТЕР", scenes: "СЦЕНЫ", tokens: "ТОКЕНЫ" },
+  uk: { battle: "БЕТЛМАП", autogm: "AUTO GM", custom: "КАСТОМ", encounter: "ЕНКАУНТЕР", scenes: "СЦЕНИ", tokens: "ТОКЕНИ" },
+  pl: { battle: "BATTLEMAP", autogm: "AUTO GM", custom: "WŁASNE", encounter: "ENCOUNTER", scenes: "SCENY", tokens: "TOKENY" },
 };
 
 function languageCode() {
@@ -70,6 +71,10 @@ export default function GmSessionMap(props) {
       <div className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         <div className="gm-tactical-battle-effects">
           <TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly />
+        </div>
+
+        <div className="gm-tactical-auto-gm">
+          <GmAutoGmPanel session={session} />
         </div>
 
         <div className="gm-tactical-environment-edit">
