@@ -69,6 +69,7 @@ export function merchantAcceptsItem(type, item) {
   const category = String(item?.category || "").toLowerCase();
   const sourceType = String(item?.sourceType || "").toLowerCase();
   const lootType = String(item?.lootType || "").toLowerCase();
+  if (sourceType === "caps" || lootType === "caps") return false;
 
   if (merchantType === "armorer") {
     return category === "armor" || sourceType === "armor" || sourceType === "armor_mod";
@@ -119,8 +120,9 @@ export function inventoryTradeKey(item, index = -1) {
 
 export function isStackableTradeItem(item) {
   const category = String(item?.category || "").toLowerCase();
-  return ["ammo", "aid", "food", "beverages", "junk", "misc", "magazines", "tools"].includes(category)
-    && !["weapon", "armor", "armor_mod", "weapon_mod"].includes(String(item?.sourceType || "").toLowerCase());
+  const sourceType = String(item?.sourceType || "").toLowerCase();
+  if (["weapon", "armor", "armor_mod", "weapon_mod", "bobblehead", "special", "stealth_boy", "stealthboy"].includes(sourceType)) return false;
+  return ["ammo", "aid", "food", "beverages", "junk", "misc", "magazines", "tools"].includes(category);
 }
 
 function identity(item) {
