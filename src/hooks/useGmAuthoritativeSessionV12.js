@@ -9,24 +9,15 @@ export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
 
 function clampFootprint(value) {
   const size = Number(value);
-  if (size === 3) return 3;
-  if (size === 2) return 2;
-  return 1;
+  return size >= 2 ? 2 : 1;
 }
 
 function tokenFootprint(token) {
   if (!token) return 1;
   const stats = token.stats && typeof token.stats === "object" ? token.stats : {};
-  const explicit = Number(stats.footprint ?? stats.size);
-  if (explicit === 3 || explicit === 2 || explicit === 1) return explicit;
-
-  if (stats.hordeEnabled) {
-    const baseSize = clampFootprint(stats.baseSize ?? token.size);
-    return baseSize >= 2 ? 3 : 2;
-  }
-
-  const baseSize = Number(stats.baseSize);
-  if (baseSize === 3 || baseSize === 2 || baseSize === 1) return baseSize;
+  const explicit = stats.footprint ?? stats.size;
+  if (explicit != null && explicit !== "") return clampFootprint(explicit);
+  if (stats.baseSize != null && stats.baseSize !== "") return clampFootprint(stats.baseSize);
   return clampFootprint(token.size);
 }
 
@@ -40,6 +31,7 @@ function decorateToken(token) {
       ...(token.stats && typeof token.stats === "object" ? token.stats : {}),
       footprint,
       size: footprint,
+      baseSize: clampFootprint(token.stats?.baseSize ?? footprint),
     },
   };
 }
@@ -86,14 +78,15 @@ export default function useGmAuthoritativeSessionV12(form) {
     const requested = clampFootprint(
       payload?.stats?.footprint
       ?? payload?.stats?.size
-      ?? (payload?.stats?.hordeEnabled
-        ? (clampFootprint(payload?.stats?.baseSize ?? payload?.size) >= 2 ? 3 : 2)
-        : payload?.size)
+      ?? payload?.size
+      ?? payload?.stats?.baseSize
+      ?? 1
     );
     const stats = {
       ...(payload?.stats && typeof payload.stats === "object" ? payload.stats : {}),
       footprint: requested,
       size: requested,
+      baseSize: requested,
     };
     return base.createNpcToken?.({ ...payload, size: requested, stats });
   };
@@ -111,6 +104,7 @@ export default function useGmAuthoritativeSessionV12(form) {
       ...(patch?.stats && typeof patch.stats === "object" ? patch.stats : {}),
       footprint: desired,
       size: desired,
+      baseSize: desired,
     };
 
     return base.updateToken?.(tokenId, {
@@ -126,12 +120,11 @@ export default function useGmAuthoritativeSessionV12(form) {
     const result = await base.moveToken?.(tokenId, x, y);
     if (!result?.ok || !desired || desired === 1 || base.mode !== "host") return result;
 
-    // Some older native token paths only preserve 1x1/2x2 during a move.
-    // Re-assert the canonical footprint after the authoritative position write.
     const stats = {
       ...(current?.stats && typeof current.stats === "object" ? current.stats : {}),
       footprint: desired,
       size: desired,
+      baseSize: desired,
     };
     const repaired = await base.updateToken?.(tokenId, {
       size: desired,
@@ -142,7 +135,7 @@ export default function useGmAuthoritativeSessionV12(form) {
 
   return {
     ...base,
-    realtimeTransport: "socketio-gm-authority-v12-stable-npc-footprints",
+    realtimeTransport: "socketio-gm-authority-v12-explicit-one-two-cell-footprints",
     tacticalScenes,
     tacticalScene,
     liveTacticalScene,
