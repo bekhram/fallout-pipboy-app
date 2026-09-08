@@ -276,6 +276,27 @@
   white-space: pre-line;
 }
 
+.tactical-enemy-attack-buttons,
+.bestiary-attack-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tactical-crowd-hp { display: grid; gap: 5px; }
+.tactical-crowd-hp > div { display: grid; grid-template-columns: 1fr auto auto; gap: 5px; align-items: center; }
+
+.tactical-grid .gm-session-token.is-size-3 {
+  left: 3px;
+  top: 3px;
+  width: calc(300% - 6px);
+  height: calc(300% - 6px);
+  transform: none;
+  border-radius: 16%;
+  z-index: 9;
+}
+.tactical-grid .gm-session-token.is-size-3.is-selected { transform: none; box-shadow: 0 0 18px currentColor; }
+
 .tactical-grid {
   min-height: 560px;
   aspect-ratio: auto;

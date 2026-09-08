@@ -6,6 +6,9 @@ import {
   createEmptyBestiaryEntry,
 } from "../../data/bestiary.js";
 import "./bestiary.css";
+import DiceRollModal from "../dice/DiceRollModal.jsx";
+import { attackRollConfig, normalizeBestiaryAttacks } from "../../utils/bestiaryAttacks.js";
+import { creatureAbilityList } from "../../data/creatureModifiers.js";
 
 const CUSTOM_STORAGE_KEY = "fallout_pipboy_bestiary_custom_v1";
 const INDEX_CACHE_PREFIX = "fallout_pipboy_bestiary_index_i18n_v1";
@@ -82,6 +85,11 @@ function writeJson(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* optional cache */ }
 }
 
+function readCharacterWeapons() {
+  const saved = readJson("fallout_pipboy_v4_last_character", {});
+  return Array.isArray(saved?.data?.weapons) ? saved.data.weapons : [];
+}
+
 function searchable(entry) {
   return [entry.name, entry.creatureType, entry.summary, entry.attacks, entry.abilities, ...(entry.tags || [])]
     .filter(Boolean).join(" ").toLowerCase();
@@ -121,6 +129,9 @@ export default function BestiaryScreen() {
   const [indexTranslations, setIndexTranslations] = useState({});
   const [detailTranslations, setDetailTranslations] = useState({});
   const [translationState, setTranslationState] = useState("idle");
+  const [diceRoll, setDiceRoll] = useState(null);
+  const [pendingAutoD6, setPendingAutoD6] = useState(null);
+  const characterWeapons = useMemo(readCharacterWeapons, []);
 
   useEffect(() => writeJson(CUSTOM_STORAGE_KEY, customEntries), [customEntries]);
 
@@ -236,12 +247,31 @@ export default function BestiaryScreen() {
     setCustomEntries((prev) => prev.map((entry) => entry.id === selected.id ? { ...entry, [key]: value } : entry));
   };
 
+  const updateCategory = (value) => {
+    updateCustom("category", value);
+    updateCustom("statKind", ["trap", "hazard", "obstacle"].includes(value) ? "rule" : value === "npc" ? "character" : "creature");
+  };
+
   const removeCustom = () => {
     if (!selected?.custom) return;
     if (!window.confirm(copy.confirmDelete)) return;
     setCustomEntries((prev) => prev.filter((entry) => entry.id !== selected.id));
     setSelectedId(BESTIARY_ENTRIES[0]?.id || null);
     setEditing(false);
+  };
+
+  const updateAttack = (index, patch) => updateCustom("attackProfiles", (selected.attackProfiles || []).map((attack, i) => i === index ? { ...attack, ...patch } : attack));
+  const addAttack = () => updateCustom("attackProfiles", [...(selected.attackProfiles || []), { id: `attack-${Date.now()}`, name: "", targetNumber: 10, diceCount: 2, difficulty: 1, damage: 3, effects: "", range: "" }]);
+  const addWeapon = (weaponIndex) => {
+    const weapon = characterWeapons[Number(weaponIndex)];
+    if (!weapon) return;
+    const damage = Number(String(weapon.damage || "").match(/\d+/)?.[0] || 0);
+    const effects = [...(Array.isArray(weapon.effects) ? weapon.effects : []), weapon.customEffect].filter(Boolean).join(", ");
+    updateCustom("attackProfiles", [...(selected.attackProfiles || []), { id: `weapon-${Date.now()}`, name: weapon.name || "Weapon", targetNumber: 10, diceCount: 2, difficulty: 1, damage, effects, range: weapon.range || "", weapon }]);
+  };
+  const rollAttack = (entry, attack) => {
+    setPendingAutoD6(null);
+    setDiceRoll(attackRollConfig(entry, attack, entry.groupSize));
   };
 
   const renderSkills = () => {
@@ -286,10 +316,20 @@ export default function BestiaryScreen() {
               <div className="bestiary-detail-head"><h3>{selected.name || copy.add}</h3><div className="pip-actions-inline"><button className="pip-btn is-primary" type="button" onClick={() => setEditing(false)}>{copy.save}</button><button className="pip-btn" type="button" onClick={removeCustom}>{copy.remove}</button></div></div>
               <div className="bestiary-edit-grid">
                 <label><span>{copy.name}</span><input className="pip-input" value={selected.name || ""} onChange={(e) => updateCustom("name", e.target.value)} /></label>
-                <label><span>{copy.category}</span><select className="pip-input" value={selected.category || "creature"} onChange={(e) => updateCustom("category", e.target.value)}>{BESTIARY_CATEGORIES.filter((x) => x !== "all").map((x) => <option value={x} key={x}>{copy[x] || x}</option>)}</select></label>
+                <label><span>{copy.category}</span><select className="pip-input" value={selected.category || "creature"} onChange={(e) => updateCategory(e.target.value)}>{BESTIARY_CATEGORIES.filter((x) => x !== "all").map((x) => <option value={x} key={x}>{copy[x] || x}</option>)}</select></label>
                 <label><span>{copy.level}</span><input className="pip-input" value={selected.level || ""} onChange={(e) => updateCustom("level", e.target.value)} /></label>
                 <label><span>{copy.type}</span><input className="pip-input" value={selected.creatureType || ""} onChange={(e) => updateCustom("creatureType", e.target.value)} /></label>
-                {["body","mind","melee","guns","other","hp","initiative","defense","carryWeight","meleeBonus"].map((key) => <label key={key}><span>{copy[key]}</span><input className="pip-input" value={selected[key] || ""} onChange={(e) => updateCustom(key, e.target.value)} /></label>)}
+                {(selected.statKind === "character" ? ["hp","initiative","defense","carryWeight","luckPoints"] : ["body","mind","melee","guns","other","hp","initiative","defense","carryWeight","meleeBonus"]).map((key) => <label key={key}><span>{copy[key]}</span><input className="pip-input" value={selected[key] || ""} onChange={(e) => updateCustom(key, e.target.value)} /></label>)}
+                {selected.statKind === "character" ? ["STR","PER","END","CHA","INT","AGI","LCK"].map((key) => <label key={key}><span>{key}</span><input className="pip-input" type="number" min="1" max="20" value={selected.special?.[key] || ""} onChange={(e) => updateCustom("special", { ...(selected.special || {}), [key]: e.target.value })} /></label>) : null}
+                <label><span>МОДИФИКАТОР</span><select className="pip-input" value={selected.modifier || "standard"} onChange={(e) => updateCustom("modifier", e.target.value)}><option value="minion">MINION</option><option value="standard">STANDARD</option><option value="special">SPECIAL</option><option value="legendary">LEGENDARY</option></select></label>
+                <label><span>ТОЛПА</span><select className="pip-input" value={selected.groupSize || 1} onChange={(e) => updateCustom("groupSize", Number(e.target.value))}>{[1,2,3,4,5].map((n) => <option key={n} value={n}>{n}</option>)}</select></label>
+                {creatureAbilityList(selected.modifier).length ? <label><span>{copy.abilities}</span><select className="pip-input" value={selected.specialAbilityId || ""} onChange={(e) => { const ability = creatureAbilityList(selected.modifier).find((item) => item.id === e.target.value); updateCustom("specialAbilityId", e.target.value); updateCustom("specialAbility", ability ? `${ability.name}: ${ability.summary}` : ""); }}><option value="">—</option>{creatureAbilityList(selected.modifier).map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select></label> : null}
+                {selected.modifier === "legendary" ? <label className="is-wide"><span>ЛЕГЕНДАРНАЯ НАГРАДА</span><input className="pip-input" value={selected.legendaryReward || ""} onChange={(e) => updateCustom("legendaryReward", e.target.value)} /></label> : null}
+                <div className="is-wide bestiary-attack-editor">
+                  <div className="bestiary-attack-editor-head"><strong>{copy.attacks}</strong><button type="button" className="pip-btn" onClick={addAttack}>+ {copy.attacks}</button></div>
+                  {selected.category === "npc" && characterWeapons.length ? <select className="pip-input" defaultValue="" onChange={(e) => { addWeapon(e.target.value); e.target.value = ""; }}><option value="">+ ОРУЖИЕ ИЗ КАРТОЧКИ</option>{characterWeapons.map((weapon, index) => <option key={`${weapon.inventoryId || weapon.name}-${index}`} value={index}>{weapon.name || `Weapon ${index + 1}`}</option>)}</select> : null}
+                  {(selected.attackProfiles || []).map((attack, index) => <div className="bestiary-attack-edit-row" key={attack.id || index}><input className="pip-input" placeholder="Название" value={attack.name || ""} onChange={(e) => updateAttack(index, { name: e.target.value })} /><input className="pip-input" type="number" title="TN" min="1" max="20" value={attack.targetNumber ?? 10} onChange={(e) => updateAttack(index, { targetNumber: e.target.value })} /><input className="pip-input" type="number" title="d20" min="1" max="10" value={attack.diceCount ?? 2} onChange={(e) => updateAttack(index, { diceCount: e.target.value })} /><input className="pip-input" type="number" title="CD" min="0" max="30" value={attack.damage ?? 0} onChange={(e) => updateAttack(index, { damage: e.target.value })} /><button type="button" className="pip-btn" onClick={() => updateCustom("attackProfiles", selected.attackProfiles.filter((_, i) => i !== index))}>×</button></div>)}
+                </div>
                 {["summary","attacks","abilities","tactics","loot","notes"].map((key) => <label className="is-wide" key={key}><span>{copy[key]}</span><textarea className="pip-textarea" value={selected[key] || ""} onChange={(e) => updateCustom(key, e.target.value)} /></label>)}
               </div>
             </div>
@@ -309,15 +349,17 @@ export default function BestiaryScreen() {
               {shown.special && Object.values(shown.special).some((v) => String(v ?? "").trim()) ? <Section title={copy.special}><div className="bestiary-special-grid">{["STR","PER","END","CHA","INT","AGI","LCK"].map((key) => <Field key={key} label={key} value={shown.special[key]} />)}</div></Section> : null}
               {Array.isArray(shown.skills) && shown.skills.length ? <Section title={copy.skills}><div className="bestiary-skill-list">{renderSkills()}</div></Section> : null}
               {shown.drBlock ? <Section title={copy.dr}><div className="pip-logbox bestiary-text">{localizeDr(shown.drBlock, language)}</div></Section> : null}
+              {normalizeBestiaryAttacks(shown).length ? <Section title={copy.attacks}><div className="bestiary-attack-buttons">{normalizeBestiaryAttacks(shown).map((attack) => <button type="button" className="pip-btn is-primary" key={attack.id} onClick={() => rollAttack(shown, attack)}>{attack.name}</button>)}</div></Section> : null}
 
               {["detectionDifficulty","disarmDifficulty","trigger","damage","effect"].some((key) => shown[key]) ? <Section title={copy[shown.category] || copy.hazard}><div className="bestiary-stat-grid"><Field label={copy.detectionDifficulty} value={shown.detectionDifficulty} /><Field label={copy.disarmDifficulty} value={shown.disarmDifficulty} /></div>{shown.trigger ? <div className="pip-logbox bestiary-text"><strong>{copy.trigger}: </strong>{shown.trigger}</div> : null}{shown.damage ? <div className="pip-logbox bestiary-text"><strong>{copy.damage}: </strong>{shown.damage}</div> : null}{shown.effect ? <div className="pip-logbox bestiary-text"><strong>{copy.effect}: </strong>{shown.effect}</div> : null}</Section> : null}
 
-              {["summary","attacks","abilities","tactics","loot","notes"].map((key) => shown[key] ? <Section title={copy[key]} key={key}><div className="pip-logbox bestiary-text">{shown[key]}</div></Section> : null)}
+              {["summary","abilities","tactics","loot","notes"].map((key) => shown[key] ? <Section title={copy[key]} key={key}><div className="pip-logbox bestiary-text">{shown[key]}</div></Section> : null)}
               {shown.source ? <Section title={copy.source}><div className="pip-logbox bestiary-source">{shown.source}</div></Section> : null}
             </article>
           )}
         </div>
       </div>
+      <DiceRollModal isOpen={Boolean(diceRoll)} onClose={() => setDiceRoll(null)} rollConfig={diceRoll} pendingAutoD6={pendingAutoD6} setPendingAutoD6={setPendingAutoD6} />
     </section>
   );
 }

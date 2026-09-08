@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
+import { applyCreatureModifier } from "../../utils/bestiaryAttacks.js";
 import "./gmSessionMap.css";
 import "./sceneLibrary.css";
 
@@ -65,7 +66,7 @@ function makeStartZone(cols, rows) {
   return result;
 }
 
-function tokenSize(token) { return Number(token?.size) === 2 ? 2 : 1; }
+function tokenSize(token) { return Math.max(1, Math.min(3, Number(token?.size) || 1)); }
 function cellKey(x, y) { return `${x}:${y}`; }
 
 function cellsFor(token, x = token.x, y = token.y) {
@@ -127,15 +128,24 @@ async function compressBackground(file) {
 
 function npcStats(entry) {
   if (!entry) return null;
-  const maxHp = Number(entry.maxHp ?? entry.hp ?? entry.health ?? 0) || null;
+  const prepared = applyCreatureModifier(entry, entry.modifier, entry.groupSize);
+  const maxHp = Number(prepared.maxHp ?? prepared.hp ?? prepared.health ?? 0) || null;
   return {
     hp: maxHp,
     maxHp,
-    defense: Number(entry.defense ?? entry.def ?? 0) || null,
+    defense: Number(prepared.defense ?? prepared.def ?? 0) || null,
     initiative: Number(entry.initiative ?? entry.init ?? 0) || null,
     level: Number(entry.level ?? 0) || null,
-    attacks: String(entry.attacks ?? entry.attack ?? entry.weapons ?? ""),
-    drBlock: String(entry.drBlock ?? entry.dr ?? entry.resistance ?? ""),
+    attacks: String(prepared.attacks ?? prepared.attack ?? prepared.weapons ?? ""),
+    attackProfiles: prepared.attackProfiles,
+    modifier: prepared.modifier,
+    groupSize: prepared.groupSize,
+    memberHps: Array.from({ length: prepared.groupSize }, () => hp),
+    xp: prepared.xp,
+    resistanceBonus: prepared.resistanceBonus,
+    specialAbility: prepared.specialAbility || "",
+    legendaryReward: prepared.legendaryReward || "",
+    drBlock: String(prepared.drBlock ?? prepared.dr ?? prepared.resistance ?? ""),
   };
 }
 
@@ -150,6 +160,8 @@ function managerToken(token) {
     initiative: stats.initiative ?? null,
     level: stats.level ?? null,
     attacks: stats.attacks ?? "",
+    attackProfiles: stats.attackProfiles ?? [], modifier: stats.modifier || "standard", groupSize: stats.groupSize || 1, memberHps: stats.memberHps ?? [],
+    xp: stats.xp ?? null, resistanceBonus: stats.resistanceBonus || 0, specialAbility: stats.specialAbility || "", legendaryReward: stats.legendaryReward || "",
     drBlock: stats.drBlock ?? "",
   };
 }
@@ -251,7 +263,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     });
   };
 
-  const addEnemy = async ({ entry, name, size }) => session.createNpcToken?.({ name, size, npcId: entry?.id || null, stats: npcStats(entry) });
+  const addEnemy = async ({ entry, name, size }) => session.createNpcToken?.({ name, size: Number(entry?.groupSize) > 1 ? (Number(size) === 2 ? 3 : 2) : size, npcId: entry?.id || null, stats: npcStats(entry) });
 
   const updateEnemy = async (tokenId, patch = {}) => {
     const source = tokens.find((token) => token.id === tokenId);
@@ -260,7 +272,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     if (Object.prototype.hasOwnProperty.call(patch, "avatar")) next.avatar = patch.avatar;
     if (Object.prototype.hasOwnProperty.call(patch, "size")) next.size = patch.size;
     if (Object.prototype.hasOwnProperty.call(patch, "name")) next.name = patch.name;
-    const statKeys = ["hp", "maxHp", "defense", "initiative", "level", "attacks", "drBlock"];
+    const statKeys = ["hp", "maxHp", "memberHps", "defense", "initiative", "level", "attacks", "attackProfiles", "modifier", "groupSize", "xp", "resistanceBonus", "specialAbility", "legendaryReward", "drBlock"];
     if (statKeys.some((key) => Object.prototype.hasOwnProperty.call(patch, key))) {
       next.stats = { ...(source.stats || {}) };
       statKeys.forEach((key) => { if (Object.prototype.hasOwnProperty.call(patch, key)) next.stats[key] = patch[key]; });
