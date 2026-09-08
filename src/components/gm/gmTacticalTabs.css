@@ -1,7 +1,7 @@
 .gm-tactical-tabs-shell {
   min-width: 0;
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .gm-tactical-tabs {
@@ -9,7 +9,7 @@
   top: 0;
   z-index: 80;
   min-width: 0;
-  padding: 6px;
+  padding: 4px;
   border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
   background: color-mix(in srgb, var(--pip-bg, #071008) 94%, transparent);
   box-shadow: 0 8px 18px rgba(0, 0, 0, .28);
@@ -19,28 +19,28 @@
 .gm-tactical-tabs__scroll {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
   scroll-snap-type: x proximity;
-  padding-bottom: 2px;
+  padding-bottom: 1px;
   -webkit-overflow-scrolling: touch;
 }
 
 .gm-tactical-tab {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 7px 12px;
+  min-height: 30px;
+  padding: 5px 9px;
   border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   background: color-mix(in srgb, currentColor 3%, transparent);
   color: inherit;
   font: inherit;
-  font-size: .68rem;
+  font-size: .62rem;
   font-weight: 700;
-  letter-spacing: .08em;
+  letter-spacing: .05em;
   cursor: pointer;
   scroll-snap-align: start;
 }
@@ -175,18 +175,24 @@
 
 @media (max-width: 640px) {
   .gm-tactical-tabs-shell {
-    gap: 6px;
+    gap: 4px;
   }
 
   .gm-tactical-tabs {
     margin-inline: -2px;
-    padding: 5px;
+    padding: 3px;
+  }
+
+  .gm-tactical-tabs__scroll {
+    gap: 3px;
+    padding-bottom: 0;
   }
 
   .gm-tactical-tab {
-    min-height: 34px;
-    padding: 6px 10px;
-    font-size: .62rem;
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: .56rem;
+    letter-spacing: .035em;
   }
 
   .gm-tactical-view--battle .gm-session-map {
