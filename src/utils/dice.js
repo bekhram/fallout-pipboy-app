@@ -1,13 +1,11 @@
 export function getHitLocationByD20(value) {
   const roll = Number(value);
-
   if (roll >= 1 && roll <= 2) return "head";
   if (roll >= 3 && roll <= 8) return "torso";
   if (roll >= 9 && roll <= 11) return "leftArm";
   if (roll >= 12 && roll <= 14) return "rightArm";
   if (roll >= 15 && roll <= 17) return "leftLeg";
   if (roll >= 18 && roll <= 20) return "rightLeg";
-
   return "unknown";
 }
 
@@ -34,8 +32,6 @@ export function clamp(value, min, max) { return Math.max(min, Math.min(max, valu
 
 function normalizeEffects(effects = []) { return effects.map((item) => String(item).trim().toLowerCase()); }
 function hasEffect(effects = [], effectName) { return normalizeEffects(effects).includes(String(effectName).trim().toLowerCase()); }
-
-/* ---------- D20 CHECKS ---------- */
 
 export function evaluateFalloutD20Value(value, { targetNumber = null, criticalRange = 1 } = {}) {
   const safeCriticalRange = clamp(Number(criticalRange) || 1, 1, 20);
@@ -80,8 +76,8 @@ export function buildFalloutD20Result(rollValues, { targetNumber = null, critica
   };
 }
 
-export function rollFalloutD20({ diceCount = 2, targetNumber = null, criticalRange = 1, label = "", maxDiceCount = 5 } = {}) {
-  const safeMaximum = clamp(Number(maxDiceCount) || 5, 1, 10);
+export function rollFalloutD20({ diceCount = 2, targetNumber = null, criticalRange = 1, label = "", maxDiceCount = 10 } = {}) {
+  const safeMaximum = clamp(Number(maxDiceCount) || 10, 1, 10);
   const safeDiceCount = clamp(Number(diceCount) || 2, 1, safeMaximum);
   const rollValues = Array.from({ length: safeDiceCount }, () => rollSingleDie(20));
   return buildFalloutD20Result(rollValues, { targetNumber, criticalRange, label });
@@ -97,8 +93,6 @@ export function rerollOneFalloutD20(result, dieIndex, { targetNumber, criticalRa
     label: label !== undefined ? label : result?.label ?? "",
   });
 }
-
-/* ---------- D6 DAMAGE ---------- */
 
 export function evaluateFalloutD6Value(value) {
   if (value === 1) return { value, damage: 1, effect: 0, label: "1" };
