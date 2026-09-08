@@ -32,12 +32,12 @@ export function normalizeStructuredAttack(value = {}, index = 0) {
     id: String(value.id || `attack-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`),
     name: String(value.name || `Attack ${index + 1}`).trim().slice(0, 80) || `Attack ${index + 1}`,
     targetNumber: Math.max(0, Math.min(20, number(value.targetNumber ?? value.tn, 0))),
-    skill: String(value.skill || "Melee").trim().slice(0, 40) || "Melee",
+    skill: String(value.skill || "Combat").trim().slice(0, 40) || "Combat",
     attribute: String(value.attribute || "BODY").trim().slice(0, 20) || "BODY",
     damageDice: Math.max(0, Math.min(50, number(value.damageDice ?? value.damage ?? value.cd, 0))),
     damageType: String(value.damageType || "Physical").trim().slice(0, 60) || "Physical",
     effects: String(value.effects || "").trim().slice(0, 300),
-    range: String(value.range || "C").trim().slice(0, 20),
+    range: String(value.range || "").trim().slice(0, 20),
     source: String(value.source || "custom").slice(0, 40),
   };
 }
@@ -63,28 +63,13 @@ export function parseAttackText(value = "") {
       name: nameMatch?.[1]?.trim() || `Attack ${index + 1}`,
       targetNumber: number(tnMatch?.[1], 0),
       attribute: profileMatch?.[1]?.toUpperCase() || "BODY",
-      skill: profileMatch?.[2]?.trim() || (/gun|rifle|pistol|shot|laser|plasma/i.test(line) ? "Guns" : "Melee"),
+      skill: profileMatch?.[2]?.trim() || "Combat",
       damageDice: number(cdMatch?.[1], 0),
       damageType: typeMatch?.[1] || "Physical",
       effects: effects.join(", "),
       source: "bestiary",
     }, index);
   });
-}
-
-export function normalizeWeaponAttack(value = {}, index = 0) {
-  return normalizeStructuredAttack({
-    id: value.id || `weapon-${String(value.name || index).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-    name: value.name || "Weapon",
-    targetNumber: value.targetNumber || value.tn || 0,
-    skill: value.skill || value.weaponType || value.type || "Guns",
-    attribute: value.attribute || (/melee/i.test(String(value.weaponType || value.type || "")) ? "BODY" : "MIND"),
-    damageDice: value.creatureDamage ?? value.damageDice ?? value.damage ?? 0,
-    damageType: value.damageType || "Physical",
-    effects: value.effects || "",
-    range: value.range || "C",
-    source: "weapon",
-  }, index);
 }
 
 export function normalizeHordeHp(value, count, memberMaxHp) {
