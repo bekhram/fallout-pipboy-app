@@ -143,8 +143,8 @@
 
 @media (max-width: 780px) {
   .gm-tactical-map-core .battlemap-scroll-grid {
-    height: min(54svh, 600px) !important;
-    min-height: 360px !important;
+    height: clamp(280px, 58svh, 600px) !important;
+    min-height: min(320px, 52svh) !important;
   }
 
   .session-tactical-player .battlemap-scroll-grid {
@@ -192,8 +192,8 @@
 
 @media (max-width: 430px) {
   .gm-tactical-map-core .battlemap-scroll-grid {
-    height: min(52svh, 560px) !important;
-    min-height: 340px !important;
+    height: clamp(260px, 56svh, 520px) !important;
+    min-height: min(290px, 50svh) !important;
   }
 
   .battlemap-view-controls {
@@ -207,5 +207,12 @@
 
   .battlemap-zoom-value {
     min-width: 42px;
+  }
+}
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .gm-tactical-map-core .battlemap-scroll-grid {
+    height: clamp(230px, 72svh, 520px) !important;
+    min-height: min(250px, 64svh) !important;
   }
 }

@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { gmMenuText } from "./gmMenuI18n.js";
+import { responsiveBattlemapBaseCell } from "../../utils/battlemapCoordinates.js";
 import "./battlemapViewport.css";
 
 const BASE_CELL_SIZE = 44;
 const MIN_ZOOM = 15;
 const MAX_ZOOM = 200;
-const MOBILE_COMFORT_ZOOM = 85;
 
 export const BATTLEMAP_GRID_PRESETS = [
   [12, 12],
@@ -35,7 +35,7 @@ function isMobileViewport() {
 }
 
 function comfortZoom() {
-  return isMobileViewport() ? MOBILE_COMFORT_ZOOM : 100;
+  return 100;
 }
 
 function makeStartZone(cols, rows) {
@@ -47,7 +47,7 @@ function makeStartZone(cols, rows) {
 }
 
 function zoomKey(role) {
-  return `pip2d20_battlemap_zoom_${role === "player" ? "player" : "gm"}_v2`;
+  return `pip2d20_battlemap_zoom_${role === "player" ? "player" : "gm"}_v3`;
 }
 
 function readZoom(role) {
@@ -95,10 +95,18 @@ export default function BattlemapViewportControls({
     grid: null,
     toolbar: null,
   });
+  const [viewportWidth, setViewportWidth] = useState(() =>
+    typeof window === "undefined" ? 360 : window.innerWidth
+  );
   const query = useMemo(() => selectors(role), [role]);
   const cols = Math.max(1, Number(scene?.cols || 12));
   const rows = Math.max(1, Number(scene?.rows || 12));
-  const cellSize = Math.max(6, Math.round((BASE_CELL_SIZE * zoom) / 100));
+  const baseCellSize = responsiveBattlemapBaseCell({
+    viewportWidth,
+    mobile: isMobileViewport(),
+    maxCellSize: BASE_CELL_SIZE,
+  });
+  const cellSize = Math.max(6, Math.round((baseCellSize * zoom) / 100));
 
   const focusToken = useMemo(() => {
     const tokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
@@ -171,6 +179,12 @@ export default function BattlemapViewportControls({
     if (!grid || !container) return undefined;
 
     const apply = () => {
+      const nextViewportWidth = Math.round(
+        container.clientWidth || window.innerWidth
+      );
+      setViewportWidth((current) =>
+        current === nextViewportWidth ? current : nextViewportWidth
+      );
       grid.classList.add("battlemap-scroll-grid");
       grid.classList.toggle("is-overview-zoom", zoom < 45);
       grid.style.setProperty("--battlemap-cell", `${cellSize}px`);
@@ -259,7 +273,7 @@ export default function BattlemapViewportControls({
     const height = Math.max(120, grid.clientHeight - 20);
     const cell = Math.min(width / cols, height / rows);
     setZoom(
-      clamp(Math.floor((cell / BASE_CELL_SIZE) * 100), MIN_ZOOM, MAX_ZOOM)
+      clamp(Math.floor((cell / baseCellSize) * 100), MIN_ZOOM, MAX_ZOOM)
     );
     requestAnimationFrame(() =>
       grid.scrollTo({ left: 0, top: 0, behavior: "smooth" })

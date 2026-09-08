@@ -30,3 +30,18 @@ export function gridDropCell({
     y: Math.max(0, Math.min(rows - size, row - anchorY)),
   };
 }
+
+export function responsiveBattlemapBaseCell({
+  viewportWidth,
+  mobile = false,
+  minCellSize = 30,
+  maxCellSize = 44,
+  visibleColumns = 10,
+}) {
+  if (!mobile) return maxCellSize;
+
+  const width = Number(viewportWidth);
+  const availableWidth = Number.isFinite(width) ? Math.max(240, width - 8) : 360;
+  const adaptiveSize = Math.floor(availableWidth / visibleColumns);
+  return Math.max(minCellSize, Math.min(maxCellSize, adaptiveSize));
+}
