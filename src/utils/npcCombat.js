@@ -36,8 +36,10 @@ export function normalizeStructuredAttack(value = {}, index = 0) {
     attribute: String(value.attribute || "BODY").trim().slice(0, 20) || "BODY",
     damageDice: Math.max(0, Math.min(50, number(value.damageDice ?? value.damage ?? value.cd, 0))),
     damageType: String(value.damageType || "Physical").trim().slice(0, 60) || "Physical",
-    effects: String(value.effects || "").trim().slice(0, 300),
+    effects: String(value.effects ?? value.effect ?? "").trim().slice(0, 500),
     range: String(value.range || "").trim().slice(0, 20),
+    weaponType: String(value.weaponType || value.attackType || "").slice(0, 100),
+    qualities: String(value.qualities || "").slice(0, 500),
     source: String(value.source || "custom").slice(0, 40),
   };
 }
@@ -48,15 +50,20 @@ export function normalizeWeaponAttack(value = {}, index = 0) {
     id: value.id || value.weaponId || `weapon-${index}`,
     name: value.name || value.originalName || `Weapon ${index + 1}`,
     damageDice: value.damageDice ?? value.creatureDamage ?? value.damage,
+    effects: value.effects ?? value.effect,
     source: "weapon",
   }, index);
   return {
     ...normalized,
     weaponId: String(value.weaponId || value.id || "").slice(0, 120),
-    weaponType: String(value.weaponType || "").slice(0, 100),
+    weaponType: String(value.weaponType || normalized.weaponType || "").slice(0, 100),
     rate: Math.max(0, number(value.rate, 0)),
-    qualities: String(value.qualities || "").slice(0, 500),
+    qualities: String(value.qualities || normalized.qualities || "").slice(0, 500),
     rarity: String(value.rarity || "").slice(0, 80),
+    ammo: String(value.ammo || "").slice(0, 120),
+    cost: String(value.cost ?? "").slice(0, 80),
+    weight: String(value.weight ?? "").slice(0, 80),
+    effect: String(value.effect ?? value.effects ?? "").slice(0, 800),
   };
 }
 
