@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
-import GmUnifiedTokenManagerV4 from "./GmUnifiedTokenManagerV4.jsx";
+import GmUnifiedTokenManagerV5 from "./GmUnifiedTokenManagerV5.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
 import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
@@ -20,22 +20,22 @@ const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
 const TABS = ["battle", "autogm", "loot", "merchants", "custom", "encounter", "scenes", "tokens"];
 const COPY = {
   en: {
-    battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CUSTOM",
+    battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC",
     encounter: "ENCOUNTER", scenes: "SCENES", tokens: "TOKENS",
     waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu",
   },
   ru: {
-    battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СВОЁ",
+    battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC",
     encounter: "СЦЕНА", scenes: "СЦЕНЫ", tokens: "ТОКЕНЫ",
     waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ",
   },
   uk: {
-    battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "ВЛАСНЕ",
+    battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC",
     encounter: "СЦЕНА", scenes: "СЦЕНИ", tokens: "ТОКЕНИ",
     waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ",
   },
   pl: {
-    battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "WŁASNE",
+    battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC",
     encounter: "SPOTKANIE", scenes: "SCENY", tokens: "TOKENY",
     waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG",
   },
@@ -84,7 +84,7 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
-        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV4 session={session} /></div>
+        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV5 session={session} /></div>
       </div>
     </section>
   );
