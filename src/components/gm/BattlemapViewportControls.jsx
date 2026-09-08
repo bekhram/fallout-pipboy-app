@@ -5,6 +5,7 @@ import "./battlemapViewport.css";
 const BASE_CELL_SIZE = 44;
 const MIN_ZOOM = 15;
 const MAX_ZOOM = 200;
+const MOBILE_COMFORT_ZOOM = 85;
 
 export const BATTLEMAP_GRID_PRESETS = [
   [12, 12],
@@ -24,6 +25,14 @@ function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value) || min));
 }
 
+function isMobileViewport() {
+  return typeof window !== "undefined" && window.matchMedia?.("(max-width: 780px)")?.matches;
+}
+
+function comfortZoom() {
+  return isMobileViewport() ? MOBILE_COMFORT_ZOOM : 100;
+}
+
 function makeStartZone(cols, rows) {
   const result = [];
   for (let y = Math.max(0, rows - 3); y < rows; y += 1) {
@@ -33,15 +42,15 @@ function makeStartZone(cols, rows) {
 }
 
 function zoomKey(role) {
-  return `pip2d20_battlemap_zoom_${role === "player" ? "player" : "gm"}_v1`;
+  return `pip2d20_battlemap_zoom_${role === "player" ? "player" : "gm"}_v2`;
 }
 
 function readZoom(role) {
   try {
     const saved = Number(localStorage.getItem(zoomKey(role)));
-    return Number.isFinite(saved) ? clamp(saved, MIN_ZOOM, MAX_ZOOM) : 100;
+    return Number.isFinite(saved) ? clamp(saved, MIN_ZOOM, MAX_ZOOM) : comfortZoom();
   } catch {
-    return 100;
+    return comfortZoom();
   }
 }
 
@@ -60,6 +69,11 @@ function selectors(role) {
   };
 }
 
+function tokenFootprint(token) {
+  const value = Number(token?.stats?.footprint || token?.size || 1);
+  return Math.max(1, Math.min(3, Number.isFinite(value) ? value : 1));
+}
+
 export default function BattlemapViewportControls({ session, role = "gm", activeTab = "" }) {
   const scene = session?.tacticalScene || null;
   const [zoom, setZoom] = useState(() => readZoom(role));
@@ -68,6 +82,24 @@ export default function BattlemapViewportControls({ session, role = "gm", active
   const cols = Math.max(1, Number(scene?.cols || 12));
   const rows = Math.max(1, Number(scene?.rows || 12));
   const cellSize = Math.max(6, Math.round(BASE_CELL_SIZE * zoom / 100));
+
+  const focusToken = useMemo(() => {
+    const tokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
+    const activeId = String(session?.turnState?.activeTokenId || "");
+    const active = activeId ? tokens.find((token) => String(token?.id || "") === activeId) : null;
+    if (active) return active;
+
+    if (role === "player") {
+      const clientId = String(session?.clientId || session?.peerId || "");
+      const owned = tokens.find((token) =>
+        token?.kind === "player" &&
+        (String(token?.ownerClientId || "") === clientId || String(token?.stats?.assignedClientId || "") === clientId)
+      );
+      if (owned) return owned;
+    }
+
+    return tokens.find((token) => token?.kind === "player") || tokens[0] || null;
+  }, [scene?.tokens, session?.turnState?.activeTokenId, session?.clientId, session?.peerId, role]);
 
   useEffect(() => {
     try { localStorage.setItem(zoomKey(role), String(Math.round(zoom))); } catch { /* noop */ }
@@ -128,10 +160,35 @@ export default function BattlemapViewportControls({ session, role = "gm", active
     };
   }, [targets.grid, targets.container, cols, rows, cellSize, zoom, activeTab]);
 
+  const focusMap = (behavior = "smooth") => {
+    const grid = targets.grid;
+    if (!grid) return;
+
+    let x = 0;
+    let y = 0;
+    let size = 1;
+    if (focusToken) {
+      x = Math.max(0, Number(focusToken.x || 0));
+      y = Math.max(0, Number(focusToken.y || 0));
+      size = tokenFootprint(focusToken);
+    } else if (Array.isArray(scene?.startZone) && scene.startZone.length) {
+      const first = scene.startZone[0];
+      x = Math.max(0, Number(first?.x || 0));
+      y = Math.max(0, Number(first?.y || 0));
+    }
+
+    const centerX = (x + size / 2) * cellSize;
+    const centerY = (y + size / 2) * cellSize;
+    const left = clamp(centerX - grid.clientWidth / 2, 0, Math.max(0, grid.scrollWidth - grid.clientWidth));
+    const top = clamp(centerY - grid.clientHeight / 2, 0, Math.max(0, grid.scrollHeight - grid.clientHeight));
+    grid.scrollTo({ left, top, behavior });
+  };
+
   useEffect(() => {
     const grid = targets.grid;
     if (!grid || !scene?.sceneId) return;
-    requestAnimationFrame(() => grid.scrollTo({ left: 0, top: 0 }));
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => focusMap("auto")));
+    return () => cancelAnimationFrame(frame);
   }, [scene?.sceneId, targets.grid]);
 
   if (!scene || !targets.container || !targets.grid) return null;
@@ -139,8 +196,8 @@ export default function BattlemapViewportControls({ session, role = "gm", active
   const nudge = (x, y) => {
     const grid = targets.grid;
     if (!grid) return;
-    const dx = Math.max(160, Math.round(grid.clientWidth * 0.68));
-    const dy = Math.max(160, Math.round(grid.clientHeight * 0.68));
+    const dx = Math.max(120, Math.round(grid.clientWidth * 0.72));
+    const dy = Math.max(120, Math.round(grid.clientHeight * 0.72));
     grid.scrollBy({ left: x * dx, top: y * dy, behavior: "smooth" });
   };
 
@@ -154,12 +211,17 @@ export default function BattlemapViewportControls({ session, role = "gm", active
     requestAnimationFrame(() => grid.scrollTo({ left: 0, top: 0, behavior: "smooth" }));
   };
 
+  const resetComfortZoom = () => {
+    setZoom(comfortZoom());
+    requestAnimationFrame(() => requestAnimationFrame(() => focusMap("smooth")));
+  };
+
   const zoomControls = createPortal(
     <div className="battlemap-view-controls" aria-label="Battlemap zoom controls">
       <button type="button" className="battlemap-control-btn" onClick={() => setZoom((value) => clamp(value - 10, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom out">−</button>
       <input className="battlemap-zoom-slider" type="range" min={MIN_ZOOM} max={MAX_ZOOM} step="5" value={zoom} onChange={(event) => setZoom(clamp(event.target.value, MIN_ZOOM, MAX_ZOOM))} aria-label="Battlemap zoom" />
       <button type="button" className="battlemap-control-btn" onClick={() => setZoom((value) => clamp(value + 10, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom in">+</button>
-      <button type="button" className="battlemap-zoom-value" onClick={() => setZoom(100)} title="Reset zoom to 100%">{Math.round(zoom)}%</button>
+      <button type="button" className="battlemap-zoom-value" onClick={resetComfortZoom} title="Comfort zoom">{Math.round(zoom)}%</button>
       <button type="button" className="battlemap-fit-btn" onClick={fit}>FIT</button>
     </div>,
     targets.container
@@ -169,7 +231,7 @@ export default function BattlemapViewportControls({ session, role = "gm", active
     <div className="battlemap-pan-controls" aria-label="Battlemap pan controls">
       <button type="button" className="is-up" onClick={() => nudge(0, -1)} aria-label="Pan up">↑</button>
       <button type="button" className="is-left" onClick={() => nudge(-1, 0)} aria-label="Pan left">←</button>
-      <button type="button" className="is-center" onClick={() => targets.grid?.scrollTo({ left: 0, top: 0, behavior: "smooth" })} aria-label="Pan to map origin">⌂</button>
+      <button type="button" className="is-center" onClick={() => focusMap("smooth")} aria-label="Focus active token">◎</button>
       <button type="button" className="is-right" onClick={() => nudge(1, 0)} aria-label="Pan right">→</button>
       <button type="button" className="is-down" onClick={() => nudge(0, 1)} aria-label="Pan down">↓</button>
     </div>,
