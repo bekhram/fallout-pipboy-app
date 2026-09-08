@@ -1,0 +1,196 @@
+.gm-loot-generator {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  background: color-mix(in srgb, var(--pip-bg, #071008) 96%, transparent);
+}
+
+.gm-loot-generator__head h2,
+.gm-loot-results h3 {
+  margin: 2px 0 0;
+}
+
+.gm-loot-generator__head p {
+  margin: 5px 0 0;
+  max-width: 760px;
+  opacity: .76;
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.gm-loot-generator__controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.gm-loot-filter-card {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+}
+
+.gm-loot-filter-card > strong {
+  font-size: .7rem;
+  letter-spacing: .08em;
+}
+
+.gm-loot-filter-card small {
+  opacity: .66;
+  font-size: .62rem;
+  line-height: 1.35;
+}
+
+.gm-loot-rarity-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 8px;
+}
+
+.gm-loot-rarity-row label {
+  display: grid;
+  gap: 4px;
+  font-size: .58rem;
+  opacity: .9;
+}
+
+.gm-loot-rarity-row select {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+  background: var(--pip-bg, #071008);
+  color: inherit;
+  font: inherit;
+}
+
+.gm-loot-filter-card input[type="range"] {
+  width: 100%;
+}
+
+.gm-loot-wealth-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -5px;
+  font-size: .58rem;
+  opacity: .66;
+}
+
+.gm-loot-type-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.gm-loot-type-chip {
+  min-width: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  background: color-mix(in srgb, currentColor 2%, transparent);
+  cursor: pointer;
+  font-size: .65rem;
+}
+
+.gm-loot-type-chip.is-active {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.gm-loot-type-chip input {
+  margin: 0;
+}
+
+.gm-loot-generate {
+  width: 100%;
+  min-height: 42px;
+}
+
+.gm-loot-status {
+  padding: 7px 9px;
+  border-left: 2px solid currentColor;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  font-size: .68rem;
+}
+
+.gm-loot-results {
+  display: grid;
+  gap: 7px;
+}
+
+.gm-loot-results h3 {
+  font-size: .78rem;
+}
+
+.gm-loot-results__table {
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.gm-loot-results__row {
+  min-width: 650px;
+  display: grid;
+  grid-template-columns: minmax(250px, 2.4fr) .55fr .8fr .7fr .65fr;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border-top: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  font-size: .68rem;
+}
+
+.gm-loot-results__row:first-child {
+  border-top: 0;
+}
+
+.gm-loot-results__row.is-head {
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  opacity: .72;
+}
+
+.gm-loot-results__row > span:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.gm-loot-results__row b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gm-loot-results__row small {
+  opacity: .58;
+  font-size: .55rem;
+}
+
+@media (max-width: 720px) {
+  .gm-loot-generator {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .gm-loot-generator__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .gm-loot-type-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gm-loot-type-chip {
+    min-height: 34px;
+    font-size: .61rem;
+  }
+}
