@@ -20,10 +20,13 @@ export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
 // Merchant stock can be several KB, so creation state must be chunked.
 const MERCHANT_CREATE_CHUNK_SIZE = 600;
 const MERCHANT_CREATE_MAX_CHUNKS = 48;
+const MERCHANT_CLEAR_PREFIX = "[[PIP2D20_MERCHANT_CLEAR_V1]]";
 
 function hiddenMerchantText(value) {
   const text = String(value || "");
-  return text.startsWith(MERCHANT_CREATE_PREFIX) || text.startsWith(MERCHANT_TRADE_PREFIX);
+  return text.startsWith(MERCHANT_CREATE_PREFIX)
+    || text.startsWith(MERCHANT_TRADE_PREFIX)
+    || text.startsWith(MERCHANT_CLEAR_PREFIX);
 }
 
 function parsePacket(message, prefix) {
@@ -70,11 +73,18 @@ function replayMerchants(chat = []) {
   const createBatches = new Map();
 
   for (const message of Array.isArray(chat) ? chat : []) {
+    const clearPacket = parsePacket(message, MERCHANT_CLEAR_PREFIX);
+    if (clearPacket) {
+      if (message?.authorRole !== "gm") continue;
+      merchants.clear();
+      createBatches.clear();
+      continue;
+    }
+
     const createPacket = parsePacket(message, MERCHANT_CREATE_PREFIX);
     if (createPacket) {
       if (message?.authorRole !== "gm") continue;
 
-      // New chunked merchant state. Reconstruct it once the final piece arrives.
       if (createPacket?.chunked === true) {
         const batchId = String(createPacket?.batchId || "").trim();
         const total = Math.max(1, Math.min(MERCHANT_CREATE_MAX_CHUNKS, Number(createPacket?.total || 1)));
@@ -101,7 +111,6 @@ function replayMerchants(chat = []) {
         continue;
       }
 
-      // Backward compatibility with the original single-message format.
       const merchant = normalizeMerchant(createPacket?.merchant || createPacket);
       if (merchant) merchants.set(merchant.id, merchant);
       continue;
@@ -126,6 +135,7 @@ function replayMerchants(chat = []) {
       accepted: false,
       reason: "INVALID",
       price: 0,
+      quantity: 1,
       item: null,
       playerItemKey: String(trade?.playerItemKey || ""),
     };
@@ -155,6 +165,7 @@ function replayMerchants(chat = []) {
       result.accepted = true;
       result.reason = "OK";
       result.price = price;
+      result.quantity = Math.max(1, Number(item?.quantity || 1));
       result.item = { ...item };
       tradeResults.push(result);
       continue;
@@ -167,11 +178,14 @@ function replayMerchants(chat = []) {
       continue;
     }
 
-    const price = merchantSellPrice(soldItem);
+    const quantity = Math.max(1, Math.floor(Number(soldItem?.quantity || 1)));
+    const unitPrice = merchantSellPrice({ ...soldItem, quantity: 1 });
+    const price = unitPrice * quantity;
     if (merchant.caps < price) {
       result.reason = "NO_VENDOR_CAPS";
       result.price = price;
-      result.item = soldItem;
+      result.quantity = quantity;
+      result.item = { ...soldItem, quantity };
       tradeResults.push(result);
       continue;
     }
@@ -179,7 +193,7 @@ function replayMerchants(chat = []) {
     const resaleItem = {
       ...soldItem,
       stockId: `resale-${tradeId}`,
-      quantity: 1,
+      quantity,
       cost: String(merchantBuyPrice(soldItem)),
     };
     merchant.caps -= price;
@@ -189,6 +203,7 @@ function replayMerchants(chat = []) {
     result.accepted = true;
     result.reason = "OK";
     result.price = price;
+    result.quantity = quantity;
     result.item = resaleItem;
     tradeResults.push(result);
   }
@@ -237,6 +252,11 @@ export default function useGmAuthoritativeSessionV10(form) {
     return sentAll;
   };
 
+  const clearMerchants = () => {
+    if (base.mode !== "host" || base.status !== "online") return false;
+    return Boolean(base.sendChat?.(`${MERCHANT_CLEAR_PREFIX}${JSON.stringify({ at: Date.now() })}`));
+  };
+
   const tradeWithMerchant = ({ tradeId, merchantId, kind, stockId = "", item = null, playerItemKey = "" } = {}) => {
     if (base.status !== "online" || !merchantId) return false;
     const resolvedTradeId = String(tradeId || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
@@ -255,19 +275,18 @@ export default function useGmAuthoritativeSessionV10(form) {
     if (base.mode !== "host" || base.status !== "online") return false;
     const id = String(merchantId || "").trim();
     if (!id) return false;
-    // Creation chunks are queued before this message, so an offer can be sent
-    // immediately after generation without waiting for React replay to catch up.
     return Boolean(base.sendChat?.(formatMerchantOfferMessage(id)));
   };
 
   return {
     ...base,
-    realtimeTransport: "socketio-gm-authority-v10-shared-merchants-chunked",
+    realtimeTransport: "socketio-gm-authority-v10-shared-merchants-quantity-clear",
     roomState: base.roomState ? { ...base.roomState, chat: visibleChat } : base.roomState,
     feed: visibleFeed,
     merchants: replay.merchants,
     merchantTradeResults: replay.tradeResults,
     createMerchant,
+    clearMerchants,
     tradeWithMerchant,
     publishMerchantOffer,
   };
