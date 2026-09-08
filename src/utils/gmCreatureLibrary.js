@@ -1,6 +1,6 @@
 import { getCampaign, putCampaign } from "./sessionLocalCache.js";
 import { makeId } from "./gmSessionModel.js";
-import { applyNpcRank, normalizeNpcRank, normalizeStructuredAttack, normalizeWeaponAttack } from "./npcCombat.js";
+import { applyNpcRank, normalizeNpcRank, normalizeStructuredAttack } from "./npcCombat.js";
 
 const LIBRARY_ID = "pip2d20-gm-custom-creatures-v1";
 export const CUSTOM_CREATURES_CHANGED_EVENT = "pip2d20:custom-creatures-changed";
@@ -23,16 +23,6 @@ function normalizeSkills(value) {
 
 function normalizeAttackList(value) {
   return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => normalizeStructuredAttack(item, index));
-}
-
-function normalizeWeaponList(value) {
-  return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => ({
-    ...normalizeWeaponAttack(item, index),
-    weaponType: String(item?.weaponType || item?.type || item?.skill || "").slice(0, 60),
-    rate: Math.max(0, numeric(item?.rate, 0)),
-    qualities: String(item?.qualities || "").slice(0, 400),
-    originalName: String(item?.originalName || item?.name || "").slice(0, 100),
-  }));
 }
 
 function normalizeCreature(value = {}) {
@@ -66,7 +56,6 @@ function normalizeCreature(value = {}) {
     skills: normalizeSkills(value.skills),
     attacks: String(value.attacks || "").slice(0, 2000),
     customAttacks: normalizeAttackList(value.customAttacks),
-    weapons: normalizeWeaponList(value.weapons),
     abilities: String(value.abilities || "").slice(0, 2400),
     drBlock: String(value.drBlock || "").slice(0, 1200),
     tactics: String(value.tactics || "").slice(0, 1600),
@@ -129,7 +118,7 @@ export function blankCreature() {
     hp: 10, maxHp: 10, baseMaxHp: 10, defense: 1, baseDefense: 1,
     initiative: 0, level: 1, xp: 0, baseXp: 0, size: 1, baseSize: 1,
     rank: "standard", hordeEnabled: false, hordeSize: 2,
-    customAttacks: [], weapons: [],
+    customAttacks: [],
     special: { STR: 5, PER: 5, END: 5, CHA: 5, INT: 5, AGI: 5, LCK: 5 },
   });
 }
