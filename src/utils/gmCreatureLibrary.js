@@ -1,5 +1,6 @@
 import { getCampaign, putCampaign } from "./sessionLocalCache.js";
 import { makeId } from "./gmSessionModel.js";
+import { applyNpcRank, normalizeNpcRank, normalizeStructuredAttack, normalizeWeaponAttack } from "./npcCombat.js";
 
 const LIBRARY_ID = "pip2d20-gm-custom-creatures-v1";
 export const CUSTOM_CREATURES_CHANGED_EVENT = "pip2d20:custom-creatures-changed";
@@ -11,25 +12,42 @@ function normalizeSpecial(value) {
 }
 
 function normalizeSkills(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join("\n").slice(0, 1600);
-  }
+  if (Array.isArray(value)) return value.map((item) => typeof item === "string" ? item : JSON.stringify(item)).join("\n").slice(0, 1600);
   return String(value || "").slice(0, 1600);
+}
+
+function normalizeAttackList(value) {
+  return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => normalizeStructuredAttack(item, index));
+}
+
+function normalizeWeaponList(value) {
+  return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => ({
+    ...normalizeWeaponAttack(item, index),
+    weaponType: String(item?.weaponType || item?.type || item?.skill || "").slice(0, 60),
+    rate: Math.max(0, Number(item?.rate || 0) || 0),
+    qualities: String(item?.qualities || "").slice(0, 400),
+    originalName: String(item?.originalName || item?.name || "").slice(0, 100),
+  }));
 }
 
 function normalizeCreature(value = {}) {
   const maxHp = Math.max(0, Number(value.maxHp ?? value.hp ?? 0) || 0);
-  return {
+  const baseSize = Number(value.baseSize ?? value.size) === 2 ? 2 : 1;
+  const base = {
     id: String(value.id || makeId("creature")),
     name: String(value.name || "Creature").trim().slice(0, 80) || "Creature",
     category: String(value.category || "npc").trim().slice(0, 40) || "npc",
     creatureType: String(value.creatureType || "").trim().slice(0, 100),
-    size: Number(value.size) === 2 ? 2 : 1,
+    size: baseSize,
+    baseSize,
     level: Math.max(0, Number(value.level || 0) || 0),
-    xp: Math.max(0, Number(value.xp || 0) || 0),
+    xp: Math.max(0, Number(value.baseXp ?? value.xp || 0) || 0),
+    baseXp: Math.max(0, Number(value.baseXp ?? value.xp || 0) || 0),
     hp: Math.max(0, Number(value.hp ?? maxHp) || 0),
     maxHp,
+    baseMaxHp: Math.max(1, Number(value.baseMaxHp ?? maxHp || 1) || 1),
     defense: Math.max(0, Number(value.defense || 0) || 0),
+    baseDefense: Math.max(0, Number(value.baseDefense ?? value.defense || 0) || 0),
     initiative: Math.max(0, Number(value.initiative || 0) || 0),
     body: String(value.body ?? "").slice(0, 20),
     mind: String(value.mind ?? "").slice(0, 20),
@@ -39,6 +57,8 @@ function normalizeCreature(value = {}) {
     special: normalizeSpecial(value.special),
     skills: normalizeSkills(value.skills),
     attacks: String(value.attacks || "").slice(0, 2000),
+    customAttacks: normalizeAttackList(value.customAttacks),
+    weapons: normalizeWeaponList(value.weapons),
     abilities: String(value.abilities || "").slice(0, 2400),
     drBlock: String(value.drBlock || "").slice(0, 1200),
     tactics: String(value.tactics || "").slice(0, 1600),
@@ -46,9 +66,18 @@ function normalizeCreature(value = {}) {
     summary: String(value.summary || "").slice(0, 1800),
     source: String(value.source || "").slice(0, 600),
     notes: String(value.notes || "").slice(0, 1800),
+    rank: normalizeNpcRank(value.rank),
+    hordeEnabled: Boolean(value.hordeEnabled),
+    hordeSize: Math.max(2, Math.min(5, Number(value.hordeSize || 2) || 2)),
+    hordeHp: Array.isArray(value.hordeHp) ? value.hordeHp : [],
+    specialFeature: String(value.specialFeature || "").slice(0, 1200),
+    legendaryAbility: String(value.legendaryAbility || "").slice(0, 1600),
+    legendaryReward: String(value.legendaryReward || "").slice(0, 1200),
     avatar: String(value.avatar || "").startsWith("data:image/") ? String(value.avatar) : "",
     updatedAt: Number(value.updatedAt || Date.now()),
   };
+  const ranked = applyNpcRank(base, base);
+  return { ...base, ...ranked, size: ranked.footprint || baseSize };
 }
 
 export async function loadCustomCreatures() {
@@ -64,12 +93,7 @@ function notifyChanged() {
 
 async function write(creatures) {
   const normalized = creatures.map(normalizeCreature);
-  await putCampaign({
-    campaignId: LIBRARY_ID,
-    role: "gm-creature-library",
-    revision: Date.now(),
-    creatures: normalized,
-  });
+  await putCampaign({ campaignId: LIBRARY_ID, role: "gm-creature-library", revision: Date.now(), creatures: normalized });
   notifyChanged();
   return normalized;
 }
@@ -93,16 +117,11 @@ export async function deleteCustomCreature(id) {
 
 export function blankCreature() {
   return normalizeCreature({
-    id: makeId("creature"),
-    name: "",
-    category: "npc",
-    creatureType: "Human",
-    hp: 10,
-    maxHp: 10,
-    defense: 1,
-    initiative: 0,
-    level: 1,
-    size: 1,
+    id: makeId("creature"), name: "", category: "npc", creatureType: "Human",
+    hp: 10, maxHp: 10, baseMaxHp: 10, defense: 1, baseDefense: 1,
+    initiative: 0, level: 1, xp: 0, baseXp: 0, size: 1, baseSize: 1,
+    rank: "standard", hordeEnabled: false, hordeSize: 2,
+    customAttacks: [], weapons: [],
     special: { STR: 5, PER: 5, END: 5, CHA: 5, INT: 5, AGI: 5, LCK: 5 },
   });
 }
