@@ -6,6 +6,11 @@ const LIBRARY_ID = "pip2d20-gm-custom-creatures-v1";
 export const CUSTOM_CREATURES_CHANGED_EVENT = "pip2d20:custom-creatures-changed";
 const SPECIAL_KEYS = ["STR", "PER", "END", "CHA", "INT", "AGI", "LCK"];
 
+function numeric(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function normalizeSpecial(value) {
   const source = value && typeof value === "object" ? value : {};
   return Object.fromEntries(SPECIAL_KEYS.map((key) => [key, String(source[key] ?? "").slice(0, 12)]));
@@ -24,15 +29,18 @@ function normalizeWeaponList(value) {
   return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => ({
     ...normalizeWeaponAttack(item, index),
     weaponType: String(item?.weaponType || item?.type || item?.skill || "").slice(0, 60),
-    rate: Math.max(0, Number(item?.rate || 0) || 0),
+    rate: Math.max(0, numeric(item?.rate, 0)),
     qualities: String(item?.qualities || "").slice(0, 400),
     originalName: String(item?.originalName || item?.name || "").slice(0, 100),
   }));
 }
 
 function normalizeCreature(value = {}) {
-  const maxHp = Math.max(0, Number(value.maxHp ?? value.hp ?? 0) || 0);
+  const maxHp = Math.max(0, numeric(value.maxHp ?? value.hp, 0));
   const baseSize = Number(value.baseSize ?? value.size) === 2 ? 2 : 1;
+  const baseXp = Math.max(0, numeric(value.baseXp ?? value.xp, 0));
+  const baseMaxHp = Math.max(1, numeric(value.baseMaxHp ?? maxHp, 1));
+  const baseDefense = Math.max(0, numeric(value.baseDefense ?? value.defense, 0));
   const base = {
     id: String(value.id || makeId("creature")),
     name: String(value.name || "Creature").trim().slice(0, 80) || "Creature",
@@ -40,15 +48,15 @@ function normalizeCreature(value = {}) {
     creatureType: String(value.creatureType || "").trim().slice(0, 100),
     size: baseSize,
     baseSize,
-    level: Math.max(0, Number(value.level || 0) || 0),
-    xp: Math.max(0, Number(value.baseXp ?? value.xp || 0) || 0),
-    baseXp: Math.max(0, Number(value.baseXp ?? value.xp || 0) || 0),
-    hp: Math.max(0, Number(value.hp ?? maxHp) || 0),
+    level: Math.max(0, numeric(value.level, 0)),
+    xp: baseXp,
+    baseXp,
+    hp: Math.max(0, numeric(value.hp ?? maxHp, maxHp)),
     maxHp,
-    baseMaxHp: Math.max(1, Number(value.baseMaxHp ?? maxHp || 1) || 1),
-    defense: Math.max(0, Number(value.defense || 0) || 0),
-    baseDefense: Math.max(0, Number(value.baseDefense ?? value.defense || 0) || 0),
-    initiative: Math.max(0, Number(value.initiative || 0) || 0),
+    baseMaxHp,
+    defense: Math.max(0, numeric(value.defense, 0)),
+    baseDefense,
+    initiative: Math.max(0, numeric(value.initiative, 0)),
     body: String(value.body ?? "").slice(0, 20),
     mind: String(value.mind ?? "").slice(0, 20),
     melee: String(value.melee ?? "").slice(0, 20),
@@ -68,7 +76,7 @@ function normalizeCreature(value = {}) {
     notes: String(value.notes || "").slice(0, 1800),
     rank: normalizeNpcRank(value.rank),
     hordeEnabled: Boolean(value.hordeEnabled),
-    hordeSize: Math.max(2, Math.min(5, Number(value.hordeSize || 2) || 2)),
+    hordeSize: Math.max(2, Math.min(5, numeric(value.hordeSize, 2))),
     hordeHp: Array.isArray(value.hordeHp) ? value.hordeHp : [],
     specialFeature: String(value.specialFeature || "").slice(0, 1200),
     legendaryAbility: String(value.legendaryAbility || "").slice(0, 1600),
