@@ -119,7 +119,7 @@
 
 .battlemap-pan-controls .is-up { grid-column: 2; grid-row: 1; }
 .battlemap-pan-controls .is-left { grid-column: 1; grid-row: 2; }
-.battlemap-pan-controls .is-center { grid-column: 2; grid-row: 2; font-size: .68rem; }
+.battlemap-pan-controls .is-center { grid-column: 2; grid-row: 2; font-size: .76rem; }
 .battlemap-pan-controls .is-right { grid-column: 3; grid-row: 2; }
 .battlemap-pan-controls .is-down { grid-column: 2; grid-row: 3; }
 
@@ -145,9 +145,9 @@
 }
 
 @media (max-width: 780px) {
-  .battlemap-scroll-grid {
-    height: 64vh !important;
-    min-height: 280px !important;
+  .gm-tactical-map-core .battlemap-scroll-grid {
+    height: min(54svh, 600px) !important;
+    min-height: 360px !important;
   }
 
   .session-tactical-player .battlemap-scroll-grid {
@@ -156,54 +156,66 @@
   }
 
   .battlemap-view-controls {
-    top: calc(var(--battlemap-grid-top, 0px) + 5px);
-    right: 7px;
+    top: calc(var(--battlemap-grid-top, 0px) + 6px);
+    right: 54px;
     gap: 3px;
-    min-height: 32px;
+    min-height: 30px;
     padding: 3px;
   }
 
   .battlemap-control-btn {
-    width: 28px;
-    height: 28px;
+    width: 27px;
+    height: 27px;
+    font-size: .9rem;
   }
 
   .battlemap-zoom-slider {
-    width: 84px;
+    width: 72px;
   }
 
   .battlemap-zoom-value,
   .battlemap-fit-btn {
-    min-height: 28px;
+    min-height: 27px;
     padding: 3px 5px;
-    font-size: .5rem;
+    font-size: .48rem;
   }
 
   .battlemap-pan-controls {
-    top: calc(var(--battlemap-grid-top, 0px) + 45px);
-    right: 7px;
-    grid-template-columns: repeat(3, 30px);
-    grid-template-rows: repeat(3, 30px);
+    top: calc(var(--battlemap-grid-top, 0px) + 43px);
+    right: 54px;
+    grid-template-columns: repeat(3, 27px);
+    grid-template-rows: repeat(3, 27px);
     gap: 2px;
     padding: 3px;
   }
 
   .battlemap-pan-controls button {
-    width: 30px;
-    height: 30px;
+    width: 27px;
+    height: 27px;
+    font-size: .7rem;
   }
 }
 
 @media (max-width: 430px) {
+  .gm-tactical-map-core .battlemap-scroll-grid {
+    height: min(52svh, 560px) !important;
+    min-height: 340px !important;
+  }
+
   .battlemap-view-controls {
-    max-width: calc(100% - 14px);
+    right: 50px;
+    max-width: calc(100% - 58px);
   }
 
   .battlemap-zoom-slider {
-    width: 62px;
+    display: none;
   }
 
   .battlemap-zoom-value {
-    min-width: 44px;
+    min-width: 42px;
+  }
+
+  .battlemap-pan-controls {
+    right: 50px;
   }
 }
