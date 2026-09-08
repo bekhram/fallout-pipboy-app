@@ -28,36 +28,44 @@ const COPY = {
     title: "MERCHANT GENERATOR", subtitle: "Create a shared session merchant with persistent stock and caps.",
     type: "MERCHANT TYPE", rarity: "RARITY", from: "MIN", to: "MAX", wealth: "WEALTH",
     wealthHint: "Higher wealth means more stock and more starting caps.", generate: "GENERATE MERCHANT",
-    trade: "TRADE / SEND TO CHAT", loading: "LOADING DATABASES...", noLoot: "No goods match this merchant and rarity range.",
-    created: "Merchant created for the whole session.", createFailed: "Could not create merchant in the session.",
-    offerSent: "Merchant offer sent to chat.", offerFailed: "Could not send merchant offer.", stock: "STOCK",
+    trade: "TRADE / SEND TO CHAT", clear: "CLEAR MERCHANTS", loading: "LOADING DATABASES...",
+    noLoot: "No goods match this merchant and rarity range.", created: "Merchant created for the whole session.",
+    createFailed: "Could not create merchant in the session.", offerSent: "Merchant offer sent to chat.",
+    offerFailed: "Could not send merchant offer.", clearConfirm: "Remove all merchants from this session?",
+    cleared: "All merchants were removed from the session.", clearFailed: "Could not clear merchants.", stock: "STOCK",
     caps: "CAPS", items: "ITEMS", name: "NAME", qty: "QTY", price: "PRICE", itemRarity: "RARITY",
   },
   ru: {
     title: "ГЕНЕРАТОР ТОРГОВЦЕВ", subtitle: "Создаёт общего для всей сессии торговца с единым ассортиментом и кассой.",
     type: "ТИП ТОРГОВЦА", rarity: "РЕДКОСТЬ", from: "ОТ", to: "ДО", wealth: "БОГАТСТВО",
     wealthHint: "Чем выше богатство, тем больше товаров и стартовых крышек.", generate: "СГЕНЕРИРОВАТЬ ТОРГОВЦА",
-    trade: "ТОРГОВАТЬ / ОТПРАВИТЬ В ЧАТ", loading: "ЗАГРУЗКА БАЗ...", noLoot: "Для этого типа торговца и диапазона редкости нет товаров.",
-    created: "Торговец создан для всей сессии.", createFailed: "Не удалось создать торговца в сессии.",
-    offerSent: "Ассортимент отправлен в чат.", offerFailed: "Не удалось отправить торговца в чат.", stock: "ТОВАРЫ",
+    trade: "ТОРГОВАТЬ / ОТПРАВИТЬ В ЧАТ", clear: "ОЧИСТИТЬ ТОРГОВЦЕВ", loading: "ЗАГРУЗКА БАЗ...",
+    noLoot: "Для этого типа торговца и диапазона редкости нет товаров.", created: "Торговец создан для всей сессии.",
+    createFailed: "Не удалось создать торговца в сессии.", offerSent: "Ассортимент отправлен в чат.",
+    offerFailed: "Не удалось отправить торговца в чат.", clearConfirm: "Удалить всех торговцев из этой сессии?",
+    cleared: "Все торговцы удалены из сессии.", clearFailed: "Не удалось очистить торговцев.", stock: "ТОВАРЫ",
     caps: "КРЫШКИ", items: "ПОЗИЦИЙ", name: "НАЗВАНИЕ", qty: "КОЛ-ВО", price: "ЦЕНА", itemRarity: "РЕДКОСТЬ",
   },
   uk: {
     title: "ГЕНЕРАТОР ТОРГОВЦІВ", subtitle: "Створює спільного для всієї сесії торговця з єдиним асортиментом і касою.",
     type: "ТИП ТОРГОВЦЯ", rarity: "РІДКІСТЬ", from: "ВІД", to: "ДО", wealth: "БАГАТСТВО",
     wealthHint: "Що вище багатство, то більше товарів і стартових кришок.", generate: "ЗГЕНЕРУВАТИ ТОРГОВЦЯ",
-    trade: "ТОРГУВАТИ / В ЧАТ", loading: "ЗАВАНТАЖЕННЯ БАЗ...", noLoot: "Для цього типу і діапазону рідкості немає товарів.",
-    created: "Торговця створено для всієї сесії.", createFailed: "Не вдалося створити торговця.",
-    offerSent: "Асортимент надіслано в чат.", offerFailed: "Не вдалося надіслати торговця в чат.", stock: "ТОВАРИ",
+    trade: "ТОРГУВАТИ / В ЧАТ", clear: "ОЧИСТИТИ ТОРГОВЦІВ", loading: "ЗАВАНТАЖЕННЯ БАЗ...",
+    noLoot: "Для цього типу і діапазону рідкості немає товарів.", created: "Торговця створено для всієї сесії.",
+    createFailed: "Не вдалося створити торговця.", offerSent: "Асортимент надіслано в чат.",
+    offerFailed: "Не вдалося надіслати торговця в чат.", clearConfirm: "Видалити всіх торговців із цієї сесії?",
+    cleared: "Усіх торговців видалено із сесії.", clearFailed: "Не вдалося очистити торговців.", stock: "ТОВАРИ",
     caps: "КРИШКИ", items: "ПОЗИЦІЙ", name: "НАЗВА", qty: "К-СТЬ", price: "ЦІНА", itemRarity: "РІДКІСТЬ",
   },
   pl: {
     title: "GENERATOR HANDLARZY", subtitle: "Tworzy wspólnego dla sesji handlarza ze wspólnym towarem i kapslami.",
     type: "TYP HANDLARZA", rarity: "RZADKOŚĆ", from: "OD", to: "DO", wealth: "BOGACTWO",
     wealthHint: "Większe bogactwo oznacza więcej towaru i kapsli.", generate: "GENERUJ HANDLARZA",
-    trade: "HANDLUJ / WYŚLIJ NA CZAT", loading: "ŁADOWANIE BAZ...", noLoot: "Brak towarów dla tego typu i zakresu rzadkości.",
-    created: "Handlarz utworzony dla całej sesji.", createFailed: "Nie udało się utworzyć handlarza.",
-    offerSent: "Oferta wysłana na czat.", offerFailed: "Nie udało się wysłać oferty.", stock: "TOWAR",
+    trade: "HANDLUJ / WYŚLIJ NA CZAT", clear: "WYCZYŚĆ HANDLARZY", loading: "ŁADOWANIE BAZ...",
+    noLoot: "Brak towarów dla tego typu i zakresu rzadkości.", created: "Handlarz utworzony dla całej sesji.",
+    createFailed: "Nie udało się utworzyć handlarza.", offerSent: "Oferta wysłana na czat.",
+    offerFailed: "Nie udało się wysłać oferty.", clearConfirm: "Usunąć wszystkich handlarzy z tej sesji?",
+    cleared: "Wszyscy handlarze zostali usunięci z sesji.", clearFailed: "Nie udało się wyczyścić handlarzy.", stock: "TOWAR",
     caps: "KAPSLE", items: "POZYCJE", name: "NAZWA", qty: "ILOŚĆ", price: "CENA", itemRarity: "RZADKOŚĆ",
   },
 };
@@ -272,6 +280,7 @@ export default function GmMerchantGenerator({ session = null }) {
   const sharedMerchant = generated ? (session?.merchants || []).find((merchant) => merchant.id === generated.id) || null : null;
   const liveMerchant = sharedMerchant || generated;
   const tradeMerchantId = sharedMerchant?.id || generated?.id || "";
+  const hasMerchants = Boolean((session?.merchants || []).length || generated);
 
   const changeMin = (value) => {
     const next = clampMerchantRarity(value, 0); setMinRarity(next); if (next > maxRarity) setMaxRarity(next);
@@ -301,6 +310,18 @@ export default function GmMerchantGenerator({ session = null }) {
     setStatus(sent ? copy.offerSent : copy.offerFailed);
   };
 
+  const clear = () => {
+    if (!hasMerchants) return;
+    if (typeof window !== "undefined" && !window.confirm(copy.clearConfirm)) return;
+    const sent = Boolean(session?.clearMerchants?.());
+    if (sent) {
+      setGenerated(null);
+      setStatus(copy.cleared);
+    } else {
+      setStatus(copy.clearFailed);
+    }
+  };
+
   return <section className="gm-merchant-generator">
     <header className="gm-merchant-generator__head"><div><div className="pip-bootline">PIP 2D20 // GM</div><h2>[ {copy.title} ]</h2><p>{copy.subtitle}</p></div></header>
     <div className="gm-merchant-controls">
@@ -308,7 +329,7 @@ export default function GmMerchantGenerator({ session = null }) {
       <section className="gm-merchant-card"><strong>{copy.rarity}</strong><div className="gm-merchant-rarity"><label>{copy.from}<select value={minRarity} onChange={(event)=>changeMin(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label><span>—</span><label>{copy.to}<select value={maxRarity} onChange={(event)=>changeMax(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label></div></section>
       <section className="gm-merchant-card"><strong>{copy.wealth}: {wealth}</strong><input type="range" min="1" max="10" step="1" value={wealth} onChange={(event)=>setWealth(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/><div className="gm-merchant-scale"><span>1</span><span>10</span></div><small>{copy.wealthHint}</small></section>
     </div>
-    <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!tradeMerchantId} onClick={trade}>{copy.trade}</button></div>
+    <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!tradeMerchantId} onClick={trade}>{copy.trade}</button><button type="button" className="pip-btn" disabled={!hasMerchants} onClick={clear}>{copy.clear}</button></div>
     {status?<div className="gm-merchant-status">{status}</div>:null}
     {liveMerchant?<section className="gm-merchant-result"><div className="gm-merchant-result__summary"><div><div className="pip-bootline">{getMerchantTypeLabel(liveMerchant.merchantType, language)}</div><h3>{liveMerchant.name}</h3></div><div><strong>💰 {liveMerchant.caps}</strong><span>{copy.caps}</span></div><div><strong>{liveMerchant.stock.length}</strong><span>{copy.items}</span></div></div><h3>[ {copy.stock} ]</h3><div className="gm-merchant-table"><div className="gm-merchant-row is-head"><span>{copy.name}</span><span>{copy.qty}</span><span>{copy.price}</span><span>{copy.itemRarity}</span></div>{liveMerchant.stock.map((item)=><div className="gm-merchant-row" key={item.stockId}><span>{item.name}</span><span>{item.quantity}</span><span>💰 {merchantBuyPrice(item)}</span><span>R{item.rarity}</span></div>)}</div></section>:null}
   </section>;
