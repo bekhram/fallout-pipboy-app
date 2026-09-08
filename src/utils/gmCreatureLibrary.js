@@ -2,6 +2,7 @@ import { getCampaign, putCampaign } from "./sessionLocalCache.js";
 import { makeId } from "./gmSessionModel.js";
 
 const LIBRARY_ID = "pip2d20-gm-custom-creatures-v1";
+export const CUSTOM_CREATURES_CHANGED_EVENT = "pip2d20:custom-creatures-changed";
 
 function normalizeCreature(value = {}) {
   const maxHp = Math.max(0, Number(value.maxHp ?? value.hp ?? 0) || 0);
@@ -27,6 +28,11 @@ export async function loadCustomCreatures() {
   return list.map(normalizeCreature);
 }
 
+function notifyChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CUSTOM_CREATURES_CHANGED_EVENT));
+}
+
 async function write(creatures) {
   const normalized = creatures.map(normalizeCreature);
   await putCampaign({
@@ -35,6 +41,7 @@ async function write(creatures) {
     revision: Date.now(),
     creatures: normalized,
   });
+  notifyChanged();
   return normalized;
 }
 
