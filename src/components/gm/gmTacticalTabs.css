@@ -1,0 +1,194 @@
+.gm-tactical-tabs-shell {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.gm-tactical-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  background: color-mix(in srgb, var(--pip-bg, #071008) 94%, transparent);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, .28);
+  backdrop-filter: blur(8px);
+}
+
+.gm-tactical-tabs__scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gm-tactical-tab {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  cursor: pointer;
+  scroll-snap-align: start;
+}
+
+.gm-tactical-tab:hover {
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.gm-tactical-tab.is-active {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 30%, transparent), 0 0 12px color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.gm-tactical-shell {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.gm-tactical-battle-effects,
+.gm-tactical-environment-edit,
+.gm-tactical-map-core,
+.gm-tactical-token-manager {
+  display: none;
+  min-width: 0;
+}
+
+/* Main GM battle screen: effects + battlemap + scene selector + scene creatures. */
+.gm-tactical-view--battle .gm-tactical-battle-effects,
+.gm-tactical-view--battle .gm-tactical-map-core,
+.gm-tactical-view--battle .gm-tactical-token-manager {
+  display: block;
+}
+
+.gm-tactical-view--battle .gm-session-map__head,
+.gm-tactical-view--battle .tactical-toolbar,
+.gm-tactical-view--battle .gm-session-map__hint,
+.gm-tactical-view--battle .tactical-background-bar,
+.gm-tactical-view--battle .tactical-background-error,
+.gm-tactical-view--battle .tactical-enemy-manager {
+  display: none !important;
+}
+
+.gm-tactical-view--battle .gm-scene-library {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+  padding: 4px 0;
+  border: 0;
+}
+
+.gm-tactical-view--battle .gm-scene-library > * {
+  display: none !important;
+}
+
+.gm-tactical-view--battle .gm-scene-library > label:first-child {
+  display: grid !important;
+  flex: 1 1 260px;
+  max-width: 520px;
+  gap: 4px;
+}
+
+.gm-tactical-view--battle .gm-session-map {
+  gap: 6px;
+}
+
+.gm-tactical-view--battle .gm-session-map__grid {
+  min-height: min(68vh, 760px);
+}
+
+/* V4 is kept mounted once so editor state/dice state survives tab changes. */
+.gm-tactical-token-manager .gm-unified-token-manager > .gm-unified-token-manager__head,
+.gm-tactical-token-manager .gm-unified-token-manager > .gm-token-section {
+  display: none;
+}
+
+.gm-tactical-view--battle .gm-unified-token-manager > .gm-token-section:nth-of-type(4) {
+  display: block;
+}
+
+.gm-tactical-view--battle .gm-unified-token-manager {
+  padding-top: 8px;
+}
+
+/* Custom NPC / Creature editor. */
+.gm-tactical-view--custom .gm-tactical-token-manager {
+  display: block;
+}
+
+.gm-tactical-view--custom .gm-unified-token-manager > .gm-token-section:nth-of-type(3) {
+  display: block;
+}
+
+/* Encounter environment and future map-generation controls. */
+.gm-tactical-view--encounter .gm-tactical-environment-edit {
+  display: block;
+}
+
+/* Scene/tactical-map creation and editing. */
+.gm-tactical-view--scenes .gm-tactical-map-core {
+  display: block;
+}
+
+.gm-tactical-view--scenes .tactical-enemy-manager {
+  display: none !important;
+}
+
+/* Player token assignment + bestiary/custom token adders. */
+.gm-tactical-view--tokens .gm-tactical-token-manager {
+  display: block;
+}
+
+.gm-tactical-view--tokens .gm-unified-token-manager > .gm-token-section:nth-of-type(1),
+.gm-tactical-view--tokens .gm-unified-token-manager > .gm-token-section:nth-of-type(2) {
+  display: block;
+}
+
+.gm-tactical-battle-effects .tactical-environment-summary.is-effects-only {
+  margin: 0;
+}
+
+.gm-tactical-battle-effects .tactical-environment-summary__effects {
+  padding: 8px 10px;
+}
+
+@media (max-width: 640px) {
+  .gm-tactical-tabs-shell {
+    gap: 6px;
+  }
+
+  .gm-tactical-tabs {
+    margin-inline: -2px;
+    padding: 5px;
+  }
+
+  .gm-tactical-tab {
+    min-height: 34px;
+    padding: 6px 10px;
+    font-size: .62rem;
+  }
+
+  .gm-tactical-view--battle .gm-session-map {
+    padding: 6px;
+  }
+
+  .gm-tactical-view--battle .gm-session-map__grid {
+    min-height: 62vh;
+    aspect-ratio: 1 / 1;
+  }
+}
