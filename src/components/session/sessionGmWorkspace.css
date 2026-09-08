@@ -271,6 +271,70 @@
     gap: 8px;
   }
 
+  .session-gm-hostbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .session-gm-hostbar__brand {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .session-gm-hostbar__brand .pip-bootline {
+    overflow: hidden;
+    font-size: .56rem;
+    letter-spacing: .06em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .session-gm-hostbar__brand > strong {
+    flex: 0 0 auto;
+    font-size: .78rem;
+    letter-spacing: .07em;
+  }
+
+  .session-gm-hostbar__session {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 5px;
+    min-width: 0;
+    padding: 3px 5px;
+    font-size: .62rem;
+    white-space: nowrap;
+  }
+
+  .session-gm-hostbar__session .session-status-dot {
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+  }
+
+  .session-gm-code {
+    flex: 0 0 auto;
+    padding: 4px 7px;
+    letter-spacing: .12em;
+  }
+
+  .session-gm-hostbar__actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .session-gm-hostbar__actions .pip-btn {
+    width: 100%;
+    min-height: 31px;
+    padding: 4px 6px;
+    font-size: .6rem;
+    letter-spacing: .035em;
+    line-height: 1.15;
+  }
+
   .session-gm-nav {
     position: relative;
     display: grid;
@@ -288,5 +352,15 @@
   .session-gm-roster-strip__head {
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  }
+}
+
+@media (max-width: 400px) {
+  .session-gm-hostbar__brand .pip-bootline {
+    display: none;
+  }
+
+  .session-gm-hostbar__session {
+    justify-content: space-between;
   }
 }
