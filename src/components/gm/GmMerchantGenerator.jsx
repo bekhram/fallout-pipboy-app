@@ -185,7 +185,8 @@ function pickStock(pool, merchantType, minRarity, maxRarity, wealth) {
 
   for (let index = 0; index < targetCount; index += 1) {
     const available = eligible.filter((item) => !used.has(item.id));
-    const source = available.length ? available : eligible;
+    if (!available.length) break;
+    const source = available;
     const rarities = [...new Set(source.map((item) => item.rarity))];
     const rarity = weightedPick(rarities, (value) => RARITY_WEIGHTS[value] || 1);
     const candidates = source.filter((item) => item.rarity === rarity);
