@@ -42,6 +42,24 @@ export function normalizeStructuredAttack(value = {}, index = 0) {
   };
 }
 
+export function normalizeWeaponAttack(value = {}, index = 0) {
+  const normalized = normalizeStructuredAttack({
+    ...value,
+    id: value.id || value.weaponId || `weapon-${index}`,
+    name: value.name || value.originalName || `Weapon ${index + 1}`,
+    damageDice: value.damageDice ?? value.creatureDamage ?? value.damage,
+    source: "weapon",
+  }, index);
+  return {
+    ...normalized,
+    weaponId: String(value.weaponId || value.id || "").slice(0, 120),
+    weaponType: String(value.weaponType || "").slice(0, 100),
+    rate: Math.max(0, number(value.rate, 0)),
+    qualities: String(value.qualities || "").slice(0, 500),
+    rarity: String(value.rarity || "").slice(0, 80),
+  };
+}
+
 export function parseAttackText(value = "") {
   const lines = String(value || "")
     .split(/\n+/)
@@ -122,7 +140,10 @@ export function applyNpcRank(base = {}, options = {}) {
     hordeLiving: hordeEnabled ? hordeHp.filter((value) => value > 0).length : 0,
     footprint,
     specialFeature: String(options.specialFeature ?? base.specialFeature ?? "").slice(0, 1200),
+    specialFeatureId: String(options.specialFeatureId ?? base.specialFeatureId ?? "").slice(0, 80),
     legendaryAbility: String(options.legendaryAbility ?? base.legendaryAbility ?? "").slice(0, 1600),
+    legendaryAbilityId: String(options.legendaryAbilityId ?? base.legendaryAbilityId ?? "").slice(0, 80),
+    legendaryRewardType: String(options.legendaryRewardType ?? base.legendaryRewardType ?? "").slice(0, 40),
     legendaryReward: String(options.legendaryReward ?? base.legendaryReward ?? "").slice(0, 1200),
   };
 }
@@ -139,6 +160,34 @@ export function effectiveAttackProfile(attack, stats = {}) {
     hordeBonusD20: stats.hordeEnabled ? living : 0,
     hordeBonusDamage: stats.hordeEnabled ? living : 0,
     rankDamageMultiplier: rule.damageMultiplier,
+  };
+}
+
+export function buildNpcAttackRollConfig(attack, stats = {}, actorName = "NPC") {
+  const profile = effectiveAttackProfile(attack, stats);
+  const effects = String(profile.effects || "").split(",").map((item) => item.trim()).filter(Boolean);
+  return {
+    id: `npc-attack-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type: "weapon",
+    diceType: "d20",
+    title: `${actorName} · ${profile.name}`,
+    targetNumber: profile.targetNumber,
+    criticalRange: 1,
+    diceCount: profile.d20Count,
+    difficulty: 1,
+    maxDiceCount: Math.max(5, profile.d20Count),
+    lockDiceCount: true,
+    npcAttack: true,
+    weapon: {
+      name: `${actorName} · ${profile.name}`,
+      damage: `${profile.damageDice} CD`,
+      effects,
+      customEffect: "",
+      skill: profile.skill,
+      damageType: profile.damageType,
+      range: profile.range,
+    },
+    npcProfile: profile,
   };
 }
 
