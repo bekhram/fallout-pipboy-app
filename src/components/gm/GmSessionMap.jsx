@@ -5,6 +5,7 @@ import GmCustomCreatureQuickAdd from "./GmCustomCreatureQuickAdd.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import TacticalEnvironmentPanel from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
+import "./tacticalInteractionFixes.css";
 
 export default function GmSessionMap(props) {
   const bridgedSession = useLiveSessionBridge();
