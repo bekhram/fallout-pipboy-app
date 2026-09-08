@@ -62,6 +62,34 @@
   font-size: .6rem;
 }
 
+.tactical-player-briefing-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.tactical-player-briefing-row > .tactical-environment-summary,
+.tactical-player-briefing-row > .tactical-player-token-setup {
+  margin: 0 !important;
+  min-width: 0;
+}
+
+.tactical-player-briefing-row .tactical-owned-token-picker {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.tactical-player-briefing-row .tactical-owned-token-picker .pip-btn {
+  min-height: 26px;
+  max-width: 112px;
+  padding: 3px 5px;
+  font-size: .5rem;
+}
+
 .session-tactical-toggle.is-live {
   border-width: 2px;
   box-shadow: 0 0 14px color-mix(in srgb, currentColor 22%, transparent), inset 0 0 14px color-mix(in srgb, currentColor 10%, transparent);
@@ -71,7 +99,6 @@
   box-shadow: 0 0 13px color-mix(in srgb, currentColor 24%, transparent), inset 0 0 10px color-mix(in srgb, currentColor 9%, transparent);
 }
 
-/* Tactical player view must always win over the session utility drawer. */
 .session-tactical-overlay {
   inset: 0 !important;
   z-index: 900 !important;
@@ -84,7 +111,7 @@
 }
 
 .session-tactical-player {
-  grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+  grid-template-rows: auto auto minmax(0, 1fr) !important;
   width: 100vw !important;
   max-width: none !important;
   height: 100dvh !important;
@@ -134,8 +161,13 @@
     display: none;
   }
 
+  .tactical-player-briefing-row {
+    grid-template-columns: minmax(0, 1fr) 110px;
+    gap: 5px;
+  }
+
   .session-tactical-player {
-    gap: 6px !important;
+    gap: 5px !important;
     padding: max(6px, env(safe-area-inset-top)) 6px max(6px, env(safe-area-inset-bottom)) !important;
   }
 
@@ -166,12 +198,6 @@
     min-height: 30px;
     padding: 4px 6px;
     font-size: .5rem;
-  }
-
-  .session-tactical-player > .gm-session-map__hint {
-    min-height: 0;
-    padding: 4px 6px;
-    font-size: .52rem;
   }
 
   .session-tactical-player .tactical-grid {
