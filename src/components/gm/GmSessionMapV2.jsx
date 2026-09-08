@@ -65,7 +65,7 @@ function makeStartZone(cols, rows) {
   return result;
 }
 
-function tokenSize(token) { return Number(token?.size) === 2 ? 2 : 1; }
+function tokenSize(token) { const n = Number(token?.stats?.footprint || token?.size); return n === 3 ? 3 : n === 2 ? 2 : 1; }
 function cellKey(x, y) { return `${x}:${y}`; }
 
 function cellsFor(token, x = token.x, y = token.y) {
@@ -134,7 +134,7 @@ function npcStats(entry) {
     defense: Number(entry.defense ?? entry.def ?? 0) || null,
     initiative: Number(entry.initiative ?? entry.init ?? 0) || null,
     level: Number(entry.level ?? 0) || null,
-    attacks: String(entry.attacks ?? entry.attack ?? entry.weapons ?? ""),
+    attacks: String(entry.attacks ?? entry.attack ?? ""),
     drBlock: String(entry.drBlock ?? entry.dr ?? entry.resistance ?? ""),
   };
 }
@@ -242,13 +242,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const resetScene = async () => {
     if (selectedIsLive) await session.disableTacticalScene?.();
     for (const token of [...tokens]) await session.deleteToken?.(token.id);
-    await session.updateTacticalScene?.({
-      cols: DEFAULT_COLS,
-      rows: DEFAULT_ROWS,
-      startZone: makeStartZone(DEFAULT_COLS, DEFAULT_ROWS),
-      backgroundUrl: "",
-      backgroundName: "",
-    });
+    await session.updateTacticalScene?.({ cols: DEFAULT_COLS, rows: DEFAULT_ROWS, startZone: makeStartZone(DEFAULT_COLS, DEFAULT_ROWS), backgroundUrl: "", backgroundName: "" });
   };
 
   const addEnemy = async ({ entry, name, size }) => session.createNpcToken?.({ name, size, npcId: entry?.id || null, stats: npcStats(entry) });
@@ -268,10 +262,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     await session.updateToken?.(tokenId, next);
   };
 
-  const moveSelected = async (x, y) => {
-    if (!selectedTokenId || editingStart) return;
-    await session.moveToken?.(selectedTokenId, x, y);
-  };
+  const moveSelected = async (x, y) => { if (!selectedTokenId || editingStart) return; await session.moveToken?.(selectedTokenId, x, y); };
 
   const beginDrag = (event, token) => {
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -313,22 +304,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       const anchored = tokens.filter((token) => Number(token.x) === x && Number(token.y) === y);
       cells.push(
         <button type="button" key={cellKey(x, y)} className={`gm-session-map__cell tactical-cell${startKeys.has(cellKey(x, y)) ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}`} onClick={() => editingStart ? toggleStartCell(x, y) : moveSelected(x, y)}>
-          {anchored.length ? <span className="gm-session-map__tokens">
-            {anchored.map((token) => {
-              const size = tokenSize(token);
-              return <span
-                key={token.id}
-                className={`gm-session-token ${token.kind === "player" ? "is-player" : "is-npc is-enemy"} is-size-${size}${selectedTokenId === token.id ? " is-selected" : ""}${dragState?.tokenId === token.id ? " is-dragging" : ""}`}
-                onPointerDown={(event) => beginDrag(event, token)}
-                onPointerMove={moveDrag}
-                onPointerUp={finishDrag}
-                onPointerCancel={finishDrag}
-              >
-                {token.avatar ? <img src={token.avatar} alt="" /> : <b>{String(token.name || "T").slice(0, 1).toUpperCase()}</b>}
-                <small>{token.name}</small>
-              </span>;
-            })}
-          </span> : null}
+          {anchored.length ? <span className="gm-session-map__tokens">{anchored.map((token) => { const size = tokenSize(token); return <span key={token.id} className={`gm-session-token ${token.kind === "player" ? "is-player" : "is-npc is-enemy"} is-size-${size}${selectedTokenId === token.id ? " is-selected" : ""}${dragState?.tokenId === token.id ? " is-dragging" : ""}`} onPointerDown={(event) => beginDrag(event, token)} onPointerMove={moveDrag} onPointerUp={finishDrag} onPointerCancel={finishDrag}>{token.avatar ? <img src={token.avatar} alt="" draggable={false} /> : <b>{String(token.name || "T").slice(0, 1).toUpperCase()}</b>}<small>{token.name}</small></span>; })}</span> : null}
         </button>
       );
     }
@@ -336,64 +312,20 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
 
   return (
     <section className="pip-panel gm-session-map tactical-map">
-      <div className="gm-session-map__head">
-        <div><div className="gm-session-map__eyebrow">PIP 2D20 // GM DEVICE AUTHORITY</div><h2>[ {text.title} ]</h2></div>
-        <div className="gm-session-map__meta">
-          <span>{session.sessionCode}</span>
-          <span className={selectedIsLive ? "tactical-live" : ""}>{selectedIsLive ? text.active : session.status}</span>
-          <span>{text.connected}: {session.players?.length || 0}</span>
-          <span>{text.players}: {playerTokens.length}</span>
-        </div>
-      </div>
+      <div className="gm-session-map__head"><div><div className="gm-session-map__eyebrow">PIP 2D20 // GM DEVICE AUTHORITY</div><h2>[ {text.title} ]</h2></div><div className="gm-session-map__meta"><span>{session.sessionCode}</span><span className={selectedIsLive ? "tactical-live" : ""}>{selectedIsLive ? text.active : session.status}</span><span>{text.connected}: {session.players?.length || 0}</span><span>{text.players}: {playerTokens.length}</span></div></div>
 
-      <div className="gm-scene-library">
-        <label><span>{text.scenes}</span><select className="pip-input" value={session.selectedSceneId || scene.sceneId} onChange={(event) => session.switchTacticalScene?.(event.target.value)}>
-          {scenes.map((item) => <option key={item.sceneId} value={item.sceneId}>{item.name}{item.sceneId === session.liveSceneId ? " • LIVE" : ""}</option>)}
-        </select></label>
-        <input className="pip-input gm-scene-library__name" value={sceneName} maxLength={80} placeholder={text.sceneName} onChange={(event) => setSceneName(event.target.value)} />
-        <button type="button" className="pip-btn" onClick={() => session.renameTacticalScene?.(scene.sceneId, sceneName)}>{text.saveName}</button>
-        <button type="button" className="pip-btn is-primary" onClick={() => session.createTacticalScene?.({ name: `${text.scenes} ${scenes.length + 1}`, cols, rows })}>{text.newScene}</button>
-        <button type="button" className="pip-btn" disabled={scenes.length <= 1} onClick={() => session.deleteTacticalScene?.(scene.sceneId)}>{text.deleteScene}</button>
-        {liveScene ? <span className="gm-scene-library__live">{text.live}: {liveScene.name}</span> : null}
-      </div>
+      <div className="gm-scene-library"><label><span>{text.scenes}</span><select className="pip-input" value={session.selectedSceneId || scene.sceneId} onChange={(event) => session.switchTacticalScene?.(event.target.value)}>{scenes.map((item) => <option key={item.sceneId} value={item.sceneId}>{item.name}{item.sceneId === session.liveSceneId ? " • LIVE" : ""}</option>)}</select></label><input className="pip-input gm-scene-library__name" value={sceneName} maxLength={80} placeholder={text.sceneName} onChange={(event) => setSceneName(event.target.value)} /><button type="button" className="pip-btn" onClick={() => session.renameTacticalScene?.(scene.sceneId, sceneName)}>{text.saveName}</button><button type="button" className="pip-btn is-primary" onClick={() => session.createTacticalScene?.({ name: `${text.scenes} ${scenes.length + 1}`, cols, rows })}>{text.newScene}</button><button type="button" className="pip-btn" disabled={scenes.length <= 1} onClick={() => session.deleteTacticalScene?.(scene.sceneId)}>{text.deleteScene}</button>{liveScene ? <span className="gm-scene-library__live">{text.live}: {liveScene.name}</span> : null}</div>
 
-      <div className="tactical-toolbar">
-        <label className="tactical-size-select">{text.size}
-          <select className="pip-input" value={`${cols}x${rows}`} disabled={selectedIsLive} onChange={(event) => setGridSize(event.target.value)}>
-            <option value="8x8">8×8</option><option value="12x12">12×12</option><option value="16x12">16×12</option><option value="16x16">16×16</option>
-          </select>
-        </label>
-        <button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>{editingStart ? text.finishEdit : text.editStart}</button>
-        {!selectedIsLive
-          ? <button type="button" className="pip-btn is-primary" onClick={enableScene}>{text.startScene}</button>
-          : <><button type="button" className="pip-btn" onClick={returnPlayersToStart}>{text.resetPlayers}</button><button type="button" className="pip-btn" onClick={() => session.disableTacticalScene?.()}>{text.endScene}</button></>}
-        <button type="button" className="pip-btn" onClick={resetScene}>{text.resetMap}</button>
-      </div>
+      <div className="tactical-toolbar"><label className="tactical-size-select">{text.size}<select className="pip-input" value={`${cols}x${rows}`} disabled={selectedIsLive} onChange={(event) => setGridSize(event.target.value)}><option value="8x8">8×8</option><option value="12x12">12×12</option><option value="16x12">16×12</option><option value="16x16">16×16</option></select></label><button type="button" className={`pip-btn${editingStart ? " is-primary" : ""}`} onClick={() => setEditingStart((value) => !value)}>{editingStart ? text.finishEdit : text.editStart}</button>{!selectedIsLive ? <button type="button" className="pip-btn is-primary" onClick={enableScene}>{text.startScene}</button> : <><button type="button" className="pip-btn" onClick={returnPlayersToStart}>{text.resetPlayers}</button><button type="button" className="pip-btn" onClick={() => session.disableTacticalScene?.()}>{text.endScene}</button></>}<button type="button" className="pip-btn" onClick={resetScene}>{text.resetMap}</button></div>
 
       <div className={`gm-session-map__hint${editingStart ? " is-editing" : ""}`}>{editingStart ? text.editHint : (selectedIsLive ? text.move : text.inactive)} · {text.startZone}: {scene.startZone?.length || 0}</div>
-
       <input ref={fileRef} className="tactical-background-input" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { uploadBackground(event.target.files?.[0]); event.target.value = ""; }} />
-      <div className="tactical-background-bar">
-        <div className="tactical-background-info"><span>{text.background}</span><strong>{scene.backgroundName || text.noBackground}</strong></div>
-        <div className="tactical-background-actions">
-          <button type="button" className="pip-btn" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? text.processing : (scene.backgroundUrl ? text.replaceBackground : text.uploadBackground)}</button>
-          {scene.backgroundUrl ? <button type="button" className="pip-btn" onClick={() => session.updateTacticalScene?.({ backgroundUrl: "", backgroundName: "" })}>{text.removeBackground}</button> : null}
-        </div>
-      </div>
+      <div className="tactical-background-bar"><div className="tactical-background-info"><span>{text.background}</span><strong>{scene.backgroundName || text.noBackground}</strong></div><div className="tactical-background-actions"><button type="button" className="pip-btn" disabled={uploading} onClick={() => fileRef.current?.click()}>{uploading ? text.processing : (scene.backgroundUrl ? text.replaceBackground : text.uploadBackground)}</button>{scene.backgroundUrl ? <button type="button" className="pip-btn" onClick={() => session.updateTacticalScene?.({ backgroundUrl: "", backgroundName: "" })}>{text.removeBackground}</button> : null}</div></div>
       {uploadError ? <div className="session-error tactical-background-error">{uploadError}</div> : null}
-
       <div ref={gridRef} className={`gm-session-map__grid tactical-grid${scene.backgroundUrl ? " has-background" : ""}${dragState?.moved ? " is-drag-active" : ""}`} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gridTemplateRows: `repeat(${rows}, minmax(0,1fr))`, backgroundImage: scene.backgroundUrl ? `url(${JSON.stringify(scene.backgroundUrl)})` : undefined }}>{cells}</div>
 
-      <TacticalEnemyManager
-        tokens={enemyTokens.map(managerToken)}
-        selectedTokenId={selectedTokenId}
-        onSelectToken={setSelectedTokenId}
-        onAddToken={addEnemy}
-        onRemoveToken={(tokenId) => session.deleteToken?.(tokenId)}
-        onUpdateToken={updateEnemy}
-      />
-
-      {dragState?.moved ? <div className={`tactical-drag-ghost${dragState.size === 2 ? " is-size-2" : ""}`} style={{ left: dragState.x, top: dragState.y }}>{dragState.avatar ? <img src={dragState.avatar} alt="" /> : <b>{String(dragState.name || "T").slice(0, 1)}</b>}</div> : null}
+      <TacticalEnemyManager tokens={enemyTokens.map(managerToken)} selectedTokenId={selectedTokenId} onSelectToken={setSelectedTokenId} onAddToken={addEnemy} onRemoveToken={(tokenId) => session.deleteToken?.(tokenId)} onUpdateToken={updateEnemy} />
+      {dragState?.moved ? <div className={`tactical-drag-ghost is-size-${dragState.size}`} style={{ left: dragState.x, top: dragState.y }}>{dragState.avatar ? <img src={dragState.avatar} alt="" /> : <b>{String(dragState.name || "T").slice(0, 1)}</b>}</div> : null}
     </section>
   );
 }
