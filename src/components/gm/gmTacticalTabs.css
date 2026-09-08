@@ -63,6 +63,7 @@
 
 .gm-tactical-battle-effects,
 .gm-tactical-auto-gm,
+.gm-tactical-loot,
 .gm-tactical-environment-edit,
 .gm-tactical-map-core,
 .gm-tactical-token-manager {
@@ -115,6 +116,11 @@
 
 /* Auto GM encounter narrator. */
 .gm-tactical-view--autogm .gm-tactical-auto-gm {
+  display: block;
+}
+
+/* Random loot generator. */
+.gm-tactical-view--loot .gm-tactical-loot {
   display: block;
 }
 
