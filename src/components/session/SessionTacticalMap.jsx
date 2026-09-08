@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import SessionTacticalMapV3 from "./SessionTacticalMapV3.jsx";
 import PlayerTokenAssignmentBridge from "./PlayerTokenAssignmentBridge.jsx";
+import BattlemapViewportControls from "../gm/BattlemapViewportControls.jsx";
 
 function findMapModeSwitch() {
   if (typeof document === "undefined") return null;
@@ -42,6 +43,7 @@ export default function SessionTacticalMap({ session, openRequest = 0 }) {
 
   return <>
     <SessionTacticalMapV3 session={tacticalSession} openRequest={openRequest} />
+    <BattlemapViewportControls session={tacticalSession} role="player" />
     <PlayerTokenAssignmentBridge session={tacticalSession} />
     {shortcut}
   </>;
