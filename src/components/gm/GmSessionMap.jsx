@@ -5,6 +5,7 @@ import GmUnifiedTokenManagerV4 from "./GmUnifiedTokenManagerV4.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
 import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
+import GmLootGenerator from "./GmLootGenerator.jsx";
 import TacticalEnvironmentPanel, {
   TacticalEnvironmentSummary,
 } from "./TacticalEnvironmentPanel.jsx";
@@ -15,11 +16,12 @@ import "./gmNpcCardEditor.css";
 import "./gmTacticalTabs.css";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["battle", "autogm", "custom", "encounter", "scenes", "tokens"];
+const TABS = ["battle", "autogm", "loot", "custom", "encounter", "scenes", "tokens"];
 const COPY = {
   en: {
     battle: "BATTLEMAP",
     autogm: "AUTO GM",
+    loot: "LOOT",
     custom: "CUSTOM",
     encounter: "ENCOUNTER",
     scenes: "SCENES",
@@ -30,6 +32,7 @@ const COPY = {
   ru: {
     battle: "БОЕВАЯ КАРТА",
     autogm: "АВТО ГМ",
+    loot: "ЛУТ",
     custom: "СВОЁ",
     encounter: "СЦЕНА",
     scenes: "СЦЕНЫ",
@@ -40,6 +43,7 @@ const COPY = {
   uk: {
     battle: "БОЙОВА МАПА",
     autogm: "АВТО ГМ",
+    loot: "ЛУТ",
     custom: "ВЛАСНЕ",
     encounter: "СЦЕНА",
     scenes: "СЦЕНИ",
@@ -50,6 +54,7 @@ const COPY = {
   pl: {
     battle: "MAPA BITWY",
     autogm: "AUTO MG",
+    loot: "ŁUP",
     custom: "WŁASNE",
     encounter: "SPOTKANIE",
     scenes: "SCENY",
@@ -127,6 +132,10 @@ export default function GmSessionMap(props) {
 
         <div className="gm-tactical-auto-gm">
           <GmAutoGmPanel session={session} />
+        </div>
+
+        <div className="gm-tactical-loot">
+          <GmLootGenerator session={session} />
         </div>
 
         <div className="gm-tactical-environment-edit">
