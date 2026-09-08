@@ -155,6 +155,9 @@ export function liveScene(state) {
 }
 
 export function tokenSize(token) {
+  const footprint = Number(token?.stats?.footprint);
+  if (footprint === 3) return 3;
+  if (footprint === 2) return 2;
   const size = Number(token?.size);
   if (size === 3) return 3;
   if (size === 2) return 2;
