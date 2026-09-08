@@ -16,6 +16,11 @@ import {
 
 export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
 
+// The shared-session chat stores at most 1200 characters per message.
+// Merchant stock can be several KB, so creation state must be chunked.
+const MERCHANT_CREATE_CHUNK_SIZE = 600;
+const MERCHANT_CREATE_MAX_CHUNKS = 48;
+
 function hiddenMerchantText(value) {
   const text = String(value || "");
   return text.startsWith(MERCHANT_CREATE_PREFIX) || text.startsWith(MERCHANT_TRADE_PREFIX);
@@ -62,11 +67,41 @@ function replayMerchants(chat = []) {
   const merchants = new Map();
   const tradeResults = [];
   const seenTradeIds = new Set();
+  const createBatches = new Map();
 
   for (const message of Array.isArray(chat) ? chat : []) {
     const createPacket = parsePacket(message, MERCHANT_CREATE_PREFIX);
     if (createPacket) {
       if (message?.authorRole !== "gm") continue;
+
+      // New chunked merchant state. Reconstruct it once the final piece arrives.
+      if (createPacket?.chunked === true) {
+        const batchId = String(createPacket?.batchId || "").trim();
+        const total = Math.max(1, Math.min(MERCHANT_CREATE_MAX_CHUNKS, Number(createPacket?.total || 1)));
+        const index = Math.max(0, Math.min(total - 1, Number(createPacket?.index || 0)));
+        if (!batchId) continue;
+
+        let batch = createBatches.get(batchId);
+        if (!batch || batch.total !== total) {
+          batch = { total, chunks: new Array(total).fill(null) };
+          createBatches.set(batchId, batch);
+        }
+        batch.chunks[index] = String(createPacket?.chunk || "");
+
+        if (batch.chunks.every((chunk) => chunk !== null)) {
+          try {
+            const decoded = JSON.parse(batch.chunks.join(""));
+            const merchant = normalizeMerchant(decoded?.merchant || decoded);
+            if (merchant) merchants.set(merchant.id, merchant);
+          } catch {
+            // Ignore malformed or incomplete merchant state.
+          }
+          createBatches.delete(batchId);
+        }
+        continue;
+      }
+
+      // Backward compatibility with the original single-message format.
       const merchant = normalizeMerchant(createPacket?.merchant || createPacket);
       if (merchant) merchants.set(merchant.id, merchant);
       continue;
@@ -179,7 +214,27 @@ export default function useGmAuthoritativeSessionV10(form) {
     if (base.mode !== "host" || base.status !== "online") return false;
     const normalized = normalizeMerchant(merchant);
     if (!normalized) return false;
-    return Boolean(base.sendChat?.(`${MERCHANT_CREATE_PREFIX}${JSON.stringify({ merchant: normalized })}`));
+
+    const json = JSON.stringify({ merchant: normalized });
+    const chunks = [];
+    for (let offset = 0; offset < json.length; offset += MERCHANT_CREATE_CHUNK_SIZE) {
+      chunks.push(json.slice(offset, offset + MERCHANT_CREATE_CHUNK_SIZE));
+    }
+    if (!chunks.length || chunks.length > MERCHANT_CREATE_MAX_CHUNKS) return false;
+
+    const batchId = `${normalized.id}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
+    let sentAll = true;
+    for (let index = 0; index < chunks.length; index += 1) {
+      const packet = `${MERCHANT_CREATE_PREFIX}${JSON.stringify({
+        chunked: true,
+        batchId,
+        index,
+        total: chunks.length,
+        chunk: chunks[index],
+      })}`;
+      if (!base.sendChat?.(packet)) sentAll = false;
+    }
+    return sentAll;
   };
 
   const tradeWithMerchant = ({ tradeId, merchantId, kind, stockId = "", item = null, playerItemKey = "" } = {}) => {
@@ -198,14 +253,16 @@ export default function useGmAuthoritativeSessionV10(form) {
 
   const publishMerchantOffer = (merchantId) => {
     if (base.mode !== "host" || base.status !== "online") return false;
-    const exists = replay.merchants.some((merchant) => merchant.id === String(merchantId || ""));
-    if (!exists) return false;
-    return Boolean(base.sendChat?.(formatMerchantOfferMessage(merchantId)));
+    const id = String(merchantId || "").trim();
+    if (!id) return false;
+    // Creation chunks are queued before this message, so an offer can be sent
+    // immediately after generation without waiting for React replay to catch up.
+    return Boolean(base.sendChat?.(formatMerchantOfferMessage(id)));
   };
 
   return {
     ...base,
-    realtimeTransport: "socketio-gm-authority-v10-shared-merchants",
+    realtimeTransport: "socketio-gm-authority-v10-shared-merchants-chunked",
     roomState: base.roomState ? { ...base.roomState, chat: visibleChat } : base.roomState,
     feed: visibleFeed,
     merchants: replay.merchants,
