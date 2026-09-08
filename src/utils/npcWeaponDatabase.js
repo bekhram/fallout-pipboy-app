@@ -23,18 +23,24 @@ export function parseNpcWeaponCsv(csv = "") {
   return lines.slice(1).map((line, index) => {
     const values = parseCsvLine(line);
     const row = Object.fromEntries(headers.map((header, i) => [header, values[i] ?? ""]));
+    const effects = String(row.Effects || "").trim();
+    const qualities = String(row.Qualities || "").trim();
     return {
       id: `weapon-db-${index}-${String(row.name || "weapon").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
       name: String(row.name || "Weapon"),
       weaponType: String(row["Weapon type"] || ""),
       damage: Math.max(0, Number(row["Damage Rating"] || 0)),
       creatureDamage: Math.max(0, Number(row["Creatures Damage Rating"] || row["Damage Rating"] || 0)),
-      effects: String(row.Effects || ""),
+      effects,
+      effect: [effects, qualities ? `Qualities: ${qualities}` : ""].filter(Boolean).join(" • "),
       damageType: String(row["Damage type"] || "Physical"),
       rate: Math.max(0, Number(row["Rate of Fire"] || 0)),
       range: String(row.Range || "C"),
-      qualities: String(row.Qualities || ""),
+      qualities,
       rarity: String(row.Rarity || ""),
+      ammo: String(row.Ammo || ""),
+      cost: String(row.Cost ?? ""),
+      weight: String(row.Weight ?? "").replace(",", "."),
     };
   }).filter((weapon) => weapon.name);
 }
