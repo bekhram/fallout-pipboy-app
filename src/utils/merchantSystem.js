@@ -160,7 +160,7 @@ export function appendPurchasedItem(inventory = [], item = {}) {
   return next;
 }
 
-export function removeSoldInventoryUnit(inventory = [], playerItemKey = "", fallbackItem = null) {
+export function removeSoldInventoryUnit(inventory = [], playerItemKey = "", fallbackItem = null, amount = null) {
   const next = Array.isArray(inventory) ? [...inventory] : [];
   let index = next.findIndex((item, itemIndex) => inventoryTradeKey(item, itemIndex) === playerItemKey);
   if (index < 0 && fallbackItem) {
@@ -170,8 +170,9 @@ export function removeSoldInventoryUnit(inventory = [], playerItemKey = "", fall
   if (index < 0) return next;
 
   const quantity = Math.max(0, Number(next[index]?.quantity ?? next[index]?.qty ?? 0));
-  if (quantity > 1) {
-    next[index] = { ...next[index], quantity: String(quantity - 1) };
+  const requested = Math.max(1, Math.floor(Number(amount ?? fallbackItem?.quantity ?? 1) || 1));
+  if (quantity > requested) {
+    next[index] = { ...next[index], quantity: String(quantity - requested) };
     return next;
   }
   next.splice(index, 1);
