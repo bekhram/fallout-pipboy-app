@@ -110,6 +110,12 @@
   margin: 0;
 }
 
+.gm-loot-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .gm-loot-generate {
   width: 100%;
   min-height: 42px;
@@ -192,5 +198,9 @@
   .gm-loot-type-chip {
     min-height: 34px;
     font-size: .61rem;
+  }
+
+  .gm-loot-actions {
+    grid-template-columns: 1fr;
   }
 }
