@@ -64,6 +64,7 @@
 .gm-tactical-battle-effects,
 .gm-tactical-auto-gm,
 .gm-tactical-loot,
+.gm-tactical-merchants,
 .gm-tactical-environment-edit,
 .gm-tactical-map-core,
 .gm-tactical-token-manager {
@@ -71,7 +72,6 @@
   min-width: 0;
 }
 
-/* Main GM battle screen: effects + battlemap + scene selector + scene creatures. */
 .gm-tactical-view--battle .gm-tactical-battle-effects,
 .gm-tactical-view--battle .gm-tactical-map-core,
 .gm-tactical-view--battle .gm-tactical-token-manager {
@@ -114,17 +114,18 @@
   min-height: min(68vh, 760px);
 }
 
-/* Auto GM encounter narrator. */
 .gm-tactical-view--autogm .gm-tactical-auto-gm {
   display: block;
 }
 
-/* Random loot generator. */
 .gm-tactical-view--loot .gm-tactical-loot {
   display: block;
 }
 
-/* V4 is kept mounted once so editor state/dice state survives tab changes. */
+.gm-tactical-view--merchants .gm-tactical-merchants {
+  display: block;
+}
+
 .gm-tactical-token-manager .gm-unified-token-manager > .gm-unified-token-manager__head,
 .gm-tactical-token-manager .gm-unified-token-manager > .gm-token-section {
   display: none;
@@ -138,7 +139,6 @@
   padding-top: 8px;
 }
 
-/* Custom NPC / Creature editor. */
 .gm-tactical-view--custom .gm-tactical-token-manager {
   display: block;
 }
@@ -147,12 +147,10 @@
   display: block;
 }
 
-/* Encounter environment and future map-generation controls. */
 .gm-tactical-view--encounter .gm-tactical-environment-edit {
   display: block;
 }
 
-/* Scene/tactical-map creation and editing. */
 .gm-tactical-view--scenes .gm-tactical-map-core {
   display: block;
 }
@@ -161,7 +159,6 @@
   display: none !important;
 }
 
-/* Player token assignment + bestiary/custom token adders. */
 .gm-tactical-view--tokens .gm-tactical-token-manager {
   display: block;
 }
@@ -180,27 +177,9 @@
 }
 
 @media (max-width: 640px) {
-  .gm-tactical-tabs-shell {
-    gap: 6px;
-  }
-
-  .gm-tactical-tabs {
-    margin-inline: -2px;
-    padding: 5px;
-  }
-
-  .gm-tactical-tab {
-    min-height: 34px;
-    padding: 6px 10px;
-    font-size: .62rem;
-  }
-
-  .gm-tactical-view--battle .gm-session-map {
-    padding: 6px;
-  }
-
-  .gm-tactical-view--battle .gm-session-map__grid {
-    min-height: 62vh;
-    aspect-ratio: 1 / 1;
-  }
+  .gm-tactical-tabs-shell { gap: 6px; }
+  .gm-tactical-tabs { margin-inline: -2px; padding: 5px; }
+  .gm-tactical-tab { min-height: 34px; padding: 6px 10px; font-size: .62rem; }
+  .gm-tactical-view--battle .gm-session-map { padding: 6px; }
+  .gm-tactical-view--battle .gm-session-map__grid { min-height: 62vh; aspect-ratio: 1 / 1; }
 }
