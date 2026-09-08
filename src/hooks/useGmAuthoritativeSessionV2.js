@@ -991,8 +991,8 @@ export default function useGmAuthoritativeSessionV2(form) {
     return mutateGmState((next) => {
       let scene = sceneById(next, next.selectedSceneId);
       if (!scene) return { ok: false, error: "SCENE_NOT_FOUND" };
-      const cols = Math.max(4, Math.min(40, Number(payload.cols || scene.cols || 12)));
-      const rows = Math.max(4, Math.min(40, Number(payload.rows || scene.rows || 12)));
+      const cols = Math.max(4, Math.min(60, Number(payload.cols || scene.cols || 12)));
+      const rows = Math.max(4, Math.min(60, Number(payload.rows || scene.rows || 12)));
       scene.cols = cols;
       scene.rows = rows;
       scene.startZone = normalizeStartZone(payload.startZone || scene.startZone, cols, rows);
@@ -1035,8 +1035,8 @@ export default function useGmAuthoritativeSessionV2(form) {
       }
       let cols = scene.cols;
       let rows = scene.rows;
-      if (Object.prototype.hasOwnProperty.call(payload, "cols")) cols = Math.max(4, Math.min(40, Number(payload.cols) || scene.cols));
-      if (Object.prototype.hasOwnProperty.call(payload, "rows")) rows = Math.max(4, Math.min(40, Number(payload.rows) || scene.rows));
+      if (Object.prototype.hasOwnProperty.call(payload, "cols")) cols = Math.max(4, Math.min(60, Number(payload.cols) || scene.cols));
+      if (Object.prototype.hasOwnProperty.call(payload, "rows")) rows = Math.max(4, Math.min(60, Number(payload.rows) || scene.rows));
       if (cols !== scene.cols || rows !== scene.rows) {
         scene.cols = cols;
         scene.rows = rows;

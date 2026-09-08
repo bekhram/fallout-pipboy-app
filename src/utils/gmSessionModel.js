@@ -40,8 +40,8 @@ export function normalizeStartZone(value, cols, rows) {
 }
 
 export function makeScene({ name = "Scene", cols = 12, rows = 12, sceneId = makeId("scene") } = {}) {
-  const safeCols = Math.max(4, Math.min(40, Number(cols) || 12));
-  const safeRows = Math.max(4, Math.min(40, Number(rows) || 12));
+  const safeCols = Math.max(4, Math.min(60, Number(cols) || 12));
+  const safeRows = Math.max(4, Math.min(60, Number(rows) || 12));
   return {
     sceneId,
     name: String(name || "Scene").trim().slice(0, 80) || "Scene",
@@ -59,8 +59,8 @@ export function makeScene({ name = "Scene", cols = 12, rows = 12, sceneId = make
 
 function normalizeScene(scene, index = 0) {
   const source = scene && typeof scene === "object" ? safeClone(scene) : {};
-  const cols = Math.max(4, Math.min(40, Number(source.cols) || 12));
-  const rows = Math.max(4, Math.min(40, Number(source.rows) || 12));
+  const cols = Math.max(4, Math.min(60, Number(source.cols) || 12));
+  const rows = Math.max(4, Math.min(60, Number(source.rows) || 12));
   return {
     ...source,
     sceneId: String(source.sceneId || makeId("scene")),
