@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
+import { gridDropCell } from "../../utils/battlemapCoordinates.js";
 import "./gmSessionMap.css";
 import "./sceneLibrary.css";
 
@@ -189,6 +190,48 @@ function freeCell(tokens, movingId, x, y, size, cols, rows) {
   );
 }
 
+function pointerPlacement(grid, event, cols, rows, drag) {
+  const firstCell = grid?.querySelector?.(".gm-session-map__cell");
+  if (!grid || !firstCell) return null;
+  return gridDropCell({
+    clientX: event.clientX,
+    clientY: event.clientY,
+    rect: grid.getBoundingClientRect(),
+    scrollLeft: grid.scrollLeft,
+    scrollTop: grid.scrollTop,
+    cellWidth: firstCell.offsetWidth,
+    cellHeight: firstCell.offsetHeight,
+    cols,
+    rows,
+    size: drag.size,
+    anchorX: drag.anchorX,
+    anchorY: drag.anchorY,
+  });
+}
+
+function autoScrollNearEdge(grid, clientX, clientY) {
+  if (!grid) return;
+  const rect = grid.getBoundingClientRect();
+  const edge = Math.min(
+    64,
+    Math.max(36, Math.min(rect.width, rect.height) * 0.12)
+  );
+  const speed = 18;
+  const dx =
+    clientX < rect.left + edge
+      ? -speed
+      : clientX > rect.right - edge
+      ? speed
+      : 0;
+  const dy =
+    clientY < rect.top + edge
+      ? -speed
+      : clientY > rect.bottom - edge
+      ? speed
+      : 0;
+  if (dx || dy) grid.scrollBy({ left: dx, top: dy, behavior: "auto" });
+}
+
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const image = new Image();
@@ -281,12 +324,15 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const [sceneName, setSceneName] = useState(scene?.name || "");
   const gridRef = useRef(null);
   const dragRef = useRef(null);
+  const suppressCellClickRef = useRef(false);
   const fileRef = useRef(null);
 
   useEffect(() => {
     setSceneName(scene?.name || "");
     setSelectedTokenId(null);
     setEditingStart(false);
+    dragRef.current = null;
+    setDragState(null);
   }, [scene?.sceneId]);
 
   if (!session?.isActive || session?.mode !== "host" || !scene) {
@@ -302,10 +348,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const tokens = Array.isArray(scene.tokens) ? scene.tokens : [];
   const playerTokens = tokens.filter((token) => token.kind === "player");
   const enemyTokens = tokens.filter((token) => token.kind !== "player");
-  const startKeys = useMemo(
-    () =>
-      new Set((scene.startZone || []).map((cell) => cellKey(cell.x, cell.y))),
-    [scene.startZone]
+  const startKeys = new Set(
+    (scene.startZone || []).map((cell) => cellKey(cell.x, cell.y))
   );
   const liveScene =
     scenes.find((item) => item.sceneId === session.liveSceneId) || null;
@@ -435,6 +479,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   };
 
   const moveSelected = async (x, y) => {
+    if (suppressCellClickRef.current) return;
     if (!selectedTokenId || editingStart) return;
     await session.moveToken?.(selectedTokenId, x, y);
   };
@@ -468,6 +513,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       startY: event.clientY,
       anchorX,
       anchorY,
+      size,
+      pointerType: event.pointerType,
       moved: false,
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -486,13 +533,41 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const moveDrag = (event) => {
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId) return;
+    const threshold = drag.pointerType === "touch" ? 8 : 5;
     drag.moved =
       drag.moved ||
-      Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 5;
-    if (drag.moved) event.preventDefault();
+      Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) >
+        threshold;
+    let placement = null;
+    let valid = false;
+    if (drag.moved) {
+      event.preventDefault();
+      autoScrollNearEdge(gridRef.current, event.clientX, event.clientY);
+      placement = pointerPlacement(gridRef.current, event, cols, rows, drag);
+      valid = Boolean(
+        placement &&
+          freeCell(
+            tokens,
+            drag.tokenId,
+            placement.x,
+            placement.y,
+            drag.size,
+            cols,
+            rows
+          )
+      );
+    }
     setDragState((value) =>
       value
-        ? { ...value, x: event.clientX, y: event.clientY, moved: drag.moved }
+        ? {
+            ...value,
+            x: event.clientX,
+            y: event.clientY,
+            moved: drag.moved,
+            targetX: placement?.x,
+            targetY: placement?.y,
+            valid,
+          }
         : value
     );
   };
@@ -509,32 +584,79 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       );
       return;
     }
-    const rect = gridRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x =
-      Math.floor(
-        ((event.clientX - rect.left) / Math.max(1, rect.width)) * cols
-      ) - drag.anchorX;
-    const y =
-      Math.floor(
-        ((event.clientY - rect.top) / Math.max(1, rect.height)) * rows
-      ) - drag.anchorY;
-    await session.moveToken?.(drag.tokenId, x, y);
+    event.preventDefault();
+    suppressCellClickRef.current = true;
+    requestAnimationFrame(() => {
+      suppressCellClickRef.current = false;
+    });
+    const placement = pointerPlacement(
+      gridRef.current,
+      event,
+      cols,
+      rows,
+      drag
+    );
+    if (
+      !placement ||
+      !freeCell(
+        tokens,
+        drag.tokenId,
+        placement.x,
+        placement.y,
+        drag.size,
+        cols,
+        rows
+      )
+    )
+      return;
+    await session.moveToken?.(drag.tokenId, placement.x, placement.y);
   };
+
+  const cancelDrag = (event) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setDragState(null);
+    event.stopPropagation();
+  };
+
+  const dragTargetKeys = new Set();
+  if (
+    dragState?.moved &&
+    Number.isFinite(dragState.targetX) &&
+    Number.isFinite(dragState.targetY)
+  ) {
+    cellsFor({
+      x: dragState.targetX,
+      y: dragState.targetY,
+      size: dragState.size,
+    }).forEach((key) => dragTargetKeys.add(key));
+  }
+
+  const tokensByAnchor = new Map();
+  tokens.forEach((token) => {
+    const key = cellKey(Number(token.x), Number(token.y));
+    const anchored = tokensByAnchor.get(key);
+    if (anchored) anchored.push(token);
+    else tokensByAnchor.set(key, [token]);
+  });
 
   const cells = [];
   for (let y = 0; y < rows; y += 1) {
     for (let x = 0; x < cols; x += 1) {
-      const anchored = tokens.filter(
-        (token) => Number(token.x) === x && Number(token.y) === y
-      );
+      const anchored = tokensByAnchor.get(cellKey(x, y)) || [];
       cells.push(
         <button
           type="button"
           key={cellKey(x, y)}
           className={`gm-session-map__cell tactical-cell${
             startKeys.has(cellKey(x, y)) ? " is-start-zone" : ""
-          }${editingStart ? " is-start-edit" : ""}`}
+          }${editingStart ? " is-start-edit" : ""}${
+            dragTargetKeys.has(cellKey(x, y))
+              ? dragState?.valid
+                ? " is-drag-target"
+                : " is-drag-invalid"
+              : ""
+          }`}
           onClick={() =>
             editingStart ? toggleStartCell(x, y) : moveSelected(x, y)
           }
@@ -554,7 +676,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                     onPointerDown={(event) => beginDrag(event, token)}
                     onPointerMove={moveDrag}
                     onPointerUp={finishDrag}
-                    onPointerCancel={finishDrag}
+                    onPointerCancel={cancelDrag}
                   >
                     {token.avatar ? (
                       <img src={token.avatar} alt="" draggable={false} />

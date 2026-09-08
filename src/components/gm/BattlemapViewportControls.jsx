@@ -252,14 +252,6 @@ export default function BattlemapViewportControls({
 
   if (!scene || !targets.container || !targets.grid) return null;
 
-  const nudge = (x, y) => {
-    const grid = targets.grid;
-    if (!grid) return;
-    const dx = Math.max(120, Math.round(grid.clientWidth * 0.72));
-    const dy = Math.max(120, Math.round(grid.clientHeight * 0.72));
-    grid.scrollBy({ left: x * dx, top: y * dy, behavior: "smooth" });
-  };
-
   const fit = () => {
     const grid = targets.grid;
     if (!grid) return;
@@ -326,51 +318,14 @@ export default function BattlemapViewportControls({
       <button type="button" className="battlemap-fit-btn" onClick={fit}>
         {text.fit}
       </button>
-    </div>,
-    targets.container
-  );
-
-  const panControls = createPortal(
-    <div className="battlemap-pan-controls" aria-label={text.panControls}>
       <button
         type="button"
-        className="is-up"
-        onClick={() => nudge(0, -1)}
-        aria-label={text.panUp}
-      >
-        ↑
-      </button>
-      <button
-        type="button"
-        className="is-left"
-        onClick={() => nudge(-1, 0)}
-        aria-label={text.panLeft}
-      >
-        ←
-      </button>
-      <button
-        type="button"
-        className="is-center"
+        className="battlemap-focus-btn"
         onClick={() => focusMap("smooth")}
         aria-label={text.focusToken}
+        title={text.focusToken}
       >
         ◎
-      </button>
-      <button
-        type="button"
-        className="is-right"
-        onClick={() => nudge(1, 0)}
-        aria-label={text.panRight}
-      >
-        →
-      </button>
-      <button
-        type="button"
-        className="is-down"
-        onClick={() => nudge(0, 1)}
-        aria-label={text.panDown}
-      >
-        ↓
       </button>
     </div>,
     targets.container
@@ -421,7 +376,6 @@ export default function BattlemapViewportControls({
   return (
     <>
       {zoomControls}
-      {panControls}
       {gridPreset}
     </>
   );

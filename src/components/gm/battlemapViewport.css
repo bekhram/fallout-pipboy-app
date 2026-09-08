@@ -10,6 +10,7 @@
   max-height: none !important;
   aspect-ratio: auto !important;
   overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
@@ -29,20 +30,37 @@
   min-height: var(--battlemap-cell) !important;
 }
 
+.battlemap-scroll-grid .gm-session-map__cell.is-drag-target {
+  z-index: 4;
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+  background: color-mix(in srgb, currentColor 22%, transparent) !important;
+  box-shadow: inset 0 0 12px color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.battlemap-scroll-grid .gm-session-map__cell.is-drag-invalid {
+  z-index: 4;
+  outline: 2px solid #ff655f;
+  outline-offset: -2px;
+  background: rgba(120, 16, 12, 0.34) !important;
+}
+
 .battlemap-scroll-grid .gm-session-token {
-  width: max(6px, min(30px, calc(var(--battlemap-cell) * .72))) !important;
-  height: max(6px, min(30px, calc(var(--battlemap-cell) * .72))) !important;
+  width: max(6px, min(30px, calc(var(--battlemap-cell) * 0.72))) !important;
+  height: max(6px, min(30px, calc(var(--battlemap-cell) * 0.72))) !important;
   touch-action: none;
 }
 
 .battlemap-scroll-grid.is-overview-zoom .gm-session-token small,
 .battlemap-scroll-grid.is-overview-zoom .gm-token-status-hp,
-.battlemap-scroll-grid.is-overview-zoom .gm-session-token:not(.is-selected) small {
+.battlemap-scroll-grid.is-overview-zoom
+  .gm-session-token:not(.is-selected)
+  small {
   display: none !important;
 }
 
 .battlemap-scroll-grid.is-overview-zoom .gm-session-token b {
-  font-size: clamp(.25rem, calc(var(--battlemap-cell) * .28), .58rem);
+  font-size: clamp(0.25rem, calc(var(--battlemap-cell) * 0.28), 0.58rem);
 }
 
 .battlemap-view-controls {
@@ -52,20 +70,21 @@
   right: 12px;
   display: flex;
   align-items: center;
-  gap: 5px;
-  max-width: min(430px, calc(100% - 24px));
-  min-height: 36px;
-  padding: 5px;
+  gap: 3px;
+  max-width: min(330px, calc(100% - 24px));
+  min-height: 30px;
+  padding: 3px;
   border: 1px solid color-mix(in srgb, currentColor 48%, transparent);
   background: color-mix(in srgb, var(--pip-bg, #071008) 94%, transparent);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .36), inset 0 0 10px color-mix(in srgb, currentColor 5%, transparent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.36),
+    inset 0 0 10px color-mix(in srgb, currentColor 5%, transparent);
   backdrop-filter: blur(7px);
 }
 
 .battlemap-control-btn,
 .battlemap-zoom-value,
 .battlemap-fit-btn,
-.battlemap-pan-controls button {
+.battlemap-focus-btn {
   border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
   background: color-mix(in srgb, currentColor 6%, var(--pip-bg, #071008));
   color: inherit;
@@ -75,59 +94,37 @@
 }
 
 .battlemap-control-btn {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   font-size: 1rem;
 }
 
 .battlemap-zoom-slider {
-  width: clamp(82px, 16vw, 160px);
+  width: clamp(68px, 12vw, 110px);
   accent-color: currentColor;
 }
 
 .battlemap-zoom-value,
-.battlemap-fit-btn {
-  min-height: 30px;
-  padding: 4px 7px;
-  font-size: .58rem;
-  letter-spacing: .04em;
+.battlemap-fit-btn,
+.battlemap-focus-btn {
+  min-height: 26px;
+  padding: 3px 6px;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
 }
 
-.battlemap-pan-controls {
-  position: absolute;
-  z-index: 44;
-  top: calc(var(--battlemap-grid-top, 0px) + 54px);
-  right: 12px;
-  display: grid;
-  grid-template-columns: repeat(3, 32px);
-  grid-template-rows: repeat(3, 32px);
-  gap: 3px;
-  padding: 4px;
-  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
-  background: color-mix(in srgb, var(--pip-bg, #071008) 91%, transparent);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .32);
-  backdrop-filter: blur(6px);
-}
-
-.battlemap-pan-controls button {
-  width: 32px;
-  height: 32px;
+.battlemap-focus-btn {
+  width: 27px;
   padding: 0;
-  font-size: .8rem;
+  font-size: 0.75rem;
 }
-
-.battlemap-pan-controls .is-up { grid-column: 2; grid-row: 1; }
-.battlemap-pan-controls .is-left { grid-column: 1; grid-row: 2; }
-.battlemap-pan-controls .is-center { grid-column: 2; grid-row: 2; font-size: .76rem; }
-.battlemap-pan-controls .is-right { grid-column: 3; grid-row: 2; }
-.battlemap-pan-controls .is-down { grid-column: 2; grid-row: 3; }
 
 .battlemap-grid-presets {
   display: grid;
   gap: 4px;
   min-width: 150px;
-  font-size: .6rem;
+  font-size: 0.6rem;
 }
 
 .gm-tactical-map-core .tactical-toolbar > .tactical-size-select {
@@ -157,42 +154,39 @@
 
   .battlemap-view-controls {
     top: calc(var(--battlemap-grid-top, 0px) + 6px);
-    right: 54px;
+    right: 8px;
     gap: 3px;
-    min-height: 30px;
+    min-height: 40px;
     padding: 3px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.42);
   }
 
   .battlemap-control-btn {
-    width: 27px;
-    height: 27px;
-    font-size: .9rem;
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
   }
 
   .battlemap-zoom-slider {
-    width: 72px;
+    width: 64px;
   }
 
   .battlemap-zoom-value,
-  .battlemap-fit-btn {
-    min-height: 27px;
-    padding: 3px 5px;
-    font-size: .48rem;
+  .battlemap-fit-btn,
+  .battlemap-focus-btn {
+    min-height: 38px;
+    padding: 3px 7px;
+    font-size: 0.54rem;
   }
 
-  .battlemap-pan-controls {
-    top: calc(var(--battlemap-grid-top, 0px) + 43px);
-    right: 54px;
-    grid-template-columns: repeat(3, 27px);
-    grid-template-rows: repeat(3, 27px);
-    gap: 2px;
-    padding: 3px;
+  .battlemap-focus-btn {
+    width: 38px;
+    font-size: 0.85rem;
   }
 
-  .battlemap-pan-controls button {
-    width: 27px;
-    height: 27px;
-    font-size: .7rem;
+  .battlemap-scroll-grid .gm-session-token.is-selected {
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 40%, transparent),
+      0 0 18px currentColor;
   }
 }
 
@@ -203,8 +197,8 @@
   }
 
   .battlemap-view-controls {
-    right: 50px;
-    max-width: calc(100% - 58px);
+    right: 6px;
+    max-width: calc(100% - 12px);
   }
 
   .battlemap-zoom-slider {
@@ -213,9 +207,5 @@
 
   .battlemap-zoom-value {
     min-width: 42px;
-  }
-
-  .battlemap-pan-controls {
-    right: 50px;
   }
 }
