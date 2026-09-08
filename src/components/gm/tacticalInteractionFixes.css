@@ -1,0 +1,28 @@
+.gm-session-token img,
+.tactical-drag-ghost img {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+
+.gm-session-token {
+  touch-action: none;
+}
+
+.gm-custom-creature-quick-select {
+  min-width: 220px;
+}
+
+.gm-custom-creature-quick-message {
+  grid-column: 1 / -1;
+  font-size: .68rem;
+  opacity: .8;
+}
+
+@media (max-width: 900px) {
+  .gm-custom-creature-quick-select {
+    min-width: 0;
+    width: 100%;
+  }
+}
