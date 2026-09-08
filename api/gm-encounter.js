@@ -8,15 +8,19 @@ const LANGUAGE_NAMES = {
 };
 
 function normalizeLanguage(language) {
-  const code = String(language || "en").toLowerCase().split("-")[0];
+  const code = String(language || "en")
+    .toLowerCase()
+    .split("-")[0];
   return LANGUAGE_NAMES[code] ? code : "en";
 }
 
 function extractOutputText(payload) {
-  if (typeof payload?.output_text === "string" && payload.output_text.trim()) return payload.output_text.trim();
+  if (typeof payload?.output_text === "string" && payload.output_text.trim())
+    return payload.output_text.trim();
   for (const item of payload?.output || []) {
     for (const content of item?.content || []) {
-      if (content?.type === "output_text" && typeof content?.text === "string") return content.text.trim();
+      if (content?.type === "output_text" && typeof content?.text === "string")
+        return content.text.trim();
     }
   }
   return "";
@@ -24,10 +28,13 @@ function extractOutputText(payload) {
 
 function sanitizeHistory(history) {
   if (!Array.isArray(history)) return [];
-  return history.slice(-10).filter(Boolean).map((item) => ({
-    role: item.role === "gm" ? "assistant" : "user",
-    content: String(item.text || "").slice(0, 5000),
-  }));
+  return history
+    .slice(-10)
+    .filter(Boolean)
+    .map((item) => ({
+      role: item.role === "gm" ? "assistant" : "user",
+      content: String(item.text || "").slice(0, 5000),
+    }));
 }
 
 function sanitizeContext(context) {
@@ -35,26 +42,49 @@ function sanitizeContext(context) {
   try {
     const json = JSON.stringify(context);
     if (json.length <= 42000) return JSON.parse(json);
-    return JSON.parse(json.slice(0, 41900).replace(/[,][^,{}\[\]]*$/, "") + "}");
+    return JSON.parse(
+      json.slice(0, 41900).replace(/[,][^,{}\[\]]*$/, "") + "}"
+    );
   } catch {
     return {};
   }
 }
 
 function parseStructured(text) {
-  const clean = String(text || "").trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  const clean = String(text || "")
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "");
   try {
     const parsed = JSON.parse(clean);
     return {
-      narration: String(parsed?.narration || "").trim().slice(0, 9000),
-      gmNotes: String(parsed?.gmNotes || "").trim().slice(0, 7000),
-      rewards: String(parsed?.rewards || "").trim().slice(0, 5000),
+      narration: String(parsed?.narration || "")
+        .trim()
+        .slice(0, 9000),
+      gmNotes: String(parsed?.gmNotes || "")
+        .trim()
+        .slice(0, 7000),
+      rewards: String(parsed?.rewards || "")
+        .trim()
+        .slice(0, 5000),
       nextBeats: Array.isArray(parsed?.nextBeats)
-        ? parsed.nextBeats.slice(0, 6).map((item) => String(item || "").trim().slice(0, 800)).filter(Boolean)
+        ? parsed.nextBeats
+            .slice(0, 6)
+            .map((item) =>
+              String(item || "")
+                .trim()
+                .slice(0, 800)
+            )
+            .filter(Boolean)
         : [],
     };
   } catch {
-    return { narration: clean.slice(0, 9000), gmNotes: "", rewards: "", nextBeats: [] };
+    return {
+      narration: clean.slice(0, 9000),
+      gmNotes: "",
+      rewards: "",
+      nextBeats: [],
+    };
   }
 }
 
@@ -65,11 +95,15 @@ export default async function handler(req, res) {
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return res.status(503).json({ error: "Auto GM is not configured." });
+  if (!apiKey)
+    return res.status(503).json({ error: "Auto GM is not configured." });
 
   const { message, language, history, gmContext } = req.body || {};
-  const userText = String(message || "").trim().slice(0, 8000);
-  if (!userText) return res.status(400).json({ error: "Encounter brief is required" });
+  const userText = String(message || "")
+    .trim()
+    .slice(0, 8000);
+  if (!userText)
+    return res.status(400).json({ error: "Encounter brief is required" });
 
   const languageCode = normalizeLanguage(language);
   const languageName = LANGUAGE_NAMES[languageCode];
@@ -77,7 +111,8 @@ export default async function handler(req, res) {
 
   const instructions = [
     "You are the GM-side Auto GM encounter narrator for a Fallout 2d20 tabletop session.",
-    `Write all visible output in ${languageName}.`,
+    `The language selected by the user is ${languageName} (${languageCode}). Write every visible string in narration, gmNotes, rewards, and nextBeats strictly in ${languageName}.`,
+    `The selected language overrides the language used in the brief, context, and conversation history. Do not switch languages because older content is in another language.`,
     "Use GM_CONTEXT as authoritative game state. Never contradict supplied character stats, scene state, enemies, weather, terrain, time, hazards, round or turn order.",
     "The party arrived here because they are pursuing a mission. Their broad goals are to complete the objective, survive, discover useful resources, find loot, and earn or recover caps. Keep those motives relevant without deciding actions for the players.",
     "The wasteland is generally hostile to the party: scarcity, distrust, environmental danger and hostile creatures or factions are common. This should create tension, but not every encounter must immediately become combat.",
@@ -98,7 +133,9 @@ export default async function handler(req, res) {
     ...sanitizeHistory(history),
     {
       role: "user",
-      content: `GM ENCOUNTER BRIEF:\n${userText}\n\nGM_CONTEXT:\n${JSON.stringify(context)}`,
+      content: `SELECTED OUTPUT LANGUAGE: ${languageName} (${languageCode})\n\nGM ENCOUNTER BRIEF:\n${userText}\n\nGM_CONTEXT:\n${JSON.stringify(
+        context
+      )}`,
     },
   ];
 
@@ -118,12 +155,20 @@ export default async function handler(req, res) {
     });
 
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) return res.status(response.status).json({ error: payload?.error?.message || "Auto GM request failed" });
+    if (!response.ok)
+      return res
+        .status(response.status)
+        .json({ error: payload?.error?.message || "Auto GM request failed" });
 
     const text = extractOutputText(payload);
-    if (!text) return res.status(502).json({ error: "Auto GM returned an empty response" });
+    if (!text)
+      return res
+        .status(502)
+        .json({ error: "Auto GM returned an empty response" });
     return res.status(200).json(parseStructured(text));
   } catch (error) {
-    return res.status(500).json({ error: error?.message || "Auto GM request failed" });
+    return res
+      .status(500)
+      .json({ error: error?.message || "Auto GM request failed" });
   }
 }
