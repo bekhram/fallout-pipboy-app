@@ -3,9 +3,32 @@ import { createPortal } from "react-dom";
 import "./tacticalSessionHud.css";
 
 const INIT_COLLAPSED_KEY = "pip2d20_initiative_collapsed_v1";
+const TOKEN_PALETTE = [
+  "#78ff98",
+  "#ffd166",
+  "#62d9ff",
+  "#ff7ad9",
+  "#ff9b54",
+  "#8da2ff",
+  "#d6ff63",
+  "#c58cff",
+];
 
 function initials(value) {
   return String(value || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase() || "?";
+}
+
+function hashIndex(value) {
+  const text = String(value || "");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  return Math.abs(hash) % TOKEN_PALETTE.length;
+}
+
+function tokenColorIndex(token) {
+  const explicit = Number(token?.stats?.tokenColorIndex);
+  if (Number.isFinite(explicit)) return Math.abs(Math.floor(explicit)) % TOKEN_PALETTE.length;
+  return hashIndex(token?.stats?.hordeGroupId || token?.id || token?.name);
 }
 
 function playerForToken(token, players) {
@@ -138,7 +161,15 @@ export default function TacticalSessionHud({ session }) {
         <div className="tactical-initiative-rail__list">
           {order.map(({ token, initiative, hp }) => {
             const current = token.id === activeTokenId;
-            return <div key={token.id} className={`tactical-initiative-entry${current ? " is-current" : ""}${hp.maxHp > 0 && hp.hp <= 0 ? " is-down" : ""}`} title={`${token.name} · INIT ${initiative}`} aria-current={current ? "true" : undefined}>
+            const accent = TOKEN_PALETTE[tokenColorIndex(token)];
+            const horde = Boolean(token?.stats?.hordeGroupId || token?.stats?.hordeVisualGroup);
+            return <div
+              key={token.id}
+              className={`tactical-initiative-entry has-token-accent${current ? " is-current" : ""}${horde ? " is-horde-member" : ""}${hp.maxHp > 0 && hp.hp <= 0 ? " is-down" : ""}`}
+              style={{ "--token-accent": accent }}
+              title={`${token.name} · INIT ${initiative}`}
+              aria-current={current ? "true" : undefined}
+            >
               <div className="tactical-initiative-entry__avatar">{token.avatar ? <img src={token.avatar} alt="" draggable={false} /> : <span>{initials(token.name)}</span>}</div>
               <div className="tactical-initiative-entry__meta"><strong>{initiative}</strong><small>{token.name}</small></div>
             </div>;
