@@ -1,6 +1,6 @@
 import React from "react";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
-import GmUnifiedTokenManager from "./GmUnifiedTokenManager.jsx";
+import GmUnifiedTokenManagerV2 from "./GmUnifiedTokenManagerV2.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import TacticalEnvironmentPanel from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
@@ -24,7 +24,7 @@ export default function GmSessionMap(props) {
       <TacticalEnvironmentPanel scene={session.tacticalScene} session={session} />
       <GmSessionMapV2 {...props} session={session} />
       <GmTokenStatusLayer session={session} />
-      <GmUnifiedTokenManager session={session} />
+      <GmUnifiedTokenManagerV2 session={session} />
     </>
   );
 }
