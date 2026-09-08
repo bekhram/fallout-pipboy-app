@@ -86,6 +86,7 @@ function appliedTradeKey(session){return `${APPLIED_TRADE_PREFIX}:${String(sessi
 function readAppliedTrades(session){try{return new Set(JSON.parse(localStorage.getItem(appliedTradeKey(session))||"[]"));}catch{return new Set();}}
 function writeAppliedTrades(session,set){try{localStorage.setItem(appliedTradeKey(session),JSON.stringify([...set].slice(-400)));}catch{}}
 function tradeError(copy,reason){if(reason==="SOLD_OUT")return copy.soldOut;if(reason==="NO_VENDOR_CAPS")return copy.vendorNoCaps;if(reason==="WRONG_TYPE")return copy.wrongType;return copy.tradeFailed;}
+function clampTradeQuantity(value,max){return Math.max(1,Math.min(Math.max(1,Number(max)||1),Math.floor(Number(value)||1)));}
 
 function RollItem({item,copy}){
   const roll=item?.roll||{},values=Array.isArray(roll.diceValues)?roll.diceValues:[],isD6=roll.diceType==="d6";
@@ -118,6 +119,21 @@ function FeedItem({item,copy,language,onLootClick,merchants,onOpenMerchant,onBuy
   return <div className={`session-drawer-message${item.type==="scene"?" is-scene":""}`}><div className="session-drawer-message-meta"><strong>{item.sender||"GM"}</strong><span>{time(item.timestamp)}</span></div><div>{item.text||""}</div></div>;
 }
 
+function MerchantSellRow({merchant,item,index,itemKey,copy,onSell,pending}){
+  const owned=Math.max(1,Number(item?.quantity??item?.qty??1));
+  const [quantity,setQuantity]=useState(1);
+  useEffect(()=>{setQuantity((value)=>clampTradeQuantity(value,owned));},[owned]);
+  const selected=clampTradeQuantity(quantity,owned);
+  const unitPrice=merchantSellPrice(item);
+  const totalPrice=unitPrice*selected;
+  return <div className="session-merchant-trade-row session-merchant-sell-row">
+    <div><strong>{item.name||item.canonicalName}</strong><small>{copy.owned}: {owned} · R{item?.rarity||0}</small></div>
+    <div className="session-merchant-qty-control" aria-label={copy.quantity}><button type="button" className="pip-btn" disabled={selected<=1||Boolean(pending)} onClick={()=>setQuantity((value)=>clampTradeQuantity(value-1,owned))}>−</button><input className="pip-input" type="number" inputMode="numeric" min="1" max={owned} value={selected} disabled={Boolean(pending)} onChange={(event)=>setQuantity(clampTradeQuantity(event.target.value,owned))}/><button type="button" className="pip-btn" disabled={selected>=owned||Boolean(pending)} onClick={()=>setQuantity((value)=>clampTradeQuantity(value+1,owned))}>+</button></div>
+    <div className="session-merchant-sale-total"><small>💰 {unitPrice} × {selected}</small><strong>💰 {totalPrice}</strong></div>
+    <button type="button" className="pip-btn is-primary" disabled={Boolean(pending)||merchant.caps<totalPrice} onClick={()=>onSell(merchant,item,index,itemKey,selected)}>{copy.sell}</button>
+  </div>;
+}
+
 function MerchantDirectory({session,form,copy,language,selectedMerchantId,setSelectedMerchantId,tradeTab,setTradeTab,onBuy,onSell,pending}){
   const merchants=Array.isArray(session?.merchants)?session.merchants:[];
   const merchant=merchants.find((entry)=>entry.id===selectedMerchantId)||null;
@@ -133,7 +149,7 @@ function MerchantDirectory({session,form,copy,language,selectedMerchantId,setSel
     <div className="session-merchant-wallets"><span>{copy.yourCaps}: <strong>💰 {playerCaps}</strong></span><span>{copy.vendorCaps}: <strong>💰 {merchant.caps}</strong></span></div>
     <nav className="session-merchant-subtabs"><button type="button" className={`pip-btn${tradeTab==="buy"?" is-primary":""}`} onClick={()=>setTradeTab("buy")}>{copy.buy}</button><button type="button" className={`pip-btn${tradeTab==="sell"?" is-primary":""}`} onClick={()=>setTradeTab("sell")}>{copy.sell}</button></nav>
     {tradeTab==="buy"?<div className="session-merchant-trade-list">{merchant.stock.length?merchant.stock.map((stockItem)=><div className="session-merchant-trade-row" key={stockItem.stockId}><div><strong>{stockItem.name}</strong><small>R{stockItem.rarity} · ⚖ {stockItem.weight}{Number(stockItem.quantity)>1?` · ×${stockItem.quantity}`:""}</small></div><span>💰 {merchantBuyPrice(stockItem)}</span><button type="button" className="pip-btn is-primary" disabled={Boolean(pending)||playerCaps<merchantBuyPrice(stockItem)} onClick={()=>onBuy(merchant,stockItem)}>{copy.buy}</button></div>):<div className="pip-logbox">{copy.noStock}</div>}</div>:null}
-    {tradeTab==="sell"?<div className="session-merchant-trade-list">{sellable.length?sellable.map(({item,index,key})=><div className="session-merchant-trade-row" key={key}><div><strong>{item.name||item.canonicalName}</strong><small>{copy.owned}: {Math.max(1,Number(item?.quantity??item?.qty??1))} · R{item?.rarity||0}</small></div><span>💰 {merchantSellPrice(item)}</span><button type="button" className="pip-btn is-primary" disabled={Boolean(pending)||merchant.caps<merchantSellPrice(item)} onClick={()=>onSell(merchant,item,index,key)}>{copy.sell}</button></div>):<div className="pip-logbox">{copy.noSellable}</div>}</div>:null}
+    {tradeTab==="sell"?<div className="session-merchant-trade-list">{sellable.length?sellable.map(({item,index,key})=><MerchantSellRow key={key} merchant={merchant} item={item} index={index} itemKey={key} copy={copy} onSell={onSell} pending={pending}/>):<div className="pip-logbox">{copy.noSellable}</div>}</div>:null}
   </section>;
 }
 
@@ -173,7 +189,7 @@ export default function SessionChatDrawer({session,form=null,setForm=null}){
       updateCharacter(form,setForm,(previous)=>{
         const caps=Math.max(0,Number(previous?.caps||0));
         if(result.kind==="sell"){
-          return {...previous,caps:String(caps+Math.max(0,Number(result.price||0))),inventoryItems:removeSoldInventoryUnit(previous.inventoryItems,result.playerItemKey,result.item)};
+          return {...previous,caps:String(caps+Math.max(0,Number(result.price||0))),inventoryItems:removeSoldInventoryUnit(previous.inventoryItems,result.playerItemKey,result.item,result.quantity)};
         }
         return {...previous,caps:String(Math.max(0,caps-Math.max(0,Number(result.price||0)))),inventoryItems:appendPurchasedItem(previous.inventoryItems,result.item)};
       });
@@ -199,14 +215,16 @@ export default function SessionChatDrawer({session,form=null,setForm=null}){
     if(!sent){setTradeStatus(copy.tradeFailed);return;}
     setPendingTradeId(tradeId);setTradeStatus(copy.pending);
   };
-  const sellToMerchant=(merchant,item,index,key)=>{
+  const sellToMerchant=(merchant,item,index,key,quantity=1)=>{
     if(!canTrade){setTradeStatus(copy.playerOnly);return;}
     if(pendingTradeId)return;
     if(!merchantAcceptsItem(merchant.merchantType,item)){setTradeStatus(copy.wrongType);return;}
-    const price=merchantSellPrice(item);
+    const owned=Math.max(1,Number(item?.quantity??item?.qty??1));
+    const selected=clampTradeQuantity(quantity,owned);
+    const price=merchantSellPrice(item)*selected;
     if(Number(merchant.caps||0)<price){setTradeStatus(copy.vendorNoCaps);return;}
     const tradeId=`trade-${session.clientId}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-    const soldSnapshot={...item,quantity:1};
+    const soldSnapshot={...item,quantity:selected};
     const sent=Boolean(session?.tradeWithMerchant?.({tradeId,merchantId:merchant.id,kind:"sell",item:soldSnapshot,playerItemKey:key||inventoryTradeKey(item,index)}));
     if(!sent){setTradeStatus(copy.tradeFailed);return;}
     setPendingTradeId(tradeId);setTradeStatus(copy.pending);
