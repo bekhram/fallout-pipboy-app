@@ -13,6 +13,7 @@ import TacticalEnvironmentPanel, {
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
+import "./tokenVisualFootprintFix.css";
 import "./gmNpcCardEditor.css";
 import "./gmTacticalTabs.css";
 
