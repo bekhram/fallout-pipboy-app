@@ -1,15 +1,15 @@
 import { useEffect } from "react";
-import useGmAuthoritativeSessionV8, {
+import useGmAuthoritativeSessionV9, {
   GAME_SERVER_URL,
   SESSION_CODE_LENGTH,
   normalizeSessionCode,
-} from "./useGmAuthoritativeSessionV8.js";
+} from "./useGmAuthoritativeSessionV9.js";
 import { setLiveSessionBridge } from "../utils/liveSessionBridge.js";
 
 export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
 
 export default function useSharedSession(form) {
-  const session = useGmAuthoritativeSessionV8(form);
+  const session = useGmAuthoritativeSessionV9(form);
 
   useEffect(() => {
     setLiveSessionBridge(session);
