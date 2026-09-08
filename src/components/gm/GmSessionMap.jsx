@@ -5,6 +5,7 @@ import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import TacticalEnvironmentPanel from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
+import "./tacticalFootprint3.css";
 import "./gmNpcCardEditor.css";
 
 export default function GmSessionMap(props) {
