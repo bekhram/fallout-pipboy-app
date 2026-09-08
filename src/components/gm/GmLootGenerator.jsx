@@ -13,35 +13,35 @@ const FILTER_KEY = "pip2d20_gm_loot_filters_v1";
 
 const COPY = {
   en: {
-    title: "LOOT GENERATOR", subtitle: "Generate loot by rarity, category and wealth, then send it to session chat.",
+    title: "LOOT GENERATOR", subtitle: "Generate loot by rarity, category and wealth, then send it to session chat when you are ready.",
     rarity: "RARITY", from: "MIN", to: "MAX", rarityHint: "R0–R1 are common. Higher rarity becomes progressively less likely.",
     types: "LOOT TYPES", wealth: "WEALTH", wealthHint: "Wealth controls the number of generated positions: 1–10.",
-    generate: "GENERATE + SEND TO CHAT", loading: "LOADING DATABASES...", noTypes: "Select at least one loot type.",
-    noLoot: "No items match the selected rarity and type filters.", sent: "Loot sent to session chat.", localOnly: "Loot generated, but session chat is unavailable.",
+    generate: "GENERATE", sendChat: "SEND TO CHAT", loading: "LOADING DATABASES...", noTypes: "Select at least one loot type.",
+    noLoot: "No items match the selected rarity and type filters.", generated: "Loot generated.", sent: "Loot sent to session chat.", localOnly: "Session chat is unavailable.",
     result: "RESULT", name: "NAME", cost: "VALUE", weight: "WEIGHT", itemRarity: "RARITY", qty: "QTY", caps: "caps",
   },
   ru: {
-    title: "ГЕНЕРАТОР ЛУТА", subtitle: "Рандомный лут по редкости, типу и богатству с отправкой результата в чат сессии.",
+    title: "ГЕНЕРАТОР ЛУТА", subtitle: "Рандомный лут по редкости, типу и богатству. Сначала сгенерируйте, затем отдельно отправьте результат в чат.",
     rarity: "РЕДКОСТЬ", from: "ОТ", to: "ДО", rarityHint: "R0–R1 выпадают часто. Чем выше редкость, тем ниже шанс выпадения.",
     types: "ТИП ЛУТА", wealth: "БОГАТСТВО", wealthHint: "Богатство определяет количество позиций: от 1 до 10.",
-    generate: "СГЕНЕРИРОВАТЬ + В ЧАТ", loading: "ЗАГРУЗКА БАЗ...", noTypes: "Выберите хотя бы один тип лута.",
-    noLoot: "Для выбранных типов и диапазона редкости предметов нет.", sent: "Лут отправлен в чат сессии.", localOnly: "Лут создан, но чат сессии сейчас недоступен.",
+    generate: "СГЕНЕРИРОВАТЬ", sendChat: "ОТПРАВИТЬ В ЧАТ", loading: "ЗАГРУЗКА БАЗ...", noTypes: "Выберите хотя бы один тип лута.",
+    noLoot: "Для выбранных типов и диапазона редкости предметов нет.", generated: "Лут сгенерирован.", sent: "Лут отправлен в чат сессии.", localOnly: "Чат сессии сейчас недоступен.",
     result: "РЕЗУЛЬТАТ", name: "НАЗВАНИЕ", cost: "СТОИМОСТЬ", weight: "ВЕС", itemRarity: "РЕДКОСТЬ", qty: "КОЛ-ВО", caps: "кр.",
   },
   uk: {
-    title: "ГЕНЕРАТОР ЛУТУ", subtitle: "Випадковий лут за рідкістю, типом і багатством з відправкою в чат сесії.",
+    title: "ГЕНЕРАТОР ЛУТУ", subtitle: "Випадковий лут за рідкістю, типом і багатством. Спочатку згенеруйте, потім окремо надішліть у чат.",
     rarity: "РІДКІСТЬ", from: "ВІД", to: "ДО", rarityHint: "R0–R1 випадають часто. Чим вища рідкість, тим нижчий шанс.",
     types: "ТИП ЛУТУ", wealth: "БАГАТСТВО", wealthHint: "Багатство визначає кількість позицій: від 1 до 10.",
-    generate: "ЗГЕНЕРУВАТИ + В ЧАТ", loading: "ЗАВАНТАЖЕННЯ БАЗ...", noTypes: "Оберіть хоча б один тип луту.",
-    noLoot: "Для вибраних типів і діапазону рідкості предметів немає.", sent: "Лут надіслано в чат сесії.", localOnly: "Лут створено, але чат сесії зараз недоступний.",
+    generate: "ЗГЕНЕРУВАТИ", sendChat: "НАДІСЛАТИ В ЧАТ", loading: "ЗАВАНТАЖЕННЯ БАЗ...", noTypes: "Оберіть хоча б один тип луту.",
+    noLoot: "Для вибраних типів і діапазону рідкості предметів немає.", generated: "Лут згенеровано.", sent: "Лут надіслано в чат сесії.", localOnly: "Чат сесії зараз недоступний.",
     result: "РЕЗУЛЬТАТ", name: "НАЗВА", cost: "ВАРТІСТЬ", weight: "ВАГА", itemRarity: "РІДКІСТЬ", qty: "К-СТЬ", caps: "кр.",
   },
   pl: {
-    title: "GENERATOR ŁUPÓW", subtitle: "Losuj łupy według rzadkości, typu i bogactwa oraz wysyłaj wynik na czat sesji.",
+    title: "GENERATOR ŁUPÓW", subtitle: "Losuj łupy według rzadkości, typu i bogactwa. Najpierw wygeneruj wynik, a potem osobno wyślij go na czat.",
     rarity: "RZADKOŚĆ", from: "OD", to: "DO", rarityHint: "R0–R1 wypadają często. Im wyższa rzadkość, tym mniejsza szansa.",
     types: "TYP ŁUPU", wealth: "BOGACTWO", wealthHint: "Bogactwo określa liczbę pozycji: 1–10.",
-    generate: "LOSUJ + WYŚLIJ NA CZAT", loading: "ŁADOWANIE BAZ...", noTypes: "Wybierz co najmniej jeden typ łupu.",
-    noLoot: "Brak przedmiotów dla wybranych typów i zakresu rzadkości.", sent: "Łup wysłano na czat sesji.", localOnly: "Łup wygenerowano, ale czat sesji jest niedostępny.",
+    generate: "LOSUJ", sendChat: "WYŚLIJ NA CZAT", loading: "ŁADOWANIE BAZ...", noTypes: "Wybierz co najmniej jeden typ łupu.",
+    noLoot: "Brak przedmiotów dla wybranych typów i zakresu rzadkości.", generated: "Łup wygenerowany.", sent: "Łup wysłano na czat sesji.", localOnly: "Czat sesji jest niedostępny.",
     result: "WYNIK", name: "NAZWA", cost: "WARTOŚĆ", weight: "WAGA", itemRarity: "RZADKOŚĆ", qty: "ILOŚĆ", caps: "kap.",
   },
 };
@@ -74,11 +74,7 @@ function inventoryRarity(item, lootType, category) {
   const raw = String(item?.rarity ?? "").trim();
   const numeric = Number(raw.replace(",", "."));
   const hasNumericRarity = raw !== "" && Number.isFinite(numeric);
-
-  // Fallout 2d20 special finds that omit rarity in the source tables are R5.
-  // This covers bobbleheads, magazines and unrated tools such as the Pip-Boy.
   if (lootType === "special" && !hasNumericRarity) return 5;
-
   return clampRarity(raw, category === "junk" ? 0 : 1);
 }
 
@@ -291,7 +287,7 @@ export default function GmLootGenerator({ session = null }) {
     if (next < minRarity) setMinRarity(next);
   };
 
-  const generate = async () => {
+  const generate = () => {
     setStatus("");
     if (!enabledTypes.size) {
       setResults([]);
@@ -307,19 +303,20 @@ export default function GmLootGenerator({ session = null }) {
     }
 
     setResults(next);
-    if (!next.length) {
-      setStatus(copy.noLoot);
+    setStatus(next.length ? copy.generated : copy.noLoot);
+  };
+
+  const sendToChat = async () => {
+    if (!results.length) return;
+    setStatus("");
+    if (typeof session?.sendChat !== "function") {
+      setStatus(copy.localOnly);
       return;
     }
-
-    if (typeof session?.sendChat === "function") {
-      try {
-        for (const item of next) await session.sendChat(formatLootChatMessage(item, language));
-        setStatus(copy.sent);
-      } catch {
-        setStatus(copy.localOnly);
-      }
-    } else {
+    try {
+      for (const item of results) await session.sendChat(formatLootChatMessage(item, language));
+      setStatus(copy.sent);
+    } catch {
       setStatus(copy.localOnly);
     }
   };
@@ -365,9 +362,14 @@ export default function GmLootGenerator({ session = null }) {
         </div>
       </section>
 
-      <button type="button" className="pip-btn is-primary gm-loot-generate" disabled={loading} onClick={generate}>
-        {loading ? copy.loading : copy.generate}
-      </button>
+      <div className="gm-loot-actions">
+        <button type="button" className="pip-btn is-primary gm-loot-generate" disabled={loading} onClick={generate}>
+          {loading ? copy.loading : copy.generate}
+        </button>
+        <button type="button" className="pip-btn gm-loot-generate" disabled={!results.length} onClick={sendToChat}>
+          {copy.sendChat}
+        </button>
+      </div>
       {status ? <div className="gm-loot-status">{status}</div> : null}
 
       {results.length ? (
