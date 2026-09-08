@@ -72,7 +72,7 @@ function normalizeScene(scene, index = 0) {
     backgroundUrl: String(source.backgroundUrl || ""),
     backgroundName: String(source.backgroundName || "").slice(0, 160),
     backgroundAssetId: String(source.backgroundAssetId || ""),
-    tokens: Array.isArray(source.tokens) ? source.tokens.map((token) => ({ ...token, size: Number(token?.size) === 2 ? 2 : 1 })) : [],
+    tokens: Array.isArray(source.tokens) ? source.tokens.map((token) => ({ ...token, size: tokenSize(token) })) : [],
     revision: Math.max(1, Number(source.revision || 1)),
   };
 }
@@ -155,7 +155,13 @@ export function liveScene(state) {
 }
 
 export function tokenSize(token) {
-  return Number(token?.size) === 2 ? 2 : 1;
+  const footprint = Number(token?.stats?.footprint);
+  if (footprint === 3) return 3;
+  if (footprint === 2) return 2;
+  const size = Number(token?.size);
+  if (size === 3) return 3;
+  if (size === 2) return 2;
+  return 1;
 }
 
 export function tokenCells(token, x = token?.x, y = token?.y, size = tokenSize(token)) {
