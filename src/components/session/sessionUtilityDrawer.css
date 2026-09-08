@@ -14,30 +14,26 @@
   right: 0 !important;
   top: 22% !important;
   z-index: 561 !important;
-  min-width: 46px;
-  min-height: 92px;
-  padding: 8px 7px !important;
-  border-radius: 12px 0 0 12px;
-  display: flex !important;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  padding: 0 !important;
+  border-radius: 10px 0 0 10px;
+  display: grid !important;
+  place-items: center;
   background: rgba(3, 13, 5, .96) !important;
-  box-shadow: -6px 0 18px rgba(0, 0, 0, .38), inset 0 0 16px color-mix(in srgb, currentColor 8%, transparent);
+  box-shadow: -5px 0 14px rgba(0, 0, 0, .34), inset 0 0 12px color-mix(in srgb, currentColor 8%, transparent);
 }
 
 .session-utility-drawer-toggle .session-chat-toggle-label {
+  display: block;
   font-size: 1rem;
   line-height: 1;
 }
 
 .session-utility-drawer-toggle .session-chat-toggle-code {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: .5rem;
-  letter-spacing: .12em;
-  opacity: .7;
+  display: none !important;
 }
 
 .session-utility-drawer {
@@ -105,6 +101,79 @@
   min-height: 0;
   overflow-y: auto !important;
   overscroll-behavior: contain;
+}
+
+.session-drawer-message.is-loot {
+  border-color: color-mix(in srgb, currentColor 42%, transparent);
+  background: color-mix(in srgb, currentColor 5%, transparent);
+}
+
+.session-loot-chat-line {
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.session-loot-item-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.session-loot-item-link:hover,
+.session-loot-item-link:focus-visible {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  outline: none;
+}
+
+.session-loot-add-card {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, var(--pip-bg, #071008) 96%, currentColor 4%);
+  box-shadow: inset 0 0 16px color-mix(in srgb, currentColor 5%, transparent);
+}
+
+.session-loot-add-card > strong {
+  font-size: .8rem;
+}
+
+.session-loot-add-card__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: .65rem;
+  opacity: .82;
+}
+
+.session-loot-add-card label {
+  display: grid;
+  grid-template-columns: auto minmax(80px, 1fr);
+  align-items: center;
+  gap: 8px;
+  font-size: .62rem;
+}
+
+.session-loot-add-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+
+.session-loot-added-status {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  border-left: 2px solid currentColor;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  font-size: .62rem;
 }
 
 .session-player-dock {
@@ -213,8 +282,10 @@
 
   .session-utility-drawer-toggle {
     top: 18% !important;
-    min-width: 40px;
-    min-height: 78px;
+    width: 34px !important;
+    min-width: 34px !important;
+    height: 34px !important;
+    min-height: 34px !important;
   }
 
   .session-player-dock {
