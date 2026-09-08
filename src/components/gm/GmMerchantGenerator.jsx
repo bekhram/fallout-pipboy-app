@@ -271,6 +271,7 @@ export default function GmMerchantGenerator({ session = null }) {
   const pool = useMemo(() => [...dynamicPool, ...staticPool], [dynamicPool, staticPool]);
   const sharedMerchant = generated ? (session?.merchants || []).find((merchant) => merchant.id === generated.id) || null : null;
   const liveMerchant = sharedMerchant || generated;
+  const tradeMerchantId = sharedMerchant?.id || generated?.id || "";
 
   const changeMin = (value) => {
     const next = clampMerchantRarity(value, 0); setMinRarity(next); if (next > maxRarity) setMaxRarity(next);
@@ -295,8 +296,8 @@ export default function GmMerchantGenerator({ session = null }) {
   };
 
   const trade = () => {
-    if (!sharedMerchant) return;
-    const sent = Boolean(session?.publishMerchantOffer?.(sharedMerchant.id));
+    if (!tradeMerchantId) return;
+    const sent = Boolean(session?.publishMerchantOffer?.(tradeMerchantId));
     setStatus(sent ? copy.offerSent : copy.offerFailed);
   };
 
@@ -307,7 +308,7 @@ export default function GmMerchantGenerator({ session = null }) {
       <section className="gm-merchant-card"><strong>{copy.rarity}</strong><div className="gm-merchant-rarity"><label>{copy.from}<select value={minRarity} onChange={(event)=>changeMin(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label><span>—</span><label>{copy.to}<select value={maxRarity} onChange={(event)=>changeMax(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label></div></section>
       <section className="gm-merchant-card"><strong>{copy.wealth}: {wealth}</strong><input type="range" min="1" max="10" step="1" value={wealth} onChange={(event)=>setWealth(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/><div className="gm-merchant-scale"><span>1</span><span>10</span></div><small>{copy.wealthHint}</small></section>
     </div>
-    <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!sharedMerchant} onClick={trade}>{copy.trade}</button></div>
+    <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!tradeMerchantId} onClick={trade}>{copy.trade}</button></div>
     {status?<div className="gm-merchant-status">{status}</div>:null}
     {liveMerchant?<section className="gm-merchant-result"><div className="gm-merchant-result__summary"><div><div className="pip-bootline">{getMerchantTypeLabel(liveMerchant.merchantType, language)}</div><h3>{liveMerchant.name}</h3></div><div><strong>💰 {liveMerchant.caps}</strong><span>{copy.caps}</span></div><div><strong>{liveMerchant.stock.length}</strong><span>{copy.items}</span></div></div><h3>[ {copy.stock} ]</h3><div className="gm-merchant-table"><div className="gm-merchant-row is-head"><span>{copy.name}</span><span>{copy.qty}</span><span>{copy.price}</span><span>{copy.itemRarity}</span></div>{liveMerchant.stock.map((item)=><div className="gm-merchant-row" key={item.stockId}><span>{item.name}</span><span>{item.quantity}</span><span>💰 {merchantBuyPrice(item)}</span><span>R{item.rarity}</span></div>)}</div></section>:null}
   </section>;
