@@ -66,6 +66,7 @@
 .gm-tactical-loot,
 .gm-tactical-merchants,
 .gm-tactical-environment-edit,
+.gm-tactical-scene-presets,
 .gm-tactical-map-core,
 .gm-tactical-token-manager {
   display: none;
@@ -151,6 +152,7 @@
   display: block;
 }
 
+.gm-tactical-view--scenes .gm-tactical-scene-presets,
 .gm-tactical-view--scenes .gm-tactical-map-core {
   display: block;
 }
