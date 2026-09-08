@@ -1,46 +1,42 @@
 .tactical-grid .gm-session-token.is-size-2,
 .tactical-grid .gm-session-token.is-size-3 {
-  left: 50% !important;
-  top: 50% !important;
-  width: min(78%, 56px) !important;
-  height: min(78%, 56px) !important;
+  left: 3px !important;
+  top: 3px !important;
+  width: calc(200% - 6px) !important;
+  height: calc(200% - 6px) !important;
   max-width: none !important;
   max-height: none !important;
-  transform: translate(-50%, -50%) !important;
-  border-radius: 50% !important;
+  transform: none !important;
+  border-radius: 14% !important;
   box-sizing: border-box !important;
   z-index: 8;
 }
 
 .tactical-grid .gm-session-token.is-size-2.is-selected,
 .tactical-grid .gm-session-token.is-size-3.is-selected {
-  transform: translate(-50%, -50%) scale(1.08) !important;
+  transform: none !important;
+  box-shadow: 0 0 18px currentColor, inset 0 0 12px color-mix(in srgb, currentColor 15%, transparent) !important;
 }
 
 .tactical-grid .gm-session-token.is-size-2 small,
 .tactical-grid .gm-session-token.is-size-3 small {
-  top: calc(100% + 3px) !important;
-  bottom: auto !important;
-  max-width: 88px !important;
+  top: auto !important;
+  bottom: 4px !important;
+  max-width: calc(100% - 10px) !important;
+  opacity: .92;
 }
 
 .tactical-drag-ghost.is-size-2,
 .tactical-drag-ghost.is-size-3 {
-  width: 58px !important;
-  height: 58px !important;
-  border-radius: 50% !important;
+  width: 92px !important;
+  height: 92px !important;
+  border-radius: 14% !important;
 }
 
 @media (max-width: 640px) {
-  .tactical-grid .gm-session-token.is-size-2,
-  .tactical-grid .gm-session-token.is-size-3 {
-    width: min(76%, 48px) !important;
-    height: min(76%, 48px) !important;
-  }
-
   .tactical-drag-ghost.is-size-2,
   .tactical-drag-ghost.is-size-3 {
-    width: 50px !important;
-    height: 50px !important;
+    width: 76px !important;
+    height: 76px !important;
   }
 }
