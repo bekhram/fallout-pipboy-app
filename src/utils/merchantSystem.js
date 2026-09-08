@@ -138,10 +138,10 @@ export function appendPurchasedItem(inventory = [], item = {}) {
   const normalized = normalizeMerchantTradeItem(item);
   const inventoryItem = {
     ...normalized,
-    id: normalized.id || `merchant-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+    id: `merchant-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
     quantity: String(Math.max(1, Number(normalized.quantity || 1))),
     rarity: String(normalized.rarity),
-    sourceId: normalized.sourceId ?? null,
+    sourceId: normalized.sourceId ?? normalized.id ?? null,
   };
 
   if (isStackableTradeItem(inventoryItem)) {
