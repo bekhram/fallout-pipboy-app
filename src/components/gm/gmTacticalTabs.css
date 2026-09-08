@@ -62,6 +62,7 @@
 }
 
 .gm-tactical-battle-effects,
+.gm-tactical-auto-gm,
 .gm-tactical-environment-edit,
 .gm-tactical-map-core,
 .gm-tactical-token-manager {
@@ -110,6 +111,11 @@
 
 .gm-tactical-view--battle .gm-session-map__grid {
   min-height: min(68vh, 760px);
+}
+
+/* Auto GM encounter narrator. */
+.gm-tactical-view--autogm .gm-tactical-auto-gm {
+  display: block;
 }
 
 /* V4 is kept mounted once so editor state/dice state survives tab changes. */
