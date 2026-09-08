@@ -6,10 +6,10 @@ const MAX_AVATAR_BYTES = 500 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const COPY = {
-  en: { waiting: "WAITING FOR GM TOKEN", assigned: "TOKEN CONTROL ACTIVE", upload: "UPLOAD AVATAR ≤500 KB", replace: "CHANGE AVATAR ≤500 KB", saved: "AVATAR SENT TO GM", tooLarge: "Avatar must be 500 KB or smaller.", type: "Use JPEG, PNG or WebP.", failed: "Could not send avatar." },
-  ru: { waiting: "ОЖИДАНИЕ ТОКЕНА ОТ ГМ", assigned: "УПРАВЛЕНИЕ ТОКЕНОМ АКТИВНО", upload: "ЗАГРУЗИТЬ АВАТАР ≤500 КБ", replace: "СМЕНИТЬ АВАТАР ≤500 КБ", saved: "АВАТАР ОТПРАВЛЕН ГМ", tooLarge: "Размер аватара должен быть не больше 500 КБ.", type: "Используйте JPEG, PNG или WebP.", failed: "Не удалось отправить аватар." },
-  uk: { waiting: "ОЧІКУВАННЯ ТОКЕНА ВІД ГМ", assigned: "КЕРУВАННЯ ТОКЕНОМ АКТИВНЕ", upload: "ЗАВАНТАЖИТИ АВАТАР ≤500 КБ", replace: "ЗМІНИТИ АВАТАР ≤500 КБ", saved: "АВАТАР НАДІСЛАНО ГМ", tooLarge: "Розмір аватара має бути не більше 500 КБ.", type: "Використовуйте JPEG, PNG або WebP.", failed: "Не вдалося надіслати аватар." },
-  pl: { waiting: "OCZEKIWANIE NA TOKEN OD GM", assigned: "STEROWANIE TOKENEM AKTYWNE", upload: "WGRAJ AWATAR ≤500 KB", replace: "ZMIEŃ AWATAR ≤500 KB", saved: "AWATAR WYSŁANY DO GM", tooLarge: "Awatar musi mieć maksymalnie 500 KB.", type: "Użyj JPEG, PNG lub WebP.", failed: "Nie udało się wysłać awatara." },
+  en: { waiting: "WAITING FOR TOKEN", uploadHint: "CLICK TO UPLOAD", saved: "AVATAR SENT", tooLarge: "Avatar must be 500 KB or smaller.", type: "Use JPEG, PNG or WebP.", failed: "Could not send avatar." },
+  ru: { waiting: "ОЖИДАНИЕ ТОКЕНА", uploadHint: "CLICK TO UPLOAD", saved: "АВАТАР ОТПРАВЛЕН", tooLarge: "Размер аватара должен быть не больше 500 КБ.", type: "Используйте JPEG, PNG или WebP.", failed: "Не удалось отправить аватар." },
+  uk: { waiting: "ОЧІКУВАННЯ ТОКЕНА", uploadHint: "CLICK TO UPLOAD", saved: "АВАТАР НАДІСЛАНО", tooLarge: "Розмір аватара має бути не більше 500 КБ.", type: "Використовуйте JPEG, PNG або WebP.", failed: "Не вдалося надіслати аватар." },
+  pl: { waiting: "OCZEKIWANIE NA TOKEN", uploadHint: "CLICK TO UPLOAD", saved: "AWATAR WYSŁANY", tooLarge: "Awatar musi mieć maksymalnie 500 KB.", type: "Użyj JPEG, PNG lub WebP.", failed: "Nie udało się wysłać awatara." },
 };
 
 function languageCode() {
@@ -40,8 +40,6 @@ export default function PlayerTokenAssignmentBridge({ session }) {
     [scene?.tokens, session?.clientId]
   );
 
-  // Old sessions can still contain a legacy player-created token. Always use
-  // the GM-assigned token for control/avatar updates when one exists.
   const ownToken = useMemo(
     () => ownedTokens.find((token) => token.assignedByGm) || ownedTokens[0] || null,
     [ownedTokens]
@@ -52,7 +50,7 @@ export default function PlayerTokenAssignmentBridge({ session }) {
     [session?.players, session?.clientId]
   );
 
-  const displayName = session?.playerTokenProfile?.name || player?.character?.name || player?.name || "Player";
+  const displayName = ownToken?.name || session?.playerTokenProfile?.name || player?.character?.name || player?.name || "Player";
   const avatar = preview || ownToken?.avatar || session?.playerTokenProfile?.avatar || "";
 
   useEffect(() => {
@@ -92,12 +90,12 @@ export default function PlayerTokenAssignmentBridge({ session }) {
 
   const controls = portalTarget ? createPortal(
     <div className="player-assigned-token-controls">
-      <button type="button" disabled={!ownToken} className="player-assigned-token-avatar" onClick={() => ownToken && inputRef.current?.click()} aria-label={avatar ? text.replace : text.upload}>
-        {avatar ? <img src={avatar} alt="" /> : <span>{String(displayName || "P").slice(0, 1).toUpperCase()}</span>}
+      <button type="button" disabled={!ownToken} className="player-assigned-token-avatar" onClick={() => ownToken && inputRef.current?.click()} aria-label={text.uploadHint}>
+        {avatar ? <img src={avatar} alt="" /> : <span className="player-assigned-token-avatar__initial">{String(displayName || "P").slice(0, 1).toUpperCase()}</span>}
+        <span className="player-assigned-token-avatar__hint">{text.uploadHint}</span>
       </button>
       <div className="player-assigned-token-controls__body">
-        <strong>{ownToken ? text.assigned : text.waiting}</strong>
-        <button type="button" className="pip-btn" disabled={!ownToken} onClick={() => inputRef.current?.click()}>{avatar ? text.replace : text.upload}</button>
+        <strong>{ownToken ? displayName : text.waiting}</strong>
         {avatarState ? <small className={avatarState === text.saved ? "is-ok" : "is-error"}>{avatarState}</small> : null}
       </div>
       <input ref={inputRef} className="player-assigned-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={uploadAvatar} />
