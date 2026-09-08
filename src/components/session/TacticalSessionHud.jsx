@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import "./tacticalSessionHud.css";
 
 const INIT_COLLAPSED_KEY = "pip2d20_initiative_collapsed_v1";
@@ -51,13 +52,16 @@ function tokenAvatarForPlayer(player, tokens) {
 
 export default function TacticalSessionHud({ session }) {
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [roundTarget, setRoundTarget] = useState(null);
   const players = Array.isArray(session?.players) ? session.players : [];
   const scene = session?.tacticalScene || null;
   const rawTokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
 
+  // Only active participants belong to initiative. Hidden/inactive NPCs stay
+  // completely outside the turn order until the GM activates them.
   const tokens = useMemo(
-    () => session?.mode === "player" ? rawTokens.filter((token) => !isHiddenNpc(token)) : rawTokens,
-    [rawTokens, session?.mode]
+    () => rawTokens.filter((token) => !isHiddenNpc(token)),
+    [rawTokens]
   );
 
   const order = useMemo(() => tokens.map((token, index) => ({
@@ -72,6 +76,25 @@ export default function TacticalSessionHud({ session }) {
     return nameSort || a.index - b.index;
   }), [tokens, players]);
 
+  const orderIds = useMemo(() => order.map(({ token }) => String(token.id)), [order]);
+  const storedActiveId = String(session?.turnState?.activeTokenId || "");
+  const activeTokenId = orderIds.includes(storedActiveId) ? storedActiveId : (orderIds[0] || "");
+  const activeIndex = Math.max(0, orderIds.indexOf(activeTokenId));
+  const round = Math.max(1, Number(session?.turnState?.round || 1));
+
+  useEffect(() => {
+    if (typeof document === "undefined" || !scene) return undefined;
+    const selector = session?.mode === "host" ? ".gm-session-map__meta" : ".session-tactical-player__actions";
+    const sync = () => {
+      const next = document.querySelector(selector);
+      setRoundTarget((current) => current === next ? current : next);
+    };
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [scene?.sceneId, session?.mode]);
+
   if (!session?.isActive) return null;
 
   const toggleCollapsed = () => {
@@ -82,8 +105,18 @@ export default function TacticalSessionHud({ session }) {
     });
   };
 
+  const changeTurn = (direction) => {
+    if (session?.mode !== "host" || !orderIds.length) return;
+    session.advanceTurn?.(orderIds, direction);
+  };
+
+  const roundBadge = roundTarget && scene
+    ? createPortal(<span className="tactical-round-badge">ROUND {round}</span>, roundTarget)
+    : null;
+
   return (
     <>
+      {roundBadge}
       {scene ? <aside className={`tactical-initiative-rail${collapsed ? " is-collapsed" : ""}`} aria-label="Initiative order">
         <button
           type="button"
@@ -94,14 +127,20 @@ export default function TacticalSessionHud({ session }) {
         >
           {collapsed ? "▶" : "◀"}
         </button>
-        <div className="tactical-initiative-rail__title">INIT</div>
+        <div className="tactical-initiative-rail__title">
+          <span>INIT</span>
+          {orderIds.length ? <div className="tactical-turn-counter">
+            {session.mode === "host" ? <button type="button" onClick={() => changeTurn(-1)} title="Previous turn">‹</button> : null}
+            <b>TURN {activeIndex + 1}/{orderIds.length}</b>
+            {session.mode === "host" ? <button type="button" onClick={() => changeTurn(1)} title="Next turn">›</button> : null}
+          </div> : <small>NO ACTORS</small>}
+        </div>
         <div className="tactical-initiative-rail__list">
           {order.map(({ token, initiative, hp }) => {
-            const hidden = isHiddenNpc(token);
-            return <div key={token.id} className={`tactical-initiative-entry${hidden && session.mode === "host" ? " is-hidden" : ""}${hp.maxHp > 0 && hp.hp <= 0 ? " is-down" : ""}`} title={`${token.name} · INIT ${initiative}`}>
-              <div className="tactical-initiative-entry__avatar">{token.avatar ? <img src={token.avatar} alt="" /> : <span>{initials(token.name)}</span>}</div>
+            const current = token.id === activeTokenId;
+            return <div key={token.id} className={`tactical-initiative-entry${current ? " is-current" : ""}${hp.maxHp > 0 && hp.hp <= 0 ? " is-down" : ""}`} title={`${token.name} · INIT ${initiative}`} aria-current={current ? "true" : undefined}>
+              <div className="tactical-initiative-entry__avatar">{token.avatar ? <img src={token.avatar} alt="" draggable={false} /> : <span>{initials(token.name)}</span>}</div>
               <div className="tactical-initiative-entry__meta"><strong>{initiative}</strong><small>{token.name}</small></div>
-              {hidden && session.mode === "host" ? <i>H</i> : null}
             </div>;
           })}
         </div>
@@ -112,10 +151,10 @@ export default function TacticalSessionHud({ session }) {
           {players.map((player) => {
             const character = player?.character || {};
             const name = character.name || player?.name || "Player";
-            const avatar = character.avatar || tokenAvatarForPlayer(player, tokens) || "";
+            const avatar = character.avatar || tokenAvatarForPlayer(player, rawTokens) || "";
             return <div className="session-player-dock__item" key={player.clientId || player.peerId || name} title={name}>
               <div className="session-player-dock__avatar">
-                {avatar ? <img src={avatar} alt="" /> : <span>{initials(name)}</span>}
+                {avatar ? <img src={avatar} alt="" draggable={false} /> : <span>{initials(name)}</span>}
                 <i className={`session-player-dock__online${player.online === false ? " is-offline" : ""}`} />
               </div>
               <small>{name}</small>
