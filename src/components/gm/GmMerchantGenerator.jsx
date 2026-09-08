@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { INVENTORY_DATABASE } from "../../data/inventoryDatabase.js";
 import { translateInventoryItemName } from "../../data/inventoryLocalization.js";
+import { getWeaponModGroups } from "../../data/weaponMods.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 import {
@@ -90,18 +91,11 @@ function normalizeInventory(item, index, language) {
   else if (category === "food") lootType = "food";
   else if (category === "beverages") lootType = "beverages";
   return {
-    id: stableId("inventory", canonicalName, index),
-    name,
-    canonicalName,
-    quantity: 1,
-    weight: String(item?.weight ?? "0"),
-    cost: String(item?.cost ?? ""),
-    rarity: merchantItemRarity(item, category === "junk" ? 0 : 1),
-    category,
-    sourceType: String(item?.sourceType || "loot"),
-    sourceId: item?.sourceId ?? null,
-    effect: String(item?.effect || ""),
-    lootType,
+    id: stableId("inventory", canonicalName, index), name, canonicalName, quantity: 1,
+    weight: String(item?.weight ?? "0"), cost: String(item?.cost ?? ""),
+    rarity: merchantItemRarity(item, category === "junk" ? 0 : 1), category,
+    sourceType: String(item?.sourceType || "loot"), sourceId: item?.sourceId ?? null,
+    effect: String(item?.effect || ""), lootType,
   };
 }
 
@@ -112,6 +106,43 @@ function normalizeWeapons(rows) {
     weight: String(row?.Weight ?? "0"), cost: String(row?.Cost ?? "0"), rarity: clampMerchantRarity(row?.Rarity, 0),
     category: "weapons", sourceType: "weapon", sourceId: null, effect: String(row?.Effects || ""), lootType: "weapon",
   })).filter((item) => item.canonicalName !== "Weapon");
+}
+
+function weaponSkill(row) {
+  const value = String(row?.["Weapon type"] || row?.skill || "").trim().toLowerCase();
+  if (value.includes("small")) return "small_guns";
+  if (value.includes("energy")) return "energy_weapons";
+  return value.replace(/[\s-]+/g, "_");
+}
+
+function weaponModRarity(mod) {
+  const ranks = String(mod?.perks || "").match(/\d+/g)?.map(Number).filter(Number.isFinite) || [];
+  if (!ranks.length) return 1;
+  return clampMerchantRarity(Math.max(...ranks), 1);
+}
+
+function normalizeWeaponMods(rows) {
+  const unique = new Map();
+  for (const row of rows) {
+    const groups = getWeaponModGroups({ name: row?.name, skill: weaponSkill(row) }) || {};
+    for (const [slot, mods] of Object.entries(groups)) {
+      for (const mod of Array.isArray(mods) ? mods : []) {
+        const name = String(mod?.name || "Weapon Mod");
+        const effect = String(mod?.effect || "");
+        const key = `${slot}::${name.toLowerCase()}::${effect.toLowerCase()}`;
+        if (unique.has(key)) continue;
+        const rarity = weaponModRarity(mod);
+        unique.set(key, {
+          id: stableId("weapon-mod", `${slot}-${name}`, unique.size),
+          name, canonicalName: name, quantity: 1,
+          weight: String(mod?.weight ?? "0"), cost: String(mod?.cost ?? "0"), rarity,
+          category: "misc", sourceType: "weapon_mod", sourceId: null,
+          effect, lootType: "mod", modSlot: slot,
+        });
+      }
+    }
+  }
+  return [...unique.values()];
 }
 
 function normalizeArmor(items, isMod = false) {
@@ -219,9 +250,11 @@ export default function GmMerchantGenerator({ session = null }) {
       fetch("/Ammo.csv").then((response) => response.ok ? response.text() : ""),
     ]).then(([weaponsText, armorText, ammoText]) => {
       if (!active) return;
+      const weaponRows = weaponsText ? parseCSV(weaponsText) : [];
       const armor = armorText ? parseArmorDatabase(armorText) : { items: [], mods: [] };
       setDynamicPool([
-        ...(weaponsText ? normalizeWeapons(parseCSV(weaponsText)) : []),
+        ...normalizeWeapons(weaponRows),
+        ...normalizeWeaponMods(weaponRows),
         ...normalizeArmor(armor.items || [], false),
         ...normalizeArmor(armor.mods || [], true),
         ...(ammoText ? normalizeAmmo(parseCSV(ammoText)) : []),
@@ -235,9 +268,8 @@ export default function GmMerchantGenerator({ session = null }) {
     [language]
   );
   const pool = useMemo(() => [...dynamicPool, ...staticPool], [dynamicPool, staticPool]);
-  const liveMerchant = generated
-    ? (session?.merchants || []).find((merchant) => merchant.id === generated.id) || generated
-    : null;
+  const sharedMerchant = generated ? (session?.merchants || []).find((merchant) => merchant.id === generated.id) || null : null;
+  const liveMerchant = sharedMerchant || generated;
 
   const changeMin = (value) => {
     const next = clampMerchantRarity(value, 0); setMinRarity(next); if (next > maxRarity) setMaxRarity(next);
@@ -262,8 +294,8 @@ export default function GmMerchantGenerator({ session = null }) {
   };
 
   const trade = () => {
-    if (!liveMerchant) return;
-    const sent = Boolean(session?.publishMerchantOffer?.(liveMerchant.id));
+    if (!sharedMerchant) return;
+    const sent = Boolean(session?.publishMerchantOffer?.(sharedMerchant.id));
     setStatus(sent ? copy.offerSent : copy.offerFailed);
   };
 
@@ -274,7 +306,7 @@ export default function GmMerchantGenerator({ session = null }) {
       <section className="gm-merchant-card"><strong>{copy.rarity}</strong><div className="gm-merchant-rarity"><label>{copy.from}<select value={minRarity} onChange={(event)=>changeMin(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label><span>—</span><label>{copy.to}<select value={maxRarity} onChange={(event)=>changeMax(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label></div></section>
       <section className="gm-merchant-card"><strong>{copy.wealth}: {wealth}</strong><input type="range" min="1" max="10" step="1" value={wealth} onChange={(event)=>setWealth(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/><div className="gm-merchant-scale"><span>1</span><span>10</span></div><small>{copy.wealthHint}</small></section>
     </div>
-    <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!liveMerchant} onClick={trade}>{copy.trade}</button></div>
+    <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!sharedMerchant} onClick={trade}>{copy.trade}</button></div>
     {status?<div className="gm-merchant-status">{status}</div>:null}
     {liveMerchant?<section className="gm-merchant-result"><div className="gm-merchant-result__summary"><div><div className="pip-bootline">{getMerchantTypeLabel(liveMerchant.merchantType, language)}</div><h3>{liveMerchant.name}</h3></div><div><strong>💰 {liveMerchant.caps}</strong><span>{copy.caps}</span></div><div><strong>{liveMerchant.stock.length}</strong><span>{copy.items}</span></div></div><h3>[ {copy.stock} ]</h3><div className="gm-merchant-table"><div className="gm-merchant-row is-head"><span>{copy.name}</span><span>{copy.qty}</span><span>{copy.price}</span><span>{copy.itemRarity}</span></div>{liveMerchant.stock.map((item)=><div className="gm-merchant-row" key={item.stockId}><span>{item.name}</span><span>{item.quantity}</span><span>💰 {merchantBuyPrice(item)}</span><span>R{item.rarity}</span></div>)}</div></section>:null}
   </section>;
