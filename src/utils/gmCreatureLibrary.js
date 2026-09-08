@@ -1,6 +1,6 @@
 import { getCampaign, putCampaign } from "./sessionLocalCache.js";
 import { makeId } from "./gmSessionModel.js";
-import { applyNpcRank, normalizeNpcRank, normalizeStructuredAttack } from "./npcCombat.js";
+import { applyNpcRank, normalizeNpcRank, normalizeStructuredAttack, normalizeWeaponAttack } from "./npcCombat.js";
 
 const LIBRARY_ID = "pip2d20-gm-custom-creatures-v1";
 export const CUSTOM_CREATURES_CHANGED_EVENT = "pip2d20:custom-creatures-changed";
@@ -25,17 +25,27 @@ function normalizeAttackList(value) {
   return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => normalizeStructuredAttack(item, index));
 }
 
+function normalizeWeaponList(value) {
+  return (Array.isArray(value) ? value : []).slice(0, 20).map((item, index) => normalizeWeaponAttack(item, index));
+}
+
+function normalizeCardKind(value) {
+  return String(value || "").toLowerCase() === "creature" ? "creature" : "npc";
+}
+
 function normalizeCreature(value = {}) {
+  const cardKind = normalizeCardKind(value.cardKind || value.kind || (value.category === "creature" ? "creature" : "npc"));
   const maxHp = Math.max(0, numeric(value.maxHp ?? value.hp, 0));
   const baseSize = Number(value.baseSize ?? value.size) === 2 ? 2 : 1;
   const baseXp = Math.max(0, numeric(value.baseXp ?? value.xp, 0));
   const baseMaxHp = Math.max(1, numeric(value.baseMaxHp ?? maxHp, 1));
   const baseDefense = Math.max(0, numeric(value.baseDefense ?? value.defense, 0));
   const base = {
-    id: String(value.id || makeId("creature")),
-    name: String(value.name || "Creature").trim().slice(0, 80) || "Creature",
-    category: String(value.category || "npc").trim().slice(0, 40) || "npc",
-    creatureType: String(value.creatureType || "").trim().slice(0, 100),
+    id: String(value.id || makeId(cardKind)),
+    cardKind,
+    name: String(value.name || (cardKind === "creature" ? "Creature" : "NPC")).trim().slice(0, 80) || (cardKind === "creature" ? "Creature" : "NPC"),
+    category: String(value.category || cardKind).trim().slice(0, 40) || cardKind,
+    creatureType: String(value.creatureType || (cardKind === "creature" ? "Creature" : "Human")).trim().slice(0, 100),
     size: baseSize,
     baseSize,
     level: Math.max(0, numeric(value.level, 0)),
@@ -56,6 +66,7 @@ function normalizeCreature(value = {}) {
     skills: normalizeSkills(value.skills),
     attacks: String(value.attacks || "").slice(0, 2000),
     customAttacks: normalizeAttackList(value.customAttacks),
+    weapons: normalizeWeaponList(value.weapons),
     abilities: String(value.abilities || "").slice(0, 2400),
     drBlock: String(value.drBlock || "").slice(0, 1200),
     tactics: String(value.tactics || "").slice(0, 1600),
@@ -68,7 +79,10 @@ function normalizeCreature(value = {}) {
     hordeSize: Math.max(2, Math.min(5, numeric(value.hordeSize, 2))),
     hordeHp: Array.isArray(value.hordeHp) ? value.hordeHp : [],
     specialFeature: String(value.specialFeature || "").slice(0, 1200),
+    specialFeatureId: String(value.specialFeatureId || "").slice(0, 80),
     legendaryAbility: String(value.legendaryAbility || "").slice(0, 1600),
+    legendaryAbilityId: String(value.legendaryAbilityId || "").slice(0, 80),
+    legendaryRewardType: String(value.legendaryRewardType || "").slice(0, 40),
     legendaryReward: String(value.legendaryReward || "").slice(0, 1200),
     avatar: String(value.avatar || "").startsWith("data:image/") ? String(value.avatar) : "",
     updatedAt: Number(value.updatedAt || Date.now()),
@@ -112,13 +126,23 @@ export async function deleteCustomCreature(id) {
   return next;
 }
 
-export function blankCreature() {
+export function blankCreature(kind = "npc") {
+  const cardKind = normalizeCardKind(kind);
   return normalizeCreature({
-    id: makeId("creature"), name: "", category: "npc", creatureType: "Human",
+    id: makeId(cardKind),
+    cardKind,
+    name: "",
+    category: cardKind,
+    creatureType: cardKind === "creature" ? "Creature" : "Human",
     hp: 10, maxHp: 10, baseMaxHp: 10, defense: 1, baseDefense: 1,
     initiative: 0, level: 1, xp: 0, baseXp: 0, size: 1, baseSize: 1,
     rank: "standard", hordeEnabled: false, hordeSize: 2,
-    customAttacks: [],
+    customAttacks: [], weapons: [],
+    body: cardKind === "creature" ? 5 : "",
+    mind: cardKind === "creature" ? 5 : "",
+    melee: cardKind === "creature" ? 2 : "",
+    guns: cardKind === "creature" ? 0 : "",
+    other: cardKind === "creature" ? 0 : "",
     special: { STR: 5, PER: 5, END: 5, CHA: 5, INT: 5, AGI: 5, LCK: 5 },
   });
 }
