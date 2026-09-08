@@ -548,6 +548,9 @@
     "unnamed": "Без імені",
     "unknown": "Невідомо",
     "continue": "ПРОДОВЖИТИ",
+    "resumeSession": "ПОВЕРНУТИСЯ ДО СЕСІЇ · {{role}} · {{code}}",
+    "roleGm": "ГМ",
+    "rolePlayer": "ГРАВЕЦЬ",
     "noSavedCharacter": "Збереженого персонажа не знайдено."
   },
   "injuryEffects": {

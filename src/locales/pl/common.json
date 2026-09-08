@@ -556,6 +556,9 @@
     "unnamed": "Bez nazwy",
     "unknown": "Nieznane",
     "continue": "KONTYNUUJ",
+    "resumeSession": "WRÓĆ DO SESJI · {{role}} · {{code}}",
+    "roleGm": "GM",
+    "rolePlayer": "GRACZ",
     "noSavedCharacter": "Brak zapisanej postaci."
   },
   "injuryEffects": {

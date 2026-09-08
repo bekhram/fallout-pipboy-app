@@ -557,6 +557,9 @@
     "unnamed": "Unnamed",
     "unknown": "Unknown",
     "continue": "CONTINUE",
+    "resumeSession": "RETURN TO SESSION · {{role}} · {{code}}",
+    "roleGm": "GM",
+    "rolePlayer": "PLAYER",
     "noSavedCharacter": "No saved character found in local storage."
   },
   "injuryEffects": {

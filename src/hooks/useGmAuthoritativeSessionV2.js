@@ -36,6 +36,7 @@ export const GAME_SERVER_URL = "https://fallout-pipboy-server-git-687180641791.e
 
 const CLIENT_ID_KEY = "pip2d20_socket_client_id_v1";
 const GM_CAMPAIGN_ID_KEY = "pip2d20_gm_campaign_id_v1";
+const LAST_SESSION_RESUME_KEY = "pip2d20_last_gm_session_v1";
 const RESOURCE_CHUNK_SIZE = 300_000;
 const EMPTY_COMBAT = {
   active: false,
@@ -51,6 +52,41 @@ const EMPTY_COMBAT = {
 
 export function normalizeSessionCode(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, SESSION_CODE_LENGTH);
+}
+
+function readLastSession() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LAST_SESSION_RESUME_KEY) || "null");
+    const code = normalizeSessionCode(parsed?.code);
+    const role = parsed?.role === "host" ? "host" : parsed?.role === "player" ? "player" : "";
+    if (code.length !== SESSION_CODE_LENGTH || !role) return null;
+    return {
+      code,
+      role,
+      name: String(parsed?.name || (role === "host" ? "GM" : "Player")).trim().slice(0, 40),
+      gmSecret: role === "host" ? String(parsed?.gmSecret || "") : "",
+      campaignId: role === "host" ? String(parsed?.campaignId || "") : "",
+      updatedAt: String(parsed?.updatedAt || ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeLastSession(value) {
+  const code = normalizeSessionCode(value?.code);
+  const role = value?.role === "host" ? "host" : value?.role === "player" ? "player" : "";
+  if (code.length !== SESSION_CODE_LENGTH || !role) return null;
+  const saved = {
+    code,
+    role,
+    name: String(value?.name || (role === "host" ? "GM" : "Player")).trim().slice(0, 40),
+    gmSecret: role === "host" ? String(value?.gmSecret || "") : "",
+    campaignId: role === "host" ? String(value?.campaignId || "") : "",
+    updatedAt: new Date().toISOString(),
+  };
+  try { localStorage.setItem(LAST_SESSION_RESUME_KEY, JSON.stringify(saved)); } catch { /* best effort */ }
+  return saved;
 }
 
 function getClientId() {
@@ -242,6 +278,7 @@ export default function useGmAuthoritativeSessionV2(form) {
   const [presenceState, setPresenceState] = useState(null);
   const [mirroredState, setMirroredState] = useState(null);
   const [campaignId, setCampaignId] = useState("");
+  const [lastSession, setLastSession] = useState(() => readLastSession());
   const [syncState, setSyncState] = useState({ phase: "idle", cached: 0, requested: 0 });
   const [playerTokenProfile, setPlayerTokenProfile] = useState({ name: "Player", size: 1, avatar: "", avatarAssetId: "", avatarHash: "" });
   const [combat] = useState({ ...EMPTY_COMBAT });
@@ -802,6 +839,12 @@ export default function useGmAuthoritativeSessionV2(form) {
     window.setTimeout(() => finish(socket.connected), 14000);
   });
 
+  const rememberSession = (value) => {
+    const saved = writeLastSession(value);
+    if (saved) setLastSession(saved);
+    return saved;
+  };
+
   useEffect(() => () => {
     try { socketRef.current?.disconnect?.(); } catch { /* noop */ }
     for (const resolver of pendingActionsRef.current.values()) resolver({ ok: false, error: "SESSION_CLOSED" });
@@ -844,6 +887,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     if (response.state) applyPresence(response.state);
     setStatus("online");
     setSyncState({ phase: "gm-authority", cached: 0, requested: 0 });
+    rememberSession({ role: "host", code, name: "GM", gmSecret: gmSecretRef.current, campaignId: id });
     await publishManifest();
     return true;
   };
@@ -873,6 +917,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     }
     if (response.state) applyPresence(response.state);
     setStatus("online");
+    rememberSession({ role: "player", code: safeCode, name: safeName });
     const profile = await loadPlayerTokenProfile(clientIdRef.current, safeName).catch(() => playerProfileRef.current);
     playerProfileRef.current = profile;
     setPlayerTokenProfile(profile);
@@ -880,6 +925,47 @@ export default function useGmAuthoritativeSessionV2(form) {
     await announcePlayerAssets(profile);
     sendPlayerAction("character:update", { character: createCharacterSnapshot(formRef.current) });
     return true;
+  };
+
+  const resumeLastSession = async () => {
+    const saved = readLastSession() || lastSession;
+    if (!saved?.code || !["host", "player"].includes(saved.role)) return false;
+
+    leavingRef.current = false;
+    setError(null);
+    setStatus("connecting");
+
+    // Connect while still in lobby mode so the socket's automatic reconnect
+    // handler cannot race this explicit restore attempt.
+    if (!await waitForConnection()) {
+      setStatus("disconnected");
+      setError(socketError("NETWORK_ERROR"));
+      return false;
+    }
+
+    codeRef.current = saved.code;
+    nameRef.current = saved.name || (saved.role === "host" ? "GM" : getCharacterName(formRef.current) || "Player");
+    setSessionCode(saved.code);
+    modeRef.current = saved.role;
+    setMode(saved.role);
+
+    if (saved.role === "host") {
+      const id = saved.campaignId || getOrCreateCampaignId();
+      campaignIdRef.current = id;
+      setCampaignId(id);
+      gmSecretRef.current = saved.gmSecret || "";
+      const cached = await getCampaign(id).catch(() => null);
+      const initial = normalizeCampaignState(cached?.state, id);
+      gmStateRef.current = initial;
+      setMirroredState(initial);
+      setSyncState({ phase: "gm-authority", cached: 0, requested: 0 });
+    } else {
+      setSyncState({ phase: "waiting-manifest", cached: 0, requested: 0 });
+    }
+
+    const resumed = await resumeCurrentRole();
+    if (resumed) rememberSession(saved);
+    return resumed;
   };
 
   const exitSession = () => {
@@ -1221,8 +1307,10 @@ export default function useGmAuthoritativeSessionV2(form) {
     liveSceneId,
     playerTokenProfile,
     connectionMeta,
+    lastSession,
     startHost,
     joinSession,
+    resumeLastSession,
     exitSession,
     reconnectNow,
     broadcastScene,

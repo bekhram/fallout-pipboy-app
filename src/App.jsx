@@ -911,6 +911,15 @@ const updateSkill = (skillName, field, value) =>
         onContinue={handleContinue}
         onImportClick={handleImportClick}
         onOpenSession={() => setScreen("session")}
+        lastSession={sharedSession.lastSession}
+        onResumeSession={() => {
+          setScreen("session");
+          if (sharedSession.isActive) {
+            if (sharedSession.status !== "online") void sharedSession.reconnectNow?.();
+            return;
+          }
+          void sharedSession.resumeLastSession?.();
+        }}
       />
     );
   } else if (screen === "session") {

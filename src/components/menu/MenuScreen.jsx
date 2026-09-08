@@ -14,6 +14,8 @@ export default function MenuScreen({
   onContinue,
   onImportClick,
   onOpenSession,
+  onResumeSession,
+  lastSession,
   saveMeta
 }) {
   const { t, i18n } = useTranslation();
@@ -92,6 +94,20 @@ export default function MenuScreen({
             >
               GM / SESSION
             </TrackedButton>
+
+            {lastSession?.code ? (
+              <TrackedButton
+                type="button"
+                className="pip-btn"
+                onClick={onResumeSession}
+                id="btn_resume_last_gm_session"
+              >
+                {t("menuScreen.resumeSession", {
+                  role: t(lastSession.role === "host" ? "menuScreen.roleGm" : "menuScreen.rolePlayer"),
+                  code: lastSession.code,
+                })}
+              </TrackedButton>
+            ) : null}
           </div>
         </section>
 
