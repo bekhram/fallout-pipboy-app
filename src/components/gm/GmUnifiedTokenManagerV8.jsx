@@ -12,6 +12,8 @@ const COPY = {
   pl: { source: "ŹRÓDŁO", all: "WSZYSTKIE", bestiary: "BESTIARIUSZ", custom: "WŁASNE", choose: "— WYBIERZ STWORA / NPC —", standardMark: "BESTIARIUSZ", customMark: "WŁASNY" },
 };
 
+const TOKEN_COLOR_COUNT = 8;
+
 function languageCode(value) {
   const code = String(value || "en").toLowerCase().split("-")[0];
   return COPY[code] ? code : "en";
@@ -25,10 +27,27 @@ function sameOptions(a, b) {
   });
 }
 
+function clampTokenSize(value) {
+  const size = Math.floor(Number(value) || 1);
+  if (size >= 3) return 3;
+  if (size === 2) return 2;
+  return 1;
+}
+
+function clampHordeSize(value) {
+  return Math.max(2, Math.min(5, Math.floor(Number(value) || 2)));
+}
+
+function makeHordeId() {
+  const random = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `horde-${random}`;
+}
+
 export default function GmUnifiedTokenManagerV8({ session }) {
   const { i18n } = useTranslation();
   const text = COPY[languageCode(i18n.resolvedLanguage || i18n.language)];
   const rootRef = useRef(null);
+  const colorCursorRef = useRef(0);
   const [controlsHost, setControlsHost] = useState(null);
   const [filterHost, setFilterHost] = useState(null);
   const [options, setOptions] = useState([]);
@@ -37,9 +56,85 @@ export default function GmUnifiedTokenManagerV8({ session }) {
 
   const tokenSession = useMemo(() => {
     if (!session) return session;
+
+    const nextColorIndex = () => {
+      const value = colorCursorRef.current % TOKEN_COLOR_COUNT;
+      colorCursorRef.current = (colorCursorRef.current + 1) % TOKEN_COLOR_COUNT;
+      return value;
+    };
+
+    const createNpcToken = async (payload = {}) => {
+      const incomingStats = payload?.stats && typeof payload.stats === "object" ? payload.stats : {};
+      const baseSize = clampTokenSize(incomingStats.baseSize ?? incomingStats.originalSize ?? payload.size ?? incomingStats.size);
+      const isHorde = Boolean(incomingStats.hordeEnabled);
+      const colorIndex = Number.isFinite(Number(incomingStats.tokenColorIndex))
+        ? Math.abs(Math.floor(Number(incomingStats.tokenColorIndex))) % TOKEN_COLOR_COUNT
+        : nextColorIndex();
+
+      if (!isHorde) {
+        return session.createNpcToken?.({
+          ...payload,
+          size: baseSize,
+          stats: {
+            ...incomingStats,
+            footprint: baseSize,
+            size: baseSize,
+            tokenColorIndex: colorIndex,
+          },
+        });
+      }
+
+      const memberCount = clampHordeSize(incomingStats.hordeSize);
+      const memberMaxHp = Math.max(
+        1,
+        Math.floor(Number(incomingStats.memberMaxHp ?? incomingStats.baseMaxHp ?? incomingStats.maxHp ?? incomingStats.hp) || 1)
+      );
+      const groupId = makeHordeId();
+      const created = [];
+
+      for (let index = 0; index < memberCount; index += 1) {
+        const memberStats = {
+          ...incomingStats,
+          hp: memberMaxHp,
+          maxHp: memberMaxHp,
+          hordeEnabled: false,
+          hordeVisualGroup: true,
+          hordeGroupId: groupId,
+          hordeMemberIndex: index + 1,
+          hordeMemberCount: memberCount,
+          hordeSize: memberCount,
+          hordeLiving: memberCount,
+          hordeHp: [],
+          footprint: baseSize,
+          size: baseSize,
+          tokenColorIndex: colorIndex,
+        };
+        const memberPayload = {
+          ...payload,
+          name: `${String(payload.name || "NPC")} ${index + 1}`,
+          size: baseSize,
+          stats: memberStats,
+        };
+        if (index > 0) {
+          delete memberPayload.x;
+          delete memberPayload.y;
+        }
+        const response = await session.createNpcToken?.(memberPayload);
+        if (!response?.ok) {
+          return created.length
+            ? { ok: true, token: created[0], tokens: created, hordeGroupId: groupId, partial: true }
+            : response;
+        }
+        if (response.token) created.push(response.token);
+      }
+
+      return { ok: true, token: created[0] || null, tokens: created, hordeGroupId: groupId };
+    };
+
     return {
       ...session,
       liveSceneId: session.liveSceneId || session.tacticalScene?.sceneId || "",
+      createNpcToken,
     };
   }, [session]);
 
