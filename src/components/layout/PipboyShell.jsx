@@ -7,6 +7,7 @@ import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 import { installBestiaryCombatGmBridge } from "../../utils/bestiaryCombatGmBridge.js";
+import { clearCharacterStateBridge, setCharacterStateBridge } from "../../utils/characterStateBridge.js";
 
 const SWIPE_THRESHOLD = 60;
 const INTERACTIVE_SELECTOR = [
@@ -68,6 +69,11 @@ export default function PipboyShell({
     installLocationLoreGmBridge();
     installBestiaryCombatGmBridge();
   }, []);
+
+  useEffect(() => {
+    setCharacterStateBridge(resolvedCharacter, resolvedSetCharacter);
+    return () => clearCharacterStateBridge(resolvedSetCharacter);
+  }, [resolvedCharacter, resolvedSetCharacter]);
 
   useEffect(() => {
     previousTab.current = activeTab;
