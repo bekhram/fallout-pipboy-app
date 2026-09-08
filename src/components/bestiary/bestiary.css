@@ -77,6 +77,10 @@
 .bestiary-edit-grid .pip-input,.bestiary-edit-grid .pip-textarea { width: 100%; box-sizing: border-box; }
 .bestiary-edit-grid label.is-wide { grid-column: 1/-1; }
 .bestiary-edit-grid textarea { min-height: 72px; resize: vertical; }
+.bestiary-attack-editor { display: grid; gap: 6px; border: 1px solid color-mix(in srgb,currentColor 38%,transparent); padding: 7px; }
+.bestiary-attack-editor-head,.bestiary-attack-buttons { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; }
+.bestiary-attack-edit-row { display: grid; grid-template-columns: minmax(120px,2fr) repeat(3,minmax(54px,.55fr)) auto; gap: 5px; }
+@media (max-width: 620px) { .bestiary-attack-edit-row { grid-template-columns: 1fr 1fr; } }
 
 @media (max-width: 980px) {
   .bestiary-stat-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }

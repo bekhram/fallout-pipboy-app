@@ -1,5 +1,8 @@
 import React, { useMemo, useState } from "react";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
+import DiceRollModal from "../dice/DiceRollModal.jsx";
+import { attackRollConfig, normalizeBestiaryAttacks } from "../../utils/bestiaryAttacks.js";
+import { creatureAbilityList } from "../../data/creatureModifiers.js";
 
 const CUSTOM_BESTIARY_KEY = "fallout_pipboy_bestiary_custom_v1";
 const MAX_AVATAR_SOURCE_BYTES = 8 * 1024 * 1024;
@@ -27,6 +30,7 @@ const COPY = {
     linked: "BESTIARY",
     manual: "MANUAL",
     selectOnMap: "SELECT",
+    modifier: "RANK", crowd: "CROWD", details: "DETAILS", addAttack: "+ ATTACK", specialAbility: "SPECIAL ABILITY", reward: "LEGENDARY REWARD",
   },
   ru: {
     title: "ТОКЕНЫ NPC / ВРАГОВ",
@@ -50,6 +54,7 @@ const COPY = {
     linked: "БЕСТИАРИЙ",
     manual: "РУЧНОЙ",
     selectOnMap: "ВЫБРАТЬ",
+    modifier: "МОДИФИКАТОР", crowd: "ТОЛПА", details: "ПОДРОБНЕЕ", addAttack: "+ АТАКА", specialAbility: "ОСОБАЯ СПОСОБНОСТЬ", reward: "ЛЕГЕНДАРНАЯ НАГРАДА",
   },
   uk: {
     title: "ТОКЕНИ NPC / ВОРОГІВ",
@@ -164,6 +169,14 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
   const [name, setName] = useState("");
   const [size, setSize] = useState(1);
   const [error, setError] = useState("");
+  const [modifier, setModifier] = useState("standard");
+  const [groupSize, setGroupSize] = useState(1);
+  const [abilityId, setAbilityId] = useState("");
+  const [attackName, setAttackName] = useState("");
+  const [attackTarget, setAttackTarget] = useState(10);
+  const [attackDamage, setAttackDamage] = useState(3);
+  const [diceRoll, setDiceRoll] = useState(null);
+  const [pendingAutoD6, setPendingAutoD6] = useState(null);
 
   const entries = useMemo(() => {
     const merged = [...BESTIARY_ENTRIES, ...readCustomBestiary()].filter(isNpcEntry);
@@ -196,7 +209,9 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
   const add = () => {
     const finalName = String(name || selectedEntry?.name || "Enemy").trim();
     if (!finalName) return;
-    onAddToken?.({ entry: selectedEntry, name: finalName, size });
+    const ability = creatureAbilityList(modifier).find((item) => item.id === abilityId);
+    const customAttack = String(attackName).trim() ? [{ id: `attack-${Date.now()}`, name: attackName.trim(), targetNumber: Number(attackTarget) || 10, diceCount: 2, damage: Number(attackDamage) || 0, difficulty: 1, effects: "" }] : [];
+    onAddToken?.({ entry: { ...(selectedEntry || { name: finalName, hp: 10, defense: 1, attacks: "" }), modifier, groupSize, attackProfiles: customAttack.length ? customAttack : selectedEntry?.attackProfiles, specialAbility: ability ? `${ability.name}: ${ability.summary}` : "" }, name: finalName, size });
   };
 
   const uploadAvatar = async (tokenId, file) => {
@@ -231,6 +246,12 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
             <option value={2}>2×2</option>
           </select>
         </label>
+        <select className="pip-input" value={modifier} onChange={(event) => setModifier(event.target.value)}><option value="minion">MINION</option><option value="standard">STANDARD</option><option value="special">SPECIAL</option><option value="legendary">LEGENDARY</option></select>
+        <label className="tactical-enemy-size-label">{text.crowd}<select className="pip-input" value={groupSize} onChange={(event) => setGroupSize(Number(event.target.value))}>{[1,2,3,4,5].map((value) => <option key={value} value={value}>{value}</option>)}</select></label>
+        {creatureAbilityList(modifier).length ? <select className="pip-input" value={abilityId} onChange={(event) => setAbilityId(event.target.value)}><option value="">— {text.specialAbility} —</option>{creatureAbilityList(modifier).map((ability) => <option key={ability.id} value={ability.id}>{ability.name}</option>)}</select> : null}
+        <input className="pip-input" value={attackName} placeholder={`${text.addAttack}: ${text.attacks}`} onChange={(event) => setAttackName(event.target.value)} />
+        <input className="pip-input" type="number" min="1" max="20" value={attackTarget} title="TN" onChange={(event) => setAttackTarget(event.target.value)} />
+        <input className="pip-input" type="number" min="0" max="30" value={attackDamage} title="CD" onChange={(event) => setAttackDamage(event.target.value)} />
         <button type="button" className="pip-btn is-primary" onClick={add}>{text.add}</button>
       </div>
 
@@ -254,8 +275,11 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
                   {token.defense ? <span>{text.defense}: <strong>{token.defense}</strong></span> : null}
                   {token.initiative ? <span>{text.initiative}: <strong>{token.initiative}</strong></span> : null}
                   {token.level ? <span>{text.level}: <strong>{token.level}</strong></span> : null}
+                  <span>{text.modifier}: <strong>{token.modifier || "standard"}</strong></span>
+                  {Number(token.groupSize) > 1 ? <span>{text.crowd}: <strong>{token.groupSize}</strong></span> : null}
                 </div>
-                <div className="tactical-enemy-card__actions">
+                <div className="tactical-enemy-attack-buttons">{normalizeBestiaryAttacks(token).map((attack) => <button type="button" className="pip-btn is-primary" key={attack.id} onClick={() => { setPendingAutoD6(null); setDiceRoll(attackRollConfig(token, attack, token.groupSize)); }}>{attack.name}</button>)}</div>
+                {selected ? <div className="tactical-enemy-card__actions">
                   <label className="pip-btn tactical-avatar-upload">
                     {token.avatar ? text.replaceAvatar : text.avatar}
                     <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { uploadAvatar(token.id, event.target.files?.[0]); event.target.value = ""; }} />
@@ -271,12 +295,15 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
                     </>
                   ) : null}
                   <button type="button" className="pip-btn" onClick={() => onRemoveToken?.(token.id)}>{text.remove}</button>
-                </div>
-                {selected && token.attacks ? (
+                </div> : null}
+                {selected ? (
                   <div className="tactical-enemy-details">
-                    <strong>{text.attacks}</strong>
-                    <div>{token.attacks}</div>
+                    {Number(token.groupSize) > 1 ? <div className="tactical-crowd-hp"><strong>{text.hp}</strong>{(token.memberHps || []).map((memberHp, memberIndex) => <div key={memberIndex}><span>#{memberIndex + 1}: {memberHp}/{token.maxHp}</span><button type="button" className="pip-btn" onClick={() => onUpdateToken?.(token.id, { memberHps: token.memberHps.map((value, index) => index === memberIndex ? Math.max(0, Number(value) - 1) : value) })}>−</button><button type="button" className="pip-btn" onClick={() => onUpdateToken?.(token.id, { memberHps: token.memberHps.map((value, index) => index === memberIndex ? Math.min(Number(token.maxHp), Number(value) + 1) : value) })}>+</button></div>)}</div> : null}
+                    {token.attacks ? <><strong>{text.attacks}</strong><div>{token.attacks}</div></> : null}
                     {token.drBlock ? <div>DR: {token.drBlock}</div> : null}
+                    {token.resistanceBonus ? <div>DR BONUS: +{token.resistanceBonus}</div> : null}
+                    {token.specialAbility ? <div><strong>{text.specialAbility}:</strong> {token.specialAbility}</div> : null}
+                    {token.legendaryReward ? <div><strong>{text.reward}:</strong> {token.legendaryReward}</div> : null}
                   </div>
                 ) : null}
               </div>
@@ -284,6 +311,7 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
           );
         }) : <div className="pip-logbox">{text.noTokens}</div>}
       </div>
+      <DiceRollModal isOpen={Boolean(diceRoll)} onClose={() => setDiceRoll(null)} rollConfig={diceRoll} pendingAutoD6={pendingAutoD6} setPendingAutoD6={setPendingAutoD6} />
     </section>
   );
 }
