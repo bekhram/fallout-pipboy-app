@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
 import GmUnifiedTokenManagerV4 from "./GmUnifiedTokenManagerV4.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
+import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
@@ -79,6 +80,7 @@ export default function GmSessionMap(props) {
           <GmSessionMapV2 {...props} session={session} />
         </div>
 
+        <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
 
         <div className="gm-tactical-token-manager">
