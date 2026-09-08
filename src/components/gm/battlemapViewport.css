@@ -1,0 +1,209 @@
+.has-battlemap-controls {
+  position: relative !important;
+}
+
+.battlemap-scroll-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: min(68vh, 760px) !important;
+  min-height: 320px !important;
+  max-height: none !important;
+  aspect-ratio: auto !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  touch-action: pan-x pan-y;
+  align-content: start;
+  justify-content: start;
+  background-repeat: no-repeat !important;
+  background-position: 0 0 !important;
+  background-attachment: local !important;
+  contain: layout paint;
+}
+
+.battlemap-scroll-grid .gm-session-map__cell {
+  width: var(--battlemap-cell) !important;
+  min-width: var(--battlemap-cell) !important;
+  height: var(--battlemap-cell) !important;
+  min-height: var(--battlemap-cell) !important;
+}
+
+.battlemap-scroll-grid .gm-session-token {
+  width: max(6px, min(30px, calc(var(--battlemap-cell) * .72))) !important;
+  height: max(6px, min(30px, calc(var(--battlemap-cell) * .72))) !important;
+  touch-action: none;
+}
+
+.battlemap-scroll-grid.is-overview-zoom .gm-session-token small,
+.battlemap-scroll-grid.is-overview-zoom .gm-token-status-hp,
+.battlemap-scroll-grid.is-overview-zoom .gm-session-token:not(.is-selected) small {
+  display: none !important;
+}
+
+.battlemap-scroll-grid.is-overview-zoom .gm-session-token b {
+  font-size: clamp(.25rem, calc(var(--battlemap-cell) * .28), .58rem);
+}
+
+.battlemap-view-controls {
+  position: absolute;
+  z-index: 45;
+  top: calc(var(--battlemap-grid-top, 0px) + 8px);
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: min(430px, calc(100% - 24px));
+  min-height: 36px;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 48%, transparent);
+  background: color-mix(in srgb, var(--pip-bg, #071008) 94%, transparent);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .36), inset 0 0 10px color-mix(in srgb, currentColor 5%, transparent);
+  backdrop-filter: blur(7px);
+}
+
+.battlemap-control-btn,
+.battlemap-zoom-value,
+.battlemap-fit-btn,
+.battlemap-pan-controls button {
+  border: 1px solid color-mix(in srgb, currentColor 42%, transparent);
+  background: color-mix(in srgb, currentColor 6%, var(--pip-bg, #071008));
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.battlemap-control-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.battlemap-zoom-slider {
+  width: clamp(82px, 16vw, 160px);
+  accent-color: currentColor;
+}
+
+.battlemap-zoom-value,
+.battlemap-fit-btn {
+  min-height: 30px;
+  padding: 4px 7px;
+  font-size: .58rem;
+  letter-spacing: .04em;
+}
+
+.battlemap-pan-controls {
+  position: absolute;
+  z-index: 44;
+  top: calc(var(--battlemap-grid-top, 0px) + 54px);
+  right: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-template-rows: repeat(3, 32px);
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  background: color-mix(in srgb, var(--pip-bg, #071008) 91%, transparent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .32);
+  backdrop-filter: blur(6px);
+}
+
+.battlemap-pan-controls button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: .8rem;
+}
+
+.battlemap-pan-controls .is-up { grid-column: 2; grid-row: 1; }
+.battlemap-pan-controls .is-left { grid-column: 1; grid-row: 2; }
+.battlemap-pan-controls .is-center { grid-column: 2; grid-row: 2; font-size: .68rem; }
+.battlemap-pan-controls .is-right { grid-column: 3; grid-row: 2; }
+.battlemap-pan-controls .is-down { grid-column: 2; grid-row: 3; }
+
+.battlemap-grid-presets {
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  font-size: .6rem;
+}
+
+.gm-tactical-map-core .tactical-toolbar > .tactical-size-select {
+  display: none !important;
+}
+
+.session-tactical-player .battlemap-scroll-grid {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 280px !important;
+  max-height: 100% !important;
+  aspect-ratio: auto !important;
+  overflow: auto !important;
+}
+
+@media (max-width: 780px) {
+  .battlemap-scroll-grid {
+    height: 64vh !important;
+    min-height: 280px !important;
+  }
+
+  .session-tactical-player .battlemap-scroll-grid {
+    height: 100% !important;
+    min-height: 0 !important;
+  }
+
+  .battlemap-view-controls {
+    top: calc(var(--battlemap-grid-top, 0px) + 5px);
+    right: 7px;
+    gap: 3px;
+    min-height: 32px;
+    padding: 3px;
+  }
+
+  .battlemap-control-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .battlemap-zoom-slider {
+    width: 84px;
+  }
+
+  .battlemap-zoom-value,
+  .battlemap-fit-btn {
+    min-height: 28px;
+    padding: 3px 5px;
+    font-size: .5rem;
+  }
+
+  .battlemap-pan-controls {
+    top: calc(var(--battlemap-grid-top, 0px) + 45px);
+    right: 7px;
+    grid-template-columns: repeat(3, 30px);
+    grid-template-rows: repeat(3, 30px);
+    gap: 2px;
+    padding: 3px;
+  }
+
+  .battlemap-pan-controls button {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (max-width: 430px) {
+  .battlemap-view-controls {
+    max-width: calc(100% - 14px);
+  }
+
+  .battlemap-zoom-slider {
+    width: 62px;
+  }
+
+  .battlemap-zoom-value {
+    min-width: 44px;
+  }
+}
