@@ -13,6 +13,7 @@ import {
   findProceduralPath,
   getDoorRuntimeState,
   getProceduralMap,
+  proceduralCoverForToken,
 } from "../utils/proceduralMapCollision.js";
 
 export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
@@ -49,7 +50,7 @@ function decorateScene(scene) {
   if (!spec) return scene;
   const proceduralMap = generateProceduralMapStructure(spec);
   const backgroundUrl = generateProceduralMapDataUrl(spec);
-  return {
+  const baseDecorated = {
     ...scene,
     backgroundUrl,
     environment: {
@@ -58,6 +59,17 @@ function decorateScene(scene) {
       proceduralMap,
     },
   };
+  const tokens = (Array.isArray(scene.tokens) ? scene.tokens : []).map((token) => {
+    const tacticalCover = proceduralCoverForToken(baseDecorated, token);
+    return {
+      ...token,
+      stats: {
+        ...(token?.stats && typeof token.stats === "object" ? token.stats : {}),
+        tacticalCover,
+      },
+    };
+  });
+  return { ...baseDecorated, tokens };
 }
 
 function sceneForToken(scenes, tokenId) {
