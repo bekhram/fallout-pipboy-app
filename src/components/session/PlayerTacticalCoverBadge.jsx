@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
+import "./playerTacticalCover.css";
 
 const COPY = {
   en: "COVER",
