@@ -59,6 +59,34 @@ const PRESETS = [
     url: "/maps/encounters/12x12/radioactive-zone-day.svg",
     name: "Radioactive Zone · Day · 12x12",
   },
+  {
+    id: "red-rocket-exterior-interior-day-12",
+    biome: "red-rocket",
+    locationType: "red_rocket",
+    time: "day",
+    label: {
+      en: "Red Rocket · Exterior + Interior",
+      ru: "Красная Ракета · Снаружи + внутри",
+      uk: "Червона Ракета · Зовні + всередині",
+      pl: "Red Rocket · Zewnątrz + wnętrze",
+    },
+    url: "/maps/encounters/12x12/red-rocket-exterior-interior.svg",
+    name: "Red Rocket · Exterior + Interior · Day · 12x12",
+  },
+  {
+    id: "red-rocket-full-station-day-12",
+    biome: "red-rocket",
+    locationType: "red_rocket",
+    time: "day",
+    label: {
+      en: "Red Rocket · Full Station",
+      ru: "Красная Ракета · Полная станция",
+      uk: "Червона Ракета · Повна станція",
+      pl: "Red Rocket · Pełna stacja",
+    },
+    url: "/maps/encounters/12x12/red-rocket-full-station.svg",
+    name: "Red Rocket · Full Station · Day · 12x12",
+  },
 ];
 
 const COPY = {
@@ -133,13 +161,22 @@ export default function GmScenePresetPanel({ session }) {
 
   const applyPreset = async (preset) => {
     if (!preset) return;
-    await session.updateTacticalScene?.({
+    const scenePatch = {
       cols: 12,
       rows: 12,
       startZone: makeStartZone(12, 12),
       backgroundUrl: preset.url,
       backgroundName: preset.name,
-    });
+    };
+    if (preset.locationType) {
+      scenePatch.environment = {
+        ...(scene?.environment || {}),
+        locationType: preset.locationType,
+        mapAssetId: preset.id,
+        timeOfDay: preset.time || scene?.environment?.timeOfDay || "day",
+      };
+    }
+    await session.updateTacticalScene?.(scenePatch);
     setMessage(text.applied);
     window.setTimeout(() => setMessage(""), 1800);
   };
