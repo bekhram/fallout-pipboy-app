@@ -1,1 +1,34 @@
-export * from "./proceduralMapGeneratorV4.js";
+import * as V4 from "./proceduralMapGeneratorV4.js";
+
+const RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
+const LEGACY_TO_R = { common: "r1", uncommon: "r3", rare: "r5", legendary: "r7" };
+const R_TO_LEGACY = { r0: "common", r1: "common", r2: "uncommon", r3: "uncommon", r4: "rare", r5: "rare", r6: "legendary", r7: "legendary" };
+
+function normalizeRarity(value) {
+  const raw = String(value || "").toLowerCase();
+  if (RARITIES.includes(raw)) return raw;
+  return LEGACY_TO_R[raw] || "r3";
+}
+
+function legacyInput(value = {}) {
+  const rarity = normalizeRarity(value.lootRarity);
+  return { ...value, lootRarity: R_TO_LEGACY[rarity] };
+}
+
+export const MAP_TYPES = V4.MAP_TYPES;
+export const makeProceduralSeed = V4.makeProceduralSeed;
+export const proceduralLocationType = V4.proceduralLocationType;
+
+export function normalizeProceduralMapSpec(value = {}) {
+  const rarity = normalizeRarity(value.lootRarity);
+  const base = V4.normalizeProceduralMapSpec(legacyInput(value));
+  return { ...base, lootRarity: rarity, version: Math.max(6, Number(base.version || 0)) };
+}
+
+export function generateProceduralMapSvg(input = {}) {
+  return V4.generateProceduralMapSvg(legacyInput(input));
+}
+
+export function generateProceduralMapDataUrl(input = {}) {
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(generateProceduralMapSvg(input))}`;
+}
