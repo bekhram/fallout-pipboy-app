@@ -65,11 +65,10 @@ export default function useGmAuthoritativeSessionV15(form) {
     const hasEnvironment = Object.prototype.hasOwnProperty.call(source, "environment");
     const incomingEnvironment = hasEnvironment ? (source.environment || {}) : null;
     const incomingSpec = proceduralSpecFromEnvironment(incomingEnvironment);
+    const hasBackgroundPatch = Object.prototype.hasOwnProperty.call(source, "backgroundUrl");
     const proceduralName = Object.prototype.hasOwnProperty.call(source, "backgroundName")
       && String(source.backgroundName || "").startsWith("PROC //");
-    const customBackground = Object.prototype.hasOwnProperty.call(source, "backgroundUrl")
-      && Boolean(source.backgroundUrl)
-      && !proceduralName;
+    const nonProceduralBackgroundChange = hasBackgroundPatch && !proceduralName;
 
     if (hasEnvironment) next.environment = compactEnvironment(incomingEnvironment);
 
@@ -83,7 +82,7 @@ export default function useGmAuthoritativeSessionV15(form) {
           proceduralMapSpec: spec,
         });
       }
-    } else if (customBackground) {
+    } else if (nonProceduralBackgroundChange) {
       next.environment = compactEnvironment(currentEnvironment, true);
     }
 
