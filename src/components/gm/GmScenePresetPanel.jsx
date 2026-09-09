@@ -19,6 +19,46 @@ const PRESETS = [
     url: "/maps/encounters/12x12/desert-day.svg",
     name: "Desert · Day · 12x12",
   },
+  {
+    id: "city-ruins-day-12",
+    biome: "city-ruins",
+    time: "day",
+    label: { en: "City ruins", ru: "Руины города", uk: "Руїни міста", pl: "Ruiny miasta" },
+    url: "/maps/encounters/12x12/city-ruins-day.svg",
+    name: "City Ruins · Day · 12x12",
+  },
+  {
+    id: "road-day-12",
+    biome: "road",
+    time: "day",
+    label: { en: "Road", ru: "Дорога", uk: "Дорога", pl: "Droga" },
+    url: "/maps/encounters/12x12/road-day.svg",
+    name: "Road · Day · 12x12",
+  },
+  {
+    id: "canyon-day-12",
+    biome: "canyon",
+    time: "day",
+    label: { en: "Canyon", ru: "Каньон", uk: "Каньйон", pl: "Kanion" },
+    url: "/maps/encounters/12x12/canyon-day.svg",
+    name: "Canyon · Day · 12x12",
+  },
+  {
+    id: "scrapyard-day-12",
+    biome: "scrapyard",
+    time: "day",
+    label: { en: "Scrapyard", ru: "Свалка", uk: "Звалище", pl: "Złomowisko" },
+    url: "/maps/encounters/12x12/scrapyard-day.svg",
+    name: "Scrapyard · Day · 12x12",
+  },
+  {
+    id: "radioactive-zone-day-12",
+    biome: "radioactive-zone",
+    time: "day",
+    label: { en: "Radioactive zone", ru: "Радиоактивная зона", uk: "Радіоактивна зона", pl: "Strefa radioaktywna" },
+    url: "/maps/encounters/12x12/radioactive-zone-day.svg",
+    name: "Radioactive Zone · Day · 12x12",
+  },
 ];
 
 const COPY = {
