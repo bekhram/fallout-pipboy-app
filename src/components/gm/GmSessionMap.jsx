@@ -13,6 +13,7 @@ import TacticalEnvironmentPanel, {
   TacticalEnvironmentSummary,
 } from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
+import { getDoorRuntimeState } from "../../utils/proceduralMapCollision.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
 import "./tokenVisualFootprintFix.css";
@@ -67,7 +68,11 @@ function sessionWithProceduralContext(session) {
     .join("; ");
   const doors = (Array.isArray(map.doors) ? map.doors : [])
     .slice(0, 16)
-    .map((item) => `${item.id}@${item.x},${item.y}${item.locked ? `[LOCKED D${item.difficulty || 1}]` : ""}${item.connects?.length ? `(${item.connects.join("↔")})` : ""}`)
+    .map((item) => {
+      const state = getDoorRuntimeState(scene, item);
+      const status = state.locked ? `LOCKED D${item.difficulty || 1}` : state.open ? "OPEN" : "CLOSED";
+      return `${item.id}@${item.x},${item.y}[${status}]${item.connects?.length ? `(${item.connects.join("↔")})` : ""}`;
+    })
     .join("; ");
   const points = (Array.isArray(map.points) ? map.points : [])
     .slice(0, 12)
@@ -125,7 +130,7 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
         <div className="gm-tactical-scene-presets"><GmScenePresetPanel session={session} /></div>
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
-        <ProceduralMapSemanticPortal scene={session.tacticalScene} />
+        <ProceduralMapSemanticPortal scene={session.tacticalScene} session={session} />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV9 session={session} /></div>
