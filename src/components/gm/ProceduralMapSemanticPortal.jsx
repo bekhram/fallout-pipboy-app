@@ -14,6 +14,7 @@ export default function ProceduralMapSemanticPortal({ scene }) {
     return () => observer.disconnect();
   }, [scene?.sceneId]);
 
-  if (!target || !scene?.environment?.proceduralMap) return null;
+  const proceduralActive = String(scene?.backgroundName || "").startsWith("PROC //");
+  if (!target || !proceduralActive || !scene?.environment?.proceduralMap) return null;
   return createPortal(<ProceduralMapSemanticLayer scene={scene} />, target);
 }
