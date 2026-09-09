@@ -5,10 +5,6 @@ import {
   makeProceduralSeed,
   proceduralLocationType,
 } from "../../utils/proceduralMapGenerator.js";
-import {
-  generateProceduralMapStructure,
-  proceduralStructureStats,
-} from "../../utils/proceduralMapStructure.js";
 import "./gmScenePresetPanel.css";
 
 const MAP_TYPES = ["wasteland", "red_rocket", "super_duper_mart", "raider_camp", "military_bunker"];
@@ -47,104 +43,84 @@ const LABELS = {
 
 const COPY = {
   en: {
-    title: "[ FALLOUT LOCATION GENERATOR ]",
-    subtitle: "Procedural map · no full-size image stored in the app",
+    title: "[ FALLOUT MAP GENERATOR ]",
+    subtitle: "Donjon-style visual map · generated locally from a compact seed",
     type: "LOCATION",
-    gridSize: "GRID SIZE",
+    gridSize: "MAP SIZE",
     seed: "SEED",
     density: "DETAIL DENSITY",
     newSeed: "NEW SEED",
     generate: "GENERATE / APPLY",
-    regenerate: "REGENERATE",
-    custom: "Prefer your own artwork? Custom background upload remains available in the tactical map editor below.",
+    regenerate: "NEW VARIANT",
+    customUpload: "UPLOAD CUSTOM BACKGROUND",
+    custom: "Custom PNG/JPEG/WebP remains fully supported if you do not want to use the generator.",
+    visualOnly: "Rooms, walls, doors and scenery are visual parts of the background only. They do not block token movement or apply combat rules.",
     grid: "GRID VISIBILITY",
     weak: "WEAK",
     normal: "NORMAL",
     strong: "STRONG",
-    applied: "Generated map applied to scene",
-    deterministic: "Same seed + settings = same map for the whole session.",
-    structure: "GAME STRUCTURE",
-    rooms: "ROOMS",
-    walls: "WALLS",
-    doors: "DOORS",
-    locked: "LOCKED",
-    covers: "COVER",
-    obstacles: "BLOCKERS",
+    applied: "Generated background applied to scene",
+    deterministic: "Same seed + settings = same background for every player without storing a full-size map image.",
   },
   ru: {
-    title: "[ ГЕНЕРАТОР ЛОКАЦИЙ FALLOUT ]",
-    subtitle: "Процедурная карта · без хранения полноразмерной картинки в приложении",
+    title: "[ ГЕНЕРАТОР КАРТ FALLOUT ]",
+    subtitle: "Визуальная карта в стиле donjon · локальная генерация из компактного seed",
     type: "ЛОКАЦИЯ",
-    gridSize: "РАЗМЕР ГРИДА",
+    gridSize: "РАЗМЕР КАРТЫ",
     seed: "SEED",
     density: "ПЛОТНОСТЬ ДЕТАЛЕЙ",
     newSeed: "НОВЫЙ SEED",
     generate: "СГЕНЕРИРОВАТЬ / ПРИМЕНИТЬ",
-    regenerate: "ПЕРЕГЕНЕРИРОВАТЬ",
-    custom: "Нужна своя картинка? Загрузка кастомного фона остаётся в редакторе тактической карты ниже.",
+    regenerate: "НОВЫЙ ВАРИАНТ",
+    customUpload: "ЗАГРУЗИТЬ СВОЙ ФОН",
+    custom: "PNG/JPEG/WebP можно по-прежнему загрузить вручную, если генератор не нужен.",
+    visualOnly: "Комнаты, стены, двери и декорации — только часть рисунка. Они не блокируют токены и не добавляют боевых правил.",
     grid: "ВИДИМОСТЬ ГРИДА",
     weak: "СЛАБЫЙ",
     normal: "ОБЫЧНЫЙ",
     strong: "КОНТРАСТНЫЙ",
-    applied: "Сгенерированная карта применена к сцене",
-    deterministic: "Одинаковый seed + настройки = одинаковая карта для всей сессии.",
-    structure: "ИГРОВАЯ СТРУКТУРА",
-    rooms: "КОМНАТЫ",
-    walls: "СТЕНЫ",
-    doors: "ДВЕРИ",
-    locked: "ЗАПЕРТО",
-    covers: "УКРЫТИЯ",
-    obstacles: "ПРЕПЯТСТВИЯ",
+    applied: "Сгенерированный фон применён к сцене",
+    deterministic: "Одинаковый seed + настройки = одинаковый фон у всех игроков без хранения полноразмерной картинки.",
   },
   uk: {
-    title: "[ ГЕНЕРАТОР ЛОКАЦІЙ FALLOUT ]",
-    subtitle: "Процедурна мапа · без зберігання повнорозмірного зображення у застосунку",
+    title: "[ ГЕНЕРАТОР МАП FALLOUT ]",
+    subtitle: "Візуальна мапа у стилі donjon · локальна генерація з компактного seed",
     type: "ЛОКАЦІЯ",
-    gridSize: "РОЗМІР СІТКИ",
+    gridSize: "РОЗМІР МАПИ",
     seed: "SEED",
     density: "ЩІЛЬНІСТЬ ДЕТАЛЕЙ",
     newSeed: "НОВИЙ SEED",
     generate: "ЗГЕНЕРУВАТИ / ЗАСТОСУВАТИ",
-    regenerate: "ПЕРЕГЕНЕРУВАТИ",
-    custom: "Потрібне власне зображення? Завантаження кастомного фону залишається у редакторі тактичної мапи нижче.",
+    regenerate: "НОВИЙ ВАРІАНТ",
+    customUpload: "ЗАВАНТАЖИТИ ВЛАСНИЙ ФОН",
+    custom: "PNG/JPEG/WebP як і раніше можна завантажити вручну, якщо генератор не потрібен.",
+    visualOnly: "Кімнати, стіни, двері та декорації — лише частина малюнка. Вони не блокують токени й не додають бойових правил.",
     grid: "ВИДИМІСТЬ СІТКИ",
     weak: "СЛАБКА",
     normal: "ЗВИЧАЙНА",
     strong: "КОНТРАСТНА",
-    applied: "Згенеровану мапу застосовано до сцени",
-    deterministic: "Однаковий seed + налаштування = однакова мапа для всієї сесії.",
-    structure: "ІГРОВА СТРУКТУРА",
-    rooms: "КІМНАТИ",
-    walls: "СТІНИ",
-    doors: "ДВЕРІ",
-    locked: "ЗАМКНЕНО",
-    covers: "УКРИТТЯ",
-    obstacles: "ПЕРЕШКОДИ",
+    applied: "Згенерований фон застосовано до сцени",
+    deterministic: "Однаковий seed + налаштування = однаковий фон у всіх гравців без зберігання повнорозмірного зображення.",
   },
   pl: {
-    title: "[ GENERATOR LOKACJI FALLOUT ]",
-    subtitle: "Mapa proceduralna · bez pełnowymiarowego obrazu w aplikacji",
+    title: "[ GENERATOR MAP FALLOUT ]",
+    subtitle: "Wizualna mapa w stylu donjon · lokalna generacja z kompaktowego seed",
     type: "LOKACJA",
-    gridSize: "ROZMIAR SIATKI",
+    gridSize: "ROZMIAR MAPY",
     seed: "SEED",
     density: "GĘSTOŚĆ SZCZEGÓŁÓW",
     newSeed: "NOWY SEED",
     generate: "GENERUJ / ZASTOSUJ",
-    regenerate: "GENERUJ PONOWNIE",
-    custom: "Wolisz własną grafikę? Wgrywanie niestandardowego tła pozostaje w edytorze mapy taktycznej poniżej.",
+    regenerate: "NOWY WARIANT",
+    customUpload: "WGRAJ WŁASNE TŁO",
+    custom: "PNG/JPEG/WebP nadal można wgrać ręcznie, jeśli generator nie jest potrzebny.",
+    visualOnly: "Pomieszczenia, ściany, drzwi i dekoracje są tylko częścią obrazu. Nie blokują tokenów i nie dodają zasad walki.",
     grid: "WIDOCZNOŚĆ SIATKI",
     weak: "SŁABA",
     normal: "NORMALNA",
     strong: "KONTRASTOWA",
-    applied: "Wygenerowana mapa została zastosowana",
-    deterministic: "Ten sam seed + ustawienia = ta sama mapa dla całej sesji.",
-    structure: "STRUKTURA GRY",
-    rooms: "POMIESZCZENIA",
-    walls: "ŚCIANY",
-    doors: "DRZWI",
-    locked: "ZAMKNIĘTE",
-    covers: "OSŁONY",
-    obstacles: "PRZESZKODY",
+    applied: "Wygenerowane tło zastosowano do sceny",
+    deterministic: "Ten sam seed + ustawienia = to samo tło u wszystkich graczy bez przechowywania pełnego obrazu mapy.",
   },
 };
 
@@ -215,10 +191,11 @@ export default function GmScenePresetPanel({ session }) {
   }, [contrast]);
 
   const [cols, rows] = useMemo(() => gridSize.split("x").map(Number), [gridSize]);
-  const generationSpec = useMemo(() => ({ type, seed, cols, rows, density: density / 100 }), [type, seed, cols, rows, density]);
+  const generationSpec = useMemo(
+    () => ({ type, seed, cols, rows, density: density / 100 }),
+    [type, seed, cols, rows, density]
+  );
   const previewUrl = useMemo(() => generateProceduralMapDataUrl(generationSpec), [generationSpec]);
-  const previewStructure = useMemo(() => generateProceduralMapStructure(generationSpec), [generationSpec]);
-  const stats = useMemo(() => proceduralStructureStats(previewStructure), [previewStructure]);
 
   if (!scene || session?.mode !== "host") return null;
 
@@ -232,21 +209,21 @@ export default function GmScenePresetPanel({ session }) {
       rows,
       density: density / 100,
     };
-    const nextUrl = generateProceduralMapDataUrl(nextSpec);
-    const structure = generateProceduralMapStructure(nextSpec);
     const locationType = proceduralLocationType(type);
     await session.updateTacticalScene?.({
       cols,
       rows,
       startZone: makeStartZone(cols, rows),
-      backgroundUrl: nextUrl,
+      backgroundUrl: "",
       backgroundName: `PROC // ${LABELS.en[type]} // ${nextSeed}`,
       environment: {
         ...(scene.environment || {}),
         locationType,
-        mapAssetId: `procedural:${type}:v2`,
+        mapAssetId: `procedural:${type}:visual-v1`,
         mapVariantSeed: nextSeed,
-        proceduralMap: structure,
+        proceduralMapSpec: nextSpec,
+        proceduralMap: null,
+        proceduralDoorStates: {},
       },
     });
     setMessage(text.applied);
@@ -263,6 +240,11 @@ export default function GmScenePresetPanel({ session }) {
     applyContrastClass(value);
   };
 
+  const uploadCustom = () => {
+    if (typeof document === "undefined") return;
+    document.querySelector(".gm-tactical-map-core .tactical-background-input")?.click();
+  };
+
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
       <header className="gm-scene-presets__head">
@@ -275,18 +257,6 @@ export default function GmScenePresetPanel({ session }) {
       <div className="gm-proc-map__preview" style={{ backgroundImage: `url(${JSON.stringify(previewUrl)})` }}>
         <span>{LABELS[lang]?.[type] || LABELS.en[type]}</span>
         <small>{cols}×{rows} · seed {seed}</small>
-      </div>
-
-      <div className="gm-proc-map__structure">
-        <strong>{text.structure}</strong>
-        <div>
-          <span>{text.rooms}<b>{stats.rooms}</b></span>
-          <span>{text.walls}<b>{stats.walls}</b></span>
-          <span>{text.doors}<b>{stats.doors}</b></span>
-          <span>{text.locked}<b>{stats.lockedDoors}</b></span>
-          <span>{text.covers}<b>{stats.covers}</b></span>
-          <span>{text.obstacles}<b>{stats.obstacles}</b></span>
-        </div>
       </div>
 
       <div className="gm-proc-map__controls">
@@ -323,8 +293,10 @@ export default function GmScenePresetPanel({ session }) {
       <div className="gm-proc-map__actions">
         <button type="button" className="pip-btn is-primary" onClick={() => generate()}>{text.generate}</button>
         <button type="button" className="pip-btn" onClick={() => generate({ newSeed: true })}>{text.regenerate}</button>
+        <button type="button" className="pip-btn" onClick={uploadCustom}>{text.customUpload}</button>
       </div>
 
+      <div className="gm-proc-map__note">{text.visualOnly}</div>
       <div className="gm-proc-map__note">{text.deterministic}</div>
       <div className="gm-proc-map__custom">{text.custom}</div>
 
