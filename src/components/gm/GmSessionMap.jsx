@@ -8,6 +8,7 @@ import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import GmScenePresetPanel from "./GmScenePresetPanel.jsx";
+import GmProceduralRoomDescriptions from "./GmProceduralRoomDescriptions.jsx";
 import TacticalEnvironmentPanel, {
   TacticalEnvironmentSummary,
 } from "./TacticalEnvironmentPanel.jsx";
@@ -83,7 +84,10 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
-        <div className="gm-tactical-scene-presets"><GmScenePresetPanel session={session} /></div>
+        <div className="gm-tactical-scene-presets">
+          <GmScenePresetPanel session={session} />
+          <GmProceduralRoomDescriptions session={session} />
+        </div>
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
