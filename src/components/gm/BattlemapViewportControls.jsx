@@ -6,7 +6,7 @@ import { responsiveBattlemapBaseCell } from "../../utils/battlemapCoordinates.js
 import "./battlemapViewport.css";
 
 const BASE_CELL_SIZE = 44;
-const MIN_ZOOM = 15;
+const ABSOLUTE_MIN_ZOOM = 15;
 const MAX_ZOOM = 200;
 
 export const BATTLEMAP_GRID_PRESETS = [
@@ -54,7 +54,7 @@ function readZoom(role) {
   try {
     const saved = Number(localStorage.getItem(zoomKey(role)));
     return Number.isFinite(saved)
-      ? clamp(saved, MIN_ZOOM, MAX_ZOOM)
+      ? clamp(saved, ABSOLUTE_MIN_ZOOM, MAX_ZOOM)
       : comfortZoom();
   } catch {
     return comfortZoom();
@@ -95,18 +95,33 @@ export default function BattlemapViewportControls({
     grid: null,
     toolbar: null,
   });
-  const [viewportWidth, setViewportWidth] = useState(() =>
-    typeof window === "undefined" ? 360 : window.innerWidth
-  );
+  const [viewportMetrics, setViewportMetrics] = useState(() => ({
+    containerWidth: typeof window === "undefined" ? 360 : window.innerWidth,
+    gridWidth: typeof window === "undefined" ? 360 : window.innerWidth,
+    gridHeight: typeof window === "undefined" ? 320 : Math.round(window.innerHeight * 0.56),
+  }));
   const query = useMemo(() => selectors(role), [role]);
   const cols = Math.max(1, Number(scene?.cols || 12));
   const rows = Math.max(1, Number(scene?.rows || 12));
   const baseCellSize = responsiveBattlemapBaseCell({
-    viewportWidth,
+    viewportWidth: viewportMetrics.containerWidth,
     mobile: isMobileViewport(),
     maxCellSize: BASE_CELL_SIZE,
   });
-  const cellSize = Math.max(6, Math.round((baseCellSize * zoom) / 100));
+  const minimumZoom = useMemo(() => {
+    const width = Math.max(1, viewportMetrics.gridWidth - 2);
+    const height = Math.max(1, viewportMetrics.gridHeight - 2);
+    const minimumCellSize = Math.max(width / cols, height / rows);
+    return clamp(
+      Math.ceil((minimumCellSize / baseCellSize) * 100),
+      ABSOLUTE_MIN_ZOOM,
+      MAX_ZOOM
+    );
+  }, [viewportMetrics.gridWidth, viewportMetrics.gridHeight, cols, rows, baseCellSize]);
+  const cellSize = Math.max(
+    6,
+    Math.round((baseCellSize * Math.max(zoom, minimumZoom)) / 100)
+  );
 
   const focusToken = useMemo(() => {
     const tokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
@@ -137,6 +152,10 @@ export default function BattlemapViewportControls({
     session?.peerId,
     role,
   ]);
+
+  useEffect(() => {
+    setZoom((value) => clamp(value, minimumZoom, MAX_ZOOM));
+  }, [minimumZoom]);
 
   useEffect(() => {
     try {
@@ -179,11 +198,17 @@ export default function BattlemapViewportControls({
     if (!grid || !container) return undefined;
 
     const apply = () => {
-      const nextViewportWidth = Math.round(
-        container.clientWidth || window.innerWidth
-      );
-      setViewportWidth((current) =>
-        current === nextViewportWidth ? current : nextViewportWidth
+      const nextMetrics = {
+        containerWidth: Math.round(container.clientWidth || window.innerWidth),
+        gridWidth: Math.round(grid.clientWidth || container.clientWidth || window.innerWidth),
+        gridHeight: Math.round(grid.clientHeight || 320),
+      };
+      setViewportMetrics((current) =>
+        current.containerWidth === nextMetrics.containerWidth &&
+        current.gridWidth === nextMetrics.gridWidth &&
+        current.gridHeight === nextMetrics.gridHeight
+          ? current
+          : nextMetrics
       );
 
       const previousCellSize =
@@ -237,7 +262,11 @@ export default function BattlemapViewportControls({
       if (!event.ctrlKey && !event.metaKey) return;
       event.preventDefault();
       setZoom((value) =>
-        clamp(value + (event.deltaY > 0 ? -10 : 10), MIN_ZOOM, MAX_ZOOM)
+        clamp(
+          value + (event.deltaY > 0 ? -10 : 10),
+          minimumZoom,
+          MAX_ZOOM
+        )
       );
     };
     grid.addEventListener("wheel", onWheel, { passive: false });
@@ -248,7 +277,16 @@ export default function BattlemapViewportControls({
       grid.classList.remove("battlemap-scroll-grid", "is-overview-zoom");
       container.classList.remove("has-battlemap-controls");
     };
-  }, [targets.grid, targets.container, cols, rows, cellSize, zoom, activeTab]);
+  }, [
+    targets.grid,
+    targets.container,
+    cols,
+    rows,
+    cellSize,
+    zoom,
+    activeTab,
+    minimumZoom,
+  ]);
 
   const focusMap = (behavior = "smooth") => {
     const grid = targets.grid;
@@ -296,19 +334,14 @@ export default function BattlemapViewportControls({
   const fit = () => {
     const grid = targets.grid;
     if (!grid) return;
-    const width = Math.max(120, grid.clientWidth - 20);
-    const height = Math.max(120, grid.clientHeight - 20);
-    const cell = Math.min(width / cols, height / rows);
-    setZoom(
-      clamp(Math.floor((cell / baseCellSize) * 100), MIN_ZOOM, MAX_ZOOM)
-    );
+    setZoom(minimumZoom);
     requestAnimationFrame(() =>
-      grid.scrollTo({ left: 0, top: 0, behavior: "smooth" })
+      requestAnimationFrame(() => focusMap("smooth"))
     );
   };
 
   const resetComfortZoom = () => {
-    setZoom(comfortZoom());
+    setZoom(clamp(comfortZoom(), minimumZoom, MAX_ZOOM));
     requestAnimationFrame(() =>
       requestAnimationFrame(() => focusMap("smooth"))
     );
@@ -319,8 +352,9 @@ export default function BattlemapViewportControls({
       <button
         type="button"
         className="battlemap-control-btn"
+        disabled={zoom <= minimumZoom}
         onClick={() =>
-          setZoom((value) => clamp(value - 10, MIN_ZOOM, MAX_ZOOM))
+          setZoom((value) => clamp(value - 10, minimumZoom, MAX_ZOOM))
         }
         aria-label={text.zoomOut}
       >
@@ -329,12 +363,12 @@ export default function BattlemapViewportControls({
       <input
         className="battlemap-zoom-slider"
         type="range"
-        min={MIN_ZOOM}
+        min={minimumZoom}
         max={MAX_ZOOM}
         step="5"
         value={zoom}
         onChange={(event) =>
-          setZoom(clamp(event.target.value, MIN_ZOOM, MAX_ZOOM))
+          setZoom(clamp(event.target.value, minimumZoom, MAX_ZOOM))
         }
         aria-label={text.zoom}
       />
@@ -342,7 +376,7 @@ export default function BattlemapViewportControls({
         type="button"
         className="battlemap-control-btn"
         onClick={() =>
-          setZoom((value) => clamp(value + 10, MIN_ZOOM, MAX_ZOOM))
+          setZoom((value) => clamp(value + 10, minimumZoom, MAX_ZOOM))
         }
         aria-label={text.zoomIn}
       >
