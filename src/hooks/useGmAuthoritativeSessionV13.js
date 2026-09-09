@@ -28,6 +28,26 @@ export default function useGmAuthoritativeSessionV13(form) {
     [base.tacticalScenes]
   );
 
+  const updateTacticalScene = async (patch = {}) => {
+    if (!patch || typeof patch !== "object") return base.updateTacticalScene?.(patch);
+    const changesBackground = Object.prototype.hasOwnProperty.call(patch, "backgroundName");
+    const proceduralBackground = changesBackground && String(patch.backgroundName || "").startsWith("PROC //");
+    if (!changesBackground || proceduralBackground) return base.updateTacticalScene?.(patch);
+
+    const scene = base.tacticalScene;
+    return base.updateTacticalScene?.({
+      ...patch,
+      environment: {
+        ...(scene?.environment || {}),
+        ...(patch.environment && typeof patch.environment === "object" ? patch.environment : {}),
+        mapAssetId: "",
+        mapVariantSeed: "",
+        proceduralMap: null,
+        proceduralDoorStates: {},
+      },
+    });
+  };
+
   const moveToken = async (tokenId, x, y) => {
     const found = findSceneAndToken(tacticalScenes, tokenId);
     if (found.scene && found.token && getProceduralMap(found.scene)) {
@@ -76,6 +96,7 @@ export default function useGmAuthoritativeSessionV13(form) {
   return {
     ...base,
     realtimeTransport: "socketio-gm-authority-v13-procedural-collision",
+    updateTacticalScene,
     moveToken,
     setProceduralDoorState,
   };
