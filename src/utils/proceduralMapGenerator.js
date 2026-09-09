@@ -8,6 +8,9 @@ const LOCATION_TYPE_BY_MAP = {
   military_bunker: "military_bunker",
 };
 
+const CELL = 100;
+const WALL = 10;
+
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value) || 0));
 }
@@ -46,268 +49,379 @@ function escapeText(value) {
 }
 
 function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") {
-  return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`;
+  return `<rect x="${Number(x).toFixed(1)}" y="${Number(y).toFixed(1)}" width="${Number(w).toFixed(1)}" height="${Number(h).toFixed(1)}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`;
 }
 
 function circle(cx, cy, r, fill, stroke = "none", sw = 0, extra = "") {
-  return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`;
+  return `<circle cx="${Number(cx).toFixed(1)}" cy="${Number(cy).toFixed(1)}" r="${Number(r).toFixed(1)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`;
 }
 
 function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") {
-  return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`;
+  return `<line x1="${Number(x1).toFixed(1)}" y1="${Number(y1).toFixed(1)}" x2="${Number(x2).toFixed(1)}" y2="${Number(y2).toFixed(1)}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`;
 }
 
 function text(x, y, value, size = 18, options = {}) {
   const { fill = "#40382f", opacity = 0.9, weight = 700, anchor = "middle" } = options;
-  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" fill="${fill}" opacity="${opacity}" font-family="monospace" font-size="${size}" font-weight="${weight}">${escapeText(value)}</text>`;
+  return `<text x="${Number(x).toFixed(1)}" y="${Number(y).toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" fill="${fill}" opacity="${opacity}" font-family="monospace" font-size="${size}" font-weight="${weight}">${escapeText(value)}</text>`;
 }
 
-function roomTag(x, y, title, note = "") {
-  const width = Math.max(82, Math.min(190, Math.max(title.length * 11, note.length * 9) + 24));
-  const height = note ? 46 : 28;
-  return `<g>${rect(x - width / 2, y - height / 2, width, height, "#d7c7a5", "#554a3e", 2, 5, `opacity="0.90"`)}${text(x, y - (note ? 8 : 0), title, 15, { fill: "#332c25", opacity: 1, weight: 900 })}${note ? text(x, y + 11, note, 11, { fill: "#5a3f2f", opacity: 1, weight: 800 }) : ""}</g>`;
+function gx(col) { return col * CELL; }
+function gy(row) { return row * CELL; }
+function gc(col) { return col * CELL + CELL / 2; }
+
+function gridRoom(x, y, w, h, floor = "#a79b83", wall = "#51483c") {
+  return rect(gx(x), gy(y), w * CELL, h * CELL, floor, wall, WALL, 2);
 }
 
-function marker(x, y, type, count = 1) {
+function roomNoteCell(col, row, title, note = "") {
+  const x = gc(col);
+  const y = gc(row);
+  const width = 88;
+  const height = note ? 52 : 32;
+  return `<g>${rect(x - width / 2, y - height / 2, width, height, "#ded0b2", "#5a4c3e", 2, 5, `opacity="0.88"`)}${text(x, y - (note ? 9 : 0), title, title.length > 12 ? 10 : 12, { fill: "#312b25", opacity: 1, weight: 900 })}${note ? text(x, y + 12, note, note.length > 11 ? 8 : 9, { fill: "#654233", opacity: 1, weight: 800 }) : ""}</g>`;
+}
+
+function markerCell(col, row, type, count = 1) {
+  const x = gc(col);
+  const y = gc(row);
   const label = count > 1 ? `${type} x${count}` : type;
   const fill = type === "ENEMY" ? "#8b3f32" : type === "TERMINAL" ? "#42695a" : type === "LOOT" ? "#806b3f" : type === "MEDS" ? "#6b7456" : "#5c554a";
-  return `<g>${circle(x, y, 13, fill, "#2f2923", 3)}${text(x, y + 1, type === "TERMINAL" ? "T" : type === "LOOT" ? "$" : type === "ENEMY" ? "!" : type === "MEDS" ? "+" : "•", 13, { fill: "#eee2c6", opacity: 1, weight: 900 })}${text(x, y + 25, label, 10, { fill: "#382f28", opacity: 0.9, weight: 800 })}</g>`;
+  const symbol = type === "TERMINAL" ? "T" : type === "LOOT" ? "$" : type === "ENEMY" ? "!" : type === "MEDS" ? "+" : "•";
+  return `<g>${circle(x, y, 15, fill, "#2f2923", 3)}${text(x, y + 1, symbol, 14, { fill: "#eee2c6", opacity: 1, weight: 900 })}${text(x, y + 26, label, 9, { fill: "#382f28", opacity: 0.9, weight: 800 })}</g>`;
 }
 
-function doorHorizontal(x, y, width = 42, label = "") {
-  const half = width / 2;
-  return `<g>${line(x - half - 8, y, x - half, y, "#51483c", 12)}${line(x + half, y, x + half + 8, y, "#51483c", 12)}${line(x - half, y, x + half, y, "#eadcbd", 6)}${line(x - half, y, x - half, y - width * 0.7, "#4a4036", 4)}<path d="M ${x - half} ${y - width * 0.7} A ${width * 0.7} ${width * 0.7} 0 0 1 ${x + half * 0.4} ${y}" fill="none" stroke="#6b5a49" stroke-width="2" stroke-dasharray="5 5"/>${label ? text(x, y + 18, label, 10, { fill: "#362f28", opacity: 1, weight: 900 }) : ""}</g>`;
+function doorH(col, boundaryRow, label = "") {
+  const x = gc(col);
+  const y = gy(boundaryRow);
+  const gap = 64;
+  return `<g>${line(x - gap / 2, y, x + gap / 2, y, "#e7d7b7", WALL + 4)}${line(x - gap / 2, y, x - gap / 2, y - 54, "#473d33", 4)}<path d="M ${x - gap / 2} ${y - 54} A 54 54 0 0 1 ${x + 20} ${y}" fill="none" stroke="#6c5b49" stroke-width="2" stroke-dasharray="5 5"/>${label ? text(x, y + 18, label, 9, { fill: "#362f28", opacity: 1, weight: 900 }) : ""}</g>`;
 }
 
-function doorVertical(x, y, width = 42, label = "") {
-  const half = width / 2;
-  return `<g>${line(x, y - half - 8, x, y - half, "#51483c", 12)}${line(x, y + half, x, y + half + 8, "#51483c", 12)}${line(x, y - half, x, y + half, "#eadcbd", 6)}${line(x, y - half, x + width * 0.7, y - half, "#4a4036", 4)}<path d="M ${x + width * 0.7} ${y - half} A ${width * 0.7} ${width * 0.7} 0 0 1 ${x} ${y + half * 0.4}" fill="none" stroke="#6b5a49" stroke-width="2" stroke-dasharray="5 5"/>${label ? text(x + 27, y, label, 10, { fill: "#362f28", opacity: 1, weight: 900, anchor: "start" }) : ""}</g>`;
+function doorV(boundaryCol, row, label = "") {
+  const x = gx(boundaryCol);
+  const y = gc(row);
+  const gap = 64;
+  return `<g>${line(x, y - gap / 2, x, y + gap / 2, "#e7d7b7", WALL + 4)}${line(x, y - gap / 2, x + 54, y - gap / 2, "#473d33", 4)}<path d="M ${x + 54} ${y - gap / 2} A 54 54 0 0 1 ${x} ${y + 20}" fill="none" stroke="#6c5b49" stroke-width="2" stroke-dasharray="5 5"/>${label ? text(x + 30, y, label, 9, { fill: "#362f28", opacity: 1, weight: 900, anchor: "start" }) : ""}</g>`;
 }
 
-function entryArrow(x, y, direction = "up", label = "ENTRY") {
+function garageDoorH(startCol, endCol, boundaryRow, label = "GARAGE") {
+  const x1 = gx(startCol) + 12;
+  const x2 = gx(endCol) - 12;
+  const y = gy(boundaryRow);
+  return `<g>${line(x1, y, x2, y, "#d5c5a6", WALL + 6, "18 9")}${text((x1 + x2) / 2, y + 18, label, 9, { fill: "#362f28", opacity: 1, weight: 900 })}</g>`;
+}
+
+function entryArrowCell(col, row, direction = "up", label = "ENTRY") {
+  const x = gc(col);
+  const y = gc(row);
   const rotations = { up: 0, right: 90, down: 180, left: -90 };
-  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rotations[direction] || 0})"><path d="M0 -30 L-16 -7 L-7 -7 L-7 20 L7 20 L7 -7 L16 -7 Z" fill="#9b3f31" stroke="#432a23" stroke-width="3"/></g>${text(x, y + (direction === "up" ? 38 : direction === "down" ? -38 : 0), label, 13, { fill: "#5d2d25", opacity: 1, weight: 900 })}`;
+  return `<g transform="translate(${x} ${y}) rotate(${rotations[direction] || 0})"><path d="M0 -30 L-16 -7 L-7 -7 L-7 20 L7 20 L7 -7 L16 -7 Z" fill="#9b3f31" stroke="#432a23" stroke-width="3"/></g>${text(x, y + (direction === "up" ? 38 : direction === "down" ? -38 : 0), label, 11, { fill: "#5d2d25", opacity: 1, weight: 900 })}`;
 }
 
-function terrainScatter(rng, width, height, density, palette) {
+function terrainScatter(rng, cols, rows, density, palette, reserved = new Set()) {
   const parts = [];
-  const rockCount = Math.round(10 + density * 20);
-  for (let i = 0; i < rockCount; i += 1) {
-    parts.push(circle(range(rng, 24, width - 24), range(rng, 24, height - 24), range(rng, 4, 11), pick(rng, palette.rocks), "#302a22", 1.2, `opacity="${range(rng, 0.35, 0.65).toFixed(2)}"`));
+  const cells = [];
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      if (!reserved.has(`${x}:${y}`)) cells.push([x, y]);
+    }
   }
-  const crackCount = Math.round(4 + density * 9);
-  for (let i = 0; i < crackCount; i += 1) {
-    const x = range(rng, 0, width);
-    const y = range(rng, 0, height);
-    const len = range(rng, 24, 65);
-    const angle = range(rng, 0, Math.PI * 2);
-    parts.push(line(x, y, x + Math.cos(angle) * len, y + Math.sin(angle) * len, "#3c3228", range(rng, 1, 2), "6 9"));
+  const count = Math.min(cells.length, Math.round((cols * rows) * density * 0.16));
+  for (let i = 0; i < count; i += 1) {
+    const index = Math.floor(rng() * cells.length);
+    const [x, y] = cells.splice(index, 1)[0] || [0, 0];
+    parts.push(circle(gc(x) + range(rng, -18, 18), gc(y) + range(rng, -18, 18), range(rng, 5, 12), pick(rng, palette.rocks), "#302a22", 1.2, `opacity="${range(rng, 0.35, 0.62).toFixed(2)}"`));
   }
   return parts.join("");
 }
 
-function vehicle(rng, x, y, scale = 1, rotation = 0) {
-  const w = 52 * scale;
-  const h = 29 * scale;
-  return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rotation.toFixed(1)})">${rect(-w / 2, -h / 2, w, h, pick(rng, ["#744637", "#5e6c62", "#696046", "#714b35"]), "#2d2723", 3, 5)}${rect(-w * 0.18, -h * 0.4, w * 0.36, h * 0.8, "#2a3434", "#1b2020", 1.5, 3)}</g>`;
-}
-
-function buildingShell(x, y, w, h, floor = "#a79b83", wall = "#51483c") {
-  return `${rect(x, y, w, h, floor, wall, 12, 2)}${rect(x + 11, y + 11, w - 22, h - 22, "none", "#c7b997", 2, 0, `opacity="0.45"`)}`;
+function vehicleCell(rng, col, row, rotation = 0) {
+  const x = gc(col);
+  const y = gc(row);
+  const w = 54;
+  const h = 30;
+  return `<g transform="translate(${x} ${y}) rotate(${rotation})">${rect(-w / 2, -h / 2, w, h, pick(rng, ["#744637", "#5e6c62", "#696046", "#714b35"]), "#2d2723", 3, 5)}${rect(-w * 0.18, -h * 0.4, w * 0.36, h * 0.8, "#2a3434", "#1b2020", 1.5, 3)}</g>`;
 }
 
 function noteFor(rng, values) {
   return pick(rng, values);
 }
 
-function generateWasteland(rng, width, height, density, palette) {
-  const parts = [terrainScatter(rng, width, height, density, palette)];
+function generateWasteland(rng, cols, rows, density, palette) {
+  const parts = [];
   const vertical = rng() > 0.5;
-  const roadCenter = vertical ? range(rng, width * 0.34, width * 0.66) : range(rng, height * 0.34, height * 0.66);
+  const reserved = new Set();
   if (vertical) {
-    parts.push(rect(roadCenter - width * 0.1, -20, width * 0.2, height + 40, "#555047", "#403b35", 4));
-    parts.push(line(roadCenter, 0, roadCenter, height, "#b69a50", 4, "22 20"));
-    parts.push(entryArrow(roadCenter, height - 65, "up", "ENTRY"));
+    const roadCol = clamp(Math.floor(cols * 0.5), 1, cols - 2);
+    parts.push(rect(gx(roadCol), 0, CELL, rows * CELL, "#555047", "#403b35", 4));
+    parts.push(line(gc(roadCol), 0, gc(roadCol), rows * CELL, "#b69a50", 4, "22 20"));
+    for (let y = 0; y < rows; y += 1) reserved.add(`${roadCol}:${y}`);
+    parts.push(entryArrowCell(roadCol, Math.max(0, rows - 1), "up", "ENTRY"));
   } else {
-    parts.push(rect(-20, roadCenter - height * 0.1, width + 40, height * 0.2, "#555047", "#403b35", 4));
-    parts.push(line(0, roadCenter, width, roadCenter, "#b69a50", 4, "22 20"));
-    parts.push(entryArrow(65, roadCenter, "right", "ENTRY"));
+    const roadRow = clamp(Math.floor(rows * 0.55), 1, rows - 2);
+    parts.push(rect(0, gy(roadRow), cols * CELL, CELL, "#555047", "#403b35", 4));
+    parts.push(line(0, gc(roadRow), cols * CELL, gc(roadRow), "#b69a50", 4, "22 20"));
+    for (let x = 0; x < cols; x += 1) reserved.add(`${x}:${roadRow}`);
+    parts.push(entryArrowCell(0, roadRow, "right", "ENTRY"));
   }
-  const zones = [
-    { x: width * 0.2, y: height * 0.23, title: "RUINS", note: noteFor(rng, ["LOOT", "ENEMY x2", "EMPTY"]) },
-    { x: width * 0.78, y: height * 0.25, title: "WRECK", note: noteFor(rng, ["LOOT", "MEDS", "TRAP"]) },
-    { x: width * 0.74, y: height * 0.72, title: "CAMP", note: noteFor(rng, ["ENEMY x2", "CAMPFIRE", "CACHE"]) },
+
+  const zoneCandidates = [
+    [1, 1, "RUINS", ["LOOT", "ENEMY x2", "EMPTY"]],
+    [Math.max(1, cols - 3), 1, "WRECK", ["LOOT", "MEDS", "TRAP"]],
+    [Math.max(1, cols - 3), Math.max(1, rows - 3), "CAMP", ["ENEMY x2", "CAMPFIRE", "CACHE"]],
   ];
-  zones.forEach((zone) => {
-    parts.push(rect(zone.x - 70, zone.y - 50, 140, 100, "#776c59", "#4d4438", 7, 3, `opacity="0.75"`));
-    parts.push(roomTag(zone.x, zone.y, zone.title, zone.note));
-    if (zone.note.startsWith("ENEMY")) parts.push(marker(zone.x, zone.y + 56, "ENEMY", Number(zone.note.match(/x(\d+)/)?.[1] || 1)));
-    if (zone.note === "LOOT" || zone.note === "CACHE") parts.push(marker(zone.x, zone.y + 56, "LOOT"));
-    if (zone.note === "MEDS") parts.push(marker(zone.x, zone.y + 56, "MEDS"));
+  zoneCandidates.forEach(([x, y, title, notes]) => {
+    const w = Math.min(2, cols - x);
+    const h = Math.min(2, rows - y);
+    if (w <= 0 || h <= 0) return;
+    const note = noteFor(rng, notes);
+    parts.push(gridRoom(x, y, w, h, "#776c59", "#4d4438"));
+    parts.push(roomNoteCell(x, y, title, note));
+    if (note.startsWith("ENEMY")) parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, y + h - 1), "ENEMY", Number(note.match(/x(\d+)/)?.[1] || 1)));
+    else if (note === "LOOT" || note === "CACHE") parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, y + h - 1), "LOOT"));
+    else if (note === "MEDS") parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, y + h - 1), "MEDS"));
+    for (let yy = y; yy < y + h; yy += 1) for (let xx = x; xx < x + w; xx += 1) reserved.add(`${xx}:${yy}`);
   });
-  for (let i = 0; i < 3 + Math.round(density * 3); i += 1) parts.push(vehicle(rng, range(rng, 40, width - 40), range(rng, 40, height - 40), range(rng, 0.7, 1), range(rng, -40, 40)));
+  parts.unshift(terrainScatter(rng, cols, rows, density, palette, reserved));
   return parts.join("");
 }
 
-function generateRedRocket(rng, width, height, density, palette) {
-  const parts = [terrainScatter(rng, width, height, density * 0.45, palette)];
-  const roadH = height * 0.22;
-  parts.push(rect(0, height - roadH, width, roadH, "#514d47", "#3a3631", 4));
-  parts.push(line(0, height - roadH * 0.5, width, height - roadH * 0.5, "#b79b51", 4, "26 22"));
+function generateRedRocket(rng, cols, rows, density, palette) {
+  const parts = [];
+  const roadRows = rows >= 10 ? 2 : 1;
+  const roadStart = rows - roadRows;
+  parts.push(rect(0, gy(roadStart), cols * CELL, roadRows * CELL, "#514d47", "#3a3631", 4));
+  parts.push(line(0, gy(roadStart) + roadRows * CELL * 0.55, cols * CELL, gy(roadStart) + roadRows * CELL * 0.55, "#b79b51", 4, "26 22"));
 
-  const bx = width * 0.40;
-  const by = height * 0.10;
-  const bw = width * 0.50;
-  const bh = height * 0.53;
-  parts.push(buildingShell(bx, by, bw, bh, "#9b907a", "#484139"));
+  const left = clamp(Math.floor(cols * 0.38), 2, Math.max(2, cols - 4));
+  const right = cols - 1;
+  const top = 1;
+  const bottom = Math.max(top + 4, roadStart - 1);
+  const bw = Math.max(4, right - left);
+  const bh = Math.max(4, bottom - top);
+  const midX = left + Math.max(2, Math.floor(bw * 0.56));
+  const splitY = top + Math.max(2, Math.floor(bh * 0.62));
 
-  const store = { x: bx + bw * 0.04, y: by + bh * 0.05, w: bw * 0.48, h: bh * 0.55 };
-  const garage = { x: bx + bw * 0.56, y: by + bh * 0.05, w: bw * 0.39, h: bh * 0.55 };
-  const office = { x: bx + bw * 0.04, y: by + bh * 0.64, w: bw * 0.23, h: bh * 0.31 };
-  const storage = { x: bx + bw * 0.31, y: by + bh * 0.64, w: bw * 0.27, h: bh * 0.31 };
-  const wc = { x: bx + bw * 0.62, y: by + bh * 0.64, w: bw * 0.14, h: bh * 0.31 };
+  parts.push(gridRoom(left, top, right - left, bottom - top, "#9b907a", "#484139"));
+  parts.push(gridRoom(left, top, midX - left, splitY - top, "#a99d84", "#554a3d"));
+  parts.push(gridRoom(midX, top, right - midX, splitY - top, "#88877d", "#514d46"));
 
-  [
-    [store, "STORE", noteFor(rng, ["LOOT", "ENEMY x2", "CASH REGISTER"])],
-    [garage, "GARAGE", noteFor(rng, ["WORKBENCH", "ENEMY", "TOOLS"])],
-    [office, "OFFICE", "TERMINAL"],
-    [storage, "STORAGE", noteFor(rng, ["LOOT", "LOCKED CACHE", "JUNK"])],
-    [wc, "WC", noteFor(rng, ["MEDS", "EMPTY", "STASH"])],
-  ].forEach(([room, title, note]) => {
-    parts.push(rect(room.x, room.y, room.w, room.h, "#a99c84", "#554a3d", 5));
-    parts.push(roomTag(room.x + room.w / 2, room.y + room.h / 2, title, note));
+  const bottomWidth = right - left;
+  const officeW = Math.max(1, Math.floor(bottomWidth * 0.32));
+  const storageW = Math.max(1, Math.floor(bottomWidth * 0.36));
+  const wcW = Math.max(1, bottomWidth - officeW - storageW);
+  const officeX = left;
+  const storageX = officeX + officeW;
+  const wcX = storageX + storageW;
+  if (splitY < bottom) {
+    parts.push(gridRoom(officeX, splitY, officeW, bottom - splitY, "#887f70", "#4d463c"));
+    parts.push(gridRoom(storageX, splitY, storageW, bottom - splitY, "#81786b", "#4d463c"));
+    parts.push(gridRoom(wcX, splitY, wcW, bottom - splitY, "#78736a", "#4d463c"));
+  }
+
+  const storeNote = noteFor(rng, ["LOOT", "ENEMY x2", "REGISTER"]);
+  const garageNote = noteFor(rng, ["WORKBENCH", "ENEMY", "TOOLS"]);
+  const officeNote = noteFor(rng, ["TERMINAL", "SAFE", "LOGS"]);
+  const storageNote = noteFor(rng, ["LOOT", "JUNK", "AMMO"]);
+  const wcNote = noteFor(rng, ["EMPTY", "MEDS", "CACHE"]);
+
+  parts.push(roomNoteCell(left, top, "STORE", storeNote));
+  parts.push(roomNoteCell(midX, top, "GARAGE", garageNote));
+  if (splitY < bottom) {
+    parts.push(roomNoteCell(officeX, splitY, "OFFICE", officeNote));
+    parts.push(roomNoteCell(storageX, splitY, "STORAGE", storageNote));
+    parts.push(roomNoteCell(wcX, splitY, "WC", wcNote));
+  }
+
+  const entryCol = clamp(left + 1, left, right - 1);
+  parts.push(doorH(entryCol, bottom, "MAIN"));
+  if (roadStart - 1 >= 0) parts.push(entryArrowCell(entryCol, roadStart - 1, "up", "ENTRY"));
+  if (midX < right) parts.push(doorV(midX, top + 1));
+  if (splitY < bottom) {
+    parts.push(doorH(officeX, splitY));
+    parts.push(doorH(storageX, splitY));
+    parts.push(doorH(wcX, splitY));
+  }
+  if (right - midX >= 2) parts.push(garageDoorH(midX, right, splitY, "GARAGE"));
+
+  if (officeNote === "TERMINAL") parts.push(markerCell(officeX, Math.min(rows - 1, splitY + 1), "TERMINAL"));
+  if (storeNote === "LOOT") parts.push(markerCell(Math.min(cols - 1, left + 1), Math.min(rows - 1, top + 1), "LOOT"));
+  if (garageNote.startsWith("ENEMY")) parts.push(markerCell(Math.min(cols - 1, midX + 1), Math.min(rows - 1, top + 1), "ENEMY", Number(garageNote.match(/x(\d+)/)?.[1] || 1)));
+
+  const canopyRight = Math.max(1, left - 1);
+  if (canopyRight > 0) {
+    const canopyTop = Math.min(rows - 2, 2);
+    const canopyH = Math.min(3, Math.max(1, roadStart - canopyTop - 1));
+    parts.push(gridRoom(0, canopyTop, canopyRight, canopyH, "#6d655a", "#433d35"));
+    for (let y = canopyTop; y < canopyTop + canopyH; y += 1) {
+      for (let x = 0; x < canopyRight; x += 1) {
+        if ((x + y) % 2 === 0) parts.push(rect(gc(x) - 10, gc(y) - 20, 20, 40, "#8c3f32", "#4e2b28", 3, 4));
+      }
+    }
+  }
+  parts.push(text((gx(left) + gx(right)) / 2, gy(top) - 24, "RED ROCKET", 28, { fill: "#8d3c31", opacity: 1, weight: 900 }));
+
+  const reserved = new Set();
+  for (let y = top; y < bottom; y += 1) for (let x = left; x < right; x += 1) reserved.add(`${x}:${y}`);
+  for (let y = roadStart; y < rows; y += 1) for (let x = 0; x < cols; x += 1) reserved.add(`${x}:${y}`);
+  parts.unshift(terrainScatter(rng, cols, rows, density * 0.45, palette, reserved));
+  const carRow = Math.max(0, roadStart);
+  if (carRow < rows) {
+    for (let i = 0; i < Math.min(3, Math.max(1, Math.round(density * 3))); i += 1) {
+      const c = clamp(1 + i * Math.max(1, Math.floor(cols / 4)), 0, cols - 1);
+      parts.push(vehicleCell(rng, c, carRow, i % 2 ? -18 : 12));
+    }
+  }
+  return parts.join("");
+}
+
+function generateSuperDuperMart(rng, cols, rows, density, palette) {
+  const parts = [];
+  const parkingRows = rows >= 10 ? 3 : 2;
+  const parkingStart = rows - parkingRows;
+  parts.push(rect(0, gy(parkingStart), cols * CELL, parkingRows * CELL, "#53504a", "#393633", 4));
+  for (let x = 1; x < cols; x += 1) parts.push(line(gx(x), gy(parkingStart) + 18, gx(x), rows * CELL - 18, "#9d8d67", 2, "16 10"));
+
+  const left = 1;
+  const right = cols - 1;
+  const top = 1;
+  const bottom = Math.max(top + 4, parkingStart - 1);
+  const storageStart = Math.max(left + 3, right - Math.max(2, Math.floor((right - left) * 0.28)));
+  const officeSplit = top + Math.max(2, Math.floor((bottom - top) * 0.62));
+
+  parts.push(gridRoom(left, top, right - left, bottom - top, "#a29a87", "#49433b"));
+  parts.push(gridRoom(left, top, storageStart - left, bottom - top, "#ada28b", "#51483d"));
+  parts.push(gridRoom(storageStart, top, right - storageStart, officeSplit - top, "#847b6c", "#4c473f"));
+  if (officeSplit < bottom) parts.push(gridRoom(storageStart, officeSplit, right - storageStart, bottom - officeSplit, "#8d8372", "#4c473f"));
+
+  const salesNote = noteFor(rng, ["ENEMY x2", "LOOT", "SCAVENGERS"]);
+  const storageNote = noteFor(rng, ["LOOT", "LOCKED CACHE", "ENEMY"]);
+  parts.push(roomNoteCell(left, top, "SALES", salesNote));
+  parts.push(roomNoteCell(storageStart, top, "STORAGE", storageNote));
+  if (officeSplit < bottom) parts.push(roomNoteCell(storageStart, officeSplit, "OFFICE", "TERMINAL"));
+
+  const shelfCols = [];
+  for (let x = left + 1; x < storageStart; x += 1) shelfCols.push(x);
+  shelfCols.slice(0, 4).forEach((x) => {
+    parts.push(rect(gc(x) - 9, gy(top + 1) + 10, 18, Math.max(50, (bottom - top - 2) * CELL - 20), "#4f473b", "#302a24", 2, 2));
   });
 
-  for (let i = 0; i < 3; i += 1) parts.push(rect(store.x + store.w * 0.12, store.y + store.h * (0.22 + i * 0.2), store.w * 0.58, 10, "#4e463b", "#312c26", 1.5, 2));
-  parts.push(vehicle(rng, garage.x + garage.w * 0.52, garage.y + garage.h * 0.45, 1.05, 90));
+  const entryCol = clamp(left + Math.floor((storageStart - left) / 2), left, storageStart - 1);
+  parts.push(doorH(entryCol, bottom, "MAIN"));
+  if (parkingStart - 1 >= 0) parts.push(entryArrowCell(entryCol, parkingStart - 1, "up", "ENTRY"));
+  parts.push(doorV(storageStart, top + 1));
+  if (officeSplit < bottom) parts.push(doorH(storageStart, officeSplit));
+  parts.push(markerCell(storageStart, Math.min(rows - 1, officeSplit), "TERMINAL"));
+  if (salesNote.startsWith("ENEMY")) parts.push(markerCell(Math.min(storageStart - 1, left + 1), Math.min(bottom - 1, top + 1), "ENEMY", Number(salesNote.match(/x(\d+)/)?.[1] || 1)));
+  if (storageNote === "LOOT" || storageNote === "LOCKED CACHE") parts.push(markerCell(storageStart, Math.min(bottom - 1, top + 1), "LOOT"));
 
-  parts.push(doorHorizontal(store.x + store.w * 0.48, store.y + store.h, 46, "MAIN"));
-  parts.push(entryArrow(store.x + store.w * 0.48, store.y + store.h + 70, "up", "ENTRY"));
-  parts.push(doorHorizontal(garage.x + garage.w * 0.50, garage.y + garage.h, 74, "GARAGE"));
-  parts.push(doorHorizontal(office.x + office.w * 0.5, office.y, 34));
-  parts.push(doorHorizontal(storage.x + storage.w * 0.5, storage.y, 34));
-  parts.push(doorHorizontal(wc.x + wc.w * 0.5, wc.y, 28));
-  parts.push(doorVertical(store.x + store.w, store.y + store.h * 0.5, 38));
-
-  parts.push(marker(office.x + office.w * 0.5, office.y + office.h * 0.76, "TERMINAL"));
-  if (rng() > 0.45) parts.push(marker(storage.x + storage.w * 0.5, storage.y + storage.h * 0.77, "LOOT"));
-  if (rng() > 0.5) parts.push(marker(garage.x + garage.w * 0.52, garage.y + garage.h * 0.78, "ENEMY", 1));
-
-  const canopyX = width * 0.07;
-  const canopyY = height * 0.18;
-  const canopyW = width * 0.27;
-  const canopyH = height * 0.30;
-  parts.push(rect(canopyX, canopyY, canopyW, canopyH, "#6d655a", "#433d35", 7, 10, `opacity="0.82"`));
-  for (let py = 0; py < 2; py += 1) for (let px = 0; px < 2; px += 1) {
-    const x = canopyX + canopyW * (0.3 + px * 0.4);
-    const y = canopyY + canopyH * (0.32 + py * 0.38);
-    parts.push(rect(x - 12, y - 20, 24, 40, "#8c3f32", "#4e2b28", 3, 4));
+  const reserved = new Set();
+  for (let y = top; y < bottom; y += 1) for (let x = left; x < right; x += 1) reserved.add(`${x}:${y}`);
+  for (let y = parkingStart; y < rows; y += 1) for (let x = 0; x < cols; x += 1) reserved.add(`${x}:${y}`);
+  parts.unshift(terrainScatter(rng, cols, rows, density * 0.35, palette, reserved));
+  for (let i = 0; i < Math.min(4, Math.max(1, Math.round(density * 4))); i += 1) {
+    const c = clamp(1 + i * Math.max(1, Math.floor(cols / 4)), 0, cols - 1);
+    parts.push(vehicleCell(rng, c, parkingStart, i % 2 ? 180 : 0));
   }
-  parts.push(text(bx + bw * 0.5, by - 20, "RED ROCKET", 29, { fill: "#8d3c31", opacity: 1, weight: 900 }));
-  for (let i = 0; i < 2 + Math.round(density * 2); i += 1) parts.push(vehicle(rng, range(rng, 35, width - 35), range(rng, height * 0.68, height - 35), range(rng, 0.7, 1), range(rng, -30, 30)));
   return parts.join("");
 }
 
-function generateSuperDuperMart(rng, width, height, density, palette) {
-  const parts = [terrainScatter(rng, width, height, density * 0.35, palette)];
-  const parkingY = height * 0.72;
-  parts.push(rect(0, parkingY, width, height - parkingY, "#53504a", "#393633", 4));
-  for (let i = 1; i < 8; i += 1) parts.push(line(width * (i / 8), parkingY + 20, width * (i / 8), height - 20, "#9d8d67", 2, "16 10"));
+function generateRaiderCamp(rng, cols, rows, density, palette) {
+  const parts = [];
+  const left = 1;
+  const right = cols - 1;
+  const top = 1;
+  const bottom = rows - 1;
+  const gateCol = clamp(Math.floor(cols / 2), left, right - 1);
 
-  const bx = width * 0.07;
-  const by = height * 0.08;
-  const bw = width * 0.86;
-  const bh = height * 0.58;
-  parts.push(buildingShell(bx, by, bw, bh, "#a29a87", "#49433b"));
-  const sales = { x: bx + 14, y: by + 14, w: bw * 0.68, h: bh - 28 };
-  const storage = { x: bx + bw * 0.72, y: by + 14, w: bw * 0.25, h: bh * 0.56 };
-  const office = { x: bx + bw * 0.72, y: by + bh * 0.62, w: bw * 0.25, h: bh * 0.31 };
-  parts.push(rect(sales.x, sales.y, sales.w, sales.h, "#ada28b", "#51483d", 5));
-  parts.push(rect(storage.x, storage.y, storage.w, storage.h, "#847b6c", "#4c473f", 5));
-  parts.push(rect(office.x, office.y, office.w, office.h, "#8d8372", "#4c473f", 5));
-  parts.push(roomTag(sales.x + sales.w * 0.5, sales.y + 45, "SALES FLOOR", noteFor(rng, ["ENEMY x2", "LOOT", "SCAVENGERS"])));
-  parts.push(roomTag(storage.x + storage.w / 2, storage.y + storage.h / 2, "STORAGE", noteFor(rng, ["LOOT", "LOCKED CACHE", "ENEMY"])));
-  parts.push(roomTag(office.x + office.w / 2, office.y + office.h / 2, "OFFICE", "TERMINAL"));
-  for (let i = 0; i < 5; i += 1) parts.push(rect(sales.x + sales.w * (0.16 + i * 0.15), sales.y + sales.h * 0.27, 16, sales.h * 0.48, "#4f473b", "#302a24", 2, 2));
-  parts.push(doorHorizontal(sales.x + sales.w * 0.46, sales.y + sales.h, 78, "MAIN"));
-  parts.push(entryArrow(sales.x + sales.w * 0.46, sales.y + sales.h + 70, "up", "ENTRY"));
-  parts.push(doorVertical(storage.x, storage.y + storage.h * 0.45, 38));
-  parts.push(doorHorizontal(office.x + office.w * 0.5, office.y, 34));
-  parts.push(marker(office.x + office.w * 0.5, office.y + office.h * 0.78, "TERMINAL"));
-  if (rng() > 0.4) parts.push(marker(storage.x + storage.w * 0.5, storage.y + storage.h * 0.76, "LOOT"));
-  for (let i = 0; i < 2 + Math.round(density * 3); i += 1) parts.push(vehicle(rng, range(rng, 60, width - 60), range(rng, parkingY + 30, height - 30), range(rng, 0.7, 1), rng() > 0.5 ? 0 : 180));
-  return parts.join("");
-}
+  parts.push(line(gx(left), gy(top), gx(right), gy(top), "#5d4b3c", 14));
+  parts.push(line(gx(left), gy(top), gx(left), gy(bottom), "#5d4b3c", 14));
+  parts.push(line(gx(right), gy(top), gx(right), gy(bottom), "#5d4b3c", 14));
+  parts.push(line(gx(left), gy(bottom), gx(gateCol) - 36, gy(bottom), "#5d4b3c", 14));
+  parts.push(line(gx(gateCol) + 36, gy(bottom), gx(right), gy(bottom), "#5d4b3c", 14));
+  parts.push(garageDoorH(gateCol, gateCol + 1, bottom, "GATE"));
+  parts.push(entryArrowCell(gateCol, Math.max(0, bottom - 1), "up", "ENTRY"));
 
-function generateRaiderCamp(rng, width, height, density, palette) {
-  const parts = [terrainScatter(rng, width, height, density, palette)];
-  const cx = width * 0.5;
-  const cy = height * 0.5;
-  const rx = width * 0.38;
-  const ry = height * 0.36;
-  const gateCenter = Math.PI / 2;
-  const segments = 20;
-  for (let i = 0; i < segments; i += 1) {
-    const a1 = (Math.PI * 2 * i) / segments;
-    const a2 = (Math.PI * 2 * (i + 0.72)) / segments;
-    const mid = (a1 + a2) / 2;
-    if (Math.abs(mid - gateCenter) < 0.22) continue;
-    parts.push(line(cx + Math.cos(a1) * rx, cy + Math.sin(a1) * ry, cx + Math.cos(a2) * rx, cy + Math.sin(a2) * ry, pick(rng, ["#4e493e", "#6b543f", "#5d4b3c"]), range(rng, 9, 14)));
-  }
-  parts.push(entryArrow(cx, cy + ry + 62, "up", "GATE"));
-  parts.push(doorHorizontal(cx, cy + ry, 82, "GATE"));
-
-  const shackData = [
-    [cx - rx * 0.48, cy - ry * 0.34, "BARRACK", noteFor(rng, ["ENEMY x2", "BEDS", "LOOT"])],
-    [cx + rx * 0.36, cy - ry * 0.31, "BOSS SHACK", noteFor(rng, ["ENEMY", "LOOT", "TERMINAL"])],
-    [cx - rx * 0.38, cy + ry * 0.25, "STORAGE", noteFor(rng, ["LOOT", "AMMO", "TRAP"])],
-    [cx + rx * 0.38, cy + ry * 0.22, "WORKSHOP", noteFor(rng, ["WORKBENCH", "JUNK", "ENEMY"])],
+  const roomW = Math.max(2, Math.floor((right - left - 1) / 2));
+  const roomH = Math.max(2, Math.floor((bottom - top - 1) / 2));
+  const locations = [
+    [left, top, "BARRACK", noteFor(rng, ["ENEMY x2", "BEDS", "LOOT"])],
+    [Math.max(left, right - roomW), top, "BOSS", noteFor(rng, ["ENEMY", "LOOT", "TERMINAL"])],
+    [left, Math.max(top, bottom - roomH), "STORAGE", noteFor(rng, ["LOOT", "AMMO", "TRAP"])],
+    [Math.max(left, right - roomW), Math.max(top, bottom - roomH), "WORKSHOP", noteFor(rng, ["WORKBENCH", "JUNK", "ENEMY"])],
   ];
-  shackData.forEach(([x, y, title, note], index) => {
-    const w = width * 0.16;
-    const h = height * 0.12;
-    parts.push(rect(x - w / 2, y - h / 2, w, h, index % 2 ? "#6a6250" : "#76583f", "#3d342b", 5, 3));
-    parts.push(roomTag(x, y, title, note));
-    parts.push(doorHorizontal(x, y + h / 2, 32));
-    if (String(note).startsWith("ENEMY")) parts.push(marker(x, y + h * 0.9, "ENEMY", Number(String(note).match(/x(\d+)/)?.[1] || 1)));
-    if (note === "LOOT") parts.push(marker(x, y + h * 0.9, "LOOT"));
-    if (note === "TERMINAL") parts.push(marker(x, y + h * 0.9, "TERMINAL"));
+  locations.forEach(([x, y, title, note], index) => {
+    const w = Math.min(roomW, right - x);
+    const h = Math.min(roomH, bottom - y);
+    if (w < 1 || h < 1) return;
+    parts.push(gridRoom(x, y, w, h, index % 2 ? "#6a6250" : "#76583f", "#3d342b"));
+    parts.push(roomNoteCell(x, y, title, note));
+    parts.push(doorH(x, y + h));
+    if (String(note).startsWith("ENEMY")) parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, y + h - 1), "ENEMY", Number(String(note).match(/x(\d+)/)?.[1] || 1)));
+    else if (note === "LOOT") parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, y + h - 1), "LOOT"));
+    else if (note === "TERMINAL") parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, y + h - 1), "TERMINAL"));
   });
-  parts.push(circle(cx, cy, 26, "#3a3028", "#211b17", 4));
-  parts.push(circle(cx, cy, 12, "#c46d2a", "#6d341d", 2, `opacity="0.85"`));
-  parts.push(roomTag(cx, cy - 60, "COURTYARD", noteFor(rng, ["ENEMY x3", "PRISONER", "CAMPFIRE"])));
+
+  const centerCol = clamp(Math.floor(cols / 2), 0, cols - 1);
+  const centerRow = clamp(Math.floor(rows / 2), 0, rows - 1);
+  parts.push(circle(gc(centerCol), gc(centerRow), 26, "#3a3028", "#211b17", 4));
+  parts.push(circle(gc(centerCol), gc(centerRow), 12, "#c46d2a", "#6d341d", 2, `opacity="0.85"`));
+  parts.push(roomNoteCell(centerCol, Math.max(0, centerRow - 1), "COURTYARD", noteFor(rng, ["ENEMY x3", "PRISONER", "CAMPFIRE"])));
+
+  const reserved = new Set();
+  for (let y = top; y < bottom; y += 1) for (let x = left; x < right; x += 1) reserved.add(`${x}:${y}`);
+  parts.unshift(terrainScatter(rng, cols, rows, density * 0.5, palette, reserved));
   return parts.join("");
 }
 
-function generateMilitaryBunker(rng, width, height, density, palette) {
-  const parts = [terrainScatter(rng, width, height, density * 0.35, palette)];
-  const bx = width * 0.12;
-  const by = height * 0.12;
-  const bw = width * 0.76;
-  const bh = height * 0.68;
-  parts.push(rect(bx - 16, by - 16, bw + 32, bh + 32, "#55564e", "#35362f", 8, 12));
-  parts.push(buildingShell(bx, by, bw, bh, "#87877c", "#44453f"));
-  const corridorY = by + bh * 0.49;
-  parts.push(rect(bx + 16, corridorY - 28, bw - 32, 56, "#6d6f68", "#484944", 4));
-  const roomW = (bw - 64) / 3;
+function generateMilitaryBunker(rng, cols, rows, density, palette) {
+  const parts = [];
+  const left = 1;
+  const right = cols - 1;
+  const top = 1;
+  const bottom = rows - 2;
+  const corridorRow = clamp(top + Math.floor((bottom - top) / 2), top + 1, bottom - 1);
+  const width = right - left;
+  const baseRoomW = Math.max(1, Math.floor(width / 3));
+
+  parts.push(gridRoom(left, top, width, bottom - top, "#87877c", "#44453f"));
+  parts.push(rect(gx(left), gy(corridorRow), width * CELL, CELL, "#6d6f68", "#484944", 4));
+
   const topNames = [["ARMORY", noteFor(rng, ["WEAPONS", "LOOT", "LOCKED"])], ["CONTROL", "TERMINAL"], ["BARRACKS", noteFor(rng, ["ENEMY x2", "BEDS", "EMPTY"])]];
   const bottomNames = [["STORAGE", noteFor(rng, ["LOOT", "AMMO", "JUNK"])], ["GENERATOR", noteFor(rng, ["TERMINAL", "WORKBENCH", "POWER"])], ["MEDICAL", noteFor(rng, ["MEDS", "LOOT", "EMPTY"])]];
+
+  let x = left;
   for (let i = 0; i < 3; i += 1) {
-    const x = bx + 18 + i * (roomW + 14);
-    const top = { x, y: by + 18, w: roomW, h: bh * 0.32 };
-    const bottom = { x, y: by + bh * 0.64, w: roomW, h: bh * 0.28 };
-    parts.push(rect(top.x, top.y, top.w, top.h, "#86877e", "#4c4d48", 5));
-    parts.push(rect(bottom.x, bottom.y, bottom.w, bottom.h, "#7b7d75", "#474943", 5));
-    parts.push(roomTag(top.x + top.w / 2, top.y + top.h / 2, topNames[i][0], topNames[i][1]));
-    parts.push(roomTag(bottom.x + bottom.w / 2, bottom.y + bottom.h / 2, bottomNames[i][0], bottomNames[i][1]));
-    parts.push(doorHorizontal(top.x + top.w / 2, top.y + top.h, 34));
-    parts.push(doorHorizontal(bottom.x + bottom.w / 2, bottom.y, 34));
-    if (topNames[i][1] === "TERMINAL") parts.push(marker(top.x + top.w * 0.5, top.y + top.h * 0.78, "TERMINAL"));
-    if (bottomNames[i][1] === "MEDS") parts.push(marker(bottom.x + bottom.w * 0.5, bottom.y + bottom.h * 0.76, "MEDS"));
+    const remaining = right - x;
+    const w = i === 2 ? remaining : Math.min(baseRoomW, remaining - (2 - i));
+    const topH = corridorRow - top;
+    const bottomY = corridorRow + 1;
+    const bottomH = bottom - bottomY;
+    if (w <= 0) break;
+    if (topH > 0) {
+      parts.push(gridRoom(x, top, w, topH, "#86877e", "#4c4d48"));
+      parts.push(roomNoteCell(x, top, topNames[i][0], topNames[i][1]));
+      parts.push(doorH(x, corridorRow));
+      if (topNames[i][1] === "TERMINAL") parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, top + topH - 1), "TERMINAL"));
+      if (String(topNames[i][1]).startsWith("ENEMY")) parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, top + topH - 1), "ENEMY", Number(String(topNames[i][1]).match(/x(\d+)/)?.[1] || 1)));
+    }
+    if (bottomH > 0) {
+      parts.push(gridRoom(x, bottomY, w, bottomH, "#7b7d75", "#474943"));
+      parts.push(roomNoteCell(x, bottomY, bottomNames[i][0], bottomNames[i][1]));
+      parts.push(doorH(x, bottomY));
+      if (bottomNames[i][1] === "MEDS") parts.push(markerCell(Math.min(cols - 1, x + w - 1), Math.min(rows - 1, bottomY + bottomH - 1), "MEDS"));
+    }
+    x += w;
   }
-  parts.push(doorHorizontal(bx + bw * 0.5, by + bh, 70, "BULKHEAD"));
-  parts.push(entryArrow(bx + bw * 0.5, by + bh + 72, "up", "ENTRY"));
-  parts.push(text(bx + bw * 0.5, corridorY, "MAIN CORRIDOR", 14, { fill: "#363a35", opacity: 0.7, weight: 900 }));
+
+  const entryCol = clamp(Math.floor((left + right) / 2), left, right - 1);
+  parts.push(doorH(entryCol, bottom, "BULKHEAD"));
+  if (bottom + 1 < rows) parts.push(entryArrowCell(entryCol, bottom + 1, "up", "ENTRY"));
+  parts.push(text((gx(left) + gx(right)) / 2, gc(corridorRow), "MAIN CORRIDOR", 14, { fill: "#363a35", opacity: 0.72, weight: 900 }));
+
+  const reserved = new Set();
+  for (let y = top; y < bottom; y += 1) for (let xx = left; xx < right; xx += 1) reserved.add(`${xx}:${y}`);
+  parts.unshift(terrainScatter(rng, cols, rows, density * 0.35, palette, reserved));
   return parts.join("");
 }
 
@@ -323,7 +437,7 @@ export function makeProceduralSeed() {
 export function normalizeProceduralMapSpec(value = {}) {
   const type = MAP_TYPES.includes(value.type) ? value.type : "wasteland";
   return {
-    version: 2,
+    version: 3,
     type,
     seed: String(value.seed || "1").slice(0, 40),
     cols: clamp(value.cols || 12, 6, 30),
@@ -338,9 +452,9 @@ export function proceduralLocationType(type) {
 
 export function generateProceduralMapSvg(input = {}) {
   const spec = normalizeProceduralMapSpec(input);
-  const width = spec.cols * 100;
-  const height = spec.rows * 100;
-  const rng = mulberry32(hashSeed(`${spec.type}:${spec.seed}:${spec.cols}x${spec.rows}:${spec.density.toFixed(2)}:v2`));
+  const width = spec.cols * CELL;
+  const height = spec.rows * CELL;
+  const rng = mulberry32(hashSeed(`${spec.type}:${spec.seed}:${spec.cols}x${spec.rows}:${spec.density.toFixed(2)}:v3-grid-aware`));
   const palette = {
     ground: pick(rng, ["#9b8663", "#927b59", "#a18a64"]),
     ground2: pick(rng, ["#796a52", "#806d51", "#74634d"]),
@@ -348,13 +462,13 @@ export function generateProceduralMapSvg(input = {}) {
   };
 
   let content = "";
-  if (spec.type === "red_rocket") content = generateRedRocket(rng, width, height, spec.density, palette);
-  else if (spec.type === "super_duper_mart") content = generateSuperDuperMart(rng, width, height, spec.density, palette);
-  else if (spec.type === "raider_camp") content = generateRaiderCamp(rng, width, height, spec.density, palette);
-  else if (spec.type === "military_bunker") content = generateMilitaryBunker(rng, width, height, spec.density, palette);
-  else content = generateWasteland(rng, width, height, spec.density, palette);
+  if (spec.type === "red_rocket") content = generateRedRocket(rng, spec.cols, spec.rows, spec.density, palette);
+  else if (spec.type === "super_duper_mart") content = generateSuperDuperMart(rng, spec.cols, spec.rows, spec.density, palette);
+  else if (spec.type === "raider_camp") content = generateRaiderCamp(rng, spec.cols, spec.rows, spec.density, palette);
+  else if (spec.type === "military_bunker") content = generateMilitaryBunker(rng, spec.cols, spec.rows, spec.density, palette);
+  else content = generateWasteland(rng, spec.cols, spec.rows, spec.density, palette);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet"><defs><linearGradient id="ground" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette.ground}"/><stop offset="1" stop-color="${palette.ground2}"/></linearGradient><pattern id="grain" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="8" cy="10" r="2" fill="#2f2a23" opacity="0.14"/><circle cx="34" cy="29" r="1.6" fill="#d1b77e" opacity="0.10"/><path d="M4 42L18 37M29 7L43 3" stroke="#41382c" stroke-width="1.2" opacity="0.11"/></pattern></defs>${rect(0, 0, width, height, "url(#ground)")}${rect(0, 0, width, height, "url(#grain)")}${content}<rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#3a3229" stroke-width="8" opacity="0.50"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><defs><linearGradient id="ground" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${palette.ground}"/><stop offset="1" stop-color="${palette.ground2}"/></linearGradient><pattern id="grain" width="48" height="48" patternUnits="userSpaceOnUse"><circle cx="8" cy="10" r="2" fill="#2f2a23" opacity="0.12"/><circle cx="34" cy="29" r="1.6" fill="#d1b77e" opacity="0.09"/><path d="M4 42L18 37M29 7L43 3" stroke="#41382c" stroke-width="1.2" opacity="0.10"/></pattern></defs>${rect(0, 0, width, height, "url(#ground)")}${rect(0, 0, width, height, "url(#grain)")}${content}<rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#3a3229" stroke-width="8" opacity="0.55"/></svg>`;
 }
 
 export function generateProceduralMapDataUrl(input = {}) {
