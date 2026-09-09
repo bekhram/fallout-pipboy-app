@@ -221,32 +221,29 @@ function renderRedRocket(spec, rng, roomData) {
     parts.push(compactRoom(roomDataById(roomData, "storage"), left + officeW, splitY, storageW, lowerH, "STORAGE", "#81786b"));
     parts.push(compactRoom(roomDataById(roomData, "wc"), left + officeW + storageW, splitY, wcW, lowerH, "WC", "#78736a"));
   }
-
-  parts.push(doorV(midX, top + 1));
+  const entryCol = clamp(left + 1, left, right - 1);
+  parts.push(doorH(entryCol, bottom, "MAIN"));
+  if (roadStart - 1 >= 0) parts.push(entryArrow(entryCol, roadStart - 1, "up"));
+  if (midX < right) parts.push(doorV(midX, top + 1));
   if (lowerH > 0) {
     parts.push(doorH(left, splitY));
     parts.push(doorH(left + officeW, splitY));
     parts.push(doorH(left + officeW + storageW, splitY));
   }
-  parts.push(garageDoor(midX, right, splitY));
-  const entryCol = clamp(left + 1, left, right - 1);
-  parts.push(doorH(entryCol, bottom, "MAIN"));
-  if (roadStart - 1 >= 0) parts.push(entryArrow(entryCol, roadStart - 1, "up"));
-  parts.push(text((gx(left) + gx(right)) / 2, gy(top) - 24, "RED ROCKET", 25, { fill: "#8d3c31", opacity: 1, weight: 900 }));
-
+  if (right - midX >= 2) parts.push(garageDoor(midX, right, splitY));
   const canopyRight = Math.max(1, left - 1);
-  if (canopyRight > 0) {
-    const canopyTop = Math.min(rows - 2, 2);
-    const canopyH = Math.min(3, Math.max(1, roadStart - canopyTop - 1));
+  const canopyTop = Math.min(rows - 2, 2);
+  const canopyH = Math.min(3, Math.max(1, roadStart - canopyTop - 1));
+  if (canopyRight > 0 && canopyH > 0) {
     parts.push(roomRect(0, canopyTop, canopyRight, canopyH, "#6d655a"));
     for (let y = canopyTop; y < canopyTop + canopyH; y += 1) for (let x = 0; x < canopyRight; x += 1) if ((x + y) % 2 === 0) parts.push(rect(gc(x) - 10, gc(y) - 20, 20, 40, "#8c3f32", "#4e2b28", 3, 4));
   }
-
+  parts.push(text((gx(left) + gx(right)) / 2, gy(top) - 24, "RED ROCKET", 26, { fill: "#8d3c31", opacity: 1, weight: 900 }));
   const reserved = new Set();
   for (let y = top; y < bottom; y += 1) for (let x = left; x < right; x += 1) reserved.add(`${x}:${y}`);
   for (let y = roadStart; y < rows; y += 1) for (let x = 0; x < cols; x += 1) reserved.add(`${x}:${y}`);
   parts.unshift(scatter(rng, cols, rows, density * 0.45, reserved));
-  for (let i = 0; i < Math.min(3, Math.max(1, Math.round(density * 3))); i += 1) parts.push(vehicle(rng, clamp(1 + i * Math.max(1, Math.floor(cols / 4)), 0, cols - 1), roadStart, i % 2 ? -18 : 12));
+  if (roadStart < rows) for (let i = 0; i < Math.min(3, Math.max(1, Math.round(density * 3))); i += 1) parts.push(vehicle(rng, clamp(1 + i * Math.max(1, Math.floor(cols / 4)), 0, cols - 1), roadStart, i % 2 ? -18 : 12));
   return parts.join("");
 }
 
@@ -257,25 +254,21 @@ function renderMart(spec, rng, roomData) {
   const parkingStart = rows - parkingRows;
   parts.push(rect(0, gy(parkingStart), cols * CELL, parkingRows * CELL, "#53504a", "#393633", 4));
   for (let x = 1; x < cols; x += 1) parts.push(line(gx(x), gy(parkingStart) + 18, gx(x), rows * CELL - 18, "#9d8d67", 2, "16 10"));
-
   const left = 1;
   const right = cols - 1;
   const top = 1;
   const bottom = Math.max(top + 4, parkingStart - 1);
   const storageStart = Math.max(left + 3, right - Math.max(2, Math.floor((right - left) * 0.28)));
   const officeSplit = top + Math.max(2, Math.floor((bottom - top) * 0.62));
-
   parts.push(compactRoom(roomDataById(roomData, "sales"), left, top, storageStart - left, bottom - top, "SALES FLOOR", "#ada28b"));
   parts.push(compactRoom(roomDataById(roomData, "storage"), storageStart, top, right - storageStart, officeSplit - top, "STORAGE", "#847b6c"));
   if (officeSplit < bottom) parts.push(compactRoom(roomDataById(roomData, "office"), storageStart, officeSplit, right - storageStart, bottom - officeSplit, "OFFICE", "#8d8372"));
-
   for (let x = left + 1; x < Math.min(storageStart, left + 5); x += 1) parts.push(rect(gc(x) - 9, gy(top + 1) + 10, 18, Math.max(50, (bottom - top - 2) * CELL - 20), "#4f473b", "#302a24", 2, 2));
-  parts.push(doorV(storageStart, top + 1));
-  if (officeSplit < bottom) parts.push(doorH(storageStart, officeSplit));
   const entryCol = clamp(left + Math.floor((storageStart - left) / 2), left, storageStart - 1);
   parts.push(doorH(entryCol, bottom, "MAIN"));
   if (parkingStart - 1 >= 0) parts.push(entryArrow(entryCol, parkingStart - 1, "up"));
-
+  parts.push(doorV(storageStart, top + 1));
+  if (officeSplit < bottom) parts.push(doorH(storageStart, officeSplit));
   const reserved = new Set();
   for (let y = top; y < bottom; y += 1) for (let x = left; x < right; x += 1) reserved.add(`${x}:${y}`);
   for (let y = parkingStart; y < rows; y += 1) for (let x = 0; x < cols; x += 1) reserved.add(`${x}:${y}`);
@@ -299,7 +292,6 @@ function renderRaider(spec, rng, roomData) {
   parts.push(line(gx(gateCol) + 36, gy(bottom), gx(right), gy(bottom), "#5d4b3c", 14));
   parts.push(garageDoor(gateCol, gateCol + 1, bottom));
   parts.push(entryArrow(gateCol, Math.max(0, bottom - 1), "up"));
-
   const roomW = Math.max(2, Math.floor((right - left - 1) / 2));
   const roomH = Math.max(2, Math.floor((bottom - top - 1) / 2));
   const configs = [
@@ -321,7 +313,6 @@ function renderRaider(spec, rng, roomData) {
   parts.push(circle(gc(centerCol), gc(centerRow), 12, "#c46d2a", "#6d341d", 2));
   parts.push(roomTitle(Math.max(0, centerCol - 1), Math.max(0, centerRow - 1), 2, "COURTYARD"));
   parts.push(roomMarker(roomDataById(roomData, "courtyard"), Math.max(0, centerCol - 1), Math.max(0, centerRow - 1), 2, 2));
-
   const reserved = new Set();
   for (let y = top; y < bottom; y += 1) for (let x = left; x < right; x += 1) reserved.add(`${x}:${y}`);
   parts.unshift(scatter(rng, cols, rows, density * 0.5, reserved));
@@ -381,13 +372,19 @@ export function makeProceduralSeed() {
 
 export function normalizeProceduralMapSpec(value = {}) {
   const type = MAP_TYPES.includes(value.type) ? value.type : "wasteland";
+  const lootRarity = ["common", "uncommon", "rare", "legendary"].includes(value.lootRarity) ? value.lootRarity : "uncommon";
+  const wealth = ["poor", "standard", "rich", "wealthy"].includes(value.wealth) ? value.wealth : "standard";
   return {
-    version: 4,
+    version: 5,
     type,
     seed: String(value.seed || "1").slice(0, 40),
     cols: clamp(value.cols || 12, 6, 30),
     rows: clamp(value.rows || 12, 6, 30),
     density: clamp(value.density ?? 0.55, 0.1, 1),
+    lootRarity,
+    wealth,
+    avgPartyLevel: clamp(value.avgPartyLevel ?? value.partyLevel ?? 1, 1, 50),
+    partySize: clamp(value.partySize ?? 4, 1, 8),
   };
 }
 
