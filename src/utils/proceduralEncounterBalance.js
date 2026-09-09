@@ -2,6 +2,16 @@ import { BESTIARY_ENTRIES } from "../data/bestiary.js";
 
 const DIFFICULTY_ORDER = ["easy", "standard", "hard", "deadly"];
 
+// Fallout 2d20 XP by NPC level (Normal), levels 1–20.
+// Level 21+ adds +7 XP per level above 20. Mighty/Notable = x2; Legendary/Major = x3.
+const NORMAL_XP_BY_LEVEL = [
+  0,
+  10, 17, 24, 31, 38,
+  45, 52, 60, 67, 74,
+  81, 88, 95, 102, 109,
+  116, 123, 130, 137, 144,
+];
+
 function number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -41,12 +51,38 @@ function mulberry32(seed) {
   };
 }
 
+export function normalNpcXpForLevel(level) {
+  const npcLevel = Math.max(1, Math.floor(number(level, 1)));
+  if (npcLevel <= 20) return NORMAL_XP_BY_LEVEL[npcLevel];
+  return 144 + (npcLevel - 20) * 7;
+}
+
+export function npcXpMultiplier(entry = {}) {
+  const source = normalizeName([
+    entry?.rank,
+    entry?.npcRank,
+    entry?.creatureType,
+    entry?.category,
+    ...(Array.isArray(entry?.tags) ? entry.tags : []),
+  ].filter(Boolean).join(" "));
+  if (/\b(legendary|major)\b|легендар|major/.test(source)) return 3;
+  if (/\b(mighty|notable|special)\b|могуч|значим|особ/.test(source)) return 2;
+  return 1;
+}
+
+export function officialNpcXp(entryOrLevel, multiplier = null) {
+  if (typeof entryOrLevel === "number" || typeof entryOrLevel === "string") {
+    return normalNpcXpForLevel(entryOrLevel) * Math.max(1, number(multiplier, 1));
+  }
+  const entry = entryOrLevel || {};
+  return normalNpcXpForLevel(entry.level) * (multiplier || npcXpMultiplier(entry));
+}
+
 function combatEntries() {
   return BESTIARY_ENTRIES.filter((entry) => {
     const level = number(entry?.level);
-    const xp = number(entry?.xp);
     const category = String(entry?.category || "").toLowerCase();
-    return level > 0 && xp > 0 && !["trap", "hazard", "obstacle"].includes(category);
+    return level > 0 && !["trap", "hazard", "obstacle"].includes(category);
   });
 }
 
@@ -64,22 +100,8 @@ export function findBestiaryCombatEntry(name) {
   }) || null;
 }
 
-function median(values) {
-  const sorted = values.filter(Number.isFinite).sort((a, b) => a - b);
-  if (!sorted.length) return 0;
-  const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[middle] : Math.round((sorted[middle - 1] + sorted[middle]) / 2);
-}
-
 export function baselineXpForLevel(level) {
-  const target = clamp(level || 1, 1, 50);
-  let matches = ENTRIES.filter((entry) => Math.abs(number(entry.level) - target) <= 1);
-  if (matches.length < 3) {
-    matches = [...ENTRIES]
-      .sort((a, b) => Math.abs(number(a.level) - target) - Math.abs(number(b.level) - target))
-      .slice(0, 8);
-  }
-  return Math.max(10, median(matches.map((entry) => number(entry.xp))) || Math.round(10 + target * 6.5));
+  return normalNpcXpForLevel(clamp(level || 1, 1, 50));
 }
 
 export function normalizedPartyConfig(spec = {}) {
@@ -89,9 +111,11 @@ export function normalizedPartyConfig(spec = {}) {
   };
 }
 
+// Balance budget grows with party size so a larger party faces more/stronger NPCs.
+// Reward semantics are different: every PC receives the full combined scene XP.
 export function targetEncounterXp(spec = {}) {
   const { avgPartyLevel, partySize } = normalizedPartyConfig(spec);
-  return Math.max(10, Math.round(baselineXpForLevel(avgPartyLevel) * partySize));
+  return Math.max(10, Math.round(normalNpcXpForLevel(avgPartyLevel) * partySize));
 }
 
 function candidateEntries(candidates = []) {
@@ -105,10 +129,10 @@ function chooseCandidate(candidates, groupBudget, avgPartyLevel, rng) {
   if (!found.length) return null;
   const scored = found.map((item) => {
     const level = number(item.entry.level, 1);
-    const xp = number(item.entry.xp, 10);
+    const xp = officialNpcXp(item.entry);
     const levelDistance = Math.abs(level - avgPartyLevel);
     const budgetDistance = Math.abs(xp - Math.max(10, groupBudget)) / Math.max(10, groupBudget);
-    return { ...item, score: levelDistance * 1.8 + budgetDistance + rng() * 0.18 };
+    return { ...item, xp, score: levelDistance * 1.8 + budgetDistance + rng() * 0.18 };
   });
   scored.sort((a, b) => a.score - b.score);
   return scored[0];
@@ -145,7 +169,7 @@ export function balanceEncounterEnemies(spec = {}, inputRooms = []) {
 
   const { avgPartyLevel, partySize } = normalizedPartyConfig(spec);
   const targetXp = targetEncounterXp(spec);
-  const rng = mulberry32(hashSeed(`${spec.type}:${spec.seed}:${avgPartyLevel}:${partySize}:encounter-balance-v1`));
+  const rng = mulberry32(hashSeed(`${spec.type}:${spec.seed}:${avgPartyLevel}:${partySize}:encounter-balance-v2-official-xp`));
   const groupBudget = targetXp / groups.length;
   const maxEnemies = Math.min(14, Math.max(2, partySize * 2 + 2));
 
@@ -154,15 +178,16 @@ export function balanceEncounterEnemies(spec = {}, inputRooms = []) {
     if (chosen) {
       enemy.type = String(chosen.entry.name || chosen.requestedName || enemy.type);
       enemy.level = number(chosen.entry.level, avgPartyLevel);
-      enemy.xp = Math.max(1, number(chosen.entry.xp, 10));
+      enemy.xpMultiplier = npcXpMultiplier(chosen.entry);
+      enemy.xp = officialNpcXp(chosen.entry);
       enemy.npcId = String(chosen.entry.id || "");
     } else {
-      const fallbackXp = Math.max(10, Math.round(baselineXpForLevel(avgPartyLevel) * 0.75));
       enemy.level = avgPartyLevel;
-      enemy.xp = fallbackXp;
+      enemy.xpMultiplier = 1;
+      enemy.xp = normalNpcXpForLevel(avgPartyLevel);
       enemy.npcId = "";
     }
-    enemy.count = Math.max(1, Math.min(5, Math.round(groupBudget / Math.max(1, enemy.xp))));
+    enemy.count = Math.max(1, Math.min(4, Math.round(groupBudget / Math.max(1, enemy.xp))));
   });
 
   const totalCount = () => groups.reduce((sum, { enemy }) => sum + Number(enemy.count || 0), 0);
@@ -180,7 +205,10 @@ export function balanceEncounterEnemies(spec = {}, inputRooms = []) {
   let guard = 0;
   while (totalXp() < targetXp * 0.82 && totalCount() < maxEnemies && guard < 24) {
     guard += 1;
-    const cheapest = groups.map(({ enemy }) => enemy).sort((a, b) => number(a.xp) - number(b.xp))[0];
+    const cheapest = groups
+      .map(({ enemy }) => enemy)
+      .filter((enemy) => enemy.count < 4)
+      .sort((a, b) => number(a.xp) - number(b.xp))[0];
     if (!cheapest) break;
     cheapest.count += 1;
   }
@@ -213,18 +241,19 @@ export function summarizeEncounter(spec = {}, rooms = []) {
   const enemies = rooms.flatMap((room) => (room.enemies || []).map((enemy) => ({ ...enemy, roomId: room.id })));
   const totalEnemies = enemies.reduce((sum, enemy) => sum + number(enemy.count), 0);
   const actualXp = enemies.reduce((sum, enemy) => {
-    const entry = enemy.xp ? null : findBestiaryCombatEntry(enemy.type);
-    const xp = Math.max(0, number(enemy.xp ?? entry?.xp));
+    const entry = findBestiaryCombatEntry(enemy.type);
+    const xp = Math.max(0, number(enemy.xp, entry ? officialNpcXp(entry) : normalNpcXpForLevel(enemy.level || avgPartyLevel)));
     return sum + xp * number(enemy.count);
   }, 0);
   const difficulty = encounterDifficulty(actualXp, targetXp);
   return {
     avgPartyLevel,
     partySize,
-    baselineXp: baselineXpForLevel(avgPartyLevel),
+    baselineXp: normalNpcXpForLevel(avgPartyLevel),
     targetXp,
     actualXp,
-    xpPerPlayer: partySize ? Math.round(actualXp / partySize) : actualXp,
+    // Rules: each PC receives the full combined XP value of the NPCs in the scene.
+    xpPerPlayer: actualXp,
     totalEnemies,
     difficulty: difficulty.key,
     ratio: difficulty.ratio,
