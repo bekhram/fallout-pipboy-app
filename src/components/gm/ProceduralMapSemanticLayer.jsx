@@ -31,7 +31,7 @@ function doorStyle(item, cols, rows) {
   };
 }
 
-export default function ProceduralMapSemanticLayer({ scene, session }) {
+export default function ProceduralMapSemanticLayer({ scene, session = null, readOnly = false }) {
   const { i18n } = useTranslation();
   const text = COPY[languageCode(i18n.resolvedLanguage || i18n.language)];
   const [selectedDoorId, setSelectedDoorId] = useState("");
@@ -44,16 +44,16 @@ export default function ProceduralMapSemanticLayer({ scene, session }) {
   const covers = Array.isArray(model.covers) ? model.covers : [];
   const obstacles = Array.isArray(model.obstacles) ? model.obstacles : [];
   const rooms = Array.isArray(model.rooms) ? model.rooms : [];
-  const selectedDoor = doors.find((item) => item.id === selectedDoorId) || null;
+  const selectedDoor = !readOnly ? doors.find((item) => item.id === selectedDoorId) || null : null;
   const selectedState = selectedDoor ? getDoorRuntimeState(scene, selectedDoor) : null;
 
   const setDoor = async (patch) => {
-    if (!selectedDoor || !session?.setProceduralDoorState) return;
+    if (readOnly || !selectedDoor || !session?.setProceduralDoorState) return;
     await session.setProceduralDoorState(selectedDoor.id, patch);
   };
 
   return (
-    <div className="proc-semantic-layer">
+    <div className={`proc-semantic-layer${readOnly ? " is-readonly" : ""}`}>
       {rooms.map((item) => (
         <div
           key={`room:${item.id}`}
@@ -90,13 +90,18 @@ export default function ProceduralMapSemanticLayer({ scene, session }) {
 
       {doors.map((item) => {
         const state = getDoorRuntimeState(scene, item);
+        const className = `proc-semantic-door is-${item.orientation || "h"}${state.locked ? " is-locked" : ""}${state.open ? " is-open" : ""}${!readOnly && selectedDoorId === item.id ? " is-selected" : ""}`;
+        const title = `${text.door}: ${state.locked ? text.locked : state.open ? text.opened : text.closed}`;
+        if (readOnly) {
+          return <i key={`door:${item.id}`} className={className} style={doorStyle(item, cols, rows)} title={title} />;
+        }
         return (
           <button
             type="button"
             key={`door:${item.id}`}
-            className={`proc-semantic-door is-${item.orientation || "h"}${state.locked ? " is-locked" : ""}${state.open ? " is-open" : ""}${selectedDoorId === item.id ? " is-selected" : ""}`}
+            className={className}
             style={doorStyle(item, cols, rows)}
-            title={`${text.door}: ${state.locked ? text.locked : state.open ? text.opened : text.closed}`}
+            title={title}
             aria-label={`${text.door} ${item.id}`}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => {
@@ -114,6 +119,7 @@ export default function ProceduralMapSemanticLayer({ scene, session }) {
           className={`proc-semantic-cover rating-${item.rating || 1}`}
           style={{ left: centerPct(item.x, cols), top: centerPct(item.y, rows) }}
           data-kind={item.type || "cover"}
+          data-rating={item.rating || 1}
         />
       ))}
 
@@ -126,7 +132,7 @@ export default function ProceduralMapSemanticLayer({ scene, session }) {
         />
       ))}
 
-      {selectedDoor && selectedState ? (
+      {!readOnly && selectedDoor && selectedState ? (
         <div className="proc-door-panel" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
           <strong>[ {text.door} ]</strong>
           <span>{selectedDoor.id}</span>
