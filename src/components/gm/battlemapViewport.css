@@ -23,6 +23,11 @@
   contain: layout paint;
 }
 
+.gm-session-map__grid.tactical-grid.has-background.battlemap-scroll-grid {
+  background-position: 0 0 !important;
+  background-size: var(--battlemap-background-size, 100% 100%) !important;
+}
+
 .battlemap-scroll-grid .gm-session-map__cell {
   width: var(--battlemap-cell) !important;
   min-width: var(--battlemap-cell) !important;
