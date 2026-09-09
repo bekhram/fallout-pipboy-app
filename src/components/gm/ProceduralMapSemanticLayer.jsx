@@ -1,5 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { getDoorRuntimeState } from "../../utils/proceduralMapCollision.js";
 import "./proceduralMapSemanticLayer.css";
+
+const COPY = {
+  en: { door: "DOOR", open: "OPEN", close: "CLOSE", lock: "LOCK", unlock: "UNLOCK", locked: "LOCKED", closed: "CLOSED", opened: "OPEN", difficulty: "DIFFICULTY" },
+  ru: { door: "ДВЕРЬ", open: "ОТКРЫТЬ", close: "ЗАКРЫТЬ", lock: "ЗАПЕРЕТЬ", unlock: "ОТПЕРЕТЬ", locked: "ЗАПЕРТА", closed: "ЗАКРЫТА", opened: "ОТКРЫТА", difficulty: "СЛОЖНОСТЬ" },
+  uk: { door: "ДВЕРІ", open: "ВІДКРИТИ", close: "ЗАКРИТИ", lock: "ЗАМКНУТИ", unlock: "ВІДІМКНУТИ", locked: "ЗАМКНЕНО", closed: "ЗАКРИТО", opened: "ВІДКРИТО", difficulty: "СКЛАДНІСТЬ" },
+  pl: { door: "DRZWI", open: "OTWÓRZ", close: "ZAMKNIJ", lock: "ZABLOKUJ", unlock: "ODBLOKUJ", locked: "ZABLOKOWANE", closed: "ZAMKNIĘTE", opened: "OTWARTE", difficulty: "TRUDNOŚĆ" },
+};
+
+function languageCode(language) {
+  const code = String(language || "en").toLowerCase().split("-")[0];
+  return COPY[code] ? code : "en";
+}
 
 function pct(value, total) {
   return `${(Number(value || 0) / Math.max(1, Number(total || 1))) * 100}%`;
@@ -9,7 +23,18 @@ function centerPct(value, total) {
   return `${((Number(value || 0) + 0.5) / Math.max(1, Number(total || 1))) * 100}%`;
 }
 
-export default function ProceduralMapSemanticLayer({ scene }) {
+function doorStyle(item, cols, rows) {
+  const vertical = item.orientation === "v";
+  return {
+    left: vertical ? pct(item.x, cols) : centerPct(item.x, cols),
+    top: vertical ? centerPct(item.y, rows) : pct(item.y, rows),
+  };
+}
+
+export default function ProceduralMapSemanticLayer({ scene, session }) {
+  const { i18n } = useTranslation();
+  const text = COPY[languageCode(i18n.resolvedLanguage || i18n.language)];
+  const [selectedDoorId, setSelectedDoorId] = useState("");
   const model = scene?.environment?.proceduralMap;
   if (!model || Number(model.version) < 2) return null;
   const cols = Number(scene?.cols || model?.spec?.cols || 12);
@@ -19,9 +44,16 @@ export default function ProceduralMapSemanticLayer({ scene }) {
   const covers = Array.isArray(model.covers) ? model.covers : [];
   const obstacles = Array.isArray(model.obstacles) ? model.obstacles : [];
   const rooms = Array.isArray(model.rooms) ? model.rooms : [];
+  const selectedDoor = doors.find((item) => item.id === selectedDoorId) || null;
+  const selectedState = selectedDoor ? getDoorRuntimeState(scene, selectedDoor) : null;
+
+  const setDoor = async (patch) => {
+    if (!selectedDoor || !session?.setProceduralDoorState) return;
+    await session.setProceduralDoorState(selectedDoor.id, patch);
+  };
 
   return (
-    <div className="proc-semantic-layer" aria-hidden="true">
+    <div className="proc-semantic-layer">
       {rooms.map((item) => (
         <div
           key={`room:${item.id}`}
@@ -56,13 +88,25 @@ export default function ProceduralMapSemanticLayer({ scene }) {
         );
       })}
 
-      {doors.map((item) => (
-        <i
-          key={`door:${item.id}`}
-          className={`proc-semantic-door is-${item.orientation || "h"}${item.locked ? " is-locked" : ""}`}
-          style={{ left: centerPct(item.x, cols), top: centerPct(item.y, rows) }}
-        />
-      ))}
+      {doors.map((item) => {
+        const state = getDoorRuntimeState(scene, item);
+        return (
+          <button
+            type="button"
+            key={`door:${item.id}`}
+            className={`proc-semantic-door is-${item.orientation || "h"}${state.locked ? " is-locked" : ""}${state.open ? " is-open" : ""}${selectedDoorId === item.id ? " is-selected" : ""}`}
+            style={doorStyle(item, cols, rows)}
+            title={`${text.door}: ${state.locked ? text.locked : state.open ? text.opened : text.closed}`}
+            aria-label={`${text.door} ${item.id}`}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              setSelectedDoorId((current) => current === item.id ? "" : item.id);
+            }}
+          />
+        );
+      })}
 
       {covers.map((item) => (
         <i
@@ -81,6 +125,22 @@ export default function ProceduralMapSemanticLayer({ scene }) {
           data-kind={item.type || "obstacle"}
         />
       ))}
+
+      {selectedDoor && selectedState ? (
+        <div className="proc-door-panel" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
+          <strong>[ {text.door} ]</strong>
+          <span>{selectedDoor.id}</span>
+          <small>{selectedState.locked ? text.locked : selectedState.open ? text.opened : text.closed}{selectedDoor.difficulty ? ` · ${text.difficulty} ${selectedDoor.difficulty}` : ""}</small>
+          <div>
+            <button type="button" className="pip-btn is-primary" disabled={selectedState.locked} onClick={() => setDoor({ open: !selectedState.open })}>
+              {selectedState.open ? text.close : text.open}
+            </button>
+            <button type="button" className="pip-btn" onClick={() => setDoor({ locked: !selectedState.locked, open: false })}>
+              {selectedState.locked ? text.unlock : text.lock}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
