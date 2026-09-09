@@ -55,6 +55,43 @@ function initialTab() {
   return TABS.includes(stored) ? stored : "battle";
 }
 
+function sessionWithProceduralContext(session) {
+  const scene = session?.tacticalScene;
+  const proceduralActive = String(scene?.backgroundName || "").startsWith("PROC //");
+  const map = proceduralActive ? scene?.environment?.proceduralMap : null;
+  if (!map) return session;
+
+  const rooms = (Array.isArray(map.rooms) ? map.rooms : [])
+    .slice(0, 12)
+    .map((item) => `${item.label}@${item.x},${item.y}[${item.w}x${item.h}]`)
+    .join("; ");
+  const doors = (Array.isArray(map.doors) ? map.doors : [])
+    .slice(0, 16)
+    .map((item) => `${item.id}@${item.x},${item.y}${item.locked ? `[LOCKED D${item.difficulty || 1}]` : ""}${item.connects?.length ? `(${item.connects.join("↔")})` : ""}`)
+    .join("; ");
+  const points = (Array.isArray(map.points) ? map.points : [])
+    .slice(0, 12)
+    .map((item) => `${item.type}@${item.x},${item.y}`)
+    .join("; ");
+  const context = [
+    `PROCEDURAL MAP V${map.version || 2}`,
+    rooms ? `ROOMS: ${rooms}` : "",
+    doors ? `DOORS: ${doors}` : "",
+    points ? `POINTS: ${points}` : "",
+    `COVER: ${map.covers?.length || 0}`,
+    `BLOCKING OBSTACLES: ${map.obstacles?.filter((item) => item.blocksMovement !== false).length || 0}`,
+    `WALL SEGMENTS: ${map.walls?.length || 0}`,
+  ].filter(Boolean).join(" | ");
+
+  return {
+    ...session,
+    tacticalScene: {
+      ...scene,
+      backgroundName: `${scene.backgroundName} | ${context}`.slice(0, 5000),
+    },
+  };
+}
+
 export default function GmSessionMap(props) {
   const { i18n } = useTranslation();
   const bridgedSession = useLiveSessionBridge();
@@ -70,17 +107,19 @@ export default function GmSessionMap(props) {
     return <section className="pip-panel gm-session-map tactical-map"><div className="gm-session-map__hint">{labels.waiting}</div></section>;
   }
 
+  const autoGmSession = sessionWithProceduralContext(session);
+
   return (
     <section className="gm-tactical-tabs-shell">
       <nav className="gm-tactical-tabs" aria-label={labels.menu}>
         <div className="gm-tactical-tabs__scroll">
-          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab===""+tab?" is-active":""}`} aria-pressed={activeTab===tab} onClick={()=>setActiveTab(tab)}>{labels[tab]}</button>)}
+          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab===tab?" is-active":""}`} aria-pressed={activeTab===tab} onClick={()=>setActiveTab(tab)}>{labels[tab]}</button>)}
         </div>
       </nav>
 
       <div className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         <div className="gm-tactical-battle-effects"><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></div>
-        <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
+        <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={autoGmSession} /></div>
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
