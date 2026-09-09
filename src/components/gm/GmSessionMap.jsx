@@ -8,6 +8,7 @@ import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import GmScenePresetPanel from "./GmScenePresetPanel.jsx";
+import ProceduralMapSemanticPortal from "./ProceduralMapSemanticPortal.jsx";
 import TacticalEnvironmentPanel, {
   TacticalEnvironmentSummary,
 } from "./TacticalEnvironmentPanel.jsx";
@@ -73,7 +74,7 @@ export default function GmSessionMap(props) {
     <section className="gm-tactical-tabs-shell">
       <nav className="gm-tactical-tabs" aria-label={labels.menu}>
         <div className="gm-tactical-tabs__scroll">
-          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab===tab?" is-active":""}`} aria-pressed={activeTab===tab} onClick={()=>setActiveTab(tab)}>{labels[tab]}</button>)}
+          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab===""+tab?" is-active":""}`} aria-pressed={activeTab===tab} onClick={()=>setActiveTab(tab)}>{labels[tab]}</button>)}
         </div>
       </nav>
 
@@ -85,6 +86,7 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
         <div className="gm-tactical-scene-presets"><GmScenePresetPanel session={session} /></div>
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
+        <ProceduralMapSemanticPortal scene={session.tacticalScene} />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV9 session={session} /></div>
