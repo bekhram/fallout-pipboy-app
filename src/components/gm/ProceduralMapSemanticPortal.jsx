@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import ProceduralMapSemanticLayer from "./ProceduralMapSemanticLayer.jsx";
 
-export default function ProceduralMapSemanticPortal({ scene }) {
+export default function ProceduralMapSemanticPortal({ scene, session }) {
   const [target, setTarget] = useState(null);
 
   useEffect(() => {
@@ -16,5 +16,5 @@ export default function ProceduralMapSemanticPortal({ scene }) {
 
   const proceduralActive = String(scene?.backgroundName || "").startsWith("PROC //");
   if (!target || !proceduralActive || !scene?.environment?.proceduralMap) return null;
-  return createPortal(<ProceduralMapSemanticLayer scene={scene} />, target);
+  return createPortal(<ProceduralMapSemanticLayer scene={scene} session={session} />, target);
 }
