@@ -5,6 +5,10 @@ import {
   makeProceduralSeed,
   proceduralLocationType,
 } from "../../utils/proceduralMapGenerator.js";
+import {
+  generateProceduralMapStructure,
+  proceduralStructureStats,
+} from "../../utils/proceduralMapStructure.js";
 import "./gmScenePresetPanel.css";
 
 const MAP_TYPES = ["wasteland", "red_rocket", "super_duper_mart", "raider_camp", "military_bunker"];
@@ -59,6 +63,13 @@ const COPY = {
     strong: "STRONG",
     applied: "Generated map applied to scene",
     deterministic: "Same seed + settings = same map for the whole session.",
+    structure: "GAME STRUCTURE",
+    rooms: "ROOMS",
+    walls: "WALLS",
+    doors: "DOORS",
+    locked: "LOCKED",
+    covers: "COVER",
+    obstacles: "BLOCKERS",
   },
   ru: {
     title: "[ ГЕНЕРАТОР ЛОКАЦИЙ FALLOUT ]",
@@ -77,6 +88,13 @@ const COPY = {
     strong: "КОНТРАСТНЫЙ",
     applied: "Сгенерированная карта применена к сцене",
     deterministic: "Одинаковый seed + настройки = одинаковая карта для всей сессии.",
+    structure: "ИГРОВАЯ СТРУКТУРА",
+    rooms: "КОМНАТЫ",
+    walls: "СТЕНЫ",
+    doors: "ДВЕРИ",
+    locked: "ЗАПЕРТО",
+    covers: "УКРЫТИЯ",
+    obstacles: "ПРЕПЯТСТВИЯ",
   },
   uk: {
     title: "[ ГЕНЕРАТОР ЛОКАЦІЙ FALLOUT ]",
@@ -95,6 +113,13 @@ const COPY = {
     strong: "КОНТРАСТНА",
     applied: "Згенеровану мапу застосовано до сцени",
     deterministic: "Однаковий seed + налаштування = однакова мапа для всієї сесії.",
+    structure: "ІГРОВА СТРУКТУРА",
+    rooms: "КІМНАТИ",
+    walls: "СТІНИ",
+    doors: "ДВЕРІ",
+    locked: "ЗАМКНЕНО",
+    covers: "УКРИТТЯ",
+    obstacles: "ПЕРЕШКОДИ",
   },
   pl: {
     title: "[ GENERATOR LOKACJI FALLOUT ]",
@@ -113,6 +138,13 @@ const COPY = {
     strong: "KONTRASTOWA",
     applied: "Wygenerowana mapa została zastosowana",
     deterministic: "Ten sam seed + ustawienia = ta sama mapa dla całej sesji.",
+    structure: "STRUKTURA GRY",
+    rooms: "POMIESZCZENIA",
+    walls: "ŚCIANY",
+    doors: "DRZWI",
+    locked: "ZAMKNIĘTE",
+    covers: "OSŁONY",
+    obstacles: "PRZESZKODY",
   },
 };
 
@@ -183,23 +215,25 @@ export default function GmScenePresetPanel({ session }) {
   }, [contrast]);
 
   const [cols, rows] = useMemo(() => gridSize.split("x").map(Number), [gridSize]);
-  const previewUrl = useMemo(
-    () => generateProceduralMapDataUrl({ type, seed, cols, rows, density: density / 100 }),
-    [type, seed, cols, rows, density]
-  );
+  const generationSpec = useMemo(() => ({ type, seed, cols, rows, density: density / 100 }), [type, seed, cols, rows, density]);
+  const previewUrl = useMemo(() => generateProceduralMapDataUrl(generationSpec), [generationSpec]);
+  const previewStructure = useMemo(() => generateProceduralMapStructure(generationSpec), [generationSpec]);
+  const stats = useMemo(() => proceduralStructureStats(previewStructure), [previewStructure]);
 
   if (!scene || session?.mode !== "host") return null;
 
   const generate = async ({ newSeed = false } = {}) => {
     const nextSeed = newSeed ? makeProceduralSeed() : seed || makeProceduralSeed();
     if (nextSeed !== seed) setSeed(nextSeed);
-    const nextUrl = generateProceduralMapDataUrl({
+    const nextSpec = {
       type,
       seed: nextSeed,
       cols,
       rows,
       density: density / 100,
-    });
+    };
+    const nextUrl = generateProceduralMapDataUrl(nextSpec);
+    const structure = generateProceduralMapStructure(nextSpec);
     const locationType = proceduralLocationType(type);
     await session.updateTacticalScene?.({
       cols,
@@ -210,8 +244,9 @@ export default function GmScenePresetPanel({ session }) {
       environment: {
         ...(scene.environment || {}),
         locationType,
-        mapAssetId: `procedural:${type}`,
+        mapAssetId: `procedural:${type}:v2`,
         mapVariantSeed: nextSeed,
+        proceduralMap: structure,
       },
     });
     setMessage(text.applied);
@@ -240,6 +275,18 @@ export default function GmScenePresetPanel({ session }) {
       <div className="gm-proc-map__preview" style={{ backgroundImage: `url(${JSON.stringify(previewUrl)})` }}>
         <span>{LABELS[lang]?.[type] || LABELS.en[type]}</span>
         <small>{cols}×{rows} · seed {seed}</small>
+      </div>
+
+      <div className="gm-proc-map__structure">
+        <strong>{text.structure}</strong>
+        <div>
+          <span>{text.rooms}<b>{stats.rooms}</b></span>
+          <span>{text.walls}<b>{stats.walls}</b></span>
+          <span>{text.doors}<b>{stats.doors}</b></span>
+          <span>{text.locked}<b>{stats.lockedDoors}</b></span>
+          <span>{text.covers}<b>{stats.covers}</b></span>
+          <span>{text.obstacles}<b>{stats.obstacles}</b></span>
+        </div>
       </div>
 
       <div className="gm-proc-map__controls">
