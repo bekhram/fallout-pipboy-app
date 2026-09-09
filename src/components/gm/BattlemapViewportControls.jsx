@@ -185,11 +185,24 @@ export default function BattlemapViewportControls({
       setViewportWidth((current) =>
         current === nextViewportWidth ? current : nextViewportWidth
       );
+
+      const previousCellSize =
+        Number.parseFloat(grid.style.getPropertyValue("--battlemap-cell")) ||
+        cellSize;
+      const centerWorldX =
+        (grid.scrollLeft + grid.clientWidth / 2) / previousCellSize;
+      const centerWorldY =
+        (grid.scrollTop + grid.clientHeight / 2) / previousCellSize;
+
       grid.classList.add("battlemap-scroll-grid");
       grid.classList.toggle("is-overview-zoom", zoom < 45);
       grid.style.setProperty("--battlemap-cell", `${cellSize}px`);
       grid.style.setProperty("--battlemap-cols", String(cols));
       grid.style.setProperty("--battlemap-rows", String(rows));
+      grid.style.setProperty(
+        "--battlemap-background-size",
+        `${cols * cellSize}px ${rows * cellSize}px`
+      );
       grid.style.gridTemplateColumns = `repeat(${cols}, ${cellSize}px)`;
       grid.style.gridTemplateRows = `repeat(${rows}, ${cellSize}px)`;
       grid.style.backgroundSize = `${cols * cellSize}px ${rows * cellSize}px`;
@@ -199,6 +212,20 @@ export default function BattlemapViewportControls({
         "--battlemap-grid-top",
         `${Math.max(0, grid.offsetTop)}px`
       );
+
+      if (previousCellSize !== cellSize) {
+        const nextLeft = clamp(
+          centerWorldX * cellSize - grid.clientWidth / 2,
+          0,
+          Math.max(0, grid.scrollWidth - grid.clientWidth)
+        );
+        const nextTop = clamp(
+          centerWorldY * cellSize - grid.clientHeight / 2,
+          0,
+          Math.max(0, grid.scrollHeight - grid.clientHeight)
+        );
+        grid.scrollTo({ left: nextLeft, top: nextTop, behavior: "auto" });
+      }
     };
 
     apply();
