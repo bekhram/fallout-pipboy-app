@@ -1,3 +1,9 @@
+import {
+  buildResidentialRoomBlueprints,
+  buildResidentialRoomLayout,
+  isResidentialType,
+} from "./proceduralResidential.js";
+
 const TYPE_SEQUENCES = {
   wasteland: ["ruins", "wreck", "camp"],
   red_rocket: ["garage", "sales", "office", "security", "storage", "coffee_area"],
@@ -27,6 +33,10 @@ const BASE_LABELS = {
   house: "HOUSE",
   courtyard: "COURTYARD", barrack: "BARRACKS", boss: "BOSS", workshop: "WORKSHOP",
   control: "CONTROL", armory: "ARMORY", barracks: "BARRACKS", medical: "MEDICAL", generator: "GENERATOR",
+  entry: "ENTRY", hall: "HALL", living_room: "LIVING ROOM", kitchen: "KITCHEN", dining: "DINING",
+  bedroom: "BEDROOM", master_bedroom: "MASTER BEDROOM", child_room: "CHILD ROOM",
+  bathroom: "BATHROOM", guest_bathroom: "GUEST WC", utility: "UTILITY", laundry: "LAUNDRY",
+  closet: "CLOSET", terrace: "TERRACE",
 };
 
 function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
@@ -38,6 +48,7 @@ function isCommercial(type) { return type === "red_rocket" || type === "super_du
 export function proceduralRoomTargetCount(spec = {}) {
   const size = Math.max(Number(spec.cols) || 12, Number(spec.rows) || 12);
   const type = String(spec.type || "wasteland");
+  if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec).length;
   if (isCommercial(type)) return tierValue(size, COMMERCIAL_INTERIOR_COUNTS) + tierValue(size, OUTSKIRT_HOUSE_COUNTS);
   return tierValue(size, TARGET_ROOM_COUNTS);
 }
@@ -68,6 +79,7 @@ function commercialBlueprints(spec = {}) {
 
 export function buildProceduralRoomBlueprints(spec = {}) {
   const type = String(spec.type || "wasteland");
+  if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec);
   if (isCommercial(type)) return commercialBlueprints(spec);
   const count = proceduralRoomTargetCount(spec);
   const sequence = typeSequence(type);
@@ -126,7 +138,9 @@ function commercialLayout(spec, blueprints, cols, rows) {
 }
 
 export function buildProceduralRoomLayout(spec = {}) {
-  const cols = clamp(spec.cols || 12, 6, 66); const rows = clamp(spec.rows || 12, 6, 66); const blueprints = buildProceduralRoomBlueprints({ ...spec, cols, rows }); const type = String(spec.type || "wasteland");
+  const cols = clamp(spec.cols || 12, 6, 66); const rows = clamp(spec.rows || 12, 6, 66); const type = String(spec.type || "wasteland");
+  if (isResidentialType(type)) return buildResidentialRoomLayout({ ...spec, cols, rows });
+  const blueprints = buildProceduralRoomBlueprints({ ...spec, cols, rows });
   if (isCommercial(type)) return commercialLayout(spec, blueprints, cols, rows);
   return matrixLayout(blueprints, { x: 1, y: 1, w: Math.max(2, cols - 2), h: Math.max(2, rows - 2) });
 }
