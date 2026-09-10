@@ -1,0 +1,180 @@
+const GROUPS = [
+  "auto",
+  "raider",
+  "super_mutant",
+  "brotherhood",
+  "mirelurk",
+  "insect",
+  "deathclaw",
+  "ghoul",
+  "robot",
+  "institute",
+  "radscorpion",
+  "mole_rat",
+  "yao_guai",
+];
+
+export const ENEMY_GROUP_OPTIONS = GROUPS;
+
+const LABELS = {
+  en: {
+    auto: "Auto",
+    raider: "Raiders + dogs",
+    super_mutant: "Super Mutants + mutant hounds",
+    brotherhood: "Brotherhood of Steel",
+    mirelurk: "Mirelurks",
+    insect: "Insects",
+    deathclaw: "Deathclaws",
+    ghoul: "Feral Ghouls",
+    robot: "Robots / turrets",
+    institute: "Institute / Synths",
+    radscorpion: "Radscorpions",
+    mole_rat: "Mole Rats",
+    yao_guai: "Yao Guai",
+    human: "Humans",
+    other: "Other",
+  },
+  ru: {
+    auto: "Авто",
+    raider: "Рейдеры + собаки",
+    super_mutant: "Супермутанты + мутировавшие собаки",
+    brotherhood: "Братство Стали",
+    mirelurk: "Болотники",
+    insect: "Насекомые",
+    deathclaw: "Когти смерти",
+    ghoul: "Дикие гули",
+    robot: "Роботы / турели",
+    institute: "Институт / синты",
+    radscorpion: "Радскорпионы",
+    mole_rat: "Кротокрысы",
+    yao_guai: "Яо-гаи",
+    human: "Люди",
+    other: "Другие",
+  },
+  uk: {
+    auto: "Авто",
+    raider: "Рейдери + собаки",
+    super_mutant: "Супермутанти + мутовані собаки",
+    brotherhood: "Братство Сталі",
+    mirelurk: "Болотники",
+    insect: "Комахи",
+    deathclaw: "Кігті смерті",
+    ghoul: "Дикі гулі",
+    robot: "Роботи / турелі",
+    institute: "Інститут / синти",
+    radscorpion: "Радскорпіони",
+    mole_rat: "Кротощури",
+    yao_guai: "Яо-гаї",
+    human: "Люди",
+    other: "Інші",
+  },
+  pl: {
+    auto: "Auto",
+    raider: "Najeźdźcy + psy",
+    super_mutant: "Supermutanci + zmutowane psy",
+    brotherhood: "Bractwo Stali",
+    mirelurk: "Mirelurki",
+    insect: "Owady",
+    deathclaw: "Szpony śmierci",
+    ghoul: "Dzikie ghule",
+    robot: "Roboty / wieżyczki",
+    institute: "Instytut / synthy",
+    radscorpion: "Radskorpiony",
+    mole_rat: "Kretoszczury",
+    yao_guai: "Yao Guai",
+    human: "Ludzie",
+    other: "Inne",
+  },
+};
+
+const LOCATION_GROUPS = {
+  wasteland: ["raider", "super_mutant", "ghoul", "insect", "mirelurk", "deathclaw", "radscorpion", "mole_rat", "yao_guai", "robot"],
+  red_rocket: ["raider", "ghoul", "insect", "mole_rat", "robot", "deathclaw"],
+  super_duper_mart: ["ghoul", "raider", "insect", "robot", "institute"],
+  raider_camp: ["raider"],
+  military_bunker: ["robot", "brotherhood", "ghoul", "super_mutant", "institute"],
+};
+
+function norm(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[’'`]/g, "")
+    .replace(/[^a-z0-9а-яёіїєґ]+/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function sourceText(value) {
+  if (typeof value === "string") return norm(value);
+  const tags = Array.isArray(value?.tags) ? value.tags : [];
+  return norm([
+    value?.id,
+    value?.name,
+    value?.creatureType,
+    value?.category,
+    ...tags,
+  ].filter(Boolean).join(" "));
+}
+
+function speciesSlug(source) {
+  const cleaned = norm(source)
+    .replace(/\b(mutated|normal|notable|major|creature|character|enemy|ally|human|mammal|reptile|arachnid)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned ? `species:${cleaned.split(" ").slice(0, 3).join("_")}` : "other";
+}
+
+export function normalizeEnemyGroup(value) {
+  const group = String(value || "auto").toLowerCase();
+  return GROUPS.includes(group) ? group : "auto";
+}
+
+export function enemyGroupForEntry(value) {
+  const source = sourceText(value);
+  if (!source) return "other";
+
+  // Named factions first.
+  if (/brotherhood of steel|brotherhood-of-steel|\bbrotherhood\b/.test(source)) return "brotherhood";
+  if (/\braider\b/.test(source)) return "raider";
+  if (/robotic synth|robotic-synth|\bsynth\b|\binstitute\b/.test(source)) return "institute";
+
+  // Creature families with explicit compatibility rules.
+  if (/mutant hound|mutant-hound/.test(source)) return "super_mutant";
+  if (/super mutant|super-mutant|\bnightkin\b/.test(source)) return "super_mutant";
+  if (/deathclaw|death-claw/.test(source)) return "deathclaw";
+  if (/mirelurk|\bcrustacean\b|\bhatchlings?\b/.test(source)) return "mirelurk";
+  if (/radscorpion|rad-scorpion|\barachnid\b/.test(source)) return "radscorpion";
+  if (/radroach|bloodbug|bloatfly|stingwing|\binsect\b/.test(source)) return "insect";
+  if (/mole rat|mole-rat/.test(source)) return "mole_rat";
+  if (/yao guai|yao-guai/.test(source)) return "yao_guai";
+  if (/feral ghoul|glowing one|\bghoul\b|\bferal\b/.test(source)) return "ghoul";
+
+  // Ordinary dogs/mongrels are allowed with raiders. Mutant Hounds were handled above.
+  if (/wild mongrel|mongrel dog|\bdog\b|\bcanine\b/.test(source)) return "raider";
+
+  if (/\brobot\b|protectron|turret|mister gutsy|mr gutsy|sentry bot|assaultron|eyebot|security robot/.test(source)) return "robot";
+  if (/\bhuman\b/.test(source)) return "human";
+
+  // Unknown creatures do not get mixed together: they fall back to an exact species bucket.
+  return speciesSlug(source);
+}
+
+export function entriesCompatible(a, b) {
+  const ga = typeof a === "string" && (a.startsWith("species:") || GROUPS.includes(a)) ? a : enemyGroupForEntry(a);
+  const gb = typeof b === "string" && (b.startsWith("species:") || GROUPS.includes(b)) ? b : enemyGroupForEntry(b);
+  return ga === gb;
+}
+
+export function autoEnemyGroupsForLocation(type) {
+  return [...(LOCATION_GROUPS[type] || LOCATION_GROUPS.wasteland)];
+}
+
+export function enemyGroupLabel(group, lang = "en") {
+  const code = ["en", "ru", "uk", "pl"].includes(String(lang || "en").toLowerCase().split("-")[0])
+    ? String(lang || "en").toLowerCase().split("-")[0]
+    : "en";
+  const key = String(group || "other");
+  if (LABELS[code]?.[key]) return LABELS[code][key];
+  if (key.startsWith("species:")) return key.slice(8).replace(/_/g, " ");
+  return LABELS[code]?.other || LABELS.en.other;
+}
