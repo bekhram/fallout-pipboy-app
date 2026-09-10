@@ -8,6 +8,11 @@ import {
   buildSettlementHouseLayout,
   isSettlementType,
 } from "./proceduralSettlement.js";
+import {
+  buildSuperDuperRoomBlueprints,
+  buildSuperDuperRoomLayout,
+  isSuperDuperMartType,
+} from "./proceduralSuperDuperMart.js";
 
 const TYPE_SEQUENCES = {
   wasteland: ["ruins", "wreck", "camp"],
@@ -48,11 +53,12 @@ function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(valu
 function hashSeed(value) { const text = String(value ?? "0"); let hash = 2166136261; for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); } return hash >>> 0; }
 function typeSequence(type) { return TYPE_SEQUENCES[type] || TYPE_SEQUENCES.wasteland; }
 function tierValue(size, table) { for (const [maxSize, value] of table) if (size <= maxSize) return value; return table[table.length - 1][1]; }
-function isCommercial(type) { return type === "red_rocket" || type === "super_duper_mart"; }
+function isCommercial(type) { return type === "red_rocket"; }
 
 export function proceduralRoomTargetCount(spec = {}) {
   const size = Math.max(Number(spec.cols) || 12, Number(spec.rows) || 12);
   const type = String(spec.type || "wasteland");
+  if (isSuperDuperMartType(type)) return buildSuperDuperRoomBlueprints(spec).length;
   if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec).length;
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec).length;
   if (isCommercial(type)) return tierValue(size, COMMERCIAL_INTERIOR_COUNTS) + tierValue(size, OUTSKIRT_HOUSE_COUNTS);
@@ -85,6 +91,7 @@ function commercialBlueprints(spec = {}) {
 
 export function buildProceduralRoomBlueprints(spec = {}) {
   const type = String(spec.type || "wasteland");
+  if (isSuperDuperMartType(type)) return buildSuperDuperRoomBlueprints(spec);
   if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec);
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec);
   if (isCommercial(type)) return commercialBlueprints(spec);
@@ -146,6 +153,7 @@ function commercialLayout(spec, blueprints, cols, rows) {
 
 export function buildProceduralRoomLayout(spec = {}) {
   const cols = clamp(spec.cols || 12, 6, 66); const rows = clamp(spec.rows || 12, 6, 66); const type = String(spec.type || "wasteland");
+  if (isSuperDuperMartType(type)) return buildSuperDuperRoomLayout({ ...spec, cols, rows });
   if (isSettlementType(type)) return buildSettlementHouseLayout({ ...spec, cols, rows });
   if (isResidentialType(type)) return buildResidentialRoomLayout({ ...spec, cols, rows });
   const blueprints = buildProceduralRoomBlueprints({ ...spec, cols, rows });
