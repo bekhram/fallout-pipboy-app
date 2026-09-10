@@ -86,13 +86,16 @@ function turretFamily(entry = {}) {
 }
 
 function factionTurretPool(entries, faction, rng) {
-  if (String(faction || "").toLowerCase() !== "raider") return entries;
+  const key = String(faction || "").toLowerCase();
+  if (!["raider", "super_mutant"].includes(key)) return entries;
 
   const machineGuns = entries.filter((entry) => turretFamily(entry) === "machine_gun");
   const lasers = entries.filter((entry) => turretFamily(entry) === "laser");
 
-  // Raiders mostly field scavenged ballistic turrets. Laser turrets remain a rarer find.
-  if (machineGuns.length && (rng() < 0.8 || !lasers.length)) return machineGuns;
+  // Raiders and super mutants mostly field scavenged ballistic turrets.
+  // Super mutants skew even harder toward machine-gun variants; laser turrets stay rare.
+  const machineGunChance = key === "super_mutant" ? 0.9 : 0.8;
+  if (machineGuns.length && (rng() < machineGunChance || !lasers.length)) return machineGuns;
   if (lasers.length) return lasers;
   return entries;
 }
@@ -177,6 +180,6 @@ export function summarizeEncounter(spec = {}, rooms = []) {
   return {
     ...base,
     supportTurrets,
-    factionSupportRules: "raider+brotherhood+institute:turrets",
+    factionSupportRules: "raider+super_mutant+brotherhood+institute:turrets",
   };
 }
