@@ -1,5 +1,22 @@
+import terrainAtlas from "../assets/wasteland/generated/terrainAtlas.js";
+import ruinsAtlas from "../assets/wasteland/generated/ruinsAtlas.js";
+
 const CELL = 100;
 const GRID = 24;
+const ATLAS_CELL = 150;
+const ATLAS_W = ATLAS_CELL * 5;
+const ATLAS_H = ATLAS_CELL;
+
+const TERRAIN_SPRITES = {
+  cliff: 0,
+  rocks: 1,
+  dead_tree: 2,
+  wreck_car: 3,
+  wreck_truck: 4,
+};
+
+const RUIN_SPRITES = [0, 1, 2, 3, 4];
+const RUIN_SIZES = [[4, 4], [3, 6], [5, 5], [5, 5], [4, 4]];
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, Number(v) || 0)); }
 function hashSeed(value) { const s = String(value ?? "0"); let h = 2166136261; for (let i = 0; i < s.length; i += 1) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -8,35 +25,27 @@ function randint(rng, min, max) { return Math.floor(min + rng() * (max - min + 1
 function pick(rng, list) { return list[Math.min(list.length - 1, Math.floor(rng() * list.length))]; }
 function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`; }
 function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") { return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`; }
-function ellipse(cx, cy, rx, ry, fill, stroke = "none", sw = 0, extra = "") { return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`; }
-
-function overlaps(a, b, pad = 0) {
-  return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y);
-}
+function ellipse(cx, cy, rx, ry, fill, stroke = "none", sw = 0) { return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`; }
+function overlaps(a, b, pad = 0) { return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y); }
 
 function roadProfile(rng) {
   const roll = rng();
-  const type = roll < 0.35 ? "none" : roll < 0.60 ? "single" : roll < 0.85 ? "cross" : "fragments";
+  const type = roll < 0.36 ? "none" : roll < 0.61 ? "single" : roll < 0.86 ? "cross" : "fragments";
   return { type, surface: pick(rng, ["asphalt", "dirt", "cobblestone"]) };
 }
 
 function roadRects(profile, rng) {
   const roads = [];
-  const offsetX = randint(rng, -3, 3);
-  const offsetY = randint(rng, -3, 3);
-  const cx = clamp(12 + offsetX, 4, 19);
-  const cy = clamp(12 + offsetY, 4, 19);
-  const width = profile.surface === "dirt" ? 2 : 2;
-
+  const cx = clamp(12 + randint(rng, -3, 3), 4, 19);
+  const cy = clamp(12 + randint(rng, -3, 3), 4, 19);
+  const width = 2;
   if (profile.type === "single") {
     if (rng() < 0.5) roads.push({ x: cx, y: 0, w: width, h: GRID });
     else roads.push({ x: 0, y: cy, w: GRID, h: width });
-  }
-  if (profile.type === "cross") {
+  } else if (profile.type === "cross") {
     roads.push({ x: cx, y: 0, w: width, h: GRID });
     roads.push({ x: 0, y: cy, w: GRID, h: width });
-  }
-  if (profile.type === "fragments") {
+  } else if (profile.type === "fragments") {
     const vertical = rng() < 0.5;
     if (vertical) {
       roads.push({ x: cx, y: 0, w: width, h: randint(rng, 5, 9) });
@@ -49,59 +58,78 @@ function roadRects(profile, rng) {
   return roads;
 }
 
-function placeLargeObjects(rng, occupied) {
-  const result = [];
-  const count = randint(rng, 1, 3);
-  for (let i = 0; i < count; i += 1) {
-    for (let attempt = 0; attempt < 120; attempt += 1) {
-      const type = pick(rng, ["rocks", "crater", "ravine"]);
-      const w = type === "ravine" ? randint(rng, 4, 7) : randint(rng, 3, 5);
-      const h = type === "ravine" ? randint(rng, 2, 4) : randint(rng, 3, 5);
-      const item = { type, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, impassable: true };
-      if (occupied.some((o) => overlaps(item, o, 1))) continue;
-      occupied.push(item);
-      result.push(item);
-      break;
-    }
+function placeItem(rng, occupied, itemFactory, pad = 1, attempts = 120) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    const item = itemFactory();
+    if (occupied.some((o) => overlaps(item, o, pad))) continue;
+    occupied.push(item);
+    return item;
   }
-  return result;
+  return null;
+}
+
+function placeObstacles(rng, occupied) {
+  const out = [];
+  for (let i = 0; i < randint(rng, 1, 3); i += 1) {
+    const type = pick(rng, ["cliff", "rocks", "crater", "ravine"]);
+    const item = placeItem(rng, occupied, () => {
+      const w = type === "ravine" ? randint(rng, 5, 7) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
+      const h = type === "ravine" ? randint(rng, 2, 4) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
+      return { type, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3) * 90, impassable: true };
+    }, 1);
+    if (item) out.push(item);
+  }
+  return out;
 }
 
 function placeRuins(rng, occupied) {
-  const result = [];
+  const out = [];
   const count = randint(rng, 1, 4);
   for (let i = 0; i < count; i += 1) {
-    for (let attempt = 0; attempt < 100; attempt += 1) {
-      const w = randint(rng, 2, 5), h = randint(rng, 2, 5);
-      const item = { type: "ruin_l", x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3), impassable: false };
-      if (occupied.some((o) => overlaps(item, o, 1))) continue;
-      occupied.push(item);
-      result.push(item);
-      break;
-    }
+    const sprite = pick(rng, RUIN_SPRITES);
+    const rot = randint(rng, 0, 3) * 90;
+    const base = RUIN_SIZES[sprite];
+    const [w, h] = rot % 180 === 0 ? base : [base[1], base[0]];
+    const item = placeItem(rng, occupied, () => ({
+      type: "ruin", sprite, rot, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, impassable: false,
+    }), 1);
+    if (item) out.push(item);
   }
-  return result;
+  return out;
 }
 
-function placeCars(rng, occupied, roads) {
-  const result = [];
-  const count = randint(rng, 2, 8);
-  for (let i = 0; i < count; i += 1) {
-    for (let attempt = 0; attempt < 80; attempt += 1) {
-      let x = randint(rng, 1, GRID - 2), y = randint(rng, 1, GRID - 2), horizontal = rng() < 0.5;
-      if (roads.length && rng() < 0.65) {
-        const road = pick(rng, roads);
-        if (road.w >= road.h) { x = clamp(randint(rng, road.x, road.x + road.w - 1), 1, GRID - 2); y = clamp(road.y + (rng() < 0.5 ? -1 : road.h), 1, GRID - 2); horizontal = true; }
-        else { y = clamp(randint(rng, road.y, road.y + road.h - 1), 1, GRID - 2); x = clamp(road.x + (rng() < 0.5 ? -1 : road.w), 1, GRID - 2); horizontal = false; }
+function placeVehicles(rng, occupied, roads) {
+  const out = [];
+  const carCount = randint(rng, 1, 4);
+  const truckCount = randint(rng, 0, 2);
+  const placeVehicle = (type, w, h) => placeItem(rng, occupied, () => {
+    let x = randint(rng, 1, GRID - w - 1), y = randint(rng, 1, GRID - h - 1), rot = pick(rng, [0, 90, 180, 270]);
+    if (roads.length && rng() < 0.68) {
+      const road = pick(rng, roads);
+      if (road.w >= road.h) {
+        x = clamp(randint(rng, road.x, road.x + Math.max(0, road.w - 1)), 1, GRID - w - 1);
+        y = clamp(road.y + (rng() < 0.5 ? -h : road.h), 1, GRID - h - 1);
+        rot = pick(rng, [0, 180]);
+      } else {
+        y = clamp(randint(rng, road.y, road.y + Math.max(0, road.h - 1)), 1, GRID - h - 1);
+        x = clamp(road.x + (rng() < 0.5 ? -w : road.w), 1, GRID - w - 1);
+        rot = pick(rng, [90, 270]);
       }
-      const item = { type: "wrecked_car", x, y, w: horizontal ? 2 : 1, h: horizontal ? 1 : 2, horizontal };
-      if (occupied.some((o) => overlaps(item, o, 0))) continue;
-      occupied.push(item);
-      result.push(item);
-      break;
     }
+    return { type, x, y, w, h, rot, impassable: false };
+  }, 0, 90);
+  for (let i = 0; i < carCount; i += 1) { const item = placeVehicle("wreck_car", 2, 1); if (item) out.push(item); }
+  for (let i = 0; i < truckCount; i += 1) { const item = placeVehicle("wreck_truck", 3, 2); if (item) out.push(item); }
+  return out;
+}
+
+function placeTrees(rng, occupied) {
+  const out = [];
+  for (let i = 0; i < randint(rng, 1, 4); i += 1) {
+    const item = placeItem(rng, occupied, () => ({ type: "dead_tree", x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 }), 0, 70);
+    if (item) out.push(item);
   }
-  return result;
+  return out;
 }
 
 function roadSvg(road, surface) {
@@ -116,46 +144,26 @@ function roadSvg(road, surface) {
   return `${rect(x, y, w, h, "#555654", "#3e403e", 4)}${w > h ? line(x, y + h / 2, x + w, y + h / 2, "#918a70", 3, "28 24") : line(x + w / 2, y, x + w / 2, y + h, "#918a70", 3, "28 24")}`;
 }
 
-function largeObjectSvg(obj, rng) {
-  const x = obj.x * CELL, y = obj.y * CELL, w = obj.w * CELL, h = obj.h * CELL;
-  if (obj.type === "crater") {
-    return `${ellipse(x + w / 2, y + h / 2, w * 0.43, h * 0.38, "#544a3d", "#302b25", 8)}${ellipse(x + w / 2, y + h / 2, w * 0.27, h * 0.22, "#332f2a", "#6b5b46", 4)}`;
-  }
-  if (obj.type === "ravine") {
-    const p1 = `${x + 15},${y + h * 0.2}`; const p2 = `${x + w * 0.28},${y + h * 0.42}`; const p3 = `${x + w * 0.58},${y + h * 0.3}`; const p4 = `${x + w - 15},${y + h * 0.72}`; const p5 = `${x + w * 0.54},${y + h - 12}`; const p6 = `${x + w * 0.22},${y + h * 0.72}`;
-    return `<polygon points="${p1} ${p2} ${p3} ${p4} ${p5} ${p6}" fill="#3d3933" stroke="#26231f" stroke-width="10"/>`;
-  }
-  let out = "";
-  const count = randint(rng, 5, 10);
-  for (let i = 0; i < count; i += 1) {
-    const cx = x + 25 + rng() * Math.max(20, w - 50), cy = y + 25 + rng() * Math.max(20, h - 50), r = 20 + rng() * 42;
-    out += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${rng() > 0.5 ? "#625b50" : "#756d60"}" stroke="#403b34" stroke-width="5"/>`;
-  }
-  return out;
+function atlasSprite(uri, index, x, y, w, h, rot = 0, opacity = 1) {
+  const px = x * CELL, py = y * CELL, pw = w * CELL, ph = h * CELL;
+  const cx = px + pw / 2, cy = py + ph / 2;
+  const sourceX = index * ATLAS_CELL;
+  const inner = `<svg x="${-pw / 2}" y="${-ph / 2}" width="${pw}" height="${ph}" viewBox="${sourceX} 0 ${ATLAS_CELL} ${ATLAS_CELL}" preserveAspectRatio="xMidYMid meet" overflow="hidden"><image href="${uri}" x="0" y="0" width="${ATLAS_W}" height="${ATLAS_H}" preserveAspectRatio="none"/></svg>`;
+  return `<g transform="translate(${cx} ${cy}) rotate(${rot})" opacity="${opacity}">${inner}</g>`;
 }
 
-function ruinSvg(obj) {
+function obstacleSvg(obj) {
+  if (obj.type === "cliff") return atlasSprite(terrainAtlas, TERRAIN_SPRITES.cliff, obj.x, obj.y, obj.w, obj.h, obj.rot);
+  if (obj.type === "rocks") return atlasSprite(terrainAtlas, TERRAIN_SPRITES.rocks, obj.x, obj.y, obj.w, obj.h, obj.rot);
   const x = obj.x * CELL, y = obj.y * CELL, w = obj.w * CELL, h = obj.h * CELL;
-  const sw = 18;
-  const variants = [
-    [line(x, y, x + w, y, "#4e4940", sw), line(x, y, x, y + h, "#4e4940", sw)],
-    [line(x, y, x + w, y, "#4e4940", sw), line(x + w, y, x + w, y + h, "#4e4940", sw)],
-    [line(x, y + h, x + w, y + h, "#4e4940", sw), line(x, y, x, y + h, "#4e4940", sw)],
-    [line(x, y + h, x + w, y + h, "#4e4940", sw), line(x + w, y, x + w, y + h, "#4e4940", sw)],
-  ];
-  return variants[obj.rot % 4].join("");
-}
-
-function carSvg(car, rng) {
-  const x = (car.x + car.w / 2) * CELL, y = (car.y + car.h / 2) * CELL;
-  const rot = car.horizontal ? 0 : 90;
-  const fill = pick(rng, ["#705348", "#56625d", "#6b6049", "#55585a"]);
-  return `<g transform="translate(${x} ${y}) rotate(${rot})">${rect(-58, -25, 116, 50, fill, "#302d29", 5, 10)}${rect(-22, -18, 44, 36, "#303638", "#202426", 2, 5)}${line(-50, 0, 50, 0, "#3e3933", 3)}</g>`;
+  if (obj.type === "crater") return `${ellipse(x + w / 2, y + h / 2, w * 0.45, h * 0.4, "#55483b", "#302820", 10)}${ellipse(x + w / 2, y + h / 2, w * 0.26, h * 0.22, "#2f2924", "#6d5944", 4)}`;
+  const pts = [`${x + 10},${y + h * 0.2}`, `${x + w * 0.25},${y + h * 0.44}`, `${x + w * 0.52},${y + h * 0.28}`, `${x + w - 10},${y + h * 0.7}`, `${x + w * 0.58},${y + h - 10}`, `${x + w * 0.2},${y + h * 0.72}`].join(" ");
+  return `<polygon points="${pts}" fill="#3b3731" stroke="#26231f" stroke-width="12"/>`;
 }
 
 function scatterSvg(rng, blocked) {
   let out = "";
-  for (let i = 0; i < 80; i += 1) {
+  for (let i = 0; i < 70; i += 1) {
     const gx = randint(rng, 0, GRID - 1), gy = randint(rng, 0, GRID - 1);
     if (blocked.some((o) => gx >= o.x && gx < o.x + o.w && gy >= o.y && gy < o.y + o.h)) continue;
     const cx = (gx + 0.25 + rng() * 0.5) * CELL, cy = (gy + 0.25 + rng() * 0.5) * CELL, r = 3 + rng() * 8;
@@ -165,14 +173,15 @@ function scatterSvg(rng, blocked) {
 }
 
 export function buildOpenWastelandSite(spec = {}) {
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-v1`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v2`));
   const profile = roadProfile(rng);
   const roads = roadRects(profile, rng);
   const occupied = [...roads];
-  const obstacles = placeLargeObjects(rng, occupied);
+  const obstacles = placeObstacles(rng, occupied);
   const ruins = placeRuins(rng, occupied);
-  const cars = placeCars(rng, occupied, roads);
-  return { cols: GRID, rows: GRID, profile, roads, obstacles, ruins, cars };
+  const vehicles = placeVehicles(rng, occupied, roads);
+  const trees = placeTrees(rng, occupied);
+  return { cols: GRID, rows: GRID, profile, roads, obstacles, ruins, vehicles, trees };
 }
 
 export function buildOpenWastelandRoomLayout() { return []; }
@@ -180,17 +189,18 @@ export function buildOpenWastelandRoomBlueprints() { return []; }
 
 export function generateOpenWastelandSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
-  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-render-v1`));
+  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v2`));
   const width = GRID * CELL, height = GRID * CELL;
-  const blocked = [...site.roads, ...site.obstacles, ...site.ruins, ...site.cars];
+  const blocked = [...site.roads, ...site.obstacles, ...site.ruins, ...site.vehicles, ...site.trees];
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#756b58"));
   out.push(scatterSvg(rng, blocked));
   site.roads.forEach((road) => out.push(roadSvg(road, site.profile.surface)));
-  site.obstacles.forEach((obj) => out.push(largeObjectSvg(obj, rng)));
-  site.ruins.forEach((obj) => out.push(ruinSvg(obj)));
-  site.cars.forEach((car) => out.push(carSvg(car, rng)));
-  out.push(rect(18, 18, 420, 42, "#d2c3a2", "#40372e", 2, 4, 'opacity="0.93"'));
+  site.obstacles.forEach((obj) => out.push(obstacleSvg(obj)));
+  site.ruins.forEach((obj) => out.push(atlasSprite(ruinsAtlas, obj.sprite, obj.x, obj.y, obj.w, obj.h, obj.rot)));
+  site.vehicles.forEach((obj) => out.push(atlasSprite(terrainAtlas, TERRAIN_SPRITES[obj.type], obj.x, obj.y, obj.w, obj.h, obj.rot)));
+  site.trees.forEach((obj) => out.push(atlasSprite(terrainAtlas, TERRAIN_SPRITES.dead_tree, obj.x, obj.y, obj.w, obj.h, obj.rot)));
+  out.push(rect(18, 18, 500, 42, "#d2c3a2", "#40372e", 2, 4, 'opacity="0.93"'));
   out.push(`<text x="34" y="40" text-anchor="start" dominant-baseline="middle" fill="#332d27" font-family="monospace" font-size="11" font-weight="900">WASTELAND // 24x24 // ${site.profile.type.toUpperCase()}${site.profile.type !== "none" ? ` // ${site.profile.surface.toUpperCase()}` : ""}</text>`);
   out.push("</svg>");
   return out.join("");
