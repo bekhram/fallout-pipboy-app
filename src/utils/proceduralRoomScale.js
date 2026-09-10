@@ -3,6 +3,11 @@ import {
   buildResidentialRoomLayout,
   isResidentialType,
 } from "./proceduralResidential.js";
+import {
+  buildSettlementHouseBlueprints,
+  buildSettlementHouseLayout,
+  isSettlementType,
+} from "./proceduralSettlement.js";
 
 const TYPE_SEQUENCES = {
   wasteland: ["ruins", "wreck", "camp"],
@@ -48,6 +53,7 @@ function isCommercial(type) { return type === "red_rocket" || type === "super_du
 export function proceduralRoomTargetCount(spec = {}) {
   const size = Math.max(Number(spec.cols) || 12, Number(spec.rows) || 12);
   const type = String(spec.type || "wasteland");
+  if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec).length;
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec).length;
   if (isCommercial(type)) return tierValue(size, COMMERCIAL_INTERIOR_COUNTS) + tierValue(size, OUTSKIRT_HOUSE_COUNTS);
   return tierValue(size, TARGET_ROOM_COUNTS);
@@ -79,6 +85,7 @@ function commercialBlueprints(spec = {}) {
 
 export function buildProceduralRoomBlueprints(spec = {}) {
   const type = String(spec.type || "wasteland");
+  if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec);
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec);
   if (isCommercial(type)) return commercialBlueprints(spec);
   const count = proceduralRoomTargetCount(spec);
@@ -139,6 +146,7 @@ function commercialLayout(spec, blueprints, cols, rows) {
 
 export function buildProceduralRoomLayout(spec = {}) {
   const cols = clamp(spec.cols || 12, 6, 66); const rows = clamp(spec.rows || 12, 6, 66); const type = String(spec.type || "wasteland");
+  if (isSettlementType(type)) return buildSettlementHouseLayout({ ...spec, cols, rows });
   if (isResidentialType(type)) return buildResidentialRoomLayout({ ...spec, cols, rows });
   const blueprints = buildProceduralRoomBlueprints({ ...spec, cols, rows });
   if (isCommercial(type)) return commercialLayout(spec, blueprints, cols, rows);
