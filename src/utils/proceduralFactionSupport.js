@@ -2,6 +2,7 @@ const SUPPORT_RULES = {
   institute: ["turret"],
   brotherhood: ["turret"],
   raider: ["turret"],
+  super_mutant: ["turret"],
 };
 
 function norm(value) {
