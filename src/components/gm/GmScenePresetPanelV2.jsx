@@ -3,6 +3,11 @@ import { useTranslation } from "react-i18next";
 import GmScenePresetPanel from "./GmScenePresetPanel.jsx";
 import { generateProceduralEncounterSummary } from "../../utils/proceduralRoomContent.js";
 import { normalizeEncounterDifficulty } from "../../utils/proceduralEncounterBalance.js";
+import {
+  ENEMY_GROUP_OPTIONS,
+  enemyGroupLabel,
+  normalizeEnemyGroup,
+} from "../../utils/proceduralEnemyGroups.js";
 import "./gmScenePresetPanelV2.css";
 
 const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
@@ -10,31 +15,35 @@ const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
 const COPY = {
   en: {
     title: "ENCOUNTER DIFFICULTY",
+    faction: "ENEMY FACTION / TYPE",
     easy: "EASY", standard: "STANDARD", hard: "HARD", deadly: "DEADLY",
     target: "Target XP", actual: "Generated XP", reward: "XP / player",
     minion: "Minions", normal: "Standard", special: "Special", legendary: "Legendary",
-    note: "Difficulty changes the XP budget and enemy rank mix. At most one legendary enemy is generated.",
+    note: "Enemies are grouped by faction/type. A room never mixes incompatible groups. Auto can use different groups in different rooms.",
   },
   ru: {
     title: "СЛОЖНОСТЬ ЭНКАУНТЕРА",
+    faction: "ФРАКЦИЯ / ТИП ВРАГОВ",
     easy: "ЛЁГКАЯ", standard: "ОБЫЧНАЯ", hard: "СЛОЖНАЯ", deadly: "СМЕРТЕЛЬНАЯ",
     target: "Целевой XP", actual: "XP врагов", reward: "XP / игрока",
     minion: "Миньоны", normal: "Стандартные", special: "Особые", legendary: "Легендарные",
-    note: "Сложность меняет XP-бюджет и состав рангов. Легендарный враг — максимум один.",
+    note: "Враги разделены по фракциям и типам. В одной комнате несовместимые группы не смешиваются. В режиме АВТО разные комнаты могут иметь разные группы.",
   },
   uk: {
     title: "СКЛАДНІСТЬ ЕНКАУНТЕРА",
+    faction: "ФРАКЦІЯ / ТИП ВОРОГІВ",
     easy: "ЛЕГКА", standard: "ЗВИЧАЙНА", hard: "СКЛАДНА", deadly: "СМЕРТЕЛЬНА",
     target: "Цільовий XP", actual: "XP ворогів", reward: "XP / гравця",
     minion: "Міньйони", normal: "Звичайні", special: "Особливі", legendary: "Легендарні",
-    note: "Складність змінює XP-бюджет і склад рангів. Легендарний ворог — максимум один.",
+    note: "Вороги розділені за фракціями й типами. В одній кімнаті несумісні групи не змішуються. В режимі АВТО різні кімнати можуть мати різні групи.",
   },
   pl: {
     title: "TRUDNOŚĆ SPOTKANIA",
+    faction: "FRAKCJA / TYP WROGÓW",
     easy: "ŁATWA", standard: "STANDARDOWA", hard: "TRUDNA", deadly: "ŚMIERTELNA",
     target: "Docelowe XP", actual: "XP wrogów", reward: "XP / gracza",
     minion: "Sługi", normal: "Zwykli", special: "Specjalni", legendary: "Legendarni",
-    note: "Trudność zmienia budżet XP i mieszankę rang. Maksymalnie jeden legendarny wróg.",
+    note: "Wrogowie są dzieleni według frakcji i typu. Jedno pomieszczenie nigdy nie miesza niekompatybilnych grup. AUTO może użyć różnych grup w różnych pokojach.",
   },
 };
 
@@ -50,16 +59,20 @@ function specFromScene(scene) {
 
 export default function GmScenePresetPanelV2({ session }) {
   const { i18n } = useTranslation();
-  const text = COPY[languageCode(i18n.resolvedLanguage || i18n.language)];
+  const lang = languageCode(i18n.resolvedLanguage || i18n.language);
+  const text = COPY[lang];
   const scene = session?.tacticalScene || null;
   const savedSpec = specFromScene(scene);
   const [difficulty, setDifficulty] = useState(() => normalizeEncounterDifficulty(savedSpec?.encounterDifficulty));
+  const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
 
   useEffect(() => {
-    setDifficulty(normalizeEncounterDifficulty(specFromScene(scene)?.encounterDifficulty));
+    const spec = specFromScene(scene);
+    setDifficulty(normalizeEncounterDifficulty(spec?.encounterDifficulty));
+    setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
   }, [scene?.sceneId]);
 
-  const sessionWithDifficulty = useMemo(() => {
+  const sessionWithEncounterSettings = useMemo(() => {
     if (!session) return session;
     return {
       ...session,
@@ -74,22 +87,32 @@ export default function GmScenePresetPanelV2({ session }) {
             proceduralMapSpec: {
               ...proceduralMapSpec,
               encounterDifficulty: difficulty,
+              enemyFaction,
             },
           },
         });
       },
     };
-  }, [session, difficulty]);
+  }, [session, difficulty, enemyFaction]);
 
-  const previewSpec = savedSpec ? { ...savedSpec, encounterDifficulty: difficulty } : null;
+  const previewSpec = savedSpec
+    ? { ...savedSpec, encounterDifficulty: difficulty, enemyFaction }
+    : null;
   const encounter = useMemo(
     () => (previewSpec ? generateProceduralEncounterSummary(previewSpec) : null),
-    [previewSpec?.type, previewSpec?.seed, previewSpec?.avgPartyLevel, previewSpec?.partySize, previewSpec?.lootRarity, previewSpec?.wealth, difficulty]
+    [
+      previewSpec?.type,
+      previewSpec?.seed,
+      previewSpec?.avgPartyLevel,
+      previewSpec?.partySize,
+      previewSpec?.lootRarity,
+      previewSpec?.wealth,
+      difficulty,
+      enemyFaction,
+    ]
   );
 
-  const changeDifficulty = async (value) => {
-    const next = normalizeEncounterDifficulty(value);
-    setDifficulty(next);
+  const persistSetting = async (patch) => {
     const spec = specFromScene(scene);
     if (!spec) return;
     await session.updateTacticalScene?.({
@@ -97,10 +120,24 @@ export default function GmScenePresetPanelV2({ session }) {
         ...(scene?.environment || {}),
         proceduralMapSpec: {
           ...spec,
-          encounterDifficulty: next,
+          encounterDifficulty: difficulty,
+          enemyFaction,
+          ...patch,
         },
       },
     });
+  };
+
+  const changeDifficulty = async (value) => {
+    const next = normalizeEncounterDifficulty(value);
+    setDifficulty(next);
+    await persistSetting({ encounterDifficulty: next, enemyFaction });
+  };
+
+  const changeEnemyFaction = async (value) => {
+    const next = normalizeEnemyGroup(value);
+    setEnemyFaction(next);
+    await persistSetting({ enemyFaction: next, encounterDifficulty: difficulty });
   };
 
   const ranks = encounter?.rankCounts || { minion: 0, standard: 0, special: 0, legendary: 0 };
@@ -108,12 +145,23 @@ export default function GmScenePresetPanelV2({ session }) {
   return (
     <div className="gm-scene-preset-v2">
       <section className="gm-encounter-difficulty pip-panel">
-        <label>
-          <span>{text.title}</span>
-          <select className="pip-input" value={difficulty} onChange={(event) => changeDifficulty(event.target.value)}>
-            {DIFFICULTIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}
-          </select>
-        </label>
+        <div className="gm-encounter-difficulty__controls">
+          <label>
+            <span>{text.title}</span>
+            <select className="pip-input" value={difficulty} onChange={(event) => changeDifficulty(event.target.value)}>
+              {DIFFICULTIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}
+            </select>
+          </label>
+
+          <label>
+            <span>{text.faction}</span>
+            <select className="pip-input" value={enemyFaction} onChange={(event) => changeEnemyFaction(event.target.value)}>
+              {ENEMY_GROUP_OPTIONS.map((value) => (
+                <option key={value} value={value}>{enemyGroupLabel(value, lang)}</option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {encounter ? (
           <div className="gm-encounter-difficulty__summary">
@@ -134,7 +182,7 @@ export default function GmScenePresetPanelV2({ session }) {
 
         <small>{text.note}</small>
       </section>
-      <GmScenePresetPanel session={sessionWithDifficulty} />
+      <GmScenePresetPanel session={sessionWithEncounterSettings} />
     </div>
   );
 }
