@@ -78,8 +78,31 @@ function supportChance(difficulty) {
   return 0.35;
 }
 
+function turretFamily(entry = {}) {
+  const source = `${entry?.id || ""} ${entry?.name || ""}`.toLowerCase();
+  if (/machine[ -]?gun/.test(source)) return "machine_gun";
+  if (/laser/.test(source)) return "laser";
+  return "other";
+}
+
+function factionTurretPool(entries, faction, rng) {
+  if (String(faction || "").toLowerCase() !== "raider") return entries;
+
+  const machineGuns = entries.filter((entry) => turretFamily(entry) === "machine_gun");
+  const lasers = entries.filter((entry) => turretFamily(entry) === "laser");
+
+  // Raiders mostly field scavenged ballistic turrets. Laser turrets remain a rarer find.
+  if (machineGuns.length && (rng() < 0.8 || !lasers.length)) return machineGuns;
+  if (lasers.length) return lasers;
+  return entries;
+}
+
 function chooseTurret(faction, partyLevel, replacementXp, rng) {
-  const eligible = TURRETS.filter((entry) => isProceduralSupportForGroup(entry, faction));
+  const eligible = factionTurretPool(
+    TURRETS.filter((entry) => isProceduralSupportForGroup(entry, faction)),
+    faction,
+    rng,
+  );
   if (!eligible.length) return null;
 
   const reasonable = eligible.filter((entry) => num(entry?.level, 1) <= partyLevel + 2);
@@ -154,6 +177,6 @@ export function summarizeEncounter(spec = {}, rooms = []) {
   return {
     ...base,
     supportTurrets,
-    factionSupportRules: "brotherhood+institute:turrets",
+    factionSupportRules: "raider+brotherhood+institute:turrets",
   };
 }
