@@ -11,16 +11,16 @@ import {
 } from "../../utils/proceduralRoomContent.js";
 import "./gmScenePresetPanel.css";
 
-const MAP_TYPES = ["wasteland", "red_rocket", "super_duper_mart", "raider_camp", "military_bunker"];
+const MAP_TYPES = ["wasteland", "residential_house", "red_rocket", "super_duper_mart", "raider_camp", "military_bunker"];
 const GRID_SIZES = ["8x8", "12x12", "18x18", "24x24", "30x30", "42x42", "54x54", "66x66"];
 const LOOT_RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const WEALTH_LEVELS = ["poor", "standard", "rich", "wealthy"];
 
 const LABELS = {
-  en: { wasteland: "Wasteland", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", raider_camp: "Raider Camp", military_bunker: "Military Bunker" },
-  ru: { wasteland: "Пустошь", red_rocket: "Красная Ракета", super_duper_mart: "Супер-Дупер Март", raider_camp: "Лагерь рейдеров", military_bunker: "Военный бункер" },
-  uk: { wasteland: "Пустка", red_rocket: "Червона Ракета", super_duper_mart: "Супер-Дупер Март", raider_camp: "Табір рейдерів", military_bunker: "Військовий бункер" },
-  pl: { wasteland: "Pustkowie", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", raider_camp: "Obóz raiderów", military_bunker: "Bunkier wojskowy" },
+  en: { wasteland: "Wasteland", residential_house: "Residential House", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", raider_camp: "Raider Camp", military_bunker: "Military Bunker" },
+  ru: { wasteland: "Пустошь", residential_house: "Жилой дом", red_rocket: "Красная Ракета", super_duper_mart: "Супер-Дупер Март", raider_camp: "Лагерь рейдеров", military_bunker: "Военный бункер" },
+  uk: { wasteland: "Пустка", residential_house: "Житловий будинок", red_rocket: "Червона Ракета", super_duper_mart: "Супер-Дупер Март", raider_camp: "Табір рейдерів", military_bunker: "Військовий бункер" },
+  pl: { wasteland: "Pustkowie", residential_house: "Dom mieszkalny", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", raider_camp: "Obóz raiderów", military_bunker: "Bunkier wojskowy" },
 };
 
 const WEALTH_LABELS = {
@@ -177,7 +177,7 @@ export default function GmScenePresetPanel({ session }) {
 
   const [cols, rows] = useMemo(() => gridSize.split("x").map(Number), [gridSize]);
   const generationSpec = useMemo(() => ({
-    version: 9,
+    version: 11,
     type,
     seed,
     cols,
