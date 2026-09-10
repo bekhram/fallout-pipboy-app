@@ -1,5 +1,5 @@
 // Wasteland layout adapter inspired by domasx2/dungeon-generator (MIT).
-// Dungeon rooms become residential buildings; corridors become roads.
+// Dungeon growth drives house placement, but corridors are converted into continuous streets.
 import { buildResidentialRoomLayout } from "./proceduralResidential.js";
 
 const CELL = 100;
@@ -67,10 +67,43 @@ function validCandidate(candidate, corridor, houses, cols, rows) {
   return !cells.some((p) => houses.some((room) => pointInRect(p.x, p.y, room, 0) && room !== houses[houses.length - 1]));
 }
 
+function uniqueSorted(values) { return [...new Set(values.map((v) => clamp(Math.round(v), 1, 65)))].sort((a, b) => a - b); }
+
+function buildContinuousStreets(cols, rows, houses, roads, rng) {
+  const size = Math.max(cols, rows);
+  const vertical = [];
+  const horizontal = [];
+
+  // Use the dungeon-growth corridors as a source of street axes.
+  roads.forEach((road) => {
+    if (road.x1 === road.x2) vertical.push(road.x1);
+    if (road.y1 === road.y2) horizontal.push(road.y1);
+  });
+
+  // Ensure the street network always crosses the complete map.
+  if (!vertical.length) vertical.push(Math.floor(cols / 2));
+  if (!horizontal.length) horizontal.push(Math.floor(rows / 2));
+
+  // Larger wasteland maps get a few extra continuous streets.
+  const desiredV = size <= 18 ? 1 : size <= 30 ? 2 : size <= 54 ? 3 : 4;
+  const desiredH = size <= 18 ? 1 : size <= 30 ? 2 : size <= 54 ? 3 : 4;
+
+  while (vertical.length < desiredV) vertical.push(randint(rng, 2, Math.max(2, cols - 3)));
+  while (horizontal.length < desiredH) horizontal.push(randint(rng, 2, Math.max(2, rows - 3)));
+
+  const v = uniqueSorted(vertical).slice(0, desiredV);
+  const h = uniqueSorted(horizontal).slice(0, desiredH);
+
+  return {
+    vertical: v.map((x, index) => ({ id: `street_v_${index + 1}`, x })),
+    horizontal: h.map((y, index) => ({ id: `street_h_${index + 1}`, y })),
+  };
+}
+
 export function buildDungeonWastelandSite(spec = {}) {
   const cols = clamp(spec.cols || 12, 6, 66), rows = clamp(spec.rows || 12, 6, 66);
   const size = Math.max(cols, rows);
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${cols}x${rows}:dungeon-wasteland-v1`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${cols}x${rows}:dungeon-wasteland-v2`));
   const target = countForSize(size);
   const firstSize = houseSizeForMap(rng, size);
   const first = {
@@ -97,7 +130,8 @@ export function buildDungeonWastelandSite(spec = {}) {
     roads.push({ ...corridor, id: `road__${roads.length + 1}`, from: parent.id, to: `house__${index}` });
   }
 
-  return { cols, rows, houses, roads };
+  const streets = buildContinuousStreets(cols, rows, houses, roads, rng);
+  return { cols, rows, houses, roads, streets };
 }
 
 export function buildDungeonWastelandRoomLayout(spec = {}) {
@@ -125,10 +159,20 @@ export function buildDungeonWastelandRoomBlueprints(spec = {}) {
   return buildDungeonWastelandRoomLayout(spec).map(({ x, y, w, h, ...room }) => room);
 }
 
-function drawRoad(road) {
-  const x1 = (road.x1 + 0.5) * CELL, y1 = (road.y1 + 0.5) * CELL;
-  const x2 = (road.x2 + 0.5) * CELL, y2 = (road.y2 + 0.5) * CELL;
-  return `${line(x1, y1, x2, y2, "#53504a", CELL * 0.72)}${line(x1, y1, x2, y2, "#8a7f62", 4, "24 22")}`;
+function drawStreetNetwork(streets, cols, rows) {
+  const out = [];
+  const width = CELL * 0.82;
+  (streets?.vertical || []).forEach((street) => {
+    const x = (street.x + 0.5) * CELL;
+    out.push(line(x, 0, x, rows * CELL, "#514f4a", width));
+    out.push(line(x, 0, x, rows * CELL, "#8e856d", 4, "26 24"));
+  });
+  (streets?.horizontal || []).forEach((street) => {
+    const y = (street.y + 0.5) * CELL;
+    out.push(line(0, y, cols * CELL, y, "#514f4a", width));
+    out.push(line(0, y, cols * CELL, y, "#8e856d", 4, "26 24"));
+  });
+  return out.join("");
 }
 
 function roomFill(type) {
@@ -148,6 +192,67 @@ function drawFurniture(room) {
   return "";
 }
 
+function sharedEdge(a, b) {
+  const ax2 = a.x + a.w, ay2 = a.y + a.h, bx2 = b.x + b.w, by2 = b.y + b.h;
+  if (ax2 === b.x || bx2 === a.x) {
+    const from = Math.max(a.y, b.y), to = Math.min(ay2, by2);
+    if (to - from >= 1) return { vertical: true, x: (ax2 === b.x ? b.x : a.x) * CELL, y: (from + (to - from) / 2) * CELL };
+  }
+  if (ay2 === b.y || by2 === a.y) {
+    const from = Math.max(a.x, b.x), to = Math.min(ax2, bx2);
+    if (to - from >= 1) return { vertical: false, x: (from + (to - from) / 2) * CELL, y: (ay2 === b.y ? b.y : a.y) * CELL };
+  }
+  return null;
+}
+
+function drawDoorSymbol(door) {
+  const gap = 52;
+  const leaf = 40;
+  const out = [];
+  if (door.vertical) {
+    out.push(line(door.x, door.y - gap / 2, door.x, door.y + gap / 2, "#d8c9aa", WALL + 8));
+    out.push(line(door.x, door.y, door.x + leaf, door.y - leaf * 0.45, "#51463a", 4));
+    out.push(`<path d="M ${door.x} ${door.y - leaf * 0.45} A ${leaf} ${leaf} 0 0 1 ${door.x + leaf} ${door.y}" fill="none" stroke="#6d604e" stroke-width="2" opacity="0.8"/>`);
+  } else {
+    out.push(line(door.x - gap / 2, door.y, door.x + gap / 2, door.y, "#d8c9aa", WALL + 8));
+    out.push(line(door.x, door.y, door.x + leaf * 0.45, door.y + leaf, "#51463a", 4));
+    out.push(`<path d="M ${door.x + leaf * 0.45} ${door.y} A ${leaf} ${leaf} 0 0 1 ${door.x} ${door.y + leaf}" fill="none" stroke="#6d604e" stroke-width="2" opacity="0.8"/>`);
+  }
+  return out.join("");
+}
+
+function drawHouseDoors(house, rooms) {
+  const out = [];
+  const seen = new Set();
+  for (let i = 0; i < rooms.length; i += 1) {
+    for (let j = i + 1; j < rooms.length; j += 1) {
+      const door = sharedEdge(rooms[i], rooms[j]);
+      if (!door) continue;
+      const key = `${door.vertical ? "v" : "h"}:${Math.round(door.x)}:${Math.round(door.y)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(drawDoorSymbol(door));
+    }
+  }
+
+  // Explicit exterior entrance for every house.
+  const entry = rooms.find((room) => room.baseRoomId === "entry") || rooms[0];
+  if (entry) {
+    const hx = house.x * CELL, hy = house.y * CELL, hx2 = (house.x + house.w) * CELL, hy2 = (house.y + house.h) * CELL;
+    const cx = (entry.x + entry.w / 2) * CELL, cy = (entry.y + entry.h / 2) * CELL;
+    const distances = [
+      { side: "top", d: Math.abs(cy - hy) }, { side: "bottom", d: Math.abs(hy2 - cy) },
+      { side: "left", d: Math.abs(cx - hx) }, { side: "right", d: Math.abs(hx2 - cx) },
+    ].sort((a, b) => a.d - b.d);
+    const side = distances[0].side;
+    if (side === "top") out.push(drawDoorSymbol({ vertical: false, x: cx, y: hy }));
+    if (side === "bottom") out.push(drawDoorSymbol({ vertical: false, x: cx, y: hy2 }));
+    if (side === "left") out.push(drawDoorSymbol({ vertical: true, x: hx, y: cy }));
+    if (side === "right") out.push(drawDoorSymbol({ vertical: true, x: hx2, y: cy }));
+  }
+  return out.join("");
+}
+
 function drawHouseRooms(house, rooms) {
   const out = [];
   out.push(rect(house.x * CELL, house.y * CELL, house.w * CELL, house.h * CELL, "#a99a7e", "#2f2b26", WALL + 4, 3));
@@ -157,17 +262,19 @@ function drawHouseRooms(house, rooms) {
     if (w >= 72 && h >= 62) out.push(text(x + w / 2, y + Math.min(24, h / 2), room.label, room.label.length > 12 ? 7 : 8));
     out.push(drawFurniture(room));
   });
+  out.push(drawHouseDoors(house, rooms));
   out.push(text((house.x + house.w / 2) * CELL, house.y * CELL - 16, `HOUSE ${Number(house.id.split("__")[1]) || 1}`, 9, "middle", "#ded1b5"));
   return out.join("");
 }
 
-function wastelandScatter(spec, rng, houses) {
+function wastelandScatter(spec, rng, houses, streets) {
   const out = [];
   const count = Math.min(150, Math.round((Number(spec.cols) || 12) * (Number(spec.rows) || 12) * 0.045));
   for (let i = 0; i < count; i += 1) {
     const gx = randint(rng, 0, Math.max(0, (Number(spec.cols) || 12) - 1));
     const gy = randint(rng, 0, Math.max(0, (Number(spec.rows) || 12) - 1));
     if (houses.some((h) => pointInRect(gx, gy, h, 0))) continue;
+    if ((streets?.vertical || []).some((s) => Math.abs(gx - s.x) <= 0) || (streets?.horizontal || []).some((s) => Math.abs(gy - s.y) <= 0)) continue;
     const px = (gx + 0.5) * CELL + randint(rng, -22, 22), py = (gy + 0.5) * CELL + randint(rng, -22, 22);
     const r = randint(rng, 7, 18);
     out.push(`<circle cx="${px}" cy="${py}" r="${r}" fill="${rng() > 0.5 ? "#68604f" : "#77705c"}" stroke="#4a4439" stroke-width="2"/>`);
@@ -180,14 +287,14 @@ export function generateDungeonWastelandSvg(input = {}) {
   const site = buildDungeonWastelandSite({ ...input, cols, rows });
   const roomLayout = buildDungeonWastelandRoomLayout({ ...input, cols, rows });
   const width = cols * CELL, height = rows * CELL;
-  const rng = mulberry32(hashSeed(`${input.seed || "1"}:${cols}x${rows}:dungeon-wasteland-render-v1`));
+  const rng = mulberry32(hashSeed(`${input.seed || "1"}:${cols}x${rows}:dungeon-wasteland-render-v2`));
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#766d5b"));
-  out.push(wastelandScatter({ ...input, cols, rows }, rng, site.houses));
-  site.roads.forEach((road) => out.push(drawRoad(road)));
+  out.push(wastelandScatter({ ...input, cols, rows }, rng, site.houses, site.streets));
+  out.push(drawStreetNetwork(site.streets, cols, rows));
   site.houses.forEach((house) => out.push(drawHouseRooms(house, roomLayout.filter((room) => room.houseId === house.id))));
   out.push(rect(18, 18, Math.min(width - 36, 480), 42, "#d4c5a4", "#40372e", 2, 4, 'opacity="0.94"'));
-  out.push(text(34, 40, `WASTELAND // DUNGEON-GROWTH // ${site.houses.length} HOUSES`, 11, "start"));
+  out.push(text(34, 40, `WASTELAND // CONTINUOUS STREETS // ${site.houses.length} HOUSES`, 11, "start"));
   out.push("</svg>");
   return out.join("");
 }
