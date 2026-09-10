@@ -1,65 +1,75 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import terrainAtlas from "../../assets/wasteland/generated/terrainAtlas.js";
-import ruinsAtlas from "../../assets/wasteland/generated/ruinsAtlas.js";
+import assetA from "../../assets/wasteland/generated/assetBundleA.js";
+import assetB from "../../assets/wasteland/generated/assetBundleB.js";
 import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
-const CELL = 100;
 const GRID = 24;
-const ATLAS_CELL = 150;
-const ATLAS_W = ATLAS_CELL * 5;
-const ATLAS_H = ATLAS_CELL;
 
-const TERRAIN_SPRITES = {
-  cliff: 0,
-  rocks: 1,
-  dead_tree: 2,
-  wreck_car: 3,
-  wreck_truck: 4,
+const ASSET_BY_TYPE = {
+  cliff: assetA.cliff_large,
+  rocks: assetA.rocks_cluster,
+  dead_tree: assetA.dead_tree,
+  wreck_car: assetB.wreck_car,
+  wreck_truck: assetB.wreck_truck,
+  ruin: assetB.ruin_l_1,
 };
 
-function AtlasSprite({ atlas, index, item }) {
-  const px = item.x * CELL;
-  const py = item.y * CELL;
-  const pw = item.w * CELL;
-  const ph = item.h * CELL;
-  const cx = px + pw / 2;
-  const cy = py + ph / 2;
-  const sourceX = index * ATLAS_CELL;
-  const rotation = Number(item.rot || 0);
+function AssetImage({ item, src, testId }) {
+  if (!src) return null;
+  const left = (item.x / GRID) * 100;
+  const top = (item.y / GRID) * 100;
+  const width = (item.w / GRID) * 100;
+  const height = (item.h / GRID) * 100;
 
   return (
-    <g transform={`translate(${cx} ${cy}) rotate(${rotation})`}>
-      <svg
-        x={-pw / 2}
-        y={-ph / 2}
-        width={pw}
-        height={ph}
-        viewBox={`${sourceX} 0 ${ATLAS_CELL} ${ATLAS_CELL}`}
-        preserveAspectRatio="xMidYMid meet"
-        overflow="hidden"
-      >
-        <image
-          href={atlas}
-          x="0"
-          y="0"
-          width={ATLAS_W}
-          height={ATLAS_H}
-          preserveAspectRatio="none"
-        />
-      </svg>
-    </g>
+    <img
+      data-wasteland-asset={testId || item.type}
+      src={src}
+      alt=""
+      draggable={false}
+      style={{
+        position: "absolute",
+        left: `${left}%`,
+        top: `${top}%`,
+        width: `${width}%`,
+        height: `${height}%`,
+        objectFit: "contain",
+        transform: `rotate(${Number(item.rot || 0)}deg)`,
+        transformOrigin: "50% 50%",
+        pointerEvents: "none",
+        userSelect: "none",
+        zIndex: 22,
+        filter: "drop-shadow(0 4px 4px rgba(0,0,0,.45))",
+      }}
+    />
   );
 }
 
 function WastelandAssetOverlay({ spec }) {
-  const site = useMemo(() => buildOpenWastelandSite({ ...spec, cols: GRID, rows: GRID }), [spec?.seed]);
+  const site = useMemo(
+    () => buildOpenWastelandSite({ ...spec, cols: GRID, rows: GRID }),
+    [spec?.seed]
+  );
+
+  const procedural = [
+    ...site.obstacles.filter((item) => item.type === "cliff" || item.type === "rocks"),
+    ...site.ruins.map((item) => ({ ...item, type: "ruin" })),
+    ...site.vehicles,
+    ...site.trees,
+  ];
+
+  // Temporary fixed diagnostics. These make asset rendering obvious even when
+  // a particular seed produces very few procedural objects.
+  const diagnostics = [
+    { type: "cliff", x: 1, y: 1, w: 6, h: 6, rot: 0 },
+    { type: "wreck_car", x: 10, y: 2, w: 3, h: 2, rot: 25 },
+    { type: "ruin", x: 16, y: 1, w: 6, h: 6, rot: 0 },
+  ];
 
   return (
-    <svg
+    <div
       className="gm-wasteland-asset-overlay"
-      viewBox={`0 0 ${GRID * CELL} ${GRID * CELL}`}
-      preserveAspectRatio="none"
       aria-hidden="true"
       style={{
         position: "absolute",
@@ -67,48 +77,46 @@ function WastelandAssetOverlay({ spec }) {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        zIndex: 1,
+        zIndex: 20,
         overflow: "hidden",
       }}
     >
-      {site.obstacles
-        .filter((item) => item.type === "cliff" || item.type === "rocks")
-        .map((item, index) => (
-          <AtlasSprite
-            key={`obstacle-${index}`}
-            atlas={terrainAtlas}
-            index={TERRAIN_SPRITES[item.type]}
-            item={item}
-          />
-        ))}
+      <div
+        data-wasteland-overlay-test="visible"
+        style={{
+          position: "absolute",
+          left: 8,
+          top: 8,
+          zIndex: 30,
+          padding: "5px 8px",
+          background: "rgba(0,0,0,.75)",
+          border: "1px solid currentColor",
+          fontSize: 10,
+          fontWeight: 900,
+          letterSpacing: ".08em",
+          pointerEvents: "none",
+        }}
+      >
+        WASTELAND ASSET LAYER
+      </div>
 
-      {site.ruins.map((item, index) => (
-        <AtlasSprite
-          key={`ruin-${index}`}
-          atlas={ruinsAtlas}
-          index={Number(item.sprite || 0)}
+      {procedural.map((item, index) => (
+        <AssetImage
+          key={`proc-${item.type}-${index}`}
           item={item}
+          src={ASSET_BY_TYPE[item.type]}
         />
       ))}
 
-      {site.vehicles.map((item, index) => (
-        <AtlasSprite
-          key={`vehicle-${index}`}
-          atlas={terrainAtlas}
-          index={TERRAIN_SPRITES[item.type]}
+      {diagnostics.map((item, index) => (
+        <AssetImage
+          key={`diag-${index}`}
+          testId={`diagnostic-${item.type}`}
           item={item}
+          src={ASSET_BY_TYPE[item.type]}
         />
       ))}
-
-      {site.trees.map((item, index) => (
-        <AtlasSprite
-          key={`tree-${index}`}
-          atlas={terrainAtlas}
-          index={TERRAIN_SPRITES.dead_tree}
-          item={item}
-        />
-      ))}
-    </svg>
+    </div>
   );
 }
 
@@ -118,8 +126,25 @@ export default function WastelandAssetPortal({ session }) {
   const [target, setTarget] = useState(null);
 
   useEffect(() => {
-    const node = document.querySelector(".gm-tactical-map-core .gm-session-map__grid");
-    setTarget(node || null);
+    let cancelled = false;
+    let tries = 0;
+
+    const findTarget = () => {
+      if (cancelled) return;
+      const node = document.querySelector(".gm-tactical-map-core .gm-session-map__grid");
+      if (node) {
+        setTarget(node);
+        return;
+      }
+      tries += 1;
+      if (tries < 20) window.setTimeout(findTarget, 50);
+    };
+
+    findTarget();
+    return () => {
+      cancelled = true;
+      setTarget(null);
+    };
   }, [scene?.sceneId, scene?.backgroundName, spec?.seed, spec?.type]);
 
   if (!target || !spec || String(spec.type || "") !== "wasteland") return null;
