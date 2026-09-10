@@ -9,10 +9,13 @@ const GROUPS = [
   "ghoul",
   "robot",
   "institute",
-  "radscorpion",
   "mole_rat",
   "yao_guai",
 ];
+
+const LEGACY_GROUP_ALIASES = {
+  radscorpion: "insect",
+};
 
 export const ENEMY_GROUP_OPTIONS = GROUPS;
 
@@ -28,7 +31,6 @@ const LABELS = {
     ghoul: "Feral Ghouls",
     robot: "Robots / turrets",
     institute: "Institute / Synths",
-    radscorpion: "Radscorpions",
     mole_rat: "Mole Rats",
     yao_guai: "Yao Guai",
     human: "Humans",
@@ -45,7 +47,6 @@ const LABELS = {
     ghoul: "Дикие гули",
     robot: "Роботы / турели",
     institute: "Институт / синты",
-    radscorpion: "Радскорпионы",
     mole_rat: "Кротокрысы",
     yao_guai: "Яо-гаи",
     human: "Люди",
@@ -62,7 +63,6 @@ const LABELS = {
     ghoul: "Дикі гулі",
     robot: "Роботи / турелі",
     institute: "Інститут / синти",
-    radscorpion: "Радскорпіони",
     mole_rat: "Кротощури",
     yao_guai: "Яо-гаї",
     human: "Люди",
@@ -79,7 +79,6 @@ const LABELS = {
     ghoul: "Dzikie ghule",
     robot: "Roboty / wieżyczki",
     institute: "Instytut / synthy",
-    radscorpion: "Radskorpiony",
     mole_rat: "Kretoszczury",
     yao_guai: "Yao Guai",
     human: "Ludzie",
@@ -88,7 +87,7 @@ const LABELS = {
 };
 
 const LOCATION_GROUPS = {
-  wasteland: ["raider", "super_mutant", "ghoul", "insect", "mirelurk", "deathclaw", "radscorpion", "mole_rat", "yao_guai", "robot"],
+  wasteland: ["raider", "super_mutant", "ghoul", "insect", "mirelurk", "deathclaw", "mole_rat", "yao_guai", "robot"],
   red_rocket: ["raider", "ghoul", "insect", "mole_rat", "robot", "deathclaw"],
   super_duper_mart: ["ghoul", "raider", "insect", "robot", "institute"],
   raider_camp: ["raider"],
@@ -125,7 +124,8 @@ function speciesSlug(source) {
 }
 
 export function normalizeEnemyGroup(value) {
-  const group = String(value || "auto").toLowerCase();
+  const raw = String(value || "auto").toLowerCase();
+  const group = LEGACY_GROUP_ALIASES[raw] || raw;
   return GROUPS.includes(group) ? group : "auto";
 }
 
@@ -143,8 +143,11 @@ export function enemyGroupForEntry(value) {
   if (/super mutant|super-mutant|\bnightkin\b/.test(source)) return "super_mutant";
   if (/deathclaw|death-claw/.test(source)) return "deathclaw";
   if (/mirelurk|\bcrustacean\b|\bhatchlings?\b/.test(source)) return "mirelurk";
-  if (/radscorpion|rad-scorpion|\barachnid\b/.test(source)) return "radscorpion";
-  if (/radroach|bloodbug|bloatfly|stingwing|\binsect\b/.test(source)) return "insect";
+
+  // All insect/arthropod enemies explicitly assigned by the GM belong to one compatible group.
+  // Current set: Radroach, Bloatfly, Bloodbug, Stingwing and Radscorpion.
+  if (/radroach|bloodbug|bloatfly|stingwing|radscorpion|rad-scorpion|\binsect\b|\barachnid\b/.test(source)) return "insect";
+
   if (/mole rat|mole-rat/.test(source)) return "mole_rat";
   if (/yao guai|yao-guai/.test(source)) return "yao_guai";
   if (/feral ghoul|glowing one|\bghoul\b|\bferal\b/.test(source)) return "ghoul";
@@ -160,8 +163,8 @@ export function enemyGroupForEntry(value) {
 }
 
 export function entriesCompatible(a, b) {
-  const ga = typeof a === "string" && (a.startsWith("species:") || GROUPS.includes(a)) ? a : enemyGroupForEntry(a);
-  const gb = typeof b === "string" && (b.startsWith("species:") || GROUPS.includes(b)) ? b : enemyGroupForEntry(b);
+  const ga = typeof a === "string" && (a.startsWith("species:") || GROUPS.includes(a)) ? normalizeEnemyGroup(a) : enemyGroupForEntry(a);
+  const gb = typeof b === "string" && (b.startsWith("species:") || GROUPS.includes(b)) ? normalizeEnemyGroup(b) : enemyGroupForEntry(b);
   return ga === gb;
 }
 
@@ -173,8 +176,8 @@ export function enemyGroupLabel(group, lang = "en") {
   const code = ["en", "ru", "uk", "pl"].includes(String(lang || "en").toLowerCase().split("-")[0])
     ? String(lang || "en").toLowerCase().split("-")[0]
     : "en";
-  const key = String(group || "other");
+  const key = normalizeEnemyGroup(group);
   if (LABELS[code]?.[key]) return LABELS[code][key];
-  if (key.startsWith("species:")) return key.slice(8).replace(/_/g, " ");
+  if (String(group || "").startsWith("species:")) return String(group).slice(8).replace(/_/g, " ");
   return LABELS[code]?.other || LABELS.en.other;
 }
