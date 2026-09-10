@@ -1,4 +1,4 @@
-import * as V4 from "./proceduralMapGeneratorV4.js";
+import * as V5 from "./proceduralMapGeneratorV5.js";
 import { normalizeEnemyGroup } from "./proceduralEnemyGroups.js";
 
 const RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
@@ -22,24 +22,24 @@ function legacyInput(value = {}) {
   return { ...value, lootRarity: R_TO_LEGACY[rarity] };
 }
 
-export const MAP_TYPES = V4.MAP_TYPES;
-export const makeProceduralSeed = V4.makeProceduralSeed;
-export const proceduralLocationType = V4.proceduralLocationType;
+export const MAP_TYPES = V5.MAP_TYPES;
+export const makeProceduralSeed = V5.makeProceduralSeed;
+export const proceduralLocationType = V5.proceduralLocationType;
 
 export function normalizeProceduralMapSpec(value = {}) {
   const rarity = normalizeRarity(value.lootRarity);
-  const base = V4.normalizeProceduralMapSpec(legacyInput(value));
+  const base = V5.normalizeProceduralMapSpec(legacyInput(value));
   return {
     ...base,
     lootRarity: rarity,
     encounterDifficulty: normalizeDifficulty(value.encounterDifficulty ?? value.difficulty),
     enemyFaction: normalizeEnemyGroup(value.enemyFaction ?? value.enemyGroup ?? "auto"),
-    version: Math.max(7, Number(base.version || 0)),
+    version: Math.max(9, Number(base.version || 0)),
   };
 }
 
 export function generateProceduralMapSvg(input = {}) {
-  return V4.generateProceduralMapSvg(legacyInput(input));
+  return V5.generateProceduralMapSvg(legacyInput(input));
 }
 
 export function generateProceduralMapDataUrl(input = {}) {
