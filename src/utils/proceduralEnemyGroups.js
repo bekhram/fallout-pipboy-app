@@ -15,7 +15,6 @@ const GROUPS = [
   // only be grouped with another member of the same profile/species.
   "radstag",
   "brahmin",
-  "dog",
   "wastelander",
   "vault_dweller",
   "trader",
@@ -31,7 +30,7 @@ export const ENEMY_GROUP_OPTIONS = GROUPS;
 const LABELS = {
   en: {
     auto: "Auto",
-    raider: "Raiders",
+    raider: "Raiders + dogs",
     super_mutant: "Super Mutants + mutant hounds",
     brotherhood: "Brotherhood of Steel",
     mirelurk: "Mirelurks",
@@ -44,7 +43,6 @@ const LABELS = {
     yao_guai: "Yao Guai",
     radstag: "Radstags",
     brahmin: "Brahmin",
-    dog: "Dogs",
     wastelander: "Wastelanders",
     vault_dweller: "Vault Dwellers",
     trader: "Traders / Caravan Merchants",
@@ -54,7 +52,7 @@ const LABELS = {
   },
   ru: {
     auto: "Авто",
-    raider: "Рейдеры",
+    raider: "Рейдеры + собаки",
     super_mutant: "Супермутанты + мутировавшие собаки",
     brotherhood: "Братство Стали",
     mirelurk: "Болотники",
@@ -67,7 +65,6 @@ const LABELS = {
     yao_guai: "Яо-гаи",
     radstag: "Радстаги",
     brahmin: "Брамины",
-    dog: "Собаки",
     wastelander: "Жители пустоши",
     vault_dweller: "Жители убежища",
     trader: "Торговцы / караванщики",
@@ -77,7 +74,7 @@ const LABELS = {
   },
   uk: {
     auto: "Авто",
-    raider: "Рейдери",
+    raider: "Рейдери + собаки",
     super_mutant: "Супермутанти + мутовані собаки",
     brotherhood: "Братство Сталі",
     mirelurk: "Болотники",
@@ -90,7 +87,6 @@ const LABELS = {
     yao_guai: "Яо-гаї",
     radstag: "Радстаги",
     brahmin: "Браміни",
-    dog: "Собаки",
     wastelander: "Мешканці пустки",
     vault_dweller: "Мешканці сховища",
     trader: "Торговці / караванники",
@@ -100,7 +96,7 @@ const LABELS = {
   },
   pl: {
     auto: "Auto",
-    raider: "Najeźdźcy",
+    raider: "Najeźdźcy + psy",
     super_mutant: "Supermutanci + zmutowane psy",
     brotherhood: "Bractwo Stali",
     mirelurk: "Mirelurki",
@@ -113,7 +109,6 @@ const LABELS = {
     yao_guai: "Yao Guai",
     radstag: "Radstagi",
     brahmin: "Brahminy",
-    dog: "Psy",
     wastelander: "Mieszkańcy pustkowi",
     vault_dweller: "Mieszkańcy krypt",
     trader: "Handlarze / kupcy karawanowi",
@@ -124,8 +119,8 @@ const LABELS = {
 };
 
 const LOCATION_GROUPS = {
-  wasteland: ["raider", "super_mutant", "ghoul", "insect", "mirelurk", "deathclaw", "mole_rat", "yao_guai", "robot", "radstag", "brahmin", "dog"],
-  red_rocket: ["raider", "ghoul", "insect", "mole_rat", "robot", "deathclaw", "dog"],
+  wasteland: ["raider", "super_mutant", "ghoul", "insect", "mirelurk", "deathclaw", "mole_rat", "yao_guai", "robot", "radstag", "brahmin"],
+  red_rocket: ["raider", "ghoul", "insect", "mole_rat", "robot", "deathclaw"],
   super_duper_mart: ["ghoul", "raider", "insect", "robot", "institute"],
   raider_camp: ["raider"],
   military_bunker: ["robot", "brotherhood", "ghoul", "super_mutant", "institute"],
@@ -166,7 +161,6 @@ function exactFactionlessGroup(value) {
 
   if (id === "radstag" || name === "radstag") return "radstag";
   if (id === "brahmin" || name === "brahmin") return "brahmin";
-  if (id === "dog" || id === "mongrel-dog" || name === "dog" || name === "mongrel dog") return "dog";
   if (id === "deathclaw" || name === "deathclaw") return "deathclaw";
   if (id === "mole-rat" || name === "mole rat") return "mole_rat";
   if (id === "yao-guai" || name === "yao guai") return "yao_guai";
@@ -193,13 +187,17 @@ export function enemyGroupForEntry(value) {
   if (/brotherhood of steel|brotherhood-of-steel|\bbrotherhood\b/.test(source)) return "brotherhood";
   if (/\braider\b/.test(source)) return "raider";
 
+  // Creature families with explicit compatibility rules.
+  if (/mutant hound|mutant-hound/.test(source)) return "super_mutant";
+  if (/super mutant|super-mutant|\bnightkin\b/.test(source)) return "super_mutant";
+
+  // Ordinary dogs/mongrels are factionless in lore, but may accompany raiders in encounters.
+  if (/wild mongrel|mongrel dog|\bdog\b|\bcanine\b/.test(source)) return "raider";
+
   // User-defined factionless profiles: never mix them with another faction/species.
   const factionless = exactFactionlessGroup(value);
   if (factionless) return factionless;
 
-  // Creature families with explicit compatibility rules.
-  if (/mutant hound|mutant-hound/.test(source)) return "super_mutant";
-  if (/super mutant|super-mutant|\bnightkin\b/.test(source)) return "super_mutant";
   if (/deathclaw|death-claw/.test(source)) return "deathclaw";
   if (/mirelurk|\bcrustacean\b|\bhatchlings?\b/.test(source)) return "mirelurk";
 
