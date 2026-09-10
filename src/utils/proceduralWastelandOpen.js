@@ -8,7 +8,6 @@ function randint(rng, min, max) { return Math.floor(min + rng() * (max - min + 1
 function pick(rng, list) { return list[Math.min(list.length - 1, Math.floor(rng() * list.length))]; }
 function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`; }
 function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") { return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`; }
-function ellipse(cx, cy, rx, ry, fill, stroke = "none", sw = 0) { return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`; }
 function overlaps(a, b, pad = 0) { return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y); }
 
 function roadProfile(rng) {
@@ -65,26 +64,44 @@ function placeObstacles(rng, occupied) {
   return out;
 }
 
+function getVehicleFootprint(type, rot) {
+  const vertical = rot === 90 || rot === 270;
+  if (type === "wreck_car") return vertical ? { w: 1, h: 2 } : { w: 2, h: 1 };
+  if (type === "wreck_truck") return vertical ? { w: 2, h: 4 } : { w: 4, h: 2 };
+  return { w: 1, h: 1 };
+}
+
 function placeVehicles(rng, occupied, roads) {
   const out = [];
-  const placeVehicle = (type, w, h) => placeItem(rng, occupied, () => {
-    let x = randint(rng, 1, GRID - w - 1), y = randint(rng, 1, GRID - h - 1), rot = pick(rng, [0, 90, 180, 270]);
-    if (roads.length && rng() < 0.68) {
-      const road = pick(rng, roads);
+  const placeVehicle = (type) => placeItem(rng, occupied, () => {
+    let rot = pick(rng, [0, 90, 180, 270]);
+    let road = null;
+    const nearRoad = roads.length && rng() < 0.68;
+
+    if (nearRoad) {
+      road = pick(rng, roads);
+      rot = road.w >= road.h ? pick(rng, [0, 180]) : pick(rng, [90, 270]);
+    }
+
+    const { w, h } = getVehicleFootprint(type, rot);
+    let x = randint(rng, 1, GRID - w - 1);
+    let y = randint(rng, 1, GRID - h - 1);
+
+    if (road) {
       if (road.w >= road.h) {
-        x = clamp(randint(rng, road.x, road.x + Math.max(0, road.w - 1)), 1, GRID - w - 1);
+        x = clamp(randint(rng, road.x, road.x + Math.max(0, road.w - w)), 1, GRID - w - 1);
         y = clamp(road.y + (rng() < 0.5 ? -h : road.h), 1, GRID - h - 1);
-        rot = pick(rng, [0, 180]);
       } else {
-        y = clamp(randint(rng, road.y, road.y + Math.max(0, road.h - 1)), 1, GRID - h - 1);
+        y = clamp(randint(rng, road.y, road.y + Math.max(0, road.h - h)), 1, GRID - h - 1);
         x = clamp(road.x + (rng() < 0.5 ? -w : road.w), 1, GRID - w - 1);
-        rot = pick(rng, [90, 270]);
       }
     }
+
     return { type, sprite: randint(rng, 0, 2), x, y, w, h, rot, impassable: false };
   }, 0, 90);
-  for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car", 2, 1); if (item) out.push(item); }
-  for (let i = 0; i < randint(rng, 0, 2); i += 1) { const item = placeVehicle("wreck_truck", 3, 2); if (item) out.push(item); }
+
+  for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
+  for (let i = 0; i < randint(rng, 0, 2); i += 1) { const item = placeVehicle("wreck_truck"); if (item) out.push(item); }
   return out;
 }
 
@@ -128,7 +145,7 @@ function scatterSvg(rng, blocked) {
 }
 
 export function buildOpenWastelandSite(spec = {}) {
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v3`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v4`));
   const profile = roadProfile(rng);
   const roads = roadRects(profile, rng);
   const occupied = [...roads];
@@ -143,7 +160,7 @@ export function buildOpenWastelandRoomBlueprints() { return []; }
 
 export function generateOpenWastelandSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
-  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v3`));
+  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v4`));
   const width = GRID * CELL, height = GRID * CELL;
   const blocked = [...site.roads, ...site.obstacles, ...site.vehicles, ...site.trees];
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];

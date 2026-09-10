@@ -21,7 +21,7 @@ import truck3 from "../../assets/wasteland/objects/truck-3.png";
 import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
-const OVERLAP_PAD = 0.12;
+const OVERLAP_PAD = 0.08;
 const ASSET_VARIANTS = {
   cliff: [cliff1, cliff2, cliff3],
   rocks: [rocks1, rocks2, rocks3],
@@ -38,16 +38,30 @@ function assetForItem(item) {
   return { src: variants[index], index };
 }
 
+function renderBoxForItem(item) {
+  const rotation = ((Number(item.rot || 0) % 360) + 360) % 360;
+  const swapsAxes = rotation === 90 || rotation === 270;
+  const logicalW = Number(item.w || 0);
+  const logicalH = Number(item.h || 0);
+  const renderW = swapsAxes ? logicalH : logicalW;
+  const renderH = swapsAxes ? logicalW : logicalH;
+  const cx = Number(item.x || 0) + logicalW / 2;
+  const cy = Number(item.y || 0) + logicalH / 2;
+  return {
+    x: cx - renderW / 2,
+    y: cy - renderH / 2,
+    w: renderW,
+    h: renderH,
+    rotation,
+  };
+}
+
 function SpriteImage({ item, preview = false }) {
   const asset = assetForItem(item);
   if (!asset) return null;
 
-  const left = (item.x / GRID) * 100;
-  const top = (item.y / GRID) * 100;
-  const width = (item.w / GRID) * 100;
-  const height = (item.h / GRID) * 100;
-  const rotation = Number(item.rot || 0);
-  const depth = Math.round((item.y + item.h / 2) * 100);
+  const box = renderBoxForItem(item);
+  const depth = Math.round((Number(item.y || 0) + Number(item.h || 0) / 2) * 100);
 
   return (
     <img
@@ -58,11 +72,11 @@ function SpriteImage({ item, preview = false }) {
       data-wasteland-sprite={asset.index}
       style={{
         position: "absolute",
-        left: `${left}%`,
-        top: `${top}%`,
-        width: `${width}%`,
-        height: `${height}%`,
-        transform: `rotate(${rotation}deg)`,
+        left: `${(box.x / GRID) * 100}%`,
+        top: `${(box.y / GRID) * 100}%`,
+        width: `${(box.w / GRID) * 100}%`,
+        height: `${(box.h / GRID) * 100}%`,
+        transform: `rotate(${box.rotation}deg)`,
         transformOrigin: "50% 50%",
         pointerEvents: "none",
         userSelect: "none",
@@ -91,11 +105,8 @@ function normalizeVisualSize(item) {
   const currentW = Number(item.w || 0);
   const currentH = Number(item.h || 0);
 
-  if (item.type === "wreck_car") {
-    return resizeAroundCenter(item, Math.max(2.8, currentW * 1.45), Math.max(1.7, currentH * 1.55));
-  }
-  if (item.type === "wreck_truck") {
-    return resizeAroundCenter(item, Math.max(4.2, currentW * 1.35), Math.max(2.6, currentH * 1.3));
+  if (item.type === "cliff") {
+    return resizeAroundCenter(item, currentW * 2, currentH * 2);
   }
   if (item.type === "dead_tree") {
     return resizeAroundCenter(item, Math.max(3, currentW * 1.4), Math.max(3, currentH * 1.4));
@@ -103,29 +114,21 @@ function normalizeVisualSize(item) {
   if (item.type === "crater") {
     return resizeAroundCenter(item, Math.max(3.4, currentW), Math.max(3.4, currentH));
   }
-  if (item.type === "rocks") {
-    return resizeAroundCenter(item, currentW * 0.85, currentH * 0.85);
-  }
   return item;
 }
 
-function rotatedBounds(item) {
-  const rotation = ((Number(item.rot || 0) % 360) + 360) % 360;
-  const swapsAxes = rotation === 90 || rotation === 270;
-  const boxW = swapsAxes ? item.h : item.w;
-  const boxH = swapsAxes ? item.w : item.h;
-  const cx = item.x + item.w / 2;
-  const cy = item.y + item.h / 2;
-  return {
-    x: cx - boxW / 2,
-    y: cy - boxH / 2,
-    w: boxW,
-    h: boxH,
-  };
+function visualBounds(item) {
+  const box = renderBoxForItem(item);
+  const swapsAxes = box.rotation === 90 || box.rotation === 270;
+  const finalW = swapsAxes ? box.h : box.w;
+  const finalH = swapsAxes ? box.w : box.h;
+  const cx = box.x + box.w / 2;
+  const cy = box.y + box.h / 2;
+  return { x: cx - finalW / 2, y: cy - finalH / 2, w: finalW, h: finalH };
 }
 
 function fitVisualItemToGrid(item) {
-  const bounds = rotatedBounds(item);
+  const bounds = visualBounds(item);
   let dx = 0;
   let dy = 0;
 
@@ -152,11 +155,10 @@ function removeVisualOverlaps(items) {
   const occupied = [];
 
   for (const item of items) {
-    const bounds = rotatedBounds(item);
+    const bounds = visualBounds(item);
     const isGroundDecal = item.type === "crater";
     const collides = !isGroundDecal && occupied.some((box) => boxesOverlap(bounds, box));
     if (collides) continue;
-
     accepted.push(item);
     if (!isGroundDecal) occupied.push(bounds);
   }
@@ -175,7 +177,7 @@ export function WastelandAssetLayer({ spec, preview = false }) {
       ...site.obstacles
         .filter((item) => item.type === "cliff" || item.type === "rocks" || item.type === "crater")
         .map(normalizeVisualSize),
-      ...site.vehicles.map(normalizeVisualSize),
+      ...site.vehicles,
       ...site.trees.map(normalizeVisualSize),
     ].map(fitVisualItemToGrid);
 
