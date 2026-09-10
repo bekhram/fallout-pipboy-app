@@ -146,7 +146,8 @@ export function normalizeEncounterDifficulty(value) {
 
 export function baseEncounterXp(spec = {}) {
   const { avgPartyLevel, partySize } = normalizedPartyConfig(spec);
-  return Math.max(10, Math.round(normalNpcXpForLevel(avgPartyLevel) * partySize));
+  const xpPerPlayer = normalNpcXpForLevel(avgPartyLevel) * 2;
+  return Math.max(10, Math.round(xpPerPlayer * partySize));
 }
 
 export function targetEncounterXp(spec = {}) {
@@ -395,7 +396,7 @@ export function summarizeEncounter(spec = {}, rooms = []) {
     targetXp,
     targetDifficulty,
     actualXp,
-    xpPerPlayer: actualXp,
+    xpPerPlayer: partySize > 0 ? Math.round((actualXp / partySize) * 10) / 10 : actualXp,
     totalEnemies,
     rankCounts,
     difficulty: calculated.key,
