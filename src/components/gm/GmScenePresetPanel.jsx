@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { WastelandAssetLayer } from "./WastelandAssetPortal.jsx";
 import {
   generateProceduralMapDataUrl,
   makeProceduralSeed,
@@ -148,7 +149,8 @@ export default function GmScenePresetPanel({ session }) {
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
       <header className="gm-scene-presets__head"><div><strong>{text.title}</strong><small>{text.fixed}</small></div></header>
-      <div className="gm-proc-map__preview" style={{ backgroundImage: `url(${JSON.stringify(previewUrl)})` }}>
+      <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: `url(${JSON.stringify(previewUrl)})` }}>
+        {type === "wasteland" ? <WastelandAssetLayer spec={generationSpec} preview /> : null}
         <span>{LABELS[lang]?.[type] || LABELS.en[type]}</span><small>24×24 · seed {seed}</small>
       </div>
       <div className="gm-proc-map__controls">
