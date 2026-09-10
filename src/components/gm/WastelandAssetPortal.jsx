@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import terrainAtlas from "../../assets/wasteland/generated/terrainAtlas.js";
-import ruinsAtlas from "../../assets/wasteland/generated/ruinsAtlas.js";
+import wastelandAtlas from "../../assets/wasteland/generated/wastelandAtlasFresh64.js";
 import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
+const ATLAS_COLS = 3;
+const ATLAS_ROWS = 3;
 
-const TERRAIN_SPRITES = {
+const SPRITE_INDEX = {
   cliff: 0,
   rocks: 1,
   dead_tree: 2,
@@ -14,17 +15,29 @@ const TERRAIN_SPRITES = {
   wreck_truck: 4,
 };
 
-function spriteSource(item) {
+function spriteIndex(item) {
   if (item.type === "ruin") {
-    return { atlas: ruinsAtlas, index: Math.max(0, Math.min(4, Number(item.sprite || 0))) };
+    return 5 + (Math.abs(Number(item.sprite || 0)) % 4);
   }
-  const index = TERRAIN_SPRITES[item.type];
-  return Number.isFinite(index) ? { atlas: terrainAtlas, index } : null;
+  return SPRITE_INDEX[item.type];
+}
+
+function spriteBackground(index) {
+  if (!Number.isFinite(index)) return null;
+  const col = index % ATLAS_COLS;
+  const row = Math.floor(index / ATLAS_COLS);
+  return {
+    backgroundImage: `url(${wastelandAtlas})`,
+    backgroundRepeat: "no-repeat",
+    backgroundSize: `${ATLAS_COLS * 100}% ${ATLAS_ROWS * 100}%`,
+    backgroundPosition: `${(col / (ATLAS_COLS - 1)) * 100}% ${(row / (ATLAS_ROWS - 1)) * 100}%`,
+  };
 }
 
 function SpriteImage({ item, preview = false }) {
-  const source = spriteSource(item);
-  if (!source) return null;
+  const index = spriteIndex(item);
+  const background = spriteBackground(index);
+  if (!background) return null;
 
   const left = (item.x / GRID) * 100;
   const top = (item.y / GRID) * 100;
@@ -35,48 +48,37 @@ function SpriteImage({ item, preview = false }) {
   return (
     <div
       data-wasteland-asset={item.type}
+      data-wasteland-sprite={index}
       style={{
         position: "absolute",
         left: `${left}%`,
         top: `${top}%`,
         width: `${width}%`,
         height: `${height}%`,
-        overflow: "hidden",
         transform: `rotate(${rotation}deg)`,
         transformOrigin: "50% 50%",
         pointerEvents: "none",
+        userSelect: "none",
+        zIndex: 1,
         filter: preview ? "none" : "drop-shadow(0 3px 4px rgba(0,0,0,.5))",
+        ...background,
       }}
-    >
-      <img
-        src={source.atlas}
-        alt=""
-        draggable={false}
-        style={{
-          position: "absolute",
-          left: `${-source.index * 100}%`,
-          top: 0,
-          width: "500%",
-          height: "100%",
-          maxWidth: "none",
-          objectFit: "fill",
-          userSelect: "none",
-          pointerEvents: "none",
-        }}
-      />
-    </div>
+    />
   );
 }
 
 function normalizeVisualSize(item) {
   if (item.type === "wreck_car") {
-    return { ...item, w: Math.max(2.4, item.w * 1.35), h: Math.max(1.4, item.h * 1.35) };
+    return { ...item, w: Math.max(2.4, Number(item.w || 0) * 1.35), h: Math.max(1.5, Number(item.h || 0) * 1.45) };
   }
   if (item.type === "wreck_truck") {
-    return { ...item, w: Math.max(3.6, item.w * 1.25), h: Math.max(2.2, item.h * 1.2) };
+    return { ...item, w: Math.max(4, Number(item.w || 0) * 1.3), h: Math.max(2.4, Number(item.h || 0) * 1.25) };
   }
   if (item.type === "dead_tree") {
-    return { ...item, w: Math.max(2.5, item.w * 1.25), h: Math.max(2.5, item.h * 1.25) };
+    return { ...item, w: Math.max(2.7, Number(item.w || 0) * 1.3), h: Math.max(2.7, Number(item.h || 0) * 1.3) };
+  }
+  if (item.type === "ruin") {
+    return { ...item, w: Math.max(4, Number(item.w || 0)), h: Math.max(4, Number(item.h || 0)) };
   }
   return item;
 }
