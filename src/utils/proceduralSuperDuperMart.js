@@ -1,15 +1,17 @@
+import { buildResidentialRoomLayout } from "./proceduralResidential.js";
+
 const CELL = 100;
 const WALL = 10;
 
 const GRID_RULES = {
-  8: { market: "small", houses: 0 },
-  12: { market: "medium", houses: 0 },
-  18: { market: "medium", houses: 1 },
-  24: { market: "medium", houses: 2 },
-  30: { market: "medium", houses: 3 },
-  42: { market: "large", houses: 4 },
-  54: { market: "large", houses: 5 },
-  66: { market: "large", houses: 6 },
+  8: { market: "small", houses: 0, houseSize: "small" },
+  12: { market: "medium", houses: 0, houseSize: "small" },
+  18: { market: "medium", houses: 1, houseSize: "small" },
+  24: { market: "medium", houses: 2, houseSize: "small" },
+  30: { market: "medium", houses: 3, houseSize: "small" },
+  42: { market: "large", houses: 4, houseSize: "small" },
+  54: { market: "large", houses: 5, houseSize: "small" },
+  66: { market: "large", houses: 6, houseSize: "medium" },
 };
 
 const ROOM_META = {
@@ -101,11 +103,9 @@ function marketBounds(spec, rule) {
   const cols = clamp(spec.cols || 12, 6, 66);
   const rows = clamp(spec.rows || 12, 6, 66);
   if (Math.max(cols, rows) <= 12) return { x: 1, y: 1, w: Math.max(6, cols - 2), h: Math.max(6, rows - 2) };
-  const houseBand = rule.houses ? Math.max(5, Math.floor(rows * 0.28)) : 0;
-  const w = clamp(Math.round(cols * (rule.market === "large" ? 0.58 : 0.64)), 8, cols - 2);
-  const h = clamp(Math.round((rows - houseBand) * 0.62), 7, rows - 3);
-  const x = Math.max(1, Math.floor((cols - w) / 2));
-  return { x, y: 1, w, h };
+  const h = clamp(Math.round(rows * (rule.houses ? 0.52 : 0.72)), 7, rows - 3);
+  const w = clamp(Math.round(cols * (rule.market === "large" ? 0.72 : 0.78)), 8, cols - 2);
+  return { x: Math.max(1, Math.floor((cols - w) / 2)), y: 1, w, h };
 }
 
 function scaledRoom(raw, template, bounds, index) {
@@ -119,49 +119,74 @@ function scaledRoom(raw, template, bounds, index) {
   return { id, baseRoomId: meta.source, semanticType: id, instance: 1, sourceSet: 0, slot: index, zone: "market", label: meta.label, x: rx, y: ry, w: Math.max(1, rx2 - rx), h: Math.max(1, ry2 - ry) };
 }
 
-function houseSlots(cols, rows, bounds) {
-  const yBelow = Math.min(rows - 4, bounds.y + bounds.h + 2);
-  return [
-    { x: 1, y: yBelow }, { x: Math.max(1, cols - 5), y: yBelow },
-    { x: 1, y: Math.max(1, Math.floor(rows * 0.56)) }, { x: Math.max(1, cols - 5), y: Math.max(1, Math.floor(rows * 0.56)) },
-    { x: Math.max(1, Math.floor(cols * 0.18)), y: Math.max(1, rows - 5) }, { x: Math.max(1, Math.floor(cols * 0.70)), y: Math.max(1, rows - 5) },
-  ];
+function houseDimensions(size, grid) {
+  if (size === "medium") return grid >= 66 ? { w: 11, h: 9 } : { w: 10, h: 8 };
+  if (grid >= 42) return { w: 9, h: 7 };
+  if (grid >= 24) return { w: 8, h: 6 };
+  return { w: 7, h: 6 };
 }
 
-function buildHouses(spec, rule, bounds, rng) {
+function houseSlots(cols, rows, bounds, count, dims) {
+  const bandTop = Math.min(rows - dims.h, bounds.y + bounds.h + 2);
+  const bottom = Math.max(bandTop, rows - dims.h - 1);
+  const candidates = [
+    { x: 1, y: bandTop },
+    { x: Math.max(1, cols - dims.w - 1), y: bandTop },
+    { x: Math.max(1, Math.floor((cols - dims.w) / 2)), y: bottom },
+    { x: 1, y: bottom },
+    { x: Math.max(1, cols - dims.w - 1), y: bottom },
+    { x: Math.max(1, Math.floor(cols * 0.28) - Math.floor(dims.w / 2)), y: bottom },
+  ];
+  return candidates.slice(0, count);
+}
+
+function buildResidentialHouses(spec, rule, bounds) {
   const cols = Number(spec.cols) || 12;
   const rows = Number(spec.rows) || 12;
-  const slots = houseSlots(cols, rows, bounds);
-  return slots.slice(0, rule.houses).map((slot, index) => {
-    const size = Math.max(cols, rows) >= 42 && index % 3 === 0 ? 4 : 3;
-    const w = clamp(size + (rng() > 0.65 ? 1 : 0), 3, 5);
-    const h = clamp(size, 3, 5);
-    return {
-      id: `house__${index + 1}`,
-      baseRoomId: "house",
-      semanticType: "house",
-      instance: index + 1,
-      sourceSet: index + 1,
-      slot: 100 + index,
-      zone: "outskirts",
-      label: `HOUSE ${index + 1}`,
-      x: clamp(Math.round(slot.x), 0, Math.max(0, cols - w)),
-      y: clamp(Math.round(slot.y), 0, Math.max(0, rows - h)),
-      w,
-      h,
-    };
+  const grid = Math.max(cols, rows);
+  const dims = houseDimensions(rule.houseSize, grid);
+  const slots = houseSlots(cols, rows, bounds, rule.houses, dims);
+  const out = [];
+
+  slots.forEach((slot, houseIndex) => {
+    const local = buildResidentialRoomLayout({
+      type: "residential_house",
+      cols: dims.w,
+      rows: dims.h,
+      houseSize: rule.houseSize,
+      seed: `${spec.seed || "1"}:sdm-house:${houseIndex + 1}`,
+    });
+
+    local.forEach((room, roomIndex) => {
+      out.push({
+        ...room,
+        id: `house_${houseIndex + 1}__${room.id}`,
+        baseRoomId: room.baseRoomId,
+        semanticType: room.baseRoomId,
+        instance: houseIndex + 1,
+        sourceSet: houseIndex + 1,
+        slot: 100 + houseIndex * 30 + roomIndex,
+        zone: "outskirts",
+        houseIndex: houseIndex + 1,
+        houseSize: rule.houseSize,
+        x: slot.x + room.x,
+        y: slot.y + room.y,
+        label: room.label,
+      });
+    });
   });
+
+  return out;
 }
 
 export function buildSuperDuperRoomLayout(spec = {}) {
   const cols = clamp(spec.cols || 12, 6, 66);
   const rows = clamp(spec.rows || 12, 6, 66);
   const rule = superDuperRule({ ...spec, cols, rows });
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${cols}x${rows}:sdm-layout-v2`));
   const bounds = marketBounds({ ...spec, cols, rows }, rule);
   const template = MARKET_TEMPLATES[rule.market];
-  const rooms = template.rooms.map((room, index) => scaledRoom(room, template, bounds, index));
-  return [...rooms, ...buildHouses({ ...spec, cols, rows }, rule, bounds, rng)];
+  const marketRooms = template.rooms.map((room, index) => scaledRoom(room, template, bounds, index));
+  return [...marketRooms, ...buildResidentialHouses({ ...spec, cols, rows }, rule, bounds)];
 }
 
 export function buildSuperDuperRoomBlueprints(spec = {}) {
@@ -182,7 +207,7 @@ function drawShelves(room, rng) {
   return out.join("");
 }
 
-function drawRoom(room, rng) {
+function drawMarketRoom(room, rng) {
   const x = room.x * CELL, y = room.y * CELL, w = room.w * CELL, h = room.h * CELL;
   const service = ["warehouse", "receiving", "cold_room", "freezer_room"].includes(room.semanticType);
   const fill = service ? "#9c9b96" : ["wc_staff", "wc_visitors"].includes(room.semanticType) ? "#b6b7b3" : "#d2ccc0";
@@ -201,13 +226,80 @@ function drawRoom(room, rng) {
   return out.join("");
 }
 
-function drawHouse(house, rng) {
-  const x = house.x * CELL, y = house.y * CELL, w = house.w * CELL, h = house.h * CELL;
-  const out = [rect(x, y, w, h, "#b7a887", "#35312a", WALL, 3)];
-  if (w >= 260) out.push(line(x + w * 0.48, y + 8, x + w * 0.48, y + h - 8, "#494238", 8));
-  if (h >= 260) out.push(line(x + 8, y + h * 0.52, x + w - 8, y + h * 0.52, "#494238", 8));
-  out.push(text(x + w / 2, y + h / 2, house.label, 10));
-  if (rng() > 0.55) out.push(rect(x + 24, y + 24, 48, 32, "#74624b", "#44382d", 2, 2));
+function residentialRoomFill(type) {
+  if (["bathroom", "guest_bathroom", "laundry", "utility"].includes(type)) return "#aaa9a0";
+  if (["entry", "hall"].includes(type)) return "#b8aa8d";
+  if (type === "terrace") return "#8f8878";
+  return "#b8aa8f";
+}
+
+function drawResidentialFurniture(room, rng) {
+  const x = room.x * CELL, y = room.y * CELL, w = room.w * CELL, h = room.h * CELL;
+  if (w < 95 || h < 85) return "";
+  const out = [];
+  const box = (px, py, bw, bh, fill = "#766955", rx = 3) => out.push(rect(px, py, bw, bh, fill, "#51483d", 2, rx));
+  const inset = 14;
+  switch (room.semanticType) {
+    case "living_room":
+      box(x + inset, y + Math.min(42, h * 0.28), Math.min(90, w * 0.42), 28, "#c6b99e", 8);
+      box(x + w * 0.55, y + h * 0.55, 30, 24, "#8a7659", 10);
+      break;
+    case "kitchen":
+      box(x + inset, y + inset, Math.max(30, w - inset * 2), 22, "#8d8371", 2);
+      if (h > 120) box(x + w * 0.45, y + h * 0.58, 36, 30, "#c8baa0", 3);
+      break;
+    case "bedroom":
+    case "master_bedroom":
+    case "child_room":
+      box(x + w * 0.28, y + Math.min(34, h * 0.25), Math.min(70, w * 0.44), Math.min(90, h * 0.52), "#c8b99d", 4);
+      break;
+    case "bathroom":
+    case "guest_bathroom":
+      box(x + inset, y + inset, Math.min(52, w * 0.45), 24, "#d9d6ca", 10);
+      box(x + w - 35, y + h - 44, 20, 27, "#d9d6ca", 8);
+      break;
+    case "office":
+      box(x + inset, y + h * 0.48, Math.min(72, w * 0.52), 26, "#806f55", 2);
+      break;
+    case "storage":
+    case "utility":
+    case "laundry":
+    case "closet":
+      for (let i = 0; i < Math.min(3, Math.max(1, room.w)); i += 1) box(x + inset + i * 28, y + inset + (i % 2) * 30, 22, 22, rng() > 0.5 ? "#766955" : "#5b5145", 2);
+      break;
+    default:
+      break;
+  }
+  return out.join("");
+}
+
+function drawResidentialHouseRooms(rooms, rng) {
+  const out = [];
+  const grouped = new Map();
+  rooms.forEach((room) => {
+    const list = grouped.get(room.houseIndex) || [];
+    list.push(room);
+    grouped.set(room.houseIndex, list);
+  });
+
+  grouped.forEach((houseRooms, index) => {
+    const minX = Math.min(...houseRooms.map((r) => r.x));
+    const minY = Math.min(...houseRooms.map((r) => r.y));
+    const maxX = Math.max(...houseRooms.map((r) => r.x + r.w));
+    const maxY = Math.max(...houseRooms.map((r) => r.y + r.h));
+    out.push(rect(minX * CELL - 8, minY * CELL - 8, (maxX - minX) * CELL + 16, (maxY - minY) * CELL + 16, "#6e6556", "#2f2b26", 5, 4));
+    out.push(text((minX + maxX) * CELL / 2, minY * CELL - 24, `HOUSE ${index}`, 10, "middle", "#ddd0b5"));
+    houseRooms.forEach((room) => {
+      const x = room.x * CELL, y = room.y * CELL, w = room.w * CELL, h = room.h * CELL;
+      out.push(rect(x, y, w, h, residentialRoomFill(room.semanticType), "#34312b", 8, 2));
+      if (w >= 78 && h >= 62) {
+        const label = room.label || String(room.semanticType || "ROOM").toUpperCase();
+        const font = label.length > 14 ? 7 : label.length > 10 ? 8 : 9;
+        out.push(text(x + w / 2, y + Math.min(22, h * 0.28), label, font));
+      }
+      out.push(drawResidentialFurniture(room, rng));
+    });
+  });
   return out.join("");
 }
 
@@ -219,39 +311,30 @@ function drawCar(x, y, rotation, rng) {
 function drawParking(spec, bounds, rng) {
   const cols = Number(spec.cols) || 12, rows = Number(spec.rows) || 12;
   if (Math.max(cols, rows) <= 12) return "";
-  const out = [];
-  const y1 = Math.min(rows - 1, bounds.y + bounds.h + 0.5) * CELL;
-  const y2 = Math.min(rows - 0.5, y1 / CELL + Math.max(2, Math.floor(rows * 0.16))) * CELL;
+  const y1 = Math.min(rows - 1, bounds.y + bounds.h + 0.35) * CELL;
+  const y2 = Math.min(rows - 0.5, y1 / CELL + Math.max(1.4, Math.floor(rows * 0.09))) * CELL;
   const x1 = Math.max(CELL, bounds.x * CELL);
   const x2 = Math.min((cols - 1) * CELL, (bounds.x + bounds.w) * CELL);
-  out.push(rect(x1, y1, Math.max(CELL, x2 - x1), Math.max(CELL, y2 - y1), "#5b5a55", "#44433f", 4, 2));
+  const out = [rect(x1, y1, Math.max(CELL, x2 - x1), Math.max(CELL * 0.7, y2 - y1), "#5b5a55", "#44433f", 4, 2)];
   const spaces = clamp(Math.floor((x2 - x1) / 120), 3, 12);
   for (let i = 1; i < spaces; i += 1) out.push(line(x1 + (i * (x2 - x1)) / spaces, y1 + 10, x1 + (i * (x2 - x1)) / spaces, y2 - 10, "#b1a98f", 3));
-  const carCount = clamp(Math.floor(spaces * (0.22 + rng() * 0.35)), 1, 5);
-  for (let i = 0; i < carCount; i += 1) {
-    const px = x1 + ((i + 0.6) * (x2 - x1)) / spaces;
-    const py = y1 + (y2 - y1) * 0.52;
-    out.push(drawCar(px, py, rng() > 0.5 ? 90 : -90, rng));
-  }
+  const carCount = clamp(Math.floor(spaces * (0.2 + rng() * 0.3)), 1, 5);
+  for (let i = 0; i < carCount; i += 1) out.push(drawCar(x1 + ((i + 0.6) * (x2 - x1)) / spaces, y1 + (y2 - y1) * 0.52, rng() > 0.5 ? 90 : -90, rng));
   return out.join("");
 }
 
 function drawLoadingBay(spec, bounds, rng) {
   if (Math.max(Number(spec.cols) || 12, Number(spec.rows) || 12) < 18) return "";
-  const x = bounds.x * CELL + 20;
-  const y = Math.max(0, bounds.y * CELL - 75);
-  const w = Math.min(bounds.w * CELL * 0.36, 360);
-  const out = [rect(x, y, w, 68, "#696760", "#3d3b37", 3, 2)];
-  out.push(text(x + w / 2, y + 19, "LOADING", 9, "middle", "#d7cfb9"));
+  const x = bounds.x * CELL + 20, y = Math.max(0, bounds.y * CELL - 75), w = Math.min(bounds.w * CELL * 0.36, 360);
+  const out = [rect(x, y, w, 68, "#696760", "#3d3b37", 3, 2), text(x + w / 2, y + 19, "LOADING", 9, "middle", "#d7cfb9")];
   for (let xx = x + 28; xx < x + w - 30; xx += 62) out.push(rect(xx, y + 31, 38, 28, rng() > 0.5 ? "#775d42" : "#655847", "#3b322a", 2, 2));
   return out.join("");
 }
 
-function drawFence(spec, bounds, condition) {
+function drawFence(spec, condition) {
   const cols = Number(spec.cols) || 12, rows = Number(spec.rows) || 12;
   if (Math.max(cols, rows) < 30 || condition === "intact") return "";
-  const margin = 0.6 * CELL;
-  const x1 = margin, y1 = margin, x2 = cols * CELL - margin, y2 = rows * CELL - margin;
+  const margin = 0.6 * CELL, x1 = margin, y1 = margin, x2 = cols * CELL - margin, y2 = rows * CELL - margin;
   const dash = condition === "ruined" ? "22 20" : "16 8";
   return [line(x1, y1, x2, y1, "#5b5145", 5, dash), line(x1, y1, x1, y2, "#5b5145", 5, dash), line(x2, y1, x2, y2, "#5b5145", 5, dash), line(x1, y2, x2, y2, "#5b5145", 5, dash)].join("");
 }
@@ -267,8 +350,7 @@ function damageOverlay(spec, condition, rng) {
     out.push(rect(x - s / 2, y - s / 3, s, s * 0.62, rng() > 0.5 ? "#625a4f" : "#756b5d", "#403a33", 1, 3, 'opacity="0.88"'));
   }
   if (condition === "raider_occupied") {
-    const cx = (Number(spec.cols) || 12) * CELL * 0.5;
-    const cy = (Number(spec.rows) || 12) * CELL * 0.72;
+    const cx = (Number(spec.cols) || 12) * CELL * 0.5, cy = (Number(spec.rows) || 12) * CELL * 0.72;
     out.push(rect(cx - 58, cy - 16, 116, 32, "#694238", "#382923", 3, 3));
     out.push(text(cx, cy, "RAIDER CAMP", 9, "middle", "#e4cfac"));
   }
@@ -284,21 +366,21 @@ export function generateSuperDuperMartSvg(input = {}) {
   const spec = normalizeSuperDuperSpec(input);
   const cols = clamp(spec.cols || 12, 6, 66), rows = clamp(spec.rows || 12, 6, 66);
   const width = cols * CELL, height = rows * CELL;
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${cols}x${rows}:sdm-render-v2`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${cols}x${rows}:sdm-render-v3`));
   const condition = effectiveCondition(spec, rng);
   const rule = superDuperRule({ ...spec, cols, rows });
   const bounds = marketBounds({ ...spec, cols, rows }, rule);
   const layout = buildSuperDuperRoomLayout({ ...spec, cols, rows });
   const marketRooms = layout.filter((room) => room.zone === "market");
-  const houses = layout.filter((room) => room.zone === "outskirts");
+  const houseRooms = layout.filter((room) => room.zone === "outskirts");
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#787267"));
   out.push(rect(0, height * 0.72, width, height * 0.28, "#625f58"));
   out.push(drawParking({ ...spec, cols, rows }, bounds, rng));
   out.push(drawLoadingBay({ ...spec, cols, rows }, bounds, rng));
-  marketRooms.forEach((room) => out.push(drawRoom(room, rng)));
-  houses.forEach((house) => out.push(drawHouse(house, rng)));
-  out.push(drawFence({ ...spec, cols, rows }, bounds, condition));
+  marketRooms.forEach((room) => out.push(drawMarketRoom(room, rng)));
+  out.push(drawResidentialHouseRooms(houseRooms, rng));
+  out.push(drawFence({ ...spec, cols, rows }, condition));
   out.push(damageOverlay({ ...spec, cols, rows }, condition, rng));
   out.push(rect(18, 18, Math.min(width - 36, 475), 42, "#d8c9a8", "#40372e", 2, 4, 'opacity="0.94"'));
   out.push(text(34, 40, `SUPER DUPER MART // ${cols}x${rows} // ${condition.toUpperCase()}`, 11, "start"));
