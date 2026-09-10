@@ -13,6 +13,10 @@ import {
   buildSuperDuperRoomLayout,
   isSuperDuperMartType,
 } from "./proceduralSuperDuperMart.js";
+import {
+  buildDungeonWastelandRoomBlueprints,
+  buildDungeonWastelandRoomLayout,
+} from "./proceduralWastelandDungeon.js";
 
 const TYPE_SEQUENCES = {
   wasteland: ["ruins", "wreck", "camp"],
@@ -58,6 +62,7 @@ function isCommercial(type) { return type === "red_rocket"; }
 export function proceduralRoomTargetCount(spec = {}) {
   const size = Math.max(Number(spec.cols) || 12, Number(spec.rows) || 12);
   const type = String(spec.type || "wasteland");
+  if (type === "wasteland") return buildDungeonWastelandRoomBlueprints(spec).length;
   if (isSuperDuperMartType(type)) return buildSuperDuperRoomBlueprints(spec).length;
   if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec).length;
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec).length;
@@ -91,6 +96,7 @@ function commercialBlueprints(spec = {}) {
 
 export function buildProceduralRoomBlueprints(spec = {}) {
   const type = String(spec.type || "wasteland");
+  if (type === "wasteland") return buildDungeonWastelandRoomBlueprints(spec);
   if (isSuperDuperMartType(type)) return buildSuperDuperRoomBlueprints(spec);
   if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec);
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec);
@@ -133,13 +139,11 @@ function commercialLayout(spec, blueprints, cols, rows) {
   const interiors = blueprints.filter((item) => item.zone !== "outskirts");
   const houses = blueprints.filter((item) => item.zone === "outskirts");
   if (Math.max(cols, rows) <= 12 || !houses.length) return matrixLayout(interiors, { x: 1, y: 1, w: Math.max(2, cols - 2), h: Math.max(2, rows - 2) });
-
   const coreW = clamp(Math.round(cols * 0.5), 8, Math.max(8, cols - 8));
   const coreH = clamp(Math.round(rows * 0.46), 7, Math.max(7, rows - 8));
   const coreX = Math.floor((cols - coreW) / 2);
   const coreY = Math.floor((rows - coreH) / 2);
   const result = matrixLayout(interiors, { x: coreX, y: coreY, w: coreW, h: coreH });
-
   const houseSize = clamp(Math.floor(Math.min(cols, rows) / 10), 2, 4);
   const slots = [
     [1, 1], [Math.max(1, cols - houseSize - 1), 1], [1, Math.max(1, rows - houseSize - 1)], [Math.max(1, cols - houseSize - 1), Math.max(1, rows - houseSize - 1)],
@@ -153,6 +157,7 @@ function commercialLayout(spec, blueprints, cols, rows) {
 
 export function buildProceduralRoomLayout(spec = {}) {
   const cols = clamp(spec.cols || 12, 6, 66); const rows = clamp(spec.rows || 12, 6, 66); const type = String(spec.type || "wasteland");
+  if (type === "wasteland") return buildDungeonWastelandRoomLayout({ ...spec, cols, rows });
   if (isSuperDuperMartType(type)) return buildSuperDuperRoomLayout({ ...spec, cols, rows });
   if (isSettlementType(type)) return buildSettlementHouseLayout({ ...spec, cols, rows });
   if (isResidentialType(type)) return buildResidentialRoomLayout({ ...spec, cols, rows });
