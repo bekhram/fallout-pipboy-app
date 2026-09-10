@@ -1,1 +1,1 @@
-export * from "./proceduralRoomContentV5.js";
+export * from "./proceduralRoomContentV6.js";
