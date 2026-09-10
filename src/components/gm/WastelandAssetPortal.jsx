@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import wastelandAtlas from "../../assets/wasteland/generated/wastelandAtlasFresh64.js";
+import wastelandAtlas from "../../assets/wasteland/generated/wastelandAtlasFinal48.js";
 import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
@@ -12,12 +12,13 @@ const SPRITE_INDEX = {
   rocks: 1,
   dead_tree: 2,
   wreck_car: 3,
-  wreck_truck: 4,
+  wreck_truck: 6,
 };
 
 function spriteIndex(item) {
   if (item.type === "ruin") {
-    return 5 + (Math.abs(Number(item.sprite || 0)) % 4);
+    const ruinMap = [4, 5, 7, 8];
+    return ruinMap[Math.abs(Number(item.sprite || 0)) % ruinMap.length];
   }
   return SPRITE_INDEX[item.type];
 }
@@ -69,13 +70,13 @@ function SpriteImage({ item, preview = false }) {
 
 function normalizeVisualSize(item) {
   if (item.type === "wreck_car") {
-    return { ...item, w: Math.max(2.4, Number(item.w || 0) * 1.35), h: Math.max(1.5, Number(item.h || 0) * 1.45) };
+    return { ...item, w: Math.max(2.8, Number(item.w || 0) * 1.45), h: Math.max(1.7, Number(item.h || 0) * 1.55) };
   }
   if (item.type === "wreck_truck") {
-    return { ...item, w: Math.max(4, Number(item.w || 0) * 1.3), h: Math.max(2.4, Number(item.h || 0) * 1.25) };
+    return { ...item, w: Math.max(4.2, Number(item.w || 0) * 1.35), h: Math.max(2.6, Number(item.h || 0) * 1.3) };
   }
   if (item.type === "dead_tree") {
-    return { ...item, w: Math.max(2.7, Number(item.w || 0) * 1.3), h: Math.max(2.7, Number(item.h || 0) * 1.3) };
+    return { ...item, w: Math.max(3, Number(item.w || 0) * 1.4), h: Math.max(3, Number(item.h || 0) * 1.4) };
   }
   if (item.type === "ruin") {
     return { ...item, w: Math.max(4, Number(item.w || 0)), h: Math.max(4, Number(item.h || 0)) };
