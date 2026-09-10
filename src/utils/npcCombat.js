@@ -120,9 +120,17 @@ export function applyNpcRank(base = {}, options = {}) {
   const hordeEnabled = Boolean(options.hordeEnabled ?? base.hordeEnabled);
   const hordeSize = Math.max(2, Math.min(5, Math.floor(number(options.hordeSize ?? base.hordeSize, 2))));
   const hordeHp = hordeEnabled ? normalizeHordeHp(options.hordeHp ?? base.hordeHp, hordeSize, memberMaxHp) : [];
+
+  const hasExplicitHp = Object.prototype.hasOwnProperty.call(options, "hp");
+  const sourceHp = number(hasExplicitHp ? options.hp : base.hp, memberMaxHp);
+  const sourceMaxHp = Math.max(1, number(base.maxHp ?? base.baseMaxHp ?? base.hp, baseMaxHp));
+  const wasFullHealth = !hasExplicitHp && sourceHp >= sourceMaxHp;
   const currentHp = hordeEnabled
     ? hordeHp.reduce((sum, value) => sum + value, 0)
-    : Math.max(0, Math.min(memberMaxHp, number(options.hp ?? base.hp, memberMaxHp)));
+    : wasFullHealth
+      ? memberMaxHp
+      : Math.max(0, Math.min(memberMaxHp, sourceHp));
+
   const maxHp = hordeEnabled ? memberMaxHp * hordeSize : memberMaxHp;
   const baseSize = Math.max(1, Math.min(3, Math.floor(number(base.baseSize ?? base.size, 1))));
   const footprint = hordeEnabled ? (baseSize >= 2 ? 3 : 2) : baseSize;
