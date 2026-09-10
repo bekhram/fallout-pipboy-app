@@ -1,75 +1,104 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import assetA from "../../assets/wasteland/generated/assetBundleA.js";
-import assetB from "../../assets/wasteland/generated/assetBundleB.js";
+import terrainAtlas from "../../assets/wasteland/generated/terrainAtlas.js";
+import ruinsAtlas from "../../assets/wasteland/generated/ruinsAtlas.js";
 import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
 
-const ASSET_BY_TYPE = {
-  cliff: assetA.cliff_large,
-  rocks: assetA.rocks_cluster,
-  dead_tree: assetA.dead_tree,
-  wreck_car: assetB.wreck_car,
-  wreck_truck: assetB.wreck_truck,
-  ruin: assetB.ruin_l_1,
+const TERRAIN_SPRITES = {
+  cliff: 0,
+  rocks: 1,
+  dead_tree: 2,
+  wreck_car: 3,
+  wreck_truck: 4,
 };
 
-function AssetImage({ item, src, testId }) {
-  if (!src) return null;
+function spriteSource(item) {
+  if (item.type === "ruin") {
+    return { atlas: ruinsAtlas, index: Math.max(0, Math.min(4, Number(item.sprite || 0))) };
+  }
+  const index = TERRAIN_SPRITES[item.type];
+  return Number.isFinite(index) ? { atlas: terrainAtlas, index } : null;
+}
+
+function SpriteImage({ item, preview = false }) {
+  const source = spriteSource(item);
+  if (!source) return null;
+
   const left = (item.x / GRID) * 100;
   const top = (item.y / GRID) * 100;
   const width = (item.w / GRID) * 100;
   const height = (item.h / GRID) * 100;
+  const rotation = Number(item.rot || 0);
 
   return (
-    <img
-      data-wasteland-asset={testId || item.type}
-      src={src}
-      alt=""
-      draggable={false}
+    <div
+      data-wasteland-asset={item.type}
       style={{
         position: "absolute",
         left: `${left}%`,
         top: `${top}%`,
         width: `${width}%`,
         height: `${height}%`,
-        objectFit: "contain",
-        transform: `rotate(${Number(item.rot || 0)}deg)`,
+        overflow: "hidden",
+        transform: `rotate(${rotation}deg)`,
         transformOrigin: "50% 50%",
         pointerEvents: "none",
-        userSelect: "none",
-        zIndex: 22,
-        filter: "drop-shadow(0 4px 4px rgba(0,0,0,.45))",
+        filter: preview ? "none" : "drop-shadow(0 3px 4px rgba(0,0,0,.5))",
       }}
-    />
+    >
+      <img
+        src={source.atlas}
+        alt=""
+        draggable={false}
+        style={{
+          position: "absolute",
+          left: `${-source.index * 100}%`,
+          top: 0,
+          width: "500%",
+          height: "100%",
+          maxWidth: "none",
+          objectFit: "fill",
+          userSelect: "none",
+          pointerEvents: "none",
+        }}
+      />
+    </div>
   );
 }
 
-function WastelandAssetOverlay({ spec }) {
+function normalizeVisualSize(item) {
+  if (item.type === "wreck_car") {
+    return { ...item, w: Math.max(2.4, item.w * 1.35), h: Math.max(1.4, item.h * 1.35) };
+  }
+  if (item.type === "wreck_truck") {
+    return { ...item, w: Math.max(3.6, item.w * 1.25), h: Math.max(2.2, item.h * 1.2) };
+  }
+  if (item.type === "dead_tree") {
+    return { ...item, w: Math.max(2.5, item.w * 1.25), h: Math.max(2.5, item.h * 1.25) };
+  }
+  return item;
+}
+
+export function WastelandAssetLayer({ spec, preview = false }) {
   const site = useMemo(
     () => buildOpenWastelandSite({ ...spec, cols: GRID, rows: GRID }),
     [spec?.seed]
   );
 
-  const procedural = [
-    ...site.obstacles.filter((item) => item.type === "cliff" || item.type === "rocks"),
-    ...site.ruins.map((item) => ({ ...item, type: "ruin" })),
-    ...site.vehicles,
-    ...site.trees,
-  ];
-
-  // Temporary fixed diagnostics. These make asset rendering obvious even when
-  // a particular seed produces very few procedural objects.
-  const diagnostics = [
-    { type: "cliff", x: 1, y: 1, w: 6, h: 6, rot: 0 },
-    { type: "wreck_car", x: 10, y: 2, w: 3, h: 2, rot: 25 },
-    { type: "ruin", x: 16, y: 1, w: 6, h: 6, rot: 0 },
+  const items = [
+    ...site.obstacles
+      .filter((item) => item.type === "cliff" || item.type === "rocks")
+      .map(normalizeVisualSize),
+    ...site.ruins.map((item) => normalizeVisualSize({ ...item, type: "ruin" })),
+    ...site.vehicles.map(normalizeVisualSize),
+    ...site.trees.map(normalizeVisualSize),
   ];
 
   return (
     <div
-      className="gm-wasteland-asset-overlay"
+      className={preview ? "gm-wasteland-assets is-preview" : "gm-wasteland-assets"}
       aria-hidden="true"
       style={{
         position: "absolute",
@@ -77,43 +106,15 @@ function WastelandAssetOverlay({ spec }) {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        zIndex: 20,
+        zIndex: preview ? 2 : 20,
         overflow: "hidden",
       }}
     >
-      <div
-        data-wasteland-overlay-test="visible"
-        style={{
-          position: "absolute",
-          left: 8,
-          top: 8,
-          zIndex: 30,
-          padding: "5px 8px",
-          background: "rgba(0,0,0,.75)",
-          border: "1px solid currentColor",
-          fontSize: 10,
-          fontWeight: 900,
-          letterSpacing: ".08em",
-          pointerEvents: "none",
-        }}
-      >
-        WASTELAND ASSET LAYER
-      </div>
-
-      {procedural.map((item, index) => (
-        <AssetImage
-          key={`proc-${item.type}-${index}`}
+      {items.map((item, index) => (
+        <SpriteImage
+          key={`${item.type}-${item.sprite ?? "x"}-${item.x}-${item.y}-${index}`}
           item={item}
-          src={ASSET_BY_TYPE[item.type]}
-        />
-      ))}
-
-      {diagnostics.map((item, index) => (
-        <AssetImage
-          key={`diag-${index}`}
-          testId={`diagnostic-${item.type}`}
-          item={item}
-          src={ASSET_BY_TYPE[item.type]}
+          preview={preview}
         />
       ))}
     </div>
@@ -137,7 +138,7 @@ export default function WastelandAssetPortal({ session }) {
         return;
       }
       tries += 1;
-      if (tries < 20) window.setTimeout(findTarget, 50);
+      if (tries < 30) window.setTimeout(findTarget, 50);
     };
 
     findTarget();
@@ -148,5 +149,5 @@ export default function WastelandAssetPortal({ session }) {
   }, [scene?.sceneId, scene?.backgroundName, spec?.seed, spec?.type]);
 
   if (!target || !spec || String(spec.type || "") !== "wasteland") return null;
-  return createPortal(<WastelandAssetOverlay spec={spec} />, target);
+  return createPortal(<WastelandAssetLayer spec={spec} />, target);
 }
