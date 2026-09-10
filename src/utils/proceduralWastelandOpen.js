@@ -1,15 +1,5 @@
-import terrainAtlas from "../assets/wasteland/generated/terrainAtlas.js";
-import ruinsAtlas from "../assets/wasteland/generated/ruinsAtlas.js";
-
 const CELL = 100;
 const GRID = 24;
-const ATLAS_CELL = 150;
-const ATLAS_W = ATLAS_CELL * 5;
-const ATLAS_H = ATLAS_CELL;
-
-const TERRAIN_SPRITES = { cliff: 0, rocks: 1, dead_tree: 2, wreck_car: 3, wreck_truck: 4 };
-const RUIN_SPRITES = [0, 1, 2, 3, 4];
-const RUIN_SIZES = [[4, 4], [3, 6], [5, 5], [5, 5], [4, 4]];
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, Number(v) || 0)); }
 function hashSeed(value) { const s = String(value ?? "0"); let h = 2166136261; for (let i = 0; i < s.length; i += 1) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -68,21 +58,8 @@ function placeObstacles(rng, occupied) {
     const item = placeItem(rng, occupied, () => {
       const w = type === "ravine" ? randint(rng, 5, 7) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
       const h = type === "ravine" ? randint(rng, 2, 4) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
-      return { type, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3) * 90, impassable: true };
+      return { type, sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3) * 90, impassable: true };
     }, 1);
-    if (item) out.push(item);
-  }
-  return out;
-}
-
-function placeRuins(rng, occupied) {
-  const out = [];
-  for (let i = 0; i < randint(rng, 1, 4); i += 1) {
-    const sprite = pick(rng, RUIN_SPRITES);
-    const rot = randint(rng, 0, 3) * 90;
-    const base = RUIN_SIZES[sprite];
-    const [w, h] = rot % 180 === 0 ? base : [base[1], base[0]];
-    const item = placeItem(rng, occupied, () => ({ type: "ruin", sprite, rot, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, impassable: false }), 1);
     if (item) out.push(item);
   }
   return out;
@@ -104,7 +81,7 @@ function placeVehicles(rng, occupied, roads) {
         rot = pick(rng, [90, 270]);
       }
     }
-    return { type, x, y, w, h, rot, impassable: false };
+    return { type, sprite: randint(rng, 0, 2), x, y, w, h, rot, impassable: false };
   }, 0, 90);
   for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car", 2, 1); if (item) out.push(item); }
   for (let i = 0; i < randint(rng, 0, 2); i += 1) { const item = placeVehicle("wreck_truck", 3, 2); if (item) out.push(item); }
@@ -114,7 +91,7 @@ function placeVehicles(rng, occupied, roads) {
 function placeTrees(rng, occupied) {
   const out = [];
   for (let i = 0; i < randint(rng, 1, 4); i += 1) {
-    const item = placeItem(rng, occupied, () => ({ type: "dead_tree", x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 }), 0, 70);
+    const item = placeItem(rng, occupied, () => ({ type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 }), 0, 70);
     if (item) out.push(item);
   }
   return out;
@@ -132,23 +109,9 @@ function roadSvg(road, surface) {
   return `${rect(x, y, w, h, "#555654", "#3e403e", 4)}${w > h ? line(x, y + h / 2, x + w, y + h / 2, "#918a70", 3, "28 24") : line(x + w / 2, y, x + w / 2, y + h, "#918a70", 3, "28 24")}`;
 }
 
-function atlasDefs() {
-  return `<defs><image id="wasteland-terrain-atlas" href="${terrainAtlas}" x="0" y="0" width="${ATLAS_W}" height="${ATLAS_H}" preserveAspectRatio="none"/><image id="wasteland-ruins-atlas" href="${ruinsAtlas}" x="0" y="0" width="${ATLAS_W}" height="${ATLAS_H}" preserveAspectRatio="none"/></defs>`;
-}
-
-function atlasSprite(atlasId, index, x, y, w, h, rot = 0, opacity = 1) {
-  const px = x * CELL, py = y * CELL, pw = w * CELL, ph = h * CELL;
-  const cx = px + pw / 2, cy = py + ph / 2;
-  const sourceX = index * ATLAS_CELL;
-  const inner = `<svg x="${-pw / 2}" y="${-ph / 2}" width="${pw}" height="${ph}" viewBox="${sourceX} 0 ${ATLAS_CELL} ${ATLAS_CELL}" preserveAspectRatio="xMidYMid meet" overflow="hidden"><use href="#${atlasId}" xlink:href="#${atlasId}"/></svg>`;
-  return `<g transform="translate(${cx} ${cy}) rotate(${rot})" opacity="${opacity}">${inner}</g>`;
-}
-
 function obstacleSvg(obj) {
-  if (obj.type === "cliff") return atlasSprite("wasteland-terrain-atlas", TERRAIN_SPRITES.cliff, obj.x, obj.y, obj.w, obj.h, obj.rot);
-  if (obj.type === "rocks") return atlasSprite("wasteland-terrain-atlas", TERRAIN_SPRITES.rocks, obj.x, obj.y, obj.w, obj.h, obj.rot);
+  if (obj.type === "cliff" || obj.type === "rocks" || obj.type === "crater") return "";
   const x = obj.x * CELL, y = obj.y * CELL, w = obj.w * CELL, h = obj.h * CELL;
-  if (obj.type === "crater") return `${ellipse(x + w / 2, y + h / 2, w * 0.45, h * 0.4, "#55483b", "#302820", 10)}${ellipse(x + w / 2, y + h / 2, w * 0.26, h * 0.22, "#2f2924", "#6d5944", 4)}`;
   const pts = [`${x + 10},${y + h * 0.2}`, `${x + w * 0.25},${y + h * 0.44}`, `${x + w * 0.52},${y + h * 0.28}`, `${x + w - 10},${y + h * 0.7}`, `${x + w * 0.58},${y + h - 10}`, `${x + w * 0.2},${y + h * 0.72}`].join(" ");
   return `<polygon points="${pts}" fill="#3b3731" stroke="#26231f" stroke-width="12"/>`;
 }
@@ -170,10 +133,9 @@ export function buildOpenWastelandSite(spec = {}) {
   const roads = roadRects(profile, rng);
   const occupied = [...roads];
   const obstacles = placeObstacles(rng, occupied);
-  const ruins = placeRuins(rng, occupied);
   const vehicles = placeVehicles(rng, occupied, roads);
   const trees = placeTrees(rng, occupied);
-  return { cols: GRID, rows: GRID, profile, roads, obstacles, ruins, vehicles, trees };
+  return { cols: GRID, rows: GRID, profile, roads, obstacles, ruins: [], vehicles, trees };
 }
 
 export function buildOpenWastelandRoomLayout() { return []; }
@@ -183,16 +145,12 @@ export function generateOpenWastelandSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
   const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v3`));
   const width = GRID * CELL, height = GRID * CELL;
-  const blocked = [...site.roads, ...site.obstacles, ...site.ruins, ...site.vehicles, ...site.trees];
-  const out = [`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
-  out.push(atlasDefs());
+  const blocked = [...site.roads, ...site.obstacles, ...site.vehicles, ...site.trees];
+  const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#756b58"));
   out.push(scatterSvg(rng, blocked));
   site.roads.forEach((road) => out.push(roadSvg(road, site.profile.surface)));
   site.obstacles.forEach((obj) => out.push(obstacleSvg(obj)));
-  site.ruins.forEach((obj) => out.push(atlasSprite("wasteland-ruins-atlas", obj.sprite, obj.x, obj.y, obj.w, obj.h, obj.rot)));
-  site.vehicles.forEach((obj) => out.push(atlasSprite("wasteland-terrain-atlas", TERRAIN_SPRITES[obj.type], obj.x, obj.y, obj.w, obj.h, obj.rot)));
-  site.trees.forEach((obj) => out.push(atlasSprite("wasteland-terrain-atlas", TERRAIN_SPRITES.dead_tree, obj.x, obj.y, obj.w, obj.h, obj.rot)));
   out.push(rect(18, 18, 500, 42, "#d2c3a2", "#40372e", 2, 4, 'opacity="0.93"'));
   out.push(`<text x="34" y="40" text-anchor="start" dominant-baseline="middle" fill="#332d27" font-family="monospace" font-size="11" font-weight="900">WASTELAND // 24x24 // ${site.profile.type.toUpperCase()}${site.profile.type !== "none" ? ` // ${site.profile.surface.toUpperCase()}` : ""}</text>`);
   out.push("</svg>");

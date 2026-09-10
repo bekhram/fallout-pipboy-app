@@ -9,9 +9,6 @@ function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") {
 function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") {
   return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`;
 }
-function ellipse(cx, cy, rx, ry, fill, stroke = "none", sw = 0) {
-  return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`;
-}
 function hashSeed(value) {
   const s = String(value ?? "0");
   let h = 2166136261;
@@ -55,14 +52,11 @@ function roadSvg(road, surface) {
 }
 
 function terrainObstacleSvg(obj) {
-  if (obj.type === "cliff" || obj.type === "rocks") return "";
+  if (obj.type === "cliff" || obj.type === "rocks" || obj.type === "crater") return "";
   const x = obj.x * CELL;
   const y = obj.y * CELL;
   const w = obj.w * CELL;
   const h = obj.h * CELL;
-  if (obj.type === "crater") {
-    return `${ellipse(x + w / 2, y + h / 2, w * 0.45, h * 0.4, "#55483b", "#302820", 10)}${ellipse(x + w / 2, y + h / 2, w * 0.26, h * 0.22, "#2f2924", "#6d5944", 4)}`;
-  }
   if (obj.type === "ravine") {
     const pts = [
       `${x + 10},${y + h * 0.2}`,
@@ -96,7 +90,7 @@ export function generateOpenWastelandBackgroundSvg(input = {}) {
   const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-background-v2`));
   const width = GRID * CELL;
   const height = GRID * CELL;
-  const blocked = [...site.roads, ...site.obstacles, ...site.ruins, ...site.vehicles, ...site.trees];
+  const blocked = [...site.roads, ...site.obstacles, ...site.vehicles, ...site.trees];
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#756b58"));
   out.push(scatterSvg(rng, blocked));

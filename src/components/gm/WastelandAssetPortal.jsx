@@ -1,44 +1,45 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import wastelandAtlas from "../../assets/wasteland/generated/wastelandAtlasFinal48.js";
+import car1 from "../../assets/wasteland/objects/car-1.png";
+import car2 from "../../assets/wasteland/objects/car-2.png";
+import car3 from "../../assets/wasteland/objects/car-3.png";
+import cliff1 from "../../assets/wasteland/objects/cliff-1.png";
+import cliff2 from "../../assets/wasteland/objects/cliff-2.png";
+import cliff3 from "../../assets/wasteland/objects/cliff-3.png";
+import crater1 from "../../assets/wasteland/objects/crater-1.png";
+import crater2 from "../../assets/wasteland/objects/crater-2.png";
+import crater3 from "../../assets/wasteland/objects/crater-3.png";
+import deadTree1 from "../../assets/wasteland/objects/dead-tree-1.png";
+import deadTree2 from "../../assets/wasteland/objects/dead-tree-2.png";
+import deadTree3 from "../../assets/wasteland/objects/dead-tree-3.png";
+import rocks1 from "../../assets/wasteland/objects/rocks-1.png";
+import rocks2 from "../../assets/wasteland/objects/rocks-2.png";
+import rocks3 from "../../assets/wasteland/objects/rocks-3.png";
+import truck1 from "../../assets/wasteland/objects/truck-1.png";
+import truck2 from "../../assets/wasteland/objects/truck-2.png";
+import truck3 from "../../assets/wasteland/objects/truck-3.png";
 import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
-const ATLAS_COLS = 3;
-const ATLAS_ROWS = 3;
-
-const SPRITE_INDEX = {
-  cliff: 0,
-  rocks: 1,
-  dead_tree: 2,
-  wreck_car: 3,
-  wreck_truck: 6,
+const ASSET_VARIANTS = {
+  cliff: [cliff1, cliff2, cliff3],
+  rocks: [rocks1, rocks2, rocks3],
+  crater: [crater1, crater2, crater3],
+  dead_tree: [deadTree1, deadTree2, deadTree3],
+  wreck_car: [car1, car2, car3],
+  wreck_truck: [truck1, truck2, truck3],
 };
 
-function spriteIndex(item) {
-  if (item.type === "ruin") {
-    const ruinMap = [4, 5, 7, 8];
-    return ruinMap[Math.abs(Number(item.sprite || 0)) % ruinMap.length];
-  }
-  return SPRITE_INDEX[item.type];
-}
-
-function spriteBackground(index) {
-  if (!Number.isFinite(index)) return null;
-  const col = index % ATLAS_COLS;
-  const row = Math.floor(index / ATLAS_COLS);
-  return {
-    backgroundImage: `url(${wastelandAtlas})`,
-    backgroundRepeat: "no-repeat",
-    backgroundSize: `${ATLAS_COLS * 100}% ${ATLAS_ROWS * 100}%`,
-    backgroundPosition: `${(col / (ATLAS_COLS - 1)) * 100}% ${(row / (ATLAS_ROWS - 1)) * 100}%`,
-  };
+function assetForItem(item) {
+  const variants = ASSET_VARIANTS[item.type];
+  if (!variants?.length) return null;
+  const index = Math.abs(Number(item.sprite || 0)) % variants.length;
+  return { src: variants[index], index };
 }
 
 function SpriteImage({ item, preview = false }) {
-  const index = spriteIndex(item);
-  const background = spriteBackground(index);
-  if (!background) return null;
+  const asset = assetForItem(item);
+  if (!asset) return null;
 
   const left = (item.x / GRID) * 100;
   const top = (item.y / GRID) * 100;
@@ -47,9 +48,12 @@ function SpriteImage({ item, preview = false }) {
   const rotation = Number(item.rot || 0);
 
   return (
-    <div
+    <img
+      src={asset.src}
+      alt=""
+      draggable={false}
       data-wasteland-asset={item.type}
-      data-wasteland-sprite={index}
+      data-wasteland-sprite={asset.index}
       style={{
         position: "absolute",
         left: `${left}%`,
@@ -61,8 +65,8 @@ function SpriteImage({ item, preview = false }) {
         pointerEvents: "none",
         userSelect: "none",
         zIndex: 1,
+        objectFit: "contain",
         filter: preview ? "none" : "drop-shadow(0 3px 4px rgba(0,0,0,.5))",
-        ...background,
       }}
     />
   );
@@ -78,8 +82,8 @@ function normalizeVisualSize(item) {
   if (item.type === "dead_tree") {
     return { ...item, w: Math.max(3, Number(item.w || 0) * 1.4), h: Math.max(3, Number(item.h || 0) * 1.4) };
   }
-  if (item.type === "ruin") {
-    return { ...item, w: Math.max(4, Number(item.w || 0)), h: Math.max(4, Number(item.h || 0)) };
+  if (item.type === "crater") {
+    return { ...item, w: Math.max(3.4, Number(item.w || 0)), h: Math.max(3.4, Number(item.h || 0)) };
   }
   return item;
 }
@@ -92,9 +96,8 @@ export function WastelandAssetLayer({ spec, preview = false }) {
 
   const items = [
     ...site.obstacles
-      .filter((item) => item.type === "cliff" || item.type === "rocks")
+      .filter((item) => item.type === "cliff" || item.type === "rocks" || item.type === "crater")
       .map(normalizeVisualSize),
-    ...site.ruins.map((item) => normalizeVisualSize({ ...item, type: "ruin" })),
     ...site.vehicles.map(normalizeVisualSize),
     ...site.trees.map(normalizeVisualSize),
   ];
