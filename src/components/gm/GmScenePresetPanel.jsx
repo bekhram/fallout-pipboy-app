@@ -12,7 +12,7 @@ import {
 import "./gmScenePresetPanel.css";
 
 const MAP_TYPES = ["wasteland", "red_rocket", "super_duper_mart", "raider_camp", "military_bunker"];
-const GRID_SIZES = ["8x8", "12x12", "16x12", "16x16"];
+const GRID_SIZES = ["8x8", "12x12", "18x18", "24x24", "30x30", "42x42", "54x54", "66x66"];
 const LOOT_RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const WEALTH_LEVELS = ["poor", "standard", "rich", "wealthy"];
 
@@ -177,6 +177,7 @@ export default function GmScenePresetPanel({ session }) {
 
   const [cols, rows] = useMemo(() => gridSize.split("x").map(Number), [gridSize]);
   const generationSpec = useMemo(() => ({
+    version: 9,
     type,
     seed,
     cols,
@@ -251,7 +252,7 @@ export default function GmScenePresetPanel({ session }) {
       environment: {
         ...(scene.environment || {}),
         locationType,
-        mapAssetId: `procedural:${type}:visual-v3`,
+        mapAssetId: `procedural:${type}:scalable-v1`,
         mapVariantSeed: nextSeed,
         proceduralMapSpec: nextSpec,
         proceduralMap: null,
