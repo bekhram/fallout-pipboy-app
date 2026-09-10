@@ -9,6 +9,7 @@ const GROUPS = [
   "ghoul",
   "robot",
   "institute",
+  "zetan",
   "mole_rat",
   "yao_guai",
   // Factionless profiles. These are encounter groups, not factions: each may
@@ -19,6 +20,10 @@ const GROUPS = [
   "vault_dweller",
   "trader",
   "minuteman",
+  "railroad_agent",
+  "gunner",
+  "mercenary",
+  "children_of_atom",
 ];
 
 const LEGACY_GROUP_ALIASES = {
@@ -39,6 +44,7 @@ const LABELS = {
     ghoul: "Feral Ghouls",
     robot: "Robots / turrets",
     institute: "Institute / Synths",
+    zetan: "Zetans",
     mole_rat: "Mole Rats",
     yao_guai: "Yao Guai",
     radstag: "Radstags",
@@ -47,6 +53,10 @@ const LABELS = {
     vault_dweller: "Vault Dwellers",
     trader: "Traders / Caravan Merchants",
     minuteman: "Minutemen",
+    railroad_agent: "Railroad Agents",
+    gunner: "Gunners",
+    mercenary: "Mercenaries",
+    children_of_atom: "Children of Atom",
     human: "Humans",
     other: "Other",
   },
@@ -61,6 +71,7 @@ const LABELS = {
     ghoul: "Дикие гули",
     robot: "Роботы / турели",
     institute: "Институт / синты",
+    zetan: "Зетаны",
     mole_rat: "Кротокрысы",
     yao_guai: "Яо-гаи",
     radstag: "Радстаги",
@@ -69,6 +80,10 @@ const LABELS = {
     vault_dweller: "Жители убежища",
     trader: "Торговцы / караванщики",
     minuteman: "Минитмены",
+    railroad_agent: "Агенты Подземки",
+    gunner: "Стрелки",
+    mercenary: "Наёмники",
+    children_of_atom: "Дети Атома",
     human: "Люди",
     other: "Другие",
   },
@@ -83,6 +98,7 @@ const LABELS = {
     ghoul: "Дикі гулі",
     robot: "Роботи / турелі",
     institute: "Інститут / синти",
+    zetan: "Зетани",
     mole_rat: "Кротощури",
     yao_guai: "Яо-гаї",
     radstag: "Радстаги",
@@ -91,6 +107,10 @@ const LABELS = {
     vault_dweller: "Мешканці сховища",
     trader: "Торговці / караванники",
     minuteman: "Мінітмени",
+    railroad_agent: "Агенти Підземки",
+    gunner: "Стрільці",
+    mercenary: "Найманці",
+    children_of_atom: "Діти Атома",
     human: "Люди",
     other: "Інші",
   },
@@ -105,6 +125,7 @@ const LABELS = {
     ghoul: "Dzikie ghule",
     robot: "Roboty / wieżyczki",
     institute: "Instytut / synthy",
+    zetan: "Zetanie",
     mole_rat: "Kretoszczury",
     yao_guai: "Yao Guai",
     radstag: "Radstagi",
@@ -113,6 +134,10 @@ const LABELS = {
     vault_dweller: "Mieszkańcy krypt",
     trader: "Handlarze / kupcy karawanowi",
     minuteman: "Minutemeni",
+    railroad_agent: "Agenci Railroad",
+    gunner: "Gunnerzy",
+    mercenary: "Najemnicy",
+    children_of_atom: "Dzieci Atomu",
     human: "Ludzie",
     other: "Inne",
   },
@@ -168,6 +193,10 @@ function exactFactionlessGroup(value) {
   if (id === "vault-dweller-npc" || name === "vault dweller") return "vault_dweller";
   if (id === "trader-caravan-merchant" || name === "trader caravan merchant") return "trader";
   if (id === "minuteman" || name === "minuteman") return "minuteman";
+  if (id === "railroad-agent" || name === "railroad agent") return "railroad_agent";
+  if (id === "gunner" || name === "gunner") return "gunner";
+  if (id === "mercenary" || name === "mercenary") return "mercenary";
+  if (id === "children-of-atom" || name === "children of atom") return "children_of_atom";
   return "";
 }
 
@@ -184,6 +213,7 @@ export function enemyGroupForEntry(value) {
 
   // Named factions first. Institute Scientist intentionally stays with Synths.
   if (/robotic synth|robotic-synth|\bsynth\b|\binstitute\b/.test(source)) return "institute";
+  if (/\bzetan\b|\baliens?\b/.test(source)) return "zetan";
   if (/brotherhood of steel|brotherhood-of-steel|\bbrotherhood\b/.test(source)) return "brotherhood";
   if (/\braider\b/.test(source)) return "raider";
 
