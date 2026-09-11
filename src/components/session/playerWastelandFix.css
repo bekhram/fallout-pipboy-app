@@ -1,0 +1,15 @@
+.session-tactical-player .tactical-grid > .gm-wasteland-assets.is-preview {
+  grid-column: 1 / -1 !important;
+  grid-row: 1 / -1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  inset: 0 !important;
+}
+
+.session-tactical-player .tactical-grid > .gm-wasteland-assets.is-preview > [data-wasteland-background="true"] {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: fill !important;
+}
