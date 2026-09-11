@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
 import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
+import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import GmUnifiedTokenManagerV9 from "./GmUnifiedTokenManagerV9.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
@@ -9,7 +10,7 @@ import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
-import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
+import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import TacticalEnvironmentPanel, {
   TacticalEnvironmentSummary,
 } from "./TacticalEnvironmentPanel.jsx";
@@ -91,10 +92,11 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
         <div className="gm-tactical-scene-presets">
           <GmScenePresetPanelV2 session={session} />
-          <GmProceduralRoomDescriptionsV4 session={session} />
+          <GmProceduralExplorationPanel session={session} />
         </div>
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />
+        <WastelandPoiPortal session={session} />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV9 session={session} /></div>
