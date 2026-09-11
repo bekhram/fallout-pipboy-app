@@ -1,0 +1,129 @@
+@media (min-width: 1100px) {
+  .session-gm-workspace-wrap,
+  .session-gm-workspace-wrap > .gm-workspace,
+  .gm-workspace--tactical-only,
+  .gm-workspace__tactical-anchor,
+  .gm-tactical-tabs-shell {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .gm-tactical-tabs-shell {
+    gap: 12px;
+  }
+
+  .gm-tactical-tabs {
+    position: sticky;
+    top: 62px;
+    padding: 7px;
+  }
+
+  .gm-tactical-tabs__scroll {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    overflow: visible;
+    gap: 7px;
+  }
+
+  .gm-tactical-tab {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    padding: 7px 8px;
+    white-space: normal;
+    line-height: 1.15;
+    text-align: center;
+  }
+
+  .gm-tactical-shell {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .gm-tactical-view--battle {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    grid-template-areas:
+      "effects effects"
+      "map manager";
+    align-items: start;
+    gap: 12px;
+  }
+
+  .gm-tactical-view--battle .gm-tactical-battle-effects {
+    grid-area: effects;
+  }
+
+  .gm-tactical-view--battle .gm-tactical-map-core {
+    grid-area: map;
+    min-width: 0;
+  }
+
+  .gm-tactical-view--battle .gm-tactical-token-manager {
+    grid-area: manager;
+    min-width: 0;
+    position: sticky;
+    top: 120px;
+    max-height: calc(100vh - 138px);
+    overflow: auto;
+    padding-right: 3px;
+  }
+
+  .gm-tactical-view--battle .gm-session-map {
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+  }
+
+  .gm-tactical-view--battle .gm-session-map__grid {
+    width: 100%;
+    min-height: clamp(620px, 72vh, 900px);
+    max-height: calc(100vh - 190px);
+  }
+
+  .gm-tactical-view--scene {
+    grid-template-columns: minmax(300px, 0.72fr) minmax(0, 1.28fr);
+    grid-template-areas:
+      "environment presets"
+      "map map";
+    gap: 12px;
+    align-items: start;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-environment-edit {
+    grid-area: environment;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-scene-presets {
+    grid-area: presets;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-map-core {
+    grid-area: map;
+    min-width: 0;
+  }
+
+  .gm-tactical-view--autogm .gm-tactical-auto-gm,
+  .gm-tactical-view--loot .gm-tactical-loot,
+  .gm-tactical-view--merchants .gm-tactical-merchants,
+  .gm-tactical-view--custom .gm-tactical-token-manager,
+  .gm-tactical-view--tokens .gm-tactical-token-manager {
+    width: min(100%, 1400px);
+    margin-inline: auto;
+  }
+
+  .gm-tactical-view--tokens .gm-unified-token-manager,
+  .gm-tactical-view--custom .gm-unified-token-manager {
+    min-width: 0;
+  }
+}
+
+@media (min-width: 1500px) {
+  .gm-tactical-view--battle {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .gm-tactical-view--battle .gm-session-map__grid {
+    min-height: 760px;
+  }
+}
