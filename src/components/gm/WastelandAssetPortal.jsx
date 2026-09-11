@@ -11,9 +11,14 @@ import crater2 from "../../assets/wasteland/objects/crater-2.png";
 import crater3 from "../../assets/wasteland/objects/crater-3.png";
 import deadTree1 from "../../assets/wasteland/objects/dead-tree-1.png";
 import deadTree2 from "../../assets/wasteland/objects/dead-tree-2.png";
+import hills1 from "../../assets/wasteland/objects/hills-1.png";
+import lake1 from "../../assets/wasteland/objects/lake-1.png";
+import ravine1 from "../../assets/wasteland/objects/ravine-1.png";
 import rocks1 from "../../assets/wasteland/objects/rocks-1.png";
 import rocks2 from "../../assets/wasteland/objects/rocks-2.png";
 import rocks3 from "../../assets/wasteland/objects/rocks-3.png";
+import ruins1 from "../../assets/wasteland/objects/ruins-1.png";
+import swamp1 from "../../assets/wasteland/objects/swamp-1.png";
 import truck1 from "../../assets/wasteland/objects/truck-1.png";
 import truck2 from "../../assets/wasteland/objects/truck-2.png";
 import truck3 from "../../assets/wasteland/objects/truck-3.png";
@@ -28,6 +33,11 @@ const ASSET_VARIANTS = {
   dead_tree: [deadTree1, deadTree2],
   wreck_car: [car1, car2, car3],
   wreck_truck: [truck1, truck2, truck3],
+  ruins: [ruins1],
+  ravine: [ravine1],
+  lake: [lake1],
+  swamp: [swamp1],
+  hills: [hills1],
 };
 
 function assetForItem(item) {
@@ -53,7 +63,10 @@ function SpriteImage({ item, preview = false }) {
   if (!asset) return null;
 
   const box = renderBoxForItem(item);
-  const depth = Math.round((Number(item.y || 0) + Number(item.h || 0) / 2) * 100);
+  const isGroundTerrain = item.type === "lake" || item.type === "swamp" || item.type === "ravine";
+  const depth = isGroundTerrain
+    ? Math.max(1, Math.round((Number(item.y || 0) + Number(item.h || 0) / 2) * 10))
+    : Math.round((Number(item.y || 0) + Number(item.h || 0) / 2) * 100);
   const scaleX = item.type === "wreck_car" ? 1.5 : item.type === "wreck_truck" ? 1.25 : 1;
   const scaleY = item.type === "wreck_car" ? 2 : item.type === "wreck_truck" ? 1.5 : 1;
 
@@ -169,6 +182,7 @@ export function WastelandAssetLayer({ spec, preview = false }) {
 
   const items = useMemo(() => {
     const normalized = [
+      ...(site.terrain || []).map(normalizeVisualSize),
       ...site.obstacles
         .filter((item) => item.type === "cliff" || item.type === "rocks" || item.type === "crater")
         .map(normalizeVisualSize),
