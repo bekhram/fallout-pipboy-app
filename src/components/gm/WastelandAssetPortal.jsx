@@ -195,11 +195,12 @@ export function WastelandAssetLayer({ spec, preview = false }) {
       aria-hidden="true"
       style={{
         position: "absolute",
-        inset: 0,
-        width: "100%",
-        height: "100%",
+        left: 0,
+        top: 0,
+        width: preview ? "100%" : "var(--battlemap-world-width, 100%)",
+        height: preview ? "100%" : "var(--battlemap-world-height, 100%)",
         pointerEvents: "none",
-        zIndex: preview ? 2 : 20,
+        zIndex: preview ? 2 : 0,
         overflow: "visible",
       }}
     >

@@ -23,28 +23,38 @@ function visualRect(item) {
   return { x: centerX - w / 2, y: centerY - h / 2, w, h };
 }
 
-function overlaps(a, b) {
+function overlaps(a, b, gap = 1) {
   return !(
-    a.x + a.w <= b.x ||
-    b.x + b.w <= a.x ||
-    a.y + a.h <= b.y ||
-    b.y + b.h <= a.y
+    a.x + a.w + gap <= b.x ||
+    b.x + b.w + gap <= a.x ||
+    a.y + a.h + gap <= b.y ||
+    b.y + b.h + gap <= a.y
   );
 }
 
-test("wasteland visual assets do not intersect after scaling and rotation", () => {
+test("wasteland assets keep a one-cell gap from roads and each other", () => {
   for (let seed = 0; seed < 250; seed += 1) {
     const site = buildOpenWastelandSite({ seed: `overlap-${seed}` });
     const items = [...site.obstacles, ...site.vehicles, ...site.trees]
       .filter((item) => item.type !== "ravine");
     const rects = items.map(visualRect);
 
+    for (let index = 0; index < rects.length; index += 1) {
+      for (const road of site.roads) {
+        assert.equal(
+          overlaps(rects[index], road),
+          false,
+          `seed ${seed}: ${items[index].type} is less than one cell from a road`
+        );
+      }
+    }
+
     for (let left = 0; left < rects.length; left += 1) {
       for (let right = left + 1; right < rects.length; right += 1) {
         assert.equal(
           overlaps(rects[left], rects[right]),
           false,
-          `seed ${seed}: ${items[left].type} intersects ${items[right].type}`
+          `seed ${seed}: ${items[left].type} is less than one cell from ${items[right].type}`
         );
       }
     }

@@ -224,6 +224,8 @@ export default function BattlemapViewportControls({
       grid.style.setProperty("--battlemap-cell", `${cellSize}px`);
       grid.style.setProperty("--battlemap-cols", String(cols));
       grid.style.setProperty("--battlemap-rows", String(rows));
+      grid.style.setProperty("--battlemap-world-width", `${cols * cellSize}px`);
+      grid.style.setProperty("--battlemap-world-height", `${rows * cellSize}px`);
       grid.style.setProperty(
         "--battlemap-background-size",
         `${cols * cellSize}px ${rows * cellSize}px`

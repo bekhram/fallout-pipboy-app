@@ -29,10 +29,19 @@
 }
 
 .battlemap-scroll-grid .gm-session-map__cell {
+  z-index: 1;
   width: var(--battlemap-cell) !important;
   min-width: var(--battlemap-cell) !important;
   height: var(--battlemap-cell) !important;
   min-height: var(--battlemap-cell) !important;
+}
+
+/* Keep procedural objects on the background plane. The grid cells, borders,
+   tokens and interactions remain in the layer above it. */
+.battlemap-scroll-grid > .gm-wasteland-assets:not(.is-preview) {
+  width: var(--battlemap-world-width, 100%) !important;
+  height: var(--battlemap-world-height, 100%) !important;
+  z-index: 0 !important;
 }
 
 .battlemap-scroll-grid .gm-session-map__cell.is-drag-target {

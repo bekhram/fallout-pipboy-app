@@ -1,5 +1,6 @@
 const CELL = 100;
 const GRID = 24;
+const ASSET_GAP = 1;
 
 function clamp(v, min, max) { return Math.max(min, Math.min(max, Number(v) || 0)); }
 function hashSeed(value) { const s = String(value ?? "0"); let h = 2166136261; for (let i = 0; i < s.length; i += 1) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -51,7 +52,7 @@ function roadRects(profile, rng) {
   return roads;
 }
 
-function placeItem(rng, occupied, itemFactory, pad = 1, attempts = 120) {
+function placeItem(rng, occupied, itemFactory, pad = ASSET_GAP, attempts = 120) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const item = itemFactory();
     const collisionRect = item.collisionRect || item;
@@ -74,7 +75,7 @@ function placeObstacles(rng, occupied) {
       if (type === "cliff") return withCollisionRect(item, w * 2, h * 2);
       if (type === "crater") return withCollisionRect(item, Math.max(4, w * 1.15), Math.max(4, h * 1.15));
       return withCollisionRect(item, w, h);
-    }, 1);
+    }, ASSET_GAP);
     if (item) out.push(item);
   }
   return out;
@@ -106,10 +107,10 @@ function placeVehicles(rng, occupied, roads) {
     if (road) {
       if (road.w >= road.h) {
         x = clamp(randint(rng, road.x, road.x + Math.max(0, road.w - w)), 1, GRID - w - 1);
-        y = clamp(road.y + (rng() < 0.5 ? -h : road.h), 1, GRID - h - 1);
+        y = clamp(road.y + (rng() < 0.5 ? -h - 2 : road.h + 2), 1, GRID - h - 1);
       } else {
         y = clamp(randint(rng, road.y, road.y + Math.max(0, road.h - h)), 1, GRID - h - 1);
-        x = clamp(road.x + (rng() < 0.5 ? -w : road.w), 1, GRID - w - 1);
+        x = clamp(road.x + (rng() < 0.5 ? -w - 2 : road.w + 2), 1, GRID - w - 1);
       }
     }
 
@@ -117,7 +118,7 @@ function placeVehicles(rng, occupied, roads) {
     return type === "wreck_car"
       ? withCollisionRect(item, 2.4, 1.75)
       : withCollisionRect(item, 4.8, 3.2);
-  }, 0, 90);
+  }, ASSET_GAP, 120);
 
   for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
   for (let i = 0; i < randint(rng, 0, 2); i += 1) { const item = placeVehicle("wreck_truck"); if (item) out.push(item); }
@@ -130,7 +131,7 @@ function placeTrees(rng, occupied) {
     const item = placeItem(rng, occupied, () => {
       const tree = { type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 };
       return withCollisionRect(tree, 3.4, 3.4);
-    }, 0, 70);
+    }, ASSET_GAP, 120);
     if (item) out.push(item);
   }
   return out;
