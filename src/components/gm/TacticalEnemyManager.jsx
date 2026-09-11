@@ -1,8 +1,19 @@
 import React, { useMemo, useState } from "react";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
+import "./tacticalEnemyManagerEnhancements.css";
 
 const CUSTOM_BESTIARY_KEY = "fallout_pipboy_bestiary_custom_v1";
 const MAX_AVATAR_SOURCE_BYTES = 8 * 1024 * 1024;
+const TOKEN_PALETTE = [
+  "#78ff98",
+  "#ffd166",
+  "#62d9ff",
+  "#ff7ad9",
+  "#ff9b54",
+  "#8da2ff",
+  "#d6ff63",
+  "#c58cff",
+];
 
 const COPY = {
   en: {
@@ -26,7 +37,7 @@ const COPY = {
     imageTooLarge: "Avatar source file is too large (max 8 MB).",
     linked: "BESTIARY",
     manual: "MANUAL",
-    selectOnMap: "SELECT",
+    selectOnMap: "SHOW ON MAP",
   },
   ru: {
     title: "ТОКЕНЫ NPC / ВРАГОВ",
@@ -49,7 +60,7 @@ const COPY = {
     imageTooLarge: "Файл аватара слишком большой (максимум 8 МБ).",
     linked: "БЕСТИАРИЙ",
     manual: "РУЧНОЙ",
-    selectOnMap: "ВЫБРАТЬ",
+    selectOnMap: "ПОКАЗАТЬ НА КАРТЕ",
   },
   uk: {
     title: "ТОКЕНИ NPC / ВОРОГІВ",
@@ -72,7 +83,7 @@ const COPY = {
     imageTooLarge: "Файл аватара завеликий (максимум 8 МБ).",
     linked: "БЕСТІАРІЙ",
     manual: "РУЧНИЙ",
-    selectOnMap: "ОБРАТИ",
+    selectOnMap: "ПОКАЗАТИ НА МАПІ",
   },
   pl: {
     title: "TOKENY NPC / WROGÓW",
@@ -95,7 +106,7 @@ const COPY = {
     imageTooLarge: "Plik awatara jest za duży (maks. 8 MB).",
     linked: "BESTIARIUSZ",
     manual: "RĘCZNY",
-    selectOnMap: "WYBIERZ",
+    selectOnMap: "POKAŻ NA MAPIE",
   },
 };
 
@@ -121,6 +132,23 @@ function isNpcEntry(entry) {
 function defaultSize(entry) {
   const haystack = `${entry?.abilities || ""} ${(entry?.tags || []).join(" ")}`.toLowerCase();
   return haystack.includes("big") || haystack.includes("massive") ? 2 : 1;
+}
+
+function hashIndex(value) {
+  const text = String(value || "");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash) % TOKEN_PALETTE.length;
+}
+
+function tokenAccent(token) {
+  const explicit = Number(token?.stats?.tokenColorIndex);
+  const index = Number.isFinite(explicit)
+    ? Math.abs(Math.floor(explicit)) % TOKEN_PALETTE.length
+    : hashIndex(token?.stats?.hordeGroupId || token?.id || token?.name);
+  return TOKEN_PALETTE[index];
 }
 
 function loadImage(url) {
@@ -210,6 +238,24 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
     }
   };
 
+  const focusTokenOnMap = (tokenId) => {
+    onSelectToken?.(tokenId);
+    if (typeof window === "undefined") return;
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const tokenNode = document.querySelector(
+          ".gm-session-map.tactical-map .gm-session-map__grid.tactical-grid .gm-session-token.is-selected"
+        );
+        if (!tokenNode) return;
+        tokenNode.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "center" });
+        tokenNode.classList.remove("is-card-focus-pulse");
+        void tokenNode.offsetWidth;
+        tokenNode.classList.add("is-card-focus-pulse");
+        window.setTimeout(() => tokenNode.classList.remove("is-card-focus-pulse"), 1400);
+      });
+    });
+  };
+
   return (
     <section className="tactical-enemy-manager">
       <div className="tactical-enemy-manager__head">
@@ -239,9 +285,14 @@ export default function TacticalEnemyManager({ tokens = [], selectedTokenId, onS
       <div className="tactical-enemy-list">
         {tokens.length ? tokens.map((token) => {
           const selected = token.id === selectedTokenId;
+          const accent = tokenAccent(token);
           return (
-            <article key={token.id} className={`tactical-enemy-card${selected ? " is-selected" : ""}`}>
-              <button type="button" className="tactical-enemy-avatar" onClick={() => onSelectToken?.(token.id)} title={text.selectOnMap}>
+            <article
+              key={token.id}
+              className={`tactical-enemy-card tactical-enemy-card--accent${selected ? " is-selected" : ""}`}
+              style={{ "--enemy-accent": accent }}
+            >
+              <button type="button" className="tactical-enemy-avatar" onClick={() => focusTokenOnMap(token.id)} title={text.selectOnMap}>
                 {token.avatar ? <img src={token.avatar} alt="" /> : <span>{String(token.name || "E").slice(0, 1).toUpperCase()}</span>}
               </button>
               <div className="tactical-enemy-card__body">
