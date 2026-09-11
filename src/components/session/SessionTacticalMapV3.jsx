@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { TacticalEnvironmentSummary } from "../gm/TacticalEnvironmentPanel.jsx";
-import { WastelandAssetLayer } from "../gm/WastelandAssetPortal.jsx";
+import { WastelandAssetLayer, wastelandBackgroundForSpec } from "../gm/WastelandAssetPortal.jsx";
 import TacticalSessionHud from "./TacticalSessionHud.jsx";
 import "../gm/gmSessionMap.css";
 import "../gm/sceneLibrary.css";
@@ -32,6 +32,7 @@ export default function SessionTacticalMapV3({session,openRequest=0}){
   const showWastelandAssets=Boolean(proceduralSpec&&String(proceduralSpec.type||"")==="wasteland");
   const cols=showWastelandAssets?positiveGridSize(proceduralSpec?.cols,24):positiveGridSize(scene?.cols,12);
   const rows=showWastelandAssets?positiveGridSize(proceduralSpec?.rows,24):positiveGridSize(scene?.rows,12);
+  const playerBackground=showWastelandAssets?wastelandBackgroundForSpec(proceduralSpec):scene?.backgroundUrl||"";
 
   useEffect(()=>{
     if(!ownedTokens.length){setSelectedTokenId("");return;}
@@ -120,7 +121,7 @@ export default function SessionTacticalMapV3({session,openRequest=0}){
   const overlay=open?<div className="session-tactical-overlay"><section className="pip-panel session-tactical-player"><header className="session-tactical-player__head"><div><div className="pip-bootline">PIP 2D20 // {scene.name||"TACTICAL"}</div><h2>[ TACTICAL MAP ]</h2></div><div className="session-tactical-player__actions"><span className="tactical-live">{session.status==="online"?"LIVE":"CONNECTING"}</span><button type="button" className="pip-btn" onClick={close}>BACK TO PLAYER</button></div></header>
     <div className="tactical-player-briefing-row"><TacticalEnvironmentSummary scene={scene} effectsOnly/><div className="tactical-player-token-setup tactical-player-token-setup-v2">{ownedTokens.length>1?<div className="tactical-owned-token-picker">{ownedTokens.map((token)=><button type="button" key={token.id} className={`pip-btn${selectedToken?.id===token.id?" is-primary":""}`} onClick={()=>setSelectedTokenId(token.id)}>{token.avatar?<img src={token.avatar} alt=""/>:null}<span>{token.name}</span></button>)}</div>:null}</div></div>
     {error?<div className="session-error">{error}</div>:null}
-    <div ref={gridRef} data-player-grid={`${cols}x${rows}`} className={`gm-session-map__grid tactical-grid${scene.backgroundUrl?" has-background":""}${dragState?.moved?" is-drag-active":""}`} style={{position:"relative",gridTemplateColumns:`repeat(${cols}, minmax(0,1fr))`,gridTemplateRows:`repeat(${rows}, minmax(0,1fr))`,backgroundImage:showWastelandAssets?undefined:(scene.backgroundUrl?`url(${JSON.stringify(scene.backgroundUrl)})`:undefined)}}>{showWastelandAssets?<WastelandAssetLayer spec={{...proceduralSpec,cols,rows}} preview/>:null}{cells}</div>
+    <div ref={gridRef} data-player-grid={`${cols}x${rows}`} className={`gm-session-map__grid tactical-grid${playerBackground?" has-background":""}${dragState?.moved?" is-drag-active":""}`} style={{position:"relative",gridTemplateColumns:`repeat(${cols}, minmax(0,1fr))`,gridTemplateRows:`repeat(${rows}, minmax(0,1fr))`,backgroundImage:playerBackground?`url(${JSON.stringify(playerBackground)})`:undefined,backgroundSize:"100% 100%",backgroundPosition:"0 0",backgroundRepeat:"no-repeat"}}>{showWastelandAssets?<WastelandAssetLayer spec={{...proceduralSpec,cols,rows}} preview showBackground={false}/>:null}{cells}</div>
   </section><TacticalSessionHud session={session}/>{dragState?.moved?<div className={`tactical-drag-ghost is-size-${dragState.size}`} style={{left:dragState.x,top:dragState.y}}>{dragState.avatar?<img src={dragState.avatar} alt=""/>:<b>{String(dragState.name||"T").slice(0,1)}</b>}</div>:null}</div>:null;
 
   return overlay&&typeof document!=="undefined"?createPortal(overlay,document.body):overlay;
