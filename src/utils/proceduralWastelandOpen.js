@@ -62,6 +62,43 @@ function placeItem(rng, occupied, itemFactory, pad = ASSET_GAP, attempts = 120) 
   return null;
 }
 
+function placeTerrain(rng, occupied) {
+  const out = [];
+  const terrainTypes = ["ruins", "ravine", "lake", "swamp", "hills"];
+  const count = randint(rng, 2, 4);
+
+  for (let i = 0; i < count; i += 1) {
+    const type = pick(rng, terrainTypes);
+    const item = placeItem(rng, occupied, () => {
+      let w = 5;
+      let h = 5;
+
+      if (type === "ruins") { w = randint(rng, 5, 7); h = randint(rng, 4, 6); }
+      if (type === "ravine") { w = randint(rng, 6, 8); h = randint(rng, 3, 5); }
+      if (type === "lake") { w = randint(rng, 5, 7); h = randint(rng, 5, 7); }
+      if (type === "swamp") { w = randint(rng, 5, 7); h = randint(rng, 4, 7); }
+      if (type === "hills") { w = randint(rng, 4, 6); h = randint(rng, 4, 6); }
+
+      const terrain = {
+        type,
+        sprite: 0,
+        x: randint(rng, 1, GRID - w - 1),
+        y: randint(rng, 1, GRID - h - 1),
+        w,
+        h,
+        rot: 0,
+        impassable: type !== "swamp",
+      };
+
+      return withCollisionRect(terrain, w, h);
+    }, ASSET_GAP, 180);
+
+    if (item) out.push(item);
+  }
+
+  return out;
+}
+
 function placeObstacles(rng, occupied) {
   const out = [];
   for (let i = 0; i < randint(rng, 1, 3); i += 1) {
@@ -91,9 +128,7 @@ function placeVehicles(rng, occupied, roads) {
     let road = null;
     const nearRoad = roads.length && rng() < 0.68;
 
-    if (nearRoad) {
-      road = pick(rng, roads);
-    }
+    if (nearRoad) road = pick(rng, roads);
 
     const { w, h } = getVehicleFootprint(type);
     let x = randint(rng, 1, GRID - w - 1);
@@ -110,9 +145,7 @@ function placeVehicles(rng, occupied, roads) {
     }
 
     const item = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot: 0, impassable: false };
-    return type === "wreck_car"
-      ? withCollisionRect(item, 3, 2)
-      : withCollisionRect(item, 5, 3);
+    return type === "wreck_car" ? withCollisionRect(item, 3, 2) : withCollisionRect(item, 5, 3);
   }, ASSET_GAP, 120);
 
   for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
@@ -156,14 +189,25 @@ function scatterSvg(rng, blocked) {
 }
 
 export function buildOpenWastelandSite(spec = {}) {
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v5`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v6`));
   const profile = roadProfile(rng);
   const roads = roadRects(profile, rng);
   const occupied = [...roads];
+  const terrain = placeTerrain(rng, occupied);
   const obstacles = placeObstacles(rng, occupied);
   const vehicles = placeVehicles(rng, occupied, roads);
   const trees = placeTrees(rng, occupied);
-  return { cols: GRID, rows: GRID, profile, roads, obstacles, ruins: [], vehicles, trees };
+  return {
+    cols: GRID,
+    rows: GRID,
+    profile,
+    roads,
+    terrain,
+    obstacles,
+    ruins: terrain.filter((item) => item.type === "ruins"),
+    vehicles,
+    trees,
+  };
 }
 
 export function buildOpenWastelandRoomLayout() { return []; }
@@ -171,9 +215,9 @@ export function buildOpenWastelandRoomBlueprints() { return []; }
 
 export function generateOpenWastelandSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
-  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v5`));
+  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v6`));
   const width = GRID * CELL, height = GRID * CELL;
-  const blocked = [...site.roads, ...site.obstacles, ...site.vehicles, ...site.trees];
+  const blocked = [...site.roads, ...site.terrain, ...site.obstacles, ...site.vehicles, ...site.trees];
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#756b58"));
   out.push(scatterSvg(rng, blocked));
