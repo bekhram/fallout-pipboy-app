@@ -21,26 +21,26 @@ import "./gmNpcCardEditor.css";
 import "./gmTacticalTabs.css";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["battle", "autogm", "loot", "merchants", "custom", "encounter", "scenes", "tokens"];
+const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens"];
 const COPY = {
   en: {
     battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC",
-    encounter: "ENCOUNTER", scenes: "SCENES", tokens: "TOKENS",
+    scene: "ENCOUNTER / SCENE", tokens: "TOKENS",
     waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu",
   },
   ru: {
     battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC",
-    encounter: "СЦЕНА", scenes: "СЦЕНЫ", tokens: "ТОКЕНЫ",
+    scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ",
     waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ",
   },
   uk: {
     battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC",
-    encounter: "СЦЕНА", scenes: "СЦЕНИ", tokens: "ТОКЕНИ",
+    scene: "ЗУСТРІЧ / СЦЕНА", tokens: "ТОКЕНИ",
     waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ",
   },
   pl: {
     battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC",
-    encounter: "SPOTKANIE", scenes: "SCENY", tokens: "TOKENY",
+    scene: "SPOTKANIE / SCENA", tokens: "TOKENY",
     waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG",
   },
 };
@@ -50,10 +50,14 @@ function languageCode(language) {
   return COPY[code] ? code : "en";
 }
 
+function normalizeTab(tab) {
+  if (tab === "encounter" || tab === "scenes") return "scene";
+  return TABS.includes(tab) ? tab : "battle";
+}
+
 function initialTab() {
   if (typeof window === "undefined") return "battle";
-  const stored = window.localStorage.getItem(TAB_STORAGE_KEY);
-  return TABS.includes(stored) ? stored : "battle";
+  return normalizeTab(window.localStorage.getItem(TAB_STORAGE_KEY));
 }
 
 export default function GmSessionMap(props) {
