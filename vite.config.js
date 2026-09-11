@@ -18,13 +18,13 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /\/assets\/(?:car|cliff|crater|dead-tree|rocks|truck)-[^/]+\.png$/,
+            urlPattern: /\/assets\/(?:wasteland-|car-|cliff-|crater-|dead-tree-|rocks-|truck-|ruins-|ravine-|lake-|swamp-|hills-)[^/]*\.png$/,
             handler: "CacheFirst",
             options: {
-              cacheName: "wasteland-map-assets-v1",
+              cacheName: "wasteland-map-assets-v2",
               cacheableResponse: { statuses: [0, 200] },
               expiration: {
-                maxEntries: 18,
+                maxEntries: 48,
                 maxAgeSeconds: 60 * 60 * 24 * 30,
               },
             },
