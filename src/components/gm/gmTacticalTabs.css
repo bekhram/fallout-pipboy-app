@@ -148,16 +148,13 @@
   display: block;
 }
 
-.gm-tactical-view--encounter .gm-tactical-environment-edit {
+.gm-tactical-view--scene .gm-tactical-environment-edit,
+.gm-tactical-view--scene .gm-tactical-scene-presets,
+.gm-tactical-view--scene .gm-tactical-map-core {
   display: block;
 }
 
-.gm-tactical-view--scenes .gm-tactical-scene-presets,
-.gm-tactical-view--scenes .gm-tactical-map-core {
-  display: block;
-}
-
-.gm-tactical-view--scenes .tactical-enemy-manager {
+.gm-tactical-view--scene .tactical-enemy-manager {
   display: none !important;
 }
 
