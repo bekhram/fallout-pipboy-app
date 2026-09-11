@@ -5,6 +5,7 @@ import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import GmUnifiedTokenManagerV9 from "./GmUnifiedTokenManagerV9.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
+import GmTokenPointerGuard from "./GmTokenPointerGuard.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
 import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
@@ -20,6 +21,7 @@ import "./tacticalFootprint3.css";
 import "./tokenVisualFootprintFix.css";
 import "./gmNpcCardEditor.css";
 import "./gmTacticalTabs.css";
+import "./gmDesktopLayoutV2.css";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
 const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens"];
@@ -99,6 +101,7 @@ export default function GmSessionMap(props) {
         <WastelandPoiPortal session={session} />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmTokenStatusLayer session={session} />
+        <GmTokenPointerGuard />
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV9 session={session} /></div>
       </div>
     </section>
