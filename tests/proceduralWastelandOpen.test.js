@@ -6,8 +6,8 @@ function visualSize(item) {
   if (item.type === "cliff") return [item.w * 2, item.h * 2];
   if (item.type === "crater") return [Math.max(4, item.w * 1.15), Math.max(4, item.h * 1.15)];
   if (item.type === "dead_tree") return [3.4, 3.4];
-  if (item.type === "wreck_car") return [2.4, 1.75];
-  if (item.type === "wreck_truck") return [4.8, 3.2];
+  if (item.type === "wreck_car") return [3, 2];
+  if (item.type === "wreck_truck") return [5, 3];
   return [item.w, item.h];
 }
 
@@ -34,9 +34,14 @@ function overlaps(a, b, gap = 1) {
 test("wasteland assets keep a one-cell gap from roads and each other", () => {
   for (let seed = 0; seed < 250; seed += 1) {
     const site = buildOpenWastelandSite({ seed: `overlap-${seed}` });
-    const items = [...site.obstacles, ...site.vehicles, ...site.trees]
-      .filter((item) => item.type !== "ravine");
+    const items = [...site.obstacles, ...site.vehicles, ...site.trees];
     const rects = items.map(visualRect);
+
+    assert.equal(
+      site.obstacles.some((item) => item.type === "ravine"),
+      false,
+      `seed ${seed}: ravines must not be generated`
+    );
 
     for (const item of items) {
       assert.equal(item.rot, 0, `seed ${seed}: ${item.type} must not rotate`);

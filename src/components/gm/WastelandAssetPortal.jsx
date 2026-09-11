@@ -11,7 +11,6 @@ import crater2 from "../../assets/wasteland/objects/crater-2.png";
 import crater3 from "../../assets/wasteland/objects/crater-3.png";
 import deadTree1 from "../../assets/wasteland/objects/dead-tree-1.png";
 import deadTree2 from "../../assets/wasteland/objects/dead-tree-2.png";
-import deadTree3 from "../../assets/wasteland/objects/dead-tree-3.png";
 import rocks1 from "../../assets/wasteland/objects/rocks-1.png";
 import rocks2 from "../../assets/wasteland/objects/rocks-2.png";
 import rocks3 from "../../assets/wasteland/objects/rocks-3.png";
@@ -26,7 +25,7 @@ const ASSET_VARIANTS = {
   cliff: [cliff1, cliff2, cliff3],
   rocks: [rocks1, rocks2, rocks3],
   crater: [crater1, crater2, crater3],
-  dead_tree: [deadTree1, deadTree2, deadTree3],
+  dead_tree: [deadTree1, deadTree2],
   wreck_car: [car1, car2, car3],
   wreck_truck: [truck1, truck2, truck3],
 };
@@ -55,9 +54,8 @@ function SpriteImage({ item, preview = false }) {
 
   const box = renderBoxForItem(item);
   const depth = Math.round((Number(item.y || 0) + Number(item.h || 0) / 2) * 100);
-  const isPassengerCar = item.type === "wreck_car";
-  const scaleX = isPassengerCar ? 1.2 : 1;
-  const scaleY = isPassengerCar ? 1.4 : 1;
+  const scaleX = item.type === "wreck_car" ? 1.5 : item.type === "wreck_truck" ? 1.25 : 1;
+  const scaleY = item.type === "wreck_car" ? 2 : item.type === "wreck_truck" ? 1.5 : 1;
 
   return (
     <img
@@ -115,8 +113,8 @@ function normalizeVisualSize(item) {
 
 function visualBounds(item) {
   const box = renderBoxForItem(item);
-  const scaleX = item.type === "wreck_car" ? 1.2 : 1;
-  const scaleY = item.type === "wreck_car" ? 1.4 : 1;
+  const scaleX = item.type === "wreck_car" ? 1.5 : item.type === "wreck_truck" ? 1.25 : 1;
+  const scaleY = item.type === "wreck_car" ? 2 : item.type === "wreck_truck" ? 1.5 : 1;
   const finalW = box.w * scaleX;
   const finalH = box.h * scaleY;
   const cx = box.x + box.w / 2;

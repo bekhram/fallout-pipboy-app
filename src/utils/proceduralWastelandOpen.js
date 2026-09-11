@@ -65,10 +65,10 @@ function placeItem(rng, occupied, itemFactory, pad = ASSET_GAP, attempts = 120) 
 function placeObstacles(rng, occupied) {
   const out = [];
   for (let i = 0; i < randint(rng, 1, 3); i += 1) {
-    const type = pick(rng, ["cliff", "rocks", "crater", "ravine"]);
+    const type = pick(rng, ["cliff", "rocks", "crater"]);
     const item = placeItem(rng, occupied, () => {
-      const w = type === "ravine" ? randint(rng, 5, 7) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
-      const h = type === "ravine" ? randint(rng, 2, 4) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
+      const w = type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
+      const h = type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
       const item = { type, sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: 0, impassable: true };
       if (type === "cliff") return withCollisionRect(item, w * 2, h * 2);
       if (type === "crater") return withCollisionRect(item, Math.max(4, w * 1.15), Math.max(4, h * 1.15));
@@ -111,8 +111,8 @@ function placeVehicles(rng, occupied, roads) {
 
     const item = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot: 0, impassable: false };
     return type === "wreck_car"
-      ? withCollisionRect(item, 2.4, 1.75)
-      : withCollisionRect(item, 4.8, 3.2);
+      ? withCollisionRect(item, 3, 2)
+      : withCollisionRect(item, 5, 3);
   }, ASSET_GAP, 120);
 
   for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
@@ -144,13 +144,6 @@ function roadSvg(road, surface) {
   return `${rect(x, y, w, h, "#555654", "#3e403e", 4)}${w > h ? line(x, y + h / 2, x + w, y + h / 2, "#918a70", 3, "28 24") : line(x + w / 2, y, x + w / 2, y + h, "#918a70", 3, "28 24")}`;
 }
 
-function obstacleSvg(obj) {
-  if (obj.type === "cliff" || obj.type === "rocks" || obj.type === "crater") return "";
-  const x = obj.x * CELL, y = obj.y * CELL, w = obj.w * CELL, h = obj.h * CELL;
-  const pts = [`${x + 10},${y + h * 0.2}`, `${x + w * 0.25},${y + h * 0.44}`, `${x + w * 0.52},${y + h * 0.28}`, `${x + w - 10},${y + h * 0.7}`, `${x + w * 0.58},${y + h - 10}`, `${x + w * 0.2},${y + h * 0.72}`].join(" ");
-  return `<polygon points="${pts}" fill="#3b3731" stroke="#26231f" stroke-width="12"/>`;
-}
-
 function scatterSvg(rng, blocked) {
   let out = "";
   for (let i = 0; i < 70; i += 1) {
@@ -163,7 +156,7 @@ function scatterSvg(rng, blocked) {
 }
 
 export function buildOpenWastelandSite(spec = {}) {
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v4`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v5`));
   const profile = roadProfile(rng);
   const roads = roadRects(profile, rng);
   const occupied = [...roads];
@@ -178,14 +171,13 @@ export function buildOpenWastelandRoomBlueprints() { return []; }
 
 export function generateOpenWastelandSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
-  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v4`));
+  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-assets-render-v5`));
   const width = GRID * CELL, height = GRID * CELL;
   const blocked = [...site.roads, ...site.obstacles, ...site.vehicles, ...site.trees];
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#756b58"));
   out.push(scatterSvg(rng, blocked));
   site.roads.forEach((road) => out.push(roadSvg(road, site.profile.surface)));
-  site.obstacles.forEach((obj) => out.push(obstacleSvg(obj)));
   out.push(rect(18, 18, 500, 42, "#d2c3a2", "#40372e", 2, 4, 'opacity="0.93"'));
   out.push(`<text x="34" y="40" text-anchor="start" dominant-baseline="middle" fill="#332d27" font-family="monospace" font-size="11" font-weight="900">WASTELAND // 24x24 // ${site.profile.type.toUpperCase()}${site.profile.type !== "none" ? ` // ${site.profile.surface.toUpperCase()}` : ""}</text>`);
   out.push("</svg>");
