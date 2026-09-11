@@ -9,6 +9,17 @@ function pick(rng, list) { return list[Math.min(list.length - 1, Math.floor(rng(
 function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`; }
 function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") { return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`; }
 function overlaps(a, b, pad = 0) { return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y); }
+function visualCollisionRect(item, width, height) {
+  const w = clamp(width, 0.25, GRID), h = clamp(height, 0.25, GRID);
+  const quarterTurn = Math.abs(Number(item.rot || 0)) % 180 === 90;
+  const boundsWidth = quarterTurn ? h : w, boundsHeight = quarterTurn ? w : h;
+  const initialCenterX = Number(item.x || 0) + Number(item.w || 0) / 2;
+  const initialCenterY = Number(item.y || 0) + Number(item.h || 0) / 2;
+  const centerX = clamp(initialCenterX, boundsWidth / 2, GRID - boundsWidth / 2);
+  const centerY = clamp(initialCenterY, boundsHeight / 2, GRID - boundsHeight / 2);
+  return { x: centerX - boundsWidth / 2, y: centerY - boundsHeight / 2, w: boundsWidth, h: boundsHeight };
+}
+function withCollisionRect(item, width, height) { return { ...item, collisionRect: visualCollisionRect(item, width, height) }; }
 
 function roadProfile(rng) {
   const roll = rng();
@@ -43,9 +54,11 @@ function roadRects(profile, rng) {
 function placeItem(rng, occupied, itemFactory, pad = 1, attempts = 120) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     const item = itemFactory();
-    if (occupied.some((o) => overlaps(item, o, pad))) continue;
-    occupied.push(item);
-    return item;
+    const collisionRect = item.collisionRect || item;
+    if (occupied.some((o) => overlaps(collisionRect, o, pad))) continue;
+    occupied.push(collisionRect);
+    const { collisionRect: _collisionRect, ...placedItem } = item;
+    return placedItem;
   }
   return null;
 }
@@ -57,7 +70,10 @@ function placeObstacles(rng, occupied) {
     const item = placeItem(rng, occupied, () => {
       const w = type === "ravine" ? randint(rng, 5, 7) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
       const h = type === "ravine" ? randint(rng, 2, 4) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
-      return { type, sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3) * 90, impassable: true };
+      const item = { type, sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3) * 90, impassable: true };
+      if (type === "cliff") return withCollisionRect(item, w * 2, h * 2);
+      if (type === "crater") return withCollisionRect(item, Math.max(4, w * 1.15), Math.max(4, h * 1.15));
+      return withCollisionRect(item, w, h);
     }, 1);
     if (item) out.push(item);
   }
@@ -97,7 +113,10 @@ function placeVehicles(rng, occupied, roads) {
       }
     }
 
-    return { type, sprite: randint(rng, 0, 2), x, y, w, h, rot, impassable: false };
+    const item = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot, impassable: false };
+    return type === "wreck_car"
+      ? withCollisionRect(item, 2.4, 1.75)
+      : withCollisionRect(item, 4.8, 3.2);
   }, 0, 90);
 
   for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
@@ -108,7 +127,10 @@ function placeVehicles(rng, occupied, roads) {
 function placeTrees(rng, occupied) {
   const out = [];
   for (let i = 0; i < randint(rng, 1, 4); i += 1) {
-    const item = placeItem(rng, occupied, () => ({ type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 }), 0, 70);
+    const item = placeItem(rng, occupied, () => {
+      const tree = { type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 };
+      return withCollisionRect(tree, 3.4, 3.4);
+    }, 0, 70);
     if (item) out.push(item);
   }
   return out;

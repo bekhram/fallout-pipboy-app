@@ -1,0 +1,52 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { buildOpenWastelandSite } from "../src/utils/proceduralWastelandOpen.js";
+
+function visualSize(item) {
+  if (item.type === "cliff") return [item.w * 2, item.h * 2];
+  if (item.type === "crater") return [Math.max(4, item.w * 1.15), Math.max(4, item.h * 1.15)];
+  if (item.type === "dead_tree") return [3.4, 3.4];
+  if (item.type === "wreck_car") return [2.4, 1.75];
+  if (item.type === "wreck_truck") return [4.8, 3.2];
+  return [item.w, item.h];
+}
+
+function visualRect(item) {
+  const [width, height] = visualSize(item);
+  const quarterTurn = Math.abs(Number(item.rot || 0)) % 180 === 90;
+  const w = quarterTurn ? height : width;
+  const h = quarterTurn ? width : height;
+  const initialCenterX = item.x + item.w / 2;
+  const initialCenterY = item.y + item.h / 2;
+  const centerX = Math.max(w / 2, Math.min(24 - w / 2, initialCenterX));
+  const centerY = Math.max(h / 2, Math.min(24 - h / 2, initialCenterY));
+  return { x: centerX - w / 2, y: centerY - h / 2, w, h };
+}
+
+function overlaps(a, b) {
+  return !(
+    a.x + a.w <= b.x ||
+    b.x + b.w <= a.x ||
+    a.y + a.h <= b.y ||
+    b.y + b.h <= a.y
+  );
+}
+
+test("wasteland visual assets do not intersect after scaling and rotation", () => {
+  for (let seed = 0; seed < 250; seed += 1) {
+    const site = buildOpenWastelandSite({ seed: `overlap-${seed}` });
+    const items = [...site.obstacles, ...site.vehicles, ...site.trees]
+      .filter((item) => item.type !== "ravine");
+    const rects = items.map(visualRect);
+
+    for (let left = 0; left < rects.length; left += 1) {
+      for (let right = left + 1; right < rects.length; right += 1) {
+        assert.equal(
+          overlaps(rects[left], rects[right]),
+          false,
+          `seed ${seed}: ${items[left].type} intersects ${items[right].type}`
+        );
+      }
+    }
+  }
+});
