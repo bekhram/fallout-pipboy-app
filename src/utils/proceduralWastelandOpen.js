@@ -19,6 +19,17 @@ function visualCollisionRect(item, width, height) {
   return { x: centerX - w / 2, y: centerY - h / 2, w, h };
 }
 function withCollisionRect(item, width, height) { return { ...item, collisionRect: visualCollisionRect(item, width, height) }; }
+function normalizeTerrain(value) {
+  const terrain = String(value || "wasteland").toLowerCase();
+  return ["wasteland", "forest", "swamp", "ruins"].includes(terrain) ? terrain : "wasteland";
+}
+
+function terrainProfile(terrain) {
+  if (terrain === "forest") return { terrainCount: [0, 1], obstacleCount: [1, 2], carCount: [0, 1], truckCount: [0, 0], treeCount: [9, 15], treeGap: 0.45 };
+  if (terrain === "swamp") return { terrainCount: [3, 5], obstacleCount: [0, 2], carCount: [0, 2], truckCount: [0, 1], treeCount: [2, 5], treeGap: 0.8 };
+  if (terrain === "ruins") return { terrainCount: [3, 5], obstacleCount: [1, 3], carCount: [2, 5], truckCount: [0, 2], treeCount: [0, 2], treeGap: ASSET_GAP };
+  return { terrainCount: [2, 4], obstacleCount: [1, 3], carCount: [1, 4], truckCount: [0, 2], treeCount: [1, 4], treeGap: ASSET_GAP };
+}
 
 function roadProfile(rng) {
   const roll = rng();
@@ -62,12 +73,17 @@ function placeItem(rng, occupied, itemFactory, pad = ASSET_GAP, attempts = 120) 
   return null;
 }
 
-function placeTerrain(rng, occupied) {
+function placeTerrain(rng, occupied, terrain, profile) {
   const out = [];
-  const terrainTypes = ["ruins", "ravine", "lake", "swamp", "hills"];
-  const count = randint(rng, 2, 4);
+  const terrainTypes = terrain === "swamp"
+    ? ["swamp", "swamp", "lake", "ravine"]
+    : terrain === "ruins"
+      ? ["ruins", "ruins", "ruins", "hills", "crater"]
+      : ["ruins", "ravine", "lake", "swamp", "hills"];
+  const count = randint(rng, profile.terrainCount[0], profile.terrainCount[1]);
   for (let i = 0; i < count; i += 1) {
     const type = pick(rng, terrainTypes);
+    if (type === "crater") continue;
     const item = placeItem(rng, occupied, () => {
       let w = 5, h = 5;
       if (type === "ruins") { w = randint(rng, 5, 7); h = randint(rng, 4, 6); }
@@ -82,10 +98,12 @@ function placeTerrain(rng, occupied) {
   return out;
 }
 
-function placeObstacles(rng, occupied) {
+function placeObstacles(rng, occupied, terrain, profile) {
   const out = [];
-  for (let i = 0; i < randint(rng, 1, 3); i += 1) {
-    const type = pick(rng, ["cliff", "rocks", "crater"]);
+  const obstacleTypes = terrain === "forest" ? ["rocks", "rocks", "cliff"] : terrain === "ruins" ? ["rocks", "crater", "crater", "cliff"] : ["cliff", "rocks", "crater"];
+  const count = randint(rng, profile.obstacleCount[0], profile.obstacleCount[1]);
+  for (let i = 0; i < count; i += 1) {
+    const type = pick(rng, obstacleTypes);
     const item = placeItem(rng, occupied, () => {
       const w = type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
       const h = type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
@@ -105,7 +123,7 @@ function getVehicleFootprint(type) {
   return { w: 1, h: 1 };
 }
 
-function placeVehicles(rng, occupied, roads) {
+function placeVehicles(rng, occupied, roads, profile) {
   const out = [];
   const placeVehicle = (type) => placeItem(rng, occupied, () => {
     let road = null;
@@ -125,15 +143,22 @@ function placeVehicles(rng, occupied, roads) {
     const base = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot: 0, impassable: false };
     return type === "wreck_car" ? withCollisionRect(base, 3, 2) : withCollisionRect(base, 5, 3);
   }, ASSET_GAP, 120);
-  for (let i = 0; i < randint(rng, 1, 4); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
-  for (let i = 0; i < randint(rng, 0, 2); i += 1) { const item = placeVehicle("wreck_truck"); if (item) out.push(item); }
+  for (let i = 0; i < randint(rng, profile.carCount[0], profile.carCount[1]); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
+  for (let i = 0; i < randint(rng, profile.truckCount[0], profile.truckCount[1]); i += 1) { const item = placeVehicle("wreck_truck"); if (item) out.push(item); }
   return out;
 }
 
-function placeTrees(rng, occupied) {
+function placeTrees(rng, occupied, profile) {
   const out = [];
-  for (let i = 0; i < randint(rng, 1, 4); i += 1) {
-    const item = placeItem(rng, occupied, () => withCollisionRect({ type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: 0 }, 3.4, 3.4), ASSET_GAP, 120);
+  const targetCount = randint(rng, profile.treeCount[0], profile.treeCount[1]);
+  for (let i = 0; i < targetCount; i += 1) {
+    const item = placeItem(
+      rng,
+      occupied,
+      () => withCollisionRect({ type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: 0 }, 3.15, 3.15),
+      profile.treeGap,
+      240
+    );
     if (item) out.push(item);
   }
   return out;
@@ -152,18 +177,21 @@ function roadSvg(road, surface) {
 }
 
 export function buildOpenWastelandSite(spec = {}) {
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:24x24:open-wasteland-assets-v8`));
-  const profile = roadProfile(rng);
-  const roads = roadRects(profile, rng);
+  const terrainType = normalizeTerrain(spec.terrain || spec.terrainType);
+  const profile = terrainProfile(terrainType);
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${terrainType}:24x24:open-wasteland-assets-v9`));
+  const road = roadProfile(rng);
+  const roads = roadRects(road, rng);
   const occupied = [...roads];
-  const terrain = placeTerrain(rng, occupied);
-  const obstacles = placeObstacles(rng, occupied);
-  const vehicles = placeVehicles(rng, occupied, roads);
-  const trees = placeTrees(rng, occupied);
+  const terrain = placeTerrain(rng, occupied, terrainType, profile);
+  const obstacles = placeObstacles(rng, occupied, terrainType, profile);
+  const vehicles = placeVehicles(rng, occupied, roads, profile);
+  const trees = placeTrees(rng, occupied, profile);
   return {
     cols: GRID,
     rows: GRID,
-    profile,
+    terrainType,
+    profile: { ...road, terrain: terrainType },
     roads,
     terrain,
     obstacles,
