@@ -13,9 +13,8 @@ function visualSize(item) {
 
 function visualRect(item) {
   const [width, height] = visualSize(item);
-  const quarterTurn = Math.abs(Number(item.rot || 0)) % 180 === 90;
-  const w = quarterTurn ? height : width;
-  const h = quarterTurn ? width : height;
+  const w = width;
+  const h = height;
   const initialCenterX = item.x + item.w / 2;
   const initialCenterY = item.y + item.h / 2;
   const centerX = Math.max(w / 2, Math.min(24 - w / 2, initialCenterX));
@@ -38,6 +37,10 @@ test("wasteland assets keep a one-cell gap from roads and each other", () => {
     const items = [...site.obstacles, ...site.vehicles, ...site.trees]
       .filter((item) => item.type !== "ravine");
     const rects = items.map(visualRect);
+
+    for (const item of items) {
+      assert.equal(item.rot, 0, `seed ${seed}: ${item.type} must not rotate`);
+    }
 
     for (let index = 0; index < rects.length; index += 1) {
       for (const road of site.roads) {

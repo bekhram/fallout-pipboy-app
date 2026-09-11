@@ -39,20 +39,13 @@ function assetForItem(item) {
 }
 
 function renderBoxForItem(item) {
-  const rotation = ((Number(item.rot || 0) % 360) + 360) % 360;
-  const swapsAxes = rotation === 90 || rotation === 270;
   const logicalW = Number(item.w || 0);
   const logicalH = Number(item.h || 0);
-  const renderW = swapsAxes ? logicalH : logicalW;
-  const renderH = swapsAxes ? logicalW : logicalH;
-  const cx = Number(item.x || 0) + logicalW / 2;
-  const cy = Number(item.y || 0) + logicalH / 2;
   return {
-    x: cx - renderW / 2,
-    y: cy - renderH / 2,
-    w: renderW,
-    h: renderH,
-    rotation,
+    x: Number(item.x || 0),
+    y: Number(item.y || 0),
+    w: logicalW,
+    h: logicalH,
   };
 }
 
@@ -79,7 +72,7 @@ function SpriteImage({ item, preview = false }) {
         top: `${(box.y / GRID) * 100}%`,
         width: `${(box.w / GRID) * 100}%`,
         height: `${(box.h / GRID) * 100}%`,
-        transform: `rotate(${box.rotation}deg) scale(${scaleX}, ${scaleY})`,
+        transform: `scale(${scaleX}, ${scaleY})`,
         transformOrigin: "50% 50%",
         pointerEvents: "none",
         userSelect: "none",
@@ -122,11 +115,10 @@ function normalizeVisualSize(item) {
 
 function visualBounds(item) {
   const box = renderBoxForItem(item);
-  const swapsAxes = box.rotation === 90 || box.rotation === 270;
   const scaleX = item.type === "wreck_car" ? 1.2 : 1;
   const scaleY = item.type === "wreck_car" ? 1.4 : 1;
-  const finalW = swapsAxes ? box.h * scaleY : box.w * scaleX;
-  const finalH = swapsAxes ? box.w * scaleX : box.h * scaleY;
+  const finalW = box.w * scaleX;
+  const finalH = box.h * scaleY;
   const cx = box.x + box.w / 2;
   const cy = box.y + box.h / 2;
   return { x: cx - finalW / 2, y: cy - finalH / 2, w: finalW, h: finalH };

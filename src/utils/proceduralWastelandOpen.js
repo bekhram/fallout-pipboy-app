@@ -12,13 +12,11 @@ function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") { return `<line x1="${x
 function overlaps(a, b, pad = 0) { return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y); }
 function visualCollisionRect(item, width, height) {
   const w = clamp(width, 0.25, GRID), h = clamp(height, 0.25, GRID);
-  const quarterTurn = Math.abs(Number(item.rot || 0)) % 180 === 90;
-  const boundsWidth = quarterTurn ? h : w, boundsHeight = quarterTurn ? w : h;
   const initialCenterX = Number(item.x || 0) + Number(item.w || 0) / 2;
   const initialCenterY = Number(item.y || 0) + Number(item.h || 0) / 2;
-  const centerX = clamp(initialCenterX, boundsWidth / 2, GRID - boundsWidth / 2);
-  const centerY = clamp(initialCenterY, boundsHeight / 2, GRID - boundsHeight / 2);
-  return { x: centerX - boundsWidth / 2, y: centerY - boundsHeight / 2, w: boundsWidth, h: boundsHeight };
+  const centerX = clamp(initialCenterX, w / 2, GRID - w / 2);
+  const centerY = clamp(initialCenterY, h / 2, GRID - h / 2);
+  return { x: centerX - w / 2, y: centerY - h / 2, w, h };
 }
 function withCollisionRect(item, width, height) { return { ...item, collisionRect: visualCollisionRect(item, width, height) }; }
 
@@ -71,7 +69,7 @@ function placeObstacles(rng, occupied) {
     const item = placeItem(rng, occupied, () => {
       const w = type === "ravine" ? randint(rng, 5, 7) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
       const h = type === "ravine" ? randint(rng, 2, 4) : type === "cliff" ? randint(rng, 4, 6) : randint(rng, 3, 5);
-      const item = { type, sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: randint(rng, 0, 3) * 90, impassable: true };
+      const item = { type, sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: 0, impassable: true };
       if (type === "cliff") return withCollisionRect(item, w * 2, h * 2);
       if (type === "crater") return withCollisionRect(item, Math.max(4, w * 1.15), Math.max(4, h * 1.15));
       return withCollisionRect(item, w, h);
@@ -81,26 +79,23 @@ function placeObstacles(rng, occupied) {
   return out;
 }
 
-function getVehicleFootprint(type, rot) {
-  const vertical = rot === 90 || rot === 270;
-  if (type === "wreck_car") return vertical ? { w: 1, h: 2 } : { w: 2, h: 1 };
-  if (type === "wreck_truck") return vertical ? { w: 2, h: 4 } : { w: 4, h: 2 };
+function getVehicleFootprint(type) {
+  if (type === "wreck_car") return { w: 2, h: 1 };
+  if (type === "wreck_truck") return { w: 4, h: 2 };
   return { w: 1, h: 1 };
 }
 
 function placeVehicles(rng, occupied, roads) {
   const out = [];
   const placeVehicle = (type) => placeItem(rng, occupied, () => {
-    let rot = pick(rng, [0, 90, 180, 270]);
     let road = null;
     const nearRoad = roads.length && rng() < 0.68;
 
     if (nearRoad) {
       road = pick(rng, roads);
-      rot = road.w >= road.h ? pick(rng, [0, 180]) : pick(rng, [90, 270]);
     }
 
-    const { w, h } = getVehicleFootprint(type, rot);
+    const { w, h } = getVehicleFootprint(type);
     let x = randint(rng, 1, GRID - w - 1);
     let y = randint(rng, 1, GRID - h - 1);
 
@@ -114,7 +109,7 @@ function placeVehicles(rng, occupied, roads) {
       }
     }
 
-    const item = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot, impassable: false };
+    const item = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot: 0, impassable: false };
     return type === "wreck_car"
       ? withCollisionRect(item, 2.4, 1.75)
       : withCollisionRect(item, 4.8, 3.2);
@@ -129,7 +124,7 @@ function placeTrees(rng, occupied) {
   const out = [];
   for (let i = 0; i < randint(rng, 1, 4); i += 1) {
     const item = placeItem(rng, occupied, () => {
-      const tree = { type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: randint(rng, 0, 3) * 90 };
+      const tree = { type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: 0 };
       return withCollisionRect(tree, 3.4, 3.4);
     }, ASSET_GAP, 120);
     if (item) out.push(item);
