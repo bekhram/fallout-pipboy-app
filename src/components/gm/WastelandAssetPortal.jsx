@@ -29,7 +29,6 @@ import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
 const OVERLAP_PAD = 0.08;
-const BACKGROUNDS = [wastelandBg, swampBg, urbanRuinsBg];
 const ASSET_VARIANTS = {
   cliff: [cliff1, cliff2, cliff3],
   rocks: [rocks1, rocks2, rocks3],
@@ -44,22 +43,12 @@ const ASSET_VARIANTS = {
   hills: [hills1],
 };
 
-function hashSeed(value) {
-  const s = String(value ?? "1");
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i += 1) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
 function backgroundForSpec(spec) {
-  const explicit = String(spec?.backgroundType || spec?.terrainType || "").toLowerCase();
-  if (explicit.includes("swamp")) return swampBg;
-  if (explicit.includes("urban") || explicit.includes("ruin") || explicit.includes("city")) return urbanRuinsBg;
-  if (explicit.includes("wasteland") || explicit.includes("desert")) return wastelandBg;
-  return BACKGROUNDS[hashSeed(spec?.seed) % BACKGROUNDS.length];
+  const terrain = String(spec?.terrain || spec?.terrainType || spec?.backgroundType || "wasteland").toLowerCase();
+  if (terrain === "swamp") return swampBg;
+  if (terrain === "ruins") return urbanRuinsBg;
+  // Forest intentionally uses the wasteland ground texture; tree density is handled by the site generator.
+  return wastelandBg;
 }
 
 function assetForItem(item) {
@@ -191,8 +180,8 @@ function SpriteImage({ item, preview = false }) {
 }
 
 export function WastelandAssetLayer({ spec, preview = false }) {
-  const site = useMemo(() => buildOpenWastelandSite({ ...spec, cols: GRID, rows: GRID }), [spec?.seed, spec?.backgroundType, spec?.terrainType]);
-  const background = useMemo(() => backgroundForSpec(spec), [spec?.seed, spec?.backgroundType, spec?.terrainType]);
+  const site = useMemo(() => buildOpenWastelandSite({ ...spec, cols: GRID, rows: GRID }), [spec?.seed, spec?.terrain, spec?.backgroundType, spec?.terrainType]);
+  const background = useMemo(() => backgroundForSpec(spec), [spec?.terrain, spec?.backgroundType, spec?.terrainType]);
   const items = useMemo(() => {
     const normalized = [
       ...(site.terrain || []).map(normalizeVisualSize),
@@ -237,7 +226,7 @@ export default function WastelandAssetPortal({ session }) {
     };
     findTarget();
     return () => { cancelled = true; setTarget(null); };
-  }, [scene?.sceneId, scene?.backgroundName, spec?.seed, spec?.type]);
+  }, [scene?.sceneId, scene?.backgroundName, spec?.seed, spec?.type, spec?.terrain]);
 
   if (!target || !spec || String(spec.type || "") !== "wasteland") return null;
   return createPortal(<WastelandAssetLayer spec={spec} />, target);
