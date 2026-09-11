@@ -92,11 +92,10 @@ function Status({ token, session }) {
 }
 
 function effectiveCols(scene) {
-  const spec = scene?.environment?.proceduralMapSpec;
-  const procedural = Number(spec?.cols);
-  if (Number.isFinite(procedural) && procedural > 0) return Math.floor(procedural);
   const sceneCols = Number(scene?.cols);
-  return Number.isFinite(sceneCols) && sceneCols > 0 ? Math.floor(sceneCols) : 12;
+  if (Number.isFinite(sceneCols) && sceneCols > 0) return Math.floor(sceneCols);
+  const procedural = Number(scene?.environment?.proceduralMapSpec?.cols);
+  return Number.isFinite(procedural) && procedural > 0 ? Math.floor(procedural) : 12;
 }
 
 function bindTargetsToTokens(scene, targets) {
