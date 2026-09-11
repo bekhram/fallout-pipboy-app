@@ -1,0 +1,50 @@
+.tactical-enemy-card--accent {
+  border-color: color-mix(in srgb, var(--enemy-accent) 72%, transparent) !important;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--enemy-accent) 13%, transparent), transparent 58%),
+    rgba(0, 0, 0, .2) !important;
+  box-shadow:
+    inset 4px 0 0 var(--enemy-accent),
+    inset 0 0 22px color-mix(in srgb, var(--enemy-accent) 7%, transparent),
+    0 0 9px color-mix(in srgb, var(--enemy-accent) 8%, transparent);
+}
+
+.tactical-enemy-card--accent .tactical-enemy-avatar {
+  border-color: var(--enemy-accent) !important;
+  color: var(--enemy-accent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--enemy-accent) 20%, transparent),
+    0 0 14px color-mix(in srgb, var(--enemy-accent) 28%, transparent);
+}
+
+.tactical-enemy-card--accent .tactical-enemy-card__title button,
+.tactical-enemy-card--accent .tactical-enemy-stats strong {
+  color: var(--enemy-accent);
+}
+
+.tactical-enemy-card--accent.is-selected {
+  border-color: var(--enemy-accent) !important;
+  box-shadow:
+    inset 5px 0 0 var(--enemy-accent),
+    inset 0 0 28px color-mix(in srgb, var(--enemy-accent) 11%, transparent),
+    0 0 16px color-mix(in srgb, var(--enemy-accent) 24%, transparent) !important;
+}
+
+.tactical-grid .gm-session-token.is-card-focus-pulse {
+  animation: tactical-token-card-focus 1.35s ease-out;
+  z-index: 45 !important;
+}
+
+@keyframes tactical-token-card-focus {
+  0% {
+    filter: brightness(1.75);
+    box-shadow: 0 0 8px currentColor, 0 0 22px currentColor, 0 0 42px currentColor;
+  }
+  45% {
+    filter: brightness(1.35);
+    box-shadow: 0 0 12px currentColor, 0 0 30px currentColor;
+  }
+  100% {
+    filter: none;
+  }
+}
