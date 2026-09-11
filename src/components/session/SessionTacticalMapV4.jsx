@@ -26,6 +26,7 @@ import truck1 from "../../assets/wasteland/objects/truck-1.png";
 import truck2 from "../../assets/wasteland/objects/truck-2.png";
 import truck3 from "../../assets/wasteland/objects/truck-3.png";
 import "../gm/tacticalFootprint3.css";
+import "./playerWastelandFix.css";
 
 const IMAGE_CACHE = new Map();
 const COMMON_ROCKS = [rocks1, rocks2, rocks3];
