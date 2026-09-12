@@ -6,6 +6,7 @@ import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import GmUnifiedTokenManagerV9 from "./GmUnifiedTokenManagerV9.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import GmTokenPointerGuard from "./GmTokenPointerGuard.jsx";
+import GmTokenColorAndFocusEnhancer from "./GmTokenColorAndFocusEnhancer.jsx";
 import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
 import BattlemapSharedLayer from "./BattlemapSharedLayer.jsx";
 import GmBattlemapTools from "./GmBattlemapTools.jsx";
@@ -106,6 +107,7 @@ export default function GmSessionMap(props) {
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmZoomDrawerToggle />
         {activeTab === "battle" ? <GmBattlemapTools session={session} /> : null}
+        <GmTokenColorAndFocusEnhancer session={session} />
         <GmTokenStatusLayer session={session} />
         <GmTokenPointerGuard />
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV9 session={session} /></div>
