@@ -210,6 +210,7 @@ function routePlan(spec) {
     return {
       kind,
       roads: [],
+      footprints: [rail],
       reserved: [expandRect(rail, RAIL_HOUSE_CLEARANCE)],
     };
   }
@@ -222,22 +223,23 @@ function routePlan(spec) {
     rows: GRID,
     reservedRects: [],
   });
+  const roads = [...(wastelandSite.roads || [])];
 
   return {
     kind,
-    roads: [...(wastelandSite.roads || [])],
-    reserved: (wastelandSite.roads || []).map((road) =>
-      expandRect(road, ROAD_HOUSE_CLEARANCE)
-    ),
+    roads,
+    footprints: roads,
+    reserved: roads.map((road) => expandRect(road, ROAD_HOUSE_CLEARANCE)),
   };
 }
 
-function houseCandidates(blocked) {
+function houseCandidates(blocked, border = HOUSE_BORDER) {
+  const safeBorder = clamp(Math.floor(border), 0, Math.floor((GRID - HOUSE_CELLS) / 2));
   const out = [];
-  const max = GRID - HOUSE_CELLS - HOUSE_BORDER;
+  const max = GRID - HOUSE_CELLS - safeBorder;
 
-  for (let y = HOUSE_BORDER; y <= max; y += 1) {
-    for (let x = HOUSE_BORDER; x <= max; x += 1) {
+  for (let y = safeBorder; y <= max; y += 1) {
+    for (let x = safeBorder; x <= max; x += 1) {
       const candidate = { x, y, w: HOUSE_CELLS, h: HOUSE_CELLS };
       if (blocked.some((rect) => overlaps(candidate, rect))) continue;
       out.push(candidate);
@@ -247,8 +249,8 @@ function houseCandidates(blocked) {
   return out;
 }
 
-function findHouseSet(rng, blocked, count) {
-  const candidates = shuffled(rng, houseCandidates(blocked));
+function findHouseSet(rng, blocked, count, border = HOUSE_BORDER) {
+  const candidates = shuffled(rng, houseCandidates(blocked, border));
   const chosen = [];
   let guard = 0;
 
@@ -272,6 +274,27 @@ function findHouseSet(rng, blocked, count) {
   return search(0) ? [...chosen] : null;
 }
 
+function findRelaxedHouseSet(terrainSeed, route, requestedHouseCount) {
+  const fallbackRng = mulberry32(hashSeed(`${terrainSeed}:settlement-house-fallback-v1`));
+  const routeFootprints = route.footprints || [];
+
+  for (let count = requestedHouseCount; count >= MIN_HOUSES; count -= 1) {
+    const result = findHouseSet(fallbackRng, routeFootprints, count, 0);
+    if (result?.length >= MIN_HOUSES) return result;
+  }
+
+  // Final deterministic scan. This keeps the hard guarantee of at least two
+  // houses while still forbidding intersections with the actual road/rail.
+  const placements = [];
+  for (const candidate of houseCandidates(routeFootprints, 0)) {
+    if (placements.every((house) => !overlaps(candidate, house, HOUSE_GAP))) {
+      placements.push(candidate);
+      if (placements.length >= MIN_HOUSES) break;
+    }
+  }
+  return placements;
+}
+
 function createSettlementSite(normalized) {
   const terrainSeed = normalized.terrainSeed || proceduralTerrainSeed(normalized.seed, normalized.terrain);
   const rng = mulberry32(hashSeed(`${terrainSeed}:settlement-houses-v4`));
@@ -285,14 +308,7 @@ function createSettlementSite(normalized) {
   }
 
   if (!placements || placements.length < MIN_HOUSES) {
-    const fallbackCandidates = houseCandidates(route.reserved);
-    placements = [];
-    for (const candidate of fallbackCandidates) {
-      if (placements.every((house) => !overlaps(candidate, house, 0))) {
-        placements.push(candidate);
-        if (placements.length >= MIN_HOUSES) break;
-      }
-    }
+    placements = findRelaxedHouseSet(terrainSeed, route, requestedHouseCount);
   }
 
   const orderedPlacements = sortPlacementsReadingOrder(placements || []);
