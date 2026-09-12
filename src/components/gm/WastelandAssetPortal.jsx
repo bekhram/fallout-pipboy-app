@@ -39,6 +39,15 @@ const OVERLAP_PAD = 0.08;
 const ROAD_TILE = 8;
 const ROAD_STEP = 5.6;
 const ROAD_CLEARANCE = 0.8;
+const ROAD_VISUAL_SCALE = {
+  straight: 1,
+  damaged: 1,
+  "dead-end": 1,
+  cross: 0.9,
+  "t-junction": 0.82,
+  "curve-soft": 0.82,
+  "curve-sharp": 0.8,
+};
 
 const ASSET_VARIANTS = {
   cliff: [cliff1, cliff2, cliff3], rocks: [rocks1, rocks2, rocks3], crater: [crater1, crater2, crater3],
@@ -117,7 +126,7 @@ function lineTiles({ axis, from, to, fixed, seed, damagedEvery = 0, skipCenter =
   for (let along = start + ROAD_TILE / 2; along <= end - ROAD_TILE / 2 + 0.01; along += ROAD_STEP) {
     const cx = axis === "v" ? fixed : along;
     const cy = axis === "v" ? along : fixed;
-    if (skipCenter && Math.hypot(cx - skipCenter.x, cy - skipCenter.y) < ROAD_TILE * 0.62) { i += 1; continue; }
+    if (skipCenter && Math.hypot(cx - skipCenter.x, cy - skipCenter.y) < ROAD_TILE * 0.45) { i += 1; continue; }
     const pieceSeed = hashValue(`${seed}:${i}`);
     const damaged = damagedEvery > 0 && pieceSeed % damagedEvery === 0;
     out.push(centeredRoadAsset(damaged ? roadDamaged : roadStraight, damaged ? "damaged" : "straight", cx, cy, axis === "v" ? 0 : 90));
@@ -130,7 +139,7 @@ function lineTiles({ axis, from, to, fixed, seed, damagedEvery = 0, skipCenter =
     if (Math.abs(lastAlong - tailCenter) > 1.25) {
       const cx = axis === "v" ? fixed : tailCenter;
       const cy = axis === "v" ? tailCenter : fixed;
-      if (!skipCenter || Math.hypot(cx - skipCenter.x, cy - skipCenter.y) >= ROAD_TILE * 0.62) {
+      if (!skipCenter || Math.hypot(cx - skipCenter.x, cy - skipCenter.y) >= ROAD_TILE * 0.45) {
         out.push(centeredRoadAsset(roadStraight, "straight", cx, cy, axis === "v" ? 0 : 90));
       }
     }
@@ -153,7 +162,7 @@ function intersectionInfo(roads) {
 function makeCrossRoads(roads, seed) {
   const info = intersectionInfo(roads);
   if (!info) return [];
-  const { vertical, horizontal, center } = info;
+  const { center } = info;
   const useT = seed % 4 === 0;
   const rotation = useT ? pickRotation(seed) : 0;
   const parts = [centeredRoadAsset(useT ? roadTJunction : roadCross, useT ? "t-junction" : "cross", center.x, center.y, rotation)];
@@ -164,7 +173,6 @@ function makeCrossRoads(roads, seed) {
   const right = lineTiles({ axis: "h", from: center.x - ROAD_TILE / 2, to: GRID, fixed: center.y, seed: `${seed}:right`, skipCenter: center });
 
   if (!useT) return [...top, ...bottom, ...left, ...right, ...parts];
-  // Default T asset connects left + right + bottom. Rotate the missing arm with the asset.
   const missingArm = rotation === 0 ? "top" : rotation === 90 ? "right" : rotation === 180 ? "bottom" : "left";
   return [
     ...(missingArm === "top" ? [] : top),
@@ -189,7 +197,6 @@ function makeBentSingleRoad(road, seed) {
   const curve = variant === 1 ? roadCurveSoft : roadCurveSharp;
   const curveName = variant === 1 ? "curve-soft" : "curve-sharp";
 
-  // Asset default connectors are bottom + right.
   let rotation = 0;
   if (fromTop && turnRight) rotation = 270;
   else if (fromTop && !turnRight) rotation = 180;
@@ -237,11 +244,12 @@ function removeRoadOverlaps(items, roadAssets) {
   });
 }
 function RoadAsset({ road }) {
+  const visualScale = ROAD_VISUAL_SCALE[road.name] ?? 1;
   return <img src={road.src} alt="" draggable={false} data-wasteland-road={road.name} style={{
     position: "absolute",
     left: `${road.x / GRID * 100}%`, top: `${road.y / GRID * 100}%`,
     width: `${ROAD_TILE / GRID * 100}%`, height: `${ROAD_TILE / GRID * 100}%`,
-    objectFit: "contain", transform: `rotate(${road.rotation || 0}deg)`, transformOrigin: "50% 50%",
+    objectFit: "contain", transform: `rotate(${road.rotation || 0}deg) scale(${visualScale})`, transformOrigin: "50% 50%",
     pointerEvents: "none", userSelect: "none", filter: "drop-shadow(0 2px 2px rgba(0,0,0,.35))",
   }}/>;
 }
