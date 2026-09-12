@@ -1377,7 +1377,7 @@ function removeRoadOverlaps(
  * ============================================================
  */
 
-export function RoadAsset({ road, fullSize = false, visualScale = 1 }) {
+export function RoadAsset({ road, fullSize = false, visualScale = 1.35 }) {
   const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
   const config = ROAD_VISUAL_CONFIG[road.name] || {
     scale: 1,
@@ -1412,8 +1412,8 @@ export function RoadAsset({ road, fullSize = false, visualScale = 1 }) {
         position: "absolute",
         left: `${(left / GRID) * 100}%`,
         top: `${(top / GRID) * 100}%`,
-        width: `${((fullSize ? visualSize : width) / GRID) * 100}%`,
-        height: `${((fullSize ? visualSize : height) / GRID) * 100}%`,
+        width: `${((fullSize ? visualSize : width * visualScale) / GRID) * 100}%`,
+        height: `${((fullSize ? visualSize : height * visualScale) / GRID) * 100}%`,
         objectFit: fullSize ? "contain" : "fill",
         transform: fullSize
           ? `rotate(${road.rotation || 0}deg)`

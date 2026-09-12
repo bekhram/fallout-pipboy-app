@@ -50,8 +50,6 @@ export function SettlementAssetLayer({ spec, preview = false }) {
           <RoadAsset
             key={`${road.name}-${road.centerX}-${road.centerY}-${index}`}
             road={road}
-            fullSize
-            visualScale={1.35}
           />
         ))}
       </div>
