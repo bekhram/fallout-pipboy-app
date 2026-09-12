@@ -2,6 +2,11 @@ import { getSelectedWeaponMods, getWeaponModGroups, applyWeaponMods } from "../d
 import { applyNpcRank, normalizeWeaponAttack, parseAttackText } from "./npcCombat.js";
 import { loadNpcWeaponDatabase } from "./npcWeaponDatabase.js";
 import { buildProceduralNpcLevelStats } from "./proceduralNpcLeveling.js";
+import {
+  applyCombatBuffsToAttack,
+  applyCombatBuffsToStats,
+  generateNpcCombatBuffs,
+} from "./combatBuffs.js";
 
 function num(value, fallback = 0) {
   const parsed = Number(value);
@@ -253,6 +258,48 @@ function buildGeneratedAttack(weapon, profile, id) {
   };
 }
 
+function combatAttackLine(attack = {}) {
+  const parts = [
+    `${attack.attribute || "BODY"} + ${attack.skill || "Combat"} (TN ${num(attack.targetNumber, 0)})`,
+    `${num(attack.damageDice, 0)} CD ${attack.effects ? `${attack.effects} ` : ""}${attack.damageType || "Physical"} damage`,
+  ];
+  if (attack.range) parts.push(`Range ${attack.range}`);
+  if (num(attack.rate, 0) > 0) parts.push(`FR ${integer(attack.rate, 0)}`);
+  if (attack.qualities) parts.push(attack.qualities);
+  return `• ${String(attack.name || "Attack").toUpperCase()} — ${parts.join(", ")}`;
+}
+
+function buildBuffedCombat(attacksText, customAttacks = [], weapons = [], buffs = []) {
+  if (!buffs.length) {
+    return {
+      attacks: attacksText || "",
+      customAttacks: Array.isArray(customAttacks) ? customAttacks : [],
+      weapons: Array.isArray(weapons) ? weapons : [],
+    };
+  }
+
+  const parsed = parseAttackText(attacksText || "");
+  const structured = [
+    ...parsed,
+    ...(Array.isArray(customAttacks) ? customAttacks : []),
+  ];
+  const unique = [];
+  const seen = new Set();
+  structured.forEach((attack, index) => {
+    const key = `${normalizeName(attack?.name)}:${normalizeName(attack?.skill)}:${num(attack?.damageDice, 0)}` || `attack-${index}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    unique.push(applyCombatBuffsToAttack(attack, buffs));
+  });
+
+  const buffedWeapons = (Array.isArray(weapons) ? weapons : []).map((weapon) => applyCombatBuffsToAttack(weapon, buffs));
+  return {
+    attacks: unique.map(combatAttackLine).join("\n"),
+    customAttacks: unique,
+    weapons: buffedWeapons,
+  };
+}
+
 export async function buildProceduralNpcEquipment(entry = {}, enemy = {}, levelStats = {}, context = {}) {
   const steps = Math.max(0, integer(levelStats?.levelEquipmentUpgradeSteps, 0));
   if (String(entry?.statKind || "").toLowerCase() !== "character" || steps <= 0) {
@@ -302,6 +349,7 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
   const leveled = buildProceduralNpcLevelStats(entry, enemy);
   const equipment = await buildProceduralNpcEquipment(entry, enemy, leveled, context);
   const baseXp = Math.max(1, num(enemy?.baseXp ?? entry?.baseXp ?? entry?.xp, enemy?.xp || 10));
+  const rank = enemy?.rank || "standard";
   const base = {
     ...leveled,
     xp: baseXp,
@@ -322,20 +370,42 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     baseSize: 1,
   };
 
+  const ranked = applyNpcRank(base, {
+    rank,
+    specialFeatureId: enemy?.specialFeatureId || "",
+    specialFeature: enemy?.specialFeature || "",
+    legendaryAbilityId: enemy?.legendaryAbilityId || "",
+    legendaryAbility: enemy?.legendaryAbility || "",
+    legendaryRewardType: enemy?.legendaryRewardType || "",
+    legendaryReward: enemy?.legendaryReward || "",
+  });
+
+  const buffSeed = [
+    context.stamp || "",
+    context.locationId || "",
+    context.roomId || "",
+    context.poiId || "",
+    entry?.id || entry?.name || "npc",
+    leveled?.level || enemy?.level || 1,
+    rank,
+  ].join(":");
+  const combatBuffs = generateNpcCombatBuffs(rank, buffSeed, {
+    ids: Array.isArray(enemy?.combatBuffIds) ? enemy.combatBuffIds : [],
+  });
+  const combat = buildBuffedCombat(ranked.attacks, ranked.customAttacks, ranked.weapons, combatBuffs);
+  const buffed = applyCombatBuffsToStats({
+    ...ranked,
+    attacks: combat.attacks,
+    customAttacks: combat.customAttacks,
+    weapons: combat.weapons,
+  }, combatBuffs);
+
   return {
-    ...applyNpcRank(base, {
-      rank: enemy?.rank || "standard",
-      specialFeatureId: enemy?.specialFeatureId || "",
-      specialFeature: enemy?.specialFeature || "",
-      legendaryAbilityId: enemy?.legendaryAbilityId || "",
-      legendaryAbility: enemy?.legendaryAbility || "",
-      legendaryRewardType: enemy?.legendaryRewardType || "",
-      legendaryReward: enemy?.legendaryReward || "",
-    }),
+    ...buffed,
     generatedEncounterSeed: context.stamp || "",
     ...(context.roomId ? { generatedRoomId: context.roomId } : {}),
     ...(context.poiId ? { generatedPoiId: context.poiId } : {}),
-    generatedEncounterRank: enemy?.rank || "standard",
+    generatedEncounterRank: rank,
     generatedEnemyGroup: enemy?.enemyGroup || "",
   };
 }
