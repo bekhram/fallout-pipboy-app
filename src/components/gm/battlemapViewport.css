@@ -2,6 +2,10 @@
   position: relative !important;
 }
 
+.gm-tactical-map-core .gm-session-map.tactical-map.has-battlemap-controls .battlemap-scroll-grid {
+  margin-top: 36px !important;
+}
+
 .battlemap-scroll-grid {
   width: 100% !important;
   min-width: 0 !important;
@@ -36,8 +40,6 @@
   min-height: var(--battlemap-cell) !important;
 }
 
-/* Keep procedural objects on the background plane. The grid cells, borders,
-   tokens and interactions remain in the layer above it. */
 .battlemap-scroll-grid > .gm-wasteland-assets:not(.is-preview) {
   width: var(--battlemap-world-width, 100%) !important;
   height: var(--battlemap-world-height, 100%) !important;
@@ -84,14 +86,14 @@
   right: 12px;
   display: flex;
   align-items: center;
-  gap: 3px;
-  max-width: min(330px, calc(100% - 24px));
-  min-height: 30px;
-  padding: 3px;
+  gap: 2px;
+  max-width: min(250px, calc(100% - 24px));
+  min-height: 24px;
+  padding: 2px;
   border: 1px solid color-mix(in srgb, currentColor 48%, transparent);
   background: color-mix(in srgb, var(--pip-bg, #071008) 94%, transparent);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.36),
-    inset 0 0 10px color-mix(in srgb, currentColor 5%, transparent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.34),
+    inset 0 0 8px color-mix(in srgb, currentColor 5%, transparent);
   backdrop-filter: blur(7px);
 }
 
@@ -108,30 +110,29 @@
 }
 
 .battlemap-control-btn {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   padding: 0;
-  font-size: 1rem;
+  font-size: .82rem;
 }
 
 .battlemap-zoom-slider {
-  width: clamp(68px, 12vw, 110px);
+  width: clamp(56px, 10vw, 90px);
   accent-color: currentColor;
 }
 
-.battlemap-zoom-value,
-.battlemap-fit-btn,
-.battlemap-focus-btn {
-  min-height: 26px;
-  padding: 3px 6px;
-  font-size: 0.58rem;
-  letter-spacing: 0.04em;
+.battlemap-zoom-value {
+  min-height: 22px;
+  min-width: 38px;
+  padding: 2px 5px;
+  font-size: 0.52rem;
+  letter-spacing: 0.03em;
+  pointer-events: none;
 }
 
+.battlemap-fit-btn,
 .battlemap-focus-btn {
-  width: 27px;
-  padding: 0;
-  font-size: 0.75rem;
+  display: none !important;
 }
 
 .battlemap-grid-presets {
@@ -156,6 +157,10 @@
 }
 
 @media (max-width: 780px) {
+  .gm-tactical-map-core .gm-session-map.tactical-map.has-battlemap-controls .battlemap-scroll-grid {
+    margin-top: 32px !important;
+  }
+
   .gm-tactical-map-core .battlemap-scroll-grid {
     height: clamp(280px, 58svh, 600px) !important;
     min-height: min(320px, 52svh) !important;
@@ -167,35 +172,29 @@
   }
 
   .battlemap-view-controls {
-    top: calc(var(--battlemap-grid-top, 0px) + 6px);
-    right: 8px;
-    gap: 3px;
-    min-height: 40px;
-    padding: 3px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.42);
+    top: calc(var(--battlemap-grid-top, 0px) + 4px);
+    right: 6px;
+    gap: 2px;
+    min-height: 22px;
+    padding: 2px;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.4);
   }
 
   .battlemap-control-btn {
-    width: 38px;
-    height: 38px;
-    font-size: 1rem;
+    width: 24px;
+    height: 24px;
+    font-size: .82rem;
   }
 
   .battlemap-zoom-slider {
-    width: 64px;
+    width: 58px;
   }
 
-  .battlemap-zoom-value,
-  .battlemap-fit-btn,
-  .battlemap-focus-btn {
-    min-height: 38px;
-    padding: 3px 7px;
-    font-size: 0.54rem;
-  }
-
-  .battlemap-focus-btn {
-    width: 38px;
-    font-size: 0.85rem;
+  .battlemap-zoom-value {
+    min-height: 24px;
+    min-width: 36px;
+    padding: 2px 4px;
+    font-size: 0.48rem;
   }
 
   .battlemap-scroll-grid .gm-session-token.is-selected {
@@ -211,8 +210,8 @@
   }
 
   .battlemap-view-controls {
-    right: 6px;
-    max-width: calc(100% - 12px);
+    right: 4px;
+    max-width: calc(100% - 8px);
   }
 
   .battlemap-zoom-slider {
@@ -220,7 +219,7 @@
   }
 
   .battlemap-zoom-value {
-    min-width: 42px;
+    min-width: 34px;
   }
 }
 
