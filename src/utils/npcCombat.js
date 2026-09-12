@@ -5,8 +5,11 @@ export const NPC_RANKS = ["minion", "standard", "special", "legendary"];
 export const NPC_RANK_RULES = {
   minion: { hpMultiplier: 0, xpMultiplier: 1 / 3, defenseMultiplier: 1, damageMultiplier: 1, resistanceBonus: 0 },
   standard: { hpMultiplier: 1, xpMultiplier: 1, defenseMultiplier: 1, damageMultiplier: 1, resistanceBonus: 0 },
-  special: { hpMultiplier: 2, xpMultiplier: 2, defenseMultiplier: 2, damageMultiplier: 2, resistanceBonus: 2 },
-  legendary: { hpMultiplier: 3, xpMultiplier: 3, defenseMultiplier: 3, damageMultiplier: 3, resistanceBonus: 5 },
+  // Special/Legendary keep the project's extra Defense and DR scaling, but rank itself
+  // no longer multiplies attack damage. Damage grows through NPC level progression,
+  // BODY/MIND or SPECIAL/skills, and actual weapon/mod upgrades instead.
+  special: { hpMultiplier: 2, xpMultiplier: 2, defenseMultiplier: 2, damageMultiplier: 1, resistanceBonus: 2 },
+  legendary: { hpMultiplier: 3, xpMultiplier: 3, defenseMultiplier: 3, damageMultiplier: 1, resistanceBonus: 5 },
 };
 
 export function normalizeNpcRank(value) {
