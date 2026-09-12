@@ -6,7 +6,7 @@ import {
   generateProceduralEncounterSummary,
   generateProceduralRoomData,
 } from "../../utils/proceduralRoomContent.js";
-import { applyNpcRank } from "../../utils/npcCombat.js";
+import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStats.js";
 import { cellsInsideRoom, getProceduralRoomBounds } from "../../utils/proceduralRoomLayout.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
 import "./gmProceduralRoomDescriptions.css";
@@ -25,7 +25,7 @@ const COPY = {
     difficulties: { easy: "Лёгкая", standard: "Обычная", hard: "Сложная", deadly: "Смертельно опасная" },
   },
   uk: {
-    title: "[ ОПИС КІМНАТ ]", subtitle: "Генерується з того самого seed, що й мапа", noMap: "Застосуйте згенеровану мапу, щоб побачити вміст кімнат.", spawn: "РОЗСТАВИТИ ВОРОГІВ", spawning: "РОЗСТАНОВКА...", noEnemies: "У цьому варіанті вороги не згенеровані.", startLive: "Спочатку запустіть саме цю сцену як LIVE.", already: "Ворогів для цього seed і параметрів групи вже розставлено.", spawned: (count) => `Розставлено токенів ворогів: ${count}.`, failed: "Частину токенів ворогів не вдалося розмістити.",
+    title: "[ ОПИС КІМНАТ ]", subtitle: "Генерується з того самого seed, що й мапа", noMap: "Застосуйте згенеровану мапу, щоб побачити вміст кімнат.", spawn: "РОЗСТАВИТИ ВОРОГІВ", spawning: "РОЗСТАНОВКА...", noEnemies: "У цьому варіанті вороги не сгенерированы.", startLive: "Спочатку запустіть саме цю сцену як LIVE.", already: "Ворогів для цього seed і параметрів групи вже розставлено.", spawned: (count) => `Розставлено токенів ворогів: ${count}.`, failed: "Частину токенів ворогів не вдалося розмістити.",
     balance: "ЕНКАУНТЕР", party: "Група", enemies: "Ворогів", targetXp: "Цільовий XP", actualXp: "XP ворогів", perPlayer: "XP / гравця", difficulty: "Складність", group: "Група ворогів", scaled: "Підтягнуто",
     minion: "Міньйон", standard: "Звичайний", special: "Особливий", legendary: "Легендарний",
     difficulties: { easy: "Легка", standard: "Звичайна", hard: "Складна", deadly: "Смертельно небезпечна" },
@@ -54,11 +54,6 @@ function normalizeName(value) {
   return String(value || "").toLowerCase().replace(/[’'`]/g, "").replace(/[^a-z0-9а-яёіїєґ]+/gi, " ").replace(/\s+/g, " ").trim();
 }
 
-function number(value, fallback = 0) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
-
 function findBestiaryEntry(enemyName) {
   const needle = normalizeName(enemyName);
   if (!needle) return null;
@@ -68,82 +63,6 @@ function findBestiaryEntry(enemyName) {
     const haystack = normalizeName(`${entry?.name || ""} ${entry?.id || ""} ${entry?.creatureType || ""} ${(entry?.tags || []).join(" ")}`);
     return haystack.includes(needle) || needle.includes(normalizeName(entry?.name));
   }) || null;
-}
-
-function scaleAttackText(value, attackBonus = 0, damageBonus = 0) {
-  const attack = Math.max(0, Math.floor(number(attackBonus, 0)));
-  const damage = Math.max(0, Math.floor(number(damageBonus, 0)));
-  if (!attack && !damage) return String(value || "");
-  return String(value || "").split(/\n/).map((line) => {
-    let next = line;
-    if (attack) {
-      next = next.replace(/\bTN\s*(\d+)\b/gi, (_, raw) => `TN ${Math.min(15, Number(raw) + attack)}`);
-    }
-    if (damage) {
-      next = next.replace(/\b(\d+)\s*(CD|DC|КУ)\b/gi, (_, raw, unit) => `${Number(raw) + damage} ${unit}`);
-    }
-    return next;
-  }).join("\n");
-}
-
-function makeStats(entry, enemy, stamp, roomId) {
-  const baseHp = Math.max(1, number(entry?.baseMaxHp ?? entry?.maxHp ?? entry?.hp, 6));
-  const baseDefense = Math.max(0, number(entry?.baseDefense ?? entry?.defense, 1));
-  const baseXp = Math.max(1, number(enemy?.baseXp ?? entry?.baseXp ?? entry?.xp, enemy?.xp || 10));
-  const baseLevel = Math.max(1, number(enemy?.baseLevel ?? enemy?.originalLevel ?? entry?.level, 1));
-  const effectiveLevel = Math.max(baseLevel, number(enemy?.level, baseLevel));
-  const levelDifference = Math.max(0, number(enemy?.levelScaleDifference, effectiveLevel - baseLevel));
-  const attackBonus = Math.max(0, number(enemy?.levelAttackBonus, Math.floor(levelDifference / 2)));
-  const damageBonus = Math.max(0, number(enemy?.levelDamageBonus, Math.floor(levelDifference / 2)));
-  const originalAttacks = entry?.attacks || "";
-  const base = {
-    level: effectiveLevel,
-    baseLevel,
-    originalLevel: baseLevel,
-    levelScaleDifference: levelDifference,
-    levelAttackBonus: attackBonus,
-    levelDamageBonus: damageBonus,
-    levelScaled: effectiveLevel > baseLevel,
-    hp: baseHp,
-    maxHp: baseHp,
-    baseMaxHp: baseHp,
-    defense: baseDefense,
-    baseDefense,
-    xp: baseXp,
-    baseXp,
-    initiative: entry?.initiative || "",
-    creatureType: entry?.creatureType || enemy?.type || "",
-    body: entry?.body || "",
-    mind: entry?.mind || "",
-    melee: entry?.melee || "",
-    guns: entry?.guns || "",
-    other: entry?.other || "",
-    attacks: scaleAttackText(originalAttacks, attackBonus, damageBonus),
-    originalAttacks,
-    abilities: entry?.abilities || "",
-    tactics: entry?.tactics || "",
-    loot: entry?.loot || "",
-    drBlock: entry?.drBlock || "",
-    footprint: 1,
-    size: 1,
-    baseSize: 1,
-  };
-
-  return {
-    ...applyNpcRank(base, {
-      rank: enemy?.rank || "standard",
-      specialFeatureId: enemy?.specialFeatureId || "",
-      specialFeature: enemy?.specialFeature || "",
-      legendaryAbilityId: enemy?.legendaryAbilityId || "",
-      legendaryAbility: enemy?.legendaryAbility || "",
-      legendaryRewardType: enemy?.legendaryRewardType || "",
-      legendaryReward: enemy?.legendaryReward || "",
-    }),
-    generatedEncounterSeed: stamp,
-    generatedRoomId: roomId,
-    generatedEncounterRank: enemy?.rank || "standard",
-    generatedEnemyGroup: enemy?.enemyGroup || "",
-  };
 }
 
 function occupiedCells(scene) {
@@ -234,7 +153,11 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
             const entry = enemy.npcId
               ? BESTIARY_ENTRIES.find((item) => String(item?.id || "") === String(enemy.npcId)) || findBestiaryEntry(enemy.type)
               : findBestiaryEntry(enemy.type);
-            const stats = makeStats(entry, enemy, stamp, room.id);
+            const stats = await buildProceduralNpcTokenStats(entry, enemy, {
+              stamp,
+              roomId: room.id,
+              locationId: room.id,
+            });
             const rank = enemy?.rank || "standard";
             const baseName = String(entry?.name || enemy.type || "NPC");
             const response = await session.createNpcToken?.({
