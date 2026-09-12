@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmScenePresetPanel from "./GmScenePresetPanel.jsx";
 import { generateProceduralEncounterSummary } from "../../utils/proceduralRoomContent.js";
-import { normalizeEncounterDifficulty } from "../../utils/proceduralEncounterBalance.js";
+import {
+  MAX_MANUAL_ENEMY_COUNT,
+  normalizeEncounterDifficulty,
+  normalizeEnemyCountOverride,
+} from "../../utils/proceduralEncounterBalance.js";
 import {
   ENEMY_GROUP_OPTIONS,
   enemyGroupLabel,
@@ -21,40 +25,48 @@ const COPY = {
   en: {
     title: "ENCOUNTER DIFFICULTY",
     faction: "ENEMY FACTION / TYPE",
+    enemyCount: "ENEMY COUNT (0 = AUTO)",
+    enemies: "Enemies",
     easy: "EASY", standard: "STANDARD", hard: "HARD", deadly: "DEADLY",
     target: "Target XP", actual: "Generated XP", reward: "XP / player",
     minion: "Minions", normal: "Standard", special: "Special", legendary: "Legendary",
-    note: "Enemies are grouped by faction/type. A room never mixes incompatible groups. Auto can use different groups in different rooms.",
+    note: "Enemies are grouped by faction/type. Set enemy count to 0 for automatic difficulty-based generation, or choose an exact total manually.",
     traps: "TRAPS", trapCount: "TRAP COUNT", trapLethality: "TRAP LETHALITY",
     low: "LOW", high: "HIGH",
   },
   ru: {
     title: "СЛОЖНОСТЬ ЭНКАУНТЕРА",
     faction: "ФРАКЦИЯ / ТИП ВРАГОВ",
+    enemyCount: "КОЛИЧЕСТВО ВРАГОВ (0 = АВТО)",
+    enemies: "Врагов",
     easy: "ЛЁГКАЯ", standard: "ОБЫЧНАЯ", hard: "СЛОЖНАЯ", deadly: "СМЕРТЕЛЬНАЯ",
     target: "Целевой XP", actual: "XP врагов", reward: "XP / игрока",
     minion: "Миньоны", normal: "Стандартные", special: "Особые", legendary: "Легендарные",
-    note: "Враги разделены по фракциям и типам. В одной комнате несовместимые группы не смешиваются. В режиме АВТО разные комнаты могут иметь разные группы.",
+    note: "При значении 0 количество врагов рассчитывается автоматически по сложности. Любое другое число задаёт точное общее количество врагов, сохраняя выбранную сложность и распределение рангов.",
     traps: "ЛОВУШКИ", trapCount: "КОЛИЧЕСТВО ЛОВУШЕК", trapLethality: "СМЕРТЕЛЬНОСТЬ ЛОВУШЕК",
     low: "НИЗКАЯ", high: "ВЫСОКАЯ",
   },
   uk: {
     title: "СКЛАДНІСТЬ ЕНКАУНТЕРА",
     faction: "ФРАКЦІЯ / ТИП ВОРОГІВ",
+    enemyCount: "КІЛЬКІСТЬ ВОРОГІВ (0 = АВТО)",
+    enemies: "Ворогів",
     easy: "ЛЕГКА", standard: "ЗВИЧАЙНА", hard: "СКЛАДНА", deadly: "СМЕРТЕЛЬНА",
     target: "Цільовий XP", actual: "XP ворогів", reward: "XP / гравця",
     minion: "Міньйони", normal: "Звичайні", special: "Особливі", legendary: "Легендарні",
-    note: "Вороги розділені за фракціями й типами. В одній кімнаті несумісні групи не змішуються. В режимі АВТО різні кімнати можуть мати різні групи.",
+    note: "За значення 0 кількість ворогів розраховується автоматично за складністю. Інше число задає точну загальну кількість ворогів, зберігаючи вибрану складність і розподіл рангів.",
     traps: "ПАСТКИ", trapCount: "КІЛЬКІСТЬ ПАСТОК", trapLethality: "СМЕРТЕЛЬНІСТЬ ПАСТОК",
     low: "НИЗЬКА", high: "ВИСОКА",
   },
   pl: {
     title: "TRUDNOŚĆ SPOTKANIA",
     faction: "FRAKCJA / TYP WROGÓW",
+    enemyCount: "LICZBA WROGÓW (0 = AUTO)",
+    enemies: "Wrogowie",
     easy: "ŁATWA", standard: "STANDARDOWA", hard: "TRUDNA", deadly: "ŚMIERTELNA",
     target: "Docelowe XP", actual: "XP wrogów", reward: "XP / gracza",
     minion: "Sługi", normal: "Zwykli", special: "Specjalni", legendary: "Legendarni",
-    note: "Wrogowie są dzieleni według frakcji i typu. Jedno pomieszczenie nigdy nie miesza niekompatybilnych grup. AUTO może użyć różnych grup w różnych pokojach.",
+    note: "Wartość 0 oblicza liczbę wrogów automatycznie z poziomu trudności. Inna liczba ustawia dokładną liczbę wrogów, zachowując trudność i podział rang.",
     traps: "PUŁAPKI", trapCount: "LICZBA PUŁAPEK", trapLethality: "ŚMIERTELNOŚĆ PUŁAPEK",
     low: "NISKA", high: "WYSOKA",
   },
@@ -78,6 +90,7 @@ export default function GmScenePresetPanelV2({ session }) {
   const savedSpec = specFromScene(scene);
   const [difficulty, setDifficulty] = useState(() => normalizeEncounterDifficulty(savedSpec?.encounterDifficulty));
   const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
+  const [enemyCountOverride, setEnemyCountOverride] = useState(() => normalizeEnemyCountOverride(savedSpec?.enemyCountOverride));
   const [trapCount, setTrapCount] = useState(() => normalizeTrapCount(savedSpec?.trapCount));
   const [trapLethality, setTrapLethality] = useState(() => normalizeTrapLethality(savedSpec?.trapLethality));
 
@@ -85,6 +98,7 @@ export default function GmScenePresetPanelV2({ session }) {
     const spec = specFromScene(scene);
     setDifficulty(normalizeEncounterDifficulty(spec?.encounterDifficulty));
     setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
+    setEnemyCountOverride(normalizeEnemyCountOverride(spec?.enemyCountOverride));
     setTrapCount(normalizeTrapCount(spec?.trapCount));
     setTrapLethality(normalizeTrapLethality(spec?.trapLethality));
   }, [scene?.sceneId]);
@@ -105,6 +119,7 @@ export default function GmScenePresetPanelV2({ session }) {
               ...proceduralMapSpec,
               encounterDifficulty: difficulty,
               enemyFaction,
+              enemyCountOverride,
               trapCount,
               trapLethality,
             },
@@ -112,10 +127,10 @@ export default function GmScenePresetPanelV2({ session }) {
         });
       },
     };
-  }, [session, difficulty, enemyFaction, trapCount, trapLethality]);
+  }, [session, difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality]);
 
   const previewSpec = savedSpec
-    ? { ...savedSpec, encounterDifficulty: difficulty, enemyFaction, trapCount, trapLethality }
+    ? { ...savedSpec, encounterDifficulty: difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality }
     : null;
   const encounter = useMemo(
     () => (previewSpec ? generateProceduralEncounterSummary(previewSpec) : null),
@@ -128,6 +143,7 @@ export default function GmScenePresetPanelV2({ session }) {
       previewSpec?.wealth,
       difficulty,
       enemyFaction,
+      enemyCountOverride,
     ]
   );
 
@@ -141,6 +157,7 @@ export default function GmScenePresetPanelV2({ session }) {
           ...spec,
           encounterDifficulty: difficulty,
           enemyFaction,
+          enemyCountOverride,
           trapCount,
           trapLethality,
           ...patch,
@@ -161,6 +178,12 @@ export default function GmScenePresetPanelV2({ session }) {
     await persistSetting({ enemyFaction: next, encounterDifficulty: difficulty });
   };
 
+  const changeEnemyCount = async (value) => {
+    const next = normalizeEnemyCountOverride(value);
+    setEnemyCountOverride(next);
+    await persistSetting({ enemyCountOverride: next });
+  };
+
   const changeTrapCount = async (value) => {
     const next = normalizeTrapCount(value);
     setTrapCount(next);
@@ -174,6 +197,7 @@ export default function GmScenePresetPanelV2({ session }) {
   };
 
   const ranks = encounter?.rankCounts || { minion: 0, standard: 0, special: 0, legendary: 0 };
+  const generatedEnemyCount = encounter?.enemyCount ?? (ranks.minion + ranks.standard + ranks.special + ranks.legendary);
 
   return (
     <div className="gm-scene-preset-v2">
@@ -196,6 +220,18 @@ export default function GmScenePresetPanelV2({ session }) {
           </label>
 
           <label>
+            <span>{text.enemyCount}</span>
+            <input
+              className="pip-input"
+              type="number"
+              min="0"
+              max={MAX_MANUAL_ENEMY_COUNT}
+              value={enemyCountOverride}
+              onChange={(event) => changeEnemyCount(event.target.value)}
+            />
+          </label>
+
+          <label>
             <span>{text.trapCount}</span>
             <input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(event) => changeTrapCount(event.target.value)} />
           </label>
@@ -210,6 +246,7 @@ export default function GmScenePresetPanelV2({ session }) {
 
         {encounter ? (
           <div className="gm-encounter-difficulty__summary">
+            <span>{text.enemies}<b>{generatedEnemyCount}</b></span>
             <span>{text.target}<b>{encounter.targetXp}</b></span>
             <span>{text.actual}<b>{encounter.actualXp}</b></span>
             <span>{text.reward}<b>{encounter.xpPerPlayer}</b></span>
