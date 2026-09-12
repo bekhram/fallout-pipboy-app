@@ -1,0 +1,71 @@
+.gm-settlement-houses {
+  display: grid;
+  gap: 14px;
+}
+
+.gm-settlement-house-group {
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  padding: 10px;
+}
+
+.gm-settlement-house-group__head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed color-mix(in srgb, currentColor 24%, transparent);
+}
+
+.gm-settlement-house-group__head > strong {
+  font-size: 1rem;
+}
+
+.gm-settlement-house-group__head > span,
+.gm-settlement-house-group__head > small {
+  opacity: 0.82;
+}
+
+.gm-settlement-room-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.gm-settlement-room-card__identity > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gm-settlement-room-number {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: rgba(0, 20, 7, 0.88);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.35), 0 0 8px color-mix(in srgb, currentColor 55%, transparent);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.gm-settlement-room-card .gm-room-card__head {
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .gm-settlement-house-group {
+    padding: 8px;
+  }
+
+  .gm-settlement-house-group__head {
+    gap: 5px 9px;
+  }
+}
