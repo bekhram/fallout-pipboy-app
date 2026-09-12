@@ -1,3 +1,35 @@
+/* The current GM workspace is tactical-only. The legacy gmWorkspace.css desktop
+   dashboard still applies a 3-column grid at >1180px unless we explicitly
+   neutralize it here. That old grid was collapsing the whole tactical UI into
+   its first narrow column. */
+.session-gm-workspace-wrap > .gm-workspace.gm-workspace--tactical-only {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+  grid-template-areas: none !important;
+}
+
+.session-gm-workspace-wrap > .gm-workspace.gm-workspace--tactical-only > .gm-workspace__tactical-anchor {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  grid-column: 1 / -1 !important;
+}
+
+.session-gm-workspace-wrap--single,
+.session-gm-workspace-wrap--single > .gm-workspace,
+.session-gm-workspace-wrap--single .gm-workspace__tactical-anchor,
+.session-gm-workspace-wrap--single .gm-tactical-tabs-shell,
+.session-gm-workspace-wrap--single .gm-tactical-shell {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
 @media (min-width: 1100px) {
   .session-gm-workspace-wrap,
   .session-gm-workspace-wrap > .gm-workspace,
@@ -22,6 +54,7 @@
   .gm-tactical-tabs__scroll {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
+    width: 100%;
     overflow: visible;
     gap: 7px;
   }
@@ -42,12 +75,12 @@
   }
 
   .gm-tactical-view--battle {
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
     grid-template-areas:
       "effects effects"
       "map manager";
     align-items: start;
-    gap: 12px;
+    gap: 14px;
   }
 
   .gm-tactical-view--battle .gm-tactical-battle-effects {
@@ -56,11 +89,13 @@
 
   .gm-tactical-view--battle .gm-tactical-map-core {
     grid-area: map;
+    width: 100%;
     min-width: 0;
   }
 
   .gm-tactical-view--battle .gm-tactical-token-manager {
     grid-area: manager;
+    width: 100%;
     min-width: 0;
     position: sticky;
     top: 120px;
@@ -120,7 +155,7 @@
 
 @media (min-width: 1500px) {
   .gm-tactical-view--battle {
-    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-columns: minmax(0, 1fr) 400px;
   }
 
   .gm-tactical-view--battle .gm-session-map__grid {
