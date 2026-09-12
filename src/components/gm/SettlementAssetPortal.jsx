@@ -52,7 +52,7 @@ export function SettlementAssetLayer({ spec, preview = false }) {
       ],
       profile: { type: "cross" },
       terrainType: "settlement",
-    }, spec);
+    }, { ...spec, forceFullCross: true });
   }, [spec?.seed, spec?.roadType]);
   return (
     <div aria-hidden="true" data-settlement-assets="true" style={{ position: "absolute", inset: 0, zIndex: preview ? 2 : 3, pointerEvents: "none", overflow: "hidden" }}>

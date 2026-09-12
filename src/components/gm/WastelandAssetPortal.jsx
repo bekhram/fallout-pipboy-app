@@ -1017,7 +1017,8 @@ function intersectionInfo(
 
 function makeCrossRoads(
   roads,
-  seed
+  seed,
+  forceFullCross = false
 ) {
   const info =
     intersectionInfo(
@@ -1033,7 +1034,7 @@ function makeCrossRoads(
   } = info;
 
   const useT =
-    seed % 4 === 0;
+    !forceFullCross && seed % 4 === 0;
 
   const rotation =
     useT
@@ -1292,7 +1293,8 @@ export function planRoadAssets(
   ) {
     return makeCrossRoads(
       roads,
-      seed
+      seed,
+      Boolean(spec?.forceFullCross)
     );
   }
 

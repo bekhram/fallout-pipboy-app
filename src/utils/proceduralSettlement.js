@@ -123,7 +123,8 @@ export function buildSettlementSite(spec = {}) {
       const x = randint(rng, 1, GRID - w - 1);
       const y = randint(rng, 1, GRID - h - 1);
       const candidate = { x, y, w, h };
-      if (overlapsRoad(candidate, roads, 1)) continue;
+      // Reserve the complete visible corridor of the PNG road pieces.
+      if (overlapsRoad(candidate, roads, 3)) continue;
       if (houses.some((house) => overlaps(candidate, house, 1))) continue;
       if (distanceToRoad(candidate, roads) > 3 && attempt < 300) continue;
       placed = candidate;
