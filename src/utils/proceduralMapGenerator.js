@@ -1,5 +1,9 @@
 import * as V11 from "./proceduralMapGeneratorV11.js";
 import { normalizeEnemyGroup } from "./proceduralEnemyGroups.js";
+import {
+  canonicalProceduralSeed,
+  proceduralTerrainSeed,
+} from "./proceduralSeed.js";
 
 const RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
@@ -30,11 +34,10 @@ function legacyInput(value = {}) {
 
 function terrainAwareInput(value = {}) {
   const terrain = normalizeTerrain(value.terrain);
-  const seed = String(value.seed || "1");
   return {
     ...value,
     terrain,
-    seed: `${seed}:terrain:${terrain}`,
+    seed: proceduralTerrainSeed(value.seed, terrain),
   };
 }
 
@@ -56,6 +59,7 @@ export function normalizeProceduralMapSpec(value = {}) {
   const base = V11.normalizeProceduralMapSpec(legacyInput(value));
   return {
     ...base,
+    seed: canonicalProceduralSeed(value.seed ?? base.seed),
     cols: 24,
     rows: 24,
     terrain,
