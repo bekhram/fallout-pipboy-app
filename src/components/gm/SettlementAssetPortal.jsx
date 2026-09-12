@@ -5,9 +5,36 @@ import {
   buildSettlementSite,
   settlementBackground,
 } from "../../utils/proceduralSettlement.js";
-import { planRoadAssets, RoadAsset } from "./WastelandAssetPortal.jsx";
+import { planRoadAssets } from "./WastelandAssetPortal.jsx";
 
 const GRID = 24;
+
+function SettlementRoadAsset({ road }) {
+  const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
+  const width = isJunction ? 6 : 4;
+  const height = isJunction ? 6 : 8;
+  return (
+    <img
+      src={road.src}
+      alt=""
+      draggable={false}
+      data-settlement-road={road.name}
+      style={{
+        position: "absolute",
+        left: `${road.centerX / GRID * 100}%`,
+        top: `${road.centerY / GRID * 100}%`,
+        width: `${width / GRID * 100}%`,
+        height: `${height / GRID * 100}%`,
+        objectFit: "fill",
+        transform: `translate(-50%, -50%) rotate(${road.rotation || 0}deg)`,
+        transformOrigin: "50% 50%",
+        pointerEvents: "none",
+        userSelect: "none",
+        filter: "drop-shadow(0 2px 2px rgba(0,0,0,.3))",
+      }}
+    />
+  );
+}
 
 export function settlementBackgroundForSpec() {
   return settlementBackground;
@@ -30,7 +57,7 @@ export function SettlementAssetLayer({ spec, preview = false }) {
   return (
     <div aria-hidden="true" data-settlement-assets="true" style={{ position: "absolute", inset: 0, zIndex: preview ? 2 : 3, pointerEvents: "none", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-        {roads.map((road, index) => <RoadAsset key={`${road.name}-${road.centerX}-${road.centerY}-${index}`} road={road} />)}
+        {roads.map((road, index) => <SettlementRoadAsset key={`${road.name}-${road.centerX}-${road.centerY}-${index}`} road={road} />)}
       </div>
       <div style={{ position: "absolute", inset: 0, zIndex: 3 }}>
       {items.map((item, index) => (
