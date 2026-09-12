@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { generateSettlementRoomMarkers } from "../../utils/proceduralSettlementRoomMarkers.js";
 
+const GRID = 24;
+
 export default function SettlementRoomMarkerPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
@@ -55,7 +57,17 @@ export default function SettlementRoomMarkerPortal({ session }) {
     <div
       aria-hidden="true"
       data-settlement-room-markers="true"
-      style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 45 }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "var(--battlemap-world-width, 100%)",
+        height: "var(--battlemap-world-height, 100%)",
+        pointerEvents: "none",
+        zIndex: 45,
+        overflow: "hidden",
+        gridColumn: "1 / -1",
+        gridRow: "1 / -1",
+      }}
     >
       {markers.map((marker) => (
         <div
@@ -65,8 +77,8 @@ export default function SettlementRoomMarkerPortal({ session }) {
           title={`Room ${marker.marker}`}
           style={{
             position: "absolute",
-            left: `${((Number(marker.x || 0) + 0.5) / 24) * 100}%`,
-            top: `${((Number(marker.y || 0) + 0.5) / 24) * 100}%`,
+            left: `${((Number(marker.x || 0) + 0.5) / GRID) * 100}%`,
+            top: `${((Number(marker.y || 0) + 0.5) / GRID) * 100}%`,
             width: 30,
             height: 30,
             transform: "translate(-50%, -50%)",
