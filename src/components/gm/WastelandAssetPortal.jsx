@@ -1377,10 +1377,25 @@ function removeRoadOverlaps(
  * ============================================================
  */
 
-export function RoadAsset({ road }) {
+export function RoadAsset({ road, fullSize = false }) {
   const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
+  const config = ROAD_VISUAL_CONFIG[road.name] || {
+    scale: 1,
+    anchorX: 0.5,
+    anchorY: 0.5,
+  };
+  const scale = config.scale ?? 1;
+  const anchorX = config.anchorX ?? 0.5;
+  const anchorY = config.anchorY ?? 0.5;
+  const visualSize = ROAD_TILE * scale;
   const width = isJunction ? 6 : 4;
   const height = isJunction ? 6 : 8;
+  const left = fullSize
+    ? road.centerX - visualSize * anchorX
+    : road.centerX;
+  const top = fullSize
+    ? road.centerY - visualSize * anchorY
+    : road.centerY;
 
   return (
     <img
@@ -1393,13 +1408,17 @@ export function RoadAsset({ road }) {
       data-road-rotation={road.rotation || 0}
       style={{
         position: "absolute",
-        left: `${(road.centerX / GRID) * 100}%`,
-        top: `${(road.centerY / GRID) * 100}%`,
-        width: `${(width / GRID) * 100}%`,
-        height: `${(height / GRID) * 100}%`,
-        objectFit: "fill",
-        transform: `translate(-50%, -50%) rotate(${road.rotation || 0}deg)`,
-        transformOrigin: "50% 50%",
+        left: `${(left / GRID) * 100}%`,
+        top: `${(top / GRID) * 100}%`,
+        width: `${((fullSize ? visualSize : width) / GRID) * 100}%`,
+        height: `${((fullSize ? visualSize : height) / GRID) * 100}%`,
+        objectFit: fullSize ? "contain" : "fill",
+        transform: fullSize
+          ? `rotate(${road.rotation || 0}deg)`
+          : `translate(-50%, -50%) rotate(${road.rotation || 0}deg)`,
+        transformOrigin: fullSize
+          ? `${anchorX * 100}% ${anchorY * 100}%`
+          : "50% 50%",
         pointerEvents: "none",
         userSelect: "none",
         filter: "drop-shadow(0 2px 2px rgba(0,0,0,.35))",
