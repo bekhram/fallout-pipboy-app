@@ -50,16 +50,48 @@ function visualBounds(item) { const box=renderBoxForItem(item); const scaleX=ite
 function fitVisualItemToGrid(item) { const bounds=visualBounds(item); let dx=0,dy=0; if(bounds.x<0)dx=-bounds.x; else if(bounds.x+bounds.w>GRID)dx=GRID-(bounds.x+bounds.w); if(bounds.y<0)dy=-bounds.y; else if(bounds.y+bounds.h>GRID)dy=GRID-(bounds.y+bounds.h); return dx||dy?{...item,x:item.x+dx,y:item.y+dy}:item; }
 function boxesOverlap(a,b,pad=OVERLAP_PAD){return !(a.x+a.w+pad<=b.x||b.x+b.w+pad<=a.x||a.y+a.h+pad<=b.y||b.y+b.h+pad<=a.y);}
 function removeVisualOverlaps(items){const accepted=[],occupied=[];for(const item of items){const bounds=visualBounds(item);const isGroundDecal=item.type==="crater";const collides=!isGroundDecal&&occupied.some((box)=>boxesOverlap(bounds,box));if(collides)continue;accepted.push(item);if(!isGroundDecal)occupied.push(bounds);}return accepted;}
-function roadStyle(road,surface){const horizontal=road.w>=road.h;const common={position:"absolute",left:`${road.x/GRID*100}%`,top:`${road.y/GRID*100}%`,width:`${road.w/GRID*100}%`,height:`${road.h/GRID*100}%`,boxSizing:"border-box",pointerEvents:"none",opacity:.94};if(surface==="dirt")return{...common,background:"rgba(118, 91, 58, .9)",border:"1px solid rgba(62, 45, 31, .75)",boxShadow:"inset 0 0 18px rgba(43, 31, 21, .35)"};if(surface==="cobblestone")return{...common,backgroundColor:"rgba(89, 86, 79, .94)",backgroundImage:"linear-gradient(rgba(120,115,104,.38) 1px, transparent 1px), linear-gradient(90deg, rgba(55,52,48,.35) 1px, transparent 1px)",backgroundSize:"18px 14px",border:"1px solid rgba(54, 52, 47, .8)"};return{...common,background:"rgba(62, 63, 60, .94)",border:"1px solid rgba(35, 36, 34, .9)",boxShadow:"inset 0 0 14px rgba(0,0,0,.28)",backgroundImage:horizontal?"linear-gradient(to bottom, transparent 47%, rgba(174,160,111,.85) 47%, rgba(174,160,111,.85) 53%, transparent 53%)":"linear-gradient(to right, transparent 47%, rgba(174,160,111,.85) 47%, rgba(174,160,111,.85) 53%, transparent 53%)"};}
+
+function roadNoise(road,index,piece){
+  const seed=(Math.round(Number(road.x||0)*31)+Math.round(Number(road.y||0)*47)+Math.round(Number(road.w||0)*59)+Math.round(Number(road.h||0)*71)+index*97+piece*131)%997;
+  return Math.sin(seed*12.9898)*43758.5453-Math.floor(Math.sin(seed*12.9898)*43758.5453);
+}
+
+function roadPieces(road,index){
+  const horizontal=Number(road.w||0)>=Number(road.h||0);
+  const length=horizontal?Number(road.w||0):Number(road.h||0);
+  if(length<=3)return [{...road,rotation:0}];
+  const count=Math.max(3,Math.min(7,Math.round(length/4)));
+  const step=length/count;
+  const overlap=.42;
+  const pieces=[];
+  let drift=0;
+  for(let i=0;i<count;i+=1){
+    const noise=roadNoise(road,index,i)-.5;
+    const nextNoise=roadNoise(road,index,i+11)-.5;
+    drift=Math.max(-.72,Math.min(.72,drift+noise*.52));
+    const rotation=Math.max(-6,Math.min(6,(nextNoise+noise)*7));
+    const start=i*step-overlap/2;
+    const span=step+overlap;
+    if(horizontal){
+      pieces.push({x:Number(road.x||0)+start,y:Number(road.y||0)+drift,w:span,h:Number(road.h||0),rotation});
+    }else{
+      pieces.push({x:Number(road.x||0)+drift,y:Number(road.y||0)+start,w:Number(road.w||0),h:span,rotation});
+    }
+  }
+  return pieces;
+}
+
+function roadStyle(road,surface){const horizontal=road.w>=road.h;const common={position:"absolute",left:`${road.x/GRID*100}%`,top:`${road.y/GRID*100}%`,width:`${road.w/GRID*100}%`,height:`${road.h/GRID*100}%`,boxSizing:"border-box",pointerEvents:"none",opacity:.94,transform:`rotate(${Number(road.rotation||0)}deg)`,transformOrigin:"50% 50%",borderRadius:"8%"};if(surface==="dirt")return{...common,background:"rgba(118, 91, 58, .9)",border:"1px solid rgba(62, 45, 31, .75)",boxShadow:"inset 0 0 18px rgba(43, 31, 21, .35)"};if(surface==="cobblestone")return{...common,backgroundColor:"rgba(89, 86, 79, .94)",backgroundImage:"linear-gradient(rgba(120,115,104,.38) 1px, transparent 1px), linear-gradient(90deg, rgba(55,52,48,.35) 1px, transparent 1px)",backgroundSize:"18px 14px",border:"1px solid rgba(54, 52, 47, .8)"};return{...common,background:"rgba(62, 63, 60, .94)",border:"1px solid rgba(35, 36, 34, .9)",boxShadow:"inset 0 0 14px rgba(0,0,0,.28)",backgroundImage:horizontal?"linear-gradient(to bottom, transparent 47%, rgba(174,160,111,.85) 47%, rgba(174,160,111,.85) 53%, transparent 53%)":"linear-gradient(to right, transparent 47%, rgba(174,160,111,.85) 47%, rgba(174,160,111,.85) 53%, transparent 53%)"};}
 function SpriteImage({item,preview=false}){const asset=assetForItem(item);if(!asset)return null;const box=renderBoxForItem(item),isGroundTerrain=["lake","swamp","ravine"].includes(item.type),depth=isGroundTerrain?2:10+Math.round((Number(item.y||0)+Number(item.h||0)/2)*10),scaleX=item.type==="wreck_car"?1.5:item.type==="wreck_truck"?1.25:1,scaleY=item.type==="wreck_car"?2:item.type==="wreck_truck"?1.5:1;return <img src={asset.src} alt="" draggable={false} data-wasteland-asset={item.type} data-wasteland-sprite={asset.index} style={{position:"absolute",left:`${box.x/GRID*100}%`,top:`${box.y/GRID*100}%`,width:`${box.w/GRID*100}%`,height:`${box.h/GRID*100}%`,transform:`scale(${scaleX}, ${scaleY})`,transformOrigin:"50% 50%",pointerEvents:"none",userSelect:"none",zIndex:depth,objectFit:"contain",overflow:"visible",filter:preview?"none":"drop-shadow(0 3px 4px rgba(0,0,0,.5))"}}/>;}
 
 export function WastelandAssetLayer({ spec, preview = false, showBackground = true }) {
   const site=useMemo(()=>buildOpenWastelandSite({...spec,cols:GRID,rows:GRID}),[spec?.seed,spec?.terrain,spec?.backgroundType,spec?.terrainType]);
   const background=useMemo(()=>wastelandBackgroundForSpec(spec),[spec?.terrain,spec?.backgroundType,spec?.terrainType]);
   const items=useMemo(()=>removeVisualOverlaps([...(site.terrain||[]).map(normalizeVisualSize),...site.obstacles.map(normalizeVisualSize),...site.vehicles,...site.trees.map(normalizeVisualSize)].map(fitVisualItemToGrid)),[site]);
+  const roadSegments=useMemo(()=>site.roads.flatMap((road,index)=>roadPieces(road,index).map((piece,pieceIndex)=>({piece,index,pieceIndex}))),[site]);
   return <div className={preview?"gm-wasteland-assets is-preview":"gm-wasteland-assets"} aria-hidden="true" style={{position:"absolute",inset:0,width:preview?"100%":"var(--battlemap-world-width, 100%)",height:preview?"100%":"var(--battlemap-world-height, 100%)",pointerEvents:"none",zIndex:preview?2:0,overflow:"hidden",gridColumn:"1 / -1",gridRow:"1 / -1"}}>
     {showBackground?<img src={background} alt="" draggable={false} data-wasteland-background="true" style={{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"fill",pointerEvents:"none",userSelect:"none",zIndex:0}}/>:null}
-    <div style={{position:"absolute",inset:0,zIndex:1,pointerEvents:"none"}}>{site.roads.map((road,index)=><div key={`${road.x}-${road.y}-${road.w}-${road.h}-${index}`} data-wasteland-road={site.profile.surface} style={roadStyle(road,site.profile.surface)}/>)}</div>
+    <div style={{position:"absolute",inset:0,zIndex:1,pointerEvents:"none"}}>{roadSegments.map(({piece,index,pieceIndex})=><div key={`${index}-${pieceIndex}`} data-wasteland-road={site.profile.surface} style={roadStyle(piece,site.profile.surface)}/>)}</div>
     <div style={{position:"absolute",inset:0,zIndex:2,pointerEvents:"none"}}>{items.map((item,index)=><SpriteImage key={`${item.type}-${item.sprite??"x"}-${item.x}-${item.y}-${index}`} item={item} preview={preview}/>)}</div>
   </div>;
 }
