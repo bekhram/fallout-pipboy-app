@@ -1320,22 +1320,16 @@ export function planRoadAssets(
  */
 
 function roadBounds(road) {
-  const config =
-    ROAD_VISUAL_CONFIG[road.name] || {
-      scale: 1,
-      anchorX: 0.5,
-      anchorY: 0.5,
-    };
-  const scale = config.scale ?? 1;
-  const anchorX = config.anchorX ?? 0.5;
-  const anchorY = config.anchorY ?? 0.5;
-
-  const visualW = ROAD_TILE * scale;
-  const visualH = ROAD_TILE * scale;
+  const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
+  const rotated = Math.abs(Number(road.rotation || 0) % 180) === 90;
+  const baseW = isJunction ? 6 : 4;
+  const baseH = isJunction ? 6 : 8;
+  const visualW = rotated ? baseH : baseW;
+  const visualH = rotated ? baseW : baseH;
 
   return {
-    x: road.centerX - visualW * anchorX,
-    y: road.centerY - visualH * anchorY,
+    x: road.centerX - visualW / 2,
+    y: road.centerY - visualH / 2,
     w: visualW,
     h: visualH,
   };
@@ -1382,26 +1376,9 @@ function removeRoadOverlaps(
  */
 
 export function RoadAsset({ road }) {
-  const config =
-    ROAD_VISUAL_CONFIG[road.name] || {
-      scale: 1,
-      anchorX: 0.5,
-      anchorY: 0.5,
-    };
-
-  const scale = config.scale ?? 1;
-  const anchorX = config.anchorX ?? 0.5;
-  const anchorY = config.anchorY ?? 0.5;
-
-  const visualSize = ROAD_TILE * scale;
-
-  const left =
-    road.centerX -
-    visualSize * anchorX;
-
-  const top =
-    road.centerY -
-    visualSize * anchorY;
+  const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
+  const width = isJunction ? 6 : 4;
+  const height = isJunction ? 6 : 8;
 
   return (
     <img
@@ -1414,13 +1391,13 @@ export function RoadAsset({ road }) {
       data-road-rotation={road.rotation || 0}
       style={{
         position: "absolute",
-        left: `${(left / GRID) * 100}%`,
-        top: `${(top / GRID) * 100}%`,
-        width: `${(visualSize / GRID) * 100}%`,
-        height: `${(visualSize / GRID) * 100}%`,
-        objectFit: "contain",
-        transform: `rotate(${road.rotation || 0}deg)`,
-        transformOrigin: `${anchorX * 100}% ${anchorY * 100}%`,
+        left: `${(road.centerX / GRID) * 100}%`,
+        top: `${(road.centerY / GRID) * 100}%`,
+        width: `${(width / GRID) * 100}%`,
+        height: `${(height / GRID) * 100}%`,
+        objectFit: "fill",
+        transform: `translate(-50%, -50%) rotate(${road.rotation || 0}deg)`,
+        transformOrigin: "50% 50%",
         pointerEvents: "none",
         userSelect: "none",
         filter: "drop-shadow(0 2px 2px rgba(0,0,0,.35))",
