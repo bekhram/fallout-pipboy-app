@@ -19,26 +19,12 @@ function pointFor(grid, event) {
   };
 }
 
-function distanceToSegment(point, a, b) {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  if (!dx && !dy) return Math.hypot(point.x - a.x, point.y - a.y);
-  const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / (dx * dx + dy * dy)));
-  return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
-}
-
-function nearStroke(point, stroke) {
-  const pts = Array.isArray(stroke?.points) ? stroke.points : [];
-  for (let i = 1; i < pts.length; i += 1) if (distanceToSegment(point, pts[i - 1], pts[i]) <= 0.55) return true;
-  return false;
-}
-
 function labels() {
   const lang = String(document?.documentElement?.lang || "en").toLowerCase().split("-")[0];
-  if (lang === "ru") return { tools:"ИНСТРУМЕНТЫ", draw:"КАРАНДАШ", erase:"ЛАСТИК", ruler:"ЛИНЕЙКА", clear:"ОЧИСТИТЬ", zones:"ЗОН" };
-  if (lang === "uk") return { tools:"ІНСТРУМЕНТИ", draw:"ОЛІВЕЦЬ", erase:"ГУМКА", ruler:"ЛІНІЙКА", clear:"ОЧИСТИТИ", zones:"ЗОН" };
-  if (lang === "pl") return { tools:"NARZĘDZIA", draw:"OŁÓWEK", erase:"GUMKA", ruler:"LINIJKA", clear:"WYCZYŚĆ", zones:"STREF" };
-  return { tools:"TOOLS", draw:"PENCIL", erase:"ERASER", ruler:"RULER", clear:"CLEAR", zones:"ZONES" };
+  if (lang === "ru") return { tools:"ИНСТРУМЕНТЫ", draw:"КАРАНДАШ", ruler:"ЛИНЕЙКА", zones:"ЗОН" };
+  if (lang === "uk") return { tools:"ІНСТРУМЕНТИ", draw:"ОЛІВЕЦЬ", ruler:"ЛІНІЙКА", zones:"ЗОН" };
+  if (lang === "pl") return { tools:"NARZĘDZIA", draw:"OŁÓWEK", ruler:"LINIJKA", zones:"STREF" };
+  return { tools:"TOOLS", draw:"PENCIL", ruler:"RULER", zones:"ZONES" };
 }
 
 export default function GmBattlemapTools({ session }) {
@@ -100,14 +86,6 @@ export default function GmBattlemapTools({ session }) {
         grid.setPointerCapture?.(event.pointerId);
         return;
       }
-      if (mode === "erase") {
-        event.preventDefault(); event.stopPropagation();
-        gestureRef.current = { type:"erase", pointerId:event.pointerId };
-        const next = strokes.filter((stroke) => !nearStroke(point, stroke));
-        if (next.length !== strokes.length) void saveMarkup({ strokes:next });
-        grid.setPointerCapture?.(event.pointerId);
-        return;
-      }
       if (mode === "ruler") {
         event.preventDefault(); event.stopPropagation();
         gestureRef.current = { type:"ruler", pointerId:event.pointerId, start:point };
@@ -140,10 +118,6 @@ export default function GmBattlemapTools({ session }) {
         const prev = g.points[g.points.length - 1];
         if (Math.hypot(point.x - prev.x, point.y - prev.y) > 0.08) g.points.push(point);
         setDraft({ points:[...g.points] });
-      } else if (g.type === "erase") {
-        const current = Array.isArray(scene?.mapMarkup?.strokes) ? scene.mapMarkup.strokes : strokes;
-        const next = current.filter((stroke) => !nearStroke(point, stroke));
-        if (next.length !== current.length) void session?.updateTacticalScene?.({ mapMarkup:{ ...(scene?.mapMarkup || {}), strokes:next } });
       } else if (g.type === "ruler") setRuler({ start:g.start, end:point });
     };
 
@@ -160,8 +134,6 @@ export default function GmBattlemapTools({ session }) {
       } else if (g.type === "ruler") {
         event.preventDefault(); event.stopPropagation();
         window.setTimeout(() => setRuler(null), 900);
-      } else if (g.type === "erase") {
-        event.preventDefault(); event.stopPropagation();
       } else if (g.type === "ping" && g.fired) {
         event.preventDefault(); event.stopPropagation();
       }
@@ -204,9 +176,7 @@ export default function GmBattlemapTools({ session }) {
       <button type="button" className="battlemap-tools-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}><span>{open ? "▴" : "▾"}</span><b>{text.tools}</b></button>
       <div className="battlemap-tools-panel">
         <button type="button" className={mode === "draw" ? "is-active" : ""} onClick={() => setMode((v) => v === "draw" ? "" : "draw")} title={text.draw}>✎</button>
-        <button type="button" className={mode === "erase" ? "is-active" : ""} onClick={() => setMode((v) => v === "erase" ? "" : "erase")} title={text.erase}>⌫</button>
         <button type="button" className={mode === "ruler" ? "is-active" : ""} onClick={() => setMode((v) => v === "ruler" ? "" : "ruler")} title={text.ruler}>↔</button>
-        <button type="button" onClick={() => void saveMarkup({ strokes:[] })} title={text.clear}>×</button>
       </div>
     </div>,
     container
