@@ -72,6 +72,34 @@ function colorIndex(token) {
   return hashIndex(token?.stats?.hordeGroupId || token?.id || token?.name);
 }
 
+function combatBuffInfo(token) {
+  const stats = token?.stats || {};
+  const summary = stats.combatBuffSummary && typeof stats.combatBuffSummary === "object"
+    ? stats.combatBuffSummary
+    : {};
+  const sources = Array.isArray(summary.sources)
+    ? summary.sources
+    : Array.isArray(stats.activeCombatBuffs)
+      ? stats.activeCombatBuffs.map((id) => ({ id, name: id }))
+      : [];
+  if (!sources.length) return null;
+
+  const parts = [sources.map((item) => item?.name || item?.id).filter(Boolean).join(" + ")];
+  const damage = Number(summary.damageDiceBonus || 0) + Number(summary.meleeDamageDiceBonus || 0);
+  if (damage > 0) parts.push(`DMG +${damage} CD`);
+  if (Number(summary.defenseBonus || 0) > 0) parts.push(`DEF +${summary.defenseBonus}`);
+  if (Number(summary.maxHpBonus || 0) > 0) parts.push(`MAX HP +${summary.maxHpBonus}`);
+  const resistance = summary.resistance || {};
+  if (Number(resistance.physical || 0) > 0) parts.push(`PDR +${resistance.physical}`);
+  if (Number(resistance.energy || 0) > 0) parts.push(`EDR +${resistance.energy}`);
+  if (Number(resistance.radiation || 0) > 0) parts.push(`RAD +${resistance.radiation}`);
+  if (Number(summary.immediateAp || 0) > 0) parts.push(`AP +${summary.immediateAp}`);
+  if (Number(summary.apPerTurn || 0) > 0) parts.push(`AP/TURN +${summary.apPerTurn}`);
+  if (Array.isArray(summary.attackEffects) && summary.attackEffects.length) parts.push(summary.attackEffects.join(", "));
+
+  return { count: sources.length, title: parts.filter(Boolean).join(" · ") };
+}
+
 function Status({ token, session }) {
   const state = hpFor(token, session?.players || []);
   const showPlayerHp = token?.kind === "player" && state.maxHp > 0;
@@ -79,12 +107,18 @@ function Status({ token, session }) {
   const percent = state.maxHp > 0
     ? Math.max(0, Math.min(100, (state.hp / state.maxHp) * 100))
     : 0;
+  const buffInfo = combatBuffInfo(token);
 
   return <>
     {showPlayerHp ? (
       <span className="gm-token-status-hp" title={`HP ${state.hp}/${state.maxHp}`} aria-label={`Current HP ${state.hp}`}>
         <span style={{ width: `${percent}%` }} />
         <b>HP {Math.round(state.hp)}</b>
+      </span>
+    ) : null}
+    {buffInfo ? (
+      <span className="gm-token-combat-buff" title={buffInfo.title} aria-label={`Combat buffs ${buffInfo.count}`}>
+        ⚡{buffInfo.count}
       </span>
     ) : null}
     {down ? <span className="gm-token-zero-marker" aria-label="0 HP" /> : null}
