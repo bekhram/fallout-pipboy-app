@@ -8,7 +8,7 @@ import {
 } from "./WastelandAssetPortal.jsx";
 
 const GRID = 24;
-const HOUSE_VISUAL_SCALE = 1;
+const HOUSE_VISUAL_CELLS = 10;
 
 function settlementBaseSpec(spec = {}) {
   return {
@@ -24,13 +24,17 @@ export function settlementBackgroundForSpec(spec = {}) {
 }
 
 function SettlementHouseAsset({ house, preview = false }) {
+  const visualW = HOUSE_VISUAL_CELLS;
+  const visualH = HOUSE_VISUAL_CELLS;
+
   const logicalW = Math.max(1, Number(house?.w || 6));
   const logicalH = Math.max(1, Number(house?.h || 6));
-  const visualW = logicalW * HOUSE_VISUAL_SCALE;
-  const visualH = logicalH * HOUSE_VISUAL_SCALE;
 
-  let visualX = Number(house?.x || 0) - (visualW - logicalW) / 2;
-  let visualY = Number(house?.y || 0) - (visualH - logicalH) / 2;
+  const centerX = Number(house?.x || 0) + logicalW / 2;
+  const centerY = Number(house?.y || 0) + logicalH / 2;
+
+  let visualX = Math.round(centerX - visualW / 2);
+  let visualY = Math.round(centerY - visualH / 2);
 
   visualX = Math.max(0, Math.min(GRID - visualW, visualX));
   visualY = Math.max(0, Math.min(GRID - visualH, visualY));
@@ -50,7 +54,7 @@ function SettlementHouseAsset({ house, preview = false }) {
         top: `${(visualY / GRID) * 100}%`,
         width: `${(visualW / GRID) * 100}%`,
         height: `${(visualH / GRID) * 100}%`,
-        objectFit: "contain",
+        objectFit: "fill",
         pointerEvents: "none",
         userSelect: "none",
         filter: preview ? "none" : "drop-shadow(0 3px 5px rgba(0,0,0,.45))",
@@ -86,7 +90,7 @@ export function SettlementAssetLayer({ spec, preview = false }) {
           width: preview ? "100%" : "var(--battlemap-world-width, 100%)",
           height: preview ? "100%" : "var(--battlemap-world-height, 100%)",
           pointerEvents: "none",
-          zIndex: preview ? 4 : 4,
+          zIndex: preview ? 4 : 1,
           overflow: "hidden",
           gridColumn: "1 / -1",
           gridRow: "1 / -1",
