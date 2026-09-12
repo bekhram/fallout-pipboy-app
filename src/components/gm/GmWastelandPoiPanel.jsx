@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
-import { applyNpcRank } from "../../utils/npcCombat.js";
+import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStats.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
 import {
   cellsAroundWastelandPoi,
@@ -50,7 +50,6 @@ function langCode(value) {
   const code = String(value || "en").toLowerCase().split("-")[0];
   return COPY[code] ? code : "en";
 }
-function num(value, fallback = 0) { const parsed = Number(value); return Number.isFinite(parsed) ? parsed : fallback; }
 function normalizeName(value) { return String(value || "").toLowerCase().replace(/[’'`]/g, "").replace(/[^a-z0-9а-яёіїєґ]+/gi, " ").replace(/\s+/g, " ").trim(); }
 function findEntry(enemy) {
   if (enemy?.npcId) {
@@ -59,42 +58,6 @@ function findEntry(enemy) {
   }
   const needle = normalizeName(enemy?.type);
   return BESTIARY_ENTRIES.find((entry) => normalizeName(entry?.name) === needle) || null;
-}
-function scaleAttackText(value, attackBonus = 0, damageBonus = 0) {
-  let text = String(value || "");
-  if (attackBonus) text = text.replace(/\bTN\s*(\d+)\b/gi, (_, raw) => `TN ${Math.min(15, Number(raw) + attackBonus)}`);
-  if (damageBonus) text = text.replace(/\b(\d+)\s*(CD|DC|КУ)\b/gi, (_, raw, unit) => `${Number(raw) + damageBonus} ${unit}`);
-  return text;
-}
-function makeStats(entry, enemy, stamp, poiId) {
-  const baseHp = Math.max(1, num(entry?.baseMaxHp ?? entry?.maxHp ?? entry?.hp, 6));
-  const baseDefense = Math.max(0, num(entry?.baseDefense ?? entry?.defense, 1));
-  const baseXp = Math.max(1, num(enemy?.baseXp ?? entry?.baseXp ?? entry?.xp, enemy?.xp || 10));
-  const baseLevel = Math.max(1, num(enemy?.baseLevel ?? entry?.level, 1));
-  const level = Math.max(baseLevel, num(enemy?.level, baseLevel));
-  const difference = Math.max(0, num(enemy?.levelScaleDifference, level - baseLevel));
-  const attackBonus = Math.max(0, num(enemy?.levelAttackBonus, Math.floor(difference / 2)));
-  const damageBonus = Math.max(0, num(enemy?.levelDamageBonus, Math.floor(difference / 2)));
-  const base = {
-    level, baseLevel, originalLevel: baseLevel, levelScaleDifference: difference, levelAttackBonus: attackBonus, levelDamageBonus: damageBonus,
-    hp: baseHp, maxHp: baseHp, baseMaxHp: baseHp, defense: baseDefense, baseDefense, xp: baseXp, baseXp,
-    initiative: entry?.initiative || "", creatureType: entry?.creatureType || enemy?.type || "", body: entry?.body || "", mind: entry?.mind || "",
-    melee: entry?.melee || "", guns: entry?.guns || "", other: entry?.other || "", attacks: scaleAttackText(entry?.attacks || "", attackBonus, damageBonus),
-    originalAttacks: entry?.attacks || "", abilities: entry?.abilities || "", tactics: entry?.tactics || "", loot: entry?.loot || "", drBlock: entry?.drBlock || "",
-    footprint: 1, size: 1, baseSize: 1,
-  };
-  return {
-    ...applyNpcRank(base, {
-      rank: enemy?.rank || "standard",
-      specialFeatureId: enemy?.specialFeatureId || "", specialFeature: enemy?.specialFeature || "",
-      legendaryAbilityId: enemy?.legendaryAbilityId || "", legendaryAbility: enemy?.legendaryAbility || "",
-      legendaryRewardType: enemy?.legendaryRewardType || "", legendaryReward: enemy?.legendaryReward || "",
-    }),
-    generatedEncounterSeed: stamp,
-    generatedPoiId: poiId,
-    generatedEncounterRank: enemy?.rank || "standard",
-    generatedEnemyGroup: enemy?.enemyGroup || "",
-  };
 }
 function occupiedCells(scene) {
   const result = new Set();
@@ -143,7 +106,11 @@ export default function GmWastelandPoiPanel({ session }) {
             const cell = candidates[cursor++];
             if (!cell) { failed = true; break; }
             const entry = findEntry(enemy);
-            const stats = makeStats(entry, enemy, stamp, poi.id);
+            const stats = await buildProceduralNpcTokenStats(entry, enemy, {
+              stamp,
+              poiId: poi.id,
+              locationId: poi.id,
+            });
             const rank = enemy?.rank || "standard";
             const response = await session.createNpcToken?.({
               name: `${entry?.name || enemy?.type || "NPC"} · ${text[rank] || rank}`,
