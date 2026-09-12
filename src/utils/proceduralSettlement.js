@@ -77,9 +77,8 @@ function overlapsRoad(candidate, roads, pad = 0) {
 
 export { settlementBackground };
 
-export function buildSettlementDecor(spec = {}) {
-  const site = buildSettlementSite(spec);
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:settlement-decor-v1`));
+function createSettlementDecor(spec, site) {
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:settlement-layout-v1:decor`));
   const placed = [];
   const plan = ["vehicle", "vehicle", "hills", "rocks", "rocks", "dead_tree", "dead_tree"];
   for (const type of plan) {
@@ -110,18 +109,18 @@ function distanceToRoad(candidate, roads) {
   return Math.min(left, right, top, bottom);
 }
 
-export function buildSettlementSite(spec = {}) {
-  const normalized = normalizeSettlementSpec(spec);
-  const rng = mulberry32(hashSeed(`${normalized.seed || "1"}:settlement-streets-v3`));
-  const roads = buildRoadNetwork(normalized, rng);
+function createSettlementSite(normalized) {
+  const roadRng = mulberry32(hashSeed(`${normalized.seed || "1"}:settlement-layout-v1:roads`));
+  const houseRng = mulberry32(hashSeed(`${normalized.seed || "1"}:settlement-layout-v1:houses`));
+  const roads = buildRoadNetwork(normalized, roadRng);
   const houses = [];
 
   for (let index = 0; index < TARGET_HOUSES; index += 1) {
     let placed = null;
     for (let attempt = 0; attempt < 420 && !placed; attempt += 1) {
-      let [w, h] = houseDims(rng);
-      const x = randint(rng, 1, GRID - w - 1);
-      const y = randint(rng, 1, GRID - h - 1);
+      const [w, h] = houseDims(houseRng);
+      const x = randint(houseRng, 1, GRID - w - 1);
+      const y = randint(houseRng, 1, GRID - h - 1);
       const candidate = { x, y, w, h };
       // Reserve the complete visible corridor of the PNG road pieces.
       if (overlapsRoad(candidate, roads, 3)) continue;
@@ -145,7 +144,18 @@ export function buildSettlementSite(spec = {}) {
   return { cols: GRID, rows: GRID, roads, houses };
 }
 
-export function buildSettlementHouseLayout(spec = {}) { return buildSettlementSite(spec).houses; }
+export function buildSettlementLayout(spec = {}) {
+  const normalized = normalizeSettlementSpec(spec);
+  const site = createSettlementSite(normalized);
+  return {
+    ...site,
+    decor: createSettlementDecor(normalized, site),
+  };
+}
+
+export function buildSettlementSite(spec = {}) { return buildSettlementLayout(spec); }
+export function buildSettlementDecor(spec = {}) { return buildSettlementLayout(spec).decor; }
+export function buildSettlementHouseLayout(spec = {}) { return buildSettlementLayout(spec).houses; }
 export function buildSettlementHouseBlueprints(spec = {}) { return buildSettlementHouseLayout(spec).map(({ x, y, w, h, ...item }) => item); }
 
 function buildHouseRooms(house) {

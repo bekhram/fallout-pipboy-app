@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  buildSettlementDecor,
-  buildSettlementSite,
+  buildSettlementLayout,
   settlementBackground,
 } from "../../utils/proceduralSettlement.js";
 import { planRoadAssets, RoadAsset } from "./WastelandAssetPortal.jsx";
@@ -30,10 +29,10 @@ export function SettlementAssetLayer({ spec, preview = false }) {
     () => settlementRenderSpec(spec),
     [spec?.seed, spec?.terrain, spec?.settlementStyle, spec?.roadType],
   );
-  const items = useMemo(() => buildSettlementDecor(renderSpec), [renderSpec]);
+  const layout = useMemo(() => buildSettlementLayout(renderSpec), [renderSpec]);
+  const items = layout.decor;
   const roads = useMemo(() => {
-    const site = buildSettlementSite(renderSpec);
-    const { cx, cy, width } = site.roads;
+    const { cx, cy, width } = layout.roads;
     return planRoadAssets({
       roads: [
         { x: cx, y: 0, w: width, h: GRID },
@@ -42,7 +41,7 @@ export function SettlementAssetLayer({ spec, preview = false }) {
       profile: { type: "cross" },
       terrainType: "settlement",
     }, { ...renderSpec, forceFullCross: true });
-  }, [renderSpec]);
+  }, [layout, renderSpec]);
   return (
     <div aria-hidden="true" data-settlement-assets="true" style={{ position: "absolute", inset: 0, zIndex: preview ? 2 : 3, pointerEvents: "none", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
