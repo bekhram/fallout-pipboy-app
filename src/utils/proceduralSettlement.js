@@ -11,6 +11,9 @@ import rocks1 from "../assets/wasteland/objects/rocks-1.png";
 import rocks2 from "../assets/wasteland/objects/rocks-2.png";
 import deadTree3 from "../assets/wasteland/objects/dead-tree-3.png";
 import deadTree4 from "../assets/wasteland/objects/dead-tree-4.png";
+import civilianHouse from "../assets/wasteland/houses/house-civilian.png";
+import ruinedHouse from "../assets/wasteland/houses/house-ruined.png";
+import raiderHouse from "../assets/wasteland/houses/house-raider.png";
 
 const CELL = 100;
 const WALL = 9;
@@ -22,6 +25,24 @@ const SETTLEMENT_DECOR = {
   hills: [hills1, hills2],
   rocks: [rocks1, rocks2],
   dead_tree: [deadTree3, deadTree4],
+};
+const HOUSE_TYPES = ["civilian", "ruined", "raider"];
+export const SETTLEMENT_HOUSE_RULES = {
+  civilian: {
+    src: civilianHouse,
+    disposition: "friendly",
+    allowedGroups: ["npc", "settler", "factionless", "wastelander", "minuteman"],
+  },
+  ruined: {
+    src: ruinedHouse,
+    disposition: "hostile",
+    allowedGroups: ["any"],
+  },
+  raider: {
+    src: raiderHouse,
+    disposition: "hostile",
+    allowedGroups: ["raider", "super_mutant"],
+  },
 };
 
 function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
@@ -56,10 +77,8 @@ function buildRoadNetwork(spec, rng) {
 }
 
 function houseDims(rng) {
-  const variant = rng();
-  if (variant < 0.68) return rng() > 0.5 ? [6, 5] : [5, 6];
-  if (variant < 0.92) return rng() > 0.5 ? [7, 5] : [5, 7];
-  return [7, 6];
+  rng();
+  return [6, 6];
 }
 
 function overlaps(a, b, pad = 1) {
@@ -114,6 +133,7 @@ function createSettlementSite(normalized) {
   const houseRng = mulberry32(hashSeed(`${normalized.seed || "1"}:settlement-layout-v1:houses`));
   const roads = buildRoadNetwork(normalized, roadRng);
   const houses = [];
+  const typeOffset = hashSeed(`${normalized.seed || "1"}:settlement-house-types`) % HOUSE_TYPES.length;
 
   for (let index = 0; index < TARGET_HOUSES; index += 1) {
     let placed = null;
@@ -129,6 +149,8 @@ function createSettlementSite(normalized) {
       placed = candidate;
     }
     if (!placed) break;
+    const houseType = HOUSE_TYPES[(index + typeOffset) % HOUSE_TYPES.length];
+    const houseRule = SETTLEMENT_HOUSE_RULES[houseType];
     houses.push({
       id: index === 0 ? "house" : `house__${index + 1}`,
       baseRoomId: "house",
@@ -138,6 +160,10 @@ function createSettlementSite(normalized) {
       zone: "settlement",
       label: `HOUSE ${index + 1}`,
       houseSize: "small",
+      houseType,
+      assetSrc: houseRule.src,
+      disposition: houseRule.disposition,
+      allowedGroups: [...houseRule.allowedGroups],
       ...placed,
     });
   }
@@ -155,7 +181,38 @@ export function buildSettlementLayout(spec = {}) {
 
 export function buildSettlementSite(spec = {}) { return buildSettlementLayout(spec); }
 export function buildSettlementDecor(spec = {}) { return buildSettlementLayout(spec).decor; }
-export function buildSettlementHouseLayout(spec = {}) { return buildSettlementLayout(spec).houses; }
+function fixedHouseRooms(house) {
+  const template = [
+    ["kitchen", 0, 0, 2, 3],
+    ["bedroom", 2, 0, 2, 3],
+    ["master_bedroom", 4, 0, 2, 3],
+    ["living_room", 0, 3, 3, 3],
+    ["hall", 3, 3, 1, 3],
+    ["bathroom", 4, 3, 2, 2],
+    ["storage", 4, 5, 2, 1],
+  ];
+  return template.map(([baseRoomId, dx, dy, w, h], roomIndex) => ({
+    id: `${house.id}__${baseRoomId}`,
+    baseRoomId,
+    instance: house.instance,
+    sourceSet: house.sourceSet,
+    slot: house.slot * template.length + roomIndex,
+    zone: "settlement_house",
+    houseId: house.id,
+    houseType: house.houseType,
+    disposition: house.disposition,
+    allowedGroups: [...house.allowedGroups],
+    label: `${house.label} · ${baseRoomId.toUpperCase().replace(/_/g, " ")}`,
+    x: house.x + dx,
+    y: house.y + dy,
+    w,
+    h,
+  }));
+}
+
+export function buildSettlementHouseLayout(spec = {}) {
+  return buildSettlementLayout(spec).houses.flatMap(fixedHouseRooms);
+}
 export function buildSettlementHouseBlueprints(spec = {}) { return buildSettlementHouseLayout(spec).map(({ x, y, w, h, ...item }) => item); }
 
 function buildHouseRooms(house) {
@@ -285,7 +342,7 @@ export function generateSettlementMapSvg(input = {}) {
   out.push(rect(0, 0, width, height, "transparent"));
   // Roads are rendered from the shared PNG road assets in SettlementAssetLayer.
   out.push(scatter(rng, site));
-  site.houses.forEach((house, index) => out.push(drawHouse(house, index)));
+  // House floor plans are rendered from fixed PNG assets in SettlementAssetLayer.
   out.push(rect(18, 18, 390, 42, "#d6c8a8", "#40382f", 2, 4, 'opacity="0.93"'));
   out.push(text(32, 40, `SETTLEMENT // 24×24 // ${site.roads.type.toUpperCase()} // ${site.houses.length} HOUSES`, 11, "start"));
   out.push("</svg>");

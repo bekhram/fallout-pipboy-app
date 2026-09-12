@@ -52,6 +52,29 @@ export function SettlementAssetLayer({ spec, preview = false }) {
           />
         ))}
       </div>
+      <div style={{ position: "absolute", inset: 0, zIndex: 2 }}>
+        {layout.houses.map((house) => (
+          <img
+            key={house.id}
+            src={house.assetSrc}
+            alt=""
+            draggable={false}
+            data-settlement-house={house.houseType}
+            data-settlement-house-id={house.id}
+            style={{
+              position: "absolute",
+              left: `${house.x / GRID * 100}%`,
+              top: `${house.y / GRID * 100}%`,
+              width: `${house.w / GRID * 100}%`,
+              height: `${house.h / GRID * 100}%`,
+              objectFit: "contain",
+              pointerEvents: "none",
+              userSelect: "none",
+              filter: preview ? "none" : "drop-shadow(0 3px 5px rgba(0,0,0,.45))",
+            }}
+          />
+        ))}
+      </div>
       <div style={{ position: "absolute", inset: 0, zIndex: 3 }}>
       {items.map((item, index) => (
         <img

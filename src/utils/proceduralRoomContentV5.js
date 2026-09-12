@@ -87,7 +87,20 @@ function expandedBaseRooms(spec = {}) {
       || (blueprint.baseRoomId === "house" ? emptyRoom("house") : sourceRooms[0])
       || emptyRoom(alias);
     const room = cloneRoom(source);
-    return { ...room, id: blueprint.id, baseRoomId: blueprint.baseRoomId, roomInstance: blueprint.instance, roomSlot: blueprint.slot, roomSourceSet: blueprint.sourceSet, roomZone: blueprint.zone || "main" };
+    return {
+      ...room,
+      id: blueprint.id,
+      baseRoomId: blueprint.baseRoomId,
+      roomInstance: blueprint.instance,
+      roomSlot: blueprint.slot,
+      roomSourceSet: blueprint.sourceSet,
+      roomZone: blueprint.zone || "main",
+      houseId: blueprint.houseId || "",
+      houseType: blueprint.houseType || "",
+      disposition: blueprint.disposition || "",
+      allowedGroups: [...(blueprint.allowedGroups || [])],
+      lootProfile: blueprint.houseType || "",
+    };
   });
 }
 

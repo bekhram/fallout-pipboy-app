@@ -197,12 +197,14 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
   const rooms = useMemo(() => (spec ? generateLocalizedProceduralRooms(spec, lang) : []), [specKey, lang]);
   const encounter = useMemo(() => (spec ? generateProceduralEncounterSummary(spec) : null), [specKey]);
   const enemyTotal = encounter?.totalEnemies || 0;
+  const residentTotal = rawRooms.reduce((sum, room) => sum + (room.residents || []).reduce((count, resident) => count + Number(resident.count || 0), 0), 0);
+  const spawnTotal = enemyTotal + residentTotal;
 
   if (session?.mode !== "host") return null;
 
   const placeEnemies = async () => {
     if (!spec || placing) return;
-    if (!enemyTotal) { setMessage(text.noEnemies); return; }
+    if (!spawnTotal) { setMessage(text.noEnemies); return; }
     if (!session?.liveSceneId || session.liveSceneId !== scene?.sceneId) { setMessage(text.startLive); return; }
 
     const stamp = specStamp(spec);
@@ -219,10 +221,11 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
     try {
       for (const room of rawRooms) {
         const bounds = boundsByRoom[room.id];
-        if (!bounds || !(room.enemies || []).length) continue;
+        const occupants = [...(room.enemies || []), ...(room.residents || [])];
+        if (!bounds || !occupants.length) continue;
         const candidates = cellsInsideRoom(bounds).reverse();
         let cursor = 0;
-        for (const enemy of room.enemies) {
+        for (const enemy of occupants) {
           for (let index = 0; index < Number(enemy.count || 0); index += 1) {
             while (cursor < candidates.length && occupied.has(`${candidates[cursor].x}:${candidates[cursor].y}`)) cursor += 1;
             const cell = candidates[cursor];
@@ -290,7 +293,7 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
         </article>
       ))}</div> : null}
 
-      {spec ? <div className="gm-room-descriptions__actions"><button type="button" className="pip-btn is-primary" disabled={placing || !enemyTotal} onClick={placeEnemies}>{placing ? text.spawning : `${text.spawn}${enemyTotal ? ` (${enemyTotal})` : ""}`}</button>{message ? <div className="gm-room-descriptions__message">{message}</div> : null}</div> : null}
+      {spec ? <div className="gm-room-descriptions__actions"><button type="button" className="pip-btn is-primary" disabled={placing || !spawnTotal} onClick={placeEnemies}>{placing ? text.spawning : `${text.spawn}${spawnTotal ? ` (${spawnTotal})` : ""}`}</button>{message ? <div className="gm-room-descriptions__message">{message}</div> : null}</div> : null}
     </section>
   );
 }
