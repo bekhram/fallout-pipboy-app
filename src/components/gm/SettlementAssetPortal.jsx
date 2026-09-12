@@ -8,15 +8,31 @@ import {
 import { planRoadAssets, RoadAsset } from "./WastelandAssetPortal.jsx";
 
 const GRID = 24;
+const SETTLEMENT_TERRAINS = new Set(["wasteland", "forest", "swamp", "ruins"]);
+
+function settlementRenderSpec(spec = {}) {
+  const terrain = SETTLEMENT_TERRAINS.has(spec.terrain) ? spec.terrain : "wasteland";
+  const seed = String(spec.seed || "1");
+  return {
+    ...spec,
+    terrain,
+    // generateProceduralMapSvg applies the same suffix before drawing houses.
+    seed: seed.endsWith(`:terrain:${terrain}`) ? seed : `${seed}:terrain:${terrain}`,
+  };
+}
 
 export function settlementBackgroundForSpec() {
   return settlementBackground;
 }
 
 export function SettlementAssetLayer({ spec, preview = false }) {
-  const items = useMemo(() => buildSettlementDecor(spec), [spec?.seed, spec?.settlementStyle, spec?.roadType]);
+  const renderSpec = useMemo(
+    () => settlementRenderSpec(spec),
+    [spec?.seed, spec?.terrain, spec?.settlementStyle, spec?.roadType],
+  );
+  const items = useMemo(() => buildSettlementDecor(renderSpec), [renderSpec]);
   const roads = useMemo(() => {
-    const site = buildSettlementSite(spec);
+    const site = buildSettlementSite(renderSpec);
     const { cx, cy, width } = site.roads;
     return planRoadAssets({
       roads: [
@@ -25,8 +41,8 @@ export function SettlementAssetLayer({ spec, preview = false }) {
       ],
       profile: { type: "cross" },
       terrainType: "settlement",
-    }, { ...spec, forceFullCross: true });
-  }, [spec?.seed, spec?.roadType]);
+    }, { ...renderSpec, forceFullCross: true });
+  }, [renderSpec]);
   return (
     <div aria-hidden="true" data-settlement-assets="true" style={{ position: "absolute", inset: 0, zIndex: preview ? 2 : 3, pointerEvents: "none", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
