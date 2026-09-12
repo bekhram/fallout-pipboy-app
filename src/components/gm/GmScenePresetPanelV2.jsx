@@ -8,9 +8,14 @@ import {
   enemyGroupLabel,
   normalizeEnemyGroup,
 } from "../../utils/proceduralEnemyGroups.js";
+import {
+  normalizeTrapCount,
+  normalizeTrapLethality,
+} from "../../utils/proceduralBattlemapExtras.js";
 import "./gmScenePresetPanelV2.css";
 
 const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
+const TRAP_LETHALITIES = ["low", "standard", "high", "deadly"];
 
 const COPY = {
   en: {
@@ -20,6 +25,8 @@ const COPY = {
     target: "Target XP", actual: "Generated XP", reward: "XP / player",
     minion: "Minions", normal: "Standard", special: "Special", legendary: "Legendary",
     note: "Enemies are grouped by faction/type. A room never mixes incompatible groups. Auto can use different groups in different rooms.",
+    traps: "TRAPS", trapCount: "TRAP COUNT", trapLethality: "TRAP LETHALITY",
+    low: "LOW", high: "HIGH",
   },
   ru: {
     title: "СЛОЖНОСТЬ ЭНКАУНТЕРА",
@@ -28,6 +35,8 @@ const COPY = {
     target: "Целевой XP", actual: "XP врагов", reward: "XP / игрока",
     minion: "Миньоны", normal: "Стандартные", special: "Особые", legendary: "Легендарные",
     note: "Враги разделены по фракциям и типам. В одной комнате несовместимые группы не смешиваются. В режиме АВТО разные комнаты могут иметь разные группы.",
+    traps: "ЛОВУШКИ", trapCount: "КОЛИЧЕСТВО ЛОВУШЕК", trapLethality: "СМЕРТЕЛЬНОСТЬ ЛОВУШЕК",
+    low: "НИЗКАЯ", high: "ВЫСОКАЯ",
   },
   uk: {
     title: "СКЛАДНІСТЬ ЕНКАУНТЕРА",
@@ -36,6 +45,8 @@ const COPY = {
     target: "Цільовий XP", actual: "XP ворогів", reward: "XP / гравця",
     minion: "Міньйони", normal: "Звичайні", special: "Особливі", legendary: "Легендарні",
     note: "Вороги розділені за фракціями й типами. В одній кімнаті несумісні групи не змішуються. В режимі АВТО різні кімнати можуть мати різні групи.",
+    traps: "ПАСТКИ", trapCount: "КІЛЬКІСТЬ ПАСТОК", trapLethality: "СМЕРТЕЛЬНІСТЬ ПАСТОК",
+    low: "НИЗЬКА", high: "ВИСОКА",
   },
   pl: {
     title: "TRUDNOŚĆ SPOTKANIA",
@@ -44,6 +55,8 @@ const COPY = {
     target: "Docelowe XP", actual: "XP wrogów", reward: "XP / gracza",
     minion: "Sługi", normal: "Zwykli", special: "Specjalni", legendary: "Legendarni",
     note: "Wrogowie są dzieleni według frakcji i typu. Jedno pomieszczenie nigdy nie miesza niekompatybilnych grup. AUTO może użyć różnych grup w różnych pokojach.",
+    traps: "PUŁAPKI", trapCount: "LICZBA PUŁAPEK", trapLethality: "ŚMIERTELNOŚĆ PUŁAPEK",
+    low: "NISKA", high: "WYSOKA",
   },
 };
 
@@ -65,11 +78,15 @@ export default function GmScenePresetPanelV2({ session }) {
   const savedSpec = specFromScene(scene);
   const [difficulty, setDifficulty] = useState(() => normalizeEncounterDifficulty(savedSpec?.encounterDifficulty));
   const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
+  const [trapCount, setTrapCount] = useState(() => normalizeTrapCount(savedSpec?.trapCount));
+  const [trapLethality, setTrapLethality] = useState(() => normalizeTrapLethality(savedSpec?.trapLethality));
 
   useEffect(() => {
     const spec = specFromScene(scene);
     setDifficulty(normalizeEncounterDifficulty(spec?.encounterDifficulty));
     setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
+    setTrapCount(normalizeTrapCount(spec?.trapCount));
+    setTrapLethality(normalizeTrapLethality(spec?.trapLethality));
   }, [scene?.sceneId]);
 
   const sessionWithEncounterSettings = useMemo(() => {
@@ -88,15 +105,17 @@ export default function GmScenePresetPanelV2({ session }) {
               ...proceduralMapSpec,
               encounterDifficulty: difficulty,
               enemyFaction,
+              trapCount,
+              trapLethality,
             },
           },
         });
       },
     };
-  }, [session, difficulty, enemyFaction]);
+  }, [session, difficulty, enemyFaction, trapCount, trapLethality]);
 
   const previewSpec = savedSpec
-    ? { ...savedSpec, encounterDifficulty: difficulty, enemyFaction }
+    ? { ...savedSpec, encounterDifficulty: difficulty, enemyFaction, trapCount, trapLethality }
     : null;
   const encounter = useMemo(
     () => (previewSpec ? generateProceduralEncounterSummary(previewSpec) : null),
@@ -122,6 +141,8 @@ export default function GmScenePresetPanelV2({ session }) {
           ...spec,
           encounterDifficulty: difficulty,
           enemyFaction,
+          trapCount,
+          trapLethality,
           ...patch,
         },
       },
@@ -138,6 +159,18 @@ export default function GmScenePresetPanelV2({ session }) {
     const next = normalizeEnemyGroup(value);
     setEnemyFaction(next);
     await persistSetting({ enemyFaction: next, encounterDifficulty: difficulty });
+  };
+
+  const changeTrapCount = async (value) => {
+    const next = normalizeTrapCount(value);
+    setTrapCount(next);
+    await persistSetting({ trapCount: next });
+  };
+
+  const changeTrapLethality = async (value) => {
+    const next = normalizeTrapLethality(value);
+    setTrapLethality(next);
+    await persistSetting({ trapLethality: next });
   };
 
   const ranks = encounter?.rankCounts || { minion: 0, standard: 0, special: 0, legendary: 0 };
@@ -159,6 +192,18 @@ export default function GmScenePresetPanelV2({ session }) {
               {ENEMY_GROUP_OPTIONS.map((value) => (
                 <option key={value} value={value}>{enemyGroupLabel(value, lang)}</option>
               ))}
+            </select>
+          </label>
+
+          <label>
+            <span>{text.trapCount}</span>
+            <input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(event) => changeTrapCount(event.target.value)} />
+          </label>
+
+          <label>
+            <span>{text.trapLethality}</span>
+            <select className="pip-input" value={trapLethality} onChange={(event) => changeTrapLethality(event.target.value)}>
+              {TRAP_LETHALITIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}
             </select>
           </label>
         </div>
