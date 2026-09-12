@@ -29,6 +29,31 @@ function markerSymbol(room = {}) {
   return "?";
 }
 
+function roomAnchor(bounds = {}) {
+  const explicitX = Number(bounds.markerX);
+  const explicitY = Number(bounds.markerY);
+
+  if (Number.isFinite(explicitX) && Number.isFinite(explicitY)) {
+    return {
+      x: clamp(Math.floor(explicitX), 0, GRID - 1),
+      y: clamp(Math.floor(explicitY), 0, GRID - 1),
+    };
+  }
+
+  return {
+    x: clamp(
+      Math.floor(Number(bounds.x || 0) + Math.max(1, Number(bounds.w || 1)) / 2),
+      0,
+      GRID - 1,
+    ),
+    y: clamp(
+      Math.floor(Number(bounds.y || 0) + Math.max(1, Number(bounds.h || 1)) / 2),
+      0,
+      GRID - 1,
+    ),
+  };
+}
+
 /**
  * One deterministic marker list shared by the Settlement tactical map,
  * room descriptions and token placement. Marker numbers are intentionally
@@ -45,24 +70,15 @@ export function generateSettlementRoomMarkers(spec = {}) {
     const bounds = boundsByRoom[room.id];
     if (!bounds) return [];
 
-    const centerX = clamp(
-      Math.floor(Number(bounds.x || 0) + Math.max(1, Number(bounds.w || 1)) / 2),
-      0,
-      GRID - 1,
-    );
-    const centerY = clamp(
-      Math.floor(Number(bounds.y || 0) + Math.max(1, Number(bounds.h || 1)) / 2),
-      0,
-      GRID - 1,
-    );
+    const anchor = roomAnchor(bounds);
 
     return [{
       id: `settlement-room:${room.id}`,
       roomId: room.id,
       marker: index + 1,
       symbol: markerSymbol(room),
-      x: centerX,
-      y: centerY,
+      x: anchor.x,
+      y: anchor.y,
       bounds: {
         x: Number(bounds.x || 0),
         y: Number(bounds.y || 0),
