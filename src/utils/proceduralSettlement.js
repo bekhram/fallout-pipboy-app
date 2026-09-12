@@ -18,7 +18,7 @@ import raiderHouse from "../assets/wasteland/houses/house-raider.png";
 const CELL = 100;
 const WALL = 9;
 const GRID = 24;
-const TARGET_HOUSES = 7;
+const TARGET_HOUSES = 4;
 const ROAD_TYPES = ["asphalt", "dirt", "cobblestone"];
 const SETTLEMENT_DECOR = {
   vehicle: [retroCar1, retroCar2, retroCar3, pickupRetro1, motorcycleRetro1],
@@ -60,12 +60,15 @@ export function isSettlementType(type) { return String(type || "") === "settleme
 export function normalizeSettlementSpec(spec = {}) {
   const settlementStyle = ["civilian", "scrappy", "fortified", "raider"].includes(spec.settlementStyle) ? spec.settlementStyle : "scrappy";
   const roadType = ROAD_TYPES.includes(spec.roadType) ? spec.roadType : "auto";
-  return { ...spec, type: "settlement", cols: GRID, rows: GRID, settlementStyle, roadType };
+  const terrain = ["wasteland", "forest", "swamp", "ruins"].includes(spec.terrain) ? spec.terrain : "wasteland";
+  const rawSeed = String(spec.seed || "1");
+  const seed = rawSeed.endsWith(`:terrain:${terrain}`) ? rawSeed : `${rawSeed}:terrain:${terrain}`;
+  return { ...spec, type: "settlement", cols: GRID, rows: GRID, terrain, seed, settlementStyle, roadType };
 }
 
 function buildRoadNetwork(spec, rng) {
-  const offsetX = randint(rng, -3, 3);
-  const offsetY = randint(rng, -3, 3);
+  const offsetX = randint(rng, -1, 1);
+  const offsetY = randint(rng, -1, 1);
   const cx = clamp(Math.floor(GRID / 2) + offsetX, 7, GRID - 8);
   const cy = clamp(Math.floor(GRID / 2) + offsetY, 7, GRID - 8);
   const width = 2;
@@ -134,21 +137,16 @@ function createSettlementSite(normalized) {
   const roads = buildRoadNetwork(normalized, roadRng);
   const houses = [];
   const typeOffset = hashSeed(`${normalized.seed || "1"}:settlement-house-types`) % HOUSE_TYPES.length;
+  const slots = [
+    { x: 1, y: 1 },
+    { x: GRID - 7, y: 1 },
+    { x: 1, y: GRID - 7 },
+    { x: GRID - 7, y: GRID - 7 },
+  ];
 
   for (let index = 0; index < TARGET_HOUSES; index += 1) {
-    let placed = null;
-    for (let attempt = 0; attempt < 420 && !placed; attempt += 1) {
-      const [w, h] = houseDims(houseRng);
-      const x = randint(houseRng, 1, GRID - w - 1);
-      const y = randint(houseRng, 1, GRID - h - 1);
-      const candidate = { x, y, w, h };
-      // Reserve the complete visible corridor of the PNG road pieces.
-      if (overlapsRoad(candidate, roads, 3)) continue;
-      if (houses.some((house) => overlaps(candidate, house, 1))) continue;
-      if (distanceToRoad(candidate, roads) > 3 && attempt < 300) continue;
-      placed = candidate;
-    }
-    if (!placed) break;
+    const [w, h] = houseDims(houseRng);
+    const placed = { ...slots[index], w, h };
     const houseType = HOUSE_TYPES[(index + typeOffset) % HOUSE_TYPES.length];
     const houseRule = SETTLEMENT_HOUSE_RULES[houseType];
     houses.push({
