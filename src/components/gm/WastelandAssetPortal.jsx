@@ -1266,7 +1266,7 @@ function makeFragments(
  * ============================================================
  */
 
-function planRoadAssets(
+export function planRoadAssets(
   site,
   spec
 ) {
@@ -1381,7 +1381,7 @@ function removeRoadOverlaps(
  * ============================================================
  */
 
-function RoadAsset({ road }) {
+export function RoadAsset({ road }) {
   const config =
     ROAD_VISUAL_CONFIG[road.name] || {
       scale: 1,

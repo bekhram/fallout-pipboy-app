@@ -87,7 +87,7 @@ export function buildSettlementDecor(spec = {}) {
     for (let attempt = 0; attempt < 180; attempt += 1) {
       const candidate = { x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h };
       if (overlapsRoad(candidate, site.roads, type === "vehicle" ? 0 : 1)) continue;
-      if (site.houses.some((house) => overlaps(candidate, house, 1))) continue;
+      if (site.houses.some((house) => overlaps(candidate, house, 2.5))) continue;
       if (placed.some((item) => overlaps(candidate, item, 1))) continue;
       if (type === "vehicle" && distanceToRoad(candidate, site.roads) > 2) continue;
       placed.push({
@@ -272,7 +272,7 @@ export function generateSettlementMapSvg(input = {}) {
   const width = GRID * CELL, height = GRID * CELL;
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "transparent"));
-  out.push(drawRoads(site.roads, rng));
+  // Roads are rendered from the shared PNG road assets in SettlementAssetLayer.
   out.push(scatter(rng, site));
   site.houses.forEach((house, index) => out.push(drawHouse(house, index)));
   out.push(rect(18, 18, 390, 42, "#d6c8a8", "#40382f", 2, 4, 'opacity="0.93"'));

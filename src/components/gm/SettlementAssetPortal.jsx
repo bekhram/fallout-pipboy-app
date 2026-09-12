@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   buildSettlementDecor,
+  buildSettlementSite,
   settlementBackground,
 } from "../../utils/proceduralSettlement.js";
+import { planRoadAssets, RoadAsset } from "./WastelandAssetPortal.jsx";
 
 const GRID = 24;
 
@@ -13,8 +15,24 @@ export function settlementBackgroundForSpec() {
 
 export function SettlementAssetLayer({ spec, preview = false }) {
   const items = useMemo(() => buildSettlementDecor(spec), [spec?.seed, spec?.settlementStyle, spec?.roadType]);
+  const roads = useMemo(() => {
+    const site = buildSettlementSite(spec);
+    const { cx, cy, width } = site.roads;
+    return planRoadAssets({
+      roads: [
+        { x: cx, y: 0, w: width, h: GRID },
+        { x: 0, y: cy, w: GRID, h: width },
+      ],
+      profile: { type: "cross" },
+      terrainType: "settlement",
+    }, spec);
+  }, [spec?.seed, spec?.roadType]);
   return (
     <div aria-hidden="true" data-settlement-assets="true" style={{ position: "absolute", inset: 0, zIndex: preview ? 2 : 3, pointerEvents: "none", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
+        {roads.map((road, index) => <RoadAsset key={`${road.name}-${road.centerX}-${road.centerY}-${index}`} road={road} />)}
+      </div>
+      <div style={{ position: "absolute", inset: 0, zIndex: 3 }}>
       {items.map((item, index) => (
         <img
           key={`${item.type}-${item.x}-${item.y}-${index}`}
@@ -35,6 +53,7 @@ export function SettlementAssetLayer({ spec, preview = false }) {
           }}
         />
       ))}
+      </div>
     </div>
   );
 }
