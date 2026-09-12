@@ -10,6 +10,7 @@ function pick(rng, list) { return list[Math.min(list.length - 1, Math.floor(rng(
 function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") { return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`; }
 function line(x1, y1, x2, y2, stroke, sw = 4, dash = "") { return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`; }
 function overlaps(a, b, pad = 0) { return !(a.x + a.w + pad <= b.x || b.x + b.w + pad <= a.x || a.y + a.h + pad <= b.y || b.y + b.h + pad <= a.y); }
+
 function visualCollisionRect(item, width, height) {
   const w = clamp(width, 0.25, GRID), h = clamp(height, 0.25, GRID);
   const initialCenterX = Number(item.x || 0) + Number(item.w || 0) / 2;
@@ -18,10 +19,29 @@ function visualCollisionRect(item, width, height) {
   const centerY = clamp(initialCenterY, h / 2, GRID - h / 2);
   return { x: centerX - w / 2, y: centerY - h / 2, w, h };
 }
+
 function withCollisionRect(item, width, height) { return { ...item, collisionRect: visualCollisionRect(item, width, height) }; }
+
 function normalizeTerrain(value) {
   const terrain = String(value || "wasteland").toLowerCase();
   return ["wasteland", "forest", "swamp", "ruins"].includes(terrain) ? terrain : "wasteland";
+}
+
+function normalizeReservedRects(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => ({
+      x: clamp(item?.x, 0, GRID),
+      y: clamp(item?.y, 0, GRID),
+      w: clamp(item?.w, 0, GRID),
+      h: clamp(item?.h, 0, GRID),
+    }))
+    .filter((item) => item.w > 0 && item.h > 0 && item.x < GRID && item.y < GRID)
+    .map((item) => ({
+      ...item,
+      w: Math.min(item.w, GRID - item.x),
+      h: Math.min(item.h, GRID - item.y),
+    }));
 }
 
 function terrainProfile(terrain) {
@@ -33,8 +53,6 @@ function terrainProfile(terrain) {
 
 function roadProfile(rng) {
   const roll = rng();
-  // A wasteland grid may contain only one road route. Crossroads previously
-  // rendered as two unrelated roads (and could read visually as road + rails).
   const type = roll < 0.36 ? "none" : roll < 0.82 ? "single" : "fragments";
   return { type, surface: pick(rng, ["asphalt", "dirt", "cobblestone"]) };
 }
@@ -52,11 +70,8 @@ function roadRects(profile, rng) {
     roads.push({ x: 0, y: cy, w: GRID, h: width });
   } else if (profile.type === "fragments") {
     const vertical = rng() < 0.5;
-    if (vertical) {
-      roads.push({ x: cx, y: 0, w: width, h: randint(rng, 7, 13) });
-    } else {
-      roads.push({ x: 0, y: cy, w: randint(rng, 7, 13), h: width });
-    }
+    if (vertical) roads.push({ x: cx, y: 0, w: width, h: randint(rng, 7, 13) });
+    else roads.push({ x: 0, y: cy, w: randint(rng, 7, 13), h: width });
   }
   return roads;
 }
@@ -151,13 +166,17 @@ function placeVehicles(rng, occupied, roads, profile) {
     if (type === "wreck_truck") return withCollisionRect(base, 5, 3);
     return withCollisionRect(base, w, h);
   }, ASSET_GAP, 120);
+
   for (let i = 0; i < randint(rng, profile.carCount[0], profile.carCount[1]); i += 1) {
     const roll = rng();
     const type = roll < 0.48 ? "retro_car" : roll < 0.66 ? "retro_pickup" : roll < 0.82 ? "retro_motorcycle" : "wreck_car";
     const item = placeVehicle(type);
     if (item) out.push(item);
   }
-  for (let i = 0; i < randint(rng, profile.truckCount[0], profile.truckCount[1]); i += 1) { const item = placeVehicle("wreck_truck"); if (item) out.push(item); }
+  for (let i = 0; i < randint(rng, profile.truckCount[0], profile.truckCount[1]); i += 1) {
+    const item = placeVehicle("wreck_truck");
+    if (item) out.push(item);
+  }
   return out;
 }
 
@@ -195,17 +214,23 @@ export function buildOpenWastelandSite(spec = {}) {
   const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${terrainType}:24x24:open-wasteland-assets-v9`));
   const road = roadProfile(rng);
   const roads = roadRects(road, rng);
-  const occupied = [...roads];
+  const reservedRects = normalizeReservedRects(spec.reservedRects);
+
+  // Reserved rectangles are occupied before every environmental asset is
+  // placed. Settlement houses use this to reserve their full visual footprint.
+  const occupied = [...roads, ...reservedRects];
   const terrain = placeTerrain(rng, occupied, terrainType, profile);
   const obstacles = placeObstacles(rng, occupied, terrainType, profile);
   const vehicles = placeVehicles(rng, occupied, roads, profile);
   const trees = placeTrees(rng, occupied, profile);
+
   return {
     cols: GRID,
     rows: GRID,
     terrainType,
     profile: { ...road, terrain: terrainType },
     roads,
+    reservedRects,
     terrain,
     obstacles,
     ruins: terrain.filter((item) => item.type === "ruins"),

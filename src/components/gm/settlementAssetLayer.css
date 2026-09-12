@@ -1,0 +1,18 @@
+.gm-tactical-map-core .gm-session-map__grid[data-settlement-grid="true"] {
+  isolation: isolate;
+}
+
+.gm-tactical-map-core .gm-session-map__grid[data-settlement-grid="true"] > [data-settlement-houses="true"] {
+  z-index: 1 !important;
+}
+
+.gm-tactical-map-core .gm-session-map__grid[data-settlement-grid="true"] > .gm-session-map__cell.tactical-cell {
+  position: relative;
+  z-index: 40 !important;
+  border-right: 1px solid color-mix(in srgb, currentColor 46%, transparent) !important;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 46%, transparent) !important;
+}
+
+.gm-tactical-map-core .gm-session-map__grid[data-settlement-grid="true"] > .gm-session-map__cell.tactical-cell:hover {
+  z-index: 41 !important;
+}
