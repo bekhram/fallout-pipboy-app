@@ -128,6 +128,7 @@ function getVehicleFootprint(type) {
 }
 
 function placeVehicles(rng, occupied, roads, profile) {
+  if (!roads.length) return [];
   const out = [];
   const placeVehicle = (type) => placeItem(rng, occupied, () => {
     let road = null;

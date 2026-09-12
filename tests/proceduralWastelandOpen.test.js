@@ -48,6 +48,9 @@ test("wasteland assets keep a one-cell gap from roads and each other", () => {
 
     assert.ok(site.roads.length <= 1, `seed ${seed}: only one road route may be generated per grid`);
     assert.notEqual(site.profile.type, "cross", `seed ${seed}: crossing roads must not be generated`);
+    if (site.roads.length === 0) {
+      assert.equal(site.vehicles.length, 0, `seed ${seed}: vehicles must not be generated without a road`);
+    }
 
     for (const item of items) {
       if (site.vehicles.includes(item)) {
