@@ -67,7 +67,7 @@ if (!self.define) {
     });
   };
 }
-define(['./workbox-5a5d9309'], (function (workbox) { 'use strict';
+define(['./workbox-9ba02feb'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
@@ -82,11 +82,20 @@ define(['./workbox-5a5d9309'], (function (workbox) { 'use strict';
     "revision": "3ca0b8505b4bec776b69afdba2768812"
   }, {
     "url": "index.html",
-    "revision": "0.9l7enb9n3ug"
+    "revision": "0.2l82hl1d1k8"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/]
   }));
+  workbox.registerRoute(/\/assets\/(?:wasteland-|road-|car-|cliff-|crater-|dead-tree-|rocks-|truck-|ruins-|ravine-|lake-|swamp-|hills-)[^/]*\.png$/, new workbox.CacheFirst({
+    "cacheName": "wasteland-map-assets-v3",
+    plugins: [new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
+    }), new workbox.ExpirationPlugin({
+      maxEntries: 64,
+      maxAgeSeconds: 2592000
+    })]
+  }), 'GET');
 
 }));
