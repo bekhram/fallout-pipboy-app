@@ -16,6 +16,10 @@ import {
   normalizeTrapCount,
   normalizeTrapLethality,
 } from "../../utils/proceduralBattlemapExtras.js";
+import {
+  ENCOUNTER_BUFF_TIERS,
+  normalizeEncounterBuffTier,
+} from "../../utils/proceduralEnemyBuffs.js";
 import "./gmScenePresetPanelV2.css";
 
 const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
@@ -27,6 +31,14 @@ const COPY = {
     faction: "ENEMY FACTION / TYPE",
     enemyCount: "ENEMY COUNT (0 = AUTO)",
     enemies: "Enemies",
+    enemyBuffs: "RANDOM ENEMY BUFFS",
+    enemyBuffTier: "BUFF STRENGTH",
+    buffsOn: "ENABLED",
+    buffsOff: "DISABLED",
+    buffLight: "LIGHT",
+    buffMedium: "MEDIUM",
+    buffStrong: "STRONG",
+    buffNote: "When enabled, about 50% of randomly placed hostile encounter tokens receive one random buff of the selected strength. The result is stable for the same seed and token position.",
     easy: "EASY", standard: "STANDARD", hard: "HARD", deadly: "DEADLY",
     target: "Target XP", actual: "Generated XP", reward: "XP / player",
     minion: "Minions", normal: "Standard", special: "Special", legendary: "Legendary",
@@ -39,6 +51,14 @@ const COPY = {
     faction: "ФРАКЦИЯ / ТИП ВРАГОВ",
     enemyCount: "КОЛИЧЕСТВО ВРАГОВ (0 = АВТО)",
     enemies: "Врагов",
+    enemyBuffs: "РАНДОМНЫЕ БАФЫ ВРАГОВ",
+    enemyBuffTier: "СИЛА БАФА",
+    buffsOn: "ВКЛЮЧЕНЫ",
+    buffsOff: "ВЫКЛЮЧЕНЫ",
+    buffLight: "ЛЁГКИЕ",
+    buffMedium: "СРЕДНИЕ",
+    buffStrong: "СИЛЬНЫЕ",
+    buffNote: "Если включено, примерно 50% случайно расставленных враждебных токенов получают один случайный баф выбранной силы. Для того же seed и позиции результат остаётся одинаковым.",
     easy: "ЛЁГКАЯ", standard: "ОБЫЧНАЯ", hard: "СЛОЖНАЯ", deadly: "СМЕРТЕЛЬНАЯ",
     target: "Целевой XP", actual: "XP врагов", reward: "XP / игрока",
     minion: "Миньоны", normal: "Стандартные", special: "Особые", legendary: "Легендарные",
@@ -51,6 +71,14 @@ const COPY = {
     faction: "ФРАКЦІЯ / ТИП ВОРОГІВ",
     enemyCount: "КІЛЬКІСТЬ ВОРОГІВ (0 = АВТО)",
     enemies: "Ворогів",
+    enemyBuffs: "ВИПАДКОВІ БАФИ ВОРОГІВ",
+    enemyBuffTier: "СИЛА БАФА",
+    buffsOn: "УВІМКНЕНО",
+    buffsOff: "ВИМКНЕНО",
+    buffLight: "ЛЕГКІ",
+    buffMedium: "СЕРЕДНІ",
+    buffStrong: "СИЛЬНІ",
+    buffNote: "Якщо ввімкнено, приблизно 50% випадково розставлених ворожих токенів отримують один випадковий баф вибраної сили. Для того самого seed і позиції результат не змінюється.",
     easy: "ЛЕГКА", standard: "ЗВИЧАЙНА", hard: "СКЛАДНА", deadly: "СМЕРТЕЛЬНА",
     target: "Цільовий XP", actual: "XP ворогів", reward: "XP / гравця",
     minion: "Міньйони", normal: "Звичайні", special: "Особливі", legendary: "Легендарні",
@@ -63,6 +91,14 @@ const COPY = {
     faction: "FRAKCJA / TYP WROGÓW",
     enemyCount: "LICZBA WROGÓW (0 = AUTO)",
     enemies: "Wrogowie",
+    enemyBuffs: "LOSOWE BUFFY WROGÓW",
+    enemyBuffTier: "SIŁA BUFFA",
+    buffsOn: "WŁĄCZONE",
+    buffsOff: "WYŁĄCZONE",
+    buffLight: "LEKKIE",
+    buffMedium: "ŚREDNIE",
+    buffStrong: "SILNE",
+    buffNote: "Po włączeniu około 50% losowo rozmieszczonych wrogich tokenów otrzymuje jeden losowy buff wybranej siły. Dla tego samego seed i pozycji wynik pozostaje taki sam.",
     easy: "ŁATWA", standard: "STANDARDOWA", hard: "TRUDNA", deadly: "ŚMIERTELNA",
     target: "Docelowe XP", actual: "XP wrogów", reward: "XP / gracza",
     minion: "Sługi", normal: "Zwykli", special: "Specjalni", legendary: "Legendarni",
@@ -82,6 +118,12 @@ function specFromScene(scene) {
   return spec && typeof spec === "object" ? spec : null;
 }
 
+function buffTierLabel(text, tier) {
+  if (tier === "medium") return text.buffMedium;
+  if (tier === "strong") return text.buffStrong;
+  return text.buffLight;
+}
+
 export default function GmScenePresetPanelV2({ session }) {
   const { i18n } = useTranslation();
   const lang = languageCode(i18n.resolvedLanguage || i18n.language);
@@ -91,6 +133,8 @@ export default function GmScenePresetPanelV2({ session }) {
   const [difficulty, setDifficulty] = useState(() => normalizeEncounterDifficulty(savedSpec?.encounterDifficulty));
   const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
   const [enemyCountOverride, setEnemyCountOverride] = useState(() => normalizeEnemyCountOverride(savedSpec?.enemyCountOverride));
+  const [enemyBuffsEnabled, setEnemyBuffsEnabled] = useState(() => savedSpec?.enemyBuffsEnabled === true);
+  const [enemyBuffTier, setEnemyBuffTier] = useState(() => normalizeEncounterBuffTier(savedSpec?.enemyBuffTier));
   const [trapCount, setTrapCount] = useState(() => normalizeTrapCount(savedSpec?.trapCount));
   const [trapLethality, setTrapLethality] = useState(() => normalizeTrapLethality(savedSpec?.trapLethality));
 
@@ -99,6 +143,8 @@ export default function GmScenePresetPanelV2({ session }) {
     setDifficulty(normalizeEncounterDifficulty(spec?.encounterDifficulty));
     setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
     setEnemyCountOverride(normalizeEnemyCountOverride(spec?.enemyCountOverride));
+    setEnemyBuffsEnabled(spec?.enemyBuffsEnabled === true);
+    setEnemyBuffTier(normalizeEncounterBuffTier(spec?.enemyBuffTier));
     setTrapCount(normalizeTrapCount(spec?.trapCount));
     setTrapLethality(normalizeTrapLethality(spec?.trapLethality));
   }, [scene?.sceneId]);
@@ -120,6 +166,8 @@ export default function GmScenePresetPanelV2({ session }) {
               encounterDifficulty: difficulty,
               enemyFaction,
               enemyCountOverride,
+              enemyBuffsEnabled,
+              enemyBuffTier,
               trapCount,
               trapLethality,
             },
@@ -127,10 +175,19 @@ export default function GmScenePresetPanelV2({ session }) {
         });
       },
     };
-  }, [session, difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality]);
+  }, [session, difficulty, enemyFaction, enemyCountOverride, enemyBuffsEnabled, enemyBuffTier, trapCount, trapLethality]);
 
   const previewSpec = savedSpec
-    ? { ...savedSpec, encounterDifficulty: difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality }
+    ? {
+      ...savedSpec,
+      encounterDifficulty: difficulty,
+      enemyFaction,
+      enemyCountOverride,
+      enemyBuffsEnabled,
+      enemyBuffTier,
+      trapCount,
+      trapLethality,
+    }
     : null;
   const encounter = useMemo(
     () => (previewSpec ? generateProceduralEncounterSummary(previewSpec) : null),
@@ -158,6 +215,8 @@ export default function GmScenePresetPanelV2({ session }) {
           encounterDifficulty: difficulty,
           enemyFaction,
           enemyCountOverride,
+          enemyBuffsEnabled,
+          enemyBuffTier,
           trapCount,
           trapLethality,
           ...patch,
@@ -182,6 +241,18 @@ export default function GmScenePresetPanelV2({ session }) {
     const next = normalizeEnemyCountOverride(value);
     setEnemyCountOverride(next);
     await persistSetting({ enemyCountOverride: next });
+  };
+
+  const changeEnemyBuffsEnabled = async (value) => {
+    const next = Boolean(value);
+    setEnemyBuffsEnabled(next);
+    await persistSetting({ enemyBuffsEnabled: next });
+  };
+
+  const changeEnemyBuffTier = async (value) => {
+    const next = normalizeEncounterBuffTier(value);
+    setEnemyBuffTier(next);
+    await persistSetting({ enemyBuffTier: next });
   };
 
   const changeTrapCount = async (value) => {
@@ -231,6 +302,32 @@ export default function GmScenePresetPanelV2({ session }) {
             />
           </label>
 
+          <label className="gm-encounter-difficulty__toggle">
+            <span>{text.enemyBuffs}</span>
+            <span className="gm-encounter-difficulty__toggle-control">
+              <input
+                type="checkbox"
+                checked={enemyBuffsEnabled}
+                onChange={(event) => changeEnemyBuffsEnabled(event.target.checked)}
+              />
+              <b>{enemyBuffsEnabled ? text.buffsOn : text.buffsOff}</b>
+            </span>
+          </label>
+
+          <label>
+            <span>{text.enemyBuffTier}</span>
+            <select
+              className="pip-input"
+              value={enemyBuffTier}
+              disabled={!enemyBuffsEnabled}
+              onChange={(event) => changeEnemyBuffTier(event.target.value)}
+            >
+              {ENCOUNTER_BUFF_TIERS.map((value) => (
+                <option key={value} value={value}>{buffTierLabel(text, value)}</option>
+              ))}
+            </select>
+          </label>
+
           <label>
             <span>{text.trapCount}</span>
             <input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(event) => changeTrapCount(event.target.value)} />
@@ -263,6 +360,7 @@ export default function GmScenePresetPanelV2({ session }) {
         ) : null}
 
         <small>{text.note}</small>
+        <small>{text.buffNote}</small>
       </section>
       <GmScenePresetPanel session={sessionWithEncounterSettings} />
     </div>
