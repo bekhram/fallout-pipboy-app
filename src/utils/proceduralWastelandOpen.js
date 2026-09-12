@@ -33,7 +33,9 @@ function terrainProfile(terrain) {
 
 function roadProfile(rng) {
   const roll = rng();
-  const type = roll < 0.36 ? "none" : roll < 0.61 ? "single" : roll < 0.86 ? "cross" : "fragments";
+  // A wasteland grid may contain only one road route. Crossroads previously
+  // rendered as two unrelated roads (and could read visually as road + rails).
+  const type = roll < 0.36 ? "none" : roll < 0.82 ? "single" : "fragments";
   return { type, surface: pick(rng, ["asphalt", "dirt", "cobblestone"]) };
 }
 
@@ -51,11 +53,9 @@ function roadRects(profile, rng) {
   } else if (profile.type === "fragments") {
     const vertical = rng() < 0.5;
     if (vertical) {
-      roads.push({ x: cx, y: 0, w: width, h: randint(rng, 5, 9) });
-      roads.push({ x: cx, y: randint(rng, 13, 17), w: width, h: randint(rng, 5, 8) });
+      roads.push({ x: cx, y: 0, w: width, h: randint(rng, 7, 13) });
     } else {
-      roads.push({ x: 0, y: cy, w: randint(rng, 5, 9), h: width });
-      roads.push({ x: randint(rng, 13, 17), y: cy, w: randint(rng, 5, 8), h: width });
+      roads.push({ x: 0, y: cy, w: randint(rng, 7, 13), h: width });
     }
   }
   return roads;
@@ -91,7 +91,8 @@ function placeTerrain(rng, occupied, terrain, profile) {
       if (type === "lake") { w = randint(rng, 5, 7); h = randint(rng, 5, 7); }
       if (type === "swamp") { w = randint(rng, 5, 7); h = randint(rng, 4, 7); }
       if (type === "hills") { w = randint(rng, 4, 6); h = randint(rng, 4, 6); }
-      return withCollisionRect({ type, sprite: 0, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: 0, impassable: type !== "swamp" }, w, h);
+      const sprite = type === "ruins" ? randint(rng, 0, 2) : type === "hills" ? randint(rng, 0, 1) : 0;
+      return withCollisionRect({ type, sprite, x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h, rot: 0, impassable: type !== "swamp" }, w, h);
     }, ASSET_GAP, 180);
     if (item) out.push(item);
   }
@@ -120,6 +121,9 @@ function placeObstacles(rng, occupied, terrain, profile) {
 function getVehicleFootprint(type) {
   if (type === "wreck_car") return { w: 2, h: 1 };
   if (type === "wreck_truck") return { w: 4, h: 2 };
+  if (type === "retro_car") return { w: 3, h: 3 };
+  if (type === "retro_pickup") return { w: 4, h: 3 };
+  if (type === "retro_motorcycle") return { w: 2.5, h: 2.5 };
   return { w: 1, h: 1 };
 }
 
@@ -140,10 +144,18 @@ function placeVehicles(rng, occupied, roads, profile) {
         x = clamp(road.x + (rng() < 0.5 ? -w - 2 : road.w + 2), 1, GRID - w - 1);
       }
     }
-    const base = { type, sprite: randint(rng, 0, 2), x, y, w, h, rot: 0, impassable: false };
-    return type === "wreck_car" ? withCollisionRect(base, 3, 2) : withCollisionRect(base, 5, 3);
+    const spriteMax = type === "retro_car" ? 5 : type === "wreck_car" || type === "wreck_truck" ? 2 : 0;
+    const base = { type, sprite: randint(rng, 0, spriteMax), x, y, w, h, rot: 0, impassable: false };
+    if (type === "wreck_car") return withCollisionRect(base, 3, 2);
+    if (type === "wreck_truck") return withCollisionRect(base, 5, 3);
+    return withCollisionRect(base, w, h);
   }, ASSET_GAP, 120);
-  for (let i = 0; i < randint(rng, profile.carCount[0], profile.carCount[1]); i += 1) { const item = placeVehicle("wreck_car"); if (item) out.push(item); }
+  for (let i = 0; i < randint(rng, profile.carCount[0], profile.carCount[1]); i += 1) {
+    const roll = rng();
+    const type = roll < 0.48 ? "retro_car" : roll < 0.66 ? "retro_pickup" : roll < 0.82 ? "retro_motorcycle" : "wreck_car";
+    const item = placeVehicle(type);
+    if (item) out.push(item);
+  }
   for (let i = 0; i < randint(rng, profile.truckCount[0], profile.truckCount[1]); i += 1) { const item = placeVehicle("wreck_truck"); if (item) out.push(item); }
   return out;
 }
@@ -155,7 +167,7 @@ function placeTrees(rng, occupied, profile) {
     const item = placeItem(
       rng,
       occupied,
-      () => withCollisionRect({ type: "dead_tree", sprite: randint(rng, 0, 2), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: 0 }, 3.15, 3.15),
+      () => withCollisionRect({ type: "dead_tree", sprite: randint(rng, 0, 3), x: randint(rng, 1, GRID - 3), y: randint(rng, 1, GRID - 3), w: 2, h: 2, rot: 0 }, 3.4, 3.4),
       profile.treeGap,
       240
     );

@@ -8,6 +8,9 @@ function visualSize(item) {
   if (item.type === "dead_tree") return [3.4, 3.4];
   if (item.type === "wreck_car") return [3, 2];
   if (item.type === "wreck_truck") return [5, 3];
+  if (item.type === "retro_car") return [3, 3];
+  if (item.type === "retro_pickup") return [4, 3];
+  if (item.type === "retro_motorcycle") return [2.5, 2.5];
   return [item.w, item.h];
 }
 
@@ -42,6 +45,9 @@ test("wasteland assets keep a one-cell gap from roads and each other", () => {
       false,
       `seed ${seed}: ravines must not be generated`
     );
+
+    assert.ok(site.roads.length <= 1, `seed ${seed}: only one road route may be generated per grid`);
+    assert.notEqual(site.profile.type, "cross", `seed ${seed}: crossing roads must not be generated`);
 
     for (const item of items) {
       assert.equal(item.rot, 0, `seed ${seed}: ${item.type} must not rotate`);
