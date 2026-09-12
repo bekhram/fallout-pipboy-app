@@ -1,16 +1,16 @@
 import { buildResidentialRoomLayout } from "./proceduralResidential.js";
-import settlementBackground from "../assets/wasteland/backgrounds/settlement-bg-1.png?inline";
-import retroCar1 from "../assets/wasteland/objects/car-retro-1.png?inline";
-import retroCar2 from "../assets/wasteland/objects/car-retro-2.png?inline";
-import retroCar3 from "../assets/wasteland/objects/car-retro-3.png?inline";
-import pickupRetro1 from "../assets/wasteland/objects/pickup-retro-1.png?inline";
-import motorcycleRetro1 from "../assets/wasteland/objects/motorcycle-retro-1.png?inline";
-import hills1 from "../assets/wasteland/objects/hills-1.png?inline";
-import hills2 from "../assets/wasteland/objects/hills-2.png?inline";
-import rocks1 from "../assets/wasteland/objects/rocks-1.png?inline";
-import rocks2 from "../assets/wasteland/objects/rocks-2.png?inline";
-import deadTree3 from "../assets/wasteland/objects/dead-tree-3.png?inline";
-import deadTree4 from "../assets/wasteland/objects/dead-tree-4.png?inline";
+import settlementBackground from "../assets/wasteland/backgrounds/settlement-bg-1.png";
+import retroCar1 from "../assets/wasteland/objects/car-retro-1.png";
+import retroCar2 from "../assets/wasteland/objects/car-retro-2.png";
+import retroCar3 from "../assets/wasteland/objects/car-retro-3.png";
+import pickupRetro1 from "../assets/wasteland/objects/pickup-retro-1.png";
+import motorcycleRetro1 from "../assets/wasteland/objects/motorcycle-retro-1.png";
+import hills1 from "../assets/wasteland/objects/hills-1.png";
+import hills2 from "../assets/wasteland/objects/hills-2.png";
+import rocks1 from "../assets/wasteland/objects/rocks-1.png";
+import rocks2 from "../assets/wasteland/objects/rocks-2.png";
+import deadTree3 from "../assets/wasteland/objects/dead-tree-3.png";
+import deadTree4 from "../assets/wasteland/objects/dead-tree-4.png";
 
 const CELL = 100;
 const WALL = 9;
@@ -75,7 +75,11 @@ function overlapsRoad(candidate, roads, pad = 0) {
   return false;
 }
 
-function placeSettlementDecor(site, rng) {
+export { settlementBackground };
+
+export function buildSettlementDecor(spec = {}) {
+  const site = buildSettlementSite(spec);
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:settlement-decor-v1`));
   const placed = [];
   const plan = ["vehicle", "vehicle", "hills", "rocks", "rocks", "dead_tree", "dead_tree"];
   for (const type of plan) {
@@ -261,26 +265,16 @@ function scatter(rng, site) {
   return out.join("");
 }
 
-function drawSettlementDecor(items) {
-  return items.map((item) => {
-    const x = item.x * CELL, y = item.y * CELL, w = item.w * CELL, h = item.h * CELL;
-    const cx = x + w / 2, cy = y + h / 2;
-    return `<image href="${item.src}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet" transform="rotate(${item.rot || 0} ${cx} ${cy})"/>`;
-  }).join("");
-}
-
 export function generateSettlementMapSvg(input = {}) {
   const spec = normalizeSettlementSpec(input);
   const site = buildSettlementSite(spec);
   const rng = mulberry32(hashSeed(`${spec.seed || "1"}:settlement-render-v3`));
-  const decor = placeSettlementDecor(site, rng);
   const width = GRID * CELL, height = GRID * CELL;
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
-  out.push(`<image href="${settlementBackground}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="none"/>`);
+  out.push(rect(0, 0, width, height, "transparent"));
   out.push(drawRoads(site.roads, rng));
   out.push(scatter(rng, site));
   site.houses.forEach((house, index) => out.push(drawHouse(house, index)));
-  out.push(drawSettlementDecor(decor));
   out.push(rect(18, 18, 390, 42, "#d6c8a8", "#40382f", 2, 4, 'opacity="0.93"'));
   out.push(text(32, 40, `SETTLEMENT // 24×24 // ${site.roads.type.toUpperCase()} // ${site.houses.length} HOUSES`, 11, "start"));
   out.push("</svg>");

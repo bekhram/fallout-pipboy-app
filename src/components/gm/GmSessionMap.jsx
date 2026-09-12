@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
 import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
+import SettlementAssetPortal from "./SettlementAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import GmUnifiedTokenManagerV9 from "./GmUnifiedTokenManagerV9.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
@@ -102,6 +103,7 @@ export default function GmSessionMap(props) {
         </div>
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />
+        <SettlementAssetPortal session={session} />
         <WastelandPoiPortal session={session} />
         <BattlemapSharedLayer scene={session.tacticalScene} role="gm" />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
