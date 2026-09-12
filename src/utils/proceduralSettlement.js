@@ -21,6 +21,51 @@ const RAIL_WIDTH = 2.67;
 const ROAD_TYPES = ["asphalt", "dirt", "cobblestone"];
 const HOUSE_TYPES = ["civilian", "ruined", "raider"];
 
+const HOUSE_ROOM_TEMPLATE = [
+  {
+    baseRoomId: "kitchen",
+    dx: 0, dy: 0, w: 3, h: 4,
+    marker: [1, 1],
+    spawn: [[1, 2], [2, 2], [1, 1], [2, 1]],
+  },
+  {
+    baseRoomId: "bedroom",
+    dx: 3, dy: 0, w: 3, h: 4,
+    marker: [4, 1],
+    spawn: [[4, 2], [4, 1], [5, 2], [5, 1]],
+  },
+  {
+    baseRoomId: "master_bedroom",
+    dx: 6, dy: 0, w: 4, h: 4,
+    marker: [8, 1],
+    spawn: [[7, 2], [8, 2], [7, 1], [8, 1]],
+  },
+  {
+    baseRoomId: "living_room",
+    dx: 0, dy: 4, w: 5, h: 6,
+    marker: [2, 6],
+    spawn: [[2, 6], [3, 6], [2, 7], [3, 7], [1, 6], [4, 6]],
+  },
+  {
+    baseRoomId: "hall",
+    dx: 5, dy: 4, w: 1, h: 6,
+    marker: [5, 6],
+    spawn: [[5, 6], [5, 7], [5, 5], [5, 8]],
+  },
+  {
+    baseRoomId: "bathroom",
+    dx: 6, dy: 4, w: 4, h: 3,
+    marker: [8, 5],
+    spawn: [[7, 5], [8, 5], [7, 6], [8, 6]],
+  },
+  {
+    baseRoomId: "storage",
+    dx: 6, dy: 7, w: 4, h: 3,
+    marker: [8, 8],
+    spawn: [[7, 8], [8, 8], [7, 9], [8, 9]],
+  },
+];
+
 export const SETTLEMENT_HOUSE_RULES = {
   civilian: {
     src: civilianHouse,
@@ -96,6 +141,15 @@ function expandRect(rect, pad) {
     w: Number(rect.w || 0) + pad * 2,
     h: Number(rect.h || 0) + pad * 2,
   };
+}
+
+function sortPlacementsReadingOrder(placements = []) {
+  return [...placements].sort((a, b) => {
+    const ay = Number(a?.y || 0);
+    const by = Number(b?.y || 0);
+    if (ay !== by) return ay - by;
+    return Number(a?.x || 0) - Number(b?.x || 0);
+  });
 }
 
 export function isSettlementType(type) {
@@ -231,8 +285,6 @@ function createSettlementSite(normalized) {
   }
 
   if (!placements || placements.length < MIN_HOUSES) {
-    // Defensive fallback. With a 24x24 map and a single road/rail route this
-    // should not normally be needed, but settlements must always have >= 2 homes.
     const fallbackCandidates = houseCandidates(route.reserved);
     placements = [];
     for (const candidate of fallbackCandidates) {
@@ -243,8 +295,9 @@ function createSettlementSite(normalized) {
     }
   }
 
+  const orderedPlacements = sortPlacementsReadingOrder(placements || []);
   const typeOffset = hashSeed(`${terrainSeed}:settlement-house-types`) % HOUSE_TYPES.length;
-  const houses = (placements || []).slice(0, MAX_HOUSES).map((placed, index) => {
+  const houses = orderedPlacements.slice(0, MAX_HOUSES).map((placed, index) => {
     const houseType = HOUSE_TYPES[(index + typeOffset) % HOUSE_TYPES.length];
     const rule = SETTLEMENT_HOUSE_RULES[houseType];
 
@@ -295,34 +348,42 @@ export function buildSettlementDecor() {
 }
 
 function fixedHouseRooms(house) {
-  const template = [
-    ["kitchen", 0, 0, 3, 5],
-    ["bedroom", 3, 0, 3, 5],
-    ["master_bedroom", 6, 0, 4, 5],
-    ["living_room", 0, 5, 5, 5],
-    ["hall", 5, 5, 1, 5],
-    ["bathroom", 6, 5, 4, 3],
-    ["storage", 6, 8, 4, 2],
-  ];
+  return HOUSE_ROOM_TEMPLATE.map((template, roomIndex) => {
+    const {
+      baseRoomId,
+      dx,
+      dy,
+      w,
+      h,
+      marker,
+      spawn,
+    } = template;
 
-  return template.map(([baseRoomId, dx, dy, w, h], roomIndex) => ({
-    id: `${house.id}__${baseRoomId}`,
-    baseRoomId,
-    instance: house.instance,
-    sourceSet: house.sourceSet,
-    slot: house.slot * template.length + roomIndex,
-    zone: "settlement_house",
-    houseId: house.id,
-    houseType: house.houseType,
-    disposition: house.disposition,
-    allowedGroups: [...house.allowedGroups],
-    encounterMode: house.encounterMode,
-    label: `${house.label} · ${baseRoomId.toUpperCase().replace(/_/g, " ")}`,
-    x: house.x + dx,
-    y: house.y + dy,
-    w,
-    h,
-  }));
+    return {
+      id: `${house.id}__${baseRoomId}`,
+      baseRoomId,
+      instance: house.instance,
+      sourceSet: house.sourceSet,
+      slot: house.slot * HOUSE_ROOM_TEMPLATE.length + roomIndex,
+      zone: "settlement_house",
+      houseId: house.id,
+      houseType: house.houseType,
+      disposition: house.disposition,
+      allowedGroups: [...house.allowedGroups],
+      encounterMode: house.encounterMode,
+      label: `${house.label} · ${baseRoomId.toUpperCase().replace(/_/g, " ")}`,
+      x: house.x + dx,
+      y: house.y + dy,
+      w,
+      h,
+      markerX: house.x + marker[0],
+      markerY: house.y + marker[1],
+      spawnCells: spawn.map(([sx, sy]) => ({
+        x: house.x + sx,
+        y: house.y + sy,
+      })),
+    };
+  });
 }
 
 export function buildSettlementHouseLayout(spec = {}) {
@@ -330,7 +391,7 @@ export function buildSettlementHouseLayout(spec = {}) {
 }
 
 export function buildSettlementHouseBlueprints(spec = {}) {
-  return buildSettlementHouseLayout(spec).map(({ x, y, w, h, ...item }) => item);
+  return buildSettlementHouseLayout(spec).map(({ x, y, w, h, markerX, markerY, spawnCells, ...item }) => item);
 }
 
 export function generateSettlementMapSvg(input = {}) {
