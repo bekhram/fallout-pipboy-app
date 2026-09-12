@@ -145,7 +145,7 @@ function placeVehicles(rng, occupied, roads, profile) {
       }
     }
     const spriteMax = type === "retro_car" ? 5 : type === "wreck_car" || type === "wreck_truck" ? 2 : 0;
-    const base = { type, sprite: randint(rng, 0, spriteMax), x, y, w, h, rot: 0, impassable: false };
+    const base = { type, sprite: randint(rng, 0, spriteMax), x, y, w, h, rot: rng() < 0.5 ? 0 : 180, impassable: false };
     if (type === "wreck_car") return withCollisionRect(base, 3, 2);
     if (type === "wreck_truck") return withCollisionRect(base, 5, 3);
     return withCollisionRect(base, w, h);

@@ -1724,7 +1724,7 @@ function SpriteImage({
           }%`,
 
         transform:
-          `scale(${scaleX}, ${scaleY})`,
+          `rotate(${Number(item.rot || 0)}deg) scale(${scaleX}, ${scaleY})`,
 
         transformOrigin:
           "50% 50%",

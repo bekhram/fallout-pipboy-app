@@ -50,7 +50,11 @@ test("wasteland assets keep a one-cell gap from roads and each other", () => {
     assert.notEqual(site.profile.type, "cross", `seed ${seed}: crossing roads must not be generated`);
 
     for (const item of items) {
-      assert.equal(item.rot, 0, `seed ${seed}: ${item.type} must not rotate`);
+      if (site.vehicles.includes(item)) {
+        assert.ok([0, 180].includes(item.rot), `seed ${seed}: ${item.type} has an invalid direction`);
+      } else {
+        assert.equal(item.rot, 0, `seed ${seed}: ${item.type} must not rotate`);
+      }
     }
 
     for (let index = 0; index < rects.length; index += 1) {
