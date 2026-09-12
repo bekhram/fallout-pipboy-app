@@ -46,7 +46,14 @@ export function SettlementAssetLayer({ spec, preview = false }) {
   return (
     <div aria-hidden="true" data-settlement-assets="true" style={{ position: "absolute", inset: 0, zIndex: preview ? 2 : 3, pointerEvents: "none", overflow: "hidden" }}>
       <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-        {roads.map((road, index) => <RoadAsset key={`${road.name}-${road.centerX}-${road.centerY}-${index}`} road={road} fullSize />)}
+        {roads.map((road, index) => (
+          <RoadAsset
+            key={`${road.name}-${road.centerX}-${road.centerY}-${index}`}
+            road={road}
+            fullSize
+            visualScale={1.35}
+          />
+        ))}
       </div>
       <div style={{ position: "absolute", inset: 0, zIndex: 3 }}>
       {items.map((item, index) => (

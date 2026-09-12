@@ -1377,7 +1377,7 @@ function removeRoadOverlaps(
  * ============================================================
  */
 
-export function RoadAsset({ road, fullSize = false }) {
+export function RoadAsset({ road, fullSize = false, visualScale = 1 }) {
   const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
   const config = ROAD_VISUAL_CONFIG[road.name] || {
     scale: 1,
@@ -1387,7 +1387,9 @@ export function RoadAsset({ road, fullSize = false }) {
   const scale = config.scale ?? 1;
   const anchorX = config.anchorX ?? 0.5;
   const anchorY = config.anchorY ?? 0.5;
-  const visualSize = ROAD_TILE * scale;
+  // Rendering scale is deliberately separate from ROAD_TILE: changing
+  // ROAD_TILE also changes route geometry and can remove straight pieces.
+  const visualSize = ROAD_TILE * scale * visualScale;
   const width = isJunction ? 6 : 4;
   const height = isJunction ? 6 : 8;
   const left = fullSize
