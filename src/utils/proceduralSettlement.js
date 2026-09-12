@@ -1,4 +1,8 @@
 import { buildOpenWastelandSite } from "./proceduralWastelandOpen.js";
+import {
+  canonicalProceduralSeed,
+  proceduralTerrainSeed,
+} from "./proceduralSeed.js";
 import settlementBackground from "../assets/wasteland/backgrounds/settlement-bg-1.png";
 import civilianHouse from "../assets/wasteland/houses/house-civilian.png";
 import ruinedHouse from "../assets/wasteland/houses/house-ruined.png";
@@ -106,10 +110,8 @@ export function normalizeSettlementSpec(spec = {}) {
   const terrain = ["wasteland", "forest", "swamp", "ruins"].includes(spec.terrain)
     ? spec.terrain
     : "wasteland";
-  const renderSeed = String(spec.seed || "1");
-  const seed = renderSeed.endsWith(`:terrain:${terrain}`)
-    ? renderSeed
-    : `${renderSeed}:terrain:${terrain}`;
+  const seed = canonicalProceduralSeed(spec.seed);
+  const terrainSeed = proceduralTerrainSeed(seed, terrain);
 
   return {
     ...spec,
@@ -118,7 +120,8 @@ export function normalizeSettlementSpec(spec = {}) {
     rows: GRID,
     terrain,
     seed,
-    renderSeed,
+    renderSeed: seed,
+    terrainSeed,
     settlementStyle,
     roadType,
   };
@@ -216,7 +219,8 @@ function findHouseSet(rng, blocked, count) {
 }
 
 function createSettlementSite(normalized) {
-  const rng = mulberry32(hashSeed(`${normalized.seed}:settlement-houses-v4`));
+  const terrainSeed = normalized.terrainSeed || proceduralTerrainSeed(normalized.seed, normalized.terrain);
+  const rng = mulberry32(hashSeed(`${terrainSeed}:settlement-houses-v4`));
   const route = routePlan(normalized);
   const requestedHouseCount = randint(rng, MIN_HOUSES, MAX_HOUSES);
 
@@ -239,7 +243,7 @@ function createSettlementSite(normalized) {
     }
   }
 
-  const typeOffset = hashSeed(`${normalized.seed}:settlement-house-types`) % HOUSE_TYPES.length;
+  const typeOffset = hashSeed(`${terrainSeed}:settlement-house-types`) % HOUSE_TYPES.length;
   const houses = (placements || []).slice(0, MAX_HOUSES).map((placed, index) => {
     const houseType = HOUSE_TYPES[(index + typeOffset) % HOUSE_TYPES.length];
     const rule = SETTLEMENT_HOUSE_RULES[houseType];
