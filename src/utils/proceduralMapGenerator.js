@@ -38,6 +38,14 @@ function terrainAwareInput(value = {}) {
   };
 }
 
+function visualMapInput(value = {}) {
+  if (String(value?.type || "") !== "settlement") return value;
+  return {
+    ...value,
+    type: "wasteland",
+  };
+}
+
 export const MAP_TYPES = V11.MAP_TYPES;
 export const makeProceduralSeed = V11.makeProceduralSeed;
 export const proceduralLocationType = V11.proceduralLocationType;
@@ -60,7 +68,8 @@ export function normalizeProceduralMapSpec(value = {}) {
 
 export function generateProceduralMapSvg(input = {}) {
   const spec = normalizeProceduralMapSpec(input);
-  return V11.generateProceduralMapSvg(legacyInput(terrainAwareInput(spec)));
+  const renderSpec = visualMapInput(spec);
+  return V11.generateProceduralMapSvg(legacyInput(terrainAwareInput(renderSpec)));
 }
 
 export function generateProceduralMapDataUrl(input = {}) {
