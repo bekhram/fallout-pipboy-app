@@ -1,10 +1,28 @@
 import { buildResidentialRoomLayout } from "./proceduralResidential.js";
+import settlementBackground from "../assets/wasteland/backgrounds/settlement-bg-1.png";
+import retroCar1 from "../assets/wasteland/objects/car-retro-1.png";
+import retroCar2 from "../assets/wasteland/objects/car-retro-2.png";
+import retroCar3 from "../assets/wasteland/objects/car-retro-3.png";
+import pickupRetro1 from "../assets/wasteland/objects/pickup-retro-1.png";
+import motorcycleRetro1 from "../assets/wasteland/objects/motorcycle-retro-1.png";
+import hills1 from "../assets/wasteland/objects/hills-1.png";
+import hills2 from "../assets/wasteland/objects/hills-2.png";
+import rocks1 from "../assets/wasteland/objects/rocks-1.png";
+import rocks2 from "../assets/wasteland/objects/rocks-2.png";
+import deadTree3 from "../assets/wasteland/objects/dead-tree-3.png";
+import deadTree4 from "../assets/wasteland/objects/dead-tree-4.png";
 
 const CELL = 100;
 const WALL = 9;
 const GRID = 24;
 const TARGET_HOUSES = 7;
 const ROAD_TYPES = ["asphalt", "dirt", "cobblestone"];
+const SETTLEMENT_DECOR = {
+  vehicle: [retroCar1, retroCar2, retroCar3, pickupRetro1, motorcycleRetro1],
+  hills: [hills1, hills2],
+  rocks: [rocks1, rocks2],
+  dead_tree: [deadTree3, deadTree4],
+};
 
 function clamp(value, min, max) { return Math.max(min, Math.min(max, Number(value) || 0)); }
 function hashSeed(value) { const text = String(value ?? "0"); let hash = 2166136261; for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 16777619); } return hash >>> 0; }
@@ -55,6 +73,29 @@ function overlapsRoad(candidate, roads, pad = 0) {
     }
   }
   return false;
+}
+
+function placeSettlementDecor(site, rng) {
+  const placed = [];
+  const plan = ["vehicle", "vehicle", "hills", "rocks", "rocks", "dead_tree", "dead_tree"];
+  for (const type of plan) {
+    const [w, h] = type === "hills" ? [5, 5] : type === "vehicle" ? [3, 3] : [3, 3];
+    for (let attempt = 0; attempt < 180; attempt += 1) {
+      const candidate = { x: randint(rng, 1, GRID - w - 1), y: randint(rng, 1, GRID - h - 1), w, h };
+      if (overlapsRoad(candidate, site.roads, type === "vehicle" ? 0 : 1)) continue;
+      if (site.houses.some((house) => overlaps(candidate, house, 1))) continue;
+      if (placed.some((item) => overlaps(candidate, item, 1))) continue;
+      if (type === "vehicle" && distanceToRoad(candidate, site.roads) > 2) continue;
+      placed.push({
+        ...candidate,
+        type,
+        src: pick(rng, SETTLEMENT_DECOR[type]),
+        rot: type === "vehicle" && rng() > 0.5 ? 180 : 0,
+      });
+      break;
+    }
+  }
+  return placed;
 }
 
 function distanceToRoad(candidate, roads) {
@@ -220,16 +261,26 @@ function scatter(rng, site) {
   return out.join("");
 }
 
+function drawSettlementDecor(items) {
+  return items.map((item) => {
+    const x = item.x * CELL, y = item.y * CELL, w = item.w * CELL, h = item.h * CELL;
+    const cx = x + w / 2, cy = y + h / 2;
+    return `<image href="${item.src}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet" transform="rotate(${item.rot || 0} ${cx} ${cy})"/>`;
+  }).join("");
+}
+
 export function generateSettlementMapSvg(input = {}) {
   const spec = normalizeSettlementSpec(input);
   const site = buildSettlementSite(spec);
   const rng = mulberry32(hashSeed(`${spec.seed || "1"}:settlement-render-v3`));
+  const decor = placeSettlementDecor(site, rng);
   const width = GRID * CELL, height = GRID * CELL;
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
-  out.push(rect(0, 0, width, height, "#6f6858"));
+  out.push(`<image href="${settlementBackground}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="none"/>`);
   out.push(drawRoads(site.roads, rng));
   out.push(scatter(rng, site));
   site.houses.forEach((house, index) => out.push(drawHouse(house, index)));
+  out.push(drawSettlementDecor(decor));
   out.push(rect(18, 18, 390, 42, "#d6c8a8", "#40382f", 2, 4, 'opacity="0.93"'));
   out.push(text(32, 40, `SETTLEMENT // 24×24 // ${site.roads.type.toUpperCase()} // ${site.houses.length} HOUSES`, 11, "start"));
   out.push("</svg>");
