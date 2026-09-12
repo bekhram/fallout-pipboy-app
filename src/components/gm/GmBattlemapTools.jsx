@@ -69,6 +69,12 @@ export default function GmBattlemapTools({ session }) {
 
   useEffect(() => { try { localStorage.setItem(STORAGE_KEY, open ? "1" : "0"); } catch {} }, [open]);
 
+  useEffect(() => {
+    if (!grid) return undefined;
+    grid.classList.toggle("is-map-tool-active", Boolean(mode));
+    return () => grid.classList.remove("is-map-tool-active");
+  }, [grid, mode]);
+
   const markup = scene?.mapMarkup && typeof scene.mapMarkup === "object" ? scene.mapMarkup : {};
   const strokes = Array.isArray(markup.strokes) ? markup.strokes : [];
   const saveMarkup = (patch) => session?.updateTacticalScene?.({ mapMarkup: { ...markup, ...patch } });
@@ -171,6 +177,8 @@ export default function GmBattlemapTools({ session }) {
     grid.addEventListener("pointerup", up, true);
     grid.addEventListener("pointercancel", up, true);
     grid.addEventListener("click", click, true);
+    window.addEventListener("pointerup", up, true);
+    window.addEventListener("pointercancel", up, true);
     return () => {
       stopPingTimer();
       grid.removeEventListener("pointerdown", down, true);
@@ -178,6 +186,8 @@ export default function GmBattlemapTools({ session }) {
       grid.removeEventListener("pointerup", up, true);
       grid.removeEventListener("pointercancel", up, true);
       grid.removeEventListener("click", click, true);
+      window.removeEventListener("pointerup", up, true);
+      window.removeEventListener("pointercancel", up, true);
     };
   }, [grid, mode, scene?.mapMarkup, scene?.sceneId]);
 
