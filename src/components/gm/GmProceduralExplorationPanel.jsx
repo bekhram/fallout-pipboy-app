@@ -30,18 +30,18 @@ function autoBrief(language) {
   return "Introduce the newly placed procedural encounter. Vividly describe the scene to the players, naturally present the mini-quest objective, and use only spoiler-safe clues about hidden threats. Never reveal hidden enemy type, count, or exact position.";
 }
 
-function sendLongChat(session, text) {
+function chatChunks(text) {
+  const chunks = [];
   let rest = String(text || "").trim();
-  if (!rest) return false;
   while (rest.length > 1080) {
     let cut = rest.lastIndexOf("\n", 1080);
     if (cut < 600) cut = rest.lastIndexOf(" ", 1080);
     if (cut < 600) cut = 1080;
-    session?.sendChat?.(rest.slice(0, cut).trim());
+    chunks.push(rest.slice(0, cut).trim());
     rest = rest.slice(cut).trim();
   }
-  if (rest) session?.sendChat?.(rest);
-  return true;
+  if (rest) chunks.push(rest);
+  return chunks.filter(Boolean);
 }
 
 export default function GmProceduralExplorationPanel({ session }) {
@@ -49,9 +49,39 @@ export default function GmProceduralExplorationPanel({ session }) {
   const type = String(spec?.type || "");
   const batchesRef = useRef(new Map());
   const timerRef = useRef(null);
+  const deliveryTimerRef = useRef(null);
+  const narrationQueueRef = useRef([]);
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+
+  const flushNarrationQueue = (attempt = 0) => {
+    const latestSession = sessionRef.current;
+    while (narrationQueueRef.current.length) {
+      const chunk = narrationQueueRef.current[0];
+      const sent = latestSession?.sendChat?.(chunk);
+      if (!sent) {
+        if (attempt < 10 && typeof window !== "undefined") {
+          if (deliveryTimerRef.current) window.clearTimeout(deliveryTimerRef.current);
+          deliveryTimerRef.current = window.setTimeout(() => {
+            deliveryTimerRef.current = null;
+            flushNarrationQueue(attempt + 1);
+          }, 750);
+        }
+        return false;
+      }
+      narrationQueueRef.current.shift();
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    sessionRef.current = session;
+    if (session?.status === "online" && narrationQueueRef.current.length) flushNarrationQueue(0);
+  }, [session, session?.status]);
 
   useEffect(() => () => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
+    if (deliveryTimerRef.current) window.clearTimeout(deliveryTimerRef.current);
   }, []);
 
   const encounterSession = useMemo(() => {
@@ -62,8 +92,9 @@ export default function GmProceduralExplorationPanel({ session }) {
       if (!placedTokens.length) return;
       batchesRef.current.delete(stamp);
 
+      const latestSession = sessionRef.current || session;
       const language = languageCode();
-      const currentScene = session?.tacticalScene || {};
+      const currentScene = latestSession?.tacticalScene || {};
       const encounterContext = buildProceduralEncounterContext({
         spec,
         scene: currentScene,
@@ -72,7 +103,7 @@ export default function GmProceduralExplorationPanel({ session }) {
       });
 
       try {
-        await session?.updateTacticalScene?.({ encounterContext });
+        await latestSession?.updateTacticalScene?.({ encounterContext });
       } catch {
         /* narration still works with the freshly built context */
       }
@@ -92,13 +123,16 @@ export default function GmProceduralExplorationPanel({ session }) {
                 grid: `${currentScene?.cols || 12}x${currentScene?.rows || 12}`,
               },
               environment: currentScene?.environment || {},
-              players: Array.isArray(session?.players) ? session.players : [],
+              players: Array.isArray(latestSession?.players) ? latestSession.players : [],
               encounterContext,
             },
           }),
         });
         const payload = await response.json().catch(() => ({}));
-        if (response.ok && payload?.narration) sendLongChat(session, payload.narration);
+        if (response.ok && payload?.narration) {
+          narrationQueueRef.current.push(...chatChunks(payload.narration));
+          flushNarrationQueue(0);
+        }
       } catch {
         /* Auto GM is optional; token placement must never fail because narration failed. */
       }
@@ -116,7 +150,8 @@ export default function GmProceduralExplorationPanel({ session }) {
       ...session,
       createNpcToken: async (payload = {}) => {
         const stats = payload?.stats && typeof payload.stats === "object" ? payload.stats : {};
-        if (!stats.generatedEncounterSeed) return session.createNpcToken?.(payload);
+        const latestSession = sessionRef.current || session;
+        if (!stats.generatedEncounterSeed) return latestSession.createNpcToken?.(payload);
 
         if (timerRef.current) {
           window.clearTimeout(timerRef.current);
@@ -144,7 +179,7 @@ export default function GmProceduralExplorationPanel({ session }) {
         }
 
         const finalPayload = { ...payload, stats: nextStats };
-        const response = await session.createNpcToken?.(finalPayload);
+        const response = await latestSession.createNpcToken?.(finalPayload);
         if (response?.ok) {
           const stamp = String(nextStats.generatedEncounterSeed);
           const batch = batchesRef.current.get(stamp) || [];
