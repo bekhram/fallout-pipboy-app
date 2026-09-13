@@ -3,7 +3,7 @@ import raiderAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-r
 import swampAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-swamp.png";
 
 const GRID = 24;
-const FOOTPRINT = 20;
+const FOOTPRINT = 30;
 const EDGE_ROAD = { x: 0, y: GRID - 2, w: GRID, h: 2 };
 
 function hashSeed(value) {
@@ -47,16 +47,16 @@ export function buildSuperDuperMartAssetLayout(spec = {}) {
     ? 0
     : hashSeed(`${spec.seed || "1"}:${terrain}:super-duper-mart`) % pool.length;
   const chosen = pool[assetIndex];
-  const building = {
-    id: "super-duper-mart",
-    x: 2,
-    y: 1,
-    w: FOOTPRINT,
-    h: FOOTPRINT,
-    assetSrc: chosen.src,
-    assetIndex,
-    assetVariant: chosen.variant,
-  };
+const building = {
+  id: "super-duper-mart",
+  x: 0,
+  y: -1,
+  w: FOOTPRINT,
+  h: FOOTPRINT,
+  assetSrc: chosen.src,
+  assetIndex,
+  assetVariant: chosen.variant,
+};
 
   return {
     grid: GRID,
