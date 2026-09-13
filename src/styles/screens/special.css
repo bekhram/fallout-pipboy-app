@@ -3,13 +3,11 @@
 }
 
 .pip-special-stats-panel {
-  position: sticky;
-  top: 86px;
-  z-index: 40;
+  position: relative;
+  z-index: 1;
   background: linear-gradient(180deg, rgba(8, 14, 9, 0.995), rgba(3, 7, 4, 0.985));
   box-shadow:
     0 0 18px rgba(80, 255, 120, 0.16),
-    0 10px 24px rgba(0, 0, 0, 0.35),
     inset 0 0 18px rgba(80, 255, 120, 0.03);
 }
 
@@ -46,17 +44,7 @@
   padding: 6px;
 }
 
-@media (max-width: 760px) {
-  .pip-special-stats-panel {
-    top: 76px;
-  }
-}
-
 @media (max-width: 640px) {
-  .pip-special-stats-panel {
-    top: 70px;
-  }
-
   .pip-special-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
@@ -83,10 +71,6 @@
 }
 
 @media (max-width: 420px) {
-  .pip-special-stats-panel {
-    top: 66px;
-  }
-
   .pip-special-card {
     min-height: 64px;
     padding: 5px 3px;
