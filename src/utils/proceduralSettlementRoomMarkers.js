@@ -60,8 +60,8 @@ function roomAnchor(bounds = {}) {
  * based on the generated room order so every consumer talks about the same
  * physical room for a given procedural spec.
  */
-export function generateSettlementRoomMarkers(spec = {}) {
-  if (String(spec?.type || "") !== "settlement") return [];
+function generateNumberedRoomMarkers(spec = {}, expectedType, idPrefix) {
+  if (String(spec?.type || "") !== expectedType) return [];
 
   const rooms = generateProceduralRoomData(spec);
   const boundsByRoom = getProceduralRoomBounds(spec);
@@ -73,7 +73,7 @@ export function generateSettlementRoomMarkers(spec = {}) {
     const anchor = roomAnchor(bounds);
 
     return [{
-      id: `settlement-room:${room.id}`,
+      id: `${idPrefix}:${room.id}`,
       roomId: room.id,
       marker: index + 1,
       symbol: markerSymbol(room),
@@ -94,8 +94,22 @@ export function generateSettlementRoomMarkers(spec = {}) {
   });
 }
 
+export function generateSettlementRoomMarkers(spec = {}) {
+  return generateNumberedRoomMarkers(spec, "settlement", "settlement-room");
+}
+
+export function generateRedRocketRoomMarkers(spec = {}) {
+  return generateNumberedRoomMarkers(spec, "red_rocket", "red-rocket-room");
+}
+
 export function settlementRoomMarkerById(spec = {}) {
   return Object.fromEntries(
     generateSettlementRoomMarkers(spec).map((marker) => [marker.roomId, marker]),
+  );
+}
+
+export function redRocketRoomMarkerById(spec = {}) {
+  return Object.fromEntries(
+    generateRedRocketRoomMarkers(spec).map((marker) => [marker.roomId, marker]),
   );
 }

@@ -1,0 +1,32 @@
+.gm-room-card__numbered-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.gm-room-card__numbered-title > strong {
+  font-size: .66rem;
+  letter-spacing: .06em;
+}
+
+.gm-room-card__number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: rgba(0, 20, 7, .88);
+  box-shadow: 0 0 7px color-mix(in srgb, currentColor 45%, transparent);
+  font-size: .65rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .gm-room-card__numbered-title > strong {
+    font-size: .7rem;
+  }
+}

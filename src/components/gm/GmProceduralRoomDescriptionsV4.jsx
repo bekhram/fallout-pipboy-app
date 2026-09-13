@@ -9,7 +9,9 @@ import {
 import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStats.js";
 import { cellsInsideRoom, getProceduralRoomBounds } from "../../utils/proceduralRoomLayout.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
+import { generateRedRocketRoomMarkers } from "../../utils/proceduralSettlementRoomMarkers.js";
 import "./gmProceduralRoomDescriptions.css";
+import "./gmProceduralRoomMarkers.css";
 
 const COPY = {
   en: {
@@ -115,6 +117,14 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
   const rawRooms = useMemo(() => (spec ? generateProceduralRoomData(spec) : []), [specKey]);
   const rooms = useMemo(() => (spec ? generateLocalizedProceduralRooms(spec, lang) : []), [specKey, lang]);
   const encounter = useMemo(() => (spec ? generateProceduralEncounterSummary(spec) : null), [specKey]);
+  const numberedMarkers = useMemo(
+    () => (String(spec?.type || "") === "red_rocket" ? generateRedRocketRoomMarkers(spec) : []),
+    [specKey],
+  );
+  const numberedMarkerByRoom = useMemo(
+    () => Object.fromEntries(numberedMarkers.map((marker) => [marker.roomId, marker])),
+    [numberedMarkers],
+  );
   const enemyTotal = encounter?.totalEnemies || 0;
   const residentTotal = rawRooms.reduce((sum, room) => sum + (room.residents || []).reduce((count, resident) => count + Number(resident.count || 0), 0), 0);
   const spawnTotal = enemyTotal + residentTotal;
@@ -203,18 +213,24 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
         </div>
       ) : null}
 
-      {rooms.length ? <div className="gm-room-descriptions__list">{rooms.map((room) => (
+      {rooms.length ? <div className="gm-room-descriptions__list">{rooms.map((room) => {
+        const numberedMarker = numberedMarkerByRoom[room.id];
+        return (
         <article key={room.id} className="gm-room-card">
           <div className="gm-room-card__head">
             <div className="gm-room-card__title">
-              <strong>{room.name}</strong>
+              <div className="gm-room-card__numbered-title">
+                {numberedMarker ? <span className="gm-room-card__number">{numberedMarker.marker}</span> : null}
+                <strong>{room.name}</strong>
+              </div>
               {room.enemyGroup && (room.enemies || []).length ? <small>{text.group}: {enemyGroupLabel(room.enemyGroup, lang)}</small> : null}
             </div>
             <div className="gm-room-card__markers" aria-label="room markers">{(room.markers || []).slice(0, 5).map((marker, index) => <span key={`${marker}-${index}`} title={marker}>{SYMBOLS[marker] || "•"}</span>)}</div>
           </div>
           <div className="gm-room-card__lines">{room.lines.map((line, index) => <div key={`${room.id}-${index}`}>{line}</div>)}</div>
         </article>
-      ))}</div> : null}
+        );
+      })}</div> : null}
 
       {spec ? <div className="gm-room-descriptions__actions"><button type="button" className="pip-btn is-primary" disabled={placing || !spawnTotal} onClick={placeEnemies}>{placing ? text.spawning : `${text.spawn}${spawnTotal ? ` (${spawnTotal})` : ""}`}</button>{message ? <div className="gm-room-descriptions__message">{message}</div> : null}</div> : null}
     </section>

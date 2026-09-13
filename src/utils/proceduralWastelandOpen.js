@@ -44,14 +44,23 @@ function normalizeReservedRects(value) {
     }));
 }
 
-function terrainProfile(terrain) {
+function terrainProfile(terrain, assetProfile = "") {
+  if (assetProfile === "red_rocket") {
+    return {
+      terrainCount: [0, 0], obstacleCount: [0, 0], carCount: [8, 12], truckCount: [1, 2],
+      treeCount: [0, 0], treeGap: ASSET_GAP, allowRoadVehicles: true, vehicleGap: 0.25,
+    };
+  }
   if (terrain === "forest") return { terrainCount: [0, 1], obstacleCount: [1, 2], carCount: [0, 1], truckCount: [0, 0], treeCount: [9, 15], treeGap: 0.45 };
   if (terrain === "swamp") return { terrainCount: [3, 5], obstacleCount: [0, 2], carCount: [0, 2], truckCount: [0, 1], treeCount: [2, 5], treeGap: 0.8 };
   if (terrain === "ruins") return { terrainCount: [3, 5], obstacleCount: [1, 3], carCount: [2, 5], truckCount: [0, 2], treeCount: [0, 2], treeGap: ASSET_GAP };
   return { terrainCount: [2, 4], obstacleCount: [1, 3], carCount: [1, 4], truckCount: [0, 2], treeCount: [1, 4], treeGap: ASSET_GAP };
 }
 
-function roadProfile(rng) {
+function roadProfile(rng, roadPlacement = "") {
+  if (roadPlacement === "bottom-edge") {
+    return { type: "edge", surface: pick(rng, ["asphalt", "dirt", "cobblestone"]) };
+  }
   const roll = rng();
   const type = roll < 0.36 ? "none" : roll < 0.82 ? "single" : "fragments";
   return { type, surface: pick(rng, ["asphalt", "dirt", "cobblestone"]) };
@@ -59,6 +68,7 @@ function roadProfile(rng) {
 
 function roadRects(profile, rng) {
   const roads = [];
+  if (profile.type === "edge") return [{ x: 0, y: GRID - 2, w: GRID, h: 2 }];
   const cx = clamp(12 + randint(rng, -3, 3), 4, 19);
   const cy = clamp(12 + randint(rng, -3, 3), 4, 19);
   const width = 2;
@@ -151,7 +161,15 @@ function placeVehicles(rng, occupied, roads, profile) {
     const { w, h } = getVehicleFootprint(type);
     let x = randint(rng, 1, GRID - w - 1);
     let y = randint(rng, 1, GRID - h - 1);
-    if (road) {
+    if (road && profile.allowRoadVehicles) {
+      if (road.w >= road.h) {
+        x = clamp(randint(rng, road.x, road.x + Math.max(0, road.w - w)), 0, GRID - w);
+        y = clamp(road.y + road.h - h, 0, GRID - h);
+      } else {
+        y = clamp(randint(rng, road.y, road.y + Math.max(0, road.h - h)), 0, GRID - h);
+        x = clamp(road.x + road.w - w, 0, GRID - w);
+      }
+    } else if (road) {
       if (road.w >= road.h) {
         x = clamp(randint(rng, road.x, road.x + Math.max(0, road.w - w)), 1, GRID - w - 1);
         y = clamp(road.y + (rng() < 0.5 ? -h - 2 : road.h + 2), 1, GRID - h - 1);
@@ -165,7 +183,7 @@ function placeVehicles(rng, occupied, roads, profile) {
     if (type === "wreck_car") return withCollisionRect(base, 3, 2);
     if (type === "wreck_truck") return withCollisionRect(base, 5, 3);
     return withCollisionRect(base, w, h);
-  }, ASSET_GAP, 120);
+  }, Number(profile.vehicleGap ?? ASSET_GAP), 240);
 
   for (let i = 0; i < randint(rng, profile.carCount[0], profile.carCount[1]); i += 1) {
     const roll = rng();
@@ -210,9 +228,9 @@ function roadSvg(road, surface) {
 
 export function buildOpenWastelandSite(spec = {}) {
   const terrainType = normalizeTerrain(spec.terrain || spec.terrainType);
-  const profile = terrainProfile(terrainType);
+  const profile = terrainProfile(terrainType, spec.assetProfile);
   const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${terrainType}:24x24:open-wasteland-assets-v9`));
-  const road = roadProfile(rng);
+  const road = roadProfile(rng, spec.roadPlacement);
   const roads = roadRects(road, rng);
   const reservedRects = normalizeReservedRects(spec.reservedRects);
 
@@ -221,7 +239,8 @@ export function buildOpenWastelandSite(spec = {}) {
   const occupied = [...roads, ...reservedRects];
   const terrain = placeTerrain(rng, occupied, terrainType, profile);
   const obstacles = placeObstacles(rng, occupied, terrainType, profile);
-  const vehicles = placeVehicles(rng, occupied, roads, profile);
+  const vehicleOccupied = profile.allowRoadVehicles ? occupied.slice(roads.length) : occupied;
+  const vehicles = placeVehicles(rng, vehicleOccupied, roads, profile);
   const trees = placeTrees(rng, occupied, profile);
 
   return {

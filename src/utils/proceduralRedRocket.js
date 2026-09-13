@@ -1,4 +1,3 @@
-import { buildOpenWastelandSite } from "./proceduralWastelandOpen.js";
 import redRocket1 from "../assets/wasteland/red-rocket/red-rocket-1.png";
 import redRocket2 from "../assets/wasteland/red-rocket/red-rocket-2.png";
 import redRocket3 from "../assets/wasteland/red-rocket/red-rocket-3.png";
@@ -8,7 +7,7 @@ const FOOTPRINT = 20;
 const ROOM_SCALE = FOOTPRINT / 10;
 const BORDER = 1;
 const ROUTE_CLEARANCE = 0.75;
-const RAIL_WIDTH = 2.67;
+const EDGE_ROAD = { x: 0, y: GRID - 2, w: GRID, h: 2 };
 const ASSETS = [redRocket1, redRocket2, redRocket3];
 
 const ROOM_TEMPLATE = [
@@ -68,29 +67,8 @@ function overlaps(a, b, pad = 0) {
   );
 }
 
-function routeReservations(spec = {}) {
-  const seed = String(spec.renderSeed || spec.seed || "1");
-  const terrain = String(spec.terrain || spec.terrainType || "wasteland");
-  const routeKind = hashSeed(`route:${seed}:${terrain}`) % 4 === 0 ? "rail" : "road";
-
-  if (routeKind === "rail") {
-    const railSeed = hashSeed(`rail:${seed}:${terrain}`);
-    const axis = (railSeed & 1) === 0 ? "h" : "v";
-    const fixed = Math.max(6, Math.min(18, 6 + ((railSeed >>> 3) % 13)));
-    const rail = axis === "h"
-      ? { x: 0, y: fixed - RAIL_WIDTH / 2, w: GRID, h: RAIL_WIDTH }
-      : { x: fixed - RAIL_WIDTH / 2, y: 0, w: RAIL_WIDTH, h: GRID };
-    return { routeKind, reservations: [rail] };
-  }
-
-  const site = buildOpenWastelandSite({
-    ...spec,
-    type: "wasteland",
-    cols: GRID,
-    rows: GRID,
-    reservedRects: [],
-  });
-  return { routeKind, reservations: site.roads || [] };
+function routeReservations() {
+  return { routeKind: "road", reservations: [{ ...EDGE_ROAD }] };
 }
 
 function placementCandidates(reservations) {
@@ -151,9 +129,11 @@ export function buildRedRocketLayout(spec = {}) {
     cols: GRID,
     rows: GRID,
     routeKind,
+    roadPlacement: "bottom-edge",
     routeReservations: reservations,
     buildings: [building],
     reservedRects: [{ x: building.x, y: building.y, w: building.w, h: building.h }],
+    environmentReservedRects: [{ x: building.x, y: building.y, w: building.w, h: building.h }],
   };
 }
 

@@ -1339,7 +1339,8 @@ function roadBounds(road) {
 
 function removeRoadOverlaps(
   items,
-  roadAssets
+  roadAssets,
+  allowRoadVehicles = false
 ) {
   if (
     !roadAssets.length
@@ -1354,6 +1355,9 @@ function removeRoadOverlaps(
 
   return items.filter(
     (item) => {
+      if (allowRoadVehicles && ["wreck_car", "wreck_truck", "retro_car", "retro_pickup", "retro_motorcycle"].includes(item.type)) {
+        return true;
+      }
       const bounds =
         visualBounds(
           item
@@ -1782,6 +1786,10 @@ export function WastelandAssetLayer({
         spec?.terrain,
         spec?.backgroundType,
         spec?.terrainType,
+        spec?.assetProfile,
+        spec?.roadPlacement,
+        spec?.allowRoadVehicles,
+        JSON.stringify(spec?.reservedRects || []),
       ]
     );
 
@@ -1801,12 +1809,14 @@ export function WastelandAssetLayer({
 
   const routeKind = useMemo(
     () =>
-      hashValue(
+      spec?.roadPlacement === "bottom-edge"
+        ? "road"
+        : hashValue(
         `route:${spec?.seed || "1"}:${spec?.terrain || spec?.terrainType || "wasteland"}`
       ) % 4 === 0
         ? "rail"
         : "road",
-    [spec?.seed, spec?.terrain, spec?.terrainType]
+    [spec?.seed, spec?.terrain, spec?.terrainType, spec?.roadPlacement]
   );
 
   const roadAssets =
@@ -1867,7 +1877,8 @@ export function WastelandAssetLayer({
             removeVisualOverlaps(
               normalized
             ),
-            roadAssets
+            roadAssets,
+            Boolean(spec?.allowRoadVehicles)
           ),
           railAssets
         );
@@ -1877,6 +1888,7 @@ export function WastelandAssetLayer({
         site,
         roadAssets,
         railAssets,
+        spec?.allowRoadVehicles,
       ]
     );
 
@@ -1988,6 +2000,8 @@ export function WastelandAssetLayer({
               road={
                 road
               }
+
+              visualScale={site?.profile?.type === "edge" ? 0.7 : 1.35}
             />
           )
         )}

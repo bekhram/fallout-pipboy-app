@@ -13,6 +13,9 @@ function wastelandSpec(spec = {}, reservedRects = []) {
     cols: GRID,
     rows: GRID,
     reservedRects,
+    roadPlacement: "bottom-edge",
+    assetProfile: "red_rocket",
+    allowRoadVehicles: true,
   };
 }
 
@@ -54,7 +57,7 @@ export function RedRocketAssetLayer({ spec, preview = false }) {
   return (
     <>
       <WastelandAssetLayer
-        spec={wastelandSpec(spec, layout.reservedRects)}
+        spec={wastelandSpec(spec, layout.environmentReservedRects)}
         preview={preview}
       />
       <div

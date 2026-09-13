@@ -1,17 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { generateSettlementRoomMarkers } from "../../utils/proceduralSettlementRoomMarkers.js";
+import {
+  generateRedRocketRoomMarkers,
+  generateSettlementRoomMarkers,
+} from "../../utils/proceduralSettlementRoomMarkers.js";
 
 const GRID = 24;
 
 export default function SettlementRoomMarkerPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
+  const locationType = String(spec?.type || "");
+  const supportsRoomMarkers = locationType === "settlement" || locationType === "red_rocket";
   const [target, setTarget] = useState(null);
 
   const markers = useMemo(() => {
-    if (!spec || String(spec?.type || "") !== "settlement") return [];
-    return generateSettlementRoomMarkers(spec);
+    if (!spec || !supportsRoomMarkers) return [];
+    return locationType === "red_rocket"
+      ? generateRedRocketRoomMarkers(spec)
+      : generateSettlementRoomMarkers(spec);
   }, [
     spec?.seed,
     spec?.terrain,
@@ -22,10 +29,12 @@ export default function SettlementRoomMarkerPortal({ session }) {
     spec?.partySize,
     spec?.encounterDifficulty,
     spec?.enemyFaction,
+    locationType,
+    supportsRoomMarkers,
   ]);
 
   useEffect(() => {
-    if (!spec || String(spec?.type || "") !== "settlement") {
+    if (!spec || !supportsRoomMarkers) {
       setTarget(null);
       return undefined;
     }
@@ -49,14 +58,16 @@ export default function SettlementRoomMarkerPortal({ session }) {
       cancelled = true;
       setTarget(null);
     };
-  }, [scene?.sceneId, spec?.seed, spec?.terrain, spec?.type]);
+  }, [scene?.sceneId, spec?.seed, spec?.terrain, spec?.type, supportsRoomMarkers]);
 
   if (!target || !markers.length) return null;
 
   return createPortal(
     <div
       aria-hidden="true"
+      data-numbered-room-markers={locationType}
       data-settlement-room-markers="true"
+      data-red-rocket-room-markers={locationType === "red_rocket" ? "true" : undefined}
       style={{
         position: "absolute",
         inset: 0,
@@ -72,7 +83,9 @@ export default function SettlementRoomMarkerPortal({ session }) {
       {markers.map((marker) => (
         <div
           key={marker.id}
+          data-numbered-room-marker={marker.roomId}
           data-settlement-room-marker={marker.roomId}
+          data-red-rocket-room-marker={locationType === "red_rocket" ? marker.roomId : undefined}
           data-settlement-room-number={marker.marker}
           title={`Room ${marker.marker}`}
           style={{
