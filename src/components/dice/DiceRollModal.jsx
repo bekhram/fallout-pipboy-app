@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import FalloutD20Roller from "./FalloutD20Roller";
 import FalloutD6Roller from "./FalloutD6Roller";
 
+let openDiceModalCount = 0;
+
 export default function DiceRollModal({
   isOpen,
   onClose,
@@ -40,6 +42,16 @@ export default function DiceRollModal({
 
     setActiveTab("d6");
   }, [pendingAutoD6, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || typeof document === "undefined") return undefined;
+    openDiceModalCount += 1;
+    document.body.classList.add("has-open-dice-modal");
+    return () => {
+      openDiceModalCount = Math.max(0, openDiceModalCount - 1);
+      if (!openDiceModalCount) document.body.classList.remove("has-open-dice-modal");
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

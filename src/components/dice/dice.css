@@ -96,6 +96,13 @@
   overflow: hidden;
 }
 
+body.has-open-dice-modal .battlemap-tools-drawer,
+body.has-open-dice-modal .battlemap-view-controls,
+body.has-open-dice-modal .battlemap-zoom-drawer-toggle,
+body.has-open-dice-modal .pip-map-battlemap-shortcut {
+  display: none !important;
+}
+
 .dice-modal-screen {
   width: 100%;
   height: 100vh;

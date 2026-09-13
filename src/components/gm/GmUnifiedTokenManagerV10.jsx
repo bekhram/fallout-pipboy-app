@@ -33,8 +33,9 @@ function norm(value) {
 
 function attackSignature(attack = {}) {
   const normalized = normalizeStructuredAttack(attack);
+  const name = norm(normalized.name);
+  if (name) return name;
   return [
-    norm(normalized.name),
     num(normalized.targetNumber, 0),
     num(normalized.damageDice, 0),
     norm(normalized.damageType),

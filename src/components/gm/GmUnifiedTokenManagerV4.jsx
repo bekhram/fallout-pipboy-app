@@ -193,7 +193,23 @@ function attacksFor(stats, linkedEntry) {
   const weapons = (Array.isArray(stats.weapons) ? stats.weapons : []).map(
     normalizeWeaponAttack
   );
-  return [...parsed, ...custom, ...weapons];
+  const seen = new Set();
+  return [...parsed, ...custom, ...weapons].filter((attack) => {
+    const normalizedName = String(attack?.name || "")
+      .toLowerCase()
+      .replace(/[’'`]/g, "")
+      .replace(/[^a-z0-9а-яёіїєґ]+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const key = normalizedName || [
+      Number(attack?.targetNumber || 0),
+      Number(attack?.damageDice || 0),
+      String(attack?.damageType || "").toLowerCase(),
+    ].join("|");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function DetailLine({ label, value }) {

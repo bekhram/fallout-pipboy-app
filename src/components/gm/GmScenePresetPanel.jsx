@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { WastelandAssetLayer } from "./WastelandAssetPortal.jsx";
 import { SettlementAssetLayer, settlementBackgroundForSpec } from "./SettlementAssetPortal.jsx";
+import { RedRocketAssetLayer, redRocketBackgroundForSpec } from "./RedRocketAssetPortal.jsx";
 import {
   generateProceduralMapDataUrl,
   makeProceduralSeed,
@@ -160,9 +161,10 @@ export default function GmScenePresetPanel({ session }) {
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
       <header className="gm-scene-presets__head"><div><strong>{text.title}</strong><small>{text.fixed}</small></div></header>
-      <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: type === "settlement" ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(settlementBackgroundForSpec())})` : `url(${JSON.stringify(previewUrl)})`, backgroundSize: "100% 100%", backgroundPosition: "0 0", backgroundRepeat: "no-repeat" }}>
+      <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: type === "settlement" ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(settlementBackgroundForSpec())})` : type === "red_rocket" ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(redRocketBackgroundForSpec(generationSpec))})` : `url(${JSON.stringify(previewUrl)})`, backgroundSize: "100% 100%", backgroundPosition: "0 0", backgroundRepeat: "no-repeat" }}>
         {type === "wasteland" ? <WastelandAssetLayer spec={generationSpec} preview /> : null}
         {type === "settlement" ? <SettlementAssetLayer spec={generationSpec} preview /> : null}
+        {type === "red_rocket" ? <RedRocketAssetLayer spec={generationSpec} preview /> : null}
         <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>24×24 · seed {seed}</small>
       </div>
       <div className="gm-proc-map__controls">

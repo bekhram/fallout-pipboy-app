@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
 import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
 import SettlementAssetPortal from "./SettlementAssetPortal.jsx";
+import RedRocketAssetPortal from "./RedRocketAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
@@ -106,6 +107,7 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />
         <SettlementAssetPortal session={session} />
+        <RedRocketAssetPortal session={session} />
         <WastelandPoiPortal session={session} />
         <SettlementRoomMarkerPortal session={session} />
         <ProceduralBattlemapExtraPortal session={session} />

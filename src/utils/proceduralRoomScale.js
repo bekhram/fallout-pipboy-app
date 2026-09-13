@@ -9,6 +9,11 @@ import {
   isSettlementType,
 } from "./proceduralSettlement.js";
 import {
+  buildRedRocketRoomBlueprints,
+  buildRedRocketRoomLayout,
+  isRedRocketType,
+} from "./proceduralRedRocket.js";
+import {
   buildSuperDuperRoomBlueprints,
   buildSuperDuperRoomLayout,
   isSuperDuperMartType,
@@ -65,6 +70,7 @@ export function proceduralRoomTargetCount(spec = {}) {
   if (type === "wasteland") return buildDungeonWastelandRoomBlueprints(spec).length;
   if (isSuperDuperMartType(type)) return buildSuperDuperRoomBlueprints(spec).length;
   if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec).length;
+  if (isRedRocketType(type)) return buildRedRocketRoomBlueprints(spec).length;
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec).length;
   if (isCommercial(type)) return tierValue(size, COMMERCIAL_INTERIOR_COUNTS) + tierValue(size, OUTSKIRT_HOUSE_COUNTS);
   return tierValue(size, TARGET_ROOM_COUNTS);
@@ -99,6 +105,7 @@ export function buildProceduralRoomBlueprints(spec = {}) {
   if (type === "wasteland") return buildDungeonWastelandRoomBlueprints(spec);
   if (isSuperDuperMartType(type)) return buildSuperDuperRoomBlueprints(spec);
   if (isSettlementType(type)) return buildSettlementHouseBlueprints(spec);
+  if (isRedRocketType(type)) return buildRedRocketRoomBlueprints(spec);
   if (isResidentialType(type)) return buildResidentialRoomBlueprints(spec);
   if (isCommercial(type)) return commercialBlueprints(spec);
   const count = proceduralRoomTargetCount(spec);
@@ -160,6 +167,7 @@ export function buildProceduralRoomLayout(spec = {}) {
   if (type === "wasteland") return buildDungeonWastelandRoomLayout({ ...spec, cols, rows });
   if (isSuperDuperMartType(type)) return buildSuperDuperRoomLayout({ ...spec, cols, rows });
   if (isSettlementType(type)) return buildSettlementHouseLayout({ ...spec, cols, rows });
+  if (isRedRocketType(type)) return buildRedRocketRoomLayout({ ...spec, cols, rows });
   if (isResidentialType(type)) return buildResidentialRoomLayout({ ...spec, cols, rows });
   const blueprints = buildProceduralRoomBlueprints({ ...spec, cols, rows });
   if (isCommercial(type)) return commercialLayout(spec, blueprints, cols, rows);

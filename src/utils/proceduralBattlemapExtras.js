@@ -4,6 +4,7 @@ import {
   buildSettlementLayout,
 } from "./proceduralSettlement.js";
 import { generateProceduralWastelandPoiData } from "./proceduralWastelandPoi.js";
+import { buildRedRocketLayout } from "./proceduralRedRocket.js";
 
 const GRID = 24;
 const TRAP_LETHALITIES = ["low", "standard", "high", "deadly"];
@@ -219,6 +220,7 @@ function occupancyForWasteland(spec, reservedRects = []) {
 function markerOffset(spec) {
   const type = String(spec?.type || "");
   if (type === "settlement") return buildSettlementHouseLayout(spec).length;
+  if (type === "red_rocket") return 6;
   if (type === "wasteland") return generateProceduralWastelandPoiData(spec).length;
   return 0;
 }
@@ -230,6 +232,10 @@ function openCells(spec) {
     const layout = buildSettlementLayout(spec);
     const houses = (layout.houses || []).map(({ x, y, w, h }) => ({ x, y, w, h }));
     blocked = occupancyForWasteland(spec, houses);
+    blocked.push(...(layout.routeReservations || []));
+  } else if (type === "red_rocket") {
+    const layout = buildRedRocketLayout(spec);
+    blocked = occupancyForWasteland(spec, layout.reservedRects || []);
     blocked.push(...(layout.routeReservations || []));
   } else if (type === "wasteland") {
     blocked = occupancyForWasteland(spec);
