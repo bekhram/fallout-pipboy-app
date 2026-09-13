@@ -38,6 +38,7 @@ export default function PipboyShell({
   children,
 }) {
   const touchStart = useRef(null);
+  const mainRef = useRef(null);
   const previousTab = useRef(activeTab);
   const previousIndex = PIPBOY_TABS.findIndex((tab) => tab.key === previousTab.current);
   const currentIndex = PIPBOY_TABS.findIndex((tab) => tab.key === activeTab);
@@ -76,6 +77,9 @@ export default function PipboyShell({
   }, [resolvedCharacter, resolvedSetCharacter]);
 
   useEffect(() => {
+    const main = mainRef.current;
+    if (main) main.scrollTop = 0;
+    window.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
     previousTab.current = activeTab;
   }, [activeTab]);
 
@@ -120,6 +124,7 @@ export default function PipboyShell({
       <div className="pip-container">
         <TopNav activeTab={activeTab} onTabChange={onTabChange} onToggleMenu={onToggleMenu} />
         <main
+          ref={mainRef}
           className="pip-main"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
