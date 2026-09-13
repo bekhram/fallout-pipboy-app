@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   SPECIAL_KEYS,
@@ -10,10 +10,7 @@ import { ORIGINS } from "../data/origins.js";
 import { getTagSkillEquipmentGrant } from "../../data/startingEquipment.js";
 import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
 import { getDerivedStats } from "../../utils/characterMath.js";
-import {
-  getSkillPerkContextOptions,
-  getSkillPerkRollModifiers,
-} from "../../utils/perkEffects.js";
+import { getSkillPerkRollModifiers } from "../../utils/perkEffects.js";
 import {
   getBobbleheadSpecialBonus,
   getBobbleheadSkillBonus,
@@ -42,7 +39,6 @@ export default function SpecialScreen({
 }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
-  const [skillContexts, setSkillContexts] = useState({});
 
   const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
   const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
@@ -55,7 +51,6 @@ export default function SpecialScreen({
     skill,
     testValue,
     effectiveRank,
-    contextId,
     perkRollModifiers
   ) => {
     if (!onRoll) return;
@@ -69,7 +64,6 @@ export default function SpecialScreen({
       skill: { ...skill, rank: String(effectiveRank) },
       testValue,
       difficulty: perkRollModifiers?.difficulty ?? 1,
-      perkContextId: contextId,
       perkRollModifiers,
     });
   };
@@ -191,23 +185,11 @@ export default function SpecialScreen({
               (entry) => entry?.type === "choice"
             );
             const storedChoices = form.startingEquipmentChoices?.[sourceKey] || {};
-            const contextOptions = getSkillPerkContextOptions(skillName, language);
-            const contextId = skillContexts[skillName]
-              || contextOptions[0]?.id
-              || "general";
             const perkRollModifiers = getSkillPerkRollModifiers(form, {
               skillName,
-              contextId,
+              contextId: "general",
               baseDifficulty: 1,
             });
-            const perkChips = [
-              `D${perkRollModifiers.difficulty}`,
-              perkRollModifiers.rerollD20 > 0 ? `↻${perkRollModifiers.rerollD20}d20` : null,
-              perkRollModifiers.ignoredComplications > 0 ? `COMP -${perkRollModifiers.ignoredComplications}` : null,
-              perkRollModifiers.firstBoughtD20Free ? "+d20 FREE" : null,
-              perkRollModifiers.healingBonus > 0 ? `HEAL +${perkRollModifiers.healingBonus}` : null,
-              perkRollModifiers.travelTimeMultiplier < 1 ? `TIME ×${perkRollModifiers.travelTimeMultiplier}` : null,
-            ].filter(Boolean);
 
             return (
               <div key={skillName} className="pip-skill-row-simple">
@@ -219,7 +201,6 @@ export default function SpecialScreen({
                     skill,
                     testValue,
                     effectiveRank,
-                    contextId,
                     perkRollModifiers
                   )}
                 >
@@ -249,52 +230,6 @@ export default function SpecialScreen({
                   <label>{t("skills.test")}</label>
                   <div className="pip-skill-test-value">{testValue}</div>
                 </div>
-
-                {contextOptions.length > 1 ? (
-                  <div
-                    style={{
-                      gridColumn: "1 / -1",
-                      display: "grid",
-                      gridTemplateColumns: "minmax(150px, 1fr) auto",
-                      gap: "6px",
-                      alignItems: "center",
-                      marginTop: "4px",
-                    }}
-                  >
-                    <select
-                      className="pip-inline-input"
-                      value={contextId}
-                      onChange={(e) => setSkillContexts((prev) => ({
-                        ...prev,
-                        [skillName]: e.target.value,
-                      }))}
-                    >
-                      {contextOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "flex-end" }}>
-                      {perkChips.map((chip) => (
-                        <span key={chip} className="pip-tag">{chip}</span>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {perkRollModifiers.notes.length ? (
-                  <div
-                    style={{
-                      gridColumn: "1 / -1",
-                      fontSize: "0.68em",
-                      opacity: 0.82,
-                      marginTop: "3px",
-                    }}
-                  >
-                    {perkRollModifiers.notes.join(" · ")}
-                  </div>
-                ) : null}
 
                 {skill.tagged && equipmentChoices.length > 0 && (
                   <div
