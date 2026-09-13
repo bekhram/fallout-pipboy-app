@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   SPECIAL_KEYS,
@@ -39,6 +39,24 @@ export default function SpecialScreen({
 }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
+  const screenTopRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const resetToSpecialTop = () => {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      window.scrollTo(0, 0);
+
+      const top = screenTopRef.current;
+      if (top) {
+        top.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
+      }
+    };
+
+    resetToSpecialTop();
+    const frame = window.requestAnimationFrame(resetToSpecialTop);
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   const currentOrigin = form.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;
   const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
@@ -91,7 +109,7 @@ export default function SpecialScreen({
   };
 
   return (
-    <div className="pip-screen-grid">
+    <div ref={screenTopRef} className="pip-screen-grid pip-special-screen">
       <section className="pip-panel pip-block">
         <div className="pip-head">
           <h2>[ {t("specialPanel.title")} ]</h2>
