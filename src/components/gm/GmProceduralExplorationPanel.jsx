@@ -4,6 +4,7 @@ import GmSettlementRoomPanel from "./GmSettlementRoomPanel.jsx";
 import GmWastelandPoiPanel from "./GmWastelandPoiPanel.jsx";
 import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
 import { applyRandomEncounterEnemyBuff } from "../../utils/proceduralEnemyBuffs.js";
+import { applyEncounterDifficultyPower } from "../../utils/proceduralEncounterDifficultyPower.js";
 
 function buffSeed(payload = {}, stats = {}) {
   return [
@@ -20,7 +21,7 @@ export default function GmProceduralExplorationPanel({ session }) {
   const type = String(spec?.type || "");
 
   const encounterSession = useMemo(() => {
-    if (!session || !spec?.enemyBuffsEnabled) return session;
+    if (!session || !spec) return session;
     return {
       ...session,
       createNpcToken: async (payload = {}) => {
@@ -28,16 +29,36 @@ export default function GmProceduralExplorationPanel({ session }) {
         if (!stats.generatedEncounterSeed) return session.createNpcToken?.(payload);
 
         const disposition = String(stats.generatedDisposition || "hostile").toLowerCase();
-        const nextStats = applyRandomEncounterEnemyBuff(stats, {
-          enabled: disposition !== "friendly",
-          tier: spec.enemyBuffTier,
-          disposition,
-          seed: buffSeed(payload, stats),
-        });
+        const hostile = disposition !== "friendly";
+        let nextStats = stats;
+
+        if (spec.enemyBuffsEnabled) {
+          nextStats = applyRandomEncounterEnemyBuff(nextStats, {
+            enabled: hostile,
+            tier: spec.enemyBuffTier,
+            disposition,
+            seed: buffSeed(payload, stats),
+          });
+        }
+
+        if (hostile) {
+          nextStats = applyEncounterDifficultyPower(
+            nextStats,
+            spec.encounterDifficulty ?? spec.difficulty ?? "standard",
+          );
+        }
+
         return session.createNpcToken?.({ ...payload, stats: nextStats });
       },
     };
-  }, [session, spec?.enemyBuffsEnabled, spec?.enemyBuffTier, spec?.seed]);
+  }, [
+    session,
+    spec?.enemyBuffsEnabled,
+    spec?.enemyBuffTier,
+    spec?.encounterDifficulty,
+    spec?.difficulty,
+    spec?.seed,
+  ]);
 
   let primary = <GmProceduralRoomDescriptionsV4 session={encounterSession} />;
   if (type === "wasteland") primary = <GmWastelandPoiPanel session={encounterSession} />;
