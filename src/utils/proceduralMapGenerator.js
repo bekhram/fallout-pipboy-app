@@ -42,7 +42,7 @@ function terrainAwareInput(value = {}) {
 }
 
 function visualMapInput(value = {}) {
-  if (!["settlement", "red_rocket"].includes(String(value?.type || ""))) return value;
+  if (!["settlement", "red_rocket", "super_duper_mart"].includes(String(value?.type || ""))) return value;
   return {
     ...value,
     type: "wasteland",
