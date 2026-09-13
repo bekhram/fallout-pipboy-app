@@ -4,7 +4,8 @@ import redRocket2 from "../assets/wasteland/red-rocket/red-rocket-2.png";
 import redRocket3 from "../assets/wasteland/red-rocket/red-rocket-3.png";
 
 const GRID = 24;
-const FOOTPRINT = 10;
+const FOOTPRINT = 20;
+const ROOM_SCALE = FOOTPRINT / 10;
 const BORDER = 1;
 const ROUTE_CLEARANCE = 0.75;
 const RAIL_WIDTH = 2.67;
@@ -95,7 +96,8 @@ function routeReservations(spec = {}) {
 function placementCandidates(reservations) {
   const result = [];
   const max = GRID - FOOTPRINT - BORDER;
-  for (let y = BORDER; y <= max; y += 1) {
+  const maxY = Math.min(max, GRID - FOOTPRINT - 3);
+  for (let y = BORDER; y <= maxY; y += 1) {
     for (let x = BORDER; x <= max; x += 1) {
       const candidate = { x, y, w: FOOTPRINT, h: FOOTPRINT };
       if (reservations.some((route) => overlaps(candidate, route, ROUTE_CLEARANCE))) continue;
@@ -114,8 +116,14 @@ function fallbackPlacement(reservations) {
       candidates.push({ ...candidate, collisions });
     }
   }
-  candidates.sort((a, b) => a.collisions - b.collisions || a.y - b.y || a.x - b.x);
-  const { collisions: _collisions, ...placement } = candidates[0] || { x: 7, y: 7, w: FOOTPRINT, h: FOOTPRINT };
+  candidates.sort((a, b) => {
+    const collisionDifference = a.collisions - b.collisions;
+    if (collisionDifference) return collisionDifference;
+    const aDistance = Math.abs(a.x - 2) + Math.abs(a.y - 1);
+    const bDistance = Math.abs(b.x - 2) + Math.abs(b.y - 1);
+    return aDistance - bDistance;
+  });
+  const { collisions: _collisions, ...placement } = candidates[0] || { x: 2, y: 1, w: FOOTPRINT, h: FOOTPRINT };
   return placement;
 }
 
@@ -159,10 +167,10 @@ export function buildRedRocketRoomLayout(spec = {}) {
     slot: index,
     zone: "red_rocket",
     label: LABELS[room.baseRoomId] || room.baseRoomId.toUpperCase(),
-    x: building.x + room.dx,
-    y: building.y + room.dy,
-    w: room.w,
-    h: room.h,
+    x: building.x + room.dx * ROOM_SCALE,
+    y: building.y + room.dy * ROOM_SCALE,
+    w: room.w * ROOM_SCALE,
+    h: room.h * ROOM_SCALE,
   }));
 }
 

@@ -67,7 +67,7 @@ export function RedRocketAssetLayer({ spec, preview = false }) {
           width: preview ? "100%" : "var(--battlemap-world-width, 100%)",
           height: preview ? "100%" : "var(--battlemap-world-height, 100%)",
           pointerEvents: "none",
-          zIndex: preview ? 4 : 1,
+          zIndex: preview ? 4 : 0,
           overflow: "hidden",
           gridColumn: "1 / -1",
           gridRow: "1 / -1",
