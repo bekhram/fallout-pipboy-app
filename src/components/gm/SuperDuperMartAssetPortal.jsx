@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 import {
   buildSuperDuperMartAssetLayout,
+  buildSuperDuperMartRoomLayout,
   isSuperDuperMartAssetType,
 } from "../../utils/proceduralSuperDuperMartAssets.js";
 import { WastelandAssetLayer, wastelandBackgroundForSpec } from "./WastelandAssetPortal.jsx";
@@ -87,10 +88,61 @@ export function SuperDuperMartAssetLayer({ spec, preview = false }) {
   );
 }
 
+function SuperDuperMartRoomMarkers({ spec }) {
+  const rooms = useMemo(() => buildSuperDuperMartRoomLayout(spec), [spec?.seed]);
+  return (
+    <div
+      aria-hidden="true"
+      data-gm-only-room-markers="true"
+      data-super-duper-mart-room-markers="true"
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "var(--battlemap-world-width, 100%)",
+        height: "var(--battlemap-world-height, 100%)",
+        pointerEvents: "none",
+        zIndex: 300,
+        overflow: "hidden",
+        gridColumn: "1 / -1",
+        gridRow: "1 / -1",
+      }}
+    >
+      {rooms.map((room, index) => (
+        <div
+          key={room.id}
+          data-super-duper-mart-room-marker={room.id}
+          title={`${index + 1}. ${room.name}`}
+          style={{
+            position: "absolute",
+            left: `${((Number(room.markerX) + 0.5) / GRID) * 100}%`,
+            top: `${((Number(room.markerY) + 0.5) / GRID) * 100}%`,
+            width: 34,
+            height: 34,
+            transform: "translate(-50%, -50%)",
+            border: "2px solid #8cff9b",
+            borderRadius: "50%",
+            color: "#8cff9b",
+            background: "rgba(0,20,7,.96)",
+            boxShadow: "0 0 0 2px rgba(0,0,0,.8), 0 0 14px #8cff9b",
+            display: "grid",
+            placeItems: "center",
+            fontSize: 14,
+            fontWeight: 900,
+            lineHeight: 1,
+          }}
+        >
+          {index + 1}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function SuperDuperMartAssetPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
   const [target, setTarget] = useState(null);
+  const isGmHost = Boolean(session?.isActive && session?.mode === "host");
 
   useEffect(() => {
     if (!spec || !isSuperDuperMartAssetType(spec.type)) {
@@ -119,5 +171,11 @@ export default function SuperDuperMartAssetPortal({ session }) {
   }, [scene?.sceneId, spec?.type, spec?.seed, spec?.terrain]);
 
   if (!target || !spec || !isSuperDuperMartAssetType(spec.type)) return null;
-  return createPortal(<SuperDuperMartAssetLayer spec={spec} />, target);
+  return createPortal(
+    <>
+      <SuperDuperMartAssetLayer spec={spec} />
+      {isGmHost ? <SuperDuperMartRoomMarkers spec={spec} /> : null}
+    </>,
+    target,
+  );
 }

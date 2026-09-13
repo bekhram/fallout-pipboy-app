@@ -1,8 +1,15 @@
 import { buildProceduralRoomLayout } from "./proceduralRoomScale.js";
+import { buildSuperDuperMartRoomLayout } from "./proceduralSuperDuperMartAssets.js";
+
+function roomLayoutForSpec(spec = {}) {
+  return String(spec?.type || "") === "super_duper_mart"
+    ? buildSuperDuperMartRoomLayout(spec)
+    : buildProceduralRoomLayout(spec);
+}
 
 export function getProceduralRoomBounds(spec = {}) {
   return Object.fromEntries(
-    buildProceduralRoomLayout(spec).map((room) => [room.id, {
+    roomLayoutForSpec(spec).map((room) => [room.id, {
       x: room.x,
       y: room.y,
       w: room.w,

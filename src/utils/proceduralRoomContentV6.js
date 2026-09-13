@@ -1,5 +1,5 @@
 import * as V5 from "./proceduralRoomContentV5.js";
-import { summarizeEncounter } from "./proceduralEncounterBalance.js";
+import { balanceEncounterEnemies, summarizeEncounter } from "./proceduralEncounterBalance.js";
 import {
   generateProceduralWastelandPoiData,
   generateLocalizedProceduralWastelandPois,
@@ -11,6 +11,50 @@ function isWasteland(spec = {}) {
 
 function isSettlement(spec = {}) {
   return String(spec?.type || "") === "settlement";
+}
+
+function isSuperDuperMart(spec = {}) {
+  return String(spec?.type || "") === "super_duper_mart";
+}
+
+const SUPER_DUPER_ROOM_SOURCES = [
+  { id: "sales-floor", candidates: ["sales"] },
+  { id: "checkout", candidates: ["checkout", "sales"] },
+  { id: "office", candidates: ["office", "info"] },
+  { id: "restroom", candidates: ["wc_visitors", "wc_staff", "wc"] },
+  { id: "cold-room", candidates: ["cold_room", "freezer_room", "freezer", "storage"] },
+  { id: "warehouse", candidates: ["warehouse", "storage"] },
+  { id: "loading-bay", candidates: ["receiving", "storage", "warehouse"] },
+];
+
+const SUPER_DUPER_NAMES = {
+  en: ["Sales Floor", "Checkout", "Office", "Restroom", "Cold Room", "Warehouse", "Loading Bay"],
+  ru: ["Торговый зал", "Кассы", "Офис", "Туалет", "Холодильная зона", "Склад", "Зона разгрузки"],
+  uk: ["Торговий зал", "Каси", "Офіс", "Туалет", "Холодильна зона", "Склад", "Зона розвантаження"],
+  pl: ["Sala sprzedaży", "Kasy", "Biuro", "Toaleta", "Chłodnia", "Magazyn", "Strefa rozładunku"],
+};
+
+function superDuperMartRooms(spec = {}) {
+  const sourceRooms = V5.generateProceduralRoomData(spec);
+  const used = new Set();
+  const picked = SUPER_DUPER_ROOM_SOURCES.map((definition, index) => {
+    let source = null;
+    for (const candidate of definition.candidates) {
+      source = sourceRooms.find((room) => !used.has(room.id) && (room.id === candidate || room.semanticType === candidate));
+      if (source) break;
+    }
+    if (!source) source = sourceRooms.find((room) => !used.has(room.id)) || sourceRooms[0] || {};
+    if (source?.id) used.add(source.id);
+    return {
+      ...source,
+      id: definition.id,
+      baseRoomId: source.baseRoomId || source.id || definition.id,
+      roomInstance: 1,
+      roomSlot: index,
+      roomZone: "super_duper_mart",
+    };
+  });
+  return balanceEncounterEnemies(spec, picked);
 }
 
 /**
@@ -35,6 +79,7 @@ function unrestrictedSettlementRooms(rooms = []) {
 
 export function generateProceduralRoomData(spec = {}) {
   if (isWasteland(spec)) return generateProceduralWastelandPoiData(spec);
+  if (isSuperDuperMart(spec)) return superDuperMartRooms(spec);
   const rooms = V5.generateProceduralRoomData(spec);
   return isSettlement(spec) ? unrestrictedSettlementRooms(rooms) : rooms;
 }
@@ -53,12 +98,21 @@ export function roomPrimaryMarker(roomData) {
 }
 
 export function localizeProceduralRoomData(data = [], lang = "en") {
-  return V5.localizeProceduralRoomData(data, lang);
+  const localized = V5.localizeProceduralRoomData(data, lang);
+  const names = SUPER_DUPER_NAMES[lang] || SUPER_DUPER_NAMES.en;
+  return localized.map((room) => {
+    const fixedIndex = SUPER_DUPER_ROOM_SOURCES.findIndex((definition) => definition.id === room.id);
+    if (fixedIndex < 0) return room;
+    return { ...room, name: `${fixedIndex + 1}. ${names[fixedIndex]}` };
+  });
 }
 
 export function generateLocalizedProceduralRooms(spec = {}, lang = "en") {
   if (isWasteland(spec)) return generateLocalizedProceduralWastelandPois(spec, lang);
-  return V5.localizeProceduralRoomData(generateProceduralRoomData(spec), lang);
+  const data = generateProceduralRoomData(spec);
+  return isSuperDuperMart(spec)
+    ? localizeProceduralRoomData(data, lang)
+    : V5.localizeProceduralRoomData(data, lang);
 }
 
 export const LOOT_RARITIES = V5.LOOT_RARITIES;
