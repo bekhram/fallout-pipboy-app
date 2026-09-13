@@ -19,7 +19,14 @@ function isInventoryEditor(panel) {
 }
 
 function isWeaponEditor(panel) {
-  if (!panel || !Array.isArray(SPECIAL_KEYS) || !SPECIAL_KEYS.length) return false;
+  if (
+    !panel
+    || panel.closest?.(".pip-special-screen")
+    || !Array.isArray(SPECIAL_KEYS)
+    || !SPECIAL_KEYS.length
+  ) {
+    return false;
+  }
 
   return Array.from(panel.querySelectorAll("select")).some((select) => {
     const values = optionValues(select);
@@ -31,6 +38,12 @@ function findInlineEditors() {
   const targets = new Set();
 
   document.querySelectorAll(".pip-screen-grid").forEach((grid) => {
+    // The SPECIAL screen contains attribute selectors with the same S/P/E/C/I/A/L
+    // values used by the legacy weapon-editor detector. Treating that panel as a
+    // weapon editor makes the entire Skills panel fixed/fullscreen and hides both
+    // the SPECIAL stats and the main navigation.
+    if (grid.matches?.(".pip-special-screen")) return;
+
     const panels = Array.from(grid.children).filter((child) =>
       child.matches?.(".pip-panel.pip-block")
     );
