@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
@@ -76,11 +76,33 @@ export default function PipboyShell({
     return () => clearCharacterStateBridge(resolvedSetCharacter);
   }, [resolvedCharacter, resolvedSetCharacter]);
 
-  useEffect(() => {
-    const main = mainRef.current;
-    if (main) main.scrollTop = 0;
-    window.scrollTo?.({ top: 0, left: 0, behavior: "auto" });
+  useLayoutEffect(() => {
+    const resetScroll = () => {
+      const main = mainRef.current;
+      if (main) {
+        main.scrollTop = 0;
+        let parent = main.parentElement;
+        while (parent) {
+          if (parent.scrollTop) parent.scrollTop = 0;
+          parent = parent.parentElement;
+        }
+      }
+
+      if (document.scrollingElement) {
+        document.scrollingElement.scrollTop = 0;
+        document.scrollingElement.scrollLeft = 0;
+      }
+      window.scrollTo?.(0, 0);
+    };
+
+    resetScroll();
+    const firstFrame = window.requestAnimationFrame(() => {
+      resetScroll();
+      window.requestAnimationFrame(resetScroll);
+    });
+
     previousTab.current = activeTab;
+    return () => window.cancelAnimationFrame(firstFrame);
   }, [activeTab]);
 
   const handleTouchStart = (event) => {
