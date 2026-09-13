@@ -10,6 +10,10 @@ const ROUTE_CLEARANCE = 0.75;
 const EDGE_ROAD = { x: 0, y: GRID - 2, w: GRID, h: 2 };
 const ASSETS = [redRocket1, redRocket2, redRocket3];
 
+// Logical room bounds are still shared by the procedural encounter system.
+// Visual marker anchors are asset-specific because all three Red Rocket PNGs
+// have different floor plans. Anchor coordinates use a normalized 10x10
+// coordinate system inside the 20x20 Red Rocket footprint.
 const ROOM_TEMPLATE = [
   { baseRoomId: "sales", dx: 1, dy: 1, w: 4, h: 4 },
   { baseRoomId: "office", dx: 5, dy: 1, w: 2, h: 3 },
@@ -17,6 +21,36 @@ const ROOM_TEMPLATE = [
   { baseRoomId: "garage", dx: 5, dy: 4, w: 4, h: 4 },
   { baseRoomId: "storage", dx: 1, dy: 5, w: 4, h: 3 },
   { baseRoomId: "coffee_area", dx: 1, dy: 8, w: 8, h: 1 },
+];
+
+const ROOM_MARKER_TEMPLATES = [
+  // red-rocket-1.png: sales block in the upper middle, garage on the right.
+  {
+    sales: { x: 5.1, y: 3.35 },
+    office: { x: 4.9, y: 1.1 },
+    wc: { x: 6.35, y: 1.25 },
+    garage: { x: 8.25, y: 3.15 },
+    storage: { x: 7.15, y: 1.7 },
+    coffee_area: { x: 5.15, y: 2.65 },
+  },
+  // red-rocket-2.png: wide sales room on the left, service garage on the right.
+  {
+    sales: { x: 3.15, y: 3.45 },
+    office: { x: 3.65, y: 1.7 },
+    wc: { x: 2.35, y: 1.7 },
+    garage: { x: 7.55, y: 4.15 },
+    storage: { x: 6.75, y: 1.55 },
+    coffee_area: { x: 4.15, y: 3.15 },
+  },
+  // red-rocket-3.png: garage on the left, sales room in the upper centre.
+  {
+    sales: { x: 5.35, y: 2.35 },
+    office: { x: 6.95, y: 1.45 },
+    wc: { x: 6.95, y: 2.75 },
+    garage: { x: 2.7, y: 2.35 },
+    storage: { x: 2.85, y: 1.05 },
+    coffee_area: { x: 5.45, y: 2.75 },
+  },
 ];
 
 const LABELS = {
@@ -139,21 +173,33 @@ export function buildRedRocketLayout(spec = {}) {
 
 export function buildRedRocketRoomLayout(spec = {}) {
   const building = buildRedRocketLayout(spec).buildings[0];
-  return ROOM_TEMPLATE.map((room, index) => ({
-    id: room.baseRoomId,
-    baseRoomId: room.baseRoomId,
-    instance: 1,
-    sourceSet: 0,
-    slot: index,
-    zone: "red_rocket",
-    label: LABELS[room.baseRoomId] || room.baseRoomId.toUpperCase(),
-    x: building.x + room.dx * ROOM_SCALE,
-    y: building.y + room.dy * ROOM_SCALE,
-    w: room.w * ROOM_SCALE,
-    h: room.h * ROOM_SCALE,
-  }));
+  const markerTemplate = ROOM_MARKER_TEMPLATES[building.assetIndex] || ROOM_MARKER_TEMPLATES[0];
+
+  return ROOM_TEMPLATE.map((room, index) => {
+    const anchor = markerTemplate[room.baseRoomId] || {
+      x: room.dx + room.w / 2,
+      y: room.dy + room.h / 2,
+    };
+
+    return {
+      id: room.baseRoomId,
+      baseRoomId: room.baseRoomId,
+      instance: 1,
+      sourceSet: 0,
+      slot: index,
+      zone: "red_rocket",
+      label: LABELS[room.baseRoomId] || room.baseRoomId.toUpperCase(),
+      assetIndex: building.assetIndex,
+      x: building.x + room.dx * ROOM_SCALE,
+      y: building.y + room.dy * ROOM_SCALE,
+      w: room.w * ROOM_SCALE,
+      h: room.h * ROOM_SCALE,
+      markerX: building.x + anchor.x * ROOM_SCALE,
+      markerY: building.y + anchor.y * ROOM_SCALE,
+    };
+  });
 }
 
 export function buildRedRocketRoomBlueprints(spec = {}) {
-  return buildRedRocketRoomLayout(spec).map(({ x, y, w, h, ...room }) => room);
+  return buildRedRocketRoomLayout(spec).map(({ x, y, w, h, markerX, markerY, assetIndex, ...room }) => room);
 }
