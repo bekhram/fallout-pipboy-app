@@ -87,6 +87,11 @@ export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "sta
   const nextSummary = summary
     ? { ...summary, resistance: scaleResistanceMap(baseSummaryResistance, profile.resistanceMultiplier) }
     : summary;
+  const powerRule = difficulty === "hard"
+    ? "HARD: attack damage dice x1.5; all resistance values x2"
+    : difficulty === "deadly"
+      ? "DEADLY: attack damage dice x2; all resistance values x3"
+      : "No encounter power multiplier";
 
   return {
     ...stats,
@@ -101,6 +106,7 @@ export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "sta
     encounterDifficulty: difficulty,
     encounterDamageMultiplier: profile.damageMultiplier,
     encounterResistanceMultiplier: profile.resistanceMultiplier,
+    encounterPowerRule: powerRule,
     encounterBaseAttacks: baseAttacks,
     encounterBaseCustomAttacks: baseCustomAttacks.map((attack) => ({ ...attack })),
     encounterBaseWeapons: baseWeapons.map((weapon) => ({ ...weapon })),
