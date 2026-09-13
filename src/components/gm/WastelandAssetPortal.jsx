@@ -2000,8 +2000,6 @@ export function WastelandAssetLayer({
               road={
                 road
               }
-
-              visualScale={site?.profile?.type === "edge" ? 0.7 : 1.35}
             />
           )
         )}
