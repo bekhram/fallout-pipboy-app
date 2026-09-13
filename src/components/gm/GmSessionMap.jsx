@@ -6,7 +6,7 @@ import SettlementAssetPortal from "./SettlementAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
-import GmUnifiedTokenManagerV9 from "./GmUnifiedTokenManagerV9.jsx";
+import GmUnifiedTokenManagerV10 from "./GmUnifiedTokenManagerV10.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import GmTokenPointerGuard from "./GmTokenPointerGuard.jsx";
 import GmTokenColorAndFocusEnhancer from "./GmTokenColorAndFocusEnhancer.jsx";
@@ -116,7 +116,7 @@ export default function GmSessionMap(props) {
         <GmTokenColorAndFocusEnhancer session={session} />
         <GmTokenStatusLayer session={session} />
         <GmTokenPointerGuard />
-        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV9 session={session} /></div>
+        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV10 session={session} /></div>
       </div>
     </section>
   );

@@ -1,0 +1,46 @@
+.gm-token-v10-buff-strip,
+.gm-token-v10-buff-details {
+  border: 1px dashed currentColor;
+  background: rgba(0, 255, 128, 0.035);
+}
+
+.gm-token-v10-buff-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.65rem;
+  margin-top: 0.45rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.gm-token-v10-buff-strip strong,
+.gm-token-v10-buff-details > strong {
+  letter-spacing: 0.05em;
+}
+
+.gm-token-v10-buff-effects {
+  opacity: 0.9;
+}
+
+.gm-token-v10-buff-details {
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.gm-token-v10-buff-names {
+  margin-top: 0.35rem;
+  font-weight: 700;
+}
+
+.gm-token-v10-buff-details .gm-token-v10-buff-effects {
+  margin-top: 0.3rem;
+}
+
+@media (max-width: 720px) {
+  .gm-token-v10-buff-strip {
+    gap: 0.2rem 0.45rem;
+    font-size: 0.68rem;
+  }
+}
