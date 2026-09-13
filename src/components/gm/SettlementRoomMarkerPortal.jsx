@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   generateRedRocketRoomMarkers,
   generateSettlementRoomMarkers,
+  generateSuperDuperMartRoomMarkers,
 } from "../../utils/proceduralSettlementRoomMarkers.js";
 
 const GRID = 24;
@@ -12,14 +13,14 @@ export default function SettlementRoomMarkerPortal({ session }) {
   const spec = scene?.environment?.proceduralMapSpec || null;
   const locationType = String(spec?.type || "");
   const isGmHost = Boolean(session?.isActive && session?.mode === "host");
-  const supportsRoomMarkers = locationType === "settlement" || locationType === "red_rocket";
+  const supportsRoomMarkers = ["settlement", "red_rocket", "super_duper_mart"].includes(locationType);
   const [target, setTarget] = useState(null);
 
   const markers = useMemo(() => {
     if (!isGmHost || !spec || !supportsRoomMarkers) return [];
-    return locationType === "red_rocket"
-      ? generateRedRocketRoomMarkers(spec)
-      : generateSettlementRoomMarkers(spec);
+    if (locationType === "red_rocket") return generateRedRocketRoomMarkers(spec);
+    if (locationType === "super_duper_mart") return generateSuperDuperMartRoomMarkers(spec);
+    return generateSettlementRoomMarkers(spec);
   }, [
     isGmHost,
     spec?.seed,
@@ -71,6 +72,7 @@ export default function SettlementRoomMarkerPortal({ session }) {
       data-numbered-room-markers={locationType}
       data-settlement-room-markers="true"
       data-red-rocket-room-markers={locationType === "red_rocket" ? "true" : undefined}
+      data-super-duper-mart-room-markers={locationType === "super_duper_mart" ? "true" : undefined}
       style={{
         position: "absolute",
         inset: 0,
@@ -89,6 +91,7 @@ export default function SettlementRoomMarkerPortal({ session }) {
           data-numbered-room-marker={marker.roomId}
           data-settlement-room-marker={marker.roomId}
           data-red-rocket-room-marker={locationType === "red_rocket" ? marker.roomId : undefined}
+          data-super-duper-mart-room-marker={locationType === "super_duper_mart" ? marker.roomId : undefined}
           data-settlement-room-number={marker.marker}
           title={`Room ${marker.marker}`}
           style={{

@@ -4,6 +4,7 @@ import {
 } from "./proceduralRoomContent.js";
 import { getProceduralRoomBounds } from "./proceduralRoomLayout.js";
 import { buildRedRocketRoomLayout } from "./proceduralRedRocket.js";
+import { buildSuperDuperMartRoomLayout } from "./proceduralSuperDuperMartAssets.js";
 
 const GRID = 24;
 
@@ -102,13 +103,10 @@ export function generateSettlementRoomMarkers(spec = {}) {
   return generateNumberedRoomMarkers(spec, "settlement", "settlement-room");
 }
 
-export function generateRedRocketRoomMarkers(spec = {}) {
-  if (String(spec?.type || "") !== "red_rocket") return [];
+function generateFixedLayoutRoomMarkers(spec = {}, expectedType, idPrefix, layoutBuilder) {
+  if (String(spec?.type || "") !== expectedType) return [];
 
-  // Red Rocket has one fixed visual floor plan. Build its markers from that
-  // floor plan directly so the numbered tokens are always present even if the
-  // generated room-content list changes independently.
-  const layoutRooms = buildRedRocketRoomLayout(spec);
+  const layoutRooms = layoutBuilder(spec);
   const contentByRoom = new Map(
     generateProceduralRoomData(spec).map((room) => [room.id, room]),
   );
@@ -121,8 +119,26 @@ export function generateRedRocketRoomMarkers(spec = {}) {
       baseRoomId: content.baseRoomId || bounds.baseRoomId || bounds.id,
       roomInstance: content.roomInstance || bounds.instance || 1,
     };
-    return numberedMarker(room, bounds, index, "red-rocket-room");
+    return numberedMarker(room, bounds, index, idPrefix);
   });
+}
+
+export function generateRedRocketRoomMarkers(spec = {}) {
+  return generateFixedLayoutRoomMarkers(
+    spec,
+    "red_rocket",
+    "red-rocket-room",
+    buildRedRocketRoomLayout,
+  );
+}
+
+export function generateSuperDuperMartRoomMarkers(spec = {}) {
+  return generateFixedLayoutRoomMarkers(
+    spec,
+    "super_duper_mart",
+    "super-duper-mart-room",
+    buildSuperDuperMartRoomLayout,
+  );
 }
 
 export function settlementRoomMarkerById(spec = {}) {
@@ -134,5 +150,11 @@ export function settlementRoomMarkerById(spec = {}) {
 export function redRocketRoomMarkerById(spec = {}) {
   return Object.fromEntries(
     generateRedRocketRoomMarkers(spec).map((marker) => [marker.roomId, marker]),
+  );
+}
+
+export function superDuperMartRoomMarkerById(spec = {}) {
+  return Object.fromEntries(
+    generateSuperDuperMartRoomMarkers(spec).map((marker) => [marker.roomId, marker]),
   );
 }
