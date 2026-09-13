@@ -3,6 +3,7 @@ import {
   roomPrimaryMarker,
 } from "./proceduralRoomContent.js";
 import { getProceduralRoomBounds } from "./proceduralRoomLayout.js";
+import { buildRedRocketRoomLayout } from "./proceduralRedRocket.js";
 
 const GRID = 24;
 
@@ -54,6 +55,30 @@ function roomAnchor(bounds = {}) {
   };
 }
 
+function numberedMarker(room = {}, bounds = {}, index, idPrefix) {
+  const anchor = roomAnchor(bounds);
+
+  return {
+    id: `${idPrefix}:${room.id || bounds.id}`,
+    roomId: room.id || bounds.id,
+    marker: index + 1,
+    symbol: markerSymbol(room),
+    x: anchor.x,
+    y: anchor.y,
+    bounds: {
+      x: Number(bounds.x || 0),
+      y: Number(bounds.y || 0),
+      w: Math.max(1, Number(bounds.w || 1)),
+      h: Math.max(1, Number(bounds.h || 1)),
+    },
+    houseId: room.houseId || "",
+    houseType: room.houseType || "",
+    roomInstance: Math.max(1, Number(room.roomInstance || bounds.instance || 1)),
+    baseRoomId: room.baseRoomId || bounds.baseRoomId || room.id || bounds.id,
+    disposition: room.disposition || "",
+  };
+}
+
 /**
  * One deterministic marker list shared by the Settlement tactical map,
  * room descriptions and token placement. Marker numbers are intentionally
@@ -69,28 +94,7 @@ function generateNumberedRoomMarkers(spec = {}, expectedType, idPrefix) {
   return rooms.flatMap((room, index) => {
     const bounds = boundsByRoom[room.id];
     if (!bounds) return [];
-
-    const anchor = roomAnchor(bounds);
-
-    return [{
-      id: `${idPrefix}:${room.id}`,
-      roomId: room.id,
-      marker: index + 1,
-      symbol: markerSymbol(room),
-      x: anchor.x,
-      y: anchor.y,
-      bounds: {
-        x: Number(bounds.x || 0),
-        y: Number(bounds.y || 0),
-        w: Math.max(1, Number(bounds.w || 1)),
-        h: Math.max(1, Number(bounds.h || 1)),
-      },
-      houseId: room.houseId || "",
-      houseType: room.houseType || "",
-      roomInstance: Math.max(1, Number(room.roomInstance || 1)),
-      baseRoomId: room.baseRoomId || room.id,
-      disposition: room.disposition || "",
-    }];
+    return [numberedMarker(room, bounds, index, idPrefix)];
   });
 }
 
@@ -99,7 +103,26 @@ export function generateSettlementRoomMarkers(spec = {}) {
 }
 
 export function generateRedRocketRoomMarkers(spec = {}) {
-  return generateNumberedRoomMarkers(spec, "red_rocket", "red-rocket-room");
+  if (String(spec?.type || "") !== "red_rocket") return [];
+
+  // Red Rocket has one fixed visual floor plan. Build its markers from that
+  // floor plan directly so the numbered tokens are always present even if the
+  // generated room-content list changes independently.
+  const layoutRooms = buildRedRocketRoomLayout(spec);
+  const contentByRoom = new Map(
+    generateProceduralRoomData(spec).map((room) => [room.id, room]),
+  );
+
+  return layoutRooms.map((bounds, index) => {
+    const content = contentByRoom.get(bounds.id) || {};
+    const room = {
+      ...content,
+      id: bounds.id,
+      baseRoomId: content.baseRoomId || bounds.baseRoomId || bounds.id,
+      roomInstance: content.roomInstance || bounds.instance || 1,
+    };
+    return numberedMarker(room, bounds, index, "red-rocket-room");
+  });
 }
 
 export function settlementRoomMarkerById(spec = {}) {
