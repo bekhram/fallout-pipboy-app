@@ -18,7 +18,8 @@ function buffSeed(payload = {}, stats = {}) {
 }
 
 function languageCode() {
-  const code = String(document?.documentElement?.lang || "en").toLowerCase().split("-")[0];
+  const raw = typeof document === "undefined" ? "en" : document.documentElement?.lang || "en";
+  const code = String(raw).toLowerCase().split("-")[0];
   return ["en", "ru", "uk", "pl"].includes(code) ? code : "en";
 }
 
