@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createWeaponRoll } from "../../utils/dice";
+import { getDerivedStats } from "../../utils/characterMath.js";
 import {
   WEAPON_EFFECT_OPTIONS,
   WEAPON_QUALITY_OPTIONS,
@@ -302,6 +303,18 @@ export default function WeaponCard({
     effectMap
   );
   const allTags = [...processedQualities, ...processedEffects];
+  const weaponSkill = String(calculatedWeapon?.skill || "").trim();
+  const meleeDamageDiceBonus = ["Melee Weapons", "Unarmed"].includes(weaponSkill)
+    ? Number(getDerivedStats(form)?.md || 0)
+    : 0;
+  const rawDamageDisplay = String(calculatedWeapon.damage || "0");
+  const damageNumberMatch = rawDamageDisplay.match(/\d+/);
+  const effectiveDamageDisplay = meleeDamageDiceBonus > 0 && damageNumberMatch
+    ? rawDamageDisplay.replace(
+        damageNumberMatch[0],
+        String(Number(damageNumberMatch[0]) + meleeDamageDiceBonus)
+      )
+    : rawDamageDisplay;
   const activeProperty = activePropertyIndex === null
     ? null
     : allTags[activePropertyIndex];
@@ -430,7 +443,7 @@ export default function WeaponCard({
       <div className="pip-weapon-stats-grid">
         <div className="pip-stat-box is-clickable" onClick={handleRoll} title="Click to Roll Damage">
           <div className="stat-label">Damage Dice</div>
-          <div className="stat-value"><span aria-hidden="true">⌖</span> {calculatedWeapon.damage || "0"}</div>
+          <div className="stat-value"><span aria-hidden="true">⌖</span> {effectiveDamageDisplay}</div>
           <div className="stat-sub">{damageTypeLabel}</div>
           {allPerkNotes.length > 0 && (
             <div className="stat-sub">{allPerkNotes.join(" · ")}</div>

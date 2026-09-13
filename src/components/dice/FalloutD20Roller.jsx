@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { playSound } from "../../utils/soundManager";
+import { getDerivedStats } from "../../utils/characterMath.js";
+import { getEffectiveSpecialValue, getEffectiveSkillRank } from "../../data/inventory/bobbleheads.js";
 import {
   rollHitLocationD20,
   rollFalloutD20,
@@ -21,22 +23,33 @@ function getHitFaceLabel(value) {
 
 const MAX_HISTORY = 5;
 
-function getSkillTestValue(skill, form) {
+function getSkillTestValue(skill, form, skillName = "") {
   if (!skill || !form) return 0;
 
-  const rank = Number(skill.rank || 0);
+  const rank = skillName
+    ? getEffectiveSkillRank(form, skillName)
+    : Number(skill.rank || 0);
   const attributeKey = skill.attribute || "A";
-  const attrValue = Number(form.special?.[attributeKey] || 0);
+  const effectiveAttrValue = getEffectiveSpecialValue(form, attributeKey);
+  const perkStrength = attributeKey === "S"
+    ? Number(getDerivedStats(form)?.perkContextualModifiers?.strengthForStrengthTests)
+    : NaN;
+  const attrValue = Number.isFinite(perkStrength)
+    ? Math.max(effectiveAttrValue, perkStrength)
+    : effectiveAttrValue;
   const tagBonus = skill.tagged ? 2 : 0;
   const bonus = Number(skill.bonus || 0);
 
   return rank + attrValue + tagBonus + bonus;
 }
 
-function getSkillCriticalRange(skill) {
+function getSkillCriticalRange(skill, form = null, skillName = "") {
   if (!skill) return 1;
 
-  const rank = Math.min(20, Number(skill.rank || 0));
+  const rawRank = form && skillName
+    ? getEffectiveSkillRank(form, skillName)
+    : Number(skill.rank || 0);
+  const rank = Math.min(20, rawRank);
   return skill.tagged ? Math.max(1, rank) : 1;
 }
 
@@ -47,7 +60,7 @@ function getWeaponTestValue(weapon, form) {
   const skill = form.skills?.[skillName];
   if (!skill) return 0;
 
-  return getSkillTestValue(skill, form);
+  return getSkillTestValue(skill, form, skillName);
 }
 
 function getWeaponCriticalRange(weapon, form) {
@@ -56,7 +69,7 @@ function getWeaponCriticalRange(weapon, form) {
   const skillName = weapon.skill;
   const skill = form.skills?.[skillName];
 
-  return getSkillCriticalRange(skill);
+  return getSkillCriticalRange(skill, form, skillName);
 }
 
 function getWeaponDamageDiceCount(weapon) {
@@ -221,11 +234,15 @@ export default function FalloutD20Roller({
   if (!didHit) return;
 
   const baseDamageDiceCount = getWeaponDamageDiceCount(rollConfig?.weapon);
+  const weaponSkill = String(rollConfig?.weapon?.skill || "").trim();
+  const meleeDamageDiceCount = ["Melee Weapons", "Unarmed"].includes(weaponSkill)
+    ? Number(getDerivedStats(form)?.md || 0)
+    : 0;
   const extraRateDiceCount = rollConfig?.useRate
     ? Number(rollConfig?.rate) || 0
     : 0;
 
-  const totalDamageDiceCount = baseDamageDiceCount + extraRateDiceCount;
+  const totalDamageDiceCount = baseDamageDiceCount + meleeDamageDiceCount + extraRateDiceCount;
   if (totalDamageDiceCount <= 0) return;
 
   damageRolledForAttackRef.current = true;
