@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
 import GmSettlementRoomPanel from "./GmSettlementRoomPanel.jsx";
 import GmWastelandPoiPanel from "./GmWastelandPoiPanel.jsx";
 import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
 import { applyRandomEncounterEnemyBuff } from "../../utils/proceduralEnemyBuffs.js";
 import { applyEncounterDifficultyPower } from "../../utils/proceduralEncounterDifficultyPower.js";
+import { buildProceduralEncounterContext } from "../../utils/proceduralEncounterContext.js";
 
 function buffSeed(payload = {}, stats = {}) {
   return [
@@ -16,17 +17,110 @@ function buffSeed(payload = {}, stats = {}) {
   ].join(":");
 }
 
+function languageCode() {
+  const code = String(document?.documentElement?.lang || "en").toLowerCase().split("-")[0];
+  return ["en", "ru", "uk", "pl"].includes(code) ? code : "en";
+}
+
+function autoBrief(language) {
+  if (language === "ru") return "Сгенерируй вступление к только что расставленному процедурному энкаунтеру. Красочно опиши сцену игрокам, естественно подай цель мини-квеста и используй только безопасные подсказки о скрытой угрозе. Не раскрывай тип, количество и точное положение скрытых врагов.";
+  if (language === "uk") return "Створи вступ до щойно розставленого процедурного енкаунтера. Яскраво опиши сцену гравцям, природно подай мету мініквесту та використовуй лише безпечні підказки про приховану загрозу. Не розкривай тип, кількість і точне положення прихованих ворогів.";
+  if (language === "pl") return "Wygeneruj wprowadzenie do właśnie rozmieszczonego proceduralnego spotkania. Opisz scenę graczom, naturalnie przedstaw cel mini-zadania i używaj wyłącznie bezpiecznych wskazówek dotyczących ukrytego zagrożenia. Nie ujawniaj typu, liczby ani dokładnego położenia ukrytych wrogów.";
+  return "Introduce the newly placed procedural encounter. Vividly describe the scene to the players, naturally present the mini-quest objective, and use only spoiler-safe clues about hidden threats. Never reveal hidden enemy type, count, or exact position.";
+}
+
+function sendLongChat(session, text) {
+  let rest = String(text || "").trim();
+  if (!rest) return false;
+  while (rest.length > 1080) {
+    let cut = rest.lastIndexOf("\n", 1080);
+    if (cut < 600) cut = rest.lastIndexOf(" ", 1080);
+    if (cut < 600) cut = 1080;
+    session?.sendChat?.(rest.slice(0, cut).trim());
+    rest = rest.slice(cut).trim();
+  }
+  if (rest) session?.sendChat?.(rest);
+  return true;
+}
+
 export default function GmProceduralExplorationPanel({ session }) {
   const spec = session?.tacticalScene?.environment?.proceduralMapSpec || null;
   const type = String(spec?.type || "");
+  const batchesRef = useRef(new Map());
+  const timerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) window.clearTimeout(timerRef.current);
+  }, []);
 
   const encounterSession = useMemo(() => {
     if (!session || !spec) return session;
+
+    const finalizeEncounter = async (stamp) => {
+      const placedTokens = batchesRef.current.get(stamp) || [];
+      if (!placedTokens.length) return;
+      batchesRef.current.delete(stamp);
+
+      const language = languageCode();
+      const currentScene = session?.tacticalScene || {};
+      const encounterContext = buildProceduralEncounterContext({
+        spec,
+        scene: currentScene,
+        placedTokens,
+        language,
+      });
+
+      try {
+        await session?.updateTacticalScene?.({ encounterContext });
+      } catch {
+        /* narration still works with the freshly built context */
+      }
+
+      try {
+        const response = await fetch("/api/gm-encounter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: autoBrief(language),
+            language,
+            history: [],
+            gmContext: {
+              scene: {
+                id: currentScene?.sceneId || "",
+                name: currentScene?.name || "Tactical scene",
+                grid: `${currentScene?.cols || 12}x${currentScene?.rows || 12}`,
+              },
+              environment: currentScene?.environment || {},
+              players: Array.isArray(session?.players) ? session.players : [],
+              encounterContext,
+            },
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (response.ok && payload?.narration) sendLongChat(session, payload.narration);
+      } catch {
+        /* Auto GM is optional; token placement must never fail because narration failed. */
+      }
+    };
+
+    const scheduleFinalize = (stamp) => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        void finalizeEncounter(stamp);
+      }, 1400);
+    };
+
     return {
       ...session,
       createNpcToken: async (payload = {}) => {
         const stats = payload?.stats && typeof payload.stats === "object" ? payload.stats : {};
         if (!stats.generatedEncounterSeed) return session.createNpcToken?.(payload);
+
+        if (timerRef.current) {
+          window.clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
 
         const disposition = String(stats.generatedDisposition || "hostile").toLowerCase();
         const hostile = disposition !== "friendly";
@@ -48,7 +142,16 @@ export default function GmProceduralExplorationPanel({ session }) {
           );
         }
 
-        return session.createNpcToken?.({ ...payload, stats: nextStats });
+        const finalPayload = { ...payload, stats: nextStats };
+        const response = await session.createNpcToken?.(finalPayload);
+        if (response?.ok) {
+          const stamp = String(nextStats.generatedEncounterSeed);
+          const batch = batchesRef.current.get(stamp) || [];
+          batch.push(finalPayload);
+          batchesRef.current.set(stamp, batch);
+          scheduleFinalize(stamp);
+        }
+        return response;
       },
     };
   }, [
@@ -58,6 +161,7 @@ export default function GmProceduralExplorationPanel({ session }) {
     spec?.encounterDifficulty,
     spec?.difficulty,
     spec?.seed,
+    spec?.type,
   ]);
 
   let primary = <GmProceduralRoomDescriptionsV4 session={encounterSession} />;
