@@ -132,7 +132,8 @@ h6 {
 .pip-app {
   min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
   animation: pipFlicker 6s infinite steps(1);
 }
 
