@@ -1,5 +1,6 @@
 from pathlib import Path
 
+# Triggered after workflow installation.
 
 def replace_once(path, old, new):
     text = Path(path).read_text()
