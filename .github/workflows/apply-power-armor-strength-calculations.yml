@@ -1,0 +1,39 @@
+name: Apply power armor strength calculations
+
+on:
+  push:
+    paths:
+      - '.github/scripts/apply_power_armor_strength_calculations.py'
+      - '.github/workflows/apply-power-armor-strength-calculations.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply source patch
+        run: python3 .github/scripts/apply_power_armor_strength_calculations.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/dice/FalloutD20Roller.jsx src/components/weapons/WeaponCard.jsx
+          if git diff --cached --quiet; then
+            echo "No source changes"
+            exit 0
+          fi
+          git commit -m "fix: use power armor strength in skills and melee damage"
+          git push origin main
