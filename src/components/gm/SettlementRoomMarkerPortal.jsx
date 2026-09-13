@@ -11,15 +11,17 @@ export default function SettlementRoomMarkerPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
   const locationType = String(spec?.type || "");
+  const isGmHost = Boolean(session?.isActive && session?.mode === "host");
   const supportsRoomMarkers = locationType === "settlement" || locationType === "red_rocket";
   const [target, setTarget] = useState(null);
 
   const markers = useMemo(() => {
-    if (!spec || !supportsRoomMarkers) return [];
+    if (!isGmHost || !spec || !supportsRoomMarkers) return [];
     return locationType === "red_rocket"
       ? generateRedRocketRoomMarkers(spec)
       : generateSettlementRoomMarkers(spec);
   }, [
+    isGmHost,
     spec?.seed,
     spec?.terrain,
     spec?.density,
@@ -34,7 +36,7 @@ export default function SettlementRoomMarkerPortal({ session }) {
   ]);
 
   useEffect(() => {
-    if (!spec || !supportsRoomMarkers) {
+    if (!isGmHost || !spec || !supportsRoomMarkers) {
       setTarget(null);
       return undefined;
     }
@@ -58,13 +60,14 @@ export default function SettlementRoomMarkerPortal({ session }) {
       cancelled = true;
       setTarget(null);
     };
-  }, [scene?.sceneId, spec?.seed, spec?.terrain, spec?.type, supportsRoomMarkers]);
+  }, [isGmHost, scene?.sceneId, spec?.seed, spec?.terrain, spec?.type, supportsRoomMarkers]);
 
-  if (!target || !markers.length) return null;
+  if (!isGmHost || !target || !markers.length) return null;
 
   return createPortal(
     <div
       aria-hidden="true"
+      data-gm-only-room-markers="true"
       data-numbered-room-markers={locationType}
       data-settlement-room-markers="true"
       data-red-rocket-room-markers={locationType === "red_rocket" ? "true" : undefined}
@@ -74,7 +77,7 @@ export default function SettlementRoomMarkerPortal({ session }) {
         width: "var(--battlemap-world-width, 100%)",
         height: "var(--battlemap-world-height, 100%)",
         pointerEvents: "none",
-        zIndex: 45,
+        zIndex: 120,
         overflow: "hidden",
         gridColumn: "1 / -1",
         gridRow: "1 / -1",
@@ -97,13 +100,14 @@ export default function SettlementRoomMarkerPortal({ session }) {
             transform: "translate(-50%, -50%)",
             border: "2px solid currentColor",
             borderRadius: "50%",
-            background: "rgba(0, 20, 7, .88)",
-            boxShadow: "0 0 0 2px rgba(0,0,0,.45), 0 0 10px currentColor",
+            background: "rgba(0, 20, 7, .96)",
+            boxShadow: "0 0 0 2px rgba(0,0,0,.72), 0 0 13px currentColor",
             display: "grid",
             placeItems: "center",
             fontSize: 13,
             fontWeight: 800,
             lineHeight: 1,
+            zIndex: 1,
           }}
         >
           <span>{marker.marker}</span>
@@ -115,7 +119,7 @@ export default function SettlementRoomMarkerPortal({ session }) {
               width: 15,
               height: 15,
               borderRadius: "50%",
-              background: "rgba(0,20,7,.95)",
+              background: "rgba(0,20,7,.98)",
               border: "1px solid currentColor",
               display: "grid",
               placeItems: "center",
