@@ -1,3 +1,7 @@
+.pip-special-screen {
+  overflow-anchor: none;
+}
+
 .pip-special-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
