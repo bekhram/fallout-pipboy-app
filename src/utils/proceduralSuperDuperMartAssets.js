@@ -1,6 +1,6 @@
-import normalAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-normal.webp";
-import raiderAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-raider.webp";
-import swampAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-swamp.webp";
+import normalAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-normal.png";
+import raiderAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-raider.png";
+import swampAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-swamp.png";
 
 const GRID = 24;
 const FOOTPRINT = 20;
