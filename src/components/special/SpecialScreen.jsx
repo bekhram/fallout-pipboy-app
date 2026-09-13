@@ -46,11 +46,6 @@ export default function SpecialScreen({
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
       window.scrollTo(0, 0);
-
-      const top = screenTopRef.current;
-      if (top) {
-        top.scrollIntoView({ block: "start", inline: "nearest", behavior: "auto" });
-      }
     };
 
     resetToSpecialTop();
@@ -110,7 +105,7 @@ export default function SpecialScreen({
 
   return (
     <div ref={screenTopRef} className="pip-screen-grid pip-special-screen">
-      <section className="pip-panel pip-block">
+      <section className="pip-panel pip-block pip-special-stats-panel">
         <div className="pip-head">
           <h2>[ {t("specialPanel.title")} ]</h2>
           <span>{t("specialPanel.primaryStats")}</span>
@@ -164,7 +159,7 @@ export default function SpecialScreen({
         </div>
       </section>
 
-      <section className="pip-panel pip-block">
+      <section className="pip-panel pip-block pip-skills-panel">
         <div className="pip-head">
           <h2>[ {t("skills.title")} ]</h2>
           <button
