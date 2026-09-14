@@ -1,0 +1,15 @@
+.session-actions-menu-button {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+  right: calc(env(safe-area-inset-right, 0px) + 12px) !important;
+  z-index: 10020 !important;
+}
+
+.session-gm-host .session-gm-hostbar__actions,
+.session-player-live .session-top-actions {
+  display: none !important;
+}
+
+.session-gm-host .gm-tactical-tabs-shell > .gm-global-menu-button:not(.session-actions-menu-button) {
+  display: none !important;
+}
