@@ -5,8 +5,8 @@ import QuickCharacterWizard, {
   getCreationCopy,
 } from "../characterCreation/QuickCharacterWizard.jsx";
 import AppDownloadPanel from "./AppDownloadPanel.jsx";
-
-const STORAGE_KEY = "fallout_pipboy_v4_last_character";
+import CharacterProfilesPanel from "./CharacterProfilesPanel.jsx";
+import { createCharacterProfile } from "../../utils/characterProfiles.js";
 
 export default function MenuScreen({
   hasCharacter,
@@ -28,6 +28,7 @@ export default function MenuScreen({
   };
 
   const handleBlankCharacter = () => {
+    createCharacterProfile({}, { activate: true });
     setShowCreationMode(false);
     onNewCharacter?.();
   };
@@ -44,13 +45,7 @@ export default function MenuScreen({
 
   const handleQuickComplete = (character) => {
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          updatedAt: new Date().toISOString(),
-          data: character,
-        })
-      );
+      createCharacterProfile(character, { activate: true });
       setShowQuickCreation(false);
       setShowCreationMode(false);
       onContinue?.();
@@ -110,6 +105,8 @@ export default function MenuScreen({
             ) : null}
           </div>
         </section>
+
+        <CharacterProfilesPanel onCreateCharacter={handleNewCharacterClick} />
 
         <section className="pip-panel pip-block">
           <div className="pip-head">
