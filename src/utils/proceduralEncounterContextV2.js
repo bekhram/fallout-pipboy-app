@@ -1,6 +1,7 @@
 import { buildProceduralEncounterContext as buildBaseProceduralEncounterContext } from "./proceduralEncounterContext.js";
 import { generateProceduralQuest } from "./proceduralQuestEngine.js";
 import { applyRequestedQuestType } from "./proceduralQuestOverride.js";
+import { generateQuestMinimapTokens } from "./proceduralQuestMinimap.js";
 
 export function buildProceduralEncounterContext(options = {}) {
   const base = buildBaseProceduralEncounterContext(options);
@@ -20,11 +21,17 @@ export function buildProceduralEncounterContext(options = {}) {
   });
 
   const quest = applyRequestedQuestType(automaticQuest, spec?.questType, language);
+  const questTokens = generateQuestMinimapTokens({
+    quest,
+    encounterContext: base,
+    scene,
+  });
 
   return {
     ...base,
-    version: Math.max(2, Number(base?.version || 1)),
+    version: Math.max(3, Number(base?.version || 1)),
     quest,
+    questTokens,
     gmTruth: {
       ...(base?.gmTruth || {}),
       questGeneration: quest?.generation || {},
