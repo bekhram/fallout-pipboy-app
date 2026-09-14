@@ -7,6 +7,7 @@ import {
   listCharacterProfiles,
   setActiveCharacter,
 } from "../../utils/characterProfiles.js";
+import "./characterProfiles.css";
 
 const COPY = {
   en: { title: "CHARACTERS", local: "LOCAL PROFILES", active: "ACTIVE", use: "OPEN", copy: "COPY", remove: "DELETE", create: "NEW CHARACTER", empty: "No local characters yet.", confirm: "Delete this character?", level: "LVL" },
