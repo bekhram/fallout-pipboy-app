@@ -1,0 +1,87 @@
+.player-battlemap-side-controls {
+  position: fixed;
+  right: 0;
+  top: 30%;
+  z-index: 1000002;
+  display: grid;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.player-battlemap-tool {
+  width: 42px;
+  min-width: 42px;
+  min-height: 38px;
+  padding: 4px 3px;
+  border: 1px solid currentColor;
+  border-right: 0;
+  border-radius: 9px 0 0 9px;
+  background: rgba(3, 13, 5, .97);
+  color: var(--pip-accent, #78ff98);
+  font: inherit;
+  font-size: .54rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  cursor: pointer;
+  box-shadow: -5px 0 14px rgba(0, 0, 0, .36), inset 0 0 10px color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.player-battlemap-tool:active {
+  transform: translateX(1px);
+}
+
+.session-tactical-player .battlemap-view-controls {
+  z-index: 1000001 !important;
+}
+
+.session-tactical-player .battlemap-view-controls .battlemap-fit-btn,
+.session-tactical-player .battlemap-view-controls .battlemap-focus-btn {
+  display: inline-grid !important;
+  place-items: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px 5px;
+  font-size: .5rem;
+}
+
+.session-tactical-player .battlemap-view-controls.is-player-collapsed {
+  width: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  height: 26px;
+  min-height: 26px;
+  overflow: hidden;
+  opacity: .18;
+  pointer-events: none;
+}
+
+.session-tactical-player .battlemap-view-controls.is-player-collapsed > * {
+  visibility: hidden;
+}
+
+/* Keep the original global controls above the full-screen tactical portal too. */
+.session-tactical-overlay ~ .session-utility-drawer-shell .session-utility-drawer-toggle,
+.session-utility-drawer-toggle,
+.floating-dice-control {
+  z-index: 1000003 !important;
+}
+
+@media (max-width: 780px) {
+  .player-battlemap-side-controls {
+    top: 28%;
+    gap: 5px;
+  }
+
+  .player-battlemap-tool {
+    width: 38px;
+    min-width: 38px;
+    min-height: 34px;
+    font-size: .48rem;
+  }
+
+  .session-tactical-player .battlemap-view-controls {
+    left: 6px;
+    right: auto !important;
+    max-width: calc(100% - 58px);
+  }
+}
