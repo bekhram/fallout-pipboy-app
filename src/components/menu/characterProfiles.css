@@ -1,0 +1,61 @@
+.character-profiles-list {
+  display: grid;
+  gap: 10px;
+}
+
+.character-profile-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(20, 255, 0, 0.3);
+  background: rgba(0, 20, 0, 0.22);
+}
+
+.character-profile-card.is-active {
+  border-color: rgba(20, 255, 0, 0.82);
+  box-shadow: inset 0 0 0 1px rgba(20, 255, 0, 0.2);
+}
+
+.character-profile-card__main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.character-profile-card__main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.character-profile-card__main span,
+.character-profile-card__main small {
+  opacity: 0.72;
+}
+
+.character-profile-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.character-profile-active {
+  padding: 6px 8px;
+  border: 1px solid currentColor;
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 720px) {
+  .character-profile-card {
+    grid-template-columns: 1fr;
+  }
+
+  .character-profile-card__actions {
+    justify-content: flex-start;
+  }
+}
