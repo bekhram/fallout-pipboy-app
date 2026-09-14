@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import GmSessionMap from "./GmSessionMap.jsx";
+import QuestTypeSelectorPortal from "./QuestTypeSelectorPortal.jsx";
 import "./gmWorkspace.css";
 import "./gmSessionMapLayout.css";
 
@@ -10,6 +11,7 @@ export default function GmWorkspace({ character = null, session = null }) {
     <div className="gm-workspace gm-workspace--tactical-only">
       <div ref={tacticalMapRef} className="gm-workspace__tactical-anchor">
         <GmSessionMap character={character} session={session} />
+        <QuestTypeSelectorPortal session={session} />
       </div>
     </div>
   );
