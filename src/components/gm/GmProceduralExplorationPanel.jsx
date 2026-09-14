@@ -95,15 +95,17 @@ export default function GmProceduralExplorationPanel({ session }) {
       const latestSession = sessionRef.current || session;
       const language = languageCode();
       const currentScene = latestSession?.tacticalScene || {};
+      const latestSpec = currentScene?.environment?.proceduralMapSpec || spec;
       const encounterContext = buildProceduralEncounterContext({
-        spec,
+        spec: latestSpec,
         scene: currentScene,
         placedTokens,
         language,
       });
+      const questTokens = Array.isArray(encounterContext?.questTokens) ? encounterContext.questTokens : [];
 
       try {
-        await latestSession?.updateTacticalScene?.({ encounterContext });
+        await latestSession?.updateTacticalScene?.({ encounterContext, questTokens });
       } catch {
         /* narration still works with the freshly built context */
       }
@@ -196,6 +198,7 @@ export default function GmProceduralExplorationPanel({ session }) {
     spec?.enemyBuffTier,
     spec?.encounterDifficulty,
     spec?.difficulty,
+    spec?.questType,
     spec?.seed,
     spec?.type,
   ]);
