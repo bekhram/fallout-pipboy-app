@@ -1,0 +1,18 @@
+.pip-drawer-backdrop--global {
+  z-index: 9998 !important;
+}
+
+.pip-drawer--global {
+  z-index: 9999 !important;
+}
+
+.pip-drawer--global .pip-head {
+  position: relative;
+  z-index: 1;
+}
+
+.pip-drawer-close {
+  margin-left: auto;
+  min-width: 38px;
+  padding-inline: 8px;
+}
