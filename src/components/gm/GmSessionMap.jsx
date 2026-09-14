@@ -5,6 +5,7 @@ import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
 import SettlementAssetPortal from "./SettlementAssetPortal.jsx";
 import RedRocketAssetPortal from "./RedRocketAssetPortal.jsx";
 import SuperDuperMartAssetPortal from "./SuperDuperMartAssetPortal.jsx";
+import FortifiedCampAssetPortal from "./FortifiedCampAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
@@ -110,6 +111,7 @@ export default function GmSessionMap(props) {
         <SettlementAssetPortal session={session} />
         <RedRocketAssetPortal session={session} />
         <SuperDuperMartAssetPortal session={session} />
+        <FortifiedCampAssetPortal session={session} />
         <WastelandPoiPortal session={session} />
         <SettlementRoomMarkerPortal session={session} />
         <ProceduralBattlemapExtraPortal session={session} />
