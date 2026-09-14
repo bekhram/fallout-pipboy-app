@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-const PORTRAIT_STORAGE_KEY = "fallout_pipboy_v4_portrait_preview";
+import { useEffect, useRef, useState } from "react";
+import { getActiveCharacterId } from "../utils/characterProfiles.js";
+
+const LEGACY_PORTRAIT_STORAGE_KEY = "fallout_pipboy_v4_portrait_preview";
+const PROFILE_PORTRAIT_PREFIX = "fallout_pipboy_v5_portrait_";
+
+function portraitStorageKey() {
+  const characterId = getActiveCharacterId();
+  return characterId ? `${PROFILE_PORTRAIT_PREFIX}${characterId}` : LEGACY_PORTRAIT_STORAGE_KEY;
+}
 
 function createImage(url) {
   return new Promise((resolve, reject) => {
@@ -46,10 +54,15 @@ export function usePortraitCropper(onApplyMeta) {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(PORTRAIT_STORAGE_KEY);
-      if (saved) setPortraitPreview(saved);
+      const key = portraitStorageKey();
+      let saved = localStorage.getItem(key);
+      if (!saved && key !== LEGACY_PORTRAIT_STORAGE_KEY) {
+        saved = localStorage.getItem(LEGACY_PORTRAIT_STORAGE_KEY);
+        if (saved) localStorage.setItem(key, saved);
+      }
+      setPortraitPreview(saved || "");
     } catch {
-      // ignore
+      setPortraitPreview("");
     }
   }, []);
 
@@ -79,7 +92,7 @@ export function usePortraitCropper(onApplyMeta) {
     if (!cropSource || !croppedAreaPixels) return;
     try {
       const dataUrl = await getCroppedImage(cropSource, croppedAreaPixels);
-      localStorage.setItem(PORTRAIT_STORAGE_KEY, dataUrl);
+      localStorage.setItem(portraitStorageKey(), dataUrl);
       setPortraitPreview(dataUrl);
       setCropModalOpen(false);
       onApplyMeta?.({ portraitName: cropFileName || "Portrait" });
@@ -90,7 +103,7 @@ export function usePortraitCropper(onApplyMeta) {
 
   const clearPortrait = () => {
     try {
-      localStorage.removeItem(PORTRAIT_STORAGE_KEY);
+      localStorage.removeItem(portraitStorageKey());
     } catch {
       // ignore
     }
