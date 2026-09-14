@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import "./sideMenuLayer.css";
 
 export default function SideMenu({
   open,
@@ -8,6 +9,7 @@ export default function SideMenu({
   onSaveToDevice,
   onImportClick,
   onReturnToMenu,
+  languageOnly = false,
 }) {
   const { t, i18n } = useTranslation();
 
@@ -18,13 +20,16 @@ export default function SideMenu({
   return (
     <>
       <div
-        className={`pip-drawer-backdrop ${open ? "is-open" : ""}`}
+        className={`pip-drawer-backdrop pip-drawer-backdrop--global ${open ? "is-open" : ""}`}
         onClick={onClose}
       />
 
-      <aside className={`pip-panel pip-drawer ${open ? "is-open" : ""}`}>
+      <aside className={`pip-panel pip-drawer pip-drawer--global ${open ? "is-open" : ""}`}>
         <div className="pip-head">
           <h2>[ {t("menu.title")} ]</h2>
+          <button type="button" className="pip-btn pip-drawer-close" onClick={onClose} aria-label="Close menu">
+            ✕
+          </button>
         </div>
 
         <div className="pip-field push-bottom">
@@ -45,19 +50,27 @@ export default function SideMenu({
           </div>
         </div>
 
-        <div className="pip-stack">
-          <button type="button" className="pip-btn" onClick={onExport}>
-            {t("menu.export")}
-          </button>
+        {!languageOnly ? (
+          <div className="pip-stack">
+            {onExport ? (
+              <button type="button" className="pip-btn" onClick={onExport}>
+                {t("menu.export")}
+              </button>
+            ) : null}
 
-          <button type="button" className="pip-btn" onClick={onImportClick}>
-            {t("menu.import")}
-          </button>
+            {onImportClick ? (
+              <button type="button" className="pip-btn" onClick={onImportClick}>
+                {t("menu.import")}
+              </button>
+            ) : null}
 
-          <button type="button" className="pip-btn" onClick={onReturnToMenu}>
-            {t("menu.return")}
-          </button>
-        </div>
+            {onReturnToMenu ? (
+              <button type="button" className="pip-btn" onClick={onReturnToMenu}>
+                {t("menu.return")}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </aside>
     </>
   );
