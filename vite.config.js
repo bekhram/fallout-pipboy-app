@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import { pip2d20CharacterRulesPlugin } from "./vite-rules-hotfix.js";
 import { pip2d20SessionMenuPlugin } from "./vite-session-menu-hotfix.js";
+import { pip2d20CharacterProfilesPlugin } from "./vite-character-profiles.js";
 
 export default defineConfig({
   base: "/",
@@ -12,6 +13,7 @@ export default defineConfig({
   plugins: [
     pip2d20CharacterRulesPlugin(),
     pip2d20SessionMenuPlugin(),
+    pip2d20CharacterProfilesPlugin(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
