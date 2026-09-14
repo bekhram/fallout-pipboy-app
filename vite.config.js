@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+import { pip2d20CharacterRulesPlugin } from "./vite-rules-hotfix.js";
 
 export default defineConfig({
   base: "/",
@@ -8,6 +9,7 @@ export default defineConfig({
     port: 5173,
   },
   plugins: [
+    pip2d20CharacterRulesPlugin(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
