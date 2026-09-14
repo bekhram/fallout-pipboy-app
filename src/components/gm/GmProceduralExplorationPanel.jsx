@@ -5,7 +5,7 @@ import GmWastelandPoiPanel from "./GmWastelandPoiPanel.jsx";
 import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
 import { applyRandomEncounterEnemyBuff } from "../../utils/proceduralEnemyBuffs.js";
 import { applyEncounterDifficultyPower } from "../../utils/proceduralEncounterDifficultyPower.js";
-import { buildProceduralEncounterContext } from "../../utils/proceduralEncounterContext.js";
+import { buildProceduralEncounterContext } from "../../utils/proceduralEncounterContextV2.js";
 
 function buffSeed(payload = {}, stats = {}) {
   return [
