@@ -154,6 +154,31 @@
   display: block;
 }
 
+/* Scene forms must stay above the still-mounted battlemap/portal layers. */
+.gm-tactical-view--scene .gm-tactical-environment-edit,
+.gm-tactical-view--scene .gm-tactical-scene-presets {
+  position: relative;
+  z-index: 40;
+  pointer-events: auto !important;
+}
+
+.gm-tactical-view--scene .gm-tactical-scene-presets .pip-panel,
+.gm-tactical-view--scene .gm-tactical-scene-presets label,
+.gm-tactical-view--scene .gm-tactical-scene-presets select,
+.gm-tactical-view--scene .gm-tactical-scene-presets input,
+.gm-tactical-view--scene .gm-tactical-scene-presets button,
+.gm-tactical-view--scene .gm-quest-type-selector,
+.gm-tactical-view--scene .gm-quest-type-selector * {
+  position: relative;
+  z-index: 41;
+  pointer-events: auto !important;
+}
+
+.gm-tactical-view--scene .gm-tactical-map-core {
+  position: relative;
+  z-index: 1;
+}
+
 .gm-tactical-view--scene .tactical-enemy-manager {
   display: none !important;
 }
