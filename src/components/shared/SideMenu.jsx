@@ -10,11 +10,17 @@ export default function SideMenu({
   onImportClick,
   onReturnToMenu,
   languageOnly = false,
+  extraActions = [],
 }) {
   const { t, i18n } = useTranslation();
 
   const setLanguage = (lng) => {
     i18n.changeLanguage(lng);
+  };
+
+  const runAction = (action) => {
+    onClose?.();
+    action?.onClick?.();
   };
 
   return (
@@ -49,6 +55,21 @@ export default function SideMenu({
             </button>
           </div>
         </div>
+
+        {Array.isArray(extraActions) && extraActions.length ? (
+          <div className="pip-stack push-bottom">
+            {extraActions.filter((action) => action?.label && typeof action?.onClick === "function").map((action) => (
+              <button
+                key={action.key || action.label}
+                type="button"
+                className={`pip-btn${action.danger ? " is-danger" : ""}`}
+                onClick={() => runAction(action)}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        ) : null}
 
         {!languageOnly ? (
           <div className="pip-stack">
