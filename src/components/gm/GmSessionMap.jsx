@@ -9,6 +9,7 @@ import FortifiedCampAssetPortal from "./FortifiedCampAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
+import QuestMinimapTokenPortal from "./QuestMinimapTokenPortal.jsx";
 import GmUnifiedTokenManagerV10 from "./GmUnifiedTokenManagerV10.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import GmTokenPointerGuard from "./GmTokenPointerGuard.jsx";
@@ -115,6 +116,7 @@ export default function GmSessionMap(props) {
         <WastelandPoiPortal session={session} />
         <SettlementRoomMarkerPortal session={session} />
         <ProceduralBattlemapExtraPortal session={session} />
+        <QuestMinimapTokenPortal session={session} />
         <BattlemapSharedLayer scene={session.tacticalScene} role="gm" />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmZoomDrawerToggle />
