@@ -40,6 +40,27 @@ function patchAppCharacterRules(source) {
   return replaceRequired(source, original, replacement, "40-point SPECIAL budget");
 }
 
+function patchEffectiveCharacterRules(source) {
+  let code = source;
+  code = `import { ORIGINS } from "../../components/data/origins.js";\n${code}`;
+
+  code = replaceRequired(
+    code,
+    `export function getEffectiveSpecialValue(form, key) {\n  const base = Number(form?.special?.[key] || 0);`,
+    `export function getEffectiveSpecialValue(form, key) {\n  const origin = form?.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;\n  const limits = origin?.specialLimits || { min: 1, max: 10 };\n  const minAllowed = Number(limits.min ?? 1);\n  const maxAllowed = Number(limits[key] ?? limits.max ?? 10);\n  const base = Math.max(minAllowed, Math.min(maxAllowed, Number(form?.special?.[key] || 0)));`,
+    "effective SPECIAL origin limit"
+  );
+
+  code = replaceRequired(
+    code,
+    `export function getEffectiveSkillRank(form, skillName) {\n  return Number(form?.skills?.[skillName]?.rank || 0) + getBobbleheadSkillBonus(form, skillName);\n}`,
+    `export function getEffectiveSkillRank(form, skillName) {\n  const origin = form?.origin && ORIGINS[form.origin] ? ORIGINS[form.origin] : null;\n  const maxRank = Number(origin?.skillRankLimit ?? 6);\n  const baseRank = Math.max(0, Math.min(maxRank, Number(form?.skills?.[skillName]?.rank || 0)));\n  return baseRank + getBobbleheadSkillBonus(form, skillName);\n}`,
+    "effective skill rank limit"
+  );
+
+  return code;
+}
+
 export function pip2d20CharacterRulesPlugin() {
   return {
     name: "pip2d20-character-rules",
@@ -51,6 +72,9 @@ export function pip2d20CharacterRulesPlugin() {
       }
       if (normalized.endsWith("/src/App.jsx")) {
         return { code: patchAppCharacterRules(source), map: null };
+      }
+      if (normalized.endsWith("/src/data/inventory/bobbleheads.js")) {
+        return { code: patchEffectiveCharacterRules(source), map: null };
       }
       return null;
     },
