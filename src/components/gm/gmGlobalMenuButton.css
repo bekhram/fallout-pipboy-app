@@ -1,0 +1,23 @@
+.gm-global-menu-button {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 9100;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid currentColor;
+  background: var(--pip-bg, #071008);
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 28%, transparent);
+}
+
+.gm-global-menu-button > span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: currentColor;
+}
