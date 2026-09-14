@@ -1,21 +1,25 @@
 import { buildProceduralEncounterContext as buildBaseProceduralEncounterContext } from "./proceduralEncounterContext.js";
 import { generateProceduralQuest } from "./proceduralQuestEngine.js";
+import { applyRequestedQuestType } from "./proceduralQuestOverride.js";
 
 export function buildProceduralEncounterContext(options = {}) {
   const base = buildBaseProceduralEncounterContext(options);
   const spec = options?.spec || {};
   const scene = options?.scene || {};
   const placedTokens = Array.isArray(options?.placedTokens) ? options.placedTokens : [];
+  const language = options?.language || "en";
 
-  const quest = generateProceduralQuest({
+  const automaticQuest = generateProceduralQuest({
     areas: Array.isArray(base?.areas) ? base.areas : [],
     markers: Array.isArray(base?.markers) ? base.markers : [],
     enemyGroups: Array.isArray(base?.enemies?.groups) ? base.enemies.groups : [],
     placedTokens,
-    language: options?.language || "en",
+    language,
     seed: spec?.seed || scene?.sceneId || "encounter",
     locationType: spec?.type || base?.location?.type || "unknown",
   });
+
+  const quest = applyRequestedQuestType(automaticQuest, spec?.questType, language);
 
   return {
     ...base,
@@ -27,7 +31,7 @@ export function buildProceduralEncounterContext(options = {}) {
     },
     narrationPolicy: {
       ...(base?.narrationPolicy || {}),
-      questRule: "Present only the quest intro and currently discoverable objectives. Never expose quest.generation, gmTruth, hidden enemy identities, hidden target locations, or undiscovered solutions. Advance the quest through playerKnowledge and revealedFacts.",
+      questRule: "Present only the quest intro and currently discoverable objectives. Never expose quest.generation, gmTruth, hidden enemy identities, hidden target locations, or undiscovered solutions. Advance the quest through playerKnowledge and revealedFacts. If quest.generation.selectionMode is manual, respect the selected primary quest type.",
     },
   };
 }
