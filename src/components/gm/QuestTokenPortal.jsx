@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-function symbolFor(type) {
+function symbolFor(type, fallback) {
+  if (fallback) return fallback;
   const value = String(type || "").toLowerCase();
   if (["search", "investigation", "discover", "hunt"].includes(value)) return "?";
   if (value === "repair") return "⚙";
@@ -14,36 +15,38 @@ function symbolFor(type) {
 
 export default function QuestTokenPortal({ session }) {
   const scene = session?.tacticalScene || null;
-  const tokens = useMemo(
-    () => (Array.isArray(scene?.encounterContext?.questTokens) ? scene.encounterContext.questTokens : []),
-    [scene?.encounterContext?.questTokens],
-  );
+  const tokens = useMemo(() => {
+    if (Array.isArray(scene?.questTokens) && scene.questTokens.length) return scene.questTokens;
+    if (Array.isArray(scene?.encounterContext?.questTokens)) return scene.encounterContext.questTokens;
+    return [];
+  }, [scene?.questTokens, scene?.encounterContext?.questTokens]);
   const [target, setTarget] = useState(null);
 
   useEffect(() => {
-    if (!scene || session?.mode !== "host" || !tokens.length) {
+    if (!scene || session?.mode !== "host") {
       setTarget(null);
       return undefined;
     }
 
     let cancelled = false;
-    let tries = 0;
+    let timer = null;
     const findTarget = () => {
       if (cancelled) return;
-      const node = document.querySelector(".gm-tactical-map-core .gm-session-map__grid");
+      const nodes = document.querySelectorAll(".gm-tactical-map-core .gm-session-map__grid");
+      const node = nodes.length ? nodes[nodes.length - 1] : null;
       if (node) {
         setTarget(node);
         return;
       }
-      tries += 1;
-      if (tries < 40) window.setTimeout(findTarget, 50);
+      timer = window.setTimeout(findTarget, 100);
     };
     findTarget();
     return () => {
       cancelled = true;
+      if (timer) window.clearTimeout(timer);
       setTarget(null);
     };
-  }, [scene?.sceneId, session?.mode, tokens.length]);
+  }, [scene?.sceneId, session?.mode]);
 
   if (!target || !tokens.length || session?.mode !== "host") return null;
 
@@ -52,46 +55,46 @@ export default function QuestTokenPortal({ session }) {
 
   return createPortal(
     <div
+      className="quest-token-layer"
       data-quest-token-layer="true"
       style={{
         position: "absolute",
         inset: 0,
-        width: "var(--battlemap-world-width, 100%)",
-        height: "var(--battlemap-world-height, 100%)",
+        width: "100%",
+        height: "100%",
         pointerEvents: "none",
-        zIndex: 165,
-        overflow: "hidden",
-        gridColumn: "1 / -1",
-        gridRow: "1 / -1",
+        zIndex: 500,
+        overflow: "visible",
       }}
     >
       {tokens.map((token) => {
-        const size = token.primary ? 36 : 31;
+        const x = Math.max(0, Math.min(cols - 1, Number(token?.x) || 0));
+        const y = Math.max(0, Math.min(rows - 1, Number(token?.y) || 0));
+        const size = token?.primary ? 38 : 32;
         return (
           <div
             key={token.id}
-            data-quest-token={token.objectiveId}
-            title={token.label || "Quest objective"}
+            data-quest-token={token.objectiveId || token.id}
+            title={token.label || token.title || "Quest objective"}
             style={{
               position: "absolute",
-              left: `${((Number(token.x || 0) + 0.5) / cols) * 100}%`,
-              top: `${((Number(token.y || 0) + 0.5) / rows) * 100}%`,
+              left: `${((x + 0.5) / cols) * 100}%`,
+              top: `${((y + 0.5) / rows) * 100}%`,
               width: size,
               height: size,
               transform: "translate(-50%, -50%) rotate(45deg)",
-              border: "3px solid #ff9d24",
-              borderRadius: 6,
-              background: "rgba(42, 22, 2, .94)",
-              boxShadow: "0 0 0 2px rgba(0,0,0,.82), 0 0 16px #ff9d24, inset 0 0 8px rgba(255,157,36,.45)",
-              color: "#ffb14a",
+              border: "3px solid #ff9800",
+              borderRadius: 5,
+              background: "rgba(39, 20, 0, .96)",
+              boxShadow: "0 0 0 2px rgba(0,0,0,.9), 0 0 18px #ff9800, inset 0 0 9px rgba(255,152,0,.5)",
+              color: "#ffb13b",
               display: "grid",
               placeItems: "center",
               fontWeight: 900,
-              zIndex: 1,
             }}
           >
-            <span style={{ transform: "rotate(-45deg)", fontSize: token.primary ? 20 : 17, lineHeight: 1 }}>
-              {symbolFor(token.objectiveType)}
+            <span style={{ transform: "rotate(-45deg)", fontSize: token?.primary ? 21 : 18, lineHeight: 1 }}>
+              {symbolFor(token.objectiveType, token.symbol)}
             </span>
           </div>
         );
