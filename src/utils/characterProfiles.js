@@ -108,7 +108,7 @@ export function createCharacterProfile(data = {}, { activate = true } = {}) {
 
 export function saveActiveCharacterProfile(data = {}) {
   const profiles = listCharacterProfiles();
-  let activeId = getActiveCharacterId();
+  const activeId = getActiveCharacterId();
   if (!activeId) return createCharacterProfile(data, { activate: true });
   const timestamp = nowIso();
   let found = false;
@@ -125,12 +125,14 @@ export function saveActiveCharacterProfile(data = {}) {
 }
 
 export function deleteCharacterProfile(id) {
+  const targetId = String(id);
   const profiles = listCharacterProfiles();
-  const next = profiles.filter((item) => item.id !== String(id));
+  const activeBeforeDelete = String(localStorage.getItem(ACTIVE_ID_KEY) || "");
+  const next = profiles.filter((item) => item.id !== targetId);
   if (next.length === profiles.length) return false;
   writeProfiles(next);
 
-  if (getActiveCharacterId() === String(id)) {
+  if (activeBeforeDelete === targetId) {
     const replacement = next[0] || null;
     if (replacement) {
       localStorage.setItem(ACTIVE_ID_KEY, replacement.id);
