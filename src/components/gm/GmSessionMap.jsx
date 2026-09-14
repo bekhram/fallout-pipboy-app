@@ -23,6 +23,7 @@ import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
 import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
+import GmGlobalMenuButton from "./GmGlobalMenuButton.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
@@ -71,6 +72,7 @@ export default function GmSessionMap(props) {
 
   return (
     <section className="gm-tactical-tabs-shell">
+      <GmGlobalMenuButton />
       <nav className="gm-tactical-tabs" aria-label={labels.menu}>
         <div className="gm-tactical-tabs__scroll">
           {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab === tab ? " is-active" : ""}`} aria-pressed={activeTab === tab} onClick={() => setActiveTab(tab)}>{labels[tab]}</button>)}
