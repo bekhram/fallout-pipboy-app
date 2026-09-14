@@ -10,7 +10,6 @@ import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
 import QuestTokenPortal from "./QuestTokenPortal.jsx";
-import GmQuestTypeSelector from "./GmQuestTypeSelector.jsx";
 import GmUnifiedTokenManagerV10 from "./GmUnifiedTokenManagerV10.jsx";
 import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
 import GmTokenPointerGuard from "./GmTokenPointerGuard.jsx";
@@ -24,9 +23,7 @@ import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
 import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
-import TacticalEnvironmentPanel, {
-  TacticalEnvironmentSummary,
-} from "./TacticalEnvironmentPanel.jsx";
+import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
@@ -38,38 +35,20 @@ import "./gmDesktopLayoutV2.css";
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
 const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens"];
 const COPY = {
-  en: {
-    battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC",
-    scene: "ENCOUNTER / SCENE", tokens: "TOKENS",
-    waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu",
-  },
-  ru: {
-    battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC",
-    scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ",
-    waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ",
-  },
-  uk: {
-    battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC",
-    scene: "ЗУСТРІЧ / СЦЕНА", tokens: "ТОКЕНИ",
-    waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ",
-  },
-  pl: {
-    battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC",
-    scene: "SPOTKANIE / SCENA", tokens: "TOKENY",
-    waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG",
-  },
+  en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu" },
+  ru: { battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC", scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ", waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ" },
+  uk: { battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC", scene: "ЗУСТРІЧ / СЦЕНА", tokens: "ТОКЕНИ", waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ" },
+  pl: { battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC", scene: "SPOTKANIE / SCENA", tokens: "TOKENY", waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG" },
 };
 
 function languageCode(language) {
   const code = String(language || "en").toLowerCase().split("-")[0];
   return COPY[code] ? code : "en";
 }
-
 function normalizeTab(tab) {
   if (tab === "encounter" || tab === "scenes") return "scene";
   return TABS.includes(tab) ? tab : "battle";
 }
-
 function initialTab() {
   if (typeof window === "undefined") return "battle";
   return normalizeTab(window.localStorage.getItem(TAB_STORAGE_KEY));
@@ -94,7 +73,7 @@ export default function GmSessionMap(props) {
     <section className="gm-tactical-tabs-shell">
       <nav className="gm-tactical-tabs" aria-label={labels.menu}>
         <div className="gm-tactical-tabs__scroll">
-          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab===tab?" is-active":""}`} aria-pressed={activeTab===tab} onClick={()=>setActiveTab(tab)}>{labels[tab]}</button>)}
+          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab === tab ? " is-active" : ""}`} aria-pressed={activeTab === tab} onClick={() => setActiveTab(tab)}>{labels[tab]}</button>)}
         </div>
       </nav>
 
@@ -105,7 +84,6 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
         <div className="gm-tactical-scene-presets">
-          <GmQuestTypeSelector session={session} />
           <GmScenePresetPanelV2 session={session} />
           <GmProceduralExplorationPanel session={session} />
         </div>
