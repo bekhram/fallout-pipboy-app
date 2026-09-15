@@ -90,15 +90,21 @@
     white-space: nowrap;
   }
 
-  /* Hide every legacy floating control while the player battlemap is open. */
+  /* Hide legacy floating controls while the player battlemap is open. */
   body.pip-player-battlemap-open .session-utility-drawer-toggle,
   body.pip-player-battlemap-open .floating-dice-control,
   body.pip-player-battlemap-open .pip-mobile-tool-dock,
-  body.pip-player-battlemap-open .tactical-initiative-rail,
-  body.pip-player-battlemap-open .session-player-dock--all {
+  body.pip-player-battlemap-open .tactical-initiative-rail {
     display: none !important;
     pointer-events: none !important;
     visibility: hidden !important;
+  }
+
+  /* Keep the online-player status strip visible in its new slot above the map. */
+  body.pip-player-battlemap-open .session-tactical-player__player-status .session-player-dock--all {
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
   /* The native zoom controls stay hidden until ZOOM in the bottom dock is pressed. */
