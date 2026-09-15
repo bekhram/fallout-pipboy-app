@@ -40,6 +40,42 @@ const specialForSkill = (skill) => ({
   Throwing: "A",
 }[skill] || "I");
 
+const SUPPLEMENTAL_COOKING_RECIPES = [
+  ["Cazador Omelet", 2, "Common", { "Cazador Egg": 2, "Purified Water": 1 }],
+  ["Crispy Cave Cricket", 1, "Common", { "Cave Cricket Meat": 3 }],
+  ["Gecko Kebab", 1, "Common", { "Gecko Meat": 1, "Common Materials": 1 }],
+  ["Grilled Giant Mantis", 1, "Common", { "Giant Mantis Foreleg": 2, "Honey": 1 }],
+  ["Gulper Slurry", 4, "Rare", { "Dirty Water": 1, "Gourd": 1, "Gulper Innards": 1, "Razorgrain": 1 }],
+  ["Hermit Crab Steak", 1, "Uncommon", { "Hermit Crab Meat": 1 }],
+  ["Honey", 1, "Uncommon", { "Honeycomb": 1 }],
+  ["Honey Cake", 4, "Rare", { "Honey": 1, "Honeycomb": 1, "Razorgrain": 1, "Mirelurk Egg": 2 }],
+  ["Lamb Chops", 1, "Rare", { "Sheepsquatch Meat": 1 }],
+  ["Mega Sloth Steak", 1, "Uncommon", { "Mega Sloth Meat": 1 }],
+  ["Mega Sloth Mushroom Soup", 2, "Uncommon", { "Dirty Water": 1, "Mega Sloth Mushroom": 1 }],
+  ["Mongrel Ribs", 2, "Uncommon", { "Mongrel Dog Meat": 1, "Lure Weed": 1 }],
+  ["Mutton Meat Pie", 4, "Rare", { "Sheepsquatch Meat": 2, "Razorgrain": 2, "Dirty Water": 1, "Carrot": 2 }],
+  ["Poached Angler", 1, "Common", { "Angler Meat": 2 }],
+  ["Roasted Radrat", 1, "Common", { "Radrat Meat": 1 }],
+  ["Scorchbeast Steak", 1, "Uncommon", { "Scorchbeast Meat": 1 }],
+  ["Scorchbeast Stew", 4, "Rare", { "Carrot": 1, "Dirty Water": 1, "Scorchbeast Meat": 1, "Tato": 1 }],
+  ["Snallygaster Stew", 3, "Uncommon", { "Dirty Water": 1, "Snallygaster Innards": 1, "Tato": 1 }],
+].map(([name, complexity, rarity, materials]) => ({
+  id: `supplement-cooking-${slug(name)}`,
+  category: "items",
+  workbench: "cooking",
+  group: "COOKING",
+  name,
+  complexity,
+  perks: "",
+  skill: "Survival",
+  rarity,
+  materials,
+  outputCategory: "food",
+  outputName: name,
+  sourcePage: 119,
+  appGeneratedSupplementRecipe: true,
+}));
+
 /**
  * Base item construction is an app/homebrew layer. The official crafting data
  * bundled with the app contains modifications, ammunition and other recipes,
@@ -96,7 +132,7 @@ export function buildBaseWeaponRecipes(weaponRows = []) {
 }
 
 export function buildBaseArmorRecipes(armorItems = []) {
-  return armorItems
+  const baseArmorRecipes = armorItems
     .filter((item) => item?.name && item?.family !== "robot")
     .map((item) => {
       const name = String(item.name).trim();
@@ -134,4 +170,6 @@ export function buildBaseArmorRecipes(armorItems = []) {
         },
       };
     });
+
+  return [...baseArmorRecipes, ...SUPPLEMENTAL_COOKING_RECIPES];
 }
