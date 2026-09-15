@@ -1,0 +1,101 @@
+name: Fix Luck and SPECIAL editor
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Apply source fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # --- App.jsx: persist current Luck Points separately from SPECIAL Luck ---
+          p = Path('src/App.jsx')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''  const [currentLuckPoints, setCurrentLuckPoints] = useState(\n    derived.luckPoints || 0\n  );\n\n  useEffect(() => {\n    setCurrentLuckPoints(derived.luckPoints || 0);\n  }, [derived.luckPoints]);\n\n  const onSpendLuck = () => {\n    setCurrentLuckPoints((prev) => Math.max(0, prev - 1));\n  };'''
+          new = '''  // Luck SPECIAL and spendable Luck Points are intentionally separate.\n  // The SPECIAL value never changes when a Luck Point is spent.\n  const luckPointsMax = Math.max(0, Number(derived.luckPoints || 0));\n  const storedLuckPoints = form.currentLuckPoints;\n  const currentLuckPoints =\n    storedLuckPoints === "" || storedLuckPoints === undefined || storedLuckPoints === null\n      ? luckPointsMax\n      : Math.max(0, Math.min(luckPointsMax, Number(storedLuckPoints) || 0));\n\n  const setCurrentLuckPoints = (valueOrUpdater) => {\n    setForm((prev) => {\n      const prevMax = Math.max(0, Number(getDerivedStats(prev).luckPoints || 0));\n      const prevStored = prev.currentLuckPoints;\n      const prevCurrent =\n        prevStored === "" || prevStored === undefined || prevStored === null\n          ? prevMax\n          : Math.max(0, Math.min(prevMax, Number(prevStored) || 0));\n      const requested =\n        typeof valueOrUpdater === "function"\n          ? valueOrUpdater(prevCurrent)\n          : valueOrUpdater;\n      const next = Math.max(0, Math.min(prevMax, Number(requested) || 0));\n      return { ...prev, currentLuckPoints: String(next) };\n    });\n  };\n\n  const onSpendLuck = () => {\n    setCurrentLuckPoints((prev) => Math.max(0, prev - 1));\n  };'''
+          if old not in s:
+              raise SystemExit('App luck state block not found')
+          s = s.replace(old, new, 1)
+
+          old = ''' const updateSpecial = (key, value) =>\n    setForm((prev) => {\n      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;\n      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };\n      const minAllowed = limits.min !== undefined ? limits.min : 1;\n      const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);\n\n      return {\n        ...prev,\n        special: {\n          ...prev.special,\n          [key]: clampNumberString(value, minAllowed, maxAllowed),\n        },\n      };\n    });'''
+          new = ''' const updateSpecial = (key, value) =>\n    setForm((prev) => {\n      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;\n      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };\n      const originMin = limits.min !== undefined ? Number(limits.min) : 1;\n      const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;\n      const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);\n      const raw = String(value ?? "").trim();\n\n      return {\n        ...prev,\n        special: {\n          ...prev.special,\n          // Allow the field to be cleared while editing; it is normalized on blur.\n          [key]: raw === "" ? "" : clampNumberString(raw, minAllowed, maxAllowed),\n        },\n      };\n    });'''
+          if old not in s:
+              raise SystemExit('App updateSpecial block not found')
+          s = s.replace(old, new, 1)
+
+          old = '''              <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>'''
+          new = '''              <div className="pip-combat-stat"><small>{t("derived.luckPoints")}</small><strong>{currentLuckPoints}</strong></div>'''
+          if old not in s:
+              raise SystemExit('Status luck label use not found in App')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # --- Default form: current pool is persisted independently from L ---
+          p = Path('src/constants.js')
+          s = p.read_text(encoding='utf-8')
+          old = '''    mdOverride: "",\n    luckPointsOverride: "",\n    maxHpOverride: "",'''
+          new = '''    mdOverride: "",\n    luckPointsOverride: "",\n    currentLuckPoints: "",\n    maxHpOverride: "",'''
+          if old not in s:
+              raise SystemExit('constants luck fields block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # --- SPECIAL screen: Luck min 4 + editable numeric fields ---
+          p = Path('src/components/special/SpecialScreen.jsx')
+          s = p.read_text(encoding='utf-8')
+          old = '''            const minAllowed = limits.min !== undefined ? limits.min : 1;'''
+          new = '''            const originMin = limits.min !== undefined ? Number(limits.min) : 1;\n            const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;'''
+          if old not in s:
+              raise SystemExit('SpecialScreen minAllowed line not found')
+          s = s.replace(old, new, 1)
+
+          old = '''                <input\n                  className="pip-special-input"\n                  value={form.special[key]}\n                  onChange={(e) => onSpecialChange(key, e.target.value)}\n                />'''
+          new = '''                <input\n                  className="pip-special-input"\n                  type="number"\n                  inputMode="numeric"\n                  min={minAllowed}\n                  max={maxAllowed}\n                  value={form.special[key]}\n                  onChange={(e) => onSpecialChange(key, e.target.value)}\n                  onBlur={(e) =>\n                    onSpecialChange(\n                      key,\n                      e.target.value === "" ? String(minAllowed) : e.target.value\n                    )\n                  }\n                />'''
+          if old not in s:
+              raise SystemExit('SpecialScreen input block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # --- Quick Create follows the same Luck minimum ---
+          p = Path('src/components/characterCreation/QuickCharacterWizard.jsx')
+          s = p.read_text(encoding='utf-8')
+          old = '''    const min = Number(limits.min ?? 1);\n    const max = Number(limits[key] ?? limits.max ?? 10);\n    setSpecial((prev) => {\n      const current = Number(prev[key] || 0);\n      const nextValue = Math.max(min, Math.min(max, current + delta));'''
+          new = '''    const originMin = Number(limits.min ?? 1);\n    const min = key === "L" ? Math.max(4, originMin) : originMin;\n    const max = Number(limits[key] ?? limits.max ?? 10);\n    setSpecial((prev) => {\n      const current = Number(prev[key] || 0);\n      const nextValue = Math.max(min, Math.min(max, current + delta));'''
+          if old not in s:
+              raise SystemExit('QuickCharacterWizard changeSpecial block not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit fixes
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.jsx src/constants.js src/components/special/SpecialScreen.jsx src/components/characterCreation/QuickCharacterWizard.jsx
+          git commit -m "fix: separate Luck points and restore SPECIAL editing"
+          git push
