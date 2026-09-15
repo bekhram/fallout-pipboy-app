@@ -1,21 +1,20 @@
 .player-battlemap-side-controls {
   position: fixed;
-  right: 0;
-  top: 30%;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
   z-index: 1000002;
-  display: grid;
+  display: flex;
+  align-items: center;
   gap: 6px;
   pointer-events: auto;
 }
 
 .player-battlemap-tool {
-  width: 42px;
-  min-width: 42px;
+  min-width: 58px;
   min-height: 38px;
-  padding: 4px 3px;
+  padding: 5px 9px;
   border: 1px solid currentColor;
-  border-right: 0;
-  border-radius: 9px 0 0 9px;
+  border-radius: 10px;
   background: rgba(3, 13, 5, .97);
   color: var(--pip-accent, #78ff98);
   font: inherit;
@@ -23,11 +22,11 @@
   font-weight: 900;
   letter-spacing: .04em;
   cursor: pointer;
-  box-shadow: -5px 0 14px rgba(0, 0, 0, .36), inset 0 0 10px color-mix(in srgb, currentColor 7%, transparent);
+  box-shadow: 0 0 14px rgba(0, 0, 0, .36), inset 0 0 10px color-mix(in srgb, currentColor 7%, transparent);
 }
 
 .player-battlemap-tool:active {
-  transform: translateX(1px);
+  transform: scale(.96);
 }
 
 .session-tactical-player .battlemap-view-controls {
@@ -59,7 +58,6 @@
   visibility: hidden;
 }
 
-/* Keep the original global controls above the full-screen tactical portal too. */
 .session-tactical-overlay ~ .session-utility-drawer-shell .session-utility-drawer-toggle,
 .session-utility-drawer-toggle,
 .floating-dice-control {
@@ -68,20 +66,45 @@
 
 @media (max-width: 780px) {
   .player-battlemap-side-controls {
-    top: 28%;
-    gap: 5px;
+    left: 50%;
+    right: auto;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: min(330px, calc(100vw - 24px));
+    transform: translateX(-50%);
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+    border-radius: 14px;
+    background: rgba(2, 12, 4, .9);
+    box-shadow: 0 -7px 22px rgba(0, 0, 0, .38), inset 0 0 18px color-mix(in srgb, currentColor 5%, transparent);
+    backdrop-filter: blur(5px);
   }
 
   .player-battlemap-tool {
-    width: 38px;
-    min-width: 38px;
-    min-height: 34px;
-    font-size: .48rem;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    min-height: 42px;
+    border-radius: 9px;
+    font-size: .5rem;
   }
 
   .session-tactical-player .battlemap-view-controls {
-    left: 6px;
+    left: 8px;
     right: auto !important;
-    max-width: calc(100% - 58px);
+    top: auto !important;
+    bottom: 70px !important;
+    max-width: calc(100% - 16px);
+  }
+
+  .session-tactical-player .battlemap-view-controls.is-player-collapsed {
+    display: none !important;
+  }
+
+  body:has(.session-tactical-player) .session-utility-drawer-toggle,
+  body:has(.session-tactical-player) .floating-dice-control,
+  body:has(.session-tactical-player) .pip-mobile-tool-dock {
+    display: none !important;
   }
 }
