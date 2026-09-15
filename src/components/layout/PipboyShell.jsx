@@ -4,6 +4,7 @@ import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
 import CraftingHub from "../crafting/CraftingHub.jsx";
 import VehicleScreen from "../vehicles/VehicleScreen.jsx";
+import VehicleCombatPanel from "../vehicles/VehicleCombatPanel.jsx";
 import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
@@ -143,10 +144,17 @@ export default function PipboyShell({
   }
   if (activeTab === "vehicles") {
     screenContent = (
-      <VehicleScreen
-        character={resolvedCharacter}
-        setCharacter={resolvedSetCharacter}
-      />
+      <>
+        <VehicleScreen
+          character={resolvedCharacter}
+          setCharacter={resolvedSetCharacter}
+        />
+        <VehicleCombatPanel
+          character={resolvedCharacter}
+          setCharacter={resolvedSetCharacter}
+          onRoll={onRoll}
+        />
+      </>
     );
   }
 
