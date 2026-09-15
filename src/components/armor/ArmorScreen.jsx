@@ -4,6 +4,10 @@ import { useTranslation } from "react-i18next";
 import PowerArmorPanel from "./PowerArmorPanel.jsx";
 import { calculatePowerArmorLocations } from "../../data/powerArmor.js";
 import {
+  getLegendaryArmorProperties,
+  getLegendaryPropertyById,
+} from "../../data/legendaryProperties.js";
+import {
   PART_LOCATION,
   armorModMultiplier,
   calculateArmorPart,
@@ -42,10 +46,10 @@ const FIELDS = [
 const RESISTANCE_FIELDS = FIELDS.filter((field) => field.key !== "hp");
 
 const UI = {
-  en: { statsTab: "ARMOR STATS", loadoutTab: "ADD / EQUIP ARMOR", powerArmor: "POWER ARMOR", normalArmor: "NORMAL ARMOR", catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", healthy: "Intact", improved: "Improved", damaged: "Damaged", broken: "Broken", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness." },
-  ru: { statsTab: "ПОКАЗАТЕЛИ БРОНИ", loadoutTab: "ДОБАВИТЬ / НАДЕТЬ БРОНЮ", powerArmor: "СИЛОВАЯ БРОНЯ", normalArmor: "ОБЫЧНАЯ БРОНЯ", catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", healthy: "Исправна", improved: "Улучшена", damaged: "Повреждена", broken: "Сломана", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте." },
-  uk: { statsTab: "ПОКАЗНИКИ БРОНІ", loadoutTab: "ДОДАТИ / ОДЯГТИ БРОНЮ", powerArmor: "СИЛОВА БРОНЯ", normalArmor: "ЗВИЧАЙНА БРОНЯ", catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", healthy: "Справна", improved: "Покращена", damaged: "Пошкоджена", broken: "Зламана", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві." },
-  pl: { statsTab: "PARAMETRY PANCERZA", loadoutTab: "DODAJ / ZAŁÓŻ PANCERZ", powerArmor: "PANCERZ WSPOMAGANY", normalArmor: "ZWYKŁY PANCERZ", catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", healthy: "Sprawna", improved: "Ulepszona", damaged: "Uszkodzona", broken: "Zniszczona", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności." },
+  en: { statsTab: "ARMOR STATS", loadoutTab: "ADD / EQUIP ARMOR", powerArmor: "POWER ARMOR", normalArmor: "NORMAL ARMOR", catalog: "ARMOR CATALOG", equip: "EQUIP", item: "Armor", material: "Material", upgrade: "Upgrade", none: "None", loading: "Loading armor database…", error: "Armor database could not be loaded.", total: "TOTAL", weight: "Weight", cost: "Cost", remove: "Remove", healthy: "Intact", improved: "Improved", damaged: "Damaged", broken: "Broken", shadowed: "SHADOWED", shadowed1: "Ignore the first complication on a Sneak test in dim light or darkness.", shadowed2: "Once per scene, re-roll 1d20 on a Sneak test in dim light or darkness.", shadowed3: "Re-roll 1d20 on every Sneak test in dim light or darkness.", legendary: "LEGENDARY ARMOR", legendaryNone: "Not legendary", legendaryBonus: "+1 Physical DR · +1 Energy DR" },
+  ru: { statsTab: "ПОКАЗАТЕЛИ БРОНИ", loadoutTab: "ДОБАВИТЬ / НАДЕТЬ БРОНЮ", powerArmor: "СИЛОВАЯ БРОНЯ", normalArmor: "ОБЫЧНАЯ БРОНЯ", catalog: "КАТАЛОГ БРОНИ", equip: "НАДЕТЬ", item: "Броня", material: "Материал", upgrade: "Улучшение", none: "Нет", loading: "Загрузка базы брони…", error: "Не удалось загрузить базу брони.", total: "ИТОГО", weight: "Вес", cost: "Стоимость", remove: "Снять", healthy: "Исправна", improved: "Улучшена", damaged: "Повреждена", broken: "Сломана", shadowed: "ТЕНЕВАЯ БРОНЯ", shadowed1: "Игнорирует первую сложность в проверке Скрытности при тусклом свете или в темноте.", shadowed2: "Один раз за сцену позволяет перебросить 1d20 в проверке Скрытности при тусклом свете или в темноте.", shadowed3: "Позволяет перебрасывать 1d20 во всех проверках Скрытности при тусклом свете или в темноте.", legendary: "ЛЕГЕНДАРНАЯ БРОНЯ", legendaryNone: "Не легендарная", legendaryBonus: "+1 физ. сопротивление · +1 энерго. сопротивление" },
+  uk: { statsTab: "ПОКАЗНИКИ БРОНІ", loadoutTab: "ДОДАТИ / ОДЯГТИ БРОНЮ", powerArmor: "СИЛОВА БРОНЯ", normalArmor: "ЗВИЧАЙНА БРОНЯ", catalog: "КАТАЛОГ БРОНІ", equip: "ОДЯГТИ", item: "Броня", material: "Матеріал", upgrade: "Покращення", none: "Немає", loading: "Завантаження бази броні…", error: "Не вдалося завантажити базу броні.", total: "РАЗОМ", weight: "Вага", cost: "Вартість", remove: "Зняти", healthy: "Справна", improved: "Покращена", damaged: "Пошкоджена", broken: "Зламана", shadowed: "ТІНЬОВА БРОНЯ", shadowed1: "Ігнорує перше ускладнення в перевірці Скритності при тьмяному світлі або в темряві.", shadowed2: "Один раз за сцену дозволяє перекинути 1d20 у перевірці Скритності при тьмяному світлі або в темряві.", shadowed3: "Дозволяє перекидати 1d20 у всіх перевірках Скритності при тьмяному світлі або в темряві.", legendary: "ЛЕГЕНДАРНА БРОНЯ", legendaryNone: "Не легендарна", legendaryBonus: "+1 фіз. опір · +1 енерг. опір" },
+  pl: { statsTab: "PARAMETRY PANCERZA", loadoutTab: "DODAJ / ZAŁÓŻ PANCERZ", powerArmor: "PANCERZ WSPOMAGANY", normalArmor: "ZWYKŁY PANCERZ", catalog: "KATALOG PANCERZY", equip: "ZAŁÓŻ", item: "Pancerz", material: "Materiał", upgrade: "Ulepszenie", none: "Brak", loading: "Wczytywanie bazy pancerzy…", error: "Nie udało się wczytać bazy pancerzy.", total: "SUMA", weight: "Waga", cost: "Koszt", remove: "Zdejmij", healthy: "Sprawna", improved: "Ulepszona", damaged: "Uszkodzona", broken: "Zniszczona", shadowed: "PANCERZ CIENIOWANY", shadowed1: "Ignoruje pierwszą komplikację w teście Skradania w półmroku lub ciemności.", shadowed2: "Raz na scenę pozwala przerzucić 1k20 w teście Skradania w półmroku lub ciemności.", shadowed3: "Pozwala przerzucać 1k20 we wszystkich testach Skradania w półmroku lub ciemności.", legendary: "LEGENDARNY PANCERZ", legendaryNone: "Nielegendarny", legendaryBonus: "+1 odporności fizycznej · +1 energetycznej" },
 };
 
 const OWNED_LABELS = {
@@ -102,6 +106,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
 
   const slots = armor?._equipment?.slots || {};
   const condition = armor?._condition?.parts || {};
+  const legendaryParts = armor?._legendary?.parts || {};
   const ownedCraftedArmor = useMemo(() => {
     const ids = new Set(
       (inventoryItems || [])
@@ -113,6 +118,13 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
 
   const setSlots = (nextSlots) => {
     onArmorChange("_equipment", "slots", nextSlots);
+  };
+
+  const setLegendaryPart = (part, propertyId) => {
+    const next = { ...legendaryParts };
+    if (propertyId) next[part] = propertyId;
+    else delete next[part];
+    onArmorChange("_legendary", "parts", next);
   };
 
   const resetConditionParts = (parts) => {
@@ -180,6 +192,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
     delete next[part];
     setSlots(next);
     resetConditionParts([part]);
+    if (legendaryParts[part]) setLegendaryPart(part, "");
   };
 
   const powerArmorStats = useMemo(
@@ -219,17 +232,30 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
     return result;
   }, [armor, database, slots]);
 
+  const withLegendaryBonus = (part, stats = {}) => {
+    if (!legendaryParts[part]) return { ...stats };
+    return {
+      ...stats,
+      physical: Number(stats.physical || 0) + 1,
+      energy: Number(stats.energy || 0) + 1,
+    };
+  };
+
   const calculated = useMemo(() => {
-    if (powerArmorStats) return powerArmorStats;
     const result = {};
     ARMOR_PARTS.forEach((part) => {
-      result[part] = { ...normalMaximums[part], ...(condition[part]?.current || {}) };
+      const base = powerArmorStats
+        ? (powerArmorStats[part] || {})
+        : { ...normalMaximums[part], ...(condition[part]?.current || {}) };
+      result[part] = withLegendaryBonus(part, base);
     });
     return result;
-  }, [condition, normalMaximums, powerArmorStats]);
+  }, [condition, normalMaximums, powerArmorStats, legendaryParts]);
 
   const setResistance = (part, field, rawValue) => {
     const value = Math.max(0, Number.parseInt(rawValue, 10) || 0);
+    const legendaryOffset = legendaryParts[part] && (field === "physical" || field === "energy") ? 1 : 0;
+    const storedValue = Math.max(0, value - legendaryOffset);
 
     if (powerArmorStats) {
       const loadout = armor?._power?.loadout || {};
@@ -238,12 +264,12 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
       const currentKey = field === "hp"
         ? "currentHp"
         : "current" + field.charAt(0).toUpperCase() + field.slice(1);
-      slots[part] = { ...selected, [currentKey]: value };
+      slots[part] = { ...selected, [currentKey]: storedValue };
       onArmorChange("_power", "loadout", { ...loadout, slots });
       return;
     }
 
-    const current = { ...(condition[part]?.current || {}), [field]: value };
+    const current = { ...(condition[part]?.current || {}), [field]: storedValue };
     onArmorChange("_condition", "parts", {
       ...condition,
       [part]: { current },
@@ -257,8 +283,11 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
     return Boolean(loadout.setId && loadout.setId !== "none");
   };
 
+  const hasArmorPart = (part) => Boolean(slots[part]?.itemId || hasPowerArmorPart(part));
+
   const getConditionStatus = (part) => {
-    const maximum = (powerArmorStats ? powerArmorMaximums : normalMaximums)?.[part] || {};
+    const rawMaximum = (powerArmorStats ? powerArmorMaximums : normalMaximums)?.[part] || {};
+    const maximum = withLegendaryBonus(part, rawMaximum);
     const current = calculated[part] || {};
     const hasArmor = FIELDS.some((field) => Number(maximum[field.key] || 0) > 0);
     if (!hasArmor) return null;
@@ -358,12 +387,14 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
             <div className="pip-armor-table-body">
               {ARMOR_PARTS.map((part) => {
                 const status = getConditionStatus(part);
+                const legendaryProperty = getLegendaryPropertyById("armor", legendaryParts[part]);
                 return (
                   <div className={`pip-armor-row${status ? ` is-${status}` : ""}`} key={part}>
                     <div className="pip-armor-row-label">
                       <span className="pip-armor-row-code">{CODES[part]}</span>
                       <span className="pip-armor-row-name">
                         {t(LABEL_KEYS[part] || part)}
+                        {legendaryProperty && <small className="pip-armor-condition">★ {legendaryProperty.name}</small>}
                         {status && <small className={`pip-armor-condition is-${status}`}>{labels[status]}</small>}
                       </span>
                     </div>
@@ -409,6 +440,40 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
         </div>
       ) : (
         <div role="tabpanel">
+          <div className="pip-armor-catalog">
+            <div className="pip-armor-section-title">[ ★ {labels.legendary} ]</div>
+            <div className="pip-stack">
+              {ARMOR_PARTS.map((part) => {
+                const propertyId = legendaryParts[part] || "";
+                const property = getLegendaryPropertyById("armor", propertyId);
+                const options = getLegendaryArmorProperties(part);
+                const enabled = hasArmorPart(part);
+                return (
+                  <label key={`legendary-${part}`} className="pip-mod-field">
+                    <span className="pip-mod-field__label">{CODES[part]} · {t(LABEL_KEYS[part] || part)}</span>
+                    <select
+                      className="pip-input"
+                      value={propertyId}
+                      disabled={!enabled}
+                      onChange={(event) => setLegendaryPart(part, event.target.value)}
+                    >
+                      <option value="">— {labels.legendaryNone} —</option>
+                      {options.map((option) => (
+                        <option key={option.id} value={option.id}>{option.name}</option>
+                      ))}
+                    </select>
+                    {propertyId && (
+                      <span className="pip-mod-field__details">
+                        {property?.description || property?.name}
+                        <small>{labels.legendaryBonus}</small>
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="pip-armor-section-title">[ {labels.powerArmor} ]</div>
           <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
 
@@ -455,6 +520,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
                   <div className="pip-armor-slot-head">
                     <span className="pip-armor-row-code">{CODES[part]}</span>
                     <strong>{t(LABEL_KEYS[part] || part)}</strong>
+                    {legendaryParts[part] && <span title={getLegendaryPropertyById("armor", legendaryParts[part])?.description || ""}>★</span>}
                     {selected.itemId && (
                       <button type="button" className="pip-armor-remove" onClick={() => removeSlot(part)} title={labels.remove}>×</button>
                     )}
