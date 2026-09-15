@@ -5,7 +5,9 @@ import {
   getLegendaryPropertyById,
   getLegendaryWeaponProperties,
   normalizeArmorLocation,
+  getLegendaryArmorPropertiesForLocations,
 } from "../../data/legendaryProperties.js";
+import { localizeLegendaryName } from "../../data/equipmentLocalizationSupplemental.js";
 
 const COPY = {
   en: { title: "LEGENDARY PROPERTY", none: "Not legendary", unavailable: "This item type cannot be Legendary.", bonus: "Legendary armor: +1 Physical DR and +1 Energy DR." },
@@ -30,11 +32,11 @@ export default function LegendaryPropertyEditor({
 }) {
   const copy = COPY[languageCode(language)];
   const isArmor = kind === "armor";
-  const normalizedLocation = normalizeArmorLocation(armorLocation || draft?.armorLocations || draft?.location);
-  const allowed = isArmor ? Boolean(normalizedLocation) : canWeaponBeLegendary(draft);
-  const options = isArmor
-    ? getLegendaryArmorProperties(normalizedLocation)
-    : getLegendaryWeaponProperties(draft);
+  const armorLocationValue = armorLocation || draft?.armorLocations || draft?.location;
+  const normalizedLocation = normalizeArmorLocation(armorLocationValue);
+  const armorOptions = getLegendaryArmorPropertiesForLocations(armorLocationValue);
+  const allowed = isArmor ? armorOptions.length > 0 : canWeaponBeLegendary(draft);
+  const options = isArmor ? armorOptions : getLegendaryWeaponProperties(draft);
   const selected = getLegendaryPropertyById(kind, draft?.legendaryProperty);
 
   const selectProperty = (propertyId) => {
@@ -64,7 +66,7 @@ export default function LegendaryPropertyEditor({
 >
   <option value="">— {copy.none} —</option>
   {options.map((property) => (
-    <option key={property.id} value={property.id}>{property.name}</option>
+    <option key={property.id} value={property.id}>{localizeLegendaryName(property.name, language)}</option>
   ))}
 </select>
 {selected?.description ? (
@@ -79,12 +81,12 @@ export default function LegendaryPropertyEditor({
   );
 }
 
-export function LegendaryBadge({ kind, item }) {
+export function LegendaryBadge({ kind, item, language = "en" }) {
   if (!item?.legendary) return null;
   const property = getLegendaryPropertyById(kind, item.legendaryProperty);
   return (
     <div className="pip-legendary-badge" title={property?.description || ""} style={{ margin: "6px 0", fontSize: 12, fontWeight: 700 }}>
-      ★ LEGENDARY{property ? ` · ${property.name}` : ""}
+      ★ LEGENDARY{property ? ` · ${localizeLegendaryName(property.name, language)}` : ""}
     </div>
   );
 }

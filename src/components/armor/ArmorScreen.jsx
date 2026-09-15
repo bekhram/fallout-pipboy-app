@@ -16,6 +16,7 @@ import {
   parseArmorDatabase,
 } from "../../utils/armorDatabase.js";
 import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";
+import { localizeLegendaryName, localizeSupplementalArmorName } from "../../data/equipmentLocalizationSupplemental.js";
 
 const LABEL_KEYS = {
   Head: "injuries.head",
@@ -77,7 +78,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const ownedLabels = OWNED_LABELS[language] || OWNED_LABELS.en;
-  const armorName = (entry) => localizeArmorName(entry?.name, language);
+  const armorName = (entry) => { const extra = localizeSupplementalArmorName(entry?.name, language); return extra !== (entry?.name || "") ? extra : localizeArmorName(entry?.name, language); };
   const armorEffect = (entry) => localizeArmorEffect(entry?.effects, language);
   const [database, setDatabase] = useState({ items: [], mods: [] });
   const [catalogItemId, setCatalogItemId] = useState("");
@@ -394,7 +395,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
                       <span className="pip-armor-row-code">{CODES[part]}</span>
                       <span className="pip-armor-row-name">
                         {t(LABEL_KEYS[part] || part)}
-                        {legendaryProperty && <small className="pip-armor-condition">★ {legendaryProperty.name}</small>}
+                        {legendaryProperty && <small className="pip-armor-condition">★ {localizeLegendaryName(legendaryProperty.name, language)}</small>}
                         {status && <small className={`pip-armor-condition is-${status}`}>{labels[status]}</small>}
                       </span>
                     </div>
@@ -526,7 +527,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
                     >
                       <option value="">— {labels.legendaryNone} —</option>
                       {getLegendaryArmorProperties(part).map((option) => (
-                        <option key={option.id} value={option.id}>{option.name}</option>
+                        <option key={option.id} value={option.id}>{localizeLegendaryName(option.name, language)}</option>
                       ))}
                     </select>
                   </label>

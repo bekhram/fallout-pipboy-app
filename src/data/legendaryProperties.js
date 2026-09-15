@@ -152,3 +152,17 @@ export function getLegendaryPropertyById(kind, id) {
   const list = kind === "armor" ? LEGENDARY_ARMOR_PROPERTIES : LEGENDARY_WEAPON_PROPERTIES;
   return list.find((property) => property.id === id) || null;
 }
+
+export function getLegendaryArmorPropertiesForLocations(value) {
+  const source = String(value || "").toLowerCase();
+  let locations = [];
+  if (source.includes("all")) locations = ["Head", "Arm", "Torso", "Leg"];
+  else {
+    if (source.includes("head")) locations.push("Head");
+    if (source.includes("arm")) locations.push("Arm");
+    if (source.includes("torso") || source.includes("chest")) locations.push("Torso");
+    if (source.includes("leg")) locations.push("Leg");
+  }
+  const seen = new Set();
+  return locations.flatMap((location) => getLegendaryArmorProperties(location)).filter((property) => !seen.has(property.id) && seen.add(property.id));
+}

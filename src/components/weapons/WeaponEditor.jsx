@@ -12,6 +12,7 @@ import {
 } from "../../constants.js";
 import { getWeaponModGroups, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";
+import { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
 import LegendaryPropertyEditor from "../shared/LegendaryPropertyEditor.jsx";
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
@@ -123,7 +124,7 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
             <option value="" disabled>-- Select to autoload --</option>
             {globalWeapons.map((gw, idx) => (
               <option key={idx} value={idx}>
-                {gw.name} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})
+                {localizeSupplementalWeaponName(gw.name, i18n.resolvedLanguage)} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})
               </option>
             ))}
           </select>
@@ -268,7 +269,7 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
                         )}
                         {options.map((item) => (
                           <option key={item.name} value={item.name}>
-                            {localizeWeaponModName(item.name, i18n.resolvedLanguage)}
+                            {localizeSupplementalModName(item.name, i18n.resolvedLanguage) !== item.name ? localizeSupplementalModName(item.name, i18n.resolvedLanguage) : localizeWeaponModName(item.name, i18n.resolvedLanguage)}
                           </option>
                         ))}
                       </select>

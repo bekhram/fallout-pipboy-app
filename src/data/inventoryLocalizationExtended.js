@@ -1,4 +1,5 @@
 import { WEAPON_NAMES, WEAPON_TERMS } from "./inventoryLocalization/weapons.js";
+import { localizeSupplementalWeaponName, localizeSupplementalArmorName } from "./equipmentLocalizationSupplemental.js";
 import { TOOL_TRANSLATIONS } from "./inventoryLocalization/tools.js";
 import MAGAZINES_1 from "./inventoryLocalization/magazines-1.js";
 import MAGAZINES_2 from "./inventoryLocalization/magazines-2.js";
@@ -157,7 +158,7 @@ export function getExtendedInventoryLocalization(item, language = "en") {
   if (item?.category === "weapons") {
     return {
       ...base,
-      displayName: pick3(WEAPON_NAMES[originalName], lang) || originalName,
+      displayName: pick3(WEAPON_NAMES[originalName], lang) || localizeSupplementalWeaponName(originalName, lang) || originalName,
       displayEffect: translateWeaponTokens(originalEffect, lang),
       displayWeaponType: translateWeaponTokens(item?.weaponType, lang),
       displayDamageType: translateWeaponTokens(item?.damageType, lang),
@@ -168,7 +169,7 @@ export function getExtendedInventoryLocalization(item, language = "en") {
   if (item?.category === "armor") {
     return {
       ...base,
-      displayName: translateArmorName(originalName, lang),
+      displayName: localizeSupplementalArmorName(originalName, lang) !== originalName ? localizeSupplementalArmorName(originalName, lang) : translateArmorName(originalName, lang),
       displayEffect: pick3(ARMOR_EFFECTS[originalName], lang) || originalEffect,
       displayArmorGroup: pick3(ARMOR_GROUPS[item?.armorGroup], lang) || item?.armorGroup || "",
       displayArmorLocations: translateArmorLocations(item?.armorLocations, lang),

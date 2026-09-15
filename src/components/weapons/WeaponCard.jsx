@@ -10,6 +10,7 @@ import {
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
 import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";
+import { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
 import { getPerkRank } from "../../utils/perkEffects.js";
 import {
   applyConditionalWeaponPerks,
@@ -418,7 +419,7 @@ export default function WeaponCard({
     <article className="pip-panel pip-item-card pip-weapon-card">
       <div className="pip-weapon-header">
         <div className="pip-weapon-header-left">
-          <h3>{weapon.name || t("weapons.unnamedWeapon")}</h3>
+          <h3>{localizeSupplementalWeaponName(weapon.name, language) || weapon.name || t("weapons.unnamedWeapon")}</h3>
           <span>{skillLabel}</span>
         </div>
 
@@ -708,7 +709,7 @@ export default function WeaponCard({
                 <div key={slot.key} style={{ display: "flex", gap: "5px" }}>
                   <span style={{ opacity: 0.5, textTransform: "uppercase" }}>{t(`weaponMods.slots.${slot.key}`, slot.label)}:</span>
                   <span style={{ fontWeight: "bold", color: "var(--pip-color-highlight, #fff)" }}>
-                    {localizeWeaponModName(modName, i18n.resolvedLanguage)}
+                    {(localizeSupplementalModName(modName, i18n.resolvedLanguage) !== modName ? localizeSupplementalModName(modName, i18n.resolvedLanguage) : localizeWeaponModName(modName, i18n.resolvedLanguage))}
                   </span>
                 </div>
               );
