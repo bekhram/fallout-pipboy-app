@@ -7,17 +7,12 @@ function clickSessionChat() {
     ? document.querySelector(".session-utility-drawer-toggle")
     : null;
   if (!target) return false;
-  target.click();
+  if (target.getAttribute("aria-expanded") !== "true") target.click();
   return true;
 }
 
 function openBattlemap() {
   if (typeof document === "undefined") return false;
-  const shortcut = document.querySelector(".pip-map-battlemap-shortcut:not(:disabled)");
-  if (shortcut) {
-    shortcut.click();
-    return true;
-  }
   document.dispatchEvent(new CustomEvent("pip2d20:open-battlemap"));
   return true;
 }
@@ -64,14 +59,12 @@ export default function FloatingDiceButton({ onOpen }) {
     }
   });
   const [hasSessionChat, setHasSessionChat] = useState(false);
-  const [hasBattlemap, setHasBattlemap] = useState(false);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
 
     const sync = () => {
       setHasSessionChat(Boolean(document.querySelector(".session-utility-drawer-toggle")));
-      setHasBattlemap(Boolean(document.querySelector(".pip-map-battlemap-shortcut:not(:disabled)")));
     };
 
     sync();
@@ -80,7 +73,7 @@ export default function FloatingDiceButton({ onOpen }) {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["disabled", "class"],
+      attributeFilter: ["class"],
     });
     return () => observer.disconnect();
   }, []);
@@ -149,9 +142,8 @@ export default function FloatingDiceButton({ onOpen }) {
           type="button"
           className="pip-mobile-tool-dock__action pip-mobile-tool-dock__action--battlemap"
           onClick={openBattlemap}
-          disabled={!hasBattlemap}
           aria-label="Open active battlemap"
-          title={hasBattlemap ? "Battlemap" : "No active battlemap"}
+          title="Battlemap"
         >
           BATTLEMAP
         </button>
