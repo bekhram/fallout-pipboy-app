@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import FalloutD20Roller from "./FalloutD20Roller";
 import FalloutD6Roller from "./FalloutD6Roller";
 
@@ -58,7 +59,7 @@ export default function DiceRollModal({
   const modalTitle =
     rollConfig?.title || (activeTab === "d20" ? "D20 Roller" : "D6 Roller");
 
-  return (
+  const modal = (
     <div className="dice-modal-overlay">
       <div className="dice-modal-screen">
         <div className="dice-modal-frame">
@@ -144,4 +145,8 @@ export default function DiceRollModal({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(modal, document.body)
+    : modal;
 }

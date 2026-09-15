@@ -46,6 +46,15 @@ body.pip-player-battlemap-open .pip-mobile-tool-dock {
   pointer-events: none !important;
 }
 
+body.pip-player-battlemap-open .session-utility-drawer-shell {
+  position: relative;
+  z-index: 1000010 !important;
+}
+
+body.pip-player-battlemap-open .session-utility-drawer-shell.is-open .session-utility-drawer {
+  z-index: 1000011 !important;
+}
+
 .session-tactical-player {
   grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
 }

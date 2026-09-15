@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import DiceRollModal from "../dice/DiceRollModal.jsx";
 import SessionTacticalMap from "./SessionTacticalMap.jsx";
@@ -231,7 +232,7 @@ export default function SessionChatDrawer({session,form=null,setForm=null}){
   };
 
   return <>
-    <div className={`session-chat-drawer-shell session-utility-drawer-shell${open?" is-open":""}`}>
+    {typeof document!=="undefined"?createPortal(<div className={`session-chat-drawer-shell session-utility-drawer-shell${open?" is-open":""}`}>
       <button type="button" className="session-chat-drawer-toggle session-utility-drawer-toggle" onClick={()=>setOpen((v)=>!v)} aria-expanded={open} aria-label={open?copy.close:copy.title} title={open?copy.close:copy.title}><span className="session-chat-toggle-label">{open?"×":"💬"}</span></button>
       <aside className="session-chat-drawer session-utility-drawer" aria-hidden={!open}>
         <header className="session-chat-drawer-head"><div><div className="pip-bootline">PIP 2D20 NETWORK</div><h2>[ {view==="merchants"?copy.merchants:copy.title} ]</h2></div><button type="button" className="pip-btn" onClick={()=>setOpen(false)}>{copy.close}</button></header>
@@ -253,8 +254,8 @@ export default function SessionChatDrawer({session,form=null,setForm=null}){
 
         {view==="merchants"?<div className="session-utility-body session-merchant-body"><MerchantDirectory session={session} form={characterForm} copy={copy} language={language} selectedMerchantId={selectedMerchantId} setSelectedMerchantId={setSelectedMerchantId} tradeTab={tradeTab} setTradeTab={setTradeTab} onBuy={buyFromMerchant} onSell={sellToMerchant} pending={pendingTradeId}/>{tradeStatus?<div className="session-merchant-trade-status">{tradeStatus}</div>:null}</div>:null}
       </aside>
-      {session.mode==="player"?<SessionTacticalMap session={session} openRequest={battlemapRequest}/>:null}
-    </div>
+    </div>,document.body):null}
+    {session.mode==="player"?<SessionTacticalMap session={session} openRequest={battlemapRequest}/>:null}
     {session.mode==="host"?<TacticalSessionHud session={session}/>:null}
     <DiceRollModal isOpen={diceOpen} onClose={()=>setDiceOpen(false)} rollConfig={null} form={diceForm} pendingAutoD6={pendingAutoD6} setPendingAutoD6={setPendingAutoD6} combatState={session?.combat||null} currentLuckPoints={undefined} onSpendCombatLuck={undefined} onMarkCombatUse={undefined} onDiceResult={session?.sendDiceResult}/>
   </>;
