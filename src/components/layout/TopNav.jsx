@@ -21,6 +21,12 @@ const EXTRA_TAB_LABELS = {
     uk: "КРАФТ",
     pl: "RZEMIOSŁO",
   },
+  vehicles: {
+    en: "VEHICLES",
+    ru: "ТРАНСПОРТ",
+    uk: "ТРАНСПОРТ",
+    pl: "POJAZDY",
+  },
 };
 
 export const PIPBOY_TABS = [
@@ -30,6 +36,7 @@ export const PIPBOY_TABS = [
   { key: "weapons", labelKey: "tabs.weapons" },
   { key: "inventory", labelKey: "tabs.inventory" },
   { key: "crafting" },
+  { key: "vehicles" },
   { key: "armor", labelKey: "tabs.armor" },
   { key: "perks", labelKey: "tabs.perks" },
   { key: "bestiary" },
