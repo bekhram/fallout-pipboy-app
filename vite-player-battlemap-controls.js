@@ -43,11 +43,19 @@ export function pip2d20PlayerBattlemapControlsPlugin() {
           `import "../gm/gmTokenStatusLayer.css";\nimport "./playerBattlemapQuickControls.css";`,
           "quick controls styles"
         );
+
+        code = replaceRequired(
+          code,
+          `  const [error,setError]=useState("");`,
+          `  const [error,setError]=useState("");\n  const [toolsCollapsed,setToolsCollapsed]=useState(()=>{try{return localStorage.getItem("pip2d20_player_tools_collapsed")==="1";}catch{return false;}});`,
+          "tools collapsed state"
+        );
+
         code = replaceRequired(
           code,
           `  </section><TacticalSessionHud session={session}/>`,
-          `  </section><div className="player-battlemap-quick-actions" aria-label="Player battlemap tools">\n      <button type="button" className="player-battlemap-quick-btn is-chat" onClick={() => document.querySelector(".session-utility-drawer-toggle")?.click()} aria-label="Open session chat">CHAT</button>\n      <button type="button" className="player-battlemap-quick-btn is-dice" onClick={() => document.querySelector(".floating-dice-button")?.click()} aria-label="Open dice roller">D20</button>\n    </div><TacticalSessionHud session={session}/>`,
-          "chat and dice buttons"
+          `  </section>\n    <div className={\`player-battlemap-tools\${toolsCollapsed ? " is-collapsed" : ""}\`} aria-label="Battlemap tools">\n      <button type="button" className="player-battlemap-tools__toggle" onClick={()=>setToolsCollapsed((value)=>{const next=!value;try{localStorage.setItem("pip2d20_player_tools_collapsed",next?"1":"0");}catch{}return next;})}>{toolsCollapsed?"TOOLS":"×"}</button>\n      {!toolsCollapsed ? <div className="player-battlemap-tools__body">\n        <strong>TOOLS</strong>\n        <button type="button" className="pip-btn" onClick={()=>document.querySelector(".battlemap-focus-btn")?.click()}>◎ TOKEN</button>\n        <button type="button" className="pip-btn" onClick={()=>document.querySelector(".battlemap-fit-btn")?.click()}>FIT</button>\n        <button type="button" className="pip-btn" onClick={()=>setSelectedTokenId(ownedTokens[0]?.id||"")} disabled={!ownedTokens.length}>MOVE</button>\n      </div> : null}\n    </div>\n    <div className="player-battlemap-quick-actions" aria-label="Player battlemap quick actions">\n      <button type="button" className="player-battlemap-quick-btn is-chat" onClick={() => document.querySelector(".session-utility-drawer-toggle")?.click()} aria-label="Open session chat">CHAT</button>\n      <button type="button" className="player-battlemap-quick-btn is-dice" onClick={() => document.querySelector(".floating-dice-button")?.click()} aria-label="Open dice roller">D20</button>\n    </div>\n    <TacticalSessionHud session={session}/>`,
+          "player tools chat and dice"
         );
         return { code, map: null };
       }
