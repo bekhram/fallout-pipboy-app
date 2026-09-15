@@ -76,6 +76,7 @@ function tokenAvatarForPlayer(player, tokens) {
 export default function TacticalSessionHud({ session }) {
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [roundTarget, setRoundTarget] = useState(null);
+  const [playerDockTarget, setPlayerDockTarget] = useState(null);
   const players = Array.isArray(session?.players) ? session.players : [];
   const scene = session?.tacticalScene || null;
   const rawTokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
@@ -111,6 +112,10 @@ export default function TacticalSessionHud({ session }) {
     const sync = () => {
       const next = document.querySelector(selector);
       setRoundTarget((current) => current === next ? current : next);
+      const nextDockTarget = session?.mode === "player"
+        ? document.querySelector(".session-tactical-player__player-status")
+        : null;
+      setPlayerDockTarget((current) => current === nextDockTarget ? current : nextDockTarget);
     };
     sync();
     const observer = new MutationObserver(sync);
@@ -136,6 +141,25 @@ export default function TacticalSessionHud({ session }) {
   const roundBadge = roundTarget && scene
     ? createPortal(<span className="tactical-round-badge">ROUND {round}</span>, roundTarget)
     : null;
+
+  const playerDock = (
+    <div className="session-player-dock session-player-dock--all" aria-label="Players in session">
+      <div className="session-player-dock__rail">
+        {players.map((player) => {
+          const character = player?.character || {};
+          const name = character.name || player?.name || "Player";
+          const avatar = character.avatar || tokenAvatarForPlayer(player, rawTokens) || "";
+          return <div className="session-player-dock__item" key={player.clientId || player.peerId || name} title={name}>
+            <div className="session-player-dock__avatar">
+              {avatar ? <img src={avatar} alt="" draggable={false} /> : <span>{initials(name)}</span>}
+              <i className={`session-player-dock__online${player.online === false ? " is-offline" : ""}`} />
+            </div>
+            <small>{name}</small>
+          </div>;
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -177,22 +201,9 @@ export default function TacticalSessionHud({ session }) {
         </div>
       </aside> : null}
 
-      <div className="session-player-dock session-player-dock--all" aria-label="Players in session">
-        <div className="session-player-dock__rail">
-          {players.map((player) => {
-            const character = player?.character || {};
-            const name = character.name || player?.name || "Player";
-            const avatar = character.avatar || tokenAvatarForPlayer(player, rawTokens) || "";
-            return <div className="session-player-dock__item" key={player.clientId || player.peerId || name} title={name}>
-              <div className="session-player-dock__avatar">
-                {avatar ? <img src={avatar} alt="" draggable={false} /> : <span>{initials(name)}</span>}
-                <i className={`session-player-dock__online${player.online === false ? " is-offline" : ""}`} />
-              </div>
-              <small>{name}</small>
-            </div>;
-          })}
-        </div>
-      </div>
+      {session?.mode === "player" && playerDockTarget
+        ? createPortal(playerDock, playerDockTarget)
+        : playerDock}
     </>
   );
 }
