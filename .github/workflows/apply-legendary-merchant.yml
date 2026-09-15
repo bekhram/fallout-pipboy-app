@@ -1,0 +1,103 @@
+name: Apply legendary merchant support
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-legendary-merchant.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Patch merchant generator
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/components/gm/GmMerchantGenerator.jsx')
+          s = p.read_text(encoding='utf-8')
+
+          anchor = 'import { parseArmorDatabase } from "../../utils/armorDatabase.js";\n'
+          extra = 'import { makeLegendaryEquipment } from "../../utils/legendaryLoot.js";\n'
+          if extra not in s:
+              s = s.replace(anchor, anchor + extra, 1)
+
+          translations = {
+            'caps: "CAPS", items: "ITEMS", name: "NAME", qty: "QTY", price: "PRICE", itemRarity: "RARITY",': 'caps: "CAPS", items: "ITEMS", name: "NAME", qty: "QTY", price: "PRICE", itemRarity: "RARITY", legendary: "LEGENDARY GOODS", legendaryCount: "LEGENDARY COUNT", legendaryHint: "Add random Legendary weapons or armor to merchant stock.",',
+            'caps: "КРЫШКИ", items: "ПОЗИЦИЙ", name: "НАЗВАНИЕ", qty: "КОЛ-ВО", price: "ЦЕНА", itemRarity: "РЕДКОСТЬ",': 'caps: "КРЫШКИ", items: "ПОЗИЦИЙ", name: "НАЗВАНИЕ", qty: "КОЛ-ВО", price: "ЦЕНА", itemRarity: "РЕДКОСТЬ", legendary: "ЛЕГЕНДАРНЫЕ ТОВАРЫ", legendaryCount: "КОЛ-ВО ЛЕГЕНДАРНЫХ", legendaryHint: "Добавляет случайное легендарное оружие или броню в ассортимент.",',
+            'caps: "КРИШКИ", items: "ПОЗИЦІЙ", name: "НАЗВА", qty: "К-СТЬ", price: "ЦІНА", itemRarity: "РІДКІСТЬ",': 'caps: "КРИШКИ", items: "ПОЗИЦІЙ", name: "НАЗВА", qty: "К-СТЬ", price: "ЦІНА", itemRarity: "РІДКІСТЬ", legendary: "ЛЕГЕНДАРНІ ТОВАРИ", legendaryCount: "К-СТЬ ЛЕГЕНДАРНИХ", legendaryHint: "Додає випадкову легендарну зброю або броню до асортименту.",',
+            'caps: "KAPSLE", items: "POZYCJE", name: "NAZWA", qty: "ILOŚĆ", price: "CENA", itemRarity: "RZADKOŚĆ",': 'caps: "KAPSLE", items: "POZYCJE", name: "NAZWA", qty: "ILOŚĆ", price: "CENA", itemRarity: "RZADKOŚĆ", legendary: "LEGENDARNE TOWARY", legendaryCount: "LICZBA LEGENDARNYCH", legendaryHint: "Dodaje losową legendarną broń lub pancerz do asortymentu.",',
+          }
+          for old, new in translations.items():
+              if old in s and new not in s:
+                  s = s.replace(old, new, 1)
+
+          old_weapon = '''    category: "weapons", sourceType: "weapon", sourceId: null, effect: String(row?.Effects || ""), lootType: "weapon",\n'''
+          new_weapon = '''    category: "weapons", sourceType: "weapon", sourceId: null, effect: String(row?.Effects || ""), lootType: "weapon",\n    weaponType: String(row?.["Weapon type"] || ""), damage: Number(row?.["Damage Rating"] || 0),\n    damageType: String(row?.["Damage type"] || "Physical"), rate: Number(row?.["Rate of Fire"] || 0),\n    range: String(row?.Range || ""), qualities: String(row?.Qualities || ""), effects: String(row?.Effects || ""), ammo: String(row?.Ammo || ""),\n'''
+          if old_weapon in s and 'weaponType: String(row?.["Weapon type"]' not in s:
+              s = s.replace(old_weapon, new_weapon, 1)
+
+          old_armor = '''    effect: String(item?.effects || ""), lootType: isMod ? "mod" : "armor",\n'''
+          new_armor = '''    effect: String(item?.effects || ""), lootType: isMod ? "mod" : "armor",\n    locations: item?.locations || {}, physical: Number(item?.physical || 0), energy: Number(item?.energy || 0), radiation: Number(item?.radiation || 0),\n'''
+          if old_armor in s and 'locations: item?.locations || {}' not in s:
+              s = s.replace(old_armor, new_armor, 1)
+
+          helper_anchor = '''function merchantCaps(wealth) {\n'''
+          helper = '''function addLegendaryMerchantStock(stock, pool, count) {\n  const requested = Math.max(0, Math.min(10, Number(count) || 0));\n  if (!requested) return stock;\n  const result = [...stock];\n  const usedIds = new Set(result.map((item) => item.id));\n  const indices = result.map((item, index) => ({ item, index })).filter(({ item }) => item.sourceType === "weapon" || item.sourceType === "armor");\n  for (let i = indices.length - 1; i > 0; i -= 1) {\n    const j = Math.floor(Math.random() * (i + 1));\n    [indices[i], indices[j]] = [indices[j], indices[i]];\n  }\n  let added = 0;\n  for (const entry of indices) {\n    if (added >= requested) break;\n    const legendary = makeLegendaryEquipment(entry.item, entry.item.sourceType === "weapon" ? "weapon" : "armor");\n    if (!legendary) continue;\n    result[entry.index] = { ...legendary, stockId: entry.item.stockId, quantity: entry.item.quantity, cost: entry.item.cost };\n    added += 1;\n  }\n  if (added < requested) {\n    const extras = pool.filter((item) => !usedIds.has(item.id) && (item.sourceType === "weapon" || item.sourceType === "armor"));\n    for (let i = extras.length - 1; i > 0; i -= 1) {\n      const j = Math.floor(Math.random() * (i + 1));\n      [extras[i], extras[j]] = [extras[j], extras[i]];\n    }\n    for (const item of extras) {\n      if (added >= requested || result.length >= 24) break;\n      const legendary = makeLegendaryEquipment(item, item.sourceType === "weapon" ? "weapon" : "armor");\n      if (!legendary) continue;\n      result.push({\n        ...legendary,\n        stockId: `${Date.now()}-legendary-${added}-${Math.random().toString(36).slice(2, 7)}`,\n        quantity: 1,\n        cost: String(merchantBuyPrice(legendary)),\n      });\n      added += 1;\n    }\n  }\n  return result;\n}\n\n'''
+          if 'function addLegendaryMerchantStock(' not in s:
+              s = s.replace(helper_anchor, helper + helper_anchor, 1)
+
+          old_saved = '''      wealth: Math.max(1, Math.min(10, Number(raw.wealth) || 3)),\n'''
+          new_saved = '''      wealth: Math.max(1, Math.min(10, Number(raw.wealth) || 3)),\n      legendaryEnabled: Boolean(raw.legendaryEnabled),\n      legendaryCount: Math.max(1, Math.min(10, Number(raw.legendaryCount) || 1)),\n'''
+          if old_saved in s and 'legendaryEnabled: Boolean(raw.legendaryEnabled)' not in s:
+              s = s.replace(old_saved, new_saved, 1)
+
+          old_state = '''  const [wealth, setWealth] = useState(saved?.wealth ?? 3);\n'''
+          new_state = '''  const [wealth, setWealth] = useState(saved?.wealth ?? 3);\n  const [legendaryEnabled, setLegendaryEnabled] = useState(saved?.legendaryEnabled ?? false);\n  const [legendaryCount, setLegendaryCount] = useState(saved?.legendaryCount ?? 1);\n'''
+          if old_state in s and 'setLegendaryEnabled' not in s:
+              s = s.replace(old_state, new_state, 1)
+
+          old_effect = '''    localStorage.setItem(FILTER_KEY, JSON.stringify({ merchantType, minRarity, maxRarity, wealth }));\n  }, [merchantType, minRarity, maxRarity, wealth]);\n'''
+          new_effect = '''    localStorage.setItem(FILTER_KEY, JSON.stringify({ merchantType, minRarity, maxRarity, wealth, legendaryEnabled, legendaryCount }));\n  }, [merchantType, minRarity, maxRarity, wealth, legendaryEnabled, legendaryCount]);\n'''
+          if old_effect in s:
+              s = s.replace(old_effect, new_effect, 1)
+
+          old_gen = '''    const stock = pickStock(pool, merchantType, minRarity, maxRarity, wealth);\n    if (!stock.length) { setGenerated(null); setStatus(copy.noLoot); return; }\n'''
+          new_gen = '''    const baseStock = pickStock(pool, merchantType, minRarity, maxRarity, wealth);\n    const stock = legendaryEnabled ? addLegendaryMerchantStock(baseStock, pool, legendaryCount) : baseStock;\n    if (!stock.length) { setGenerated(null); setStatus(copy.noLoot); return; }\n'''
+          if old_gen in s:
+              s = s.replace(old_gen, new_gen, 1)
+
+          old_card = '''      <section className="gm-merchant-card"><strong>{copy.wealth}: {wealth}</strong><input type="range" min="1" max="10" step="1" value={wealth} onChange={(event)=>setWealth(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/><div className="gm-merchant-scale"><span>1</span><span>10</span></div><small>{copy.wealthHint}</small></section>\n'''
+          new_card = old_card + '''      <section className="gm-merchant-card"><label style={{display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" checked={legendaryEnabled} onChange={(event)=>setLegendaryEnabled(event.target.checked)}/><strong>★ {copy.legendary}</strong></label><label style={{display:"grid",gap:4,marginTop:8}}><span>{copy.legendaryCount}</span><input className="pip-input" type="number" min="1" max="10" value={legendaryCount} disabled={!legendaryEnabled} onChange={(event)=>setLegendaryCount(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/></label><small>{copy.legendaryHint}</small></section>\n'''
+          if old_card in s and 'copy.legendaryCount' not in s:
+              s = s.replace(old_card, new_card, 1)
+
+          old_name = '''<span>{item.name}</span><span>{item.quantity}</span>'''
+          new_name = '''<span>{item.legendary ? `★ ${item.legendaryPropertyName || "Legendary"} · ${item.name}` : item.name}</span><span>{item.quantity}</span>'''
+          if old_name in s:
+              s = s.replace(old_name, new_name, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/gm/GmMerchantGenerator.jsx
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: add legendary goods to merchants"
+          git push
