@@ -11,16 +11,9 @@ export const VEHICLE_QUALITIES = [
 ];
 
 export const VEHICLE_MATERIALS = [
-  "Steel",
-  "Aluminum",
-  "Rubber",
-  "Gears",
-  "Screws",
-  "Springs",
-  "Adhesive",
-  "Oil",
-  "Circuitry",
-  "Nuclear Material",
+  "Common Scrap",
+  "Special Scrap",
+  "Rare Scrap",
 ];
 
 const loc = (roll, name, physical, energy) => ({ roll, name, physical, energy });
@@ -94,41 +87,52 @@ export function getVehicleCraftCost(vehicle) {
   const hp = Math.max(1, Number(vehicle?.maxHp || 1));
   const impact = Math.max(0, Number(vehicle?.impact || 0));
   const speed = Math.max(0, Number(vehicle?.speedZones || 0));
-  const armored = String(vehicle?.cover || "").toLowerCase() === "enclosed" || (vehicle?.qualities || []).includes("Enclosed");
-  const flying = (vehicle?.qualities || []).includes("Flying");
-  const highPerformance = (vehicle?.qualities || []).includes("High-Performance");
+  const qualities = vehicle?.qualities || [];
+  const armored = String(vehicle?.cover || "").toLowerCase() === "enclosed" || qualities.includes("Enclosed");
+  const flying = qualities.includes("Flying");
+  const highPerformance = qualities.includes("High-Performance");
+  const rugged = qualities.includes("Rugged");
   const weaponCount = (vehicle?.weapons || []).length;
-  const cost = {
-    Steel: Math.ceil(hp / 2) + scale * 5 + (armored ? 12 : 0),
-    Aluminum: Math.max(0, scale * 2 + (flying ? 14 : 0)),
-    Rubber: flying ? 0 : Math.max(2, 4 + scale * 2),
-    Gears: 3 + scale + speed,
-    Screws: 4 + scale * 2 + weaponCount * 2,
-    Springs: 2 + Math.ceil(impact / 2),
-    Adhesive: 3 + scale * 2,
-    Oil: 2 + speed,
-    Circuitry: 1 + weaponCount * 2 + (highPerformance ? 3 : 0) + (flying ? 4 : 0),
-  };
-  if (flying) cost["Nuclear Material"] = 2;
-  return Object.fromEntries(Object.entries(cost).filter(([, qty]) => qty > 0));
+
+  const common = Math.max(2, Math.ceil(hp / 6) + scale * 2 + Math.ceil(impact / 3));
+  const special = Math.max(0, scale + Math.max(0, speed - 2) + weaponCount * 2 + (armored ? 2 : 0) + (highPerformance ? 2 : 0) + (rugged ? 1 : 0));
+  const rare = Math.max(0, (flying ? 3 : 0) + (weaponCount > 0 ? 1 : 0) + (armored && scale >= 3 ? 1 : 0) + (highPerformance && scale >= 3 ? 1 : 0));
+
+  return Object.fromEntries([
+    ["Common Scrap", common],
+    ["Special Scrap", special],
+    ["Rare Scrap", rare],
+  ].filter(([, qty]) => qty > 0));
 }
 
 export function getVehicleRepairPlan(vehicle, locationName = "Chassis") {
   const maxHp = Math.max(1, Number(vehicle?.maxHp || 1));
   const currentHp = Math.max(0, Math.min(maxHp, Number(vehicle?.currentHp ?? maxHp)));
   const missing = maxHp - currentHp;
-  const chunks = Math.max(1, Math.ceil(Math.min(5, missing) / 5));
-  const lower = String(locationName || "").toLowerCase();
-  const cost = { Steel: 2 * chunks, Adhesive: 1 * chunks };
-  if (lower.includes("wheel")) cost.Rubber = 2 * chunks;
-  if (lower.includes("engine")) { cost.Gears = 1 * chunks; cost.Oil = 1 * chunks; }
-  if (lower.includes("wing")) cost.Aluminum = 2 * chunks;
-  if (lower.includes("weapon")) { cost.Screws = 1 * chunks; cost.Circuitry = 1 * chunks; }
-  if ((vehicle?.qualities || []).includes("Flying")) cost.Aluminum = (cost.Aluminum || 0) + chunks;
+  const restore = Math.min(5, missing);
   const ratio = missing / maxHp;
+  const lower = String(locationName || "").toLowerCase();
+  const qualities = vehicle?.qualities || [];
+  const complexPart = lower.includes("engine") || lower.includes("wing") || lower.includes("weapon");
+  const armored = String(vehicle?.cover || "").toLowerCase() === "enclosed" || qualities.includes("Enclosed");
+  const flying = qualities.includes("Flying");
+  const highPerformance = qualities.includes("High-Performance");
+
+  const cost = {
+    "Common Scrap": restore > 0 ? Math.max(1, Math.ceil(Number(vehicle?.scale || 0) / 2) + 1) : 0,
+  };
+  if (restore > 0 && (complexPart || armored || highPerformance || ratio >= 0.5)) cost["Special Scrap"] = 1;
+  if (restore > 0 && (currentHp <= 0 || flying || (lower.includes("weapon") && ratio >= 0.5))) cost["Rare Scrap"] = 1;
+
   let difficulty = ratio <= 0.25 ? 1 : ratio <= 0.5 ? 2 : 3;
   if (currentHp <= 0) difficulty = 4;
-  if ((vehicle?.qualities || []).includes("Rugged")) difficulty -= 1;
-  if ((vehicle?.qualities || []).includes("High-Performance")) difficulty += 1;
-  return { missing, restore: Math.min(5, missing), difficulty: Math.max(0, Math.min(5, difficulty)), cost };
+  if (qualities.includes("Rugged")) difficulty -= 1;
+  if (highPerformance) difficulty += 1;
+
+  return {
+    missing,
+    restore,
+    difficulty: Math.max(0, Math.min(5, difficulty)),
+    cost: Object.fromEntries(Object.entries(cost).filter(([, qty]) => qty > 0)),
+  };
 }
