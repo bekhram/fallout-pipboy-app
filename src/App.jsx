@@ -697,7 +697,8 @@ export default function App() {
           entryKey === key ? sum : sum + (Number(entryValue) || 0),
         0
       );
-      const budgetMax = Math.max(minAllowed, 40 - otherTotal);
+      const specialPointBudget = currentOrigin?.id === "survivor" ? 42 : 40;
+      const budgetMax = Math.max(minAllowed, specialPointBudget - otherTotal);
       const effectiveMax = Math.min(maxAllowed, budgetMax);
 
       return {
