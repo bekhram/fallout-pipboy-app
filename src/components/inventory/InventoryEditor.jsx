@@ -9,6 +9,7 @@ import {
 import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
+import LegendaryPropertyEditor from "../shared/LegendaryPropertyEditor.jsx";
 
 const CATEGORY_LABEL_KEYS = {
   weapons: "inventory.categories.weapons",
@@ -67,6 +68,8 @@ const EMPTY_DETAIL_FIELDS = {
   armorRadiation: "",
   armorLocations: "",
   armorGroup: "",
+  legendary: false,
+  legendaryProperty: "",
 };
 
 const EMPTY_ARCHIVE_FIELDS = {
@@ -120,6 +123,8 @@ const weaponRowToInventoryItem = (weapon) => {
     weaponType: String(weapon?.["Weapon type"] ?? ""),
     qualities,
     ammo: String(weapon?.Ammo ?? ""),
+    legendary: false,
+    legendaryProperty: "",
   };
 };
 
@@ -137,6 +142,8 @@ const armorEntryToInventoryItem = (armor) => ({
   armorLocations: armorLocationsText(armor?.locations),
   armorGroup: String(armor?.group || armor?.category || ""),
   armorSourceId: armor?.id || "",
+  legendary: false,
+  legendaryProperty: "",
 });
 
 export default function InventoryEditor({
@@ -282,6 +289,7 @@ export default function InventoryEditor({
   const showMagazineFields = draft.category === "magazines";
   const showWeaponFields = draft.category === "weapons";
   const showArmorFields = draft.category === "armor";
+  const showLegendaryFields = showWeaponFields || showArmorFields;
   const showRarity = ["weapons", "armor", "aid", "food", "beverages", "tools"].includes(draft.category);
 
   return (
@@ -508,6 +516,16 @@ export default function InventoryEditor({
           placeholder="Effect / qualities"
           value={draft.effect || ""}
           onChange={(e) => setDraft({ ...draft, effect: e.target.value })}
+        />
+      )}
+
+      {showLegendaryFields && (
+        <LegendaryPropertyEditor
+          kind={showArmorFields ? "armor" : "weapon"}
+          draft={draft}
+          setDraft={setDraft}
+          language={i18n.resolvedLanguage}
+          armorLocation={draft.armorLocations}
         />
       )}
 
