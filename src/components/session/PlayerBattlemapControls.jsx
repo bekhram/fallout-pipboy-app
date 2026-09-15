@@ -26,20 +26,39 @@ function openDice() {
   }
 }
 
+function toggleBattlemapTools() {
+  return clickFirst(
+    ".session-tactical-player .battlemap-tools-toggle, .session-tactical-overlay .battlemap-tools-toggle, .battlemap-tools-toggle"
+  );
+}
+
 export default function PlayerBattlemapControls({ session }) {
   const [zoomCollapsed, setZoomCollapsed] = useState(readCollapsed);
+  const [battlemapOpen, setBattlemapOpen] = useState(false);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
 
     const sync = () => {
-      const controls = document.querySelector(".session-tactical-player .battlemap-view-controls");
+      const playerMap = document.querySelector(
+        ".session-tactical-overlay .session-tactical-player"
+      );
+      const controls = document.querySelector(
+        ".session-tactical-player .battlemap-view-controls"
+      );
+
+      setBattlemapOpen(Boolean(playerMap));
       if (controls) controls.classList.toggle("is-player-collapsed", zoomCollapsed);
     };
 
     sync();
     const observer = new MutationObserver(sync);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
     return () => observer.disconnect();
   }, [zoomCollapsed, session?.tacticalScene?.sceneId]);
 
@@ -55,7 +74,14 @@ export default function PlayerBattlemapControls({ session }) {
     });
   };
 
-  if (!session?.isActive || session?.mode !== "player" || !session?.tacticalScene?.active) return null;
+  if (
+    !battlemapOpen ||
+    !session?.isActive ||
+    session?.mode !== "player" ||
+    !session?.tacticalScene?.active
+  ) {
+    return null;
+  }
 
   return (
     <>
@@ -64,12 +90,12 @@ export default function PlayerBattlemapControls({ session }) {
       <div className="player-battlemap-side-controls" aria-label="Player battlemap tools">
         <button
           type="button"
-          className="player-battlemap-tool"
+          className="player-battlemap-tool player-battlemap-tool--zoom"
           onClick={toggleZoom}
           title={zoomCollapsed ? "Show zoom controls" : "Hide zoom controls"}
           aria-label={zoomCollapsed ? "Show zoom controls" : "Hide zoom controls"}
         >
-          {zoomCollapsed ? "Z+" : "Z−"}
+          ZOOM
         </button>
         <button
           type="button"
@@ -88,6 +114,15 @@ export default function PlayerBattlemapControls({ session }) {
           aria-label="Open dice roller"
         >
           D20
+        </button>
+        <button
+          type="button"
+          className="player-battlemap-tool player-battlemap-tool--tools"
+          onClick={toggleBattlemapTools}
+          title="Battlemap tools"
+          aria-label="Open battlemap tools"
+        >
+          TOOLS
         </button>
       </div>
     </>
