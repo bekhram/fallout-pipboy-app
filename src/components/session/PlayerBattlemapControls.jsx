@@ -7,9 +7,10 @@ const COLLAPSED_KEY = "pip2d20_player_zoom_collapsed_v1";
 
 function readCollapsed() {
   try {
-    return window.localStorage.getItem(COLLAPSED_KEY) === "1";
+    const stored = window.localStorage.getItem(COLLAPSED_KEY);
+    return stored === null ? true : stored !== "0";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -20,17 +21,33 @@ function clickFirst(selector) {
   return true;
 }
 
+function openSessionChat() {
+  const target = typeof document !== "undefined"
+    ? document.querySelector(".session-utility-drawer-toggle")
+    : null;
+  if (!target) return false;
+  if (target.getAttribute("aria-expanded") !== "true") target.click();
+  return true;
+}
+
 function openDice() {
-  if (clickFirst(".floating-dice-button")) return;
+  if (clickFirst(".floating-dice-button")) return true;
   if (clickFirst(".floating-dice-toggle")) {
     requestAnimationFrame(() => clickFirst(".floating-dice-button"));
+    return true;
   }
+  return false;
 }
 
 function toggleBattlemapTools() {
   return clickFirst(
-    ".session-tactical-player .battlemap-tools-toggle, .session-tactical-overlay .battlemap-tools-toggle, .battlemap-tools-toggle"
+    ".session-tactical-overlay .battlemap-tools-toggle, .session-tactical-player .battlemap-tools-toggle, .battlemap-tools-toggle"
   );
+}
+
+function stopMapGesture(event) {
+  event.preventDefault();
+  event.stopPropagation();
 }
 
 export default function PlayerBattlemapControls({ session }) {
@@ -44,10 +61,22 @@ export default function PlayerBattlemapControls({ session }) {
       const playerMap = document.querySelector(
         ".session-tactical-overlay .session-tactical-player"
       );
-      const controls = playerMap?.querySelector?.(".battlemap-view-controls") || null;
+      const controls = document.querySelector(
+        ".session-tactical-overlay .battlemap-view-controls, .battlemap-view-controls"
+      );
 
+      document.body.classList.toggle("pip-player-battlemap-open", Boolean(playerMap));
       setBattlemapTarget((current) => (current === playerMap ? current : playerMap));
-      if (controls) controls.classList.toggle("is-player-collapsed", zoomCollapsed);
+
+      document.querySelectorAll(".battlemap-view-controls.is-player-battlemap-viewport")
+        .forEach((node) => {
+          if (node !== controls) node.classList.remove("is-player-battlemap-viewport");
+        });
+
+      if (controls) {
+        controls.classList.add("is-player-battlemap-viewport");
+        controls.classList.toggle("is-player-collapsed", zoomCollapsed);
+      }
     };
 
     sync();
@@ -58,10 +87,17 @@ export default function PlayerBattlemapControls({ session }) {
       attributes: true,
       attributeFilter: ["class"],
     });
-    return () => observer.disconnect();
+
+    return () => {
+      observer.disconnect();
+      document.body.classList.remove("pip-player-battlemap-open");
+      document.querySelectorAll(".battlemap-view-controls.is-player-battlemap-viewport")
+        .forEach((node) => node.classList.remove("is-player-battlemap-viewport"));
+    };
   }, [zoomCollapsed, session?.tacticalScene?.sceneId]);
 
-  const toggleZoom = () => {
+  const toggleZoom = (event) => {
+    stopMapGesture(event);
     setZoomCollapsed((current) => {
       const next = !current;
       try {
@@ -71,6 +107,21 @@ export default function PlayerBattlemapControls({ session }) {
       }
       return next;
     });
+  };
+
+  const handleChat = (event) => {
+    stopMapGesture(event);
+    openSessionChat();
+  };
+
+  const handleDice = (event) => {
+    stopMapGesture(event);
+    openDice();
+  };
+
+  const handleTools = (event) => {
+    stopMapGesture(event);
+    toggleBattlemapTools();
   };
 
   if (
@@ -83,7 +134,12 @@ export default function PlayerBattlemapControls({ session }) {
   }
 
   const dock = (
-    <div className="player-battlemap-side-controls" aria-label="Player battlemap tools">
+    <div
+      className="player-battlemap-side-controls"
+      aria-label="Player battlemap tools"
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
+    >
       <button
         type="button"
         className="player-battlemap-tool player-battlemap-tool--zoom"
@@ -96,7 +152,7 @@ export default function PlayerBattlemapControls({ session }) {
       <button
         type="button"
         className="player-battlemap-tool player-battlemap-tool--chat"
-        onClick={() => clickFirst(".session-utility-drawer-toggle")}
+        onClick={handleChat}
         title="Chat"
         aria-label="Open session chat"
       >
@@ -105,7 +161,7 @@ export default function PlayerBattlemapControls({ session }) {
       <button
         type="button"
         className="player-battlemap-tool player-battlemap-tool--dice"
-        onClick={openDice}
+        onClick={handleDice}
         title="Dice"
         aria-label="Open dice roller"
       >
@@ -114,7 +170,7 @@ export default function PlayerBattlemapControls({ session }) {
       <button
         type="button"
         className="player-battlemap-tool player-battlemap-tool--tools"
-        onClick={toggleBattlemapTools}
+        onClick={handleTools}
         title="Battlemap tools"
         aria-label="Open battlemap tools"
       >
