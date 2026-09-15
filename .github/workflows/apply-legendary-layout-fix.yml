@@ -1,0 +1,199 @@
+name: Apply legendary editor layout fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/apply-legendary-layout-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Patch legendary UI
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+
+          # 1) Make the legendary selector compact/stable everywhere.
+          shared = root / 'src/components/shared/LegendaryPropertyEditor.jsx'
+          shared.write_text(r'''import React from "react";
+          import {
+            canWeaponBeLegendary,
+            getLegendaryArmorProperties,
+            getLegendaryPropertyById,
+            getLegendaryWeaponProperties,
+            normalizeArmorLocation,
+          } from "../../data/legendaryProperties.js";
+
+          const COPY = {
+            en: { title: "LEGENDARY PROPERTY", none: "Not legendary", unavailable: "This item type cannot be Legendary.", bonus: "Legendary armor: +1 Physical DR and +1 Energy DR." },
+            ru: { title: "ЛЕГЕНДАРНОЕ СВОЙСТВО", none: "Не легендарный", unavailable: "Этот тип предмета не может быть легендарным.", bonus: "Легендарная броня: +1 к физическому и энергетическому сопротивлению." },
+            uk: { title: "ЛЕГЕНДАРНА ВЛАСТИВІСТЬ", none: "Не легендарний", unavailable: "Цей тип предмета не може бути легендарним.", bonus: "Легендарна броня: +1 до фізичного та енергетичного опору." },
+            pl: { title: "WŁAŚCIWOŚĆ LEGENDARNA", none: "Nielegendarny", unavailable: "Ten typ przedmiotu nie może być legendarny.", bonus: "Legendarny pancerz: +1 odporności fizycznej i energetycznej." },
+          };
+
+          function languageCode(language) {
+            const code = String(language || "en").toLowerCase().split("-")[0];
+            return COPY[code] ? code : "en";
+          }
+
+          export default function LegendaryPropertyEditor({
+            kind,
+            draft,
+            setDraft,
+            language = "en",
+            armorLocation = "",
+            compact = false,
+            embedded = false,
+          }) {
+            const copy = COPY[languageCode(language)];
+            const isArmor = kind === "armor";
+            const normalizedLocation = normalizeArmorLocation(armorLocation || draft?.armorLocations || draft?.location);
+            const allowed = isArmor ? Boolean(normalizedLocation) : canWeaponBeLegendary(draft);
+            const options = isArmor
+              ? getLegendaryArmorProperties(normalizedLocation)
+              : getLegendaryWeaponProperties(draft);
+            const selected = getLegendaryPropertyById(kind, draft?.legendaryProperty);
+
+            const selectProperty = (propertyId) => {
+              setDraft((prev) => ({
+                ...prev,
+                legendary: Boolean(propertyId),
+                legendaryProperty: propertyId,
+              }));
+            };
+
+            return (
+              <div
+                className={`pip-legendary-editor${compact ? " is-compact" : ""}${embedded ? " is-embedded" : ""}`}
+                style={{ marginTop: embedded ? 12 : compact ? 8 : 14, width: "100%", minWidth: 0 }}
+              >
+                {!embedded && <div className="pip-armor-section-title">[ ★ {copy.title} ]</div>}
+                {!allowed ? (
+                  <p className="pip-mod-empty" style={{ margin: "6px 0" }}>{copy.unavailable}</p>
+                ) : (
+                  <label className="pip-mod-field" style={{ display: "block", width: "100%", minWidth: 0 }}>
+                    <span className="pip-mod-field__label">★ {copy.title}</span>
+                    <select
+                      className="pip-input"
+                      style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}
+                      value={draft?.legendaryProperty || ""}
+                      onChange={(event) => selectProperty(event.target.value)}
+                    >
+                      <option value="">— {copy.none} —</option>
+                      {options.map((property) => (
+                        <option key={property.id} value={property.id}>{property.name}</option>
+                      ))}
+                    </select>
+                    {selected?.description ? (
+                      <span className="pip-mod-field__details" style={{ display: "block", maxWidth: "100%", overflowWrap: "anywhere" }}>
+                        {selected.description}
+                        {isArmor ? <small style={{ display: "block", marginTop: 6 }}>{copy.bonus}</small> : null}
+                      </span>
+                    ) : null}
+                  </label>
+                )}
+              </div>
+            );
+          }
+
+          export function LegendaryBadge({ kind, item }) {
+            if (!item?.legendary) return null;
+            const property = getLegendaryPropertyById(kind, item.legendaryProperty);
+            return (
+              <div className="pip-legendary-badge" title={property?.description || ""} style={{ margin: "6px 0", fontSize: 12, fontWeight: 700 }}>
+                ★ LEGENDARY{property ? ` · ${property.name}` : ""}
+              </div>
+            );
+          }
+          '''.replace('\n          ', '\n').lstrip(), encoding='utf-8')
+
+          # 2) WeaponsScreen: keep badge, remove separate editor above WeaponEditor.
+          p = root / 'src/components/weapons/WeaponsScreen.jsx'
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('import LegendaryPropertyEditor, { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";', 'import { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";')
+          block = '''            <LegendaryPropertyEditor\n              kind="weapon"\n              draft={weaponDraft}\n              setDraft={setWeaponDraft}\n              language={i18n.resolvedLanguage}\n            />\n'''
+          if block not in s:
+            raise SystemExit('WeaponsScreen legendary block not found')
+          s = s.replace(block, '')
+          p.write_text(s, encoding='utf-8')
+
+          # 3) WeaponEditor: render selector directly under Damage Effects.
+          p = root / 'src/components/weapons/WeaponEditor.jsx'
+          s = p.read_text(encoding='utf-8')
+          import_anchor = 'import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";\n'
+          if 'LegendaryPropertyEditor' not in s:
+            s = s.replace(import_anchor, import_anchor + 'import LegendaryPropertyEditor from "../shared/LegendaryPropertyEditor.jsx";\n')
+          effects_anchor = '''            <div className="pip-tagrow">\n              {WEAPON_EFFECT_OPTIONS.map((item) => {\n                const active = (draft.effects || []).includes(item.key);\n\n                return (\n                  <button\n                    key={item.key}\n                    type="button"\n                    className={`pip-tag ${active ? "is-selected" : ""}`}\n                    onClick={() => toggleEffect(item.key)}\n                    title={t(item.descriptionKey || item.description)}\n                  >\n                    {t(item.nameKey || item.name)}\n                  </button>\n                );\n              })}\n            </div>\n'''
+          replacement = effects_anchor + '''            <LegendaryPropertyEditor\n              kind="weapon"\n              draft={draft}\n              setDraft={setDraft}\n              language={i18n.resolvedLanguage}\n              embedded\n              compact\n            />\n'''
+          if effects_anchor not in s:
+            raise SystemExit('WeaponEditor effects anchor not found')
+          s = s.replace(effects_anchor, replacement, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 4) Normal armor: remove standalone legendary menu and place property after Upgrade in each armor slot.
+          p = root / 'src/components/armor/ArmorScreen.jsx'
+          s = p.read_text(encoding='utf-8')
+          standalone_start = '''          <div className="pip-armor-catalog">\n            <div className="pip-armor-section-title">[ ★ {labels.legendary} ]</div>\n            <div className="pip-stack">\n              {ARMOR_PARTS.map((part) => {\n                const propertyId = legendaryParts[part] || "";\n                const property = getLegendaryPropertyById("armor", propertyId);\n                const options = getLegendaryArmorProperties(part);\n                const enabled = hasArmorPart(part);\n                return (\n                  <label key={`legendary-${part}`} className="pip-mod-field">\n                    <span className="pip-mod-field__label">{CODES[part]} · {t(LABEL_KEYS[part] || part)}</span>\n                    <select\n                      className="pip-input"\n                      value={propertyId}\n                      disabled={!enabled}\n                      onChange={(event) => setLegendaryPart(part, event.target.value)}\n                    >\n                      <option value="">— {labels.legendaryNone} —</option>\n                      {options.map((option) => (\n                        <option key={option.id} value={option.id}>{option.name}</option>\n                      ))}\n                    </select>\n                    {propertyId && (\n                      <span className="pip-mod-field__details">\n                        {property?.description || property?.name}\n                        <small>{labels.legendaryBonus}</small>\n                      </span>\n                    )}\n                  </label>\n                );\n              })}\n            </div>\n          </div>\n\n'''
+          if standalone_start not in s:
+            raise SystemExit('Armor standalone legendary menu not found')
+          s = s.replace(standalone_start, '')
+
+          upgrade_block = '''                  <label>\n                    <span>{labels.upgrade}</span>\n                    <select className="pip-input" disabled={!item} value={selected.upgradeId || ""} onChange={(event) => changeSlot(part, { upgradeId: event.target.value })}>\n                      <option value="">{labels.none}</option>\n                      {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}\n                    </select>\n                  </label>\n'''
+          legendary_inline = upgrade_block + '''                  <label>\n                    <span>★ {labels.legendary}</span>\n                    <select\n                      className="pip-input"\n                      disabled={!item}\n                      value={legendaryParts[part] || ""}\n                      onChange={(event) => setLegendaryPart(part, event.target.value)}\n                    >\n                      <option value="">— {labels.legendaryNone} —</option>\n                      {getLegendaryArmorProperties(part).map((option) => (\n                        <option key={option.id} value={option.id}>{option.name}</option>\n                      ))}\n                    </select>\n                  </label>\n                  {legendaryParts[part] && (\n                    <p className="pip-armor-effect">\n                      {getLegendaryPropertyById("armor", legendaryParts[part])?.description || ""}\n                      <small style={{ display: "block", marginTop: 4 }}>{labels.legendaryBonus}</small>\n                    </p>\n                  )}\n'''
+          if upgrade_block not in s:
+            raise SystemExit('Armor upgrade block not found')
+          s = s.replace(upgrade_block, legendary_inline, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 5) Power armor: add legendary property after System, using the same _legendary.parts storage.
+          p = root / 'src/components/armor/PowerArmorPanel.jsx'
+          s = p.read_text(encoding='utf-8')
+          power_import = '} from "../../data/powerArmor.js";\n'
+          legend_import = 'import { getLegendaryArmorProperties, getLegendaryPropertyById } from "../../data/legendaryProperties.js";\n'
+          if legend_import not in s:
+            s = s.replace(power_import, power_import + legend_import, 1)
+
+          s = s.replace('broken: "Broken" }', 'broken: "Broken", legendary: "Legendary property", legendaryNone: "Not legendary", legendaryBonus: "+1 Physical DR · +1 Energy DR" }')
+          s = s.replace('broken: "Сломана" }', 'broken: "Сломана", legendary: "Легендарное свойство", legendaryNone: "Не легендарная", legendaryBonus: "+1 физ. сопротивление · +1 энерго. сопротивление" }')
+          s = s.replace('broken: "Зламана" }', 'broken: "Зламана", legendary: "Легендарна властивість", legendaryNone: "Не легендарна", legendaryBonus: "+1 фіз. опір · +1 енерг. опір" }')
+          s = s.replace('broken: "Zniszczona" }', 'broken: "Zniszczona", legendary: "Właściwość legendarna", legendaryNone: "Nielegendarny", legendaryBonus: "+1 odporności fizycznej · +1 energetycznej" }')
+
+          update_anchor = '''  const update = (patch) => {\n    onArmorChange("_power", "loadout", { ...stored, slots, ...patch });\n  };\n'''
+          update_repl = update_anchor + '''\n  const legendaryParts = armor?._legendary?.parts || {};\n  const setLegendaryPart = (part, propertyId) => {\n    const next = { ...legendaryParts };\n    if (propertyId) next[part] = propertyId;\n    else delete next[part];\n    onArmorChange("_legendary", "parts", next);\n  };\n'''
+          if update_anchor not in s:
+            raise SystemExit('PowerArmor update anchor not found')
+          s = s.replace(update_anchor, update_repl, 1)
+
+          system_block = '''                  <label>\n                    <span>{labels.system}</span>\n                    <select className="pip-input" value={selected.systemId || "none"} onChange={(event) => updateSlot(definition.id, { systemId: event.target.value })}>\n                      {systemOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.id === "none" ? labels.empty : localizedName(mod)}</option>)}\n                    </select>\n                  </label>\n'''
+          power_legend = system_block + '''                  <label>\n                    <span>★ {labels.legendary}</span>\n                    <select\n                      className="pip-input"\n                      value={legendaryParts[definition.id] || ""}\n                      onChange={(event) => setLegendaryPart(definition.id, event.target.value)}\n                    >\n                      <option value="">— {labels.legendaryNone} —</option>\n                      {getLegendaryArmorProperties(definition.id).map((option) => (\n                        <option key={option.id} value={option.id}>{option.name}</option>\n                      ))}\n                    </select>\n                  </label>\n                  {legendaryParts[definition.id] && (\n                    <p className="pip-armor-effect">\n                      {getLegendaryPropertyById("armor", legendaryParts[definition.id])?.description || ""}\n                      <small style={{ display: "block", marginTop: 4 }}>{labels.legendaryBonus}</small>\n                    </p>\n                  )}\n'''
+          if system_block not in s:
+            raise SystemExit('PowerArmor system block not found')
+          s = s.replace(system_block, power_legend, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit fixes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/shared/LegendaryPropertyEditor.jsx src/components/weapons/WeaponsScreen.jsx src/components/weapons/WeaponEditor.jsx src/components/armor/ArmorScreen.jsx src/components/armor/PowerArmorPanel.jsx
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: integrate legendary selectors into item editors"
+          git push
