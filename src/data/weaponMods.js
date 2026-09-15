@@ -17,6 +17,7 @@ export const MOD_SLOT_LABELS = {
   nozzle: "Nozzle",
   blade: "Blade",
   head: "Weapon mod",
+  frame: "Frame",
 };
 
 const sights = [
@@ -236,6 +237,129 @@ const unique = {
   },
 };
 
+
+
+// === SUPPLEMENTAL WEAPON BATCH 2 ===
+const supplementalUnique = {
+  bow: {
+    frame: [mod("Compound Frame", "+1 damage; -1 Fire Rate; remove Recoil (6)", 1, 30, "Gun Nut 1", "Compound")],
+    sights: [
+      mod("Iron Sights", "Increase Range by 1 step", 1, 10, "Gun Nut 1", ""),
+      mod("Glow Sights", "Increase Range by 1 step; gain Accurate", 1, 15, "Gun Nut 2", "Glow-Sighted"),
+    ],
+  },
+  crossbow: {
+    sights: [
+      mod("Iron Sights", "Increase Range by 1 step", 1, 10, "Gun Nut 1", ""),
+      mod("Glow Sights", "Increase Range by 1 step; gain Accurate", 1, 15, "Gun Nut 2", "Glow-Sighted"),
+    ],
+    frame: [
+      mod("Heavy Frame", "+1 damage", 1, 30, "Gun Nut 1", "Heavy"),
+      mod("Repeating Frame", "+1 Fire Rate; remove Slow Load", 2, 75, "Gun Nut 3", "Repeating"),
+      mod("Multiple Launch Frame", "-1 damage; gain Ammo-Hungry (3) and Spread", 4, 60, "Gun Nut 2", "Peppered"),
+    ],
+  },
+  "assaultron-blade": {
+    blade: [mod("Electrified Blade", "+1 damage; damage type becomes Energy", 0, 50, "Blacksmith 2, Science! 1", "Electrified")],
+  },
+  "auto-axe": {
+    head: [
+      mod("Electrified", "+1 damage; damage type becomes Energy", 0, 50, "Blacksmith 2, Science! 1", "Electrified"),
+      mod("Burning", "Damage type becomes Energy; gain Persistent", 0, 50, "Blacksmith 2, Science! 1", "Burning"),
+      mod("Poisoned", "Gain Persistent (Poison)", 0, 50, "Blacksmith 2, Science! 1", "Toxic"),
+      mod("Turbo", "Each AP spent for extra damage adds +2 damage instead of +1", 2, 50, "Blacksmith 2, Science! 1", "Turbo"),
+    ],
+  },
+  chainsaw: {
+    blade: [
+      mod("Dual Bar", "+2 damage", 1, 30, "Blacksmith 2", "Dual"),
+      mod("Bow Bar", "Gain Piercing 1", 2, 45, "Blacksmith 3", "Bow bar"),
+      mod("Long Bow Bar", "Gain Persistent", 3, 60, "Blacksmith 3", "Long bow bar"),
+    ],
+    nozzle: [mod("Flamer", "+1 damage; damage type becomes Energy", 2, 90, "Blacksmith 3, Gun Nut 1", "Flaming")],
+  },
+  "gatling-laser": {
+    capacitor: [
+      mod("Gamma Wave Emitter", "+1 damage; gain Persistent", 3, 169, "Science! 3", "Fiery"),
+      mod("Maximized Capacitor", "+2 damage", 3, 207, "Science! 4", "Maximized"),
+      mod("Boosted Photon Agitator", "+2 damage; gain Vicious", 5, 244, "Science! 4", "Boosted, Agitated"),
+      mod("Boosted Gamma Wave Emitter", "+2 damage; gain Persistent", 5, 282, "Science! 4", "Boosted Fiery"),
+      mod("Overcharged Capacitor", "+3 damage", 5, 319, "Science! 4", "Overcharged"),
+    ],
+  },
+};
+
+const supplementalSmallGunMods = {
+  "10mm-pistol": { receiver: [
+    mod("Armor Piercing Receiver", "Add Piercing 1", 0, 3, "Gun Nut 1", "Armor Piercing"),
+    mod("Armor Piercing Automatic Receiver", "-1 damage; +2 Fire Rate; add Piercing 1; gain Inaccurate", 1, 40, "Gun Nut 3", "AP Auto"),
+    mod("Hardened Automatic Receiver", "+2 Fire Rate; gain Inaccurate", 2, 58, "Gun Nut 3", "Hardened Auto"),
+    mod("Rapid Automatic Receiver", "-1 damage; +3 Fire Rate; gain Inaccurate", 2, 63, "Gun Nut 4", "Rapid"),
+    mod("Calibrated Powerful Receiver", "+2 damage; gain Vicious", 3, 68, "Gun Nut 4", "Calibrated Powerful"),
+    mod("Powerful Automatic Receiver", "+1 damage; +2 Fire Rate; gain Inaccurate", 4, 88, "Gun Nut 4", "Powerful Auto"),
+    mod("Hardened Piercing Auto Receiver", "+2 Fire Rate; gain Piercing 1; gain Inaccurate", 3, 78, "Gun Nut 4", "Hardened AP Auto"),
+  ]},
+  "assault-rifle": { receiver: [] },
+  "combat-rifle": { receiver: [] },
+  "hunting-rifle": { receiver: [] },
+  "submachine-gun": { receiver: [] },
+  "pipe-gun": { receiver: [] },
+  "combat-shotgun": { receiver: [] },
+  "pipe-bolt-action": { receiver: [] },
+  "pipe-revolver": { receiver: [] },
+};
+const sg = supplementalSmallGunMods;
+const sg10 = sg["10mm-pistol"].receiver;
+const pickMods = (...names) => sg10.filter((item) => names.includes(item.name));
+sg["assault-rifle"].receiver.push(...sg10);
+sg["combat-rifle"].receiver.push(...sg10);
+sg["hunting-rifle"].receiver.push(...pickMods("Armor Piercing Receiver", "Calibrated Powerful Receiver"));
+sg["submachine-gun"].receiver.push(...pickMods("Armor Piercing Receiver"), mod("9mm Receiver", "Damage becomes 3; ammo becomes 9mm; +1 Fire Rate", -1, 10, "Gun Nut 2", "9mm"));
+sg["pipe-gun"].receiver.push(...sg10, mod("9mm Receiver", "Damage becomes 3; ammo becomes 9mm; +1 Fire Rate", -1, 10, "Gun Nut 2", "9mm"));
+sg["combat-shotgun"].receiver.push(...pickMods("Hardened Automatic Receiver", "Rapid Automatic Receiver", "Calibrated Powerful Receiver", "Powerful Automatic Receiver"));
+sg["pipe-bolt-action"].receiver.push(...pickMods("Calibrated Powerful Receiver"));
+sg["pipe-revolver"].receiver.push(...pickMods("Calibrated Powerful Receiver"), mod(".357 Receiver", "Damage becomes 5; ammo becomes .357; gain Vicious", 1, 35, "Gun Nut 3", ".357"));
+
+const supplementalEnergyMods = {
+  "institute-laser": {
+    capacitor: [
+      mod("Gamma Wave Emitter", "+1 damage; gain Persistent", 1, 14, "Science! 1", "Fiery"),
+      mod("Maximized Capacitor", "+2 damage", 1, 17, "Science! 2", "Maximized"),
+      mod("Boosted Photon Agitator", "+2 damage; gain Vicious", 1, 20, "Science! 2", "Boosted, Agitated"),
+      mod("Boosted Gamma Wave Emitter", "+2 damage; gain Persistent", 1, 23, "Science! 2", "Boosted, Fiery"),
+      mod("Overcharged Capacitor", "+3 damage", 1, 42, "Science! 2", "Overcharged"),
+    ],
+    barrel: [
+      mod("Improved Long Barrel", "+1 damage; remove Close Quarters; increase Range by 1 step", 1, 15, "Science! 2", "Improved Long"),
+      mod("Improved Automatic Barrel", "Gain Burst; gain Inaccurate; remove Close Quarters; increase Range by 1 step; +1 Fire Rate", 1, 18, "Science! 2", "Improved Automatic"),
+    ],
+    muzzle: [
+      mod("Amplified Beam Splitter", "Gain Spread; -1 Fire Rate; reduce Range by 1 step", 1, 15, "Science! 2", "Improved Scattered"),
+      mod("Fine-Tuned Beam Focuser", "Increase Range by 1 step; gain Accurate", 1, 18, "Science! 2", "Improved Focused"),
+      mod("Quantum Gyro-Compensating Lens", "+2 Fire Rate; remove Inaccurate", 1, 21, "Science! 3", "Improved Targeting"),
+    ],
+  },
+  "laser-gun": {},
+  "plasma-gun": {},
+};
+supplementalEnergyMods["laser-gun"] = {
+  capacitor: [...supplementalEnergyMods["institute-laser"].capacitor],
+  barrel: [
+    ...supplementalEnergyMods["institute-laser"].barrel,
+    mod("Improved Sniper Barrel", "+3 damage; remove Close Quarters; increase Range by 1 step; -1 Fire Rate", 1, 21, "Science! 2", "Improved Charging"),
+  ],
+  muzzle: [...supplementalEnergyMods["institute-laser"].muzzle],
+};
+supplementalEnergyMods["plasma-gun"] = {
+  capacitor: [...supplementalEnergyMods["institute-laser"].capacitor],
+  barrel: [
+    ...supplementalEnergyMods["institute-laser"].barrel,
+    mod("Improved Sniper Barrel", "+3 damage; remove Close Quarters; increase Range by 1 step; -1 Fire Rate", 1, 21, "Science! 2", "Improved Charging"),
+    mod("Improved Splitter", "Gain Spread; gain Inaccurate", 1, 25, "Science! 2", "Improved Scattergun"),
+  ],
+};
+
+
 const melee = {
   sword: { blade: [mod("Serrated Blade", "Gain Persistent", 0, 25, "Blacksmith 2", "Serrated"), mod("Electrified Blade", "+1 damage; damage becomes Energy", 0, 50, "Blacksmith 2, Science! 1", "Electrified"), mod("Electrified Serrated Blade", "+1 damage; damage becomes Energy; gain Persistent", 0, 75, "Blacksmith 3, Science! 1", "Electrified Serrated"), mod("Stun Pack", "+2 damage; damage becomes Energy; gain Stun", 0, 100, "Blacksmith 3, Science! 1", "Stunning")] },
   "combat-knife": { blade: [mod("Serrated Blade", "+1 damage; gain Persistent", 0, 12, "Blacksmith 1", "Serrated"), mod("Stealth Blade", "+1 damage and Persistent; +2 damage on Sneak attacks", 0, 18, "Blacksmith 2", "Stealth")] },
@@ -274,10 +398,10 @@ const mergeGroups = (...groups) => {
 export function getWeaponModGroups(weapon) {
   const slug = slugify(weapon?.name);
   const skill = String(weapon?.skill || "").trim().toLowerCase().replace(/[\s-]+/g, "_");
-  if (melee[slug]) return melee[slug];
-  if (skill === "small_guns") return mergeGroups(smallGuns, unique[slug]);
-  if (skill === "energy_weapons") return mergeGroups(energyWeapons, unique[slug]);
-  return unique[slug] || {};
+  if (melee[slug]) return mergeGroups(melee[slug], supplementalUnique[slug]);
+  if (skill === "small_guns") return mergeGroups(smallGuns, supplementalSmallGunMods[slug], unique[slug], supplementalUnique[slug]);
+  if (skill === "energy_weapons") return mergeGroups(energyWeapons, supplementalEnergyMods[slug], unique[slug], supplementalUnique[slug]);
+  return mergeGroups(unique[slug], supplementalUnique[slug]);
 }
 
 const EFFECT_KEYS = new Map([

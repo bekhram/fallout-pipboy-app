@@ -206,6 +206,43 @@ const WEAPON_RECIPES = [
   ...group({ workbench: "weapons", category: "weapons", group: "POWER FIST MODS", skill: "Repair", page: 227 }, [["Puncturing", 3, "Blacksmith 2", "Uncommon"], ["Heating Coil", 4, "Blacksmith 3", "Uncommon"]]),
 ];
 
+
+
+// === SUPPLEMENTAL WEAPON BATCH 2 CRAFTING ===
+WEAPON_RECIPES.push(
+  ...group({ workbench: "weapons", category: "weapons", group: "BOWS", skill: "Survival", page: 74 }, [
+    ["Bow", 3, "", "Common"],
+    ["Compound Frame", 3, "Gun Nut 1", "Uncommon"],
+    ["Iron Sights (Bow)", 2, "Gun Nut 1", "Uncommon", null, null, null, "Iron Sights"],
+    ["Glow Sights (Bow)", 3, "Gun Nut 2", "Uncommon", null, null, null, "Glow Sights"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "CROSSBOW", skill: "Repair", page: 75 }, [
+    ["Crossbow", 3, "Gun Nut 1", "Uncommon"],
+    ["Iron Sights (Crossbow)", 2, "Gun Nut 1", "Uncommon", null, null, null, "Iron Sights"],
+    ["Glow Sights (Crossbow)", 3, "Gun Nut 2", "Uncommon", null, null, null, "Glow Sights"],
+    ["Heavy Frame", 2, "Gun Nut 1", "Uncommon"],
+    ["Repeating Frame", 3, "Gun Nut 3", "Uncommon"],
+    ["Multiple Launch Frame", 3, "Gun Nut 2", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "ASSAULTRON BLADE MODS", skill: "Repair", page: 76 }, [["Electrified Blade", 4, "Blacksmith 2, Science! 1", "Uncommon"]]),
+  ...group({ workbench: "weapons", category: "weapons", group: "AUTO-AXE MODS", skill: "Repair", page: 76 }, [
+    ["Electrified", 4, "Blacksmith 2, Science! 1", "Uncommon"], ["Burning", 3, "Blacksmith 2, Science! 1", "Uncommon"], ["Poisoned", 3, "Blacksmith 2, Science! 1", "Uncommon"], ["Turbo", 4, "Blacksmith 2, Science! 1", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "CHAINSAW MODS", skill: "Repair", page: 78 }, [
+    ["Dual Bar", 3, "Blacksmith 2", "Uncommon"], ["Bow Bar", 3, "Blacksmith 3", "Uncommon"], ["Long Bow Bar", 4, "Blacksmith 3", "Uncommon"], ["Flamer (Chainsaw)", 4, "Blacksmith 2, Gun Nut 1", "Uncommon", null, null, null, "Flamer"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "ADDITIONAL SMALL GUN RECEIVERS", skill: "Repair", page: 82 }, [
+    ["Armor Piercing Receiver", 3, "Gun Nut 1", "Uncommon"], ["Armor Piercing Automatic Receiver", 4, "Gun Nut 3", "Uncommon"], ["Hardened Automatic Receiver", 4, "Gun Nut 3", "Uncommon"], ["Rapid Automatic Receiver", 4, "Gun Nut 4", "Uncommon"], ["Calibrated Powerful Receiver", 4, "Gun Nut 4", "Uncommon"], ["Powerful Automatic Receiver", 4, "Gun Nut 4", "Uncommon"], ["Hardened Piercing Auto Receiver", 5, "Gun Nut 4", "Uncommon"], ["9mm Receiver", 3, "Gun Nut 2", "Uncommon"], [".357 Receiver", 3, "Gun Nut 3", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "ADDITIONAL ENERGY WEAPON MODS", skill: "Science", page: 83 }, [
+    ["Gamma Wave Emitter", 3, "Science! 1", "Uncommon"], ["Maximized Capacitor", 3, "Science! 2", "Uncommon"], ["Boosted Photon Agitator", 4, "Science! 2", "Uncommon"], ["Boosted Gamma Wave Emitter", 5, "Science! 2", "Uncommon"], ["Overcharged Capacitor", 4, "Science! 3", "Uncommon"], ["Improved Long Barrel", 4, "Science! 2", "Uncommon"], ["Improved Automatic Barrel", 5, "Science! 3", "Uncommon"], ["Improved Sniper Barrel", 5, "Science! 3", "Uncommon"], ["Improved Splitter", 4, "Science! 3", "Uncommon"], ["Amplified Beam Splitter", 5, "Science! 2", "Uncommon"], ["Fine-Tuned Beam Focuser", 5, "Science! 2", "Uncommon"], ["Quantum Gyro-Compensating Lens", 5, "Science! 3", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "GATLING LASER ADDITIONAL MODS", skill: "Science", page: 84 }, [
+    ["Gamma Wave Emitter (Gatling Laser)", 3, "Science! 3", "Uncommon", null, null, null, "Gamma Wave Emitter"], ["Maximized Capacitor (Gatling Laser)", 3, "Science! 4", "Uncommon", null, null, null, "Maximized Capacitor"], ["Boosted Photon Agitator (Gatling Laser)", 4, "Science! 4", "Uncommon", null, null, null, "Boosted Photon Agitator"], ["Boosted Gamma Wave Emitter (Gatling Laser)", 5, "Science! 4", "Uncommon", null, null, null, "Boosted Gamma Wave Emitter"], ["Overcharged Capacitor (Gatling Laser)", 4, "Science! 4", "Uncommon", null, null, null, "Overcharged Capacitor"],
+  ]),
+);
+
+
 const CHEMISTRY_RECIPES = [
   ...group({ workbench: "chemistry", category: "items", group: "CHEMS", skill: "Science", page: 213, outputCategory: "aid" }, [
     ["Antibiotics", 4, "Chemist", "Uncommon", null, { "Rare Materials": 2, "Glowing Fungus": 3, "Purified Water": 2, "Stimpak": 3 }],
