@@ -6,6 +6,7 @@ import QuickCharacterWizard, {
 } from "../characterCreation/QuickCharacterWizard.jsx";
 import AppDownloadPanel from "./AppDownloadPanel.jsx";
 import CharacterProfilesPanel from "./CharacterProfilesPanel.jsx";
+import CloudAccountPanel from "./CloudAccountPanel.jsx";
 import { createCharacterProfile } from "../../utils/characterProfiles.js";
 
 export default function MenuScreen({
@@ -105,6 +106,8 @@ export default function MenuScreen({
             ) : null}
           </div>
         </section>
+
+        <CloudAccountPanel language={i18n.resolvedLanguage || i18n.language} />
 
         <CharacterProfilesPanel onCreateCharacter={handleNewCharacterClick} />
 
