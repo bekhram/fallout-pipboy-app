@@ -1,8 +1,6 @@
 .player-battlemap-side-controls {
-  position: fixed;
-  right: 12px;
-  bottom: max(12px, env(safe-area-inset-bottom));
-  z-index: 1000002;
+  position: relative;
+  z-index: 60;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -23,6 +21,7 @@
   letter-spacing: .04em;
   cursor: pointer;
   box-shadow: 0 0 14px rgba(0, 0, 0, .36), inset 0 0 10px color-mix(in srgb, currentColor 7%, transparent);
+  touch-action: manipulation;
 }
 
 .player-battlemap-tool:active {
@@ -30,7 +29,7 @@
 }
 
 .session-tactical-player .battlemap-view-controls {
-  z-index: 1000001 !important;
+  z-index: 61 !important;
 }
 
 .session-tactical-player .battlemap-view-controls .battlemap-fit-btn,
@@ -44,35 +43,24 @@
 }
 
 .session-tactical-player .battlemap-view-controls.is-player-collapsed {
-  width: 30px;
-  min-width: 30px;
-  max-width: 30px;
-  height: 26px;
-  min-height: 26px;
-  overflow: hidden;
-  opacity: .18;
-  pointer-events: none;
-}
-
-.session-tactical-player .battlemap-view-controls.is-player-collapsed > * {
-  visibility: hidden;
-}
-
-.session-tactical-overlay ~ .session-utility-drawer-shell .session-utility-drawer-toggle,
-.session-utility-drawer-toggle,
-.floating-dice-control {
-  z-index: 1000003 !important;
+  display: none !important;
 }
 
 @media (max-width: 780px) {
+  /* The player battlemap gets one control surface only: the dock below the map. */
+  .session-tactical-player {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
   .player-battlemap-side-controls {
-    position: fixed !important;
-    left: 10px !important;
-    right: 10px !important;
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
     top: auto !important;
-    bottom: max(10px, env(safe-area-inset-bottom)) !important;
-    width: auto !important;
+    bottom: auto !important;
+    width: calc(100% - 20px) !important;
     max-width: none !important;
+    margin: 8px 10px 0 !important;
     transform: none !important;
     display: grid !important;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -82,37 +70,88 @@
     padding: 6px;
     border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
     border-radius: 14px;
-    background: rgba(2, 12, 4, .94);
-    box-shadow: 0 -7px 22px rgba(0, 0, 0, .38), inset 0 0 18px color-mix(in srgb, currentColor 5%, transparent);
+    background: rgba(2, 12, 4, .96);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .32), inset 0 0 18px color-mix(in srgb, currentColor 5%, transparent);
     backdrop-filter: blur(5px);
   }
 
   .player-battlemap-tool {
     width: 100% !important;
     min-width: 0 !important;
-    min-height: 42px;
-    padding: 4px 3px;
+    min-height: 44px;
+    padding: 5px 3px;
     border-radius: 9px;
     font-size: .46rem;
     line-height: 1;
     white-space: nowrap;
   }
 
+  /* ZOOM opens as a compact row below the map instead of a right-side overlay. */
   .session-tactical-player .battlemap-view-controls {
-    left: 8px;
+    position: relative !important;
+    left: auto !important;
     right: auto !important;
     top: auto !important;
-    bottom: 72px !important;
-    max-width: calc(100% - 16px);
+    bottom: auto !important;
+    width: calc(100% - 20px) !important;
+    max-width: none !important;
+    margin: 8px 10px 0 !important;
+    justify-content: center;
+    box-sizing: border-box;
   }
 
   .session-tactical-player .battlemap-view-controls.is-player-collapsed {
     display: none !important;
   }
 
+  /* Remove the old right-side CHAT / D20 / zoom controls while the player map is open. */
   body:has(.session-tactical-player) .session-utility-drawer-toggle,
   body:has(.session-tactical-player) .floating-dice-control,
-  body:has(.session-tactical-player) .pip-mobile-tool-dock {
+  body:has(.session-tactical-player) .pip-mobile-tool-dock,
+  body:has(.session-tactical-player) .player-battlemap-side-controls ~ .session-utility-drawer-toggle {
+    display: none !important;
+  }
+
+  /* Reuse the existing battlemap tools, but remove its left-side toggle.
+     The TOOLS button in the bottom dock clicks that hidden toggle and the tool row appears below the map. */
+  body:has(.session-tactical-player) .battlemap-tools-drawer {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    width: calc(100% - 20px) !important;
+    max-width: none !important;
+    margin: 8px 10px 0 !important;
+    justify-content: center !important;
+    transform: none !important;
+    box-sizing: border-box;
+  }
+
+  body:has(.session-tactical-player) .battlemap-tools-drawer .battlemap-tools-toggle {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    min-width: 1px !important;
+    min-height: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+  }
+
+  body:has(.session-tactical-player) .battlemap-tools-drawer .battlemap-tools-panel {
+    width: 100%;
+    min-height: 42px;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px;
+    border-radius: 10px;
+    box-sizing: border-box;
+  }
+
+  body:has(.session-tactical-player) .battlemap-tools-drawer:not(.is-open) {
     display: none !important;
   }
 }
