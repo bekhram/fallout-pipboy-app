@@ -2,6 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { INVENTORY_DATABASE } from "../../data/inventoryDatabase.js";
 import { translateInventoryItemName } from "../../data/inventoryLocalization.js";
+import {
+  getLegendaryArmorProperties,
+  getLegendaryWeaponProperties,
+} from "../../data/legendaryProperties.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 import { formatLootChatMessage, getLootTypeLabel } from "../../utils/lootChat.js";
@@ -16,6 +20,7 @@ const COPY = {
     title: "LOOT GENERATOR", subtitle: "Generate loot by rarity, category and wealth, then send it to session chat when you are ready.",
     rarity: "RARITY", from: "MIN", to: "MAX", rarityHint: "R0–R1 are common. Higher rarity becomes progressively less likely.",
     types: "LOOT TYPES", wealth: "WEALTH", wealthHint: "Wealth controls the number of generated positions: 1–10.",
+    legendary: "LEGENDARY LOOT", legendaryToggle: "Add Legendary items", legendaryCount: "Legendary count", legendaryHint: "Legendary slots are generated only from compatible weapons and armor.",
     generate: "GENERATE", sendChat: "SEND TO CHAT", loading: "LOADING DATABASES...", noTypes: "Select at least one loot type.",
     noLoot: "No items match the selected rarity and type filters.", generated: "Loot generated.", sent: "Loot sent to session chat.", localOnly: "Session chat is unavailable.",
     result: "RESULT", name: "NAME", cost: "VALUE", weight: "WEIGHT", itemRarity: "RARITY", qty: "QTY", caps: "caps",
@@ -24,6 +29,7 @@ const COPY = {
     title: "ГЕНЕРАТОР ЛУТА", subtitle: "Рандомный лут по редкости, типу и богатству. Сначала сгенерируйте, затем отдельно отправьте результат в чат.",
     rarity: "РЕДКОСТЬ", from: "ОТ", to: "ДО", rarityHint: "R0–R1 выпадают часто. Чем выше редкость, тем ниже шанс выпадения.",
     types: "ТИП ЛУТА", wealth: "БОГАТСТВО", wealthHint: "Богатство определяет количество позиций: от 1 до 10.",
+    legendary: "ЛЕГЕНДАРНЫЙ ЛУТ", legendaryToggle: "Добавлять легендарные предметы", legendaryCount: "Количество легендарных", legendaryHint: "Легендарные позиции создаются только из подходящего оружия и брони.",
     generate: "СГЕНЕРИРОВАТЬ", sendChat: "ОТПРАВИТЬ В ЧАТ", loading: "ЗАГРУЗКА БАЗ...", noTypes: "Выберите хотя бы один тип лута.",
     noLoot: "Для выбранных типов и диапазона редкости предметов нет.", generated: "Лут сгенерирован.", sent: "Лут отправлен в чат сессии.", localOnly: "Чат сессии сейчас недоступен.",
     result: "РЕЗУЛЬТАТ", name: "НАЗВАНИЕ", cost: "СТОИМОСТЬ", weight: "ВЕС", itemRarity: "РЕДКОСТЬ", qty: "КОЛ-ВО", caps: "кр.",
@@ -32,6 +38,7 @@ const COPY = {
     title: "ГЕНЕРАТОР ЛУТУ", subtitle: "Випадковий лут за рідкістю, типом і багатством. Спочатку згенеруйте, потім окремо надішліть у чат.",
     rarity: "РІДКІСТЬ", from: "ВІД", to: "ДО", rarityHint: "R0–R1 випадають часто. Чим вища рідкість, тим нижчий шанс.",
     types: "ТИП ЛУТУ", wealth: "БАГАТСТВО", wealthHint: "Багатство визначає кількість позицій: від 1 до 10.",
+    legendary: "ЛЕГЕНДАРНИЙ ЛУТ", legendaryToggle: "Додавати легендарні предмети", legendaryCount: "Кількість легендарних", legendaryHint: "Легендарні позиції створюються лише з відповідної зброї та броні.",
     generate: "ЗГЕНЕРУВАТИ", sendChat: "НАДІСЛАТИ В ЧАТ", loading: "ЗАВАНТАЖЕННЯ БАЗ...", noTypes: "Оберіть хоча б один тип луту.",
     noLoot: "Для вибраних типів і діапазону рідкості предметів немає.", generated: "Лут згенеровано.", sent: "Лут надіслано в чат сесії.", localOnly: "Чат сесії зараз недоступний.",
     result: "РЕЗУЛЬТАТ", name: "НАЗВА", cost: "ВАРТІСТЬ", weight: "ВАГА", itemRarity: "РІДКІСТЬ", qty: "К-СТЬ", caps: "кр.",
@@ -40,6 +47,7 @@ const COPY = {
     title: "GENERATOR ŁUPÓW", subtitle: "Losuj łupy według rzadkości, typu i bogactwa. Najpierw wygeneruj wynik, a potem osobno wyślij go na czat.",
     rarity: "RZADKOŚĆ", from: "OD", to: "DO", rarityHint: "R0–R1 wypadają często. Im wyższa rzadkość, tym mniejsza szansa.",
     types: "TYP ŁUPU", wealth: "BOGACTWO", wealthHint: "Bogactwo określa liczbę pozycji: 1–10.",
+    legendary: "LEGENDARNE ŁUPY", legendaryToggle: "Dodawaj legendarne przedmioty", legendaryCount: "Liczba legendarnych", legendaryHint: "Legendarne pozycje są tworzone tylko z pasującej broni i pancerzy.",
     generate: "LOSUJ", sendChat: "WYŚLIJ NA CZAT", loading: "ŁADOWANIE BAZ...", noTypes: "Wybierz co najmniej jeden typ łupu.",
     noLoot: "Brak przedmiotów dla wybranych typów i zakresu rzadkości.", generated: "Łup wygenerowany.", sent: "Łup wysłano na czat sesji.", localOnly: "Czat sesji jest niedostępny.",
     result: "WYNIK", name: "NAZWA", cost: "WARTOŚĆ", weight: "WAGA", itemRarity: "RZADKOŚĆ", qty: "ILOŚĆ", caps: "kap.",
@@ -82,13 +90,11 @@ function normalizeInventoryItem(item, index, language) {
   const category = String(item?.category || "").toLowerCase();
   const lootType = inventoryLootType(category);
   if (!lootType) return null;
-
   const canonicalName = String(item?.name || "Loot");
   const localizedName = item?.localizedName?.[language]
     || item?.localizedName?.en
     || translateInventoryItemName(canonicalName, language)
     || canonicalName;
-
   return {
     id: stableId("inventory", canonicalName, index),
     name: localizedName,
@@ -115,7 +121,18 @@ function normalizeWeapons(rows) {
     rarity: clampRarity(row?.Rarity, 0),
     category: "weapons",
     sourceType: "weapon",
+    weaponType: String(row?.["Weapon type"] || ""),
+    skill: String(row?.["Weapon type"] || ""),
   })).filter((item) => item.name && item.name !== "Weapon");
+}
+
+function firstArmorLocation(item) {
+  const locations = item?.locations || {};
+  if (locations.head) return "Head";
+  if (locations.arms) return "Arm";
+  if (locations.torso) return "Torso";
+  if (locations.legs) return "Leg";
+  return "";
 }
 
 function normalizeArmor(items, lootType = "armor") {
@@ -130,6 +147,7 @@ function normalizeArmor(items, lootType = "armor") {
     rarity: clampRarity(item?.rarity, lootType === "mod" ? 2 : 1),
     category: lootType === "mod" ? "misc" : "armor",
     sourceType: lootType === "mod" ? "armor_mod" : "armor",
+    armorLocations: firstArmorLocation(item),
   })).filter((item) => item.canonicalName);
 }
 
@@ -186,7 +204,6 @@ function weightedPick(values, weightFor) {
 function generateOne(pool, enabledTypes, minRarity, maxRarity, usedIds, wealth) {
   const eligible = pool.filter((item) => enabledTypes.has(item.lootType) && item.rarity >= minRarity && item.rarity <= maxRarity);
   if (!eligible.length) return null;
-
   const rarities = [...new Set(eligible.map((item) => item.rarity))];
   const rarity = weightedPick(rarities, (value) => RARITY_WEIGHTS[value] || 1);
   const atRarity = eligible.filter((item) => item.rarity === rarity);
@@ -194,7 +211,6 @@ function generateOne(pool, enabledTypes, minRarity, maxRarity, usedIds, wealth) 
   const candidates = unused.length ? unused : atRarity;
   const base = candidates[Math.floor(Math.random() * candidates.length)];
   if (!base) return null;
-
   usedIds.add(base.id);
   let quantity = base.lootType === "ammo" ? rollFoundQuantity(base.quantityFormula) : 1;
   if (base.lootType === "caps") {
@@ -203,6 +219,25 @@ function generateOne(pool, enabledTypes, minRarity, maxRarity, usedIds, wealth) 
     quantity = min + Math.floor(Math.random() * (max - min + 1));
   }
   return { ...base, quantity };
+}
+
+function getLegendaryOptions(item) {
+  if (item?.lootType === "weapon") return getLegendaryWeaponProperties(item);
+  if (item?.lootType === "armor") return getLegendaryArmorProperties(item?.armorLocations);
+  return [];
+}
+
+function makeLegendary(item) {
+  const options = getLegendaryOptions(item);
+  if (!options.length) return item;
+  const property = options[Math.floor(Math.random() * options.length)];
+  return {
+    ...item,
+    legendary: true,
+    legendaryProperty: property.id,
+    legendaryPropertyName: property.name,
+    legendaryDescription: property.description,
+  };
 }
 
 function readSavedFilters() {
@@ -214,6 +249,8 @@ function readSavedFilters() {
       maxRarity: clampRarity(raw.maxRarity, 7),
       wealth: Math.max(1, Math.min(10, Number(raw.wealth) || 3)),
       types: Array.isArray(raw.types) ? raw.types.filter((type) => TYPE_IDS.includes(type)) : TYPE_IDS,
+      includeLegendary: Boolean(raw.includeLegendary),
+      legendaryCount: Math.max(1, Math.min(10, Number(raw.legendaryCount) || 1)),
     };
   } catch {
     return null;
@@ -229,14 +266,27 @@ export default function GmLootGenerator({ session = null }) {
   const [maxRarity, setMaxRarity] = useState(saved?.maxRarity ?? 7);
   const [wealth, setWealth] = useState(saved?.wealth ?? 3);
   const [enabledTypes, setEnabledTypes] = useState(() => new Set(saved?.types?.length ? saved.types : TYPE_IDS));
+  const [includeLegendary, setIncludeLegendary] = useState(saved?.includeLegendary ?? false);
+  const [legendaryCount, setLegendaryCount] = useState(saved?.legendaryCount ?? 1);
   const [dynamicPool, setDynamicPool] = useState([]);
   const [loading, setLoading] = useState(true);
   const [results, setResults] = useState([]);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(FILTER_KEY, JSON.stringify({ minRarity, maxRarity, wealth, types: [...enabledTypes] }));
-  }, [minRarity, maxRarity, wealth, enabledTypes]);
+    localStorage.setItem(FILTER_KEY, JSON.stringify({
+      minRarity,
+      maxRarity,
+      wealth,
+      types: [...enabledTypes],
+      includeLegendary,
+      legendaryCount,
+    }));
+  }, [minRarity, maxRarity, wealth, enabledTypes, includeLegendary, legendaryCount]);
+
+  useEffect(() => {
+    if (legendaryCount > wealth) setLegendaryCount(wealth);
+  }, [wealth, legendaryCount]);
 
   useEffect(() => {
     let active = true;
@@ -297,9 +347,18 @@ export default function GmLootGenerator({ session = null }) {
 
     const usedIds = new Set();
     const next = [];
-    for (let index = 0; index < wealth; index += 1) {
+    const requestedLegendary = includeLegendary ? Math.min(wealth, Math.max(1, legendaryCount)) : 0;
+    const legendaryPool = pool.filter((item) => getLegendaryOptions(item).length > 0);
+
+    for (let index = 0; index < requestedLegendary; index += 1) {
+      const item = generateOne(legendaryPool, enabledTypes, minRarity, maxRarity, usedIds, wealth);
+      if (item) next.push(makeLegendary(item));
+    }
+
+    while (next.length < wealth) {
       const item = generateOne(pool, enabledTypes, minRarity, maxRarity, usedIds, wealth);
-      if (item) next.push(item);
+      if (!item) break;
+      next.push(item);
     }
 
     setResults(next);
@@ -362,6 +421,28 @@ export default function GmLootGenerator({ session = null }) {
         </div>
       </section>
 
+      <section className="gm-loot-filter-card">
+        <strong>{copy.legendary}</strong>
+        <label className={`gm-loot-type-chip${includeLegendary ? " is-active" : ""}`} style={{ marginTop: 8 }}>
+          <input type="checkbox" checked={includeLegendary} onChange={(event) => setIncludeLegendary(event.target.checked)} />
+          <span>{copy.legendaryToggle}</span>
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <span>{copy.legendaryCount}</span>
+          <input
+            className="pip-input"
+            type="number"
+            min="1"
+            max={wealth}
+            disabled={!includeLegendary}
+            value={Math.min(legendaryCount, wealth)}
+            onChange={(event) => setLegendaryCount(Math.max(1, Math.min(wealth, Number(event.target.value) || 1)))}
+            style={{ width: 76 }}
+          />
+        </label>
+        <small>{copy.legendaryHint}</small>
+      </section>
+
       <div className="gm-loot-actions">
         <button type="button" className="pip-btn is-primary gm-loot-generate" disabled={loading} onClick={generate}>
           {loading ? copy.loading : copy.generate}
@@ -379,7 +460,10 @@ export default function GmLootGenerator({ session = null }) {
             <div className="gm-loot-results__row is-head"><span>{copy.name}</span><span>{copy.qty}</span><span>{copy.cost}</span><span>{copy.weight}</span><span>{copy.itemRarity}</span></div>
             {results.map((item, index) => (
               <div className="gm-loot-results__row" key={`${item.id}:${index}`}>
-                <span><b>{item.name}</b><small>{getLootTypeLabel(item.lootType, language)}</small></span>
+                <span>
+                  <b>{item.legendary ? `★ ${item.name}` : item.name}</b>
+                  <small>{getLootTypeLabel(item.lootType, language)}{item.legendaryPropertyName ? ` · ${item.legendaryPropertyName}` : ""}</small>
+                </span>
                 <span>{item.quantity}</span>
                 <span>{item.cost}{item.lootType === "caps" ? ` ${copy.caps}` : ""}</span>
                 <span>{item.weight}</span>
