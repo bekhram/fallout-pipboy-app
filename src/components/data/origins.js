@@ -167,9 +167,18 @@ export const TRAITS_DICTIONARY = {
   "origins.traits.necrotic_post_human": "necrotic_post_human",
   "origins.traits.forced_evolution": "forced_evolution",
   "origins.traits.mister_handy_robot": "mister_handy_robot",
+  "origins.traits.designed_for_frontline": "designed_for_frontline",
+  "origins.traits.chain_that_breaks": "chain_that_breaks",
+  "origins.traits.rad_sponge": "rad_sponge",
+  "origins.traits.stealth_boy_addict": "stealth_boy_addict",
   "educated": "educated",
   "fast_shot": "fast_shot",
   "gifted": "gifted",
   "heavy_handed": "heavy_handed",
-  "small_frame": "small_frame"
+  "small_frame": "small_frame",
+  "mother_wasteland": "mother_wasteland",
+  "nomad": "nomad",
+  "rite_of_passage": "rite_of_passage",
+  "tools_of_old_world": "tools_of_old_world",
+  "chosen_one": "chosen_one"
 };
