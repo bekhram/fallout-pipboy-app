@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import BattlemapViewportControls from "../gm/BattlemapViewportControls.jsx";
 import "./playerBattlemapControls.css";
 
@@ -34,7 +35,7 @@ function toggleBattlemapTools() {
 
 export default function PlayerBattlemapControls({ session }) {
   const [zoomCollapsed, setZoomCollapsed] = useState(readCollapsed);
-  const [battlemapOpen, setBattlemapOpen] = useState(false);
+  const [battlemapTarget, setBattlemapTarget] = useState(null);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -43,11 +44,9 @@ export default function PlayerBattlemapControls({ session }) {
       const playerMap = document.querySelector(
         ".session-tactical-overlay .session-tactical-player"
       );
-      const controls = document.querySelector(
-        ".session-tactical-player .battlemap-view-controls"
-      );
+      const controls = playerMap?.querySelector?.(".battlemap-view-controls") || null;
 
-      setBattlemapOpen(Boolean(playerMap));
+      setBattlemapTarget((current) => (current === playerMap ? current : playerMap));
       if (controls) controls.classList.toggle("is-player-collapsed", zoomCollapsed);
     };
 
@@ -75,7 +74,7 @@ export default function PlayerBattlemapControls({ session }) {
   };
 
   if (
-    !battlemapOpen ||
+    !battlemapTarget ||
     !session?.isActive ||
     session?.mode !== "player" ||
     !session?.tacticalScene?.active
@@ -83,48 +82,51 @@ export default function PlayerBattlemapControls({ session }) {
     return null;
   }
 
+  const dock = (
+    <div className="player-battlemap-side-controls" aria-label="Player battlemap tools">
+      <button
+        type="button"
+        className="player-battlemap-tool player-battlemap-tool--zoom"
+        onClick={toggleZoom}
+        title={zoomCollapsed ? "Show zoom controls" : "Hide zoom controls"}
+        aria-label={zoomCollapsed ? "Show zoom controls" : "Hide zoom controls"}
+      >
+        ZOOM
+      </button>
+      <button
+        type="button"
+        className="player-battlemap-tool player-battlemap-tool--chat"
+        onClick={() => clickFirst(".session-utility-drawer-toggle")}
+        title="Chat"
+        aria-label="Open session chat"
+      >
+        CHAT
+      </button>
+      <button
+        type="button"
+        className="player-battlemap-tool player-battlemap-tool--dice"
+        onClick={openDice}
+        title="Dice"
+        aria-label="Open dice roller"
+      >
+        D20
+      </button>
+      <button
+        type="button"
+        className="player-battlemap-tool player-battlemap-tool--tools"
+        onClick={toggleBattlemapTools}
+        title="Battlemap tools"
+        aria-label="Open battlemap tools"
+      >
+        TOOLS
+      </button>
+    </div>
+  );
+
   return (
     <>
       <BattlemapViewportControls session={session} role="player" activeTab="battle" />
-
-      <div className="player-battlemap-side-controls" aria-label="Player battlemap tools">
-        <button
-          type="button"
-          className="player-battlemap-tool player-battlemap-tool--zoom"
-          onClick={toggleZoom}
-          title={zoomCollapsed ? "Show zoom controls" : "Hide zoom controls"}
-          aria-label={zoomCollapsed ? "Show zoom controls" : "Hide zoom controls"}
-        >
-          ZOOM
-        </button>
-        <button
-          type="button"
-          className="player-battlemap-tool player-battlemap-tool--chat"
-          onClick={() => clickFirst(".session-utility-drawer-toggle")}
-          title="Chat"
-          aria-label="Open session chat"
-        >
-          CHAT
-        </button>
-        <button
-          type="button"
-          className="player-battlemap-tool player-battlemap-tool--dice"
-          onClick={openDice}
-          title="Dice"
-          aria-label="Open dice roller"
-        >
-          D20
-        </button>
-        <button
-          type="button"
-          className="player-battlemap-tool player-battlemap-tool--tools"
-          onClick={toggleBattlemapTools}
-          title="Battlemap tools"
-          aria-label="Open battlemap tools"
-        >
-          TOOLS
-        </button>
-      </div>
+      {createPortal(dock, battlemapTarget)}
     </>
   );
 }
