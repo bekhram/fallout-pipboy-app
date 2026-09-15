@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import GmUnifiedTokenManagerV5 from "./GmUnifiedTokenManagerV5.jsx";
 import GmNpcCardEditorV8 from "./GmNpcCardEditorV8.jsx";
+import { enrichLegendaryNpcStats } from "../../utils/legendaryLoot.js";
 import "./gmUnifiedTokenManagerV8.css";
 
 const COPY = {
@@ -72,11 +73,12 @@ export default function GmUnifiedTokenManagerV8({ session }) {
         : nextColorIndex();
 
       if (!isHorde) {
+        const enrichedStats = await enrichLegendaryNpcStats(incomingStats);
         return session.createNpcToken?.({
           ...payload,
           size: baseSize,
           stats: {
-            ...incomingStats,
+            ...enrichedStats,
             footprint: baseSize,
             size: baseSize,
             tokenColorIndex: colorIndex,
@@ -93,7 +95,7 @@ export default function GmUnifiedTokenManagerV8({ session }) {
       const created = [];
 
       for (let index = 0; index < memberCount; index += 1) {
-        const memberStats = {
+        const memberBaseStats = {
           ...incomingStats,
           hp: memberMaxHp,
           maxHp: memberMaxHp,
@@ -109,6 +111,7 @@ export default function GmUnifiedTokenManagerV8({ session }) {
           size: baseSize,
           tokenColorIndex: colorIndex,
         };
+        const memberStats = await enrichLegendaryNpcStats(memberBaseStats);
         const memberPayload = {
           ...payload,
           name: `${String(payload.name || "NPC")} ${index + 1}`,
@@ -252,7 +255,7 @@ export default function GmUnifiedTokenManagerV8({ session }) {
   return (
     <div className="gm-unified-token-manager-v8" ref={rootRef}>
       <GmUnifiedTokenManagerV5 session={tokenSession} />
-      <GmNpcCardEditorV8 session={session} />
+      <GmNpcCardEditorV8 session={tokenSession} />
 
       {filterHost ? createPortal(
         <label className="gm-token-v8-source-filter">
