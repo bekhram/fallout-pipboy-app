@@ -1,0 +1,327 @@
+name: Apply combat calculations
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-combat-calculations.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply legendary and damage calculation support
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          # Shared legendary calculation helpers.
+          Path('src/utils/legendaryEffects.js').write_text(r'''function asNumber(value) {
+  const match = String(value ?? "").match(/-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function replaceLeadingNumber(value, next) {
+  const text = String(value ?? "0");
+  return /\d+/.test(text) ? text.replace(/\d+/, String(next)) : String(next);
+}
+
+function uniqueTokens(values = []) {
+  const result = [];
+  const seen = new Set();
+  values.filter(Boolean).forEach((value) => {
+    const key = String(value).trim().toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(String(value).trim());
+    }
+  });
+  return result;
+}
+
+function splitCustom(value) {
+  return String(value || "").split(/[,;]/).map((item) => item.trim()).filter(Boolean);
+}
+
+function addEffect(effects, effect) {
+  return uniqueTokens([...(effects || []), effect]);
+}
+
+function addQuality(qualities, quality) {
+  return uniqueTokens([...(qualities || []), quality]);
+}
+
+function increasePiercing(effects, amount) {
+  let found = false;
+  const next = (effects || []).map((effect) => {
+    const match = String(effect).match(/^Piercing\s*\(?\s*(\d+)\s*\)?$/i);
+    if (!match) return effect;
+    found = true;
+    return `Piercing ${Number(match[1]) + amount}`;
+  });
+  return found ? next : [...next, `Piercing ${amount}`];
+}
+
+export function applyLegendaryWeaponEffects(weapon = {}, context = {}) {
+  if (!weapon?.legendary || !weapon?.legendaryProperty) return { ...weapon, legendaryEffectNotes: [] };
+
+  const id = String(weapon.legendaryProperty);
+  let damage = asNumber(weapon.damage);
+  let rate = asNumber(weapon.rate);
+  let type = weapon.type;
+  let effects = uniqueTokens([
+    ...(Array.isArray(weapon.effects) ? weapon.effects : []),
+    ...splitCustom(weapon.customEffect),
+  ]);
+  let qualities = uniqueTokens([
+    ...(Array.isArray(weapon.qualities) ? weapon.qualities : []),
+    ...splitCustom(weapon.qualitiesCustom),
+  ]);
+  const notes = [];
+
+  const addDamage = (amount, note) => {
+    damage += amount;
+    if (note) notes.push(note);
+  };
+
+  switch (id) {
+    case 'mighty':
+    case 'powerful':
+      addDamage(2, 'Legendary: +2 CD');
+      break;
+    case 'rapid':
+      rate += 3;
+      notes.push('Legendary: +3 Fire Rate');
+      break;
+    case 'two-shot':
+      addDamage(2, 'Legendary: +2 CD');
+      effects = addEffect(effects, 'Vicious');
+      qualities = addQuality(qualities, 'Ammo-Hungry (2)');
+      break;
+    case 'penetrating':
+      effects = increasePiercing(effects, 2);
+      break;
+    case 'plasma-infused':
+      addDamage(2, 'Legendary: +2 CD');
+      type = 'Physical/Energy damage';
+      break;
+    case 'poisoners':
+      effects = addEffect(effects, 'Persistent (Poison)');
+      break;
+    case 'staggering':
+      effects = addEffect(effects, 'Stun');
+      break;
+    case 'wounding':
+      effects = addEffect(effects, 'Persistent (Physical)');
+      break;
+    case 'irradiated':
+      effects = addEffect(effects, 'Radioactive');
+      break;
+    case 'incendiary':
+      effects = addEffect(effects, 'Persistent (Energy)');
+      break;
+    case 'freezing':
+      if (context.spendLegendaryLuck) effects = addEffect(effects, 'Freeze');
+      else notes.push('Legendary: spend 1 Luck to add Freeze');
+      break;
+    case 'hitmans':
+      if (context.aimed) addDamage(1, 'Legendary Hitman: Aim +1 CD');
+      break;
+    case 'instigating':
+      if (context.targetAtMaxHp) addDamage(3, 'Legendary Instigating: target at max HP +3 CD');
+      else notes.push('Legendary: +3 CD against a target at maximum HP');
+      break;
+    case 'nocturnal':
+      if (context.isNight) effects = addEffect(effects, 'Vicious');
+      break;
+    case 'assassins':
+      if (context.targetType === 'human') effects = addEffect(effects, 'Vicious');
+      break;
+    case 'ghoul-slayers':
+      if (context.targetType === 'ghoul') effects = addEffect(effects, 'Vicious');
+      break;
+    case 'mutant-slayers':
+      if (context.targetType === 'superMutant') effects = addEffect(effects, 'Vicious');
+      break;
+    case 'troubleshooters':
+      if (context.targetType === 'robot') effects = addEffect(effects, 'Vicious');
+      break;
+    case 'exterminators':
+      if (context.targetType === 'insect') effects = addEffect(effects, 'Vicious');
+      break;
+    case 'hunters':
+      if (context.targetType === 'mammalLizard' || context.targetType === 'mutatedAnimal') effects = addEffect(effects, 'Vicious');
+      break;
+    case 'violent':
+      addDamage(2, 'Legendary: +2 CD; high-damage hits can cause injury');
+      qualities = addQuality(qualities, 'Recoil (7)');
+      break;
+    case 'kneecapper':
+      notes.push('Legendary: leg hit becomes critical at 3+ damage after DR');
+      break;
+    case 'crippling':
+      notes.push('Legendary: arm/leg hit causes injury at 4+ damage after DR');
+      break;
+    case 'explosive':
+      notes.push('Legendary: each Effect can hit a nearby secondary target');
+      break;
+    case 'bloodied':
+      if (Number.isFinite(Number(context.hp)) && Number.isFinite(Number(context.maxHp)) && Number(context.maxHp) > 0) {
+        const ratio = Number(context.hp) / Number(context.maxHp);
+        const bonus = ratio < 0.25 ? 4 : ratio < 0.5 ? 3 : ratio < 0.75 ? 2 : ratio < 1 ? 1 : 0;
+        if (bonus) addDamage(bonus, `Legendary Bloodied: +${bonus} CD`);
+      }
+      break;
+    case 'junkies': {
+      const addictions = Math.max(0, Number(context.addictions || 0));
+      if (addictions) addDamage(addictions, `Legendary Junkie's: +${addictions} CD`);
+      break;
+    }
+    default:
+      break;
+  }
+
+  return {
+    ...weapon,
+    damage: replaceLeadingNumber(weapon.damage, damage),
+    rate,
+    type,
+    effects,
+    customEffect: '',
+    qualities,
+    qualitiesCustom: '',
+    legendaryEffectNotes: notes,
+  };
+}
+
+export function applyLegendaryArmorEffects(stats = {}, propertyId = '') {
+  if (!propertyId) return { ...stats };
+  const next = {
+    ...stats,
+    physical: Number(stats.physical || 0) + 1,
+    energy: Number(stats.energy || 0) + 1,
+  };
+
+  if (propertyId === 'poisoners') {
+    next.poison = Number(stats.poison || 0) + 4;
+  }
+
+  return next;
+}
+
+export function getLegendaryArmorConditionalBonus(propertyId = '', context = {}) {
+  const bonus = { physical: 0, energy: 0, radiation: 0, poison: 0, notes: [] };
+  switch (propertyId) {
+    case 'assassins':
+      if (context.attackerType === 'human') { bonus.physical += 2; bonus.energy += 2; }
+      break;
+    case 'exterminators':
+      if (context.attackerType === 'insect') { bonus.physical += 2; bonus.energy += 2; }
+      break;
+    case 'ghoul-slayers':
+      if (context.attackerType === 'ghoul') { bonus.physical += 2; bonus.energy += 2; bonus.radiation += 2; }
+      break;
+    case 'hunters':
+      if (context.attackerType === 'mammalLizard' || context.attackerType === 'mutatedAnimal') { bonus.physical += 2; bonus.energy += 2; }
+      break;
+    case 'mutant-slayers':
+      if (context.attackerType === 'superMutant') { bonus.physical += 2; bonus.energy += 2; }
+      break;
+    case 'troubleshooters':
+      if (context.attackerType === 'robot') { bonus.physical += 2; bonus.energy += 2; }
+      break;
+    case 'sentinels':
+      if (context.didNotMoveLastTurn) { bonus.physical += 3; bonus.energy += 3; }
+      break;
+    case 'bolstering': {
+      const hp = Number(context.hp); const maxHp = Number(context.maxHp);
+      if (maxHp > 0 && hp < maxHp / 4) { bonus.physical += 3; bonus.energy += 3; }
+      else if (maxHp > 0 && hp < maxHp / 2) { bonus.physical += 2; bonus.energy += 2; }
+      break;
+    }
+    default:
+      break;
+  }
+  return bonus;
+}
+''', encoding='utf-8')
+
+          # Weapon card: run legendary math after normal weapon mods + perks.
+          p = Path('src/components/weapons/WeaponCard.jsx')
+          s = p.read_text(encoding='utf-8')
+          imp = 'import { applyLegendaryWeaponEffects } from "../../utils/legendaryEffects.js";\n'
+          if imp not in s:
+            anchor = 'import { getPerkRank } from "../../utils/perkEffects.js";\n'
+            s = s.replace(anchor, anchor + imp)
+          old = '  const calculatedWeapon = conditionalPerkResult.weapon;\n'
+          new = '''  const calculatedWeapon = applyLegendaryWeaponEffects(conditionalPerkResult.weapon, {\n    ...attackContext,\n    hp: form?.hp?.current ?? form?.currentHp,\n    maxHp: form?.hp?.max ?? form?.maxHp,\n    addictions: Array.isArray(form?.addictions) ? form.addictions.length : Number(form?.addictions || 0),\n  });\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          # Include legendary calculation notes with perk notes.
+          old = '''  const allPerkNotes = [\n    ...passivePerkResult.notes,\n    ...conditionalPerkResult.notes,\n    ...(aimNote ? [aimNote] : []),\n  ];\n'''
+          new = '''  const allPerkNotes = [\n    ...passivePerkResult.notes,\n    ...conditionalPerkResult.notes,\n    ...(calculatedWeapon.legendaryEffectNotes || []),\n    ...(aimNote ? [aimNote] : []),\n  ];\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # Armor screen: apply guaranteed legendary armor DR and Poisoner's automatically.
+          p = Path('src/components/armor/ArmorScreen.jsx')
+          s = p.read_text(encoding='utf-8')
+          imp = 'import { applyLegendaryArmorEffects } from "../../utils/legendaryEffects.js";\n'
+          if imp not in s:
+            anchor = 'import { localizeLegendaryName, localizeSupplementalArmorName } from "../../data/equipmentLocalizationSupplemental.js";\n'
+            s = s.replace(anchor, anchor + imp)
+          old = '''  const withLegendaryBonus = (part, stats = {}) => {\n    if (!legendaryParts[part]) return { ...stats };\n    return {\n      ...stats,\n      physical: Number(stats.physical || 0) + 1,\n      energy: Number(stats.energy || 0) + 1,\n    };\n  };\n'''
+          new = '''  const withLegendaryBonus = (part, stats = {}) =>\n    applyLegendaryArmorEffects(stats, legendaryParts[part]);\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          # Manual editing should subtract all static legendary offsets, not only P/E.
+          old = '    const legendaryOffset = legendaryParts[part] && (field === "physical" || field === "energy") ? 1 : 0;\n'
+          new = '''    const legendaryStatic = applyLegendaryArmorEffects({}, legendaryParts[part]);\n    const legendaryOffset = Number(legendaryStatic[field] || 0);\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # Damage dice engine: recognize deterministic weapon effects, including mod/legendary-added effects.
+          p = Path('src/utils/dice.js')
+          s = p.read_text(encoding='utf-8')
+          old = '''  const hasVicious = hasEffect(normalizedEffects, "vicious");\n  const hasSpread = hasEffect(normalizedEffects, "spread");\n  const hasBurst = hasEffect(normalizedEffects, "burst");\n'''
+          new = '''  const hasToken = (name) => normalizedEffects.some((effect) => effect === name || effect.startsWith(`${name} `) || effect.startsWith(`${name}(`));\n  const hasVicious = hasToken("vicious");\n  const hasSpread = hasToken("spread");\n  const hasBurst = hasToken("burst");\n  const hasStun = hasToken("stun");\n  const hasRadioactive = hasToken("radioactive");\n  const hasFreeze = hasToken("freeze");\n  const hasBreaking = hasToken("breaking");\n  const persistentEffects = normalizedEffects.filter((effect) => effect.startsWith("persistent"));\n  const piercingRating = normalizedEffects.reduce((best, effect) => {\n    const match = effect.match(/^piercing\\s*\\(?\\s*(\\d+)\\s*\\)?/i);\n    return match ? Math.max(best, Number(match[1]) || 0) : best;\n  }, 0);\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          old = '''  return {\n    type: "fallout-d6-damage",\n'''
+          new = '''  const piercingTotal = piercingRating * totalEffects;\n  const triggeredEffects = {\n    stun: hasStun && totalEffects > 0,\n    radioactive: hasRadioactive && totalEffects > 0,\n    freeze: hasFreeze && totalEffects > 0,\n    breaking: hasBreaking && totalEffects > 0,\n    persistent: totalEffects > 0 ? persistentEffects : [],\n    piercingRating,\n    piercingTotal,\n  };\n  return {\n    type: "fallout-d6-damage",\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          old = '''    recognizedEffects: { vicious: hasVicious, spread: hasSpread, burst: hasBurst },\n    hasVicious,\n'''
+          new = '''    recognizedEffects: { vicious: hasVicious, spread: hasSpread, burst: hasBurst, stun: hasStun, radioactive: hasRadioactive, freeze: hasFreeze, breaking: hasBreaking, persistent: persistentEffects.length > 0, piercing: piercingRating > 0 },\n    triggeredEffects,\n    piercingRating,\n    piercingTotal,\n    hasVicious,\n'''
+          if old in s:
+            s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # Damage roller: show what was actually triggered/calculated.
+          p = Path('src/components/dice/FalloutD6Roller.jsx')
+          s = p.read_text(encoding='utf-8')
+          marker = '''        {(finesseAvailable || forceCriticalAvailable || lastRoll?.forcedCritical) && (\n'''
+          block = '''        {lastRoll && (lastRoll.piercingTotal > 0 || lastRoll.triggeredEffects?.stun || lastRoll.triggeredEffects?.radioactive || lastRoll.triggeredEffects?.freeze || lastRoll.triggeredEffects?.breaking || lastRoll.triggeredEffects?.persistent?.length > 0) && (\n          <div className="dice-actions" style={{ marginBottom: 10, flexWrap: "wrap" }}>\n            {lastRoll.piercingTotal > 0 && <div className="dice-context-stat"><span className="dice-context-stat-label">PIERCING:</span><span className="dice-context-stat-value">{lastRoll.piercingTotal}</span></div>}\n            {lastRoll.triggeredEffects?.stun && <div className="dice-context-stat"><span className="dice-context-stat-value">STUN</span></div>}\n            {lastRoll.triggeredEffects?.radioactive && <div className="dice-context-stat"><span className="dice-context-stat-value">RADIOACTIVE</span></div>}\n            {lastRoll.triggeredEffects?.freeze && <div className="dice-context-stat"><span className="dice-context-stat-value">FREEZE</span></div>}\n            {lastRoll.triggeredEffects?.breaking && <div className="dice-context-stat"><span className="dice-context-stat-value">BREAKING</span></div>}\n            {lastRoll.triggeredEffects?.persistent?.map((effect) => <div key={effect} className="dice-context-stat"><span className="dice-context-stat-value">{effect.toUpperCase()}</span></div>)}\n          </div>\n        )}\n\n'''
+          if block not in s and marker in s:
+            s = s.replace(marker, block + marker, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Build
+        run: npm ci && npm run build
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/legendaryEffects.js src/components/weapons/WeaponCard.jsx src/components/armor/ArmorScreen.jsx src/utils/dice.js src/components/dice/FalloutD6Roller.jsx
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "feat: integrate legendary effects into combat calculations"
+          git push
