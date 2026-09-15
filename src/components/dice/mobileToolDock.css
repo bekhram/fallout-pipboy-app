@@ -1,0 +1,96 @@
+.pip-mobile-tool-dock {
+  display: none;
+}
+
+@media (max-width: 780px) {
+  .floating-dice-control--desktop {
+    display: none !important;
+  }
+
+  .session-utility-drawer-toggle {
+    display: none !important;
+  }
+
+  .pip-mobile-tool-dock {
+    position: fixed;
+    right: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 1000004;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    pointer-events: none;
+  }
+
+  .pip-mobile-tool-dock__toggle,
+  .pip-mobile-tool-dock__action {
+    pointer-events: auto;
+    border: 1px solid color-mix(in srgb, currentColor 76%, transparent);
+    background: rgba(3, 13, 5, .96);
+    color: var(--pip-accent, #78ff98);
+    box-shadow: 0 0 14px rgba(0, 0, 0, .4), inset 0 0 12px color-mix(in srgb, currentColor 7%, transparent);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .pip-mobile-tool-dock__toggle {
+    width: 46px;
+    min-width: 46px;
+    height: 46px;
+    min-height: 46px;
+    padding: 0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 1.05rem;
+    font-weight: 900;
+  }
+
+  .pip-mobile-tool-dock__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateX(10px);
+    transition: max-width .18s ease, opacity .15s ease, transform .18s ease;
+    pointer-events: none;
+  }
+
+  .pip-mobile-tool-dock.is-open .pip-mobile-tool-dock__actions {
+    max-width: 220px;
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  .pip-mobile-tool-dock__action {
+    min-width: 64px;
+    height: 42px;
+    padding: 4px 9px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: .56rem;
+    font-weight: 900;
+    letter-spacing: .05em;
+  }
+
+  .pip-mobile-tool-dock__icon {
+    font-size: .9rem;
+    line-height: 1;
+  }
+
+  .pip-mobile-tool-dock__toggle:active,
+  .pip-mobile-tool-dock__action:active {
+    transform: scale(.96);
+  }
+
+  body:has(.session-tactical-player) .pip-mobile-tool-dock {
+    display: none !important;
+  }
+}
