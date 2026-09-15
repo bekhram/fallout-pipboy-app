@@ -178,6 +178,62 @@ const unique = {
       mod("Stabilizer", "Gain Piercing 1", 2, 60, "Gun Nut 2", "Muzzled"),
     ],
   },
+
+  // === SUPPLEMENTAL WEAPON BATCH 1 ===
+  "assaultron-head": {
+    capacitor: [
+      mod("Capacitor Mk III", "+1 damage; consumes 3 shots per attack", 0, 4, "Robotics Expert", "Mk III"),
+      mod("Capacitor Mk IV", "+2 damage; consumes 4 shots per attack", 1, 8, "Robotics Expert, Science! 1", "Mk IV"),
+      mod("Capacitor Mk V", "+3 damage; consumes 5 shots per attack", 1, 12, "Robotics Expert, Science! 2", "Mk V"),
+      mod("Capacitor Mk VI", "+4 damage; consumes 6 shots per attack", 2, 16, "Robotics Expert, Science! 3", "Mk VI"),
+    ],
+  },
+  "50-cal-machine-gun": {
+    barrel: [mod("Heavy Barrel", "+1 damage; gain Vicious", 3, 35, "Gun Nut 4", "")],
+  },
+  "auto-grenade-launcher": {
+    barrel: [
+      mod("Heavy Barrel", "+1 damage; gain Vicious", 3, 135, "Gun Nut 4", ""),
+      mod("Long Barrel", "Increase Range by 1 step", 2, 45, "Gun Nut 4", ""),
+    ],
+    receiver: [mod("25mm Grenade Receiver", "Damage becomes 4; +2 Fire Rate; ammo becomes 25mm Grenade", -3, 135, "Gun Nut 4", "")],
+  },
+  "gatling-gun": {
+    receiver: [mod("Speedy Receiver", "+2 Fire Rate", 1, 35, "Gun Nut 3", "")],
+    barrel: [mod("Long Barrel", "Increase Range by 1 step", 2, 158, "Gun Nut 4", "Long")],
+    grip: [mod("Comfort Grip", "Remove Recoil (6)", 3, 90, "Gun Nut 4", "Comfort Grip")],
+    magazine: [mod("Extra-Large Magazine", "+1 Fire Rate; gain Unreliable", 2, 28, "Gun Nut 4", "")],
+    sights: [mod("Front Sight Ring", "Remove Inaccurate", 2, 158, "Gun Nut 4", "Sighted")],
+    muzzle: [mod("Large Bayonet", "Melee profile: 5 damage, Piercing 1 Physical", 5, 18, "Gun Nut 4", "Bayoneted")],
+  },
+  "gatling-plasma": {
+    barrel: [mod("Ported Barrel", "Remove Inaccurate", 6, 81, "Science! 4", "Ported")],
+    grip: [mod("Comfort Grip", "Remove Recoil (6)", 3, 90, "Science! 4", "Comfort Grip")],
+    sights: [mod("Reflex Sight", "May re-roll hit location die", 2, 50, "Gun Nut 2", "Sighted")],
+    nozzle: [
+      mod("Beam Splitter", "Gain Spread", 3, 20, "Science! 4", "Scattered"),
+      mod("Beam Focuser", "Increase Range by 1 step", 4, 41, "Science! 4", "Focused"),
+    ],
+  },
+  "gauss-minigun": {
+    barrel: [
+      mod("Tri-Barrel", "+1 Fire Rate", 4, 91, "Science! 1", "Triple Barrel"),
+      mod("Penta-Barrel", "-1 damage; reduce Range by 1 step; +2 Fire Rate", 12, 182, "Science! 1", "Penta Barrel"),
+    ],
+    capacitor: [
+      mod("Tesla Coil Capacitor", "Damage type becomes Energy", 8, 91, "Science! 1", "Tesla Capacitor"),
+      mod("Tesla Coil Dynamo", "Damage type becomes Energy; +1 Fire Rate", 12, 136, "Science! 2", "Tesla Dynamo"),
+    ],
+    sights: [mod("Gunner Sight", "May re-roll hit location die", 1, 5, "", "Tactical")],
+  },
+  "plasma-caster": {
+    capacitor: [
+      mod("Calibrated Capacitor", "Gain Vicious", 3, 140, "Science! 4", ""),
+      mod("Pulse Capacitor", "Gain Surge", 3, 70, "Science! 3", "Pulse"),
+      mod("High Speed Electrode", "+1 Fire Rate", 3, 105, "Science! 3", "Rapid"),
+    ],
+    barrel: [mod("Long Barrel", "Increase Range by 1 step", 5, 128, "Science! 4", "")],
+  },
 };
 
 const melee = {

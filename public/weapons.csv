@@ -1,64 +1,97 @@
-Weapon type,name,Number of found,Weight,Cost,mods,Damage Rating,Effects,Damage type,Rate of Fire,Range,Qualities,Rarity,Creatures Damage Rating
-Small Guns,.44 Pistol,1,13,99,,6,Vicious,Physical,1,C,Close Quarters,2,7
-Small Guns,10mm Pistol,1,13,50,,4,,Physical,2,C,"Close Quarters, Reliable",1,6
-Small Guns,Flare Gun,1,13,50,,3,,Physical,0,M,Reliable,1,3
-Small Guns,Assault Rifle,1,13,144,,5,Burst,Physical,2,M,Two-Handed,2,7
-Small Guns,Combat Rifle,1,13,117,,5,,Physical,2,M,Two-Handed,2,7
-Small Guns,Gauss Rifle,1,13,228,,10,Piercing 1,Physical,1,L,Two-Handed,5,11
-Small Guns,Hunting Rifle,1,13,55,,6,Piercing 1,Physical,0,M,Two-Handed,2,6
-Small Guns,Submachine Gun,1,13,109,,3,Burst,Physical,3,C,"Inaccurate, Two-Handed",1,6
-Small Guns,Combat Shotgun,1,13,87,,5,Spread,Physical,2,C,"Inaccurate, Two-Handed",2,7
-Small Guns,Double-Barrel Shotgun,1,13,39,,5,"Vicious, Spread",Physical,0,C,"Inaccurate, Two-Handed",1,5
-Small Guns,Pipe Bolt-Action,1,13,30,,5,Piercing 1,Physical,0,C,Unreliable,0,5
-Small Guns,Pipe Gun,1,13,30,,3,,Physical,2,C,"Close Quarters, Unreliable",0,5
-Small Guns,Pipe Revolver,1,13,25,,4,,Physical,1,C,"Close Quarters, Unreliable",0,5
-Small Guns,Railway Rifle,1,13,290,,10,Breaking,Physical,0,M,"Two-Handed, Unreliable, Debilitating",4,10
-Small Guns,Syringer,1,13,132,,3,,Physical,0,M,Two-Handed,2,3
-Energy Weapon,Institute Laser,1,13,50,,3,Burst,Energy damage,3,C,"Close Quarters, Inaccurate",2,6
-Energy Weapon,Laser Musket,1,13,57,,5,Piercing 1,Energy damage,0,M,Two-Handed,1,5
-Energy Weapon,Laser Gun,1,13,69,,4,Piercing 1,Energy damage,2,C,Close Quarters,2,6
-Energy Weapon,Plasma Gun,1,13,123,,6,,Physical/Energy damage,1,C,Close Quarters,3,7
-Energy Weapon,Gamma Gun,1,13,15,,3,"Piercing 1, Stun",Radiation damage,1,M,"Inaccurate, Blast",5,4
-Big Guns,Fat Man,1,13,512,,21,"Vicious, Breaking, Radioactive",Physical/Energy damage/Radioactive,0,M,"Inaccurate,Two-Handed, Blast",4,21
-Big Guns,Flamer,1,13,137,,3,"Spread, Persistent, Burst",Energy damage,4,C,"Inaccurate, Two-Handed, Debilitating",3,7
-Big Guns,Gatling Laser,1,13,804,,3,"Piercing 1, Burst",Energy damage,6,M,"Inaccurate, Two-Handed, Gatling",3,9
-Big Guns,Heavy Incinerator,1,13,350,,5,"Spread, Persistent, Burst",Energy damage,3,M,"Two-Handed, Debilitating",4,8
-Big Guns,Junk Jet,1,13,285,,6,,Physical,1,M,Two-Handed,3,7
-Big Guns,Minigun,1,13,382,,3,"Spread, Burst",Physical,5,M,"Inaccurate, Two-Handed, Gatling",2,8
-Big Guns,Missile Launcher,1,13,314,,11,,Physical,0,L,"Two-Handed, Blast",4,11
-Melee Weapon,Sword,1,13,50,,4,Piercing 1,Physical,0,C,Parry,2,4
-Melee Weapon,Combat Knife,1,13,25,,3,Piercing 1,Physical,0,C,,1,3
-Melee Weapon,Machete,1,13,25,,3,Piercing 1,Physical,0,C,,1,3
-Melee Weapon,Ripper,1,13,50,,4,Vicious,Physical,0,C,,2,4
-Melee Weapon,Shishkebab,1,13,200,,5,Piercing 1,Energy damage,0,C,Parry,3,5
-Melee Weapon,Switchblade,1,13,20,,2,Piercing 1,Physical,0,C,Concealed,0,2
-Melee Weapon,Baseball Bat,1,13,25,,4,,Physical,0,C,Two-Handed,1,4
-Melee Weapon,Aluminum Baseball Bat,1,13,32,,5,,Physical,0,C,Two-Handed,2,5
-Melee Weapon,Board,1,13,20,,4,,Physical,0,C,Two-Handed,0,4
-Melee Weapon,Lead Pipe,1,13,15,,3,,Physical,0,C,,0,3
-Melee Weapon,Pipe Wrench,1,13,30,,3,,Physical,0,C,,1,3
-Melee Weapon,Pool Cue,1,13,10,,3,,Physical,0,C,Two-Handed,0,3
-Melee Weapon,Rolling Pin,1,13,10,,3,,Physical,0,C,,0,3
-Melee Weapon,Baton,1,13,15,,3,,Physical,0,C,,1,3
-Melee Weapon,Sledgehammer,1,13,40,,5,,Physical,0,C,,2,5
-Melee Weapon,Super Sledge,1,13,180,,6,Breaking,Physical,0,C,Two-Handed,3,6
-Melee Weapon,Tire Iron,1,13,25,,3,,Physical,0,C,,1,3
-Melee Weapon,Walking Cane,1,13,10,,3,,Physical,0,C,,0,3
-Melee Weapon,Boxing Glove,1,13,10,,3,Stun,Physical,0,C,,1,3
-Melee Weapon,Deathclaw Gauntlet,1,13,75,,5,Piercing 1,Physical,0,C,,3,5
-Melee Weapon,Knuckles,1,13,10,,3,,Physical,0,C,Concealed,1,3
-Melee Weapon,Power Fist,1,13,100,,4,Stun,Physical,0,C,,2,4
-Melee Weapon,Throwing Knives,1,13,10,,3,Piercing 1,Physical,0,C,"Supressed, Thrown, Concealed",1,3
-Melee Weapon,Tomahawk,1,13,15,,4,Piercing 1,Physical,0,C,"Supressed, Thrown",2,4
-Melee Weapon,Javelin,1,13,10,,4,Piercing 1,Physical,0,C,"Supressed, Thrown",1,4
-Explosive,Baseball Grenade,1,13,40,,5,,Physical,0,M,"Blast, Thrown",1,5
-Explosive,Frag Grenade,1,13,50,,6,,Physical,0,M,"Blast, Thrown",2,6
-Explosive,Molotov Cocktail,1,13,20,,4,"Breaking, Persistent",Energy damage,0,M,"Blast, Thrown",1,4
-Explosive,Nuka Grenade,1,13,100,,9,"Vicious, Radioactive",Energy damage,0,M,"Blast, Thrown",4,9
-Explosive,Plasma Grenade,1,13,135,,9,,Energy damage,0,M,"Blast, Thrown",3,9
-Explosive,Pulse Grenade,1,13,100,,6,Stun,Energy damage,0,M,"Blast, Thrown",3,6
-Explosive,Bottlecap Mine,1,13,75,,6,,Physical,0,M,"Blast, Mine",2,6
-Explosive,Frag Mine,1,13,50,,6,,Physical,0,M,"Blast, Mine",2,6
-Explosive,Nuke Mine,1,13,100,,9,"Vicious, Breaking, Radioactive",Energy damage,0,M,"Blast, Thrown",4,9
-Explosive,Plasma Mine,1,13,135,,9,,Energy damage,0,M,"Blast, Thrown",3,9
-Explosive,Pulse Mine,1,13,100,,6,Stun,Energy damage,0,M,"Blast, Thrown",3,6
+Weapon type,name,Number of found,Weight,Cost,mods,Damage Rating,Effects,Damage type,Rate of Fire,Range,Qualities,Rarity,Creatures Damage Rating,Ammo
+Small Guns,.44 Pistol,1,13,99,,6,Vicious,Physical,1,C,Close Quarters,2,7,
+Small Guns,10mm Pistol,1,13,50,,4,,Physical,2,C,"Close Quarters, Reliable",1,6,
+Small Guns,Flare Gun,1,13,50,,3,,Physical,0,M,Reliable,1,3,
+Small Guns,Assault Rifle,1,13,144,,5,Burst,Physical,2,M,Two-Handed,2,7,
+Small Guns,Combat Rifle,1,13,117,,5,,Physical,2,M,Two-Handed,2,7,
+Small Guns,Gauss Rifle,1,13,228,,10,Piercing 1,Physical,1,L,Two-Handed,5,11,
+Small Guns,Hunting Rifle,1,13,55,,6,Piercing 1,Physical,0,M,Two-Handed,2,6,
+Small Guns,Submachine Gun,1,13,109,,3,Burst,Physical,3,C,"Inaccurate, Two-Handed",1,6,
+Small Guns,Combat Shotgun,1,13,87,,5,Spread,Physical,2,C,"Inaccurate, Two-Handed",2,7,
+Small Guns,Double-Barrel Shotgun,1,13,39,,5,"Vicious, Spread",Physical,0,C,"Inaccurate, Two-Handed",1,5,
+Small Guns,Pipe Bolt-Action,1,13,30,,5,Piercing 1,Physical,0,C,Unreliable,0,5,
+Small Guns,Pipe Gun,1,13,30,,3,,Physical,2,C,"Close Quarters, Unreliable",0,5,
+Small Guns,Pipe Revolver,1,13,25,,4,,Physical,1,C,"Close Quarters, Unreliable",0,5,
+Small Guns,Railway Rifle,1,13,290,,10,Breaking,Physical,0,M,"Two-Handed, Unreliable, Debilitating",4,10,
+Small Guns,Syringer,1,13,132,,3,,Physical,0,M,Two-Handed,2,3,
+Energy Weapon,Institute Laser,1,13,50,,3,Burst,Energy damage,3,C,"Close Quarters, Inaccurate",2,6,
+Energy Weapon,Laser Musket,1,13,57,,5,Piercing 1,Energy damage,0,M,Two-Handed,1,5,
+Energy Weapon,Laser Gun,1,13,69,,4,Piercing 1,Energy damage,2,C,Close Quarters,2,6,
+Energy Weapon,Plasma Gun,1,13,123,,6,,Physical/Energy damage,1,C,Close Quarters,3,7,
+Energy Weapon,Gamma Gun,1,13,15,,3,"Piercing 1, Stun",Radiation damage,1,M,"Inaccurate, Blast",5,4,
+Big Guns,Fat Man,1,13,512,,21,"Vicious, Breaking, Radioactive",Physical/Energy damage/Radioactive,0,M,"Inaccurate,Two-Handed, Blast",4,21,
+Big Guns,Flamer,1,13,137,,3,"Spread, Persistent, Burst",Energy damage,4,C,"Inaccurate, Two-Handed, Debilitating",3,7,
+Big Guns,Gatling Laser,1,13,804,,3,"Piercing 1, Burst",Energy damage,6,M,"Inaccurate, Two-Handed, Gatling",3,9,
+Big Guns,Heavy Incinerator,1,13,350,,5,"Spread, Persistent, Burst",Energy damage,3,M,"Two-Handed, Debilitating",4,8,
+Big Guns,Junk Jet,1,13,285,,6,,Physical,1,M,Two-Handed,3,7,
+Big Guns,Minigun,1,13,382,,3,"Spread, Burst",Physical,5,M,"Inaccurate, Two-Handed, Gatling",2,8,
+Big Guns,Missile Launcher,1,13,314,,11,,Physical,0,L,"Two-Handed, Blast",4,11,
+Melee Weapon,Sword,1,13,50,,4,Piercing 1,Physical,0,C,Parry,2,4,
+Melee Weapon,Combat Knife,1,13,25,,3,Piercing 1,Physical,0,C,,1,3,
+Melee Weapon,Machete,1,13,25,,3,Piercing 1,Physical,0,C,,1,3,
+Melee Weapon,Ripper,1,13,50,,4,Vicious,Physical,0,C,,2,4,
+Melee Weapon,Shishkebab,1,13,200,,5,Piercing 1,Energy damage,0,C,Parry,3,5,
+Melee Weapon,Switchblade,1,13,20,,2,Piercing 1,Physical,0,C,Concealed,0,2,
+Melee Weapon,Baseball Bat,1,13,25,,4,,Physical,0,C,Two-Handed,1,4,
+Melee Weapon,Aluminum Baseball Bat,1,13,32,,5,,Physical,0,C,Two-Handed,2,5,
+Melee Weapon,Board,1,13,20,,4,,Physical,0,C,Two-Handed,0,4,
+Melee Weapon,Lead Pipe,1,13,15,,3,,Physical,0,C,,0,3,
+Melee Weapon,Pipe Wrench,1,13,30,,3,,Physical,0,C,,1,3,
+Melee Weapon,Pool Cue,1,13,10,,3,,Physical,0,C,Two-Handed,0,3,
+Melee Weapon,Rolling Pin,1,13,10,,3,,Physical,0,C,,0,3,
+Melee Weapon,Baton,1,13,15,,3,,Physical,0,C,,1,3,
+Melee Weapon,Sledgehammer,1,13,40,,5,,Physical,0,C,,2,5,
+Melee Weapon,Super Sledge,1,13,180,,6,Breaking,Physical,0,C,Two-Handed,3,6,
+Melee Weapon,Tire Iron,1,13,25,,3,,Physical,0,C,,1,3,
+Melee Weapon,Walking Cane,1,13,10,,3,,Physical,0,C,,0,3,
+Melee Weapon,Boxing Glove,1,13,10,,3,Stun,Physical,0,C,,1,3,
+Melee Weapon,Deathclaw Gauntlet,1,13,75,,5,Piercing 1,Physical,0,C,,3,5,
+Melee Weapon,Knuckles,1,13,10,,3,,Physical,0,C,Concealed,1,3,
+Melee Weapon,Power Fist,1,13,100,,4,Stun,Physical,0,C,,2,4,
+Melee Weapon,Throwing Knives,1,13,10,,3,Piercing 1,Physical,0,C,"Supressed, Thrown, Concealed",1,3,
+Melee Weapon,Tomahawk,1,13,15,,4,Piercing 1,Physical,0,C,"Supressed, Thrown",2,4,
+Melee Weapon,Javelin,1,13,10,,4,Piercing 1,Physical,0,C,"Supressed, Thrown",1,4,
+Explosive,Baseball Grenade,1,13,40,,5,,Physical,0,M,"Blast, Thrown",1,5,
+Explosive,Frag Grenade,1,13,50,,6,,Physical,0,M,"Blast, Thrown",2,6,
+Explosive,Molotov Cocktail,1,13,20,,4,"Breaking, Persistent",Energy damage,0,M,"Blast, Thrown",1,4,
+Explosive,Nuka Grenade,1,13,100,,9,"Vicious, Radioactive",Energy damage,0,M,"Blast, Thrown",4,9,
+Explosive,Plasma Grenade,1,13,135,,9,,Energy damage,0,M,"Blast, Thrown",3,9,
+Explosive,Pulse Grenade,1,13,100,,6,Stun,Energy damage,0,M,"Blast, Thrown",3,6,
+Explosive,Bottlecap Mine,1,13,75,,6,,Physical,0,M,"Blast, Mine",2,6,
+Explosive,Frag Mine,1,13,50,,6,,Physical,0,M,"Blast, Mine",2,6,
+Explosive,Nuke Mine,1,13,100,,9,"Vicious, Breaking, Radioactive",Energy damage,0,M,"Blast, Thrown",4,9,
+Explosive,Plasma Mine,1,13,135,,9,,Energy damage,0,M,"Blast, Thrown",3,9,
+Explosive,Pulse Mine,1,13,100,,6,Stun,Energy damage,0,M,"Blast, Thrown",3,6,
+Small Guns,.357 Magnum Revolver,1,2,110,,5,Vicious,Physical,1,C,"Close Quarters, Reliable",2,5,
+Small Guns,12.7mm Pistol,1,4,400,,6,,Physical,1,C,"Close Quarters, Recoil (7)",4,6,
+Small Guns,12.7mm SMG,1,5,510,,5,Burst,Physical,3,C,"Inaccurate, Recoil (7), Two-Handed",4,5,
+Small Guns,25mm Grenade APW,1,8,420,,4,,Physical,1,L,"Blast, Two-Handed",4,4,25mm Grenade
+Small Guns,9mm Pistol,1,2,50,,3,,Physical,2,C,"Close Quarters, Concealed, Reliable",2,3,
+Small Guns,Anti-Materiel Rifle,1,20,560,,8,Vicious,Physical,0,L,"Reliable, Two-Handed, Recoil (8)",4,8,
+Small Guns,Battle Rifle,1,10,150,,7,Piercing 1,Physical,1,M,"Reliable, Two-Handed",3,7,
+Small Guns,Black Powder Blunderbuss,1,3,90,,7,Vicious,Physical,0,C,"Close Quarters, Inaccurate, Recoil (7), Slow Load",3,7,
+Small Guns,Black Powder Pistol,1,3,60,,7,Vicious,Physical,0,C,"Recoil (7), Slow Load",3,7,
+Small Guns,Black Powder Rifle,1,6,60,,8,Vicious,Physical,0,M,"Recoil (7), Slow Load",3,8,
+Small Guns,Gauss Pistol,1,6,334,,8,Piercing 1,Physical,1,M,,5,8,
+Small Guns,Gauss Shotgun,1,14,400,,7,"Piercing 1, Spread",Physical,0,C,"Ammo-Hungry (10), Two-Handed",5,7,
+Small Guns,Lever-Action Rifle,1,9,201,,7,Piercing 1,Physical,0,M,,3,7,
+Small Guns,Light Machine Gun,1,15,150,,5,Burst,Physical,4,M,"Inaccurate, Recoil (8), Two-Handed",3,5,
+Small Guns,Pump-Action Shotgun,1,11,70,,5,Spread,Physical,1,C,"Inaccurate, Two-Handed",1,5,
+Small Guns,Radium Rifle,1,11,110,,4,Radioactive,Physical,3,M,Two-Handed,3,4,
+Small Guns,Sniper Rifle,1,10,300,,7,Piercing 1,Physical,0,L,"Accurate, Two-Handed",4,7,
+Energy Weapon,Alien Atomizer,1,3,1536,,6,Vicious,Energy,3,C,"Close Quarters, Reliable",5,6,
+Energy Weapon,Alien Disintegrator,1,7,921,,8,Vicious,Energy,2,M,"Two-Handed, Reliable",5,8,
+Energy Weapon,Arc Welder,1,15,370,,3,Stun,Energy,4,C,"Surge, Two-Handed",4,3,
+Energy Weapon,Assaultron Head,1,8,500,,5,Piercing 1,Energy,0,C,,3,5,Fusion Cell
+Energy Weapon,Microwave Emitter,1,8,500,,6,"Persistent, Piercing 3",Energy,1,M,Two-Handed,5,6,
+Energy Weapon,Tesla Rifle,1,8,180,,5,Arc,Energy,2,M,Two-Handed,4,5,
+Big Guns,.50 Cal Machine Gun,1,31,350,,7,Burst,Physical,3,M,"Two-Handed, Recoil (9)",3,7,.50
+Big Guns,Auto Grenade Launcher,1,30,450,,6,Breaking,Physical,2,L,"Bombard, Inaccurate",4,6,40mm Grenade
+Big Guns,Drone Cannon,1,18,600,,8,Breaking,Energy,0,M,"Ammo-Hungry (20), Blast, Inaccurate, Slow Load",5,8,Alien Power Module
+Big Guns,Gatling Gun,1,20,350,,3,"Burst, Spread",Physical,3,M,"Gatling, Inaccurate, Recoil (6), Two-Handed",1,3,5mm
+Big Guns,Gatling Plasma,1,24,1000,,4,Burst,Physical/Energy,4,M,"Gatling, Inaccurate, Two-Handed",4,4,Plasma Cartridge or Plasma Core
+Big Guns,Gauss Minigun,1,38,912,,6,"Burst, Piercing 1",Physical,3,L,"Gatling, Two-Handed",6,6,2mm EC
+Big Guns,Plasma Caster,1,30,700,,8,Burst,Physical/Energy,3,M,"Inaccurate, Recoil (8), Two-Handed",5,8,Plasma Cartridge
+Big Guns,Tesla Cannon,1,24,870,,8,"Arc, Piercing 2",Energy,0,L,"Accurate, Ammo-Hungry (5), Surge, Two-Handed",5,8,Fusion Cell
+Bow,Bow,1,3,44,,3,,Physical,2,M,"Suppressed, Recoil (6), Two-Handed",1,3,Arrow
+Bow,Crossbow,1,3,44,,5,,Physical,0,M,"Suppressed, Two-Handed, Slow Load",2,5,Crossbow Bolt

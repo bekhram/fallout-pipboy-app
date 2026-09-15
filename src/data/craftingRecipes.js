@@ -137,6 +137,52 @@ const WEAPON_RECIPES = [
   ...group({ workbench: "weapons", category: "weapons", group: "JUNK JET MODS", skill: "Repair", page: 225 }, [["Long Barrel", 3, "Gun Nut 1", "Uncommon"], ["Recoil Compensating Stock", 2], ["Gunner Sight", 2], ["Electrification Module", 6, "Gun Nut 2, Science! 1", "Uncommon"], ["Ignition Module", 7, "Gun Nut 3, Science! 1", "Uncommon"]]),
   ...group({ workbench: "weapons", category: "weapons", group: "MINIGUN MODS", skill: "Repair", page: 225 }, [["Accelerated Barrel", 5, "Gun Nut 3", "Uncommon"], ["Tri-Barrel", 6, "Gun Nut 4", "Uncommon"], ["Gunner Sight", 2], ["Shredder", 4, "Gun Nut 2", "Uncommon"]]),
   ...group({ workbench: "weapons", category: "weapons", group: "MISSILE LAUNCHER MOD", skill: "Repair", page: 225 }, [["Triple Barrel", 4, "Gun Nut 2", "Uncommon"], ["Quad Barrel", 5, "Gun Nut 3", "Uncommon"], ["Scope", 4, "Gun Nut 2", "Uncommon"], ["Night Vision Scope", 6, "Gun Nut 4, Science! 1", "Uncommon"], ["Targeting Computer", 6, "Gun Nut 2, Science! 2", "Uncommon"], ["Bayonet", 2], ["Stabilizer", 4, "Gun Nut 2", "Uncommon"]]),
+
+  // === SUPPLEMENTAL WEAPON BATCH 1 RECIPES ===
+  ...group({ workbench: "weapons", category: "weapons", group: "ASSAULTRON HEAD MODS", skill: "Science", page: 62 }, [
+    ["Capacitor Mk III", 2, "Robotics Expert", "Uncommon"],
+    ["Capacitor Mk IV", 3, "Robotics Expert, Science! 1", "Uncommon"],
+    ["Capacitor Mk V", 4, "Robotics Expert, Science! 2", "Uncommon"],
+    ["Capacitor Mk VI", 5, "Robotics Expert, Science! 3", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: ".50 CAL MACHINE GUN MODS", skill: "Repair", page: 67 }, [
+    ["Heavy Barrel", 4, "Gun Nut 4", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "AUTO GRENADE LAUNCHER MODS", skill: "Repair", page: 67 }, [
+    ["Heavy Barrel", 4, "Gun Nut 4", "Uncommon"],
+    ["Long Barrel", 4, "Gun Nut 4", "Uncommon"],
+    ["25mm Grenade Receiver", 5, "Gun Nut 4", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "GATLING GUN MODS", skill: "Repair", page: 68 }, [
+    ["Speedy Receiver", 3, "Gun Nut 3", "Uncommon"],
+    ["Long Barrel", 4, "Gun Nut 4", "Uncommon"],
+    ["Comfort Grip", 3, "Gun Nut 4", "Uncommon"],
+    ["Extra-Large Magazine", 3, "Gun Nut 4", "Uncommon"],
+    ["Front Sight Ring", 2, "Gun Nut 4", "Uncommon"],
+    ["Large Bayonet", 2, "Gun Nut 4", "Uncommon"],
+  ]),
+  // The screenshots for Gatling Plasma and Gauss Minigun repeat unrelated recipe rows.
+  // Keep their mod stats from the source tables, but use the app's abstract junk economy here.
+  ...group({ workbench: "weapons", category: "weapons", group: "GATLING PLASMA MODS", skill: "Science", page: 70 }, [
+    ["Ported Barrel", 4, "Science! 4", "Uncommon"],
+    ["Comfort Grip", 4, "Science! 4", "Uncommon"],
+    ["Reflex Sight", 2, "Gun Nut 2", "Uncommon", "Repair"],
+    ["Beam Splitter", 4, "Science! 4", "Uncommon"],
+    ["Beam Focuser", 4, "Science! 4", "Uncommon"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "GAUSS MINIGUN MODS", skill: "Science", page: 71 }, [
+    ["Tri-Barrel", 2, "Science! 1", "Uncommon"],
+    ["Penta-Barrel", 3, "Science! 1", "Uncommon"],
+    ["Tesla Coil Capacitor", 2, "Science! 1", "Uncommon"],
+    ["Tesla Coil Dynamo", 3, "Science! 2", "Uncommon"],
+    ["Gunner Sight", 2, "", "Common", "Repair"],
+  ]),
+  ...group({ workbench: "weapons", category: "weapons", group: "PLASMA CASTER MODS", skill: "Science", page: 72 }, [
+    ["Calibrated Capacitor", 3, "Science! 4", "Uncommon"],
+    ["Pulse Capacitor", 4, "Science! 3", "Uncommon"],
+    ["High Speed Electrode", 5, "Science! 3", "Uncommon"],
+    ["Long Barrel", 3, "Science! 4", "Uncommon"],
+  ]),
   ...group({ workbench: "weapons", category: "weapons", group: "SWORD MODS", skill: "Repair", page: 225 }, [["Serrated Blade", 3, "Blacksmith 2", "Uncommon"], ["Electrified Blade", 4, "Blacksmith 2, Science! 1", "Uncommon"], ["Electrified Serrated Blade", 5, "Blacksmith 3, Science! 1", "Uncommon"], ["Stun Pack", 5, "Blacksmith 3, Science! 1", "Uncommon"]]),
   ...group({ workbench: "weapons", category: "weapons", group: "COMBAT KNIFE MODS", skill: "Repair", page: 225 }, [["Serrated Blade", 3, "Blacksmith 1", "Uncommon"], ["Stealth Blade", 4, "Blacksmith 2", "Uncommon"]]),
   ...group({ workbench: "weapons", category: "weapons", group: "MACHETE MOD", skill: "Repair", page: 225 }, [["Serrated Blade", 3, "Blacksmith 1", "Uncommon"]]),
