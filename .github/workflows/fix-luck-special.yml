@@ -23,8 +23,9 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
-          # App: persist the spendable Luck Point pool separately from Luck SPECIAL.
+          # App: persist spendable Luck Points separately from Luck SPECIAL.
           p = Path('src/App.jsx')
           s = p.read_text(encoding='utf-8')
           old = '''  const [currentLuckPoints, setCurrentLuckPoints] = useState(\n    derived.luckPoints || 0\n  );\n\n  useEffect(() => {\n    setCurrentLuckPoints(derived.luckPoints || 0);\n  }, [derived.luckPoints]);\n\n  const onSpendLuck = () => {\n    setCurrentLuckPoints((prev) => Math.max(0, prev - 1));\n  };'''
@@ -34,13 +35,13 @@ jobs:
           s = s.replace(old, new, 1)
 
           old = ''' const updateSpecial = (key, value) =>\n    setForm((prev) => {\n      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;\n      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };\n      const minAllowed = limits.min !== undefined ? limits.min : 1;\n      const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);\n\n      return {\n        ...prev,\n        special: {\n          ...prev.special,\n          [key]: clampNumberString(value, minAllowed, maxAllowed),\n        },\n      };\n    });'''
-          new = ''' const updateSpecial = (key, value) =>\n    setForm((prev) => {\n      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;\n      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };\n      const originMin = limits.min !== undefined ? Number(limits.min) : 1;\n      const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;\n      const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);\n      const raw = String(value ?? "").trim();\n\n      return {\n        ...prev,\n        special: {\n          ...prev.special,\n          // Keep an empty value while the user is typing; blur restores the minimum.\n          [key]: raw === "" ? "" : clampNumberString(raw, minAllowed, maxAllowed),\n        },\n      };\n    });'''
+          new = ''' const updateSpecial = (key, value) =>\n    setForm((prev) => {\n      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;\n      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };\n      const originMin = Number(limits.min !== undefined ? limits.min : 1);\n      const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;\n      const maxAllowed = Number(limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10));\n      const raw = String(value ?? "").trim();\n      const special = prev.special || {};\n      const otherTotal = Object.entries(special).reduce(\n        (sum, [entryKey, entryValue]) =>\n          entryKey === key ? sum : sum + (Number(entryValue) || 0),\n        0\n      );\n      const budgetMax = Math.max(minAllowed, 40 - otherTotal);\n      const effectiveMax = Math.min(maxAllowed, budgetMax);\n\n      return {\n        ...prev,\n        special: {\n          ...special,\n          // Keep an empty value while typing; blur restores the legal minimum.\n          [key]: raw === "" ? "" : clampNumberString(raw, minAllowed, effectiveMax),\n        },\n      };\n    });'''
           if old not in s:
               raise SystemExit('App updateSpecial block not found')
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
 
-          # Default character data stores current Luck Points independently.
+          # Default character data stores the current Luck Point pool independently.
           p = Path('src/constants.js')
           s = p.read_text(encoding='utf-8')
           old = '''    mdOverride: "",\n    luckPointsOverride: "",\n    maxHpOverride: "",'''
@@ -50,7 +51,7 @@ jobs:
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
 
-          # SPECIAL screen: Luck is never below 4 and fields are easy to edit on mobile/desktop.
+          # SPECIAL screen: Luck min 4; allow normal clear-and-retype editing.
           p = Path('src/components/special/SpecialScreen.jsx')
           s = p.read_text(encoding='utf-8')
           old = '''            const minAllowed = limits.min !== undefined ? limits.min : 1;'''
@@ -65,7 +66,7 @@ jobs:
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
 
-          # Quick Create uses the same Luck minimum.
+          # Quick Create follows the same Luck minimum.
           p = Path('src/components/characterCreation/QuickCharacterWizard.jsx')
           s = p.read_text(encoding='utf-8')
           old = '''    const min = Number(limits.min ?? 1);\n    const max = Number(limits[key] ?? limits.max ?? 10);\n    setSpecial((prev) => {\n      const current = Number(prev[key] || 0);\n      const nextValue = Math.max(min, Math.min(max, current + delta));'''
@@ -75,7 +76,7 @@ jobs:
           s = s.replace(old, new, 1)
           p.write_text(s, encoding='utf-8')
 
-          # Status summary explicitly says Luck Points, not Luck SPECIAL.
+          # Status summary explicitly labels the spendable pool as Luck Points.
           p = Path('src/components/status/StatusScreen.jsx')
           s = p.read_text(encoding='utf-8')
           old = '''              <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>'''
@@ -83,6 +84,21 @@ jobs:
           if old not in s:
               raise SystemExit('StatusScreen Luck label not found')
           s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # Remove the obsolete build-time App mutation. It was re-clamping SPECIAL
+          # on every keystroke and was the reason the SPECIAL editor could not be edited.
+          p = Path('vite-rules-hotfix.js')
+          s = p.read_text(encoding='utf-8')
+          pattern = re.compile(r'function patchAppCharacterRules\(source\) \{.*?\n\}\n\nfunction patchEffectiveCharacterRules', re.S)
+          if not pattern.search(s):
+              raise SystemExit('vite App rules patch block not found')
+          s = pattern.sub('function patchAppCharacterRules(source) {\n  return source;\n}\n\nfunction patchEffectiveCharacterRules', s, count=1)
+          s = s.replace(
+              '  const minAllowed = Number(limits.min ?? 1);\\n  const maxAllowed = Number(limits[key] ?? limits.max ?? 10);',
+              '  const originMin = Number(limits.min ?? 1);\\n  const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;\\n  const maxAllowed = Number(limits[key] ?? limits.max ?? 10);',
+              1,
+          )
           p.write_text(s, encoding='utf-8')
           PY
       - name: Install dependencies
@@ -98,6 +114,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/App.jsx src/constants.js src/components/special/SpecialScreen.jsx src/components/characterCreation/QuickCharacterWizard.jsx src/components/status/StatusScreen.jsx
+          git add src/App.jsx src/constants.js src/components/special/SpecialScreen.jsx src/components/characterCreation/QuickCharacterWizard.jsx src/components/status/StatusScreen.jsx vite-rules-hotfix.js
           git commit -m "fix: separate Luck points and restore SPECIAL editing"
           git push
