@@ -5,6 +5,7 @@ import { translateInventoryItemName } from "../../data/inventoryLocalization.js"
 import { getWeaponModGroups } from "../../data/weaponMods.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
+import { makeLegendaryEquipment } from "../../utils/legendaryLoot.js";
 import {
   MERCHANT_TYPES,
   clampMerchantRarity,
@@ -33,7 +34,7 @@ const COPY = {
     createFailed: "Could not create merchant in the session.", offerSent: "Merchant offer sent to chat.",
     offerFailed: "Could not send merchant offer.", clearConfirm: "Remove all merchants from this session?",
     cleared: "All merchants were removed from the session.", clearFailed: "Could not clear merchants.", stock: "STOCK",
-    caps: "CAPS", items: "ITEMS", name: "NAME", qty: "QTY", price: "PRICE", itemRarity: "RARITY",
+    caps: "CAPS", items: "ITEMS", name: "NAME", qty: "QTY", price: "PRICE", itemRarity: "RARITY", legendary: "LEGENDARY GOODS", legendaryCount: "LEGENDARY COUNT", legendaryHint: "Add random Legendary weapons or armor to merchant stock.",
   },
   ru: {
     title: "ГЕНЕРАТОР ТОРГОВЦЕВ", subtitle: "Создаёт общего для всей сессии торговца с единым ассортиментом и кассой.",
@@ -44,7 +45,7 @@ const COPY = {
     createFailed: "Не удалось создать торговца в сессии.", offerSent: "Ассортимент отправлен в чат.",
     offerFailed: "Не удалось отправить торговца в чат.", clearConfirm: "Удалить всех торговцев из этой сессии?",
     cleared: "Все торговцы удалены из сессии.", clearFailed: "Не удалось очистить торговцев.", stock: "ТОВАРЫ",
-    caps: "КРЫШКИ", items: "ПОЗИЦИЙ", name: "НАЗВАНИЕ", qty: "КОЛ-ВО", price: "ЦЕНА", itemRarity: "РЕДКОСТЬ",
+    caps: "КРЫШКИ", items: "ПОЗИЦИЙ", name: "НАЗВАНИЕ", qty: "КОЛ-ВО", price: "ЦЕНА", itemRarity: "РЕДКОСТЬ", legendary: "ЛЕГЕНДАРНЫЕ ТОВАРЫ", legendaryCount: "КОЛ-ВО ЛЕГЕНДАРНЫХ", legendaryHint: "Добавляет случайное легендарное оружие или броню в ассортимент.",
   },
   uk: {
     title: "ГЕНЕРАТОР ТОРГОВЦІВ", subtitle: "Створює спільного для всієї сесії торговця з єдиним асортиментом і касою.",
@@ -55,7 +56,7 @@ const COPY = {
     createFailed: "Не вдалося створити торговця.", offerSent: "Асортимент надіслано в чат.",
     offerFailed: "Не вдалося надіслати торговця в чат.", clearConfirm: "Видалити всіх торговців із цієї сесії?",
     cleared: "Усіх торговців видалено із сесії.", clearFailed: "Не вдалося очистити торговців.", stock: "ТОВАРИ",
-    caps: "КРИШКИ", items: "ПОЗИЦІЙ", name: "НАЗВА", qty: "К-СТЬ", price: "ЦІНА", itemRarity: "РІДКІСТЬ",
+    caps: "КРИШКИ", items: "ПОЗИЦІЙ", name: "НАЗВА", qty: "К-СТЬ", price: "ЦІНА", itemRarity: "РІДКІСТЬ", legendary: "ЛЕГЕНДАРНІ ТОВАРИ", legendaryCount: "К-СТЬ ЛЕГЕНДАРНИХ", legendaryHint: "Додає випадкову легендарну зброю або броню до асортименту.",
   },
   pl: {
     title: "GENERATOR HANDLARZY", subtitle: "Tworzy wspólnego dla sesji handlarza ze wspólnym towarem i kapslami.",
@@ -66,7 +67,7 @@ const COPY = {
     createFailed: "Nie udało się utworzyć handlarza.", offerSent: "Oferta wysłana na czat.",
     offerFailed: "Nie udało się wysłać oferty.", clearConfirm: "Usunąć wszystkich handlarzy z tej sesji?",
     cleared: "Wszyscy handlarze zostali usunięci z sesji.", clearFailed: "Nie udało się wyczyścić handlarzy.", stock: "TOWAR",
-    caps: "KAPSLE", items: "POZYCJE", name: "NAZWA", qty: "ILOŚĆ", price: "CENA", itemRarity: "RZADKOŚĆ",
+    caps: "KAPSLE", items: "POZYCJE", name: "NAZWA", qty: "ILOŚĆ", price: "CENA", itemRarity: "RZADKOŚĆ", legendary: "LEGENDARNE TOWARY", legendaryCount: "LICZBA LEGENDARNYCH", legendaryHint: "Dodaje losową legendarną broń lub pancerz do asortymentu.",
   },
 };
 
@@ -113,6 +114,9 @@ function normalizeWeapons(rows) {
     name: String(row?.name || "Weapon"), canonicalName: String(row?.name || "Weapon"), quantity: 1,
     weight: String(row?.Weight ?? "0"), cost: String(row?.Cost ?? "0"), rarity: clampMerchantRarity(row?.Rarity, 0),
     category: "weapons", sourceType: "weapon", sourceId: null, effect: String(row?.Effects || ""), lootType: "weapon",
+    weaponType: String(row?.["Weapon type"] || ""), damage: Number(row?.["Damage Rating"] || 0),
+    damageType: String(row?.["Damage type"] || "Physical"), rate: Number(row?.["Rate of Fire"] || 0),
+    range: String(row?.Range || ""), qualities: String(row?.Qualities || ""), effects: String(row?.Effects || ""), ammo: String(row?.Ammo || ""),
   })).filter((item) => item.canonicalName !== "Weapon");
 }
 
@@ -160,6 +164,7 @@ function normalizeArmor(items, isMod = false) {
     weight: String(item?.weight ?? "0"), cost: String(item?.cost ?? "0"), rarity: merchantItemRarity(item, isMod ? 2 : 1),
     category: isMod ? "misc" : "armor", sourceType: isMod ? "armor_mod" : "armor", sourceId: item?.id || null,
     effect: String(item?.effects || ""), lootType: isMod ? "mod" : "armor",
+    locations: item?.locations || {}, physical: Number(item?.physical || 0), energy: Number(item?.energy || 0), radiation: Number(item?.radiation || 0),
   })).filter((item) => item.canonicalName);
 }
 
@@ -215,6 +220,46 @@ function pickStock(pool, merchantType, minRarity, maxRarity, wealth) {
   return result;
 }
 
+function addLegendaryMerchantStock(stock, pool, count) {
+  const requested = Math.max(0, Math.min(10, Number(count) || 0));
+  if (!requested) return stock;
+  const result = [...stock];
+  const usedIds = new Set(result.map((item) => item.id));
+  const indices = result.map((item, index) => ({ item, index })).filter(({ item }) => item.sourceType === "weapon" || item.sourceType === "armor");
+  for (let i = indices.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  let added = 0;
+  for (const entry of indices) {
+    if (added >= requested) break;
+    const legendary = makeLegendaryEquipment(entry.item, entry.item.sourceType === "weapon" ? "weapon" : "armor");
+    if (!legendary) continue;
+    result[entry.index] = { ...legendary, stockId: entry.item.stockId, quantity: entry.item.quantity, cost: entry.item.cost };
+    added += 1;
+  }
+  if (added < requested) {
+    const extras = pool.filter((item) => !usedIds.has(item.id) && (item.sourceType === "weapon" || item.sourceType === "armor"));
+    for (let i = extras.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [extras[i], extras[j]] = [extras[j], extras[i]];
+    }
+    for (const item of extras) {
+      if (added >= requested || result.length >= 24) break;
+      const legendary = makeLegendaryEquipment(item, item.sourceType === "weapon" ? "weapon" : "armor");
+      if (!legendary) continue;
+      result.push({
+        ...legendary,
+        stockId: `${Date.now()}-legendary-${added}-${Math.random().toString(36).slice(2, 7)}`,
+        quantity: 1,
+        cost: String(merchantBuyPrice(legendary)),
+      });
+      added += 1;
+    }
+  }
+  return result;
+}
+
 function merchantCaps(wealth) {
   const min = 50 + (wealth - 1) * 50;
   const max = Math.min(1000, 100 + (wealth - 1) * 100);
@@ -229,6 +274,8 @@ function savedFilters() {
       merchantType: MERCHANT_TYPES.includes(raw.merchantType) ? raw.merchantType : "armorer",
       minRarity: clampMerchantRarity(raw.minRarity, 0), maxRarity: clampMerchantRarity(raw.maxRarity, 7),
       wealth: Math.max(1, Math.min(10, Number(raw.wealth) || 3)),
+      legendaryEnabled: Boolean(raw.legendaryEnabled),
+      legendaryCount: Math.max(1, Math.min(10, Number(raw.legendaryCount) || 1)),
     };
   } catch { return null; }
 }
@@ -242,14 +289,16 @@ export default function GmMerchantGenerator({ session = null }) {
   const [minRarity, setMinRarity] = useState(saved?.minRarity ?? 0);
   const [maxRarity, setMaxRarity] = useState(saved?.maxRarity ?? 7);
   const [wealth, setWealth] = useState(saved?.wealth ?? 3);
+  const [legendaryEnabled, setLegendaryEnabled] = useState(saved?.legendaryEnabled ?? false);
+  const [legendaryCount, setLegendaryCount] = useState(saved?.legendaryCount ?? 1);
   const [dynamicPool, setDynamicPool] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generated, setGenerated] = useState(null);
   const [status, setStatus] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(FILTER_KEY, JSON.stringify({ merchantType, minRarity, maxRarity, wealth }));
-  }, [merchantType, minRarity, maxRarity, wealth]);
+    localStorage.setItem(FILTER_KEY, JSON.stringify({ merchantType, minRarity, maxRarity, wealth, legendaryEnabled, legendaryCount }));
+  }, [merchantType, minRarity, maxRarity, wealth, legendaryEnabled, legendaryCount]);
 
   useEffect(() => {
     let active = true;
@@ -291,7 +340,8 @@ export default function GmMerchantGenerator({ session = null }) {
 
   const generate = () => {
     setStatus("");
-    const stock = pickStock(pool, merchantType, minRarity, maxRarity, wealth);
+    const baseStock = pickStock(pool, merchantType, minRarity, maxRarity, wealth);
+    const stock = legendaryEnabled ? addLegendaryMerchantStock(baseStock, pool, legendaryCount) : baseStock;
     if (!stock.length) { setGenerated(null); setStatus(copy.noLoot); return; }
     const caps = merchantCaps(wealth);
     const merchant = {
@@ -328,9 +378,10 @@ export default function GmMerchantGenerator({ session = null }) {
       <section className="gm-merchant-card"><strong>{copy.type}</strong><select className="pip-input" value={merchantType} onChange={(event)=>setMerchantType(event.target.value)}>{MERCHANT_TYPES.map((type)=><option key={type} value={type}>{getMerchantTypeLabel(type, language)}</option>)}</select></section>
       <section className="gm-merchant-card"><strong>{copy.rarity}</strong><div className="gm-merchant-rarity"><label>{copy.from}<select value={minRarity} onChange={(event)=>changeMin(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label><span>—</span><label>{copy.to}<select value={maxRarity} onChange={(event)=>changeMax(event.target.value)}>{Array.from({length:8},(_,value)=><option key={value} value={value}>R{value}</option>)}</select></label></div></section>
       <section className="gm-merchant-card"><strong>{copy.wealth}: {wealth}</strong><input type="range" min="1" max="10" step="1" value={wealth} onChange={(event)=>setWealth(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/><div className="gm-merchant-scale"><span>1</span><span>10</span></div><small>{copy.wealthHint}</small></section>
+      <section className="gm-merchant-card"><label style={{display:"flex",gap:8,alignItems:"center"}}><input type="checkbox" checked={legendaryEnabled} onChange={(event)=>setLegendaryEnabled(event.target.checked)}/><strong>★ {copy.legendary}</strong></label><label style={{display:"grid",gap:4,marginTop:8}}><span>{copy.legendaryCount}</span><input className="pip-input" type="number" min="1" max="10" value={legendaryCount} disabled={!legendaryEnabled} onChange={(event)=>setLegendaryCount(Math.max(1,Math.min(10,Number(event.target.value)||1)))}/></label><small>{copy.legendaryHint}</small></section>
     </div>
     <div className="gm-merchant-actions"><button type="button" className="pip-btn is-primary" disabled={loading} onClick={generate}>{loading?copy.loading:copy.generate}</button><button type="button" className="pip-btn" disabled={!tradeMerchantId} onClick={trade}>{copy.trade}</button><button type="button" className="pip-btn" disabled={!hasMerchants} onClick={clear}>{copy.clear}</button></div>
     {status?<div className="gm-merchant-status">{status}</div>:null}
-    {liveMerchant?<section className="gm-merchant-result"><div className="gm-merchant-result__summary"><div><div className="pip-bootline">{getMerchantTypeLabel(liveMerchant.merchantType, language)}</div><h3>{liveMerchant.name}</h3></div><div><strong>💰 {liveMerchant.caps}</strong><span>{copy.caps}</span></div><div><strong>{liveMerchant.stock.length}</strong><span>{copy.items}</span></div></div><h3>[ {copy.stock} ]</h3><div className="gm-merchant-table"><div className="gm-merchant-row is-head"><span>{copy.name}</span><span>{copy.qty}</span><span>{copy.price}</span><span>{copy.itemRarity}</span></div>{liveMerchant.stock.map((item)=><div className="gm-merchant-row" key={item.stockId}><span>{item.name}</span><span>{item.quantity}</span><span>💰 {merchantBuyPrice(item)}</span><span>R{item.rarity}</span></div>)}</div></section>:null}
+    {liveMerchant?<section className="gm-merchant-result"><div className="gm-merchant-result__summary"><div><div className="pip-bootline">{getMerchantTypeLabel(liveMerchant.merchantType, language)}</div><h3>{liveMerchant.name}</h3></div><div><strong>💰 {liveMerchant.caps}</strong><span>{copy.caps}</span></div><div><strong>{liveMerchant.stock.length}</strong><span>{copy.items}</span></div></div><h3>[ {copy.stock} ]</h3><div className="gm-merchant-table"><div className="gm-merchant-row is-head"><span>{copy.name}</span><span>{copy.qty}</span><span>{copy.price}</span><span>{copy.itemRarity}</span></div>{liveMerchant.stock.map((item)=><div className="gm-merchant-row" key={item.stockId}><span>{item.legendary ? `★ ${item.legendaryPropertyName || "Legendary"} · ${item.name}` : item.name}</span><span>{item.quantity}</span><span>💰 {merchantBuyPrice(item)}</span><span>R{item.rarity}</span></div>)}</div></section>:null}
   </section>;
 }
