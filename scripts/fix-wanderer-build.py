@@ -4,8 +4,21 @@ import re
 p = Path('src/components/characterCreation/QuickCharacterWizard.jsx')
 s = p.read_text(encoding='utf-8')
 
-# Normalize to one component-scope INT+9 budget regardless of what earlier patches inserted.
-s = re.sub(r'^\s*const skillPointBudget\s*=.*?;\n', '', s, flags=re.MULTILINE)
+# Remove every existing skillPointBudget declaration, including multiline variants.
+lines = s.splitlines(keepends=True)
+out = []
+skipping = False
+for line in lines:
+    if not skipping and re.search(r'\bconst\s+skillPointBudget\s*=', line):
+        skipping = ';' not in line
+        continue
+    if skipping:
+        if ';' in line:
+            skipping = False
+        continue
+    out.append(line)
+s = ''.join(out)
+
 anchor = '  const usedSkillPoints = SKILL_KEYS.reduce(\n'
 if anchor not in s:
     raise SystemExit('usedSkillPoints anchor not found')
@@ -15,7 +28,7 @@ s = s.replace(
     1,
 )
 
-# Normalize other component-scope declarations if a prior patch duplicated them.
+# Normalize other simple component-scope declarations if a prior patch duplicated them.
 for variable in ['specialBudget', 'requiredPerkCount']:
     pattern = re.compile(rf'^  const {variable} = .*?;\n', re.MULTILINE)
     matches = list(pattern.finditer(s))
