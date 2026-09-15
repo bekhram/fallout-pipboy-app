@@ -1,0 +1,38 @@
+name: Apply second weapon batch v2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-second-batch-weapon-content-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply patch
+        run: python .github/scripts/apply_second_batch.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify build
+        run: npm run build
+      - name: Commit source changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/weapons.csv src/data/weaponMods.js src/data/craftingRecipes.js
+          if git diff --cached --quiet; then
+            echo "No source changes needed"
+            exit 0
+          fi
+          git commit -m "feat: add second supplemental weapon and mod batch"
+          git push origin HEAD:main
