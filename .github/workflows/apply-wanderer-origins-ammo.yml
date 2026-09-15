@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'scripts/apply-wanderer-origins-ammo.py'
+      - 'scripts/fix-wanderer-patch.py'
       - '.github/workflows/apply-wanderer-origins-ammo.yml'
   workflow_dispatch:
 
@@ -23,7 +24,9 @@ jobs:
           node-version: 20
           cache: npm
       - name: Apply source changes
-        run: python scripts/apply-wanderer-origins-ammo.py
+        run: |
+          python scripts/apply-wanderer-origins-ammo.py
+          python scripts/fix-wanderer-patch.py
       - name: Install dependencies
         run: npm ci
       - name: Build
