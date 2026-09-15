@@ -4,7 +4,7 @@ import re
 p = Path('src/components/characterCreation/QuickCharacterWizard.jsx')
 s = p.read_text(encoding='utf-8')
 
-# Remove every existing skillPointBudget declaration, including multiline variants.
+# Remove every skillPointBudget declaration, including multiline variants.
 lines = s.splitlines(keepends=True)
 out = []
 skipping = False
@@ -19,14 +19,9 @@ for line in lines:
     out.append(line)
 s = ''.join(out)
 
-anchor = '  const usedSkillPoints = SKILL_KEYS.reduce(\n'
-if anchor not in s:
-    raise SystemExit('usedSkillPoints anchor not found')
-s = s.replace(
-    anchor,
-    '  const skillPointBudget = Math.max(9, Number(special?.I || 0) + 9);\n' + anchor,
-    1,
-)
+# Inline the budget expression everywhere. This avoids collisions with legacy
+# patches that may also declare a skillPointBudget in the same component scope.
+s = re.sub(r'\bskillPointBudget\b', '(Math.max(9, Number(special?.I || 0) + 9))', s)
 
 # Normalize other simple component-scope declarations if a prior patch duplicated them.
 for variable in ['specialBudget', 'requiredPerkCount']:
