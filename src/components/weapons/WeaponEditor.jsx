@@ -12,6 +12,7 @@ import {
 } from "../../constants.js";
 import { getWeaponModGroups, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";
+import LegendaryPropertyEditor from "../shared/LegendaryPropertyEditor.jsx";
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
   const { t, i18n } = useTranslation();
@@ -381,6 +382,14 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
                 );
               })}
             </div>
+            <LegendaryPropertyEditor
+              kind="weapon"
+              draft={draft}
+              setDraft={setDraft}
+              language={i18n.resolvedLanguage}
+              embedded
+              compact
+            />
           </div>
         </details>
       </div>

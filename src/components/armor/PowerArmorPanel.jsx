@@ -9,6 +9,7 @@ import {
   availablePowerUpgrades,
   calculatePowerPart,
 } from "../../data/powerArmor.js";
+import { getLegendaryArmorProperties, getLegendaryPropertyById } from "../../data/legendaryProperties.js";
 
 const SLOT_DEFS = [
   { id: "Head", type: "head" },
@@ -20,10 +21,10 @@ const SLOT_DEFS = [
 ];
 
 const UI = {
-  en: { title: "POWER ARMOR", frame: "Armor Frame", preset: "Complete set", part: "Part", upgrade: "Upgrade", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Frame only", custom: "Mixed set", empty: "No armor piece", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL", currentHp: "Condition", repair: "Repair", intact: "Intact", damaged: "Damaged", broken: "Broken" },
-  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", upgrade: "Улучшение", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО", currentHp: "Состояние", repair: "Ремонт", intact: "Исправна", damaged: "Повреждена", broken: "Сломана" },
-  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", upgrade: "Покращення", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ", currentHp: "Стан", repair: "Ремонт", intact: "Справна", damaged: "Пошкоджена", broken: "Зламана" },
-  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA", currentHp: "Stan", repair: "Napraw", intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona" },
+  en: { title: "POWER ARMOR", frame: "Armor Frame", preset: "Complete set", part: "Part", upgrade: "Upgrade", plating: "Plating", system: "System", none: "Not equipped", frameOnly: "Frame only", custom: "Mixed set", empty: "No armor piece", dr: "DR", hp: "HP", weight: "Weight", cost: "Cost", rarity: "Rarity", total: "TOTAL", currentHp: "Condition", repair: "Repair", intact: "Intact", damaged: "Damaged", broken: "Broken", legendary: "Legendary property", legendaryNone: "Not legendary", legendaryBonus: "+1 Physical DR · +1 Energy DR" },
+  ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", upgrade: "Улучшение", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО", currentHp: "Состояние", repair: "Ремонт", intact: "Исправна", damaged: "Повреждена", broken: "Сломана", legendary: "Легендарное свойство", legendaryNone: "Не легендарная", legendaryBonus: "+1 физ. сопротивление · +1 энерго. сопротивление" },
+  uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", upgrade: "Покращення", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ", currentHp: "Стан", repair: "Ремонт", intact: "Справна", damaged: "Пошкоджена", broken: "Зламана", legendary: "Легендарна властивість", legendaryNone: "Не легендарна", legendaryBonus: "+1 фіз. опір · +1 енерг. опір" },
+  pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA", currentHp: "Stan", repair: "Napraw", intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", legendary: "Właściwość legendarna", legendaryNone: "Nielegendarny", legendaryBonus: "+1 odporności fizycznej · +1 energetycznej" },
 };
 
 const POWER_NAMES = {
@@ -85,6 +86,14 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
 
   const update = (patch) => {
     onArmorChange("_power", "loadout", { ...stored, slots, ...patch });
+  };
+
+  const legendaryParts = armor?._legendary?.parts || {};
+  const setLegendaryPart = (part, propertyId) => {
+    const next = { ...legendaryParts };
+    if (propertyId) next[part] = propertyId;
+    else delete next[part];
+    onArmorChange("_legendary", "parts", next);
   };
 
   const choosePreset = (value) => {
@@ -228,6 +237,25 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
                       {systemOptions.map((mod) => <option key={mod.id} value={mod.id}>{mod.id === "none" ? labels.empty : localizedName(mod)}</option>)}
                     </select>
                   </label>
+                  <label>
+                    <span>★ {labels.legendary}</span>
+                    <select
+                      className="pip-input"
+                      value={legendaryParts[definition.id] || ""}
+                      onChange={(event) => setLegendaryPart(definition.id, event.target.value)}
+                    >
+                      <option value="">— {labels.legendaryNone} —</option>
+                      {getLegendaryArmorProperties(definition.id).map((option) => (
+                        <option key={option.id} value={option.id}>{option.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {legendaryParts[definition.id] && (
+                    <p className="pip-armor-effect">
+                      {getLegendaryPropertyById("armor", legendaryParts[definition.id])?.description || ""}
+                      <small style={{ display: "block", marginTop: 4 }}>{labels.legendaryBonus}</small>
+                    </p>
+                  )}
                 </>
               )}
               {stats && (

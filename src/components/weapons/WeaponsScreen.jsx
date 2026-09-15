@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import WeaponCard from "./WeaponCard.jsx";
 import WeaponEditor from "./WeaponEditor.jsx";
-import LegendaryPropertyEditor, { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";
+import { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";
 
 export default function WeaponsScreen({
   weapons,
@@ -70,12 +70,6 @@ export default function WeaponsScreen({
             >
               ×
             </button>
-            <LegendaryPropertyEditor
-              kind="weapon"
-              draft={weaponDraft}
-              setDraft={setWeaponDraft}
-              language={i18n.resolvedLanguage}
-            />
             <WeaponEditor
               draft={weaponDraft}
               setDraft={setWeaponDraft}

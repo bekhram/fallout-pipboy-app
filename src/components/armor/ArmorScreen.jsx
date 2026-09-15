@@ -440,40 +440,6 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
         </div>
       ) : (
         <div role="tabpanel">
-          <div className="pip-armor-catalog">
-            <div className="pip-armor-section-title">[ ★ {labels.legendary} ]</div>
-            <div className="pip-stack">
-              {ARMOR_PARTS.map((part) => {
-                const propertyId = legendaryParts[part] || "";
-                const property = getLegendaryPropertyById("armor", propertyId);
-                const options = getLegendaryArmorProperties(part);
-                const enabled = hasArmorPart(part);
-                return (
-                  <label key={`legendary-${part}`} className="pip-mod-field">
-                    <span className="pip-mod-field__label">{CODES[part]} · {t(LABEL_KEYS[part] || part)}</span>
-                    <select
-                      className="pip-input"
-                      value={propertyId}
-                      disabled={!enabled}
-                      onChange={(event) => setLegendaryPart(part, event.target.value)}
-                    >
-                      <option value="">— {labels.legendaryNone} —</option>
-                      {options.map((option) => (
-                        <option key={option.id} value={option.id}>{option.name}</option>
-                      ))}
-                    </select>
-                    {propertyId && (
-                      <span className="pip-mod-field__details">
-                        {property?.description || property?.name}
-                        <small>{labels.legendaryBonus}</small>
-                      </span>
-                    )}
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
           <div className="pip-armor-section-title">[ {labels.powerArmor} ]</div>
           <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
 
@@ -550,6 +516,26 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
                       {availableMods.upgrades.map((option) => <option key={option.id} value={option.id}>{armorName(option)}</option>)}
                     </select>
                   </label>
+                  <label>
+                    <span>★ {labels.legendary}</span>
+                    <select
+                      className="pip-input"
+                      disabled={!item}
+                      value={legendaryParts[part] || ""}
+                      onChange={(event) => setLegendaryPart(part, event.target.value)}
+                    >
+                      <option value="">— {labels.legendaryNone} —</option>
+                      {getLegendaryArmorProperties(part).map((option) => (
+                        <option key={option.id} value={option.id}>{option.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {legendaryParts[part] && (
+                    <p className="pip-armor-effect">
+                      {getLegendaryPropertyById("armor", legendaryParts[part])?.description || ""}
+                      <small style={{ display: "block", marginTop: 4 }}>{labels.legendaryBonus}</small>
+                    </p>
+                  )}
                   {(findById(database.mods, selected.materialId)?.effects || findById(database.mods, selected.upgradeId)?.effects) && (
                     <p className="pip-armor-effect">
                       {[findById(database.mods, selected.materialId), findById(database.mods, selected.upgradeId)].map(armorEffect).filter(Boolean).join(" ")}
