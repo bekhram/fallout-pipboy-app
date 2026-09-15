@@ -3,6 +3,7 @@ import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
 import CraftingHub from "../crafting/CraftingHub.jsx";
+import VehicleScreen from "../vehicles/VehicleScreen.jsx";
 import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
@@ -23,6 +24,7 @@ const INTERACTIVE_SELECTOR = [
   ".games-screen",
   ".bestiary-screen",
   ".crafting-screen",
+  ".vehicle-screen",
   ".armor-repair-panel",
   ".pip-active-combat",
   ".combat-turn-sequence",
@@ -134,6 +136,14 @@ export default function PipboyShell({
   if (activeTab === "crafting") {
     screenContent = (
       <CraftingHub
+        character={resolvedCharacter}
+        setCharacter={resolvedSetCharacter}
+      />
+    );
+  }
+  if (activeTab === "vehicles") {
+    screenContent = (
+      <VehicleScreen
         character={resolvedCharacter}
         setCharacter={resolvedSetCharacter}
       />
