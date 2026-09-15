@@ -6,6 +6,7 @@ import magazineRows1 from "./inventory/magazines-1.js";
 import magazineRows2 from "./inventory/magazines-2.js";
 import magazineRows3 from "./inventory/magazines-3.js";
 import toolRows from "./inventory/tools.js";
+import { RARE_BOOK_ITEMS } from "./inventory/rareBooks.js";
 import { BOBBLEHEAD_ITEMS } from "./inventory/bobbleheads.js";
 import { CRAFTING_MATERIAL_ITEMS } from "./inventory/craftingMaterials.js";
 import { STEALTH_BOY_ITEM } from "./inventory/stealthBoy.js";
@@ -119,6 +120,7 @@ export const INVENTORY_DATABASE = [
   ...foodItems,
   ...beverageItems,
   ...magazineItems,
+  ...RARE_BOOK_ITEMS,
   ...toolItems,
   ...BOBBLEHEAD_ITEMS,
   ...CRAFTING_MATERIAL_ITEMS,
