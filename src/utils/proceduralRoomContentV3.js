@@ -105,11 +105,11 @@ function legacySpec(spec = {}) {
 
 function roomCategories(roomId) {
   if (["medical", "wc"].includes(roomId)) return ["aid", "food", "beverages"];
-  if (["store", "sales", "camp", "barrack", "barracks"].includes(roomId)) return ["food", "beverages", "aid", "tools", "junk"];
+  if (["store", "sales", "camp", "barrack", "barracks"].includes(roomId)) return ["food", "beverages", "aid", "tools", "junk", "magazines"];
   if (["garage", "workshop", "wreck", "generator"].includes(roomId)) return ["tools", "junk", "aid"];
-  if (["armory", "storage", "boss"].includes(roomId)) return ["ammo", "weapons", "aid", "tools", "junk"];
-  if (["office", "control"].includes(roomId)) return ["aid", "tools", "junk", "ammo"];
-  return ["food", "beverages", "aid", "tools", "junk", "ammo"];
+  if (["armory", "storage", "boss"].includes(roomId)) return ["ammo", "weapons", "aid", "tools", "junk", "magazines"];
+  if (["office", "control"].includes(roomId)) return ["aid", "tools", "junk", "ammo", "magazines"];
+  return ["food", "beverages", "aid", "tools", "junk", "ammo", "magazines"];
 }
 
 function eligibleItems(spec, categories) {
@@ -155,7 +155,7 @@ function enhanceRoomLoot(spec, room) {
     const itemCount = Math.max(1, next.safe.contents.length - caps.length);
     next.safe.contents = [
       ...caps,
-      ...pickLoot(rng, spec, ["weapons", "ammo", "aid", "tools"], itemCount),
+      ...pickLoot(rng, spec, ["weapons", "ammo", "aid", "tools", "magazines"], itemCount),
     ];
   }
 
