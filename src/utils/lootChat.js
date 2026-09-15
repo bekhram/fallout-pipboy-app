@@ -1,3 +1,9 @@
+import {
+  LEGENDARY_ARMOR_PROPERTIES,
+  LEGENDARY_WEAPON_PROPERTIES,
+  getLegendaryPropertyById,
+} from "../data/legendaryProperties.js";
+
 export const LOOT_TYPE_COPY = {
   weapon: { en: "Weapon", ru: "Оружие", uk: "Зброя", pl: "Broń" },
   armor: { en: "Armor", ru: "Броня", uk: "Броня", pl: "Pancerz" },
@@ -45,6 +51,24 @@ function cleanField(value, fallback = "0") {
   return text || fallback;
 }
 
+function legendaryKindFromLootType(type) {
+  if (type === "weapon") return "weapon";
+  if (type === "armor") return "armor";
+  return "";
+}
+
+function resolveLegendaryProperty(type, propertyId, propertyName) {
+  const kind = legendaryKindFromLootType(type);
+  if (!kind) return null;
+  if (propertyId) {
+    const byId = getLegendaryPropertyById(kind, propertyId);
+    if (byId) return byId;
+  }
+  const list = kind === "armor" ? LEGENDARY_ARMOR_PROPERTIES : LEGENDARY_WEAPON_PROPERTIES;
+  const wanted = String(propertyName || "").trim().toLowerCase();
+  return list.find((property) => property.name.toLowerCase() === wanted) || null;
+}
+
 export function formatLootChatMessage(item, language = "en") {
   const type = String(item?.lootType || item?.type || "special").toLowerCase();
   const label = getLootTypeLabel(type, language);
@@ -53,7 +77,11 @@ export function formatLootChatMessage(item, language = "en") {
   const cost = cleanField(item?.cost ?? item?.price, "-");
   const weight = cleanField(item?.weight, "0");
   const rarity = Math.max(0, Math.min(7, Number(item?.rarity || 0)));
-  return `🎁 [${label}] ${String(item?.name || "Loot")}${quantityText} — 💰${cost} · ⚖${weight} · R${rarity}`;
+  const property = item?.legendary
+    ? resolveLegendaryProperty(type, item?.legendaryProperty, item?.legendaryPropertyName)
+    : null;
+  const legendaryText = property ? ` · ★${property.name}` : "";
+  return `🎁 [${label}] ${String(item?.name || "Loot")}${quantityText} — 💰${cost} · ⚖${weight} · R${rarity}${legendaryText}`;
 }
 
 function lootTypeFromLabel(label) {
@@ -88,6 +116,8 @@ export function parseLootChatMessage(text) {
   const weight = String(parts[1] || "").replace(/^⚖/, "").trim() || "0";
   const rarity = Math.max(0, Math.min(7, Number(String(parts[2] || "").replace(/^R/i, "")) || 0));
   const lootType = lootTypeFromLabel(label);
+  const legendaryName = String(parts.find((part) => part.startsWith("★")) || "").replace(/^★/, "").trim();
+  const property = legendaryName ? resolveLegendaryProperty(lootType, "", legendaryName) : null;
 
   return {
     label,
@@ -101,8 +131,11 @@ export function parseLootChatMessage(text) {
       category: INVENTORY_CATEGORY_BY_LOOT_TYPE[lootType] || "misc",
       sourceType: SOURCE_TYPE_BY_LOOT_TYPE[lootType] || "loot",
       sourceId: null,
-      effect: "",
+      effect: property?.description || "",
       lootType,
+      legendary: Boolean(property),
+      legendaryProperty: property?.id || "",
+      legendaryPropertyName: property?.name || "",
     },
   };
 }
