@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import WeaponCard from "./WeaponCard.jsx";
 import WeaponEditor from "./WeaponEditor.jsx";
+import LegendaryPropertyEditor, { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";
 
 export default function WeaponsScreen({
   weapons,
@@ -20,7 +21,7 @@ export default function WeaponsScreen({
   combatState,
   onSpendCombatAp,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <div className="pip-screen-grid">
@@ -38,19 +39,21 @@ export default function WeaponsScreen({
 
         <div className="pip-stack">
           {weapons.map((weapon, index) => (
-            <WeaponCard
-              key={`${weapon.name}-${index}`}
-              weapon={weapon}
-              index={index}
-              onEdit={onEdit}
-              onCopy={onCopy}
-              onRemove={onRemove}
-              onRoll={onRoll}
-              form={form}
-              globalWeapons={globalWeapons}
-              combatState={combatState}
-              onSpendCombatAp={onSpendCombatAp}
-            />
+            <div key={`${weapon.name}-${index}`}>
+              <LegendaryBadge kind="weapon" item={weapon} language={i18n.resolvedLanguage} />
+              <WeaponCard
+                weapon={weapon}
+                index={index}
+                onEdit={onEdit}
+                onCopy={onCopy}
+                onRemove={onRemove}
+                onRoll={onRoll}
+                form={form}
+                globalWeapons={globalWeapons}
+                combatState={combatState}
+                onSpendCombatAp={onSpendCombatAp}
+              />
+            </div>
           ))}
         </div>
       </section>
@@ -67,6 +70,12 @@ export default function WeaponsScreen({
             >
               ×
             </button>
+            <LegendaryPropertyEditor
+              kind="weapon"
+              draft={weaponDraft}
+              setDraft={setWeaponDraft}
+              language={i18n.resolvedLanguage}
+            />
             <WeaponEditor
               draft={weaponDraft}
               setDraft={setWeaponDraft}
