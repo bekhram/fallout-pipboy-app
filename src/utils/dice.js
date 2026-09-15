@@ -106,9 +106,19 @@ export function buildFalloutD6Result(rollValues, { effects = [] } = {}) {
   const rolls = rollValues.map((value) => evaluateFalloutD6Value(value));
   const rawEffects = Array.isArray(effects) ? effects : [];
   const normalizedEffects = normalizeEffects(rawEffects);
-  const hasVicious = hasEffect(normalizedEffects, "vicious");
-  const hasSpread = hasEffect(normalizedEffects, "spread");
-  const hasBurst = hasEffect(normalizedEffects, "burst");
+  const hasToken = (name) => normalizedEffects.some((effect) => effect === name || effect.startsWith(`${name} `) || effect.startsWith(`${name}(`));
+  const hasVicious = hasToken("vicious");
+  const hasSpread = hasToken("spread");
+  const hasBurst = hasToken("burst");
+  const hasStun = hasToken("stun");
+  const hasRadioactive = hasToken("radioactive");
+  const hasFreeze = hasToken("freeze");
+  const hasBreaking = hasToken("breaking");
+  const persistentEffects = normalizedEffects.filter((effect) => effect.startsWith("persistent"));
+  const piercingRating = normalizedEffects.reduce((best, effect) => {
+    const match = effect.match(/^piercing\s*\(?\s*(\d+)\s*\)?/i);
+    return match ? Math.max(best, Number(match[1]) || 0) : best;
+  }, 0);
   let baseDamage = 0;
   let totalDamage = 0;
   let totalEffects = 0;
@@ -135,6 +145,16 @@ export function buildFalloutD6Result(rollValues, { effects = [] } = {}) {
   if (hasBurst && totalEffects > 0 && burstDamagePerTarget > 0) {
     for (let i = 0; i < totalEffects; i += 1) burstTargets.push({ target: i + 1, damage: burstDamagePerTarget });
   }
+  const piercingTotal = piercingRating * totalEffects;
+  const triggeredEffects = {
+    stun: hasStun && totalEffects > 0,
+    radioactive: hasRadioactive && totalEffects > 0,
+    freeze: hasFreeze && totalEffects > 0,
+    breaking: hasBreaking && totalEffects > 0,
+    persistent: totalEffects > 0 ? persistentEffects : [],
+    piercingRating,
+    piercingTotal,
+  };
   return {
     type: "fallout-d6-damage",
     diceCount: processedRolls.length,
@@ -144,7 +164,10 @@ export function buildFalloutD6Result(rollValues, { effects = [] } = {}) {
     baseDamage,
     rawEffects,
     effects: normalizedEffects,
-    recognizedEffects: { vicious: hasVicious, spread: hasSpread, burst: hasBurst },
+    recognizedEffects: { vicious: hasVicious, spread: hasSpread, burst: hasBurst, stun: hasStun, radioactive: hasRadioactive, freeze: hasFreeze, breaking: hasBreaking, persistent: persistentEffects.length > 0, piercing: piercingRating > 0 },
+    triggeredEffects,
+    piercingRating,
+    piercingTotal,
     hasVicious,
     hasSpread,
     hasBurst,

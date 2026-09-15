@@ -17,6 +17,7 @@ import {
 } from "../../utils/armorDatabase.js";
 import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";
 import { localizeLegendaryName, localizeSupplementalArmorName } from "../../data/equipmentLocalizationSupplemental.js";
+import { applyLegendaryArmorEffects } from "../../utils/legendaryEffects.js";
 
 const LABEL_KEYS = {
   Head: "injuries.head",
@@ -233,14 +234,8 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
     return result;
   }, [armor, database, slots]);
 
-  const withLegendaryBonus = (part, stats = {}) => {
-    if (!legendaryParts[part]) return { ...stats };
-    return {
-      ...stats,
-      physical: Number(stats.physical || 0) + 1,
-      energy: Number(stats.energy || 0) + 1,
-    };
-  };
+  const withLegendaryBonus = (part, stats = {}) =>
+    applyLegendaryArmorEffects(stats, legendaryParts[part]);
 
   const calculated = useMemo(() => {
     const result = {};
@@ -255,7 +250,8 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
 
   const setResistance = (part, field, rawValue) => {
     const value = Math.max(0, Number.parseInt(rawValue, 10) || 0);
-    const legendaryOffset = legendaryParts[part] && (field === "physical" || field === "energy") ? 1 : 0;
+    const legendaryStatic = applyLegendaryArmorEffects({}, legendaryParts[part]);
+    const legendaryOffset = Number(legendaryStatic[field] || 0);
     const storedValue = Math.max(0, value - legendaryOffset);
 
     if (powerArmorStats) {

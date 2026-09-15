@@ -12,6 +12,7 @@ import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";
 import { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
 import { getPerkRank } from "../../utils/perkEffects.js";
+import { applyLegendaryWeaponEffects } from "../../utils/legendaryEffects.js";
 import {
   applyConditionalWeaponPerks,
   applyPassiveWeaponPerks,
@@ -245,7 +246,12 @@ export default function WeaponCard({
     passivePerkResult.weapon,
     attackContext
   );
-  const calculatedWeapon = conditionalPerkResult.weapon;
+  const calculatedWeapon = applyLegendaryWeaponEffects(conditionalPerkResult.weapon, {
+    ...attackContext,
+    hp: form?.hp?.current ?? form?.currentHp,
+    maxHp: form?.hp?.max ?? form?.maxHp,
+    addictions: Array.isArray(form?.addictions) ? form.addictions.length : Number(form?.addictions || 0),
+  });
   const isRangedWeapon = ["Small Guns", "Energy Weapons", "Big Guns", "Explosives", "Throwing"]
     .includes(String(calculatedWeapon?.skill || "").trim());
   const hasQuickHands = isRangedWeapon && getPerkRank(form, "quick_hands") > 0;
@@ -270,6 +276,7 @@ export default function WeaponCard({
   const allPerkNotes = [
     ...passivePerkResult.notes,
     ...conditionalPerkResult.notes,
+    ...(calculatedWeapon.legendaryEffectNotes || []),
     ...(aimNote ? [aimNote] : []),
   ];
 

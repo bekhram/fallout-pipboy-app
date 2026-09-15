@@ -321,6 +321,17 @@ useEffect(() => {
           </div>
         </div>
 
+        {lastRoll && (lastRoll.piercingTotal > 0 || lastRoll.triggeredEffects?.stun || lastRoll.triggeredEffects?.radioactive || lastRoll.triggeredEffects?.freeze || lastRoll.triggeredEffects?.breaking || lastRoll.triggeredEffects?.persistent?.length > 0) && (
+          <div className="dice-actions" style={{ marginBottom: 10, flexWrap: "wrap" }}>
+            {lastRoll.piercingTotal > 0 && <div className="dice-context-stat"><span className="dice-context-stat-label">PIERCING:</span><span className="dice-context-stat-value">{lastRoll.piercingTotal}</span></div>}
+            {lastRoll.triggeredEffects?.stun && <div className="dice-context-stat"><span className="dice-context-stat-value">STUN</span></div>}
+            {lastRoll.triggeredEffects?.radioactive && <div className="dice-context-stat"><span className="dice-context-stat-value">RADIOACTIVE</span></div>}
+            {lastRoll.triggeredEffects?.freeze && <div className="dice-context-stat"><span className="dice-context-stat-value">FREEZE</span></div>}
+            {lastRoll.triggeredEffects?.breaking && <div className="dice-context-stat"><span className="dice-context-stat-value">BREAKING</span></div>}
+            {lastRoll.triggeredEffects?.persistent?.map((effect) => <div key={effect} className="dice-context-stat"><span className="dice-context-stat-value">{effect.toUpperCase()}</span></div>)}
+          </div>
+        )}
+
         {(finesseAvailable || forceCriticalAvailable || lastRoll?.forcedCritical) && (
           <div className="dice-actions" style={{ marginBottom: 10, flexWrap: "wrap" }}>
             {finesseAvailable && (
