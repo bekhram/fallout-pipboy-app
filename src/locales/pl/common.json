@@ -999,5 +999,103 @@
       "blade": "Ostrze",
       "head": "Modyfikacja"
     }
+  },
+  "origins": {
+    "assaultron": "Assaultron",
+    "brotherhood_outcast": "Wyrzutek Bractwa",
+    "child_of_atom": "Dziecko Atomu",
+    "nightkin": "Nightkin",
+    "tribal": "Plemienny"
+  },
+  "originDescriptions": {
+    "assaultron": "Robot bojowy pierwszej linii stworzony do przetrwania na Pustkowiu. Jest odporny na promieniowanie, trucizny i choroby, ma stały udźwig 150 funtów i odzyskuje sprawność dzięki naprawom.",
+    "brotherhood_outcast": "Były członek Bractwa, który odrzucił kierunek dowództwa i wykorzystuje wojskowe szkolenie oraz wiedzę o technologii sprzed wojny na własnych zasadach.",
+    "child_of_atom": "Wyznawca Atomu traktujący promieniowanie jako święty dar. Pochodzenie daje dodatkowy perk na 1. poziomie i specjalne zasady promieniowania.",
+    "nightkin": "Niebieskoskóry supermutant zmieniony przez długotrwałe używanie Stealth Boyów. Jest bardzo silny i odporny, lecz ma niższe limity Inteligencji, Charyzmy i Umiejętności.",
+    "tribal": "Członek zwartej społeczności plemiennej Pustkowia, którego życie kształtują tradycje, przetrwanie i wybrane cechy kulturowe."
+  },
+  "traitsInfo": {
+    "designed_for_frontline": {
+      "name": "Zaprojektowany na linię frontu",
+      "desc": "Robot: odporność na promieniowanie, trucizny i choroby; stały udźwig 150 funtów; brak normalnych korzyści z jedzenia, picia, odpoczynku i chemów; wzmocniona walka wręcz bez broni."
+    },
+    "chain_that_breaks": {
+      "name": "Łańcuch, który pęka",
+      "desc": "Otrzymujesz dodatkową Tag Skill: Energy Weapons, Science albo Repair oraz lepsze możliwości szabrowania."
+    },
+    "rad_sponge": {
+      "name": "Gąbka radiacyjna",
+      "desc": "Otrzymujesz dodatkowy perk na 1. poziomie, bazowe Radiation DR 1 i pulę Punktów Promieniowania do wzmacniania ataków."
+    },
+    "stealth_boy_addict": {
+      "name": "Uzależniony od Stealth Boya",
+      "desc": "STR i END +2; maks. STR/END 12, INT/CHA 8, ranga Umiejętności 4. Odporność na promieniowanie i trucizny. Częste używanie Stealth Boya grozi uzależnieniem."
+    },
+    "mother_wasteland": {
+      "name": "Matka Pustkowie",
+      "desc": "Wydawaj Szczęście, aby uzyskać zagadkową wskazówkę o zadaniu lub scenie; artefakty sprzed wojny są trudniejsze do zrozumienia."
+    },
+    "nomad": {
+      "name": "Nomada",
+      "desc": "Przerzut Survival podczas podróży, obozowania i zdobywania żywności; testy społeczne w stałych osadach są trudniejsze, a Science nie może być Tag Skill."
+    },
+    "rite_of_passage": {
+      "name": "Rytuał przejścia",
+      "desc": "Pierwszy wydany punkt Szczęścia w scenie może uruchomić rzut efektu; pomoc innemu bohaterowi wymaga najpierw AP."
+    },
+    "tools_of_old_world": {
+      "name": "Narzędzia Starego Świata",
+      "desc": "Możesz używać Survival zamiast Repair lub Science przy technologii sprzed wojny, ale komplikacje są częstsze."
+    },
+    "chosen_one": {
+      "name": "Wybraniec",
+      "desc": "Pierwsze kupione k20 w testach związanych z celem plemienia jest darmowe; sukces za cenę jest zawsze dostępny."
+    }
+  },
+  "equipmentPacks": {
+    "assaultron_military": {
+      "name": "Model wojskowy USA",
+      "items": "Wbudowany laser; rama siłownikowa do wyboru; standardowe poszycie; ogniwa fuzyjne; czujniki zwiadowcze; 15 kapsli."
+    },
+    "assaultron_devil": {
+      "name": "Assaultron Diabłów",
+      "items": "Maska czaszki; ząbkowana płyta do wyboru; dwa pazury konstrukcyjne; moduł wykrywania zagrożeń; ogniwa fuzyjne; zestaw naprawczy robota."
+    },
+    "assaultron_caravan": {
+      "name": "Robotyczny strażnik karawany",
+      "items": "Wbudowany laser; fabryczny pancerz transportowy i nogi; ogniwa fuzyjne; po 3 losowe przedmioty amunicji, pomocy i złomu; moduł analizy zachowania; losowe kapsle."
+    },
+    "outcast_ex_knight": {
+      "name": "Były Rycerz",
+      "items": "Karabin laserowy i ogniwa fuzyjne; podarty mundur Bractwa; manierka z wodą; 2 rzuty na tabeli Wyrzutków; 10 kapsli."
+    },
+    "outcast_ex_scribe": {
+      "name": "Były Skryba",
+      "items": "Pistolet laserowy i ogniwa fuzyjne; podarty pancerz Skryby; multitool; 3 rzuty na tabeli Wyrzutków; 15 kapsli."
+    },
+    "atom_missionary": {
+      "name": "Misjonarz",
+      "items": "Wytrzymałe ubranie; laska; pistolet gamma i naboje gamma; Stimpak; 10 kapsli; 1 losowe jedzenie."
+    },
+    "atom_zealot": {
+      "name": "Zelota",
+      "items": "Wytrzymałe ubranie lub strój włóczęgi; maczeta; pistolet gamma i naboje gamma; maska przeciwgazowa; 2 losowe jedzenia."
+    },
+    "nightkin_pack": {
+      "name": "Nightkin",
+      "items": "Karabin laserowy i ogniwa fuzyjne; miecz ze zderzaka; elementy pancerza bandyty; Stealth Boy; 2 losowe jedzenia; 1 losowy napój."
+    },
+    "tribal_modernist": {
+      "name": "Modernista",
+      "items": "Nowoczesna broń do wyboru z amunicją; kombinezon pod pancerz; pancerz bojowy do wyboru; multitool; losowe jedzenie i napój; 3 złomu."
+    },
+    "tribal_ritualist": {
+      "name": "Rytualista",
+      "items": "Broń do wyboru z amunicją; wzmocnione ubranie; skórzany napierśnik; osobisty talizman; 2 losowe kosztowności."
+    },
+    "tribal_naturalist": {
+      "name": "Naturalista",
+      "items": "Łuk i strzały; maczeta i nóż bojowy; strój i kaptur myśliwego; drewniany pancerz; 3 losowe jedzenia; 3 losowe napoje."
+    }
   }
 }

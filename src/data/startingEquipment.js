@@ -248,6 +248,88 @@ export const ORIGIN_EQUIPMENT_PACKS = {
     item("Personal Trinket", "misc"),
     caps(30),
   ],
+  assaultron_military: [
+    item("Laser Gun Attachment", "weapons"),
+    choice("actuatedFrame", [[item("Actuated Frame Body", "armor")], [item("Actuated Frame Arm", "armor"), item("Actuated Frame Leg", "armor")]]),
+    item("Standard Plating", "armor"),
+    item("Fusion Cell", "ammo", cd(8, 7)),
+    item("Recon Sensors Mod", "misc"),
+    caps(15),
+  ],
+  assaultron_devil: [
+    item("Skull Mask", "armor"),
+    choice("serratedPlate", [[item("Serrated Plate Body", "armor")], [item("Serrated Plate Arm", "armor"), item("Serrated Plate Leg", "armor")]]),
+    item("Construction Claw", "weapons", 2),
+    item("Hazard Detection Mod", "misc"),
+    item("Fusion Cell", "ammo", cd(6, 6)),
+    item("Robot Repair Kit", "tools"),
+  ],
+  assaultron_caravan: [
+    item("Laser Gun Attachment", "weapons"),
+    item("Factory Storage Armor", "armor"),
+    item("Factory Armor Legs", "armor"),
+    item("Fusion Cell", "ammo", cd(14, 7)),
+    { type: "randomWares", count: 3 },
+    item("Behavioral Analysis Module", "misc"),
+    caps(cd(10, 5)),
+  ],
+  outcast_ex_knight: [
+    item("Laser Rifle", "weapons"),
+    item("Fusion Cell", "ammo", cd(8, 6)),
+    item("Tattered Brotherhood Fatigues", "armor"),
+    item("Military Canteen", "beverages", 1, { effect: "Filled with water." }),
+    { type: "randomOutcast", count: 2 },
+    caps(10),
+  ],
+  outcast_ex_scribe: [
+    item("Laser Pistol", "weapons"),
+    item("Fusion Cell", "ammo", cd(8, 4)),
+    item("Tattered Brotherhood Scribe's Armor", "armor"),
+    item("Multi-Tool", "tools"),
+    { type: "randomOutcast", count: 3 },
+    caps(15),
+  ],
+  atom_missionary: [
+    item("Tough Clothing", "armor"), item("Walking Cane", "weapons"),
+    item("Gamma Gun", "weapons"), item("Gamma Round", "ammo", cd(4, 2)),
+    item("Stimpak", "aid"), caps(10), { type: "randomFood", count: 1 },
+  ],
+  atom_zealot: [
+    choice("clothing", [[item("Tough Clothing", "armor")], [item("Drifter Outfit", "armor")]]),
+    item("Machete", "weapons"), item("Gamma Gun", "weapons"), item("Gamma Round", "ammo", cd(4, 2)),
+    item("Gas Mask", "armor"), { type: "randomFood", count: 2 },
+  ],
+  nightkin_pack: [
+    item("Laser Rifle", "weapons"), item("Fusion Cell", "ammo", cd(8, 6)),
+    item("Bumper Sword", "weapons"), item("Raider Chest Piece", "armor"),
+    item("Raider Arm", "armor"), item("Raider Leg", "armor"), item("Stealth Boy", "misc"),
+    { type: "randomFood", count: 2 }, { type: "randomBeverage", count: 1 },
+  ],
+  tribal_modernist: [
+    choice("modernWeapon", [
+      [item("9mm Pistol", "weapons"), item("9mm", "ammo", cd(8, 6)), item("Combat Knife", "weapons")],
+      [item("Pump-Action Shotgun", "weapons"), item("Shotgun Shell", "ammo", cd(12, 6))],
+    ]),
+    item("Underarmor Suit", "armor"),
+    choice("combatArmor", [[item("Combat Chest Piece", "armor")], [item("Combat Arm", "armor"), item("Combat Leg", "armor")]]),
+    item("Multi-Tool", "tools"), { type: "randomFood", count: 1 }, { type: "randomBeverage", count: 1 },
+    item("Junk", "junk", 3),
+  ],
+  tribal_ritualist: [
+    choice("ritualWeapon", [
+      [item("Hunting Rifle", "weapons"), item(".308", "ammo", cd(6, 4))],
+      [item("Black Powder Blunderbuss", "weapons"), item(".50 Ball", "ammo", cd(6, 4))],
+      [item("Pipe Gun", "weapons"), item(".38", "ammo", cd(4, 6)), item("Pipe Revolver", "weapons"), item(".45", "ammo", cd(4, 6))],
+    ]),
+    item("Sturdy Clothing", "armor"), item("Leather Chest Piece", "armor"), item("Personal Trinket", "misc"),
+    { type: "randomOddity", count: 2 },
+  ],
+  tribal_naturalist: [
+    item("Bow", "weapons"), item("Arrow", "ammo", cd(10, 6)), item("Machete", "weapons"), item("Combat Knife", "weapons"),
+    item("Hunter's Pelt Outfit", "armor"), item("Hunter's Hood", "armor"), item("Wood Armor Chest Piece", "armor"),
+    choice("woodLimb", [[item("Wooden Arm", "armor")], [item("Wooden Leg", "armor")]]),
+    { type: "randomFood", count: 3 }, { type: "randomBeverage", count: 3 },
+  ]
 };
 
 function rollCombatDice(count = 0) {
@@ -346,6 +428,20 @@ function enrichItem(spec, databases = {}) {
   return { ...spec };
 }
 
+const OUTCAST_RANDOM_ITEMS = [
+  item("Deluxe Toolkit", "tools"), item("Flashlight", "tools"), item("Fixin' Things", "magazines"),
+  item("Antibiotics", "aid"), item("Bottlecap Mine", "weapons"), item("Radio", "misc"),
+  item("Combat Chest Piece", "armor"), item("Old World Cache Map", "misc"), item("Stimpak", "aid"),
+  item("Combat Arm", "armor"), item("Combat Leg", "armor"), item("Sensor Array", "misc"),
+  item("Backpack, Small", "misc"), item("Sword", "weapons"), item("Laser Musket", "weapons"),
+  item("RadAway", "aid"), item("Combat Shotgun", "weapons"), item("Power Fist", "weapons"),
+  item("Sturdy Combat Helmet", "armor"), item("Pip-Boy", "tools"),
+];
+
+function randomFrom(list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+
 function flattenGrant(entries = [], form = {}, choices = {}) {
   const result = [];
   let capTotal = 0;
@@ -373,9 +469,48 @@ function flattenGrant(entries = [], form = {}, choices = {}) {
       const foods = INVENTORY_DATABASE.filter((candidate) => candidate.category === "food");
       for (let i = 0; i < Number(entry.count || 1); i += 1) {
         if (!foods.length) break;
-        const picked = foods[Math.floor(Math.random() * foods.length)];
+        const picked = randomFrom(foods);
         result.push(item(picked.name, "food"));
       }
+      return;
+    }
+    if (entry.type === "randomBeverage") {
+      const drinks = INVENTORY_DATABASE.filter((candidate) => candidate.category === "beverages");
+      for (let i = 0; i < Number(entry.count || 1); i += 1) {
+        if (!drinks.length) break;
+        const picked = randomFrom(drinks);
+        result.push(item(picked.name, "beverages"));
+      }
+      return;
+    }
+    if (entry.type === "randomOddity") {
+      const oddities = INVENTORY_DATABASE.filter((candidate) => ["misc", "tools", "magazines"].includes(candidate.category));
+      for (let i = 0; i < Number(entry.count || 1); i += 1) {
+        if (!oddities.length) break;
+        const picked = randomFrom(oddities);
+        result.push(item(picked.name, picked.category || "misc"));
+      }
+      return;
+    }
+    if (entry.type === "randomOutcast") {
+      for (let i = 0; i < Number(entry.count || 1); i += 1) result.push({ ...randomFrom(OUTCAST_RANDOM_ITEMS) });
+      return;
+    }
+    if (entry.type === "randomWares") {
+      const ammoWares = [".38", "9mm", "10mm", ".308", "Shotgun Shell", "Fusion Cell", "Gamma Round", "Arrow", ".45"]
+        .map((name) => item(name, "ammo"));
+      const pools = [
+        ammoWares,
+        INVENTORY_DATABASE.filter((candidate) => candidate.category === "aid"),
+        INVENTORY_DATABASE.filter((candidate) => candidate.category === "junk"),
+      ];
+      pools.forEach((pool) => {
+        for (let i = 0; i < Number(entry.count || 1); i += 1) {
+          if (!pool.length) break;
+          const picked = randomFrom(pool);
+          result.push(item(picked.name, picked.category || "misc"));
+        }
+      });
       return;
     }
     if (entry.type === "item") result.push({ ...entry });

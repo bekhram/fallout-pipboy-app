@@ -13,6 +13,7 @@ import {
 } from "../data/origins.js";
 import { PERKS_LIST } from "../data/perks.js";
 import { getAddedPerkTranslation } from "../data/perkTranslations.js";
+import { getSupplementalPerkTranslation } from "../data/supplementalPerks.js";
 import {
   getOriginEquipmentGrant,
   getTagSkillEquipmentGrant,
@@ -47,7 +48,7 @@ export const CREATION_COPY = {
     remaining: "Remaining",
     specialReady: "All 40 points are assigned.",
     skillTitle: "Distribute Skills and choose Tag Skills",
-    skillHelp: "Assign 9 starting Skill ranks. A starting Skill can have up to rank 3. Then choose all Tag Skills allowed by your Origin; each Tag gives +2 in the app and grants its starting items.",
+    skillHelp: "Assign starting Skill ranks equal to INT + 9. A starting Skill can have up to rank 3. Then choose all Tag Skills allowed by your Origin; each Tag gives +2 in the app and grants its starting items.",
     skillPoints: "Skill points",
     tags: "Tag Skills",
     requiredTags: "Required marked Tags",
@@ -62,7 +63,7 @@ export const CREATION_COPY = {
     needOrigin: "Choose an Origin and its starting equipment first.",
     needTraits: "Choose all required Origin traits.",
     needSpecial: "Assign exactly 40 S.P.E.C.I.A.L. points.",
-    needSkills: "Assign exactly 9 Skill ranks and all required Tag Skills.",
+    needSkills: "Assign exactly INT + 9 Skill ranks and all required Tag Skills.",
     needPerk: "Choose one available Perk.",
     available: "Available",
     selected: "Selected",
@@ -93,7 +94,7 @@ export const CREATION_COPY = {
     remaining: "Осталось",
     specialReady: "Все 40 очков распределены.",
     skillTitle: "Распредели навыки и выбери Tag Skills",
-    skillHelp: "Распредели 9 стартовых рангов навыков. На старте навык может иметь максимум 3 ранга. Затем выбери все Tag Skills, доступные Origin: приложение учитывает +2 и автоматически выдаёт стартовые предметы.",
+    skillHelp: "Распредели количество стартовых рангов навыков, равное INT + 9. На старте навык может иметь максимум 3 ранга. Затем выбери все Tag Skills, доступные Origin: приложение учитывает +2 и автоматически выдаёт стартовые предметы.",
     skillPoints: "Очки навыков",
     tags: "Tag Skills",
     requiredTags: "Обязательные отмеченные теги",
@@ -108,7 +109,7 @@ export const CREATION_COPY = {
     needOrigin: "Сначала выбери Origin и стартовый набор снаряжения.",
     needTraits: "Выбери все обязательные трейты Origin.",
     needSpecial: "Нужно распределить ровно 40 очков S.P.E.C.I.A.L.",
-    needSkills: "Нужно распределить ровно 9 рангов навыков и выбрать все обязательные Tag Skills.",
+    needSkills: "Нужно распределить ровно INT + 9 рангов навыков и выбрать все обязательные Tag Skills.",
     needPerk: "Выбери один доступный Perk.",
     available: "Доступно",
     selected: "Выбрано",
@@ -139,7 +140,7 @@ export const CREATION_COPY = {
     remaining: "Залишилось",
     specialReady: "Усі 40 очок розподілено.",
     skillTitle: "Розподіли навички та обери Tag Skills",
-    skillHelp: "Розподіли 9 стартових рангів навичок. На старті навичка може мати максимум 3 ранги. Потім обери всі Tag Skills, доступні Origin: застосунок врахує +2 та автоматично видасть стартові предмети.",
+    skillHelp: "Розподіли кількість стартових рангів навичок, що дорівнює INT + 9. На старті навичка може мати максимум 3 ранги. Потім обери всі Tag Skills, доступні Origin: застосунок врахує +2 та автоматично видасть стартові предмети.",
     skillPoints: "Очки навичок",
     tags: "Tag Skills",
     requiredTags: "Обов'язкові позначені теги",
@@ -154,7 +155,7 @@ export const CREATION_COPY = {
     needOrigin: "Спочатку обери Origin і стартовий набір спорядження.",
     needTraits: "Обери всі обов'язкові трейти Origin.",
     needSpecial: "Потрібно розподілити рівно 40 очок S.P.E.C.I.A.L.",
-    needSkills: "Потрібно розподілити рівно 9 рангів навичок і обрати всі обов'язкові Tag Skills.",
+    needSkills: "Потрібно розподілити рівно INT + 9 рангів навичок і обрати всі обов'язкові Tag Skills.",
     needPerk: "Обери один доступний Perk.",
     available: "Доступно",
     selected: "Обрано",
@@ -185,7 +186,7 @@ export const CREATION_COPY = {
     remaining: "Pozostało",
     specialReady: "Wszystkie 40 punktów zostało przydzielonych.",
     skillTitle: "Rozdziel umiejętności i wybierz Tag Skills",
-    skillHelp: "Rozdziel 9 początkowych rang umiejętności. Na starcie umiejętność może mieć maksymalnie 3 rangi. Następnie wybierz wszystkie Tag Skills dostępne dla Origin; aplikacja doliczy +2 i automatycznie doda przedmioty startowe.",
+    skillHelp: "Rozdziel liczbę początkowych rang umiejętności równą INT + 9. Na starcie umiejętność może mieć maksymalnie 3 rangi. Następnie wybierz wszystkie Tag Skills dostępne dla Origin; aplikacja doliczy +2 i automatycznie doda przedmioty startowe.",
     skillPoints: "Punkty umiejętności",
     tags: "Tag Skills",
     requiredTags: "Wymagane oznaczone tagi",
@@ -200,7 +201,7 @@ export const CREATION_COPY = {
     needOrigin: "Najpierw wybierz Origin i zestaw wyposażenia startowego.",
     needTraits: "Wybierz wszystkie wymagane cechy Origin.",
     needSpecial: "Przydziel dokładnie 40 punktów S.P.E.C.I.A.L.",
-    needSkills: "Przydziel dokładnie 9 rang umiejętności i wybierz wszystkie wymagane Tag Skills.",
+    needSkills: "Przydziel dokładnie INT + 9 rang umiejętności i wybierz wszystkie wymagane Tag Skills.",
     needPerk: "Wybierz jeden dostępny Perk.",
     available: "Dostępne",
     selected: "Wybrane",
@@ -243,7 +244,9 @@ function getPerkWarnings(perk, form) {
     LCK: Number(form?.special?.L || 0),
   };
   const level = Number(form?.level || 1);
-  const isRobot = form?.origin === "mister_handy";
+  const isRobot = ["mister_handy", "assaultron"].includes(form?.origin);
+  const isGhoul = form?.origin === "ghoul";
+  const radiationImmune = ["ghoul", "super_mutant", "nightkin", "mister_handy", "assaultron"].includes(form?.origin);
 
   String(reqString)
     .split(",")
@@ -263,7 +266,10 @@ function getPerkWarnings(perk, form) {
         return;
       }
 
-      if (part.toLowerCase() === "not a robot" && isRobot) warnings.push(part);
+      const lower = part.toLowerCase();
+      if (lower === "not a robot" && isRobot) warnings.push(part);
+      if (lower === "not a ghoul or robot" && (isGhoul || isRobot)) warnings.push(part);
+      if (lower === "not immune to radiation" && radiationImmune) warnings.push(part);
     });
 
   return warnings;
@@ -298,7 +304,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   const [special, setSpecial] = useState(() => ({ ...buildDefaultForm().special }));
   const [skills, setSkills] = useState(() => ({ ...buildDefaultForm().skills }));
   const [startingChoices, setStartingChoices] = useState({});
-  const [perkId, setPerkId] = useState("");
+  const [perkIds, setPerkIds] = useState([]);
   const [perkSearch, setPerkSearch] = useState("");
 
   const origin = originId ? ORIGINS[originId] : null;
@@ -310,12 +316,17 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
     (sum, key) => sum + Number(special?.[key] || 0),
     0
   );
-  const specialRemaining = 40 - specialTotal;
+  const specialBudget = 40 + Object.values(origin?.specialBonuses || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+  const specialRemaining = specialBudget - specialTotal;
 
   let tagLimit = Number(origin?.tagSkillCount || 3);
   if (selectedTraits.includes("educated")) tagLimit += 1;
   const restrictedTags = origin?.restrictedTagList || [];
   const restrictedRequired = Number(origin?.restrictedTagCount || 0);
+  const forbiddenTags = [
+    ...(origin?.forbiddenTagList || []),
+    ...(selectedTraits.includes("nomad") ? ["Science"] : []),
+  ];
 
   const usedSkillPoints = SKILL_KEYS.reduce(
     (sum, key) => sum + Number(skills?.[key]?.rank || 0),
@@ -338,12 +349,15 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
 
   const localizedPerk = (perk) => {
     const language = (i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
+    const supplemental = getSupplementalPerkTranslation(perk.id, language);
     const added = getAddedPerkTranslation(perk.id, language);
     return {
       name:
+        supplemental?.name ||
         added?.name ||
         t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id }),
       description:
+        supplemental?.description ||
         added?.description ||
         t(`perksInfo.${perk.id}.desc`, { defaultValue: perk.description || "" }),
     };
@@ -362,12 +376,13 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   if (!open) return null;
 
   const originReady = Boolean(originId && equipmentPack && selectedTraitReady);
-  const specialReady = specialTotal === 40;
+  const specialReady = specialTotal === specialBudget;
   const skillsReady =
-    usedSkillPoints === 9 &&
+    usedSkillPoints === (Math.max(9, Number(special?.I || 0) + 9)) &&
     taggedSkills.length === tagLimit &&
     restrictedTaggedCount >= restrictedRequired;
-  const perkReady = Boolean(perkId);
+  const requiredPerkCount = 1 + Number(origin?.bonusPerkCount || 0);
+  const perkReady = perkIds.length === requiredPerkCount;
 
   const canContinue =
     step === 1 ? originReady : step === 2 ? specialReady : step === 3 ? skillsReady : perkReady;
@@ -376,10 +391,14 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
     setOriginId(id);
     setSelectedTraits([]);
     setEquipmentPack("");
-    setSpecial({ ...buildDefaultForm().special });
+    const baseSpecial = { ...buildDefaultForm().special };
+    Object.entries(ORIGINS[id]?.specialBonuses || {}).forEach(([key, value]) => {
+      baseSpecial[key] = String(Number(baseSpecial[key] || 0) + Number(value || 0));
+    });
+    setSpecial(baseSpecial);
     setSkills({ ...buildDefaultForm().skills });
     setStartingChoices({});
-    setPerkId("");
+    setPerkIds([]);
   };
 
   const setPack = (packId) => {
@@ -419,13 +438,16 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
       const nextValue = Math.max(min, Math.min(max, current + delta));
       return { ...prev, [key]: String(nextValue) };
     });
-    setPerkId("");
+    setPerkIds([]);
   };
 
   const changeSkillRank = (skillName, delta) => {
     const current = Number(skills?.[skillName]?.rank || 0);
-    const nextRank = Math.max(0, Math.min(3, current + delta));
-    if (delta > 0 && usedSkillPoints >= 9) return;
+    const isTagged = Boolean(skills?.[skillName]?.tagged);
+    const effectiveLimit = Number(origin?.skillRankLimit || 6);
+    const maxBaseRank = Math.max(0, Math.min(3, effectiveLimit - (isTagged ? 2 : 0)));
+    const nextRank = Math.max(0, Math.min(maxBaseRank, current + delta));
+    if (delta > 0 && usedSkillPoints >= (Math.max(9, Number(special?.I || 0) + 9))) return;
     setSkills((prev) => ({
       ...prev,
       [skillName]: {
@@ -437,15 +459,22 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
 
   const toggleTag = (skillName) => {
     const isTagged = Boolean(skills?.[skillName]?.tagged);
-    if (!isTagged && taggedSkills.length >= tagLimit) return;
+    if (!isTagged && (taggedSkills.length >= tagLimit || forbiddenTags.includes(skillName))) return;
 
-    setSkills((prev) => ({
-      ...prev,
-      [skillName]: {
-        ...prev[skillName],
-        tagged: !isTagged,
-      },
-    }));
+    setSkills((prev) => {
+      const becomingTagged = !isTagged;
+      const maxBase = becomingTagged
+        ? Math.max(0, Math.min(3, Number(origin?.skillRankLimit || 6) - 2))
+        : 3;
+      return {
+        ...prev,
+        [skillName]: {
+          ...prev[skillName],
+          rank: String(Math.min(Number(prev[skillName]?.rank || 0), maxBase)),
+          tagged: becomingTagged,
+        },
+      };
+    });
 
     const sourceKey = `tag:${skillName}`;
     if (!isTagged) {
@@ -478,9 +507,8 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
 
   const finish = () => {
     if (!perkReady || !origin) return;
-    const perk = PERKS_LIST.find((entry) => entry.id === perkId);
-    if (!perk) return;
-    const perkText = localizedPerk(perk);
+    const selectedPerks = perkIds.map((id) => PERKS_LIST.find((entry) => entry.id === id)).filter(Boolean);
+    if (selectedPerks.length !== requiredPerkCount) return;
     const originTraitCards = makeOriginTraitCards(originId, selectedTraits, t);
 
     let finalForm = {
@@ -496,12 +524,15 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
       tagged_skills: taggedSkills,
       perksAndTraits: [
         ...originTraitCards,
-        {
-          id: perk.id,
-          name: perkText.name,
-          rank: "1",
-          description: `${perkText.description}\n[Req: ${perk.requirements} | Max Rank: ${perk.maxRanks}]`,
-        },
+        ...selectedPerks.map((perk) => {
+          const perkText = localizedPerk(perk);
+          return {
+            id: perk.id,
+            name: perkText.name,
+            rank: "1",
+            description: `${perkText.description}\n[Req: ${perk.requirements} | Max Rank: ${perk.maxRanks}]`,
+          };
+        }),
       ],
       characterCreationMode: "quick",
     };
@@ -559,6 +590,24 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
 
               {origin && (
                 <div className="quick-create-section">
+                  {origin.descriptionKey && (
+                    <div className="pip-logbox" style={{ marginBottom: 10 }}>
+                      {t(origin.descriptionKey, { defaultValue: "" })}
+                    </div>
+                  )}
+                  {(origin.traits || []).length > 0 && (
+                    <div className="quick-create-subsection">
+                      <strong>{copy.traits}</strong>
+                      {(origin.traits || []).map((traitKey) => {
+                        const traitId = TRAITS_DICTIONARY[traitKey];
+                        return traitId ? (
+                          <div className="quick-choice-card is-selected" key={traitKey}>
+                            <span><strong>{t(`traitsInfo.${traitId}.name`, { defaultValue: traitId })}</strong><small>{t(`traitsInfo.${traitId}.desc`, { defaultValue: "" })}</small></span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  )}
                   {origin.availableTraits?.length > 0 && (
                     <div className="quick-create-subsection">
                       <strong>{copy.traits} ({selectedTraits.length}/{originTraitRequired})</strong>
@@ -639,7 +688,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 <p>{copy.specialHelp}</p>
               </div>
               <div className={`quick-budget ${specialReady ? "is-ready" : ""}`}>
-                <span>{copy.total}: <strong>{specialTotal}/40</strong></span>
+                <span>{copy.total}: <strong>{specialTotal}/{specialBudget}</strong></span>
                 <span>{copy.remaining}: <strong>{specialRemaining}</strong></span>
               </div>
               <div className="quick-special-grid">
@@ -672,7 +721,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 <p>{copy.skillHelp}</p>
               </div>
               <div className={`quick-budget ${skillsReady ? "is-ready" : ""}`}>
-                <span>{copy.skillPoints}: <strong>{usedSkillPoints}/9</strong></span>
+                <span>{copy.skillPoints}: <strong>{usedSkillPoints}/{(Math.max(9, Number(special?.I || 0) + 9))}</strong></span>
                 <span>{copy.tags}: <strong>{taggedSkills.length}/{tagLimit}</strong></span>
                 {restrictedRequired > 0 && (
                   <span>{copy.requiredTags}: <strong>{restrictedTaggedCount}/{restrictedRequired}</strong></span>
@@ -695,12 +744,12 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                         <div className="quick-counter compact">
                           <button type="button" className="pip-btn" disabled={Number(skill.rank || 0) <= 0} onClick={() => changeSkillRank(skillName, -1)}>−</button>
                           <strong>{skill.rank || "0"}</strong>
-                          <button type="button" className="pip-btn" disabled={Number(skill.rank || 0) >= 3 || usedSkillPoints >= 9} onClick={() => changeSkillRank(skillName, 1)}>+</button>
+                          <button type="button" className="pip-btn" disabled={Number(skill.rank || 0) >= Math.max(0, Math.min(3, Number(origin?.skillRankLimit || 6) - (isTagged ? 2 : 0))) || usedSkillPoints >= (Math.max(9, Number(special?.I || 0) + 9))} onClick={() => changeSkillRank(skillName, 1)}>+</button>
                         </div>
                         <button
                           type="button"
                           className={`pip-skill-tag-btn ${isTagged ? "is-on" : ""}`}
-                          disabled={!isTagged && taggedSkills.length >= tagLimit}
+                          disabled={!isTagged && (taggedSkills.length >= tagLimit || forbiddenTags.includes(skillName))}
                           onClick={() => toggleTag(skillName)}
                         >
                           TAG +2
@@ -731,7 +780,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
           {step === 4 && (
             <>
               <div className="quick-create-intro">
-                <h3>{copy.perkTitle}</h3>
+                <h3>{copy.perkTitle} ({perkIds.length}/{requiredPerkCount})</h3>
                 <p>{copy.perkHelp}</p>
               </div>
               <input
@@ -745,13 +794,13 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
               <div className="quick-perk-list">
                 {availablePerks.map((perk) => {
                   const localized = localizedPerk(perk);
-                  const selected = perkId === perk.id;
+                  const selected = perkIds.includes(perk.id);
                   return (
                     <button
                       key={perk.id}
                       type="button"
                       className={`quick-perk-card ${selected ? "is-selected" : ""}`}
-                      onClick={() => setPerkId(perk.id)}
+                      onClick={() => setPerkIds((prev) => selected ? prev.filter((id) => id !== perk.id) : (prev.length < requiredPerkCount ? [...prev, perk.id] : prev))}
                     >
                       <div className="quick-perk-heading">
                         <strong>{localized.name}</strong>

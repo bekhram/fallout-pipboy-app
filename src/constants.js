@@ -921,26 +921,11 @@ export const WEAPON_RANGE_OPTIONS = [
 ];
 
 export const WEAPON_AMMO_OPTIONS = [
-  ".38",
-  "10mm",
-  ".308",
-  "Flare",
-  "Shotgun Shell",
-  ".45",
-  "Flamer Fuel",
-  "Fusion Cell",
-  "Gamma Round",
-  "Railway Spike",
-  "Syringer Ammo",
-  ".44 Magnum",
-  ".50",
-  "5.56mm",
-  "5mm",
-  "Fusion Core",
-  "Missile",
-  "Plasma Cartridge",
-  "2mm EC",
-  "Mini-Nuke"
+  ".38", "9mm", "10mm", ".308", ".357 Magnum", ".44 Magnum", ".45", ".50", ".50 Ball",
+  "5mm", "5.56mm", "12.7mm", "2mm EC", "Arrow", "Crossbow Bolt", "Flare",
+  "Shotgun Shell", "Flamer Fuel", "Fusion Cell", "Fusion Core", "Gamma Round",
+  "Railway Spike", "Syringer Ammo", "Plasma Cartridge", "Plasma Core", "Missile",
+  "25mm Grenade", "40mm Grenade Round", "Mini-Nuke", "Alien Power Cells", "Alien Power Module"
 ];
 
 export function createEmptyWeapon() {

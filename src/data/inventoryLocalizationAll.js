@@ -2,6 +2,7 @@ import { getLocalizedInventoryItem as getConsumableLocalization } from "./invent
 import { getExtendedInventoryLocalization } from "./inventoryLocalizationExtended.js";
 import { getLocalizedBobbleheadItem } from "./inventory/bobbleheads.js";
 import { getLocalizedCraftingMaterial } from "./inventory/craftingMaterials.js";
+import { getWandererEquipmentLocalization } from "./wandererEquipmentLocalization.js";
 import { getSupplementalFoodLocalization } from "./inventoryLocalizationSupplementalFood.js";
 
 export function getLocalizedInventoryItem(item, language = "en") {
@@ -9,6 +10,15 @@ export function getLocalizedInventoryItem(item, language = "en") {
   const supplementalFood = getSupplementalFoodLocalization(item, language);
   const bobblehead = getLocalizedBobbleheadItem(item, language);
   const craftingMaterial = getLocalizedCraftingMaterial(item, language);
+  const wanderer = getWandererEquipmentLocalization(item, language);
+
+  if (wanderer) {
+    return {
+      ...base,
+      ...wanderer,
+      displayName: wanderer.displayName || base.displayName || item?.name || "",
+    };
+  }
 
   if (supplementalFood) {
     return {

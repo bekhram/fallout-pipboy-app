@@ -991,7 +991,12 @@
       "necrotic_post_human": "Necrotic Post-Human",
       "forced_evolution": "Forced Evolution",
       "mister_handy_robot": "Mister Handy Robot"
-    }
+    },
+    "assaultron": "Assaultron",
+    "brotherhood_outcast": "Brotherhood Outcast",
+    "child_of_atom": "Child of Atom",
+    "nightkin": "Nightkin",
+    "tribal": "Tribal"
   },
   "characterCreation": {
     "selectOriginTitle": "SELECT ORIGIN",
@@ -1044,6 +1049,42 @@
     "small_frame": {
       "name": "Small Frame (Trait)",
       "desc": "You may re-roll 1d20 on all AGI tests which rely on balance or contortion..."
+    },
+    "designed_for_frontline": {
+      "name": "Designed for the Frontline",
+      "desc": "Robot physiology: immune to radiation, poison and disease; fixed 150 lb carry weight; cannot rely on food, drink, rest or chems; gains extra unarmed combat capability."
+    },
+    "chain_that_breaks": {
+      "name": "The Chain that Breaks",
+      "desc": "Gain one extra Tag Skill, which must be Energy Weapons, Science or Repair, plus improved scavenging opportunities."
+    },
+    "rad_sponge": {
+      "name": "Rad Sponge",
+      "desc": "Gain one extra perk at level 1, base Radiation DR 1, and a pool of Radiation Points that can power radioactive melee strikes."
+    },
+    "stealth_boy_addict": {
+      "name": "Stealth Boy Addict",
+      "desc": "STR and END receive +2; maximum STR/END 12, INT/CHA 8, Skill rank 4. Immune to radiation and poison. Repeated Stealth Boy use risks addiction."
+    },
+    "mother_wasteland": {
+      "name": "Mother Wasteland",
+      "desc": "Spend Luck for cryptic insight about the current quest or situation; pre-War artifacts are harder to understand."
+    },
+    "nomad": {
+      "name": "Nomad",
+      "desc": "Re-roll Survival tests for travel, camp and foraging; social tests in static settlements become more difficult and Science cannot be a Tag Skill."
+    },
+    "rite_of_passage": {
+      "name": "Rite of Passage",
+      "desc": "The first Luck spent in a scene can trigger an Effect roll; assisting another PC requires spending AP first."
+    },
+    "tools_of_old_world": {
+      "name": "Tools of the Old World",
+      "desc": "Use Survival instead of Repair or Science with pre-War technology; complications involving such technology are more likely."
+    },
+    "chosen_one": {
+      "name": "The Chosen One",
+      "desc": "The first d20 bought for tests tied to your tribe’s quest is free, and success at a cost is always available; the GM gains AP when the quest appears."
     }
   },
   "perksInfo": {
@@ -1318,6 +1359,50 @@
     "wanderer": {
       "name": "Wanderer",
       "items": "• Drifter outfit\n• Switchblade, pipe wrench, rolling pin, or knuckles\n• Pipe gun (8+4 rounds .38)\n• 1 dose Jet or RadAway\n• Personal trinket, 30 caps"
+    },
+    "assaultron_military": {
+      "name": "U.S. Military Model",
+      "items": "Laser gun attachment; actuated frame choice; standard plating; Fusion Cells; Recon Sensors; 15 caps."
+    },
+    "assaultron_devil": {
+      "name": "Assaultron Devil",
+      "items": "Skull mask; serrated plate choice; two construction claws; Hazard Detection; Fusion Cells; Robot Repair Kit."
+    },
+    "assaultron_caravan": {
+      "name": "Robotic Caravan Guard",
+      "items": "Laser attachment; factory storage armor and legs; Fusion Cells; caravan wares; Behavioral Analysis Module; caps."
+    },
+    "outcast_ex_knight": {
+      "name": "Ex-Knight",
+      "items": "Laser Rifle, Fusion Cells, tattered Brotherhood fatigues, water canteen, two Outcast-table rolls, 10 caps."
+    },
+    "outcast_ex_scribe": {
+      "name": "Ex-Scribe",
+      "items": "Laser Pistol, Fusion Cells, tattered Scribe armor, Multi-Tool, three Outcast-table rolls, 15 caps."
+    },
+    "atom_missionary": {
+      "name": "Missionary",
+      "items": "Tough Clothing, walking cane, Gamma Gun and rounds, Stimpak, 10 caps, one random food."
+    },
+    "atom_zealot": {
+      "name": "Zealot",
+      "items": "Tough Clothing or Drifter Outfit, Machete, Gamma Gun and rounds, gas mask, two random foods."
+    },
+    "nightkin_pack": {
+      "name": "Nightkin",
+      "items": "Laser Rifle and cells, Bumper Sword, Raider armor pieces, Stealth Boy, random food and beverage."
+    },
+    "tribal_modernist": {
+      "name": "Modernist",
+      "items": "Modern firearm package, Underarmor Suit, combat armor choice, Multi-Tool, food, beverage and junk."
+    },
+    "tribal_ritualist": {
+      "name": "Ritualist",
+      "items": "Traditional firearm choice and ammo, Sturdy Clothing, Leather Chest, trinket, two oddities."
+    },
+    "tribal_naturalist": {
+      "name": "Naturalist",
+      "items": "Bow and arrows, Machete, Combat Knife, hunter clothing, wood armor, food and beverages."
     }
   },
   "weaponMods": {
@@ -1343,5 +1428,12 @@
       "blade": "Blade",
       "head": "Weapon mod"
     }
+  },
+  "originDescriptions": {
+    "assaultron": "A frontline combat robot built to survive the Wasteland. It is immune to radiation, poison and disease, carries a fixed 150 lb load, and relies on repairs instead of normal biological recovery.",
+    "brotherhood_outcast": "A former Brotherhood member who rejected the order’s direction and now applies military training and pre-War technical knowledge on their own terms.",
+    "child_of_atom": "A devotee of Atom who treats radiation as a sacred gift. The origin grants an extra level-1 perk and special interaction with radiation.",
+    "nightkin": "A blue-skinned super mutant shaped by long-term Stealth Boy use. Nightkin are powerful and resistant, but have tighter Intelligence, Charisma and Skill limits.",
+    "tribal": "A member of a strong wasteland community whose identity is defined by traditions, survival knowledge and one of several cultural traits."
   }
 }

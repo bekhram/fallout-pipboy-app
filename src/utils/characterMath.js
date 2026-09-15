@@ -77,7 +77,9 @@ export function getDerivedStats(form) {
   }
 
   let calculatedCarryWeight = 150 + strength * 10;
-  if (form.origin === "mister_handy") {
+  if (originData?.fixedCarryWeight != null) {
+    calculatedCarryWeight = Number(originData.fixedCarryWeight);
+  } else if (form.origin === "mister_handy") {
     calculatedCarryWeight = 150;
   } else if (form.originTraits?.includes("small_frame")) {
     calculatedCarryWeight = 150 + strength * 5;
@@ -182,6 +184,7 @@ export function getDerivedStats(form) {
       toNumber(effectMods.derived.energyResistBonus) +
       toNumber(perkState.derived.energyResistBonus),
     radiationResistBonus:
+      toNumber(originData?.baseRadiationResistance) +
       toNumber(effectMods.derived.radiationResistBonus) +
       toNumber(perkState.derived.radiationResistBonus),
     poisonResistBonus:

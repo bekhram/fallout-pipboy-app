@@ -133,6 +133,11 @@ export default function OriginSelectionModal({
               className="origin-details push-top"
               style={{ padding: "10px", border: "1px solid var(--pip-color, #14ff00)" }}
             >
+              {selectedOriginData.descriptionKey && (
+                <p style={{ marginTop: 0, opacity: 0.85 }}>
+                  {t(selectedOriginData.descriptionKey, { defaultValue: "" })}
+                </p>
+              )}
               {selectedOriginData.traits && selectedOriginData.traits.length > 0 && (
                 <div>
                   <strong>{t("characterCreation.trait")}: </strong>
@@ -305,7 +310,8 @@ export default function OriginSelectionModal({
             onClick={handleConfirm}
             disabled={
               !selectedId ||
-              (selectedOriginData?.equipmentPacks && !selectedPack)
+              (selectedOriginData?.equipmentPacks && !selectedPack) ||
+              (Number(selectedOriginData?.traitSelectCount || 0) > 0 && selectedTraits.length !== Number(selectedOriginData?.traitSelectCount || 0))
             }
           >
             {t("common.confirm")}
