@@ -4,14 +4,13 @@
   top: 58% !important;
   z-index: 2147483647 !important;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   pointer-events: auto !important;
   touch-action: manipulation;
 }
 
 .player-battlemap-quick-btn,
-.battlemap-collapse-btn,
-.player-battlemap-tools__toggle {
+.battlemap-collapse-btn {
   border: 1px solid currentColor;
   background: rgba(3, 13, 5, 0.98);
   color: var(--pip-accent, #78ff98);
@@ -40,53 +39,27 @@
   font-size: .68rem;
 }
 
-.player-battlemap-tools {
+.battlemap-tools-drawer.is-player-tools {
   position: fixed !important;
-  left: 6px !important;
-  top: 48% !important;
+  left: 0 !important;
+  right: auto !important;
+  top: 46% !important;
   z-index: 2147483647 !important;
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
   pointer-events: auto !important;
   touch-action: manipulation;
 }
 
-.player-battlemap-tools__toggle {
-  min-width: 34px;
-  height: 30px;
-  padding: 0 5px;
-  border-radius: 6px;
-  font-size: .52rem;
-}
-
-.player-battlemap-tools.is-collapsed .player-battlemap-tools__toggle {
-  min-width: 50px;
-}
-
-.player-battlemap-tools__body {
-  display: grid;
-  gap: 5px;
-  width: 116px;
-  padding: 7px;
-  border: 1px solid currentColor;
-  border-radius: 6px;
-  background: rgba(3, 13, 5, .98);
-  box-shadow: 0 0 14px color-mix(in srgb, currentColor 12%, transparent);
-  pointer-events: auto !important;
-}
-
-.player-battlemap-tools__body strong {
-  font-size: .55rem;
-  letter-spacing: .08em;
-}
-
-.player-battlemap-tools__body .pip-btn {
-  min-height: 30px;
-  padding: 4px 6px;
-  font-size: .52rem;
+.battlemap-tools-drawer.is-player-tools,
+.battlemap-tools-drawer.is-player-tools .battlemap-tools-toggle,
+.battlemap-tools-drawer.is-player-tools .battlemap-tools-panel,
+.battlemap-tools-drawer.is-player-tools button {
   pointer-events: auto !important;
   touch-action: manipulation;
+}
+
+.battlemap-tools-drawer.is-player-tools .battlemap-tools-toggle {
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
 }
 
 .battlemap-collapse-btn {
@@ -99,12 +72,14 @@
 
 .battlemap-view-controls.is-player-controls {
   position: fixed !important;
-  top: 48% !important;
-  right: 6px !important;
+  top: 46% !important;
+  right: 0 !important;
   left: auto !important;
   z-index: 2147483647 !important;
   pointer-events: auto !important;
   touch-action: manipulation;
+  border-right: 0 !important;
+  border-radius: 6px 0 0 6px;
 }
 
 .battlemap-view-controls.is-player-controls > *,
@@ -121,10 +96,23 @@
   padding: 2px !important;
 }
 
+body:has(.session-tactical-overlay) .session-utility-drawer-shell,
+body:has(.session-tactical-overlay) .session-utility-drawer {
+  z-index: 2147483600 !important;
+}
+
+body:has(.session-tactical-overlay) .session-utility-drawer-toggle {
+  z-index: 2147483601 !important;
+}
+
+body:has(.session-tactical-overlay) .session-utility-drawer,
+body:has(.session-tactical-overlay) .session-utility-drawer * {
+  pointer-events: auto;
+}
+
 @media (max-width: 780px) {
   .player-battlemap-quick-actions {
-    top: 62% !important;
-    gap: 6px;
+    top: 60% !important;
   }
 
   .player-battlemap-quick-btn {
@@ -138,18 +126,13 @@
     min-height: 42px;
   }
 
-  .player-battlemap-tools {
-    left: 4px !important;
-    top: 50% !important;
-  }
-
-  .player-battlemap-tools__body {
-    width: 96px;
-    padding: 5px;
+  .battlemap-tools-drawer.is-player-tools {
+    left: 0 !important;
+    top: 47% !important;
   }
 
   .battlemap-view-controls.is-player-controls {
-    right: 4px !important;
-    top: 50% !important;
+    right: 0 !important;
+    top: 47% !important;
   }
 }
