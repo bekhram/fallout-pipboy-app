@@ -186,8 +186,6 @@ export default function BattlemapViewportControls({
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeFilter: ["class"],
     });
     return () => observer.disconnect();
   }, [query]);

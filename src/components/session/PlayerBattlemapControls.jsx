@@ -68,7 +68,9 @@ export default function PlayerBattlemapControls({ session }) {
         ".session-tactical-overlay .battlemap-view-controls, .battlemap-view-controls"
       );
 
-      document.body.classList.toggle("pip-player-battlemap-open", Boolean(playerMap));
+      const isOpen = Boolean(playerMap);
+      document.body.classList.toggle("pip-player-battlemap-open", isOpen);
+      document.documentElement.classList.toggle("pip-player-battlemap-open", isOpen);
       setBattlemapTarget((current) => (current === controlsSlot ? current : controlsSlot));
 
       document.querySelectorAll(".battlemap-view-controls.is-player-battlemap-viewport")
@@ -87,13 +89,12 @@ export default function PlayerBattlemapControls({ session }) {
     observer.observe(document.body, {
       childList: true,
       subtree: true,
-      attributes: true,
-      attributeFilter: ["class"],
     });
 
     return () => {
       observer.disconnect();
       document.body.classList.remove("pip-player-battlemap-open");
+      document.documentElement.classList.remove("pip-player-battlemap-open");
       document.querySelectorAll(".battlemap-view-controls.is-player-battlemap-viewport")
         .forEach((node) => node.classList.remove("is-player-battlemap-viewport"));
     };

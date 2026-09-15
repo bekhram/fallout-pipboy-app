@@ -3,11 +3,12 @@ import { createPortal } from "react-dom";
 import "./gmBattlemapTools.css";
 
 const STORAGE_KEY = "pip2d20_gm_tools_open_v1";
+const PLAYER_STORAGE_KEY = "pip2d20_player_tools_open_v2";
 const ZONE_CELLS = 6;
 
 function readOpen(role) {
   try {
-    if (role === "player") return localStorage.getItem("pip2d20_player_tools_open_v1") === "1";
+    if (role === "player") return localStorage.getItem(PLAYER_STORAGE_KEY) === "1";
     return localStorage.getItem(STORAGE_KEY) !== "0";
   } catch {
     return role !== "player";
@@ -64,7 +65,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
   }, [scene?.sceneId, role]);
 
   useEffect(() => {
-    const key = role === "player" ? "pip2d20_player_tools_open_v1" : STORAGE_KEY;
+    const key = role === "player" ? PLAYER_STORAGE_KEY : STORAGE_KEY;
     try { localStorage.setItem(key, open ? "1" : "0"); } catch {}
   }, [open, role]);
 
