@@ -15,151 +15,100 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Patch localization and legendary garments
-        shell: bash
+      - name: Patch UI localization and legendary outfit support
         run: |
-          python3 <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
-          import re
 
-          # ---------- Legendary localization ----------
-          p=Path('src/utils/legendaryLocalization.js')
-          p.write_text(r'''const NAME = {
-  ru: {
-    "Assassin's":"Убийцы","Berserker's":"Берсерка","Blazing":"Пылающее","Bloodied":"Кровавое","Cavalier's":"Кавалериста","Charged":"Заряженное","Crippling":"Калечащее","Deadeye":"Меткий стрелок","Defiant":"Непокорное","Duelist's":"Дуэлянта","Enraging":"Яростное","Explosive":"Взрывное","Exterminator's":"Истребителя","Freezing":"Замораживающее","Frigid":"Ледяное","Furious":"Яростное","Ghoul Slayer's":"Убийцы гулей","Hitman's":"Киллерское","Hunter's":"Охотника","Incendiary":"Зажигательное","Instigating":"Провоцирующее","Irradiated":"Облучённое","Junkie's":"Наркомана","Kneecapper":"Подсекатель","Lucky":"Удачливое","Mighty":"Могучее","Mutant Slayer's":"Убийцы мутантов","Nimble":"Проворное","Nocturnal":"Ночное","Penetrating":"Пробивающее","Plasma Infused":"Плазменное","Poisoner's":"Отравителя","Powerful":"Мощное","Quickdraw":"Быстрое извлечение","Rapid":"Скорострельное","Relentless":"Неумолимое","Sentinel's":"Стража","Staggering":"Ошеломляющее","Stalker's":"Преследователя","Steadfast":"Стойкое","Troubleshooter's":"Роботоборца","Two-Shot":"Двухзарядное","Violent":"Жестокое","Wounding":"Ранящее",
-    "Acrobat's":"Акробата","Auto Stim":"Автостим","Bolstering":"Укрепляющее","Chameleon":"Хамелеон","Champion":"Чемпиона","Cloaking":"Маскирующее","Cryogenic":"Криогенное","Cunning":"Хитрое","Martyr's":"Мученика","Powered":"Энергетическое","Punishing":"Карающее","Rad Powered":"Радиационно-заряженное","Safecracker's":"Медвежатника","Sharp":"Острое","Sprinter's":"Спринтера","Unyielding":"Несгибаемое"
-  },
-  uk: {
-    "Assassin's":"Убивці","Berserker's":"Берсерка","Blazing":"Палаюче","Bloodied":"Криваве","Cavalier's":"Кавалериста","Charged":"Заряджене","Crippling":"Калічне","Deadeye":"Влучне","Defiant":"Непокірне","Duelist's":"Дуелянта","Enraging":"Розлючуюче","Explosive":"Вибухове","Exterminator's":"Винищувача","Freezing":"Заморожувальне","Frigid":"Крижане","Furious":"Люте","Ghoul Slayer's":"Убивці гулів","Hitman's":"Кілерське","Hunter's":"Мисливця","Incendiary":"Запалювальне","Instigating":"Провокуюче","Irradiated":"Опромінене","Junkie's":"Наркомана","Kneecapper":"Підсікач","Lucky":"Щасливе","Mighty":"Могутнє","Mutant Slayer's":"Убивці мутантів","Nimble":"Спритне","Nocturnal":"Нічне","Penetrating":"Пробивне","Plasma Infused":"Плазмове","Poisoner's":"Отруйника","Powerful":"Потужне","Quickdraw":"Швидке вихоплення","Rapid":"Скорострільне","Relentless":"Невблаганне","Sentinel's":"Вартового","Staggering":"Приголомшливе","Stalker's":"Переслідувача","Steadfast":"Стійке","Troubleshooter's":"Роботоборця","Two-Shot":"Двопострільне","Violent":"Жорстоке","Wounding":"Раняче",
-    "Acrobat's":"Акробата","Auto Stim":"Автостим","Bolstering":"Зміцнювальне","Chameleon":"Хамелеон","Champion":"Чемпіона","Cloaking":"Маскувальне","Cryogenic":"Кріогенне","Cunning":"Хитре","Martyr's":"Мученика","Powered":"Енергетичне","Punishing":"Каральне","Rad Powered":"Радіаційно-заряджене","Safecracker's":"Зломщика","Sharp":"Гостре","Sprinter's":"Спринтера","Unyielding":"Непохитне"
-  },
-  pl: {
-    "Assassin's":"Zabójcy","Berserker's":"Berserkera","Blazing":"Płonąca","Bloodied":"Krwawa","Cavalier's":"Kawalerzysty","Charged":"Naładowana","Crippling":"Okaleczająca","Deadeye":"Sokole oko","Defiant":"Nieugięta","Duelist's":"Pojedynkowicza","Enraging":"Rozwścieczająca","Explosive":"Wybuchowa","Exterminator's":"Tępiciela","Freezing":"Mrożąca","Frigid":"Lodowa","Furious":"Furia","Ghoul Slayer's":"Pogromcy ghuli","Hitman's":"Zabójcza","Hunter's":"Łowcy","Incendiary":"Zapalająca","Instigating":"Inicjująca","Irradiated":"Napromieniowana","Junkie's":"Ćpuna","Kneecapper":"Podcinająca","Lucky":"Szczęśliwa","Mighty":"Potężna","Mutant Slayer's":"Pogromcy mutantów","Nimble":"Zwinna","Nocturnal":"Nocna","Penetrating":"Penetrująca","Plasma Infused":"Plazmowa","Poisoner's":"Truciciela","Powerful":"Mocna","Quickdraw":"Szybkie dobycie","Rapid":"Szybkostrzelna","Relentless":"Nieustępliwa","Sentinel's":"Strażnika","Staggering":"Ogłuszająca","Stalker's":"Tropiciela","Steadfast":"Niezachwiana","Troubleshooter's":"Pogromcy robotów","Two-Shot":"Dwustrzałowa","Violent":"Brutalna","Wounding":"Raniąca",
-    "Acrobat's":"Akrobaty","Auto Stim":"Autostym","Bolstering":"Wzmacniający","Chameleon":"Kameleon","Champion":"Czempiona","Cloaking":"Maskujący","Cryogenic":"Kriogeniczny","Cunning":"Przebiegły","Martyr's":"Męczennika","Powered":"Zasilany","Punishing":"Karzący","Rad Powered":"Napędzany radiacją","Safecracker's":"Włamywacza","Sharp":"Bystry","Sprinter's":"Sprintera","Unyielding":"Nieustępliwy"
-  }
-};
+          def replace(path, old, new, required=True):
+              p=Path(path); s=p.read_text()
+              if old not in s:
+                  if required: raise SystemExit(f'missing pattern in {path}: {old[:80]}')
+                  return
+              p.write_text(s.replace(old,new))
 
-const DESC = {
-  ru: {
-    "Poisoner's":"Даёт сопротивление яду.","Powered":"В начале каждого вашего хода в бою добавляет 1 ОД в общий запас.","Punishing":"При попадании в ближнем бою эффекты урона возвращают атакующему урон того же типа.","Rad Powered":"Радиация позволяет улучшать проверки СИЛ один или несколько раз за сцену.","Safecracker's":"Раз за сцену один d20 проверки Взлома замков считается выпавшей 1.","Sentinel's":"Если вы не двигались в прошлый ход, даёт +3 к физическому и энергетическому сопротивлению.","Sharp":"Раз за сцену один d20 проверки ИНТ или ХАР считается выпавшей 1.","Sprinter's":"Снижает стоимость преодоления сложной местности на 1 ОД.","Troubleshooter's":"Даёт дополнительную защиту от атак роботов.","Unyielding":"При здоровье ниже четверти максимума позволяет перебросить 1d20 в любой проверке."
-  },
-  uk: {
-    "Poisoner's":"Дає опір отруті.","Powered":"На початку кожного вашого ходу в бою додає 1 ОД до спільного запасу.","Punishing":"Під час влучання в ближньому бою ефекти шкоди повертають атакувальнику шкоду того самого типу.","Rad Powered":"Радіація дозволяє покращувати перевірки СИЛ один або кілька разів за сцену.","Safecracker's":"Раз за сцену один d20 перевірки Злому замків вважається таким, що випала 1.","Sentinel's":"Якщо ви не рухались у попередній хід, дає +3 до фізичного та енергетичного опору.","Sharp":"Раз за сцену один d20 перевірки ІНТ або ХАР вважається таким, що випала 1.","Sprinter's":"Зменшує вартість подолання складної місцевості на 1 ОД.","Troubleshooter's":"Дає додатковий захист від атак роботів.","Unyielding":"За здоров'я нижче чверті максимуму дозволяє перекинути 1d20 у будь-якій перевірці."
-  },
-  pl: {
-    "Poisoner's":"Zapewnia odporność na truciznę.","Powered":"Na początku każdej twojej tury w walce dodaje 1 PA do wspólnej puli.","Punishing":"Po trafieniu wręcz efekty obrażeń zadają atakującemu obrażenia tego samego typu.","Rad Powered":"Promieniowanie pozwala wzmacniać testy SIŁ raz lub więcej razy na scenę.","Safecracker's":"Raz na scenę jeden k20 w teście Otwierania zamków liczy się jako wynik 1.","Sentinel's":"Jeśli nie poruszałeś się w poprzedniej turze, daje +3 do odporności fizycznej i energetycznej.","Sharp":"Raz na scenę jeden k20 w teście INT lub CHA liczy się jako wynik 1.","Sprinter's":"Zmniejsza koszt pokonywania trudnego terenu o 1 PA.","Troubleshooter's":"Zapewnia dodatkową ochronę przed atakami robotów.","Unyielding":"Przy zdrowiu poniżej jednej czwartej maksimum pozwala przerzucić 1k20 w dowolnym teście."
-  }
-};
+          # Clothing / outfits with All or multiple locations can be legendary.
+          p=Path('src/data/legendaryProperties.js'); s=p.read_text()
+          if 'getLegendaryArmorPropertiesForLocations' not in s:
+              s += '''\nexport function getLegendaryArmorPropertiesForLocations(value) {\n  const source = String(value || "").toLowerCase();\n  let locations = [];\n  if (source.includes("all")) locations = ["Head", "Arm", "Torso", "Leg"];\n  else {\n    if (source.includes("head")) locations.push("Head");\n    if (source.includes("arm")) locations.push("Arm");\n    if (source.includes("torso") || source.includes("chest")) locations.push("Torso");\n    if (source.includes("leg")) locations.push("Leg");\n  }\n  const seen = new Set();\n  return locations.flatMap((location) => getLegendaryArmorProperties(location)).filter((property) => !seen.has(property.id) && seen.add(property.id));\n}\n'''
+              p.write_text(s)
 
-function langCode(language) {
-  const code = String(language || "en").toLowerCase().split("-")[0];
-  return ["ru","uk","pl"].includes(code) ? code : "en";
-}
+          replace('src/components/shared/LegendaryPropertyEditor.jsx',
+            '  normalizeArmorLocation,\n} from "../../data/legendaryProperties.js";',
+            '  normalizeArmorLocation,\n  getLegendaryArmorPropertiesForLocations,\n} from "../../data/legendaryProperties.js";\nimport { localizeLegendaryName } from "../../data/equipmentLocalizationSupplemental.js";')
+          replace('src/components/shared/LegendaryPropertyEditor.jsx',
+            '  const normalizedLocation = normalizeArmorLocation(armorLocation || draft?.armorLocations || draft?.location);\n  const allowed = isArmor ? Boolean(normalizedLocation) : canWeaponBeLegendary(draft);\n  const options = isArmor\n    ? getLegendaryArmorProperties(normalizedLocation)\n    : getLegendaryWeaponProperties(draft);',
+            '  const armorLocationValue = armorLocation || draft?.armorLocations || draft?.location;\n  const normalizedLocation = normalizeArmorLocation(armorLocationValue);\n  const armorOptions = getLegendaryArmorPropertiesForLocations(armorLocationValue);\n  const allowed = isArmor ? armorOptions.length > 0 : canWeaponBeLegendary(draft);\n  const options = isArmor ? armorOptions : getLegendaryWeaponProperties(draft);')
+          replace('src/components/shared/LegendaryPropertyEditor.jsx',
+            '<option key={property.id} value={property.id}>{property.name}</option>',
+            '<option key={property.id} value={property.id}>{localizeLegendaryName(property.name, language)}</option>')
+          replace('src/components/shared/LegendaryPropertyEditor.jsx',
+            'export function LegendaryBadge({ kind, item }) {',
+            'export function LegendaryBadge({ kind, item, language = "en" }) {')
+          replace('src/components/shared/LegendaryPropertyEditor.jsx',
+            '★ LEGENDARY{property ? ` · ${property.name}` : ""}',
+            '★ LEGENDARY{property ? ` · ${localizeLegendaryName(property.name, language)}` : ""}')
 
-export function localizeLegendaryProperty(property, language = "en") {
-  if (!property) return null;
-  const lang = langCode(language);
-  if (lang === "en") return property;
-  return {
-    ...property,
-    name: NAME[lang]?.[property.name] || property.name,
-    description: DESC[lang]?.[property.name] || property.description,
-  };
-}
-''', encoding='utf-8')
+          # Armor screen names + legendary option translations.
+          replace('src/components/armor/ArmorScreen.jsx',
+            'import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";',
+            'import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";\nimport { localizeLegendaryName, localizeSupplementalArmorName } from "../../data/equipmentLocalizationSupplemental.js";')
+          replace('src/components/armor/ArmorScreen.jsx',
+            '  const armorName = (entry) => localizeArmorName(entry?.name, language);',
+            '  const armorName = (entry) => { const extra = localizeSupplementalArmorName(entry?.name, language); return extra !== (entry?.name || "") ? extra : localizeArmorName(entry?.name, language); };')
+          replace('src/components/armor/ArmorScreen.jsx',
+            '<option key={option.id} value={option.id}>{option.name}</option>',
+            '<option key={option.id} value={option.id}>{localizeLegendaryName(option.name, language)}</option>')
+          replace('src/components/armor/ArmorScreen.jsx',
+            '★ {legendaryProperty.name}',
+            '★ {localizeLegendaryName(legendaryProperty.name, language)}', required=False)
 
-          # ---------- Supplemental weapon names ----------
-          wp=Path('src/data/inventoryLocalization/weapons.js')
-          s=wp.read_text()
-          add='''\n  ".357 Magnum Revolver": ["Револьвер .357 Магнум","Револьвер .357 Магнум","Rewolwer .357 Magnum"],\n  "12.7mm Pistol": ["Пистолет 12,7 мм","Пістолет 12,7 мм","Pistolet 12,7 mm"],\n  "12.7mm SMG": ["Пистолет-пулемёт 12,7 мм","Пістолет-кулемет 12,7 мм","Pistolet maszynowy 12,7 mm"],\n  "25mm Grenade APW": ["25-мм гранатомёт APW","25-мм гранатомет APW","Granatnik 25 mm APW"],\n  "9mm Pistol": ["9-мм пистолет","9-мм пістолет","Pistolet 9 mm"],\n  "Anti-Materiel Rifle": ["Крупнокалиберная снайперская винтовка","Великокаліберна снайперська гвинтівка","Karabin przeciwmateriałowy"],\n  "Battle Rifle": ["Боевая винтовка","Бойова гвинтівка","Karabin bojowy"],\n  "Black Powder Blunderbuss": ["Кремнёвый мушкетон","Кременевий мушкетон","Garłacz czarnoprochowy"],\n  "Black Powder Pistol": ["Чёрнопороховый пистолет","Чорнопороховий пістолет","Pistolet czarnoprochowy"],\n  "Black Powder Rifle": ["Чёрнопороховая винтовка","Чорнопорохова гвинтівка","Karabin czarnoprochowy"],\n  "Gauss Pistol": ["Пистолет Гаусса","Пістолет Гауса","Pistolet Gaussa"],\n  "Gauss Shotgun": ["Дробовик Гаусса","Дробовик Гауса","Strzelba Gaussa"],\n  "Lever-Action Rifle": ["Винтовка с рычажным затвором","Гвинтівка з важільним затвором","Karabin dźwigniowy"],\n  "Light Machine Gun": ["Ручной пулемёт","Ручний кулемет","Lekki karabin maszynowy"],\n  "Pump-Action Shotgun": ["Помповый дробовик","Помповий дробовик","Strzelba pump-action"],\n  "Radium Rifle": ["Радиевая винтовка","Радієва гвинтівка","Karabin radowy"],\n  "Sniper Rifle": ["Снайперская винтовка","Снайперська гвинтівка","Karabin snajperski"],\n  "Alien Atomizer": ["Инопланетный атомизатор","Інопланетний атомізатор","Atomizer obcych"],\n  "Alien Disintegrator": ["Инопланетный дезинтегратор","Інопланетний дезінтегратор","Dezintegrator obcych"],\n  "Arc Welder": ["Дуговой сварочник","Дуговий зварювач","Spawarka łukowa"],\n  "Assaultron Head": ["Голова штурмотрона","Голова штурмотрона","Głowa Assaultrona"],\n  "Microwave Emitter": ["Микроволновый излучатель","Мікрохвильовий випромінювач","Emiter mikrofalowy"],\n  "Tesla Rifle": ["Винтовка Тесла","Гвинтівка Тесла","Karabin Tesli"],\n  ".50 Cal Machine Gun": ["Пулемёт .50 калибра","Кулемет .50 калібру","Karabin maszynowy .50"],\n  "Auto Grenade Launcher": ["Автоматический гранатомёт","Автоматичний гранатомет","Automatyczny granatnik"],\n  "Drone Cannon": ["Пушка дрона","Гармата дрона","Działo drona"],\n  "Gatling Gun": ["Пулемёт Гатлинга","Кулемет Гатлінга","Karabin Gatlinga"],\n  "Gatling Plasma": ["Плазма Гатлинга","Плазма Гатлінга","Plazma Gatlinga"],\n  "Gauss Minigun": ["Миниган Гаусса","Мініган Гауса","Minigun Gaussa"],\n  "Plasma Caster": ["Плазменный кастер","Плазмовий кастер","Miotacz plazmy"],\n  "Tesla Cannon": ["Пушка Тесла","Гармата Тесла","Działo Tesli"],\n  "Bow": ["Лук","Лук","Łuk"],\n  "Crossbow": ["Арбалет","Арбалет","Kusza"],\n  "Assaultron Blade": ["Клинок штурмотрона","Клинок штурмотрона","Ostrze Assaultrona"],\n  "Auto-Axe": ["Автотопор","Автосокира","Auto-topór"],\n  "Ballistic Fist": ["Баллистический кулак","Балістичний кулак","Pięść balistyczna"],\n  "Bumper Sword": ["Меч из бампера","Меч із бампера","Miecz ze zderzaka"],\n  "Cattle Prod": ["Электропогонялка","Електропоганялка","Poganiacz elektryczny"],\n  "Chainsaw": ["Бензопила","Бензопила","Piła łańcuchowa"],\n  "Death Tambo": ["Тамбурин смерти","Тамбурин смерті","Tamburyn śmierci"],\n  "Displacer Glove": ["Перчатка-дисплейсер","Рукавиця-дисплейсер","Rękawica przemieszczenia"],\n  "Guitar Sword": ["Гитара-меч","Гітара-меч","Gitara-miecz"],\n  "Mr Handy Buzz Blade": ["Дисковый клинок мистера Помощника","Дисковий клинок містера Помічника","Wirujące ostrze Mr Handy"],\n  "Multi-Purpose Axe": ["Многоцелевой топор","Багатоцільова сокира","Topór wielofunkcyjny"],\n  "Proton Axe": ["Протонный топор","Протонна сокира","Topór protonowy"],\n  "War Drum": ["Боевой барабан","Бойовий барабан","Bęben wojenny"],\n  "Cryogenic Grenade": ["Криогенная граната","Кріогенна граната","Granat kriogeniczny"],\n  "Cryo Mine": ["Криомамина","Кріоміна","Mina kriogeniczna"],\n  "Detonator": ["Детонатор","Детонатор","Detonator"],\n  "Dynamite": ["Динамит","Динаміт","Dynamit"],\n  "Dynamite Bundle": ["Связка динамита","Зв'язка динаміту","Wiązka dynamitu"],\n  "Flash Bang": ["Светошумовая граната","Світлошумова граната","Granat hukowo-błyskowy"],\n  "Frag Grenade MIRV": ["Осколочная граната MIRV","Осколкова граната MIRV","Granat odłamkowy MIRV"],\n  "Plastic Explosives": ["Пластичная взрывчатка","Пластична вибухівка","Plastyczny materiał wybuchowy"],\n  "Powder Charge": ["Пороховой заряд","Пороховий заряд","Ładunek prochowy"],\n  "Smoke Grenade": ["Дымовая граната","Димова граната","Granat dymny"]'''
-          s=s.replace('  "Pulse Mine": ["Импульсная мина", "Імпульсна міна", "Mina impulsowa"]\n};', '  "Pulse Mine": ["Импульсная мина", "Імпульсна міна", "Mina impulsowa"],'+add+'\n};')
-          if 'export function localizeWeaponName' not in s:
-            s += '''\n\nexport function localizeWeaponName(name, language = "en") {\n  const lang=String(language||"en").toLowerCase().split("-")[0];\n  const idx={ru:0,uk:1,pl:2}[lang];\n  return idx===undefined ? (name||"") : (WEAPON_NAMES[name]?.[idx] || name || "");\n}\n'''
-          wp.write_text(s)
+          # Weapon names and newly added mod names.
+          replace('src/components/weapons/WeaponCard.jsx',
+            'import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";',
+            'import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";\nimport { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";')
+          replace('src/components/weapons/WeaponCard.jsx',
+            '<h3>{weapon.name || t("weapons.unnamedWeapon")}</h3>',
+            '<h3>{localizeSupplementalWeaponName(weapon.name, language) || weapon.name || t("weapons.unnamedWeapon")}</h3>')
+          replace('src/components/weapons/WeaponCard.jsx',
+            'localizeWeaponModName(modName, i18n.resolvedLanguage)',
+            '(localizeSupplementalModName(modName, i18n.resolvedLanguage) !== modName ? localizeSupplementalModName(modName, i18n.resolvedLanguage) : localizeWeaponModName(modName, i18n.resolvedLanguage))', required=False)
 
-          # ---------- Armor supplemental exact names ----------
-          additions={
-          "Beer Hat":["Пивная шляпа","Пивний капелюх","Piwna czapka"],"Marine Tactical Helmet":["Тактический шлем морпеха","Тактичний шолом морпіха","Hełm taktyczny piechoty morskiej"],"Spacesuit Helmet":["Шлем скафандра","Шолом скафандра","Hełm skafandra"],"Marine Wetsuit":["Гидрокостюм морпеха","Гідрокостюм морпіха","Pianka piechoty morskiej"],"Underarmor Suit":["Подброневый костюм","Підброньовий костюм","Kombinezon pod pancerz"],"Brotherhood Armored Battlecoat":["Бронированный боевой плащ Братства","Броньований бойовий плащ Братства","Opancerzony płaszcz bojowy Bractwa"],"Brotherhood Bomber Jacket":["Куртка-бомбер Братства","Куртка-бомбер Братства","Kurtka bomberka Bractwa"],"Cleanroom Suit":["Костюм чистой комнаты","Костюм чистої кімнати","Kombinezon do pomieszczeń czystych"],"Hunter’s Pelt Outfit":["Костюм из шкуры охотника","Костюм зі шкури мисливця","Strój z futra łowcy"],"Hunter's Pelt Outfit":["Костюм из шкуры охотника","Костюм зі шкури мисливця","Strój z futra łowcy"],"Hunter’s Hood":["Капюшон охотника","Каптур мисливця","Kaptur łowcy"],"Hunter's Hood":["Капюшон охотника","Каптур мисливця","Kaptur łowcy"],"Spacesuit Costume":["Костюм скафандра","Костюм скафандра","Kostium skafandra"],"Chinese Stealth Armor":["Китайская стелс-броня","Китайська стелс-броня","Chiński pancerz maskujący"],"Diving Suit":["Водолазный костюм","Водолазний костюм","Skafander nurkowy"],"Recon Armor":["Разведывательная броня","Розвідувальна броня","Pancerz zwiadowczy"]}
-          # families
-          for prefix,ru,uk,pl in [("Legionary Recruit","Рекрут Легиона","Рекрут Легіону","Rekrut Legionu"),("Legionary","Легионер","Легіонер","Legionista"),("Legionary Centurion","Центурион Легиона","Центуріон Легіону","Centurion Legionu"),("Marine Armor","Морская броня","Морська броня","Pancerz piechoty morskiej"),("Scout Armor","Разведброня","Розвідброня","Pancerz zwiadowcy"),("Robot Armor","Роботизированная броня","Роботизована броня","Pancerz robotyczny"),("Sturdy Robot Armor","Усиленная роботизированная броня","Посилена роботизована броня","Wzmocniony pancerz robotyczny"),("Heavy Robot Armor","Тяжёлая роботизированная броня","Важка роботизована броня","Ciężki pancerz robotyczny"),("Wood Armor","Деревянная броня","Дерев'яна броня","Drewniany pancerz")]:
-            for part,enpart,rupart,ukpart,plpart in [("Chest Piece","Chest Piece","нагрудник","нагрудник","napierśnik"),("Arm","Arm","рука","рука","ramię"),("Leg","Leg","нога","нога","noga"),("Helmet","Helmet","шлем","шолом","hełm")]:
-              additions[f"{prefix} {enpart}"]=[f"{ru} — {rupart}",f"{uk} — {ukpart}",f"{pl} — {plpart}"]
-          additions['Legatus Helmet']=["Шлем легата","Шолом легата","Hełm legata"]
+          replace('src/components/weapons/WeaponEditor.jsx',
+            'import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";',
+            'import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";\nimport { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";')
+          replace('src/components/weapons/WeaponEditor.jsx',
+            "{gw.name} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})",
+            "{localizeSupplementalWeaponName(gw.name, i18n.resolvedLanguage)} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})")
+          replace('src/components/weapons/WeaponEditor.jsx',
+            '{localizeWeaponModName(item.name, i18n.resolvedLanguage)}',
+            '{localizeSupplementalModName(item.name, i18n.resolvedLanguage) !== item.name ? localizeSupplementalModName(item.name, i18n.resolvedLanguage) : localizeWeaponModName(item.name, i18n.resolvedLanguage)}')
 
-          for file in ['src/data/inventoryLocalization/armor.js','src/utils/armorLocalization.js']:
-            path=Path(file); txt=path.read_text()
-            marker='const NAMES = {' if 'utils/armorLocalization' in file else 'export const ARMOR_EXACT_NAMES = {'
-            pos=txt.find(marker)
-            if pos<0: continue
-            insert_pos=txt.find('\n};', pos)
-            block='\n'+''.join([f'  {k!r}: {v!r},\n' for k,v in additions.items()])
-            # JS needs double quote keys, arrays valid as Python single-quoted strings are also valid JS
-            txt=txt[:insert_pos]+block+txt[insert_pos:]
-            path.write_text(txt)
+          # Inventory archive translations.
+          replace('src/data/inventoryLocalizationExtended.js',
+            'import { WEAPON_NAMES, WEAPON_TERMS } from "./inventoryLocalization/weapons.js";',
+            'import { WEAPON_NAMES, WEAPON_TERMS } from "./inventoryLocalization/weapons.js";\nimport { localizeSupplementalWeaponName, localizeSupplementalArmorName } from "./equipmentLocalizationSupplemental.js";')
+          replace('src/data/inventoryLocalizationExtended.js',
+            '      displayName: pick3(WEAPON_NAMES[originalName], lang) || originalName,',
+            '      displayName: pick3(WEAPON_NAMES[originalName], lang) || localizeSupplementalWeaponName(originalName, lang) || originalName,')
+          replace('src/data/inventoryLocalizationExtended.js',
+            '      displayName: translateArmorName(originalName, lang),',
+            '      displayName: localizeSupplementalArmorName(originalName, lang) !== originalName ? localizeSupplementalArmorName(originalName, lang) : translateArmorName(originalName, lang),')
 
-          # ---------- Weapon mod supplemental names ----------
-          mp=Path('src/utils/weaponModLocalization.js'); m=mp.read_text()
-          supplemental={
-            "Capacitor Mk III":["Конденсатор Mk III","Конденсатор Mk III","Kondensator Mk III"],"Capacitor Mk IV":["Конденсатор Mk IV","Конденсатор Mk IV","Kondensator Mk IV"],"Capacitor Mk V":["Конденсатор Mk V","Конденсатор Mk V","Kondensator Mk V"],"Capacitor Mk VI":["Конденсатор Mk VI","Конденсатор Mk VI","Kondensator Mk VI"],"Heavy Barrel":["Тяжёлый ствол","Важкий ствол","Ciężka lufa"],"25mm Grenade Receiver":["Ствольная коробка под 25-мм гранаты","Ствольна коробка під 25-мм гранати","Komora na granaty 25 mm"],"Speedy Receiver":["Скоростная ствольная коробка","Швидкісна ствольна коробка","Szybka komora"],"Extra-Large Magazine":["Сверхбольшой магазин","Надвеликий магазин","Bardzo duży magazynek"],"Front Sight Ring":["Кольцевая мушка","Кільцева мушка","Muszka pierścieniowa"],"Large Bayonet":["Большой штык","Великий багнет","Duży bagnet"],"Ported Barrel":["Портированный ствол","Портований ствол","Lufa portowana"],"Tesla Coil Capacitor":["Конденсатор катушки Тесла","Конденсатор котушки Тесла","Kondensator cewki Tesli"],"Tesla Coil Dynamo":["Динамо катушки Тесла","Динамо котушки Тесла","Dynamo cewki Tesli"],"Calibrated Capacitor":["Калиброванный конденсатор","Калібрований конденсатор","Kalibrowany kondensator"],"Pulse Capacitor":["Импульсный конденсатор","Імпульсний конденсатор","Kondensator impulsowy"],"High Speed Electrode":["Высокоскоростной электрод","Високошвидкісний електрод","Elektroda wysokiej prędkości"],"Compound Frame":["Составная рама","Складена рама","Rama kompozytowa"],"Iron Sights":["Механический прицел","Механічний приціл","Przyrządy mechaniczne"],"Glow Sights":["Светящиеся прицелы","Світні приціли","Świecące przyrządy"],"Heavy Frame":["Тяжёлая рама","Важка рама","Ciężka rama"],"Repeating Frame":["Многозарядная рама","Багатозарядна рама","Rama powtarzalna"],"Multiple Launch Frame":["Рама множественного запуска","Рама множинного запуску","Rama wielostrzałowa"],"Dual Bar":["Двойная шина","Подвійна шина","Podwójna prowadnica"],"Bow Bar":["Изогнутая шина","Вигнута шина","Prowadnica łukowa"],"Long Bow Bar":["Длинная изогнутая шина","Довга вигнута шина","Długa prowadnica łukowa"],"Gamma Wave Emitter":["Излучатель гамма-волн","Випромінювач гамма-хвиль","Emiter fal gamma"],"Maximized Capacitor":["Максимизированный конденсатор","Максимізований конденсатор","Maksymalny kondensator"],"Boosted Photon Agitator":["Усиленный фотонный агитатор","Посилений фотонний агітатор","Wzmocniony agitator fotonowy"],"Boosted Gamma Wave Emitter":["Усиленный излучатель гамма-волн","Посилений випромінювач гамма-хвиль","Wzmocniony emiter fal gamma"],"Overcharged Capacitor":["Перезаряженный конденсатор","Перезаряджений конденсатор","Przeładowany kondensator"],"Improved Long Barrel":["Улучшенный длинный ствол","Покращений довгий ствол","Ulepszona długa lufa"],"Improved Automatic Barrel":["Улучшенный автоматический ствол","Покращений автоматичний ствол","Ulepszona lufa automatyczna"],"Improved Sniper Barrel":["Улучшенный снайперский ствол","Покращений снайперський ствол","Ulepszona lufa snajperska"],"Improved Splitter":["Улучшенный расщепитель","Покращений розщеплювач","Ulepszony rozdzielacz"],"Amplified Beam Splitter":["Усиленный расщепитель луча","Посилений розщеплювач променя","Wzmocniony rozdzielacz wiązki"],"Fine-Tuned Beam Focuser":["Точно настроенный фокусировщик луча","Точно налаштований фокусувальник променя","Precyzyjny ogniskownik wiązki"],"Quantum Gyro-Compensating Lens":["Квантовая гирокомпенсирующая линза","Квантова гірокомпенсувальна лінза","Kwantowa soczewka żyrokompensacyjna"],"Armor Piercing Receiver":["Бронебойная ствольная коробка","Бронебійна ствольна коробка","Komora przeciwpancerna"],"Armor Piercing Automatic Receiver":["Автоматическая бронебойная коробка","Автоматична бронебійна коробка","Automatyczna komora przeciwpancerna"],"Hardened Automatic Receiver":["Закалённая автоматическая коробка","Загартована автоматична коробка","Utwardzona komora automatyczna"],"Rapid Automatic Receiver":["Скоростная автоматическая коробка","Швидкісна автоматична коробка","Szybka komora automatyczna"],"Calibrated Powerful Receiver":["Калиброванная мощная коробка","Калібрована потужна коробка","Kalibrowana mocna komora"],"Powerful Automatic Receiver":["Мощная автоматическая коробка","Потужна автоматична коробка","Mocna komora automatyczna"],"Hardened Piercing Auto Receiver":["Закалённая бронебойная автоматическая коробка","Загартована бронебійна автоматична коробка","Utwardzona automatyczna komora ppanc."],"9mm Receiver":["Ствольная коробка 9 мм","Ствольна коробка 9 мм","Komora 9 mm"],".357 Receiver":["Ствольная коробка .357","Ствольна коробка .357","Komora .357"]}
-          # inject into each language dictionary near first closing after language declaration
-          for lang,idx in [('ru',0),('uk',1),('pl',2)]:
-            start=m.find(f'  {lang}: {{')
-            end=m.find('\n  },', start)
-            block='\n'+''.join([f'    {k!r}: {v[idx]!r},\n' for k,v in supplemental.items()])
-            m=m[:end]+block+m[end:]
-          mp.write_text(m)
-
-          # ---------- LegendaryPropertyEditor localization + multi-location garments ----------
-          ep=Path('src/components/shared/LegendaryPropertyEditor.jsx'); e=ep.read_text()
-          e=e.replace('normalizeArmorLocation,\n} from "../../data/legendaryProperties.js";', 'normalizeArmorLocation,\n  getLegendaryArmorPropertiesForLocations,\n} from "../../data/legendaryProperties.js";\nimport { localizeLegendaryProperty } from "../../utils/legendaryLocalization.js";')
-          e=e.replace('const normalizedLocation = normalizeArmorLocation(armorLocation || draft?.armorLocations || draft?.location);\n  const allowed = isArmor ? Boolean(normalizedLocation) : canWeaponBeLegendary(draft);\n  const options = isArmor\n    ? getLegendaryArmorProperties(normalizedLocation)\n    : getLegendaryWeaponProperties(draft);\n  const selected = getLegendaryPropertyById(kind, draft?.legendaryProperty);', 'const armorLocationValue = armorLocation || draft?.armorLocations || draft?.location;\n  const normalizedLocation = normalizeArmorLocation(armorLocationValue);\n  const armorOptions = getLegendaryArmorPropertiesForLocations(armorLocationValue);\n  const allowed = isArmor ? armorOptions.length > 0 : canWeaponBeLegendary(draft);\n  const options = isArmor ? armorOptions : getLegendaryWeaponProperties(draft);\n  const selected = getLegendaryPropertyById(kind, draft?.legendaryProperty);\n  const localizedOptions = options.map((property) => localizeLegendaryProperty(property, language));\n  const localizedSelected = localizeLegendaryProperty(selected, language);')
-          e=e.replace('{options.map((property) => (\n    <option key={property.id} value={property.id}>{property.name}</option>\n  ))}', '{localizedOptions.map((property) => (\n    <option key={property.id} value={property.id}>{property.name}</option>\n  ))}')
-          e=e.replace('{selected?.description ? (', '{localizedSelected?.description ? (').replace('{selected.description}', '{localizedSelected.description}')
-          e=e.replace('export function LegendaryBadge({ kind, item }) {', 'export function LegendaryBadge({ kind, item, language = "en" }) {').replace('  const property = getLegendaryPropertyById(kind, item.legendaryProperty);', '  const property = localizeLegendaryProperty(getLegendaryPropertyById(kind, item.legendaryProperty), language);')
-          ep.write_text(e)
-
-          # ---------- legendary multi-location helper ----------
-          lp=Path('src/data/legendaryProperties.js'); l=lp.read_text()
-          if 'getLegendaryArmorPropertiesForLocations' not in l:
-            l += '''\n\nexport function getLegendaryArmorPropertiesForLocations(value) {\n  const text=String(value||"").toLowerCase();\n  let locations=[];\n  if (text.includes("all")) locations=["Head","Arm","Torso","Leg"];\n  else {\n    if (text.includes("head")) locations.push("Head");\n    if (text.includes("arm")) locations.push("Arm");\n    if (text.includes("torso") || text.includes("chest")) locations.push("Torso");\n    if (text.includes("leg")) locations.push("Leg");\n  }\n  const ids=new Set();\n  return locations.flatMap(loc=>getLegendaryArmorProperties(loc)).filter(p=>!ids.has(p.id) && ids.add(p.id));\n}\n'''
-          lp.write_text(l)
-
-          # ---------- ArmorScreen translated legendary names ----------
-          ap=Path('src/components/armor/ArmorScreen.jsx'); a=ap.read_text()
-          if 'localizeLegendaryProperty' not in a:
-            a=a.replace('import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";', 'import { localizeArmorEffect, localizeArmorName } from "../../utils/armorLocalization.js";\nimport { localizeLegendaryProperty } from "../../utils/legendaryLocalization.js";')
-          a=a.replace('★ {legendaryProperty.name}', '★ {localizeLegendaryProperty(legendaryProperty, language)?.name || legendaryProperty.name}')
-          a=a.replace('<option key={option.id} value={option.id}>{option.name}</option>', '<option key={option.id} value={option.id}>{localizeLegendaryProperty(option, language)?.name || option.name}</option>')
-          a=a.replace('{property?.description || property?.name}', '{localizeLegendaryProperty(property, language)?.description || localizeLegendaryProperty(property, language)?.name || property?.name}')
-          a=a.replace('title={getLegendaryPropertyById("armor", legendaryParts[part])?.description || ""}', 'title={localizeLegendaryProperty(getLegendaryPropertyById("armor", legendaryParts[part]), language)?.description || ""}')
-          ap.write_text(a)
-
-          # ---------- Weapon card/editor names ----------
-          wc=Path('src/components/weapons/WeaponCard.jsx'); w=wc.read_text()
-          if 'localizeWeaponName' not in w:
-            w=w.replace('import { getWeaponMetadata } from "../../utils/weaponDatabase.js";', 'import { getWeaponMetadata } from "../../utils/weaponDatabase.js";\nimport { localizeWeaponName } from "../../data/inventoryLocalization/weapons.js";')
-          w=w.replace('<h3>{weapon.name || t("weapons.unnamedWeapon")}</h3>', '<h3>{localizeWeaponName(weapon.name, language) || t("weapons.unnamedWeapon")}</h3>')
-          wc.write_text(w)
-          we=Path('src/components/weapons/WeaponEditor.jsx'); x=we.read_text()
-          if 'localizeWeaponName' not in x:
-            x=x.replace('import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";', 'import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";\nimport { localizeWeaponName } from "../../data/inventoryLocalization/weapons.js";')
-          x=x.replace("{gw.name} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})", "{localizeWeaponName(gw.name, i18n.resolvedLanguage)} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})")
-          we.write_text(x)
-
-          # ---------- Badge receives language ----------
-          ws=Path('src/components/weapons/WeaponsScreen.jsx'); z=ws.read_text().replace('<LegendaryBadge kind="weapon" item={weapon} language={i18n.resolvedLanguage} />','<LegendaryBadge kind="weapon" item={weapon} language={i18n.resolvedLanguage} />')
-          ws.write_text(z)
+          # Power armor additions.
+          p=Path('src/components/armor/PowerArmorPanel.jsx'); s=p.read_text()
+          s=s.replace('ru: { raider:', 'ru: { excavator: "Силовая броня Экскаватор", hellcat: "Силовая броня Hellcat", t65: "Силовая броня T-65", raider:')
+          s=s.replace('uk: { raider:', 'uk: { excavator: "Силова броня Екскаватор", hellcat: "Силова броня Hellcat", t65: "Силова броня T-65", raider:')
+          s=s.replace('pl: { raider:', 'pl: { excavator: "Pancerz wspomagany Excavator", hellcat: "Pancerz wspomagany Hellcat", t65: "Pancerz wspomagany T-65", raider:')
+          p.write_text(s)
           PY
-      - name: Install dependencies
-        run: npm ci
-      - name: Build
-        run: npm run build
-      - name: Commit changes
-        shell: bash
+      - run: npm ci
+      - run: npm run build
+      - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m "feat: localize legendary equipment and allow legendary outfits"
+          git commit -m "feat: localize equipment and legendary properties"
           git push
