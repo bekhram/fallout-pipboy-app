@@ -344,7 +344,7 @@ if (derived?.immunities?.includes("radiation")) {
               <div className="pip-combat-stat"><small>{t("main.defense")}</small><strong>{derived.defense}</strong></div>
               <div className="pip-combat-stat"><small>{t("main.initiative")}</small><strong>{derived.initiative}</strong></div>
               <div className="pip-combat-stat"><small>{t("main.melee")}</small><strong>{derived.md}</strong></div>
-              <div className="pip-combat-stat"><small>{t("main.luck")}</small><strong>{currentLuckPoints}</strong></div>
+              <div className="pip-combat-stat"><small>{t("derived.luckPoints")}</small><strong>{currentLuckPoints}</strong></div>
             </div>
           </div>
 

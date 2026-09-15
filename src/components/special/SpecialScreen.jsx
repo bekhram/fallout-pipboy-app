@@ -113,7 +113,8 @@ export default function SpecialScreen({
 
         <div className="pip-special-grid">
           {SPECIAL_KEYS.map((key) => {
-            const minAllowed = limits.min !== undefined ? limits.min : 1;
+            const originMin = limits.min !== undefined ? Number(limits.min) : 1;
+            const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;
             const maxAllowed =
               limits[key] !== undefined
                 ? limits[key]
@@ -134,8 +135,18 @@ export default function SpecialScreen({
                 <div className="pip-special-letter">{key}</div>
                 <input
                   className="pip-special-input"
+                  type="number"
+                  inputMode="numeric"
+                  min={minAllowed}
+                  max={maxAllowed}
                   value={form.special[key]}
                   onChange={(e) => onSpecialChange(key, e.target.value)}
+                  onBlur={(e) =>
+                    onSpecialChange(
+                      key,
+                      e.target.value === "" ? String(minAllowed) : e.target.value
+                    )
+                  }
                 />
                 {effectiveNotes.length ? (
                   <div style={{ fontSize: "0.68em", marginTop: "3px", textAlign: "center" }}>

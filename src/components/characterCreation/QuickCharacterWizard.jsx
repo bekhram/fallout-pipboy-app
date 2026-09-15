@@ -431,7 +431,8 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   const changeSpecial = (key, delta) => {
     if (!origin) return;
     const limits = origin.specialLimits || { min: 1, max: 10 };
-    const min = Number(limits.min ?? 1);
+    const originMin = Number(limits.min ?? 1);
+    const min = key === "L" ? Math.max(4, originMin) : originMin;
     const max = Number(limits[key] ?? limits.max ?? 10);
     setSpecial((prev) => {
       const current = Number(prev[key] || 0);

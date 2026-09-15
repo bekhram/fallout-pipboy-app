@@ -1046,6 +1046,7 @@ return {
     initiativeOverride: "",
     mdOverride: "",
     luckPointsOverride: "",
+    currentLuckPoints: "",
     maxHpOverride: "",
     injuries: {
       head: "normal",

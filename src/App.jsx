@@ -507,13 +507,31 @@ export default function App() {
 
   const derived = getDerivedStats(form);
 
-  const [currentLuckPoints, setCurrentLuckPoints] = useState(
-    derived.luckPoints || 0
-  );
+  // Luck SPECIAL and spendable Luck Points are intentionally separate.
+  // Spending a Luck Point never changes form.special.L.
+  const luckPointsMax = Math.max(0, Number(derived.luckPoints || 0));
+  const storedLuckPoints = form.currentLuckPoints;
+  const currentLuckPoints =
+    storedLuckPoints === "" || storedLuckPoints === undefined || storedLuckPoints === null
+      ? luckPointsMax
+      : Math.max(0, Math.min(luckPointsMax, Number(storedLuckPoints) || 0));
 
-  useEffect(() => {
-    setCurrentLuckPoints(derived.luckPoints || 0);
-  }, [derived.luckPoints]);
+  const setCurrentLuckPoints = (valueOrUpdater) => {
+    setForm((prev) => {
+      const prevMax = Math.max(0, Number(getDerivedStats(prev).luckPoints || 0));
+      const prevStored = prev.currentLuckPoints;
+      const prevCurrent =
+        prevStored === "" || prevStored === undefined || prevStored === null
+          ? prevMax
+          : Math.max(0, Math.min(prevMax, Number(prevStored) || 0));
+      const requested =
+        typeof valueOrUpdater === "function"
+          ? valueOrUpdater(prevCurrent)
+          : valueOrUpdater;
+      const next = Math.max(0, Math.min(prevMax, Number(requested) || 0));
+      return { ...prev, currentLuckPoints: String(next) };
+    });
+  };
 
   const onSpendLuck = () => {
     setCurrentLuckPoints((prev) => Math.max(0, prev - 1));
@@ -669,14 +687,25 @@ export default function App() {
     setForm((prev) => {
       const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;
       const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
-      const minAllowed = limits.min !== undefined ? limits.min : 1;
-      const maxAllowed = limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10);
+      const originMin = Number(limits.min !== undefined ? limits.min : 1);
+      const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;
+      const maxAllowed = Number(limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10));
+      const raw = String(value ?? "").trim();
+      const special = prev.special || {};
+      const otherTotal = Object.entries(special).reduce(
+        (sum, [entryKey, entryValue]) =>
+          entryKey === key ? sum : sum + (Number(entryValue) || 0),
+        0
+      );
+      const budgetMax = Math.max(minAllowed, 40 - otherTotal);
+      const effectiveMax = Math.min(maxAllowed, budgetMax);
 
       return {
         ...prev,
         special: {
-          ...prev.special,
-          [key]: clampNumberString(value, minAllowed, maxAllowed),
+          ...special,
+          // Keep an empty value while typing; blur restores the legal minimum.
+          [key]: raw === "" ? "" : clampNumberString(raw, minAllowed, effectiveMax),
         },
       };
     });
