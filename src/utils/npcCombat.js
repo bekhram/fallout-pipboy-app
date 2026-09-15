@@ -33,9 +33,9 @@ function number(value, fallback = 0) {
 export function normalizeStructuredAttack(value = {}, index = 0) {
   return {
     id: String(value.id || `attack-${Date.now()}-${index}-${Math.random().toString(36).slice(2, 7)}`),
-    name: String(value.name || `Attack ${index + 1}`).trim().slice(0, 80) || `Attack ${index + 1}`,
+    name: String(value.name || `Attack ${index + 1}`).trim().slice(0, 120) || `Attack ${index + 1}`,
     targetNumber: Math.max(0, Math.min(20, number(value.targetNumber ?? value.tn, 0))),
-    skill: String(value.skill || "Combat").trim().slice(0, 40) || "Combat",
+    skill: String(value.skill || "Combat").trim().slice(0, 60) || "Combat",
     attribute: String(value.attribute || "BODY").trim().slice(0, 20) || "BODY",
     damageDice: Math.max(0, Math.min(50, number(value.damageDice ?? value.damage ?? value.cd, 0))),
     damageType: String(value.damageType || "Physical").trim().slice(0, 60) || "Physical",
@@ -44,6 +44,9 @@ export function normalizeStructuredAttack(value = {}, index = 0) {
     weaponType: String(value.weaponType || value.attackType || "").slice(0, 100),
     qualities: String(value.qualities || "").slice(0, 500),
     source: String(value.source || "custom").slice(0, 40),
+    legendary: Boolean(value.legendary),
+    legendaryProperty: String(value.legendaryProperty || "").slice(0, 100),
+    legendaryPropertyName: String(value.legendaryPropertyName || "").slice(0, 120),
   };
 }
 
@@ -54,7 +57,7 @@ export function normalizeWeaponAttack(value = {}, index = 0) {
     name: value.name || value.originalName || `Weapon ${index + 1}`,
     damageDice: value.damageDice ?? value.creatureDamage ?? value.damage,
     effects: value.effects ?? value.effect,
-    source: "weapon",
+    source: value.source || "weapon",
   }, index);
   return {
     ...normalized,
@@ -67,6 +70,9 @@ export function normalizeWeaponAttack(value = {}, index = 0) {
     cost: String(value.cost ?? "").slice(0, 80),
     weight: String(value.weight ?? "").slice(0, 80),
     effect: String(value.effect ?? value.effects ?? "").slice(0, 800),
+    legendary: Boolean(value.legendary || normalized.legendary),
+    legendaryProperty: String(value.legendaryProperty || normalized.legendaryProperty || "").slice(0, 100),
+    legendaryPropertyName: String(value.legendaryPropertyName || normalized.legendaryPropertyName || "").slice(0, 120),
   };
 }
 
@@ -163,6 +169,7 @@ export function applyNpcRank(base = {}, options = {}) {
     legendaryAbilityId: String(options.legendaryAbilityId ?? base.legendaryAbilityId ?? "").slice(0, 80),
     legendaryRewardType: String(options.legendaryRewardType ?? base.legendaryRewardType ?? "").slice(0, 40),
     legendaryReward: String(options.legendaryReward ?? base.legendaryReward ?? "").slice(0, 1200),
+    legendaryLootItem: options.legendaryLootItem ?? base.legendaryLootItem ?? null,
   };
 }
 
@@ -204,6 +211,8 @@ export function buildNpcAttackRollConfig(attack, stats = {}, actorName = "NPC") 
       skill: profile.skill,
       damageType: profile.damageType,
       range: profile.range,
+      legendary: profile.legendary,
+      legendaryProperty: profile.legendaryProperty,
     },
     npcProfile: profile,
   };
