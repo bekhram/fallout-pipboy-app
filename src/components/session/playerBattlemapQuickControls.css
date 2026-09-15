@@ -1,23 +1,26 @@
 .player-battlemap-quick-actions {
-  position: fixed;
-  right: 0;
-  top: 42%;
-  z-index: 999999;
+  position: fixed !important;
+  right: 0 !important;
+  top: 58% !important;
+  z-index: 2147483647 !important;
   display: grid;
   gap: 8px;
-  pointer-events: auto;
+  pointer-events: auto !important;
+  touch-action: manipulation;
 }
 
 .player-battlemap-quick-btn,
 .battlemap-collapse-btn,
 .player-battlemap-tools__toggle {
   border: 1px solid currentColor;
-  background: rgba(3, 13, 5, 0.96);
+  background: rgba(3, 13, 5, 0.98);
   color: var(--pip-accent, #78ff98);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 0 12px color-mix(in srgb, currentColor 14%, transparent);
+  pointer-events: auto !important;
+  touch-action: manipulation;
 }
 
 .player-battlemap-quick-btn {
@@ -38,14 +41,15 @@
 }
 
 .player-battlemap-tools {
-  position: fixed;
-  left: 8px;
-  top: 44%;
-  z-index: 999999;
+  position: fixed !important;
+  left: 6px !important;
+  top: 48% !important;
+  z-index: 2147483647 !important;
   display: flex;
   align-items: flex-start;
   gap: 4px;
-  pointer-events: auto;
+  pointer-events: auto !important;
+  touch-action: manipulation;
 }
 
 .player-battlemap-tools__toggle {
@@ -67,8 +71,9 @@
   padding: 7px;
   border: 1px solid currentColor;
   border-radius: 6px;
-  background: rgba(3, 13, 5, .96);
+  background: rgba(3, 13, 5, .98);
   box-shadow: 0 0 14px color-mix(in srgb, currentColor 12%, transparent);
+  pointer-events: auto !important;
 }
 
 .player-battlemap-tools__body strong {
@@ -80,6 +85,8 @@
   min-height: 30px;
   padding: 4px 6px;
   font-size: .52rem;
+  pointer-events: auto !important;
+  touch-action: manipulation;
 }
 
 .battlemap-collapse-btn {
@@ -88,6 +95,23 @@
   min-width: 28px;
   padding: 0 3px;
   font-size: .52rem;
+}
+
+.battlemap-view-controls.is-player-controls {
+  position: fixed !important;
+  top: 48% !important;
+  right: 6px !important;
+  left: auto !important;
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+}
+
+.battlemap-view-controls.is-player-controls > *,
+.battlemap-view-controls.is-player-controls button,
+.battlemap-view-controls.is-player-controls input {
+  pointer-events: auto !important;
+  touch-action: manipulation;
 }
 
 .battlemap-view-controls.is-collapsed {
@@ -99,7 +123,7 @@
 
 @media (max-width: 780px) {
   .player-battlemap-quick-actions {
-    top: 46%;
+    top: 62% !important;
     gap: 6px;
   }
 
@@ -115,12 +139,17 @@
   }
 
   .player-battlemap-tools {
-    left: 4px;
-    top: 49%;
+    left: 4px !important;
+    top: 50% !important;
   }
 
   .player-battlemap-tools__body {
     width: 96px;
     padding: 5px;
+  }
+
+  .battlemap-view-controls.is-player-controls {
+    right: 4px !important;
+    top: 50% !important;
   }
 }
