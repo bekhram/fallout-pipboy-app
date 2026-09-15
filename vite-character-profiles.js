@@ -29,15 +29,10 @@ export function pip2d20CharacterProfilesPlugin() {
         return { code, map: null };
       }
 
+      // Luck Point persistence now lives in App.jsx itself. Do not rewrite that
+      // state at build time: Luck SPECIAL and spendable Luck Points are separate.
       if (normalized.endsWith("/src/App.jsx")) {
-        let code = source;
-        code = replaceRequired(
-          code,
-          `  const [currentLuckPoints, setCurrentLuckPoints] = useState(\n    derived.luckPoints || 0\n  );\n\n  useEffect(() => {\n    setCurrentLuckPoints(derived.luckPoints || 0);\n  }, [derived.luckPoints]);`,
-          `  const maxLuckPoints = Math.max(0, Number(derived.luckPoints || 0));\n  const [currentLuckPoints, setCurrentLuckPoints] = useState(() =>\n    Math.max(0, Math.min(maxLuckPoints, Number(form.currentLuckPoints ?? maxLuckPoints)))\n  );\n\n  useEffect(() => {\n    setCurrentLuckPoints((prev) =>\n      Math.max(0, Math.min(maxLuckPoints, Number(prev ?? form.currentLuckPoints ?? maxLuckPoints)))\n    );\n  }, [maxLuckPoints]);\n\n  useEffect(() => {\n    setForm((prev) => {\n      const value = String(Math.max(0, Math.min(maxLuckPoints, Number(currentLuckPoints || 0))));\n      if (String(prev.currentLuckPoints ?? "") === value) return prev;\n      return { ...prev, currentLuckPoints: value };\n    });\n  }, [currentLuckPoints, maxLuckPoints, setForm]);`,
-          "current luck persistence"
-        );
-        return { code, map: null };
+        return { code: source, map: null };
       }
 
       return null;
