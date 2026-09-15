@@ -4,6 +4,10 @@ import {
   translateInventoryItemEffect,
   translateInventoryItemName,
 } from "../data/inventoryLocalization.js";
+import {
+  translateSupplementalFoodEffect,
+  translateSupplementalFoodName,
+} from "../data/inventoryLocalizationSupplementalFood.js";
 import { rerollOneFalloutD6, rollFalloutD6 } from "./dice.js";
 import { showConsumableResultPopup } from "./consumableResultUi.js";
 
@@ -456,7 +460,7 @@ function rollAddictionRisk(item, canonicalName, language, character) {
   }
 
   const rule = CHEM_ADDICTION_RULES[addictionKey];
-  const sourceName = translateInventoryItemName(canonicalName, language) || canonicalName || "Consumable";
+  const sourceName = translateSupplementalFoodName(canonicalName, language) || translateInventoryItemName(canonicalName, language) || canonicalName || "Consumable";
   const now = new Date().toISOString();
 
   return {
@@ -509,6 +513,14 @@ export function isConsumableItem(item) {
 }
 
 
+function getFoodHungerRestore(item, character) {
+  if (item?.category !== "food") return 0;
+  const name = normalizeName(getCanonicalName(item));
+  const cookedOrPrepared = /(baked|cooked|crispy|grilled|roasted|poached|steak|stew|soup|omelet|omelette|kebab|cake|chops|ribs|pie|slurry|chunks|filet|roast|on a stick|noodle|salisbury|cram|paste|canned)/i.test(name);
+  const base = cookedOrPrepared ? 2 : 1;
+  return base + (getCharacterPerkRank(character, "slow_metabolizer") > 0 ? 1 : 0);
+}
+
 export function getConsumableUsePlan(item, character = null, options = {}) {
   const canonicalName = getCanonicalName(item);
   const effectText = getCanonicalEffect(item);
@@ -519,6 +531,7 @@ export function getConsumableUsePlan(item, character = null, options = {}) {
   const healingHp = Number.isFinite(healingField) && healingField > 0
     ? healingField
     : (healingFromText ? Number(healingFromText[1]) : 0);
+  const hungerRestore = getFoodHungerRestore(item, character);
   const radiationHealMatch = effectText.match(/heals?\s*(\d+)\s*radiation damage/i);
   const baseRadiationHealing = radiationHealMatch ? Number(radiationHealMatch[1]) : 0;
   const radiationRisk = rollRadiationRisk(item, effectText, character);
@@ -527,7 +540,7 @@ export function getConsumableUsePlan(item, character = null, options = {}) {
   const cureDiseases = /cure all illnesses/i.test(effectText);
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const addictionRisk = rollAddictionRisk(item, canonicalName, language, character);
-  const displayEffect = translateInventoryItemEffect(effectText, language) || effectText;
+  const displayEffect = translateSupplementalFoodEffect(canonicalName, effectText, language) || translateInventoryItemEffect(effectText, language) || effectText;
 
   let activeEffect = null;
   if (cureAddictions) {
@@ -536,10 +549,10 @@ export function getConsumableUsePlan(item, character = null, options = {}) {
     activeEffect = addictionRisk.activeEffect;
   } else if (!statusKey) {
     const modifiers = buildConsumableModifiers(effectText);
-    if (hasStructuredModifiers(modifiers)) {
+    if (hasStructuredModifiers(modifiers) || (item?.category === "food" && effectText && effectText !== "-")) {
       activeEffect = {
         id: makeEffectId(item),
-        sourceName: translateInventoryItemName(canonicalName, language) || "Consumable",
+        sourceName: translateSupplementalFoodName(canonicalName, language) || translateInventoryItemName(canonicalName, language) || "Consumable",
         effectText: displayEffect,
         canonicalSourceName: canonicalName,
         canonicalEffect: effectText,
@@ -552,6 +565,7 @@ export function getConsumableUsePlan(item, character = null, options = {}) {
 
   const plan = {
     statusKey,
+    hungerRestore,
     healingHp,
     healingRadiation,
     radiationHealing: baseRadiationHealing,
@@ -563,6 +577,7 @@ export function getConsumableUsePlan(item, character = null, options = {}) {
     displayEffect,
     hasImmediateEffect:
       healingHp > 0
+      || hungerRestore > 0
       || healingRadiation !== 0
       || radiationRisk.damage > 0
       || Boolean(addictionRisk)
@@ -575,7 +590,7 @@ export function getConsumableUsePlan(item, character = null, options = {}) {
     showConsumableResultPopup({
       item: {
         ...item,
-        name: translateInventoryItemName(canonicalName, language) || item?.name || canonicalName,
+        name: translateSupplementalFoodName(canonicalName, language) || translateInventoryItemName(canonicalName, language) || item?.name || canonicalName,
       },
       plan,
       language,

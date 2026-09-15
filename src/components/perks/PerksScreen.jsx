@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SPECIAL_KEYS } from "../../constants.js";
 import { PERKS_LIST } from "../data/perks";
 import { getAddedPerkTranslation } from "../data/perkTranslations";
+import { getSupplementalPerkTranslation } from "../data/supplementalPerks.js";
 
 const perkImageModules = import.meta.glob("../../assets/perks/*.png", {
   eager: true,
@@ -23,11 +24,10 @@ const SPECIAL_NAMES = {
   pl: { S: "Siła", P: "Percepcja", E: "Wytrzymałość", C: "Charyzma", I: "Inteligencja", A: "Zręczność", L: "Szczęście" },
 };
 
-function getRequirementsWarnings(reqString, form) {
+function getRequirementsWarnings(reqString, form, perk = null, rank = 1) {
   if (!reqString || reqString === "None") return [];
   const warnings = [];
-  const parts = reqString.split(",").map((s) => s.trim());
-
+  const parts = reqString.split(",").map((value) => value.trim());
   const stats = {
     STR: Number(form?.special?.S || 0),
     PER: Number(form?.special?.P || 0),
@@ -38,13 +38,20 @@ function getRequirementsWarnings(reqString, form) {
     LCK: Number(form?.special?.L || 0),
   };
   const level = Number(form?.level || 1);
-  const isRobot = form?.origin === "mister_handy";
+  const origin = String(form?.origin || "").toLowerCase();
+  const isRobot = origin.includes("handy") || origin.includes("robot");
+  const isGhoul = origin.includes("ghoul");
+  const ignoreFirstRankLevel = Number(rank || 1) === 1
+    && (perk?.ignoreFirstRankLevelForOrigins || []).some((value) =>
+      origin.includes(String(value).toLowerCase())
+    );
 
   parts.forEach((part) => {
+    const lower = part.toLowerCase();
     const levelMatch = part.match(/Level\s*(\d+)\+/i);
     if (levelMatch) {
       const reqLevel = parseInt(levelMatch[1], 10);
-      if (level < reqLevel) {
+      if (level < reqLevel && !ignoreFirstRankLevel) {
         warnings.push(`Requires Level ${reqLevel}+ (Current: ${level})`);
       }
       return;
@@ -60,8 +67,16 @@ function getRequirementsWarnings(reqString, form) {
       return;
     }
 
-    if (part.toLowerCase() === "not a robot" && isRobot) {
+    if (lower === "not a ghoul or robot" && (isGhoul || isRobot)) {
+      warnings.push("Cannot be a ghoul or robot");
+      return;
+    }
+    if (lower === "not a robot" && isRobot) {
       warnings.push("Cannot be a robot");
+      return;
+    }
+    if (lower === "not immune to radiation" && isGhoul) {
+      warnings.push("Requires a character that is not immune to radiation");
     }
   });
 
@@ -95,10 +110,11 @@ export default function PerksScreen({
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const specialNames = SPECIAL_NAMES[language] || SPECIAL_NAMES.en;
   const localizedPerk = (perk) => {
+    const supplemental = getSupplementalPerkTranslation(perk.id, language);
     const added = getAddedPerkTranslation(perk.id, language);
     return {
-      name: added?.name || t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id }),
-      description: added?.description || t(`perksInfo.${perk.id}.desc`, { defaultValue: perk.description || "" }),
+      name: supplemental?.name || added?.name || t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id }),
+      description: supplemental?.description || added?.description || t(`perksInfo.${perk.id}.desc`, { defaultValue: perk.description || "" }),
     };
   };
   const safeList = Array.isArray(perks) ? perks : [];
@@ -168,7 +184,19 @@ export default function PerksScreen({
     item?.id || PERKS_LIST.find((perk) => localizedPerk(perk).name === item?.name)?.id;
 
   const activeRequirements = getPerkRequirementsForRank(matchedPerk, perkDraft?.rank);
-  const warnings = matchedPerk ? getRequirementsWarnings(activeRequirements, form) : [];
+  const warnings = matchedPerk
+    ? getRequirementsWarnings(activeRequirements, form, matchedPerk, perkDraft?.rank)
+    : [];
+  const rankValue = Number(perkDraft?.rank || 1);
+  const rankInvalid = Boolean(matchedPerk) && (
+    !Number.isInteger(rankValue)
+    || rankValue < 1
+    || rankValue > Number(matchedPerk?.maxRanks || 1)
+  );
+  const allWarnings = [
+    ...warnings,
+    ...(rankInvalid ? [`Rank must be between 1 and ${matchedPerk?.maxRanks || 1}`] : []),
+  ];
   const intenseTrainingRank = matchedPerk?.id === "intense_training"
     ? getSafeRank(matchedPerk, perkDraft?.rank)
     : 0;
@@ -303,7 +331,7 @@ export default function PerksScreen({
                 </select>
               </div>
 
-              {warnings.length > 0 && (
+              {allWarnings.length > 0 && (
                 <div style={{
                   gridColumn: "1 / -1",
                   border: "1px solid var(--pip-color-alert, #ffcc00)",
@@ -313,7 +341,7 @@ export default function PerksScreen({
                 }}>
                   <strong style={{ display: "block", marginBottom: "5px" }}>[ WARNING: REQUIREMENTS NOT MET ]</strong>
                   <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.9em" }}>
-                    {warnings.map((warning, index) => <li key={index}>{warning}</li>)}
+                    {allWarnings.map((warning, index) => <li key={index}>{warning}</li>)}
                   </ul>
                 </div>
               )}
@@ -383,6 +411,8 @@ export default function PerksScreen({
                   type="button"
                   className="pip-btn is-primary"
                   onClick={() => onSaveEdit(editingIndex)}
+                  disabled={allWarnings.length > 0}
+                  title={allWarnings.length ? allWarnings.join(" · ") : undefined}
                 >
                   {t("common.save")}
                 </button>

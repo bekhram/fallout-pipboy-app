@@ -404,6 +404,7 @@ export default function App() {
           statuses,
           activeConsumableEffects,
           radiationHp: String(nextRadiation),
+          satiety: String(Math.min(5, Math.max(0, Number(prev.satiety || 0) + Number(plan.hungerRestore || 0)))),
         };
         const maxHp = Math.max(0, Number(getDerivedStats(preview).effectiveMaxHp || 0));
         const nextHp = Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0) + Number(plan.healingHp || 0)));

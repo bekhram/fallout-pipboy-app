@@ -1,3 +1,5 @@
+import { SUPPLEMENTAL_PERKS } from "./supplementalPerks.js";
+
 export const PERKS_DICTIONARY = {
   "action_boy_girl": { id: "action_boy_girl", maxRanks: 1, requirements: "None" },
   "adamantium_skeleton": { id: "adamantium_skeleton", maxRanks: 3, requirements: "END 7, Level 1+" },
@@ -93,7 +95,8 @@ export const PERKS_DICTIONARY = {
   "strong_back": { id: "strong_back", maxRanks: 3, requirements: "STR 5, Level 1+" },
   "tag": { id: "tag", maxRanks: 1, requirements: "Level 5+" },
   "terrifying_presence": { id: "terrifying_presence", maxRanks: 2, requirements: "STR 6, CHA 8, Level 3+" },
-  "toughness": { id: "toughness", maxRanks: 2, requirements: "END 6, LCK 6, Level 1+" }
+  "toughness": { id: "toughness", maxRanks: 2, requirements: "END 6, LCK 6, Level 1+" },
+  ...Object.fromEntries(SUPPLEMENTAL_PERKS.map((perk) => [perk.id, perk]))
 };
 
 export const PERKS_LIST = Object.values(PERKS_DICTIONARY);
