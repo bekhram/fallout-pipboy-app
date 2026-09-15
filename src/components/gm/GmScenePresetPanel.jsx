@@ -19,7 +19,7 @@ import {
 } from "../../utils/proceduralRoomContent.js";
 import "./gmScenePresetPanel.css";
 
-const MAP_TYPES = ["wasteland", "settlement", "residential_house", "red_rocket", "super_duper_mart", "raider_camp", "military_bunker"];
+const MAP_TYPES = ["wasteland", "settlement", "red_rocket", "super_duper_mart"];
 const FIXED_GRID = 24;
 const LOOT_RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const WEALTH_LEVELS = ["poor", "standard", "rich", "wealthy"];
@@ -48,6 +48,9 @@ const WEALTH_LABELS = {
 function langCode(value) {
   const code = String(value || "en").toLowerCase().split("-")[0];
   return COPY[code] ? code : "en";
+}
+function selectableMapType(value) {
+  return MAP_TYPES.includes(value) ? value : "wasteland";
 }
 function clampInteger(value, min, max, fallback) {
   const parsed = Math.floor(Number(value));
@@ -79,7 +82,7 @@ export default function GmScenePresetPanel({ session }) {
   const saved = scene?.environment?.proceduralMapSpec || {};
   const detectedPlayers = Math.max(0, (scene?.tokens || []).filter((token) => token?.kind === "player").length);
 
-  const [type, setType] = useState(saved.type || "wasteland");
+  const [type, setType] = useState(selectableMapType(saved.type));
   const [terrain, setTerrain] = useState(saved.terrain || scene?.environment?.terrain || "wasteland");
   const [seed, setSeed] = useState(saved.seed || makeProceduralSeed());
   const [density, setDensity] = useState(Math.round(Number(saved.density ?? 0.55) * 100));
@@ -93,7 +96,7 @@ export default function GmScenePresetPanel({ session }) {
   useEffect(() => {
     const spec = scene?.environment?.proceduralMapSpec;
     if (spec) {
-      setType(spec.type || "wasteland");
+      setType(selectableMapType(spec.type));
       setTerrain(spec.terrain || scene?.environment?.terrain || "wasteland");
       setSeed(spec.seed || makeProceduralSeed());
       setDensity(Math.round(Number(spec.density ?? 0.55) * 100));
