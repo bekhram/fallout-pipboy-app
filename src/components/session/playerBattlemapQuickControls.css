@@ -1,0 +1,70 @@
+.player-battlemap-quick-actions {
+  position: fixed;
+  right: 0;
+  top: 42%;
+  z-index: 999999;
+  display: grid;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.player-battlemap-quick-btn,
+.battlemap-collapse-btn {
+  border: 1px solid currentColor;
+  background: rgba(3, 13, 5, 0.96);
+  color: var(--pip-accent, #78ff98);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.player-battlemap-quick-btn {
+  width: 46px;
+  min-width: 46px;
+  min-height: 42px;
+  padding: 5px 3px;
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  font-size: .58rem;
+  letter-spacing: .03em;
+}
+
+.player-battlemap-quick-btn.is-dice {
+  min-height: 46px;
+  border-radius: 50% 0 0 50%;
+  font-size: .68rem;
+}
+
+.battlemap-collapse-btn {
+  width: 28px;
+  height: 24px;
+  min-width: 28px;
+  padding: 0 3px;
+  font-size: .52rem;
+}
+
+.battlemap-view-controls.is-collapsed {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  padding: 2px !important;
+}
+
+@media (max-width: 780px) {
+  .player-battlemap-quick-actions {
+    top: 46%;
+    gap: 6px;
+  }
+
+  .player-battlemap-quick-btn {
+    width: 40px;
+    min-width: 40px;
+    min-height: 38px;
+    font-size: .5rem;
+  }
+
+  .player-battlemap-quick-btn.is-dice {
+    min-height: 42px;
+  }
+}
