@@ -50,7 +50,7 @@ function openMainMenu() {
   return true;
 }
 
-export default function FloatingDiceButton({ onOpen }) {
+export default function FloatingDiceButton({ onOpen, onOpenMenu, battlemapAvailable = false }) {
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem("pip2d20:dice-collapsed") === "true";
@@ -76,6 +76,11 @@ export default function FloatingDiceButton({ onOpen }) {
       attributeFilter: ["class"],
     });
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.add("pip-sheet-tools-visible");
+    return () => document.body.classList.remove("pip-sheet-tools-visible");
   }, []);
 
   const toggleCollapsed = () => {
@@ -142,15 +147,16 @@ export default function FloatingDiceButton({ onOpen }) {
           type="button"
           className="pip-mobile-tool-dock__action pip-mobile-tool-dock__action--battlemap"
           onClick={openBattlemap}
+          disabled={!battlemapAvailable}
           aria-label="Open active battlemap"
-          title="Battlemap"
+          title={battlemapAvailable ? "Battlemap" : "GM has not activated a battlemap yet"}
         >
           BATTLEMAP
         </button>
         <button
           type="button"
           className="pip-mobile-tool-dock__action"
-          onClick={openMainMenu}
+          onClick={onOpenMenu || openMainMenu}
           aria-label="Open main menu"
           title="Menu"
         >

@@ -61,12 +61,15 @@ export default function PlayerBattlemapControls({ session }) {
       const playerMap = document.querySelector(
         ".session-tactical-overlay .session-tactical-player"
       );
+      const controlsSlot = document.querySelector(
+        ".session-tactical-overlay .session-tactical-player__controls-slot"
+      );
       const controls = document.querySelector(
         ".session-tactical-overlay .battlemap-view-controls, .battlemap-view-controls"
       );
 
       document.body.classList.toggle("pip-player-battlemap-open", Boolean(playerMap));
-      setBattlemapTarget((current) => (current === playerMap ? current : playerMap));
+      setBattlemapTarget((current) => (current === controlsSlot ? current : controlsSlot));
 
       document.querySelectorAll(".battlemap-view-controls.is-player-battlemap-viewport")
         .forEach((node) => {

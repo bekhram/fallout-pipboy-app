@@ -13,7 +13,7 @@
 
   /* Reserve a real footer lane for the sheet dock so the last rows/tabs can
      always scroll above it instead of being covered by the fixed controls. */
-  body:has(.pip-mobile-tool-dock) .pip-main {
+  body.pip-sheet-tools-visible .pip-main {
     padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
     scroll-padding-bottom: calc(86px + env(safe-area-inset-bottom));
   }
@@ -68,11 +68,11 @@
     cursor: default;
   }
 
-  body:has(.session-tactical-overlay .session-tactical-player) .pip-mobile-tool-dock {
+  body.pip-player-battlemap-open .pip-mobile-tool-dock {
     display: none !important;
   }
 
-  body:has(.session-tactical-overlay .session-tactical-player) .pip-main {
+  body.pip-player-battlemap-open .pip-main {
     padding-bottom: 0 !important;
     scroll-padding-bottom: 0;
   }

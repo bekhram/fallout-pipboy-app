@@ -349,6 +349,10 @@ export default function BattlemapViewportControls({
     );
   };
 
+  const zoomControlsTarget = role === "player"
+    ? document.querySelector(".session-tactical-player__zoom-slot") || targets.container
+    : targets.container;
+
   const zoomControls = createPortal(
     <div className="battlemap-view-controls" aria-label={text.zoomControls}>
       <button
@@ -405,7 +409,7 @@ export default function BattlemapViewportControls({
         ◎
       </button>
     </div>,
-    targets.container
+    zoomControlsTarget
   );
 
   const presetValue = `${cols}x${rows}`;

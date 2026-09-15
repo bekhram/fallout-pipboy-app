@@ -1494,7 +1494,14 @@ const SkillsEditorModal = () => {
       <SkillsEditorModal />
 
       {screen === "sheet" && !isDiceOpen && (
-        <FloatingDiceButton onOpen={openFreeDiceRoll} />
+        <FloatingDiceButton
+          onOpen={openFreeDiceRoll}
+          onOpenMenu={() => setSideMenuOpen(true)}
+          battlemapAvailable={Boolean(
+            sharedSession.isActive &&
+            (sharedSession.tacticalScene || sharedSession.liveSceneId)
+          )}
+        />
       )}
 
       {screen === "sheet" && sharedSession.isActive && sharedSession.mode === "player" && (

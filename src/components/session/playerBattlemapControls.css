@@ -8,6 +8,93 @@
   isolation: isolate;
 }
 
+body.pip-player-battlemap-open .tactical-initiative-rail,
+body.pip-player-battlemap-open .session-utility-drawer-toggle,
+body.pip-player-battlemap-open .floating-dice-control,
+body.pip-player-battlemap-open .pip-mobile-tool-dock {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.session-tactical-player {
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto !important;
+}
+
+.session-tactical-player__status-area {
+  min-width: 0;
+}
+
+.session-tactical-player__footer {
+  z-index: 80;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 2px;
+  background: var(--pip-bg, #071008);
+}
+
+.session-tactical-player__controls-slot {
+  min-width: 0;
+}
+
+.session-tactical-player__controls-slot .player-battlemap-side-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+}
+
+.session-tactical-player__controls-slot .player-battlemap-tool {
+  width: 100%;
+  min-width: 0;
+}
+
+.session-tactical-player__zoom-slot:empty,
+.session-tactical-player__tools-slot:empty {
+  display: none;
+}
+
+.session-tactical-player__zoom-slot .battlemap-view-controls {
+  position: relative !important;
+  inset: auto !important;
+  display: flex;
+  width: 100%;
+  max-width: none;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.session-tactical-player__tools-slot .battlemap-tools-drawer.is-player-tools {
+  position: relative !important;
+  inset: auto !important;
+  width: 100%;
+  justify-content: center;
+  transform: none !important;
+}
+
+.session-tactical-player__tools-slot .battlemap-tools-drawer.is-player-tools:not(.is-open) {
+  display: none !important;
+}
+
+.session-tactical-player__tools-slot .battlemap-tools-drawer.is-player-tools .battlemap-tools-toggle {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  min-height: 1px !important;
+  padding: 0 !important;
+  opacity: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+.session-tactical-player__tools-slot .battlemap-tools-drawer.is-player-tools .battlemap-tools-panel {
+  width: 100%;
+  min-height: 38px;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
 .player-battlemap-tool {
   min-width: 58px;
   min-height: 38px;
@@ -52,7 +139,7 @@
 
 @media (max-width: 780px) {
   .session-tactical-player {
-    padding-bottom: max(10px, env(safe-area-inset-bottom));
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
   }
 
   .player-battlemap-side-controls {
@@ -61,9 +148,9 @@
     right: auto !important;
     top: auto !important;
     bottom: auto !important;
-    width: calc(100% - 20px) !important;
+    width: 100% !important;
     max-width: none !important;
-    margin: 8px 10px 0 !important;
+    margin: 0 !important;
     transform: none !important;
     display: grid !important;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -90,16 +177,6 @@
     white-space: nowrap;
   }
 
-  /* Hide legacy floating controls while the player battlemap is open. */
-  body.pip-player-battlemap-open .session-utility-drawer-toggle,
-  body.pip-player-battlemap-open .floating-dice-control,
-  body.pip-player-battlemap-open .pip-mobile-tool-dock,
-  body.pip-player-battlemap-open .tactical-initiative-rail {
-    display: none !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
-  }
-
   /* Keep the online-player status strip visible in its new slot above the map. */
   body.pip-player-battlemap-open .session-tactical-player__player-status .session-player-dock--all {
     display: block !important;
@@ -118,35 +195,31 @@
     right: auto !important;
     top: auto !important;
     bottom: auto !important;
-    width: calc(100% - 20px) !important;
+    width: 100% !important;
     max-width: none !important;
-    margin: 8px 10px 0 !important;
+    margin: 0 !important;
     display: flex !important;
     justify-content: center;
     box-sizing: border-box;
   }
 
   /* The old left tools toggle never appears. TOOLS in the bottom dock controls its panel. */
-  body.pip-player-battlemap-open .battlemap-tools-drawer {
-    display: none !important;
-  }
-
-  body.pip-player-battlemap-open .battlemap-tools-drawer.is-open {
+  body.pip-player-battlemap-open .battlemap-tools-drawer.is-player-tools.is-open {
     position: relative !important;
     left: auto !important;
     right: auto !important;
     top: auto !important;
     bottom: auto !important;
-    width: calc(100% - 20px) !important;
+    width: 100% !important;
     max-width: none !important;
-    margin: 8px 10px 0 !important;
+    margin: 0 !important;
     display: flex !important;
     justify-content: center !important;
     transform: none !important;
     box-sizing: border-box;
   }
 
-  body.pip-player-battlemap-open .battlemap-tools-drawer .battlemap-tools-toggle {
+  body.pip-player-battlemap-open .battlemap-tools-drawer.is-player-tools .battlemap-tools-toggle {
     position: absolute !important;
     width: 1px !important;
     height: 1px !important;
@@ -159,7 +232,7 @@
     pointer-events: none !important;
   }
 
-  body.pip-player-battlemap-open .battlemap-tools-drawer .battlemap-tools-panel {
+  body.pip-player-battlemap-open .battlemap-tools-drawer.is-player-tools .battlemap-tools-panel {
     width: 100%;
     min-height: 42px;
     justify-content: center;

@@ -5,8 +5,13 @@ import "./gmBattlemapTools.css";
 const STORAGE_KEY = "pip2d20_gm_tools_open_v1";
 const ZONE_CELLS = 6;
 
-function readOpen() {
-  try { return localStorage.getItem(STORAGE_KEY) !== "0"; } catch { return true; }
+function readOpen(role) {
+  try {
+    if (role === "player") return localStorage.getItem("pip2d20_player_tools_open_v1") === "1";
+    return localStorage.getItem(STORAGE_KEY) !== "0";
+  } catch {
+    return role !== "player";
+  }
 }
 
 function pointFor(grid, event) {
@@ -27,14 +32,15 @@ function labels() {
   return { tools:"TOOLS", draw:"PENCIL", ruler:"RULER", zones:"ZONES" };
 }
 
-export default function GmBattlemapTools({ session }) {
+export default function GmBattlemapTools({ session, role = "gm" }) {
   const scene = session?.tacticalScene || null;
   const [container, setContainer] = useState(null);
   const [grid, setGrid] = useState(null);
-  const [open, setOpen] = useState(readOpen);
+  const [open, setOpen] = useState(() => readOpen(role));
   const [mode, setMode] = useState("");
   const [draft, setDraft] = useState(null);
   const [ruler, setRuler] = useState(null);
+  const [localMarkup, setLocalMarkup] = useState({ strokes: [], ping: null });
   const gestureRef = useRef(null);
   const pingTimerRef = useRef(null);
   const text = labels();
@@ -42,8 +48,12 @@ export default function GmBattlemapTools({ session }) {
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
     const sync = () => {
-      const nextContainer = document.querySelector(".gm-tactical-map-core .gm-session-map.tactical-map");
-      const nextGrid = document.querySelector(".gm-tactical-map-core .gm-session-map__grid.tactical-grid");
+      const nextContainer = document.querySelector(role === "player"
+        ? ".session-tactical-player__tools-slot"
+        : ".gm-tactical-map-core .gm-session-map.tactical-map");
+      const nextGrid = document.querySelector(role === "player"
+        ? ".session-tactical-player .gm-session-map__grid.tactical-grid"
+        : ".gm-tactical-map-core .gm-session-map__grid.tactical-grid");
       setContainer((v) => v === nextContainer ? v : nextContainer);
       setGrid((v) => v === nextGrid ? v : nextGrid);
     };
@@ -51,9 +61,12 @@ export default function GmBattlemapTools({ session }) {
     const observer = new MutationObserver(sync);
     observer.observe(document.body, { childList:true, subtree:true });
     return () => observer.disconnect();
-  }, [scene?.sceneId]);
+  }, [scene?.sceneId, role]);
 
-  useEffect(() => { try { localStorage.setItem(STORAGE_KEY, open ? "1" : "0"); } catch {} }, [open]);
+  useEffect(() => {
+    const key = role === "player" ? "pip2d20_player_tools_open_v1" : STORAGE_KEY;
+    try { localStorage.setItem(key, open ? "1" : "0"); } catch {}
+  }, [open, role]);
 
   useEffect(() => {
     if (!grid) return undefined;
@@ -61,9 +74,16 @@ export default function GmBattlemapTools({ session }) {
     return () => grid.classList.remove("is-map-tool-active");
   }, [grid, mode]);
 
-  const markup = scene?.mapMarkup && typeof scene.mapMarkup === "object" ? scene.mapMarkup : {};
+  const sharedMarkup = scene?.mapMarkup && typeof scene.mapMarkup === "object" ? scene.mapMarkup : {};
+  const markup = role === "player" ? localMarkup : sharedMarkup;
   const strokes = Array.isArray(markup.strokes) ? markup.strokes : [];
-  const saveMarkup = (patch) => session?.updateTacticalScene?.({ mapMarkup: { ...markup, ...patch } });
+  const saveMarkup = (patch) => {
+    if (role === "player") {
+      setLocalMarkup((current) => ({ ...current, ...patch }));
+      return;
+    }
+    session?.updateTacticalScene?.({ mapMarkup: { ...markup, ...patch } });
+  };
 
   useEffect(() => {
     if (!grid) return undefined;
@@ -161,7 +181,7 @@ export default function GmBattlemapTools({ session }) {
       window.removeEventListener("pointerup", up, true);
       window.removeEventListener("pointercancel", up, true);
     };
-  }, [grid, mode, scene?.mapMarkup, scene?.sceneId]);
+  }, [grid, mode, scene?.mapMarkup, scene?.sceneId, role, localMarkup]);
 
   if (!container || !grid || !scene) return null;
 
@@ -172,7 +192,7 @@ export default function GmBattlemapTools({ session }) {
   const zones = ruler ? Math.ceil(Math.max(dx, dy) / ZONE_CELLS) : 0;
 
   const panel = createPortal(
-    <div className={`battlemap-tools-drawer${open ? " is-open" : ""}`}>
+    <div className={`battlemap-tools-drawer${role === "player" ? " is-player-tools" : ""}${open ? " is-open" : ""}`}>
       <button type="button" className="battlemap-tools-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}><span>{open ? "▴" : "▾"}</span><b>{text.tools}</b></button>
       <div className="battlemap-tools-panel">
         <button type="button" className={mode === "draw" ? "is-active" : ""} onClick={() => setMode((v) => v === "draw" ? "" : "draw")} title={text.draw}>✎</button>

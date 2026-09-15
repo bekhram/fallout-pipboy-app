@@ -3,7 +3,6 @@ import { VitePWA } from "vite-plugin-pwa";
 import { pip2d20CharacterRulesPlugin } from "./vite-rules-hotfix.js";
 import { pip2d20SessionMenuPlugin } from "./vite-session-menu-hotfix.js";
 import { pip2d20CharacterProfilesPlugin } from "./vite-character-profiles.js";
-import { pip2d20PlayerBattlemapControlsPlugin } from "./vite-player-battlemap-controls.js";
 
 export default defineConfig({
   base: "/",
@@ -15,7 +14,6 @@ export default defineConfig({
     pip2d20CharacterRulesPlugin(),
     pip2d20SessionMenuPlugin(),
     pip2d20CharacterProfilesPlugin(),
-    pip2d20PlayerBattlemapControlsPlugin(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
