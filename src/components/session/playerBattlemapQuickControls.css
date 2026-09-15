@@ -9,7 +9,8 @@
 }
 
 .player-battlemap-quick-btn,
-.battlemap-collapse-btn {
+.battlemap-collapse-btn,
+.player-battlemap-tools__toggle {
   border: 1px solid currentColor;
   background: rgba(3, 13, 5, 0.96);
   color: var(--pip-accent, #78ff98);
@@ -34,6 +35,51 @@
   min-height: 46px;
   border-radius: 50% 0 0 50%;
   font-size: .68rem;
+}
+
+.player-battlemap-tools {
+  position: fixed;
+  left: 8px;
+  top: 44%;
+  z-index: 999999;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.player-battlemap-tools__toggle {
+  min-width: 34px;
+  height: 30px;
+  padding: 0 5px;
+  border-radius: 6px;
+  font-size: .52rem;
+}
+
+.player-battlemap-tools.is-collapsed .player-battlemap-tools__toggle {
+  min-width: 50px;
+}
+
+.player-battlemap-tools__body {
+  display: grid;
+  gap: 5px;
+  width: 116px;
+  padding: 7px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: rgba(3, 13, 5, .96);
+  box-shadow: 0 0 14px color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.player-battlemap-tools__body strong {
+  font-size: .55rem;
+  letter-spacing: .08em;
+}
+
+.player-battlemap-tools__body .pip-btn {
+  min-height: 30px;
+  padding: 4px 6px;
+  font-size: .52rem;
 }
 
 .battlemap-collapse-btn {
@@ -66,5 +112,15 @@
 
   .player-battlemap-quick-btn.is-dice {
     min-height: 42px;
+  }
+
+  .player-battlemap-tools {
+    left: 4px;
+    top: 49%;
+  }
+
+  .player-battlemap-tools__body {
+    width: 96px;
+    padding: 5px;
   }
 }
