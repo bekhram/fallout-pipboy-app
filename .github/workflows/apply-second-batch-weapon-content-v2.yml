@@ -36,3 +36,5 @@ jobs:
           fi
           git commit -m "feat: add second supplemental weapon and mod batch"
           git push origin HEAD:main
+
+# trigger: 2
