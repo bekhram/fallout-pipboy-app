@@ -11,11 +11,18 @@
     display: none !important;
   }
 
+  /* Reserve a real footer lane for the sheet dock so the last rows/tabs can
+     always scroll above it instead of being covered by the fixed controls. */
+  body:has(.pip-mobile-tool-dock) .pip-main {
+    padding-bottom: calc(86px + env(safe-area-inset-bottom)) !important;
+    scroll-padding-bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+
   .pip-mobile-tool-dock {
     position: fixed;
     left: 12px;
     right: 12px;
-    bottom: max(10px, env(safe-area-inset-bottom));
+    bottom: max(8px, env(safe-area-inset-bottom));
     z-index: 1000004;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -63,5 +70,10 @@
 
   body:has(.session-tactical-overlay .session-tactical-player) .pip-mobile-tool-dock {
     display: none !important;
+  }
+
+  body:has(.session-tactical-overlay .session-tactical-player) .pip-main {
+    padding-bottom: 0 !important;
+    scroll-padding-bottom: 0;
   }
 }
