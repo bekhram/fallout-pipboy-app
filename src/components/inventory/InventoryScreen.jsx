@@ -5,6 +5,7 @@ import { extendInventoryCategories, getExtraCategoryLabel } from "../../data/inv
 import { getCompanionCarryWeight } from "../../utils/companionStorage.js";
 import InventoryCard from "./InventoryCard.jsx";
 import InventoryEditor from "./InventoryEditor.jsx";
+import { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";
 
 const CATEGORY_LABEL_KEYS = {
   all: "inventory.categories.all",
@@ -18,10 +19,10 @@ const CATEGORY_LABEL_KEYS = {
 };
 
 const CARRY_LABELS = {
-  en: { player: "Player", companions: "Companions", total: "Total" },
-  ru: { player: "Игрок", companions: "Компаньоны", total: "Итого" },
-  uk: { player: "Гравець", companions: "Компаньйони", total: "Разом" },
-  pl: { player: "Gracz", companions: "Towarzysze", total: "Razem" },
+  en: { player: "Player", companions: "Companions", total: "Total", legendary: "Legendary", normal: "Non-legendary", any: "All items" },
+  ru: { player: "Игрок", companions: "Компаньоны", total: "Итого", legendary: "Легендарные", normal: "Обычные", any: "Все предметы" },
+  uk: { player: "Гравець", companions: "Компаньйони", total: "Разом", legendary: "Легендарні", normal: "Звичайні", any: "Усі предмети" },
+  pl: { player: "Gracz", companions: "Towarzysze", total: "Razem", legendary: "Legendarne", normal: "Zwykłe", any: "Wszystkie" },
 };
 
 function isProtectedInventoryItem(item) {
@@ -50,6 +51,7 @@ export default function InventoryScreen({
   const { t, i18n } = useTranslation();
   const [selectedIndices, setSelectedIndices] = useState([]);
   const [sellBonusPercent, setSellBonusPercent] = useState("0");
+  const [legendaryFilter, setLegendaryFilter] = useState("all");
   const language = String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
   const carryLabels = CARRY_LABELS[language] || CARRY_LABELS.en;
   const companionCarryWeight = getCompanionCarryWeight();
@@ -77,10 +79,16 @@ export default function InventoryScreen({
       ? t(CATEGORY_LABEL_KEYS[item.value])
       : getExtraCategoryLabel(item.value, i18n.resolvedLanguage);
 
-  const filteredItems =
+  const categoryFilteredItems =
     activeCategory === "all"
       ? items
       : items.filter((item) => item.category === activeCategory);
+
+  const filteredItems = categoryFilteredItems.filter((item) => {
+    if (legendaryFilter === "legendary") return Boolean(item?.legendary);
+    if (legendaryFilter === "normal") return !item?.legendary;
+    return true;
+  });
 
   const filteredItemsWithIndex = filteredItems.map((item) => ({
     item,
@@ -215,6 +223,18 @@ export default function InventoryScreen({
           ))}
         </div>
 
+        <div className="pip-tagrow is-wrap push-bottom" aria-label="Legendary filter">
+          <button type="button" className={`pip-tag ${legendaryFilter === "all" ? "is-selected" : ""}`} onClick={() => { setLegendaryFilter("all"); clearSelected(); }}>
+            {carryLabels.any}
+          </button>
+          <button type="button" className={`pip-tag ${legendaryFilter === "legendary" ? "is-selected" : ""}`} onClick={() => { setLegendaryFilter("legendary"); clearSelected(); }}>
+            ★ {carryLabels.legendary}
+          </button>
+          <button type="button" className={`pip-tag ${legendaryFilter === "normal" ? "is-selected" : ""}`} onClick={() => { setLegendaryFilter("normal"); clearSelected(); }}>
+            {carryLabels.normal}
+          </button>
+        </div>
+
         <div className="pip-inventory-actions push-bottom">
           <button
             type="button"
@@ -285,6 +305,11 @@ export default function InventoryScreen({
                 </label>
 
                 <div className="pip-inventory-card-wrap">
+                  <LegendaryBadge
+                    kind={item.category === "armor" ? "armor" : "weapon"}
+                    item={item}
+                    language={i18n.resolvedLanguage}
+                  />
                   <InventoryCard
                     item={item}
                     index={originalIndex}
