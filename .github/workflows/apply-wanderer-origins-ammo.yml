@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/apply-wanderer-origins-ammo.py'
       - 'scripts/fix-wanderer-patch.py'
+      - 'scripts/fix-wanderer-build.py'
       - '.github/workflows/apply-wanderer-origins-ammo.yml'
   workflow_dispatch:
 
@@ -27,6 +28,7 @@ jobs:
         run: |
           python scripts/apply-wanderer-origins-ammo.py
           python scripts/fix-wanderer-patch.py
+          python scripts/fix-wanderer-build.py
       - name: Install dependencies
         run: npm ci
       - name: Build
