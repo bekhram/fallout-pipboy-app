@@ -99,6 +99,22 @@ const ROBOT_RECIPES = [
 ];
 
 const WEAPON_RECIPES = [
+  // App crafting layer for the supplemental arrow/bolt variants.
+  // Uses only the companion's abstract junk/material economy.
+  ...group({ workbench: "weapons", category: "weapons", group: "SPECIAL ARROWS & BOLTS", skill: "Repair", page: 59, outputCategory: "ammo" }, [
+    ["Cryo Arrow", 4, "", "Rare", null, { "Arrow": 1, "Common Materials": 2, "Uncommon Materials": 2, "Rare Materials": 1 }],
+    ["Cryo Crossbow Bolt", 4, "", "Rare", null, { "Crossbow Bolt": 1, "Common Materials": 2, "Uncommon Materials": 2, "Rare Materials": 1 }],
+    ["Explosive Arrow", 4, "", "Uncommon", null, { "Arrow": 1, "Common Materials": 3, "Uncommon Materials": 2 }],
+    ["Explosive Crossbow Bolt", 4, "", "Uncommon", null, { "Crossbow Bolt": 1, "Common Materials": 3, "Uncommon Materials": 2 }],
+    ["Flaming Arrow", 2, "", "Uncommon", null, { "Arrow": 1, "Common Materials": 3 }],
+    ["Flaming Crossbow Bolt", 2, "", "Uncommon", null, { "Crossbow Bolt": 1, "Common Materials": 3 }],
+    ["Serrated Arrow", 3, "", "Uncommon", null, { "Arrow": 1, "Common Materials": 2, "Uncommon Materials": 1 }],
+    ["Serrated Crossbow Bolt", 3, "", "Uncommon", null, { "Crossbow Bolt": 1, "Common Materials": 2, "Uncommon Materials": 1 }],
+    ["Plasma Arrow", 5, "", "Rare", null, { "Arrow": 1, "Common Materials": 2, "Uncommon Materials": 2, "Rare Materials": 2 }],
+    ["Plasma Crossbow Bolt", 5, "", "Rare", null, { "Crossbow Bolt": 1, "Common Materials": 2, "Uncommon Materials": 2, "Rare Materials": 2 }],
+    ["Poison Arrow", 3, "", "Uncommon", null, { "Arrow": 1, "Common Materials": 2, "Uncommon Materials": 1 }],
+    ["Poison Crossbow Bolt", 3, "", "Uncommon", null, { "Crossbow Bolt": 1, "Common Materials": 2, "Uncommon Materials": 1 }],
+  ]),
   ...group({ workbench: "weapons", category: "weapons", group: "SMALL GUNS RECEIVER MODS", skill: "Repair", page: 222 }, [
     ["Hardened", 2], ["Powerful", 3, "Gun Nut 1", "Uncommon"], ["Advanced", 5, "Gun Nut 2", "Uncommon"], ["Calibrated", 2], ["Automatic", 3, "Gun Nut 1", "Uncommon"], ["Hair Trigger", 4, "Gun Nut 2", "Uncommon"], [".38 Receiver", 6, "Gun Nut 4", "Uncommon"], [".308 Receiver", 6, "Gun Nut 4", "Uncommon"], [".45 Receiver", 4, "Gun Nut 2", "Uncommon"], [".50 Receiver", 6, "Gun Nut 4", "Uncommon"], ["Automatic Piston", 4, "Gun Nut 2", "Uncommon"],
   ]),
