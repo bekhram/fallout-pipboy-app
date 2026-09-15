@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import "./gmBattlemapTools.css";
 
+const ZONE_CELLS = 6;
+
 function selectorFor(role) {
   return role === "player"
     ? ".session-tactical-player .gm-session-map__grid.tactical-grid"
@@ -19,6 +21,7 @@ export default function BattlemapSharedLayer({ scene, role = "gm" }) {
   const [grid, setGrid] = useState(null);
   const { cols, rows } = sceneSize(scene);
   const strokes = useMemo(() => Array.isArray(scene?.mapMarkup?.strokes) ? scene.mapMarkup.strokes : [], [scene?.mapMarkup?.strokes]);
+  const rulers = useMemo(() => Array.isArray(scene?.mapMarkup?.rulers) ? scene.mapMarkup.rulers : [], [scene?.mapMarkup?.rulers]);
   const ping = scene?.mapMarkup?.ping || null;
 
   useEffect(() => {
@@ -44,7 +47,30 @@ export default function BattlemapSharedLayer({ scene, role = "gm" }) {
           if (points.length < 2) return null;
           return <polyline key={stroke.id} points={points.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="0.12" strokeLinecap="round" strokeLinejoin="round" />;
         })}
+        {rulers.map((ruler) => {
+          const start = ruler?.start;
+          const end = ruler?.end;
+          if (![start?.x, start?.y, end?.x, end?.y].every((value) => Number.isFinite(Number(value)))) return null;
+          return (
+            <g key={ruler.id || ruler.ownerClientId} className="battlemap-shared-ruler">
+              <line x1={start.x} y1={start.y} x2={end.x} y2={end.y} stroke="currentColor" strokeWidth="0.09" strokeDasharray="0.24 0.16" />
+              <circle cx={start.x} cy={start.y} r="0.16" fill="currentColor" />
+              <circle cx={end.x} cy={end.y} r="0.16" fill="currentColor" />
+            </g>
+          );
+        })}
       </svg>
+      {rulers.map((ruler) => {
+        const start = ruler?.start;
+        const end = ruler?.end;
+        if (![start?.x, start?.y, end?.x, end?.y].every((value) => Number.isFinite(Number(value)))) return null;
+        const zones = Math.ceil(Math.max(Math.abs(Number(end.x) - Number(start.x)), Math.abs(Number(end.y) - Number(start.y))) / ZONE_CELLS);
+        return (
+          <span key={`${ruler.id || ruler.ownerClientId}-label`} className="battlemap-ruler-label is-shared" style={{ left:`${(Number(end.x) / cols) * 100}%`, top:`${(Number(end.y) / rows) * 100}%` }}>
+            {zones} ZONES · {ruler.ownerName || "PLAYER"}
+          </span>
+        );
+      })}
       {ping && Number.isFinite(Number(ping.x)) && Number.isFinite(Number(ping.y)) ? (
         <span key={ping.id || ping.at} className="battlemap-shared-ping" style={{ left: `${(Number(ping.x) / cols) * 100}%`, top: `${(Number(ping.y) / rows) * 100}%` }}>
           <i /><i /><i />

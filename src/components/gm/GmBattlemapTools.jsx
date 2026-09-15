@@ -41,9 +41,12 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
   const [mode, setMode] = useState("");
   const [draft, setDraft] = useState(null);
   const [ruler, setRuler] = useState(null);
-  const [localMarkup, setLocalMarkup] = useState({ strokes: [], ping: null });
   const gestureRef = useRef(null);
   const pingTimerRef = useRef(null);
+  const rulerClearTimerRef = useRef(null);
+  const lastRulerSendRef = useRef(0);
+  const updateMarkupRef = useRef(session?.updateSharedMapMarkup);
+  updateMarkupRef.current = session?.updateSharedMapMarkup;
   const text = labels();
 
   useEffect(() => {
@@ -75,23 +78,29 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
     return () => grid.classList.remove("is-map-tool-active");
   }, [grid, mode]);
 
-  const sharedMarkup = scene?.mapMarkup && typeof scene.mapMarkup === "object" ? scene.mapMarkup : {};
-  const markup = role === "player" ? localMarkup : sharedMarkup;
-  const strokes = Array.isArray(markup.strokes) ? markup.strokes : [];
-  const saveMarkup = (patch) => {
-    if (role === "player") {
-      setLocalMarkup((current) => ({ ...current, ...patch }));
-      return;
-    }
-    session?.updateTacticalScene?.({ mapMarkup: { ...markup, ...patch } });
-  };
-
   useEffect(() => {
     if (!grid) return undefined;
 
     const stopPingTimer = () => {
       if (pingTimerRef.current) window.clearTimeout(pingTimerRef.current);
       pingTimerRef.current = null;
+    };
+
+    const stopRulerClearTimer = () => {
+      if (rulerClearTimerRef.current) window.clearTimeout(rulerClearTimerRef.current);
+      rulerClearTimerRef.current = null;
+    };
+
+    const shareMarkup = (operation, payload = {}) => {
+      const update = updateMarkupRef.current;
+      if (typeof update === "function") void update({ operation, ...payload });
+    };
+
+    const shareRuler = (start, end, force = false) => {
+      const now = Date.now();
+      if (!force && now - lastRulerSendRef.current < 350) return;
+      lastRulerSendRef.current = now;
+      shareMarkup("ruler:set", { ruler: { start, end } });
     };
 
     const down = (event) => {
@@ -109,8 +118,10 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
       }
       if (mode === "ruler") {
         event.preventDefault(); event.stopPropagation();
+        stopRulerClearTimer();
         gestureRef.current = { type:"ruler", pointerId:event.pointerId, start:point };
         setRuler({ start:point, end:point });
+        shareRuler(point, point, true);
         grid.setPointerCapture?.(event.pointerId);
         return;
       }
@@ -121,7 +132,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
         const g = gestureRef.current;
         if (!g || g.type !== "ping") return;
         g.fired = true;
-        void saveMarkup({ ping:{ id:`ping-${Date.now()}`, x:g.point.x, y:g.point.y, at:Date.now() } });
+        shareMarkup("ping:set", { ping:g.point });
       }, 550);
     };
 
@@ -139,7 +150,10 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
         const prev = g.points[g.points.length - 1];
         if (Math.hypot(point.x - prev.x, point.y - prev.y) > 0.08) g.points.push(point);
         setDraft({ points:[...g.points] });
-      } else if (g.type === "ruler") setRuler({ start:g.start, end:point });
+      } else if (g.type === "ruler") {
+        setRuler({ start:g.start, end:point });
+        shareRuler(g.start, point);
+      }
     };
 
     const up = (event) => {
@@ -150,11 +164,18 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
       try { grid.releasePointerCapture?.(event.pointerId); } catch {}
       if (g.type === "draw") {
         event.preventDefault(); event.stopPropagation();
-        if (g.points.length > 1) void saveMarkup({ strokes:[...strokes, { id:`stroke-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, points:g.points }].slice(-120) });
+        if (g.points.length > 1) shareMarkup("stroke:add", { stroke:{ points:g.points } });
         setDraft(null);
       } else if (g.type === "ruler") {
         event.preventDefault(); event.stopPropagation();
-        window.setTimeout(() => setRuler(null), 900);
+        const point = pointFor(grid, event) || g.start;
+        shareRuler(g.start, point, true);
+        stopRulerClearTimer();
+        rulerClearTimerRef.current = window.setTimeout(() => {
+          setRuler(null);
+          shareMarkup("ruler:clear");
+          rulerClearTimerRef.current = null;
+        }, 900);
       } else if (g.type === "ping" && g.fired) {
         event.preventDefault(); event.stopPropagation();
       }
@@ -174,6 +195,11 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
     window.addEventListener("pointercancel", up, true);
     return () => {
       stopPingTimer();
+      if (gestureRef.current?.type === "ruler" || rulerClearTimerRef.current) shareMarkup("ruler:clear");
+      stopRulerClearTimer();
+      gestureRef.current = null;
+      setDraft(null);
+      setRuler(null);
       grid.removeEventListener("pointerdown", down, true);
       grid.removeEventListener("pointermove", move, true);
       grid.removeEventListener("pointerup", up, true);
@@ -182,7 +208,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
       window.removeEventListener("pointerup", up, true);
       window.removeEventListener("pointercancel", up, true);
     };
-  }, [grid, mode, scene?.mapMarkup, scene?.sceneId, role, localMarkup]);
+  }, [grid, mode, scene?.sceneId]);
 
   if (!container || !grid || !scene) return null;
 

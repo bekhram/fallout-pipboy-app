@@ -38,6 +38,9 @@ const CLIENT_ID_KEY = "pip2d20_socket_client_id_v1";
 const GM_CAMPAIGN_ID_KEY = "pip2d20_gm_campaign_id_v1";
 const LAST_SESSION_RESUME_KEY = "pip2d20_last_gm_session_v1";
 const RESOURCE_CHUNK_SIZE = 300_000;
+const MAX_MAP_STROKES = 80;
+const MAX_STROKE_POINTS = 240;
+const MAX_SHARED_RULERS = 24;
 const EMPTY_COMBAT = {
   active: false,
   round: 0,
@@ -49,6 +52,93 @@ const EMPTY_COMBAT = {
   apMax: 6,
   startedAt: null,
 };
+
+function normalizeMapPoint(point, scene) {
+  const x = Number(point?.x);
+  const y = Number(point?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const cols = Math.max(1, Number(scene?.environment?.proceduralMapSpec?.cols || scene?.cols || 12));
+  const rows = Math.max(1, Number(scene?.environment?.proceduralMapSpec?.rows || scene?.rows || 12));
+  return {
+    x: Math.round(Math.max(0, Math.min(cols, x)) * 1000) / 1000,
+    y: Math.round(Math.max(0, Math.min(rows, y)) * 1000) / 1000,
+  };
+}
+
+function sampleMapPoints(points) {
+  if (points.length <= MAX_STROKE_POINTS) return points;
+  return Array.from({ length: MAX_STROKE_POINTS }, (_, index) => (
+    points[Math.round((index * (points.length - 1)) / (MAX_STROKE_POINTS - 1))]
+  ));
+}
+
+function applyMapMarkupOperation(scene, ownerClientId, ownerName, payload = {}) {
+  const operation = String(payload?.operation || "");
+  const current = scene?.mapMarkup && typeof scene.mapMarkup === "object" ? scene.mapMarkup : {};
+  const markup = { ...current };
+  const ownerId = String(ownerClientId || "").slice(0, 120);
+  const safeOwnerName = String(ownerName || "Player").trim().slice(0, 40) || "Player";
+
+  if (operation === "stroke:add") {
+    const points = sampleMapPoints(Array.isArray(payload?.stroke?.points) ? payload.stroke.points : [])
+      .map((point) => normalizeMapPoint(point, scene))
+      .filter(Boolean);
+    if (points.length < 2) return { ok: false, error: "INVALID_MAP_STROKE" };
+    const stroke = {
+      id: makeId("stroke"),
+      points,
+      ownerClientId: ownerId,
+      ownerName: safeOwnerName,
+      at: Date.now(),
+    };
+    markup.strokes = [...(Array.isArray(current.strokes) ? current.strokes : []), stroke].slice(-MAX_MAP_STROKES);
+    scene.mapMarkup = markup;
+    return { strokeId: stroke.id };
+  }
+
+  if (operation === "ruler:set") {
+    const start = normalizeMapPoint(payload?.ruler?.start, scene);
+    const end = normalizeMapPoint(payload?.ruler?.end, scene);
+    if (!start || !end) return { ok: false, error: "INVALID_MAP_RULER" };
+    const ruler = {
+      id: `ruler-${ownerId || "gm"}`,
+      start,
+      end,
+      ownerClientId: ownerId,
+      ownerName: safeOwnerName,
+      at: Date.now(),
+    };
+    markup.rulers = [
+      ...(Array.isArray(current.rulers) ? current.rulers : []).filter((item) => item?.ownerClientId !== ownerId),
+      ruler,
+    ].slice(-MAX_SHARED_RULERS);
+    scene.mapMarkup = markup;
+    return { rulerId: ruler.id };
+  }
+
+  if (operation === "ruler:clear") {
+    markup.rulers = (Array.isArray(current.rulers) ? current.rulers : [])
+      .filter((item) => item?.ownerClientId !== ownerId);
+    scene.mapMarkup = markup;
+    return {};
+  }
+
+  if (operation === "ping:set") {
+    const point = normalizeMapPoint(payload?.ping, scene);
+    if (!point) return { ok: false, error: "INVALID_MAP_PING" };
+    markup.ping = {
+      id: makeId("ping"),
+      ...point,
+      ownerClientId: ownerId,
+      ownerName: safeOwnerName,
+      at: Date.now(),
+    };
+    scene.mapMarkup = markup;
+    return { pingId: markup.ping.id };
+  }
+
+  return { ok: false, error: "UNKNOWN_MAP_MARKUP_OPERATION" };
+}
 
 export function normalizeSessionCode(value) {
   return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, SESSION_CODE_LENGTH);
@@ -641,6 +731,13 @@ export default function useGmAuthoritativeSessionV2(form) {
       const activeIndex = next.scenes.findIndex((scene) => scene.sceneId === active.sceneId);
       const scene = next.scenes[activeIndex];
 
+      if (action === "map:markup") {
+        const result = applyMapMarkupOperation(scene, fromClientId, fromName, payload);
+        if (result?.ok === false) return result;
+        scene.revision = Number(scene.revision || 0) + 1;
+        return result;
+      }
+
       if (action === "token:create-player") {
         const existing = (scene.tokens || []).find((token) => token.kind === "player" && token.ownerClientId === fromClientId);
         if (existing) return { token: existing };
@@ -1135,6 +1232,20 @@ export default function useGmAuthoritativeSessionV2(form) {
     });
   };
 
+  const updateSharedMapMarkup = (payload = {}) => {
+    if (modeRef.current === "player") return sendPlayerAction("map:markup", payload);
+    if (modeRef.current !== "host") return Promise.resolve({ ok: false, error: "NOT_IN_SESSION" });
+    return mutateGmState((next) => {
+      const scene = sceneById(next, next.selectedSceneId);
+      if (!scene) return { ok: false, error: "SCENE_NOT_FOUND" };
+      const result = applyMapMarkupOperation(scene, clientIdRef.current, "GM", payload);
+      if (result?.ok === false) return result;
+      scene.revision = Number(scene.revision || 0) + 1;
+      next.scene = safeClone(scene);
+      return result;
+    });
+  };
+
   const updatePlayerTokenProfile = async (patch = {}) => {
     const fallbackName = nameRef.current || getCharacterName(formRef.current) || "Player";
     const profile = await savePlayerTokenProfile(clientIdRef.current, patch, fallbackName);
@@ -1324,6 +1435,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     enableTacticalScene,
     disableTacticalScene,
     updateTacticalScene,
+    updateSharedMapMarkup,
     updatePlayerTokenProfile,
     createPlayerToken,
     createNpcToken,
