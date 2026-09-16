@@ -6,15 +6,21 @@ import {
   SETTLEMENT_GRID_SIZE,
   settlementBuildingName,
 } from "../../data/settlement/buildings.js";
-import { SETTLEMENT_ACTIONS, settlementRuleName } from "../../data/settlement/rulebook.js";
+import { ROOMS, SETTLEMENT_ACTIONS, settlementRuleName } from "../../data/settlement/rulebook.js";
 import { formatRulebookCost, getRulebookBuilding } from "../../data/settlement/rulebookCatalog.js";
 import { calculateSettlementStats, formatBuildTime } from "../../utils/settlementEconomy.js";
 import { calculateAttackRisk, resolveSettlementAttack } from "../../utils/settlementAttackEngine.js";
 import {
+  canAffordRoom,
   canAffordRulebookBuilding,
   createConstructionBuilding,
+  createRoomConstruction,
   getConstructionProgress,
+  getRoomConstructionProgress,
+  getSettlementRulebookSnapshot,
+  getStructureRoomCapacity,
   normalizeStockpile,
+  payRoomCost,
   payRulebookBuildingCost,
 } from "../../utils/settlementDayEngine.js";
 import { getConstructionAsset, getSettlementAsset } from "./settlementAssets.js";
@@ -22,6 +28,13 @@ import "./settlement.css";
 
 const BUILDING_ICONS = { crop_field: "🌾", water_pump: "💧", generator: "⚡", workshop: "🔧", trading_post: "¤", clinic: "+", guard_post: "▲", turret: "⌖" };
 const BUILD_CATEGORIES = ["housing", "food", "water", "power", "production", "commerce", "services", "defense"];
+const ROOM_ORDER = ["private_room", "dormitory", "quarters", "lounge", "storage", "office"];
+const ROOM_NAMES = {
+  en: { private_room: "Private Room", dormitory: "Dormitory", quarters: "Quarters", lounge: "Lounge", storage: "Storage", office: "Office" },
+  ru: { private_room: "Личная комната", dormitory: "Общежитие", quarters: "Жилые помещения", lounge: "Гостиная", storage: "Склад", office: "Офис" },
+  uk: { private_room: "Приватна кімната", dormitory: "Гуртожиток", quarters: "Житлові приміщення", lounge: "Вітальня", storage: "Сховище", office: "Офіс" },
+  pl: { private_room: "Pokój prywatny", dormitory: "Dormitorium", quarters: "Kwatery", lounge: "Salon", storage: "Magazyn", office: "Biuro" },
+};
 const CATEGORY_LABELS = {
   en: { housing: "HOUSING", food: "FOOD", water: "WATER", power: "POWER", production: "PRODUCTION", commerce: "TRADE", services: "SERVICES", defense: "DEFENSE" },
   ru: { housing: "ЖИЛЬЁ", food: "ЕДА", water: "ВОДА", power: "ЭНЕРГИЯ", production: "ПРОИЗВОДСТВО", commerce: "ТОРГОВЛЯ", services: "СЕРВИС", defense: "ОБОРОНА" },
@@ -29,12 +42,31 @@ const CATEGORY_LABELS = {
   pl: { housing: "MIESZKANIA", food: "ŻYWNOŚĆ", water: "WODA", power: "ENERGIA", production: "PRODUKCJA", commerce: "HANDEL", services: "USŁUGI", defense: "OBRONA" },
 };
 const COPY = {
-  en: { back: "WORLD MAP", build: "BUILD", cancel: "CANCEL", materials: "Materials", caps: "Caps", food: "Food", water: "Water", power: "Power", people: "People", defense: "Defense", beds: "Beds", happiness: "Happiness", income: "Income", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough stockpile materials", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DISASSEMBLE", active: "Active", building: "Building", workers: "Workers", attack: "ATTACK", warning: "Raid warning", attackActive: "Attack in progress", strength: "Enemy strength", autoDefense: "AUTO DEFENSE", startsIn: "Starts in", noThreat: "No active threat", victory: "Victory", defeat: "Defeat", hqLocked: "Settlement HQ cannot be moved or disassembled", stockpile: "STOCKPILE", common: "Common", uncommon: "Uncommon", rare: "Rare", day: "Day", nextDay: "Next settlement day", action: "Settlement action", target: "Construction target", none: "None", progress: "Progress", riskCheck: "End-of-day risk dice" },
-  ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", cancel: "ОТМЕНА", materials: "Материалы", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", people: "Люди", defense: "Защита", beds: "Кровати", happiness: "Счастье", income: "Доход", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно материалов в запасах", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "РАЗОБРАТЬ", active: "Работает", building: "Строится", workers: "Работники", attack: "АТАКА", warning: "Обнаружены враги", attackActive: "Идёт нападение", strength: "Сила врага", autoDefense: "АВТООБОРОНА", startsIn: "Начало через", noThreat: "Активных угроз нет", victory: "Победа", defeat: "Поражение", hqLocked: "Штаб поселения нельзя перемещать или разбирать", stockpile: "ЗАПАСЫ", common: "Обычные", uncommon: "Необычные", rare: "Редкие", day: "День", nextDay: "Следующий день поселения", action: "Действие поселения", target: "Цель строительства", none: "Нет", progress: "Прогресс", riskCheck: "Кости риска в конце дня" },
-  uk: { back: "ГЛОБАЛЬНА МАПА", build: "БУДУВАТИ", cancel: "СКАСУВАТИ", materials: "Матеріали", caps: "Кришки", food: "Їжа", water: "Вода", power: "Енергія", people: "Люди", defense: "Захист", beds: "Ліжка", happiness: "Щастя", income: "Дохід", construction: "Будівництво", cannotPlace: "Тут будувати не можна", insufficient: "Недостатньо матеріалів у запасах", tapMap: "Оберіть вільне місце на мапі", empty: "Оберіть споруду знизу", manage: "СПОРУДА", move: "ПЕРЕМІСТИТИ", demolish: "РОЗІБРАТИ", active: "Працює", building: "Будується", workers: "Працівники", attack: "АТАКА", warning: "Ворог наближається", attackActive: "Триває напад", strength: "Сила ворога", autoDefense: "АВТООБОРОНА", startsIn: "Початок через", noThreat: "Активних загроз немає", victory: "Перемога", defeat: "Поразка", hqLocked: "Штаб поселення не можна переміщати або розбирати", stockpile: "ЗАПАСИ", common: "Звичайні", uncommon: "Незвичайні", rare: "Рідкісні", day: "День", nextDay: "Наступний день поселення", action: "Дія поселення", target: "Ціль будівництва", none: "Немає", progress: "Прогрес", riskCheck: "Кості ризику наприкінці дня" },
-  pl: { back: "MAPA ŚWIATA", build: "BUDUJ", cancel: "ANULUJ", materials: "Materiały", caps: "Kapsle", food: "Żywność", water: "Woda", power: "Energia", people: "Ludzie", defense: "Obrona", beds: "Łóżka", happiness: "Szczęście", income: "Dochód", construction: "Budowa", cannotPlace: "Nie można tu budować", insufficient: "Za mało materiałów w zapasach", tapMap: "Wybierz wolne miejsce na mapie", empty: "Wybierz budynek poniżej", manage: "BUDYNEK", move: "PRZENIEŚ", demolish: "ROZBIERZ", active: "Aktywny", building: "W budowie", workers: "Pracownicy", attack: "ATAK", warning: "Wróg się zbliża", attackActive: "Atak trwa", strength: "Siła wroga", autoDefense: "AUTOOBRONA", startsIn: "Początek za", noThreat: "Brak aktywnego zagrożenia", victory: "Zwycięstwo", defeat: "Porażka", hqLocked: "Centrum osady nie może być przenoszone ani rozbierane", stockpile: "ZAPASY", common: "Pospolite", uncommon: "Niepospolite", rare: "Rzadkie", day: "Dzień", nextDay: "Następny dzień osady", action: "Akcja osady", target: "Cel budowy", none: "Brak", progress: "Postęp", riskCheck: "Kości ryzyka na koniec dnia" },
+  en: { back: "WORLD MAP", build: "BUILD", cancel: "CANCEL", caps: "Caps", food: "Food", water: "Water", power: "Power", people: "People", defense: "Defense", beds: "Beds", happiness: "Happiness", income: "Income", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough stockpile materials", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DISASSEMBLE", active: "Active", attack: "ATTACK", warning: "Raid warning", attackActive: "Attack in progress", strength: "Enemy strength", autoDefense: "AUTO DEFENSE", startsIn: "Starts in", noThreat: "No active threat", victory: "Victory", defeat: "Defeat", hqLocked: "Settlement HQ cannot be moved or disassembled", stockpile: "STOCKPILE", common: "Common", uncommon: "Uncommon", rare: "Rare", day: "Day", nextDay: "Next settlement day", target: "Construction target", none: "None", progress: "Progress", riskCheck: "End-of-day risk dice", rooms: "ROOMS", roomSlots: "Room slots", addRoom: "ADD ROOM", full: "No free room slots", roomBuilding: "Under construction" },
+  ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", cancel: "ОТМЕНА", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", people: "Люди", defense: "Защита", beds: "Кровати", happiness: "Счастье", income: "Доход", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно материалов в запасах", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "РАЗОБРАТЬ", active: "Работает", attack: "АТАКА", warning: "Обнаружены враги", attackActive: "Идёт нападение", strength: "Сила врага", autoDefense: "АВТООБОРОНА", startsIn: "Начало через", noThreat: "Активных угроз нет", victory: "Победа", defeat: "Поражение", hqLocked: "Штаб поселения нельзя перемещать или разбирать", stockpile: "ЗАПАСЫ", common: "Обычные", uncommon: "Необычные", rare: "Редкие", day: "День", nextDay: "Следующий день поселения", target: "Цель строительства", none: "Нет", progress: "Прогресс", riskCheck: "Кости риска в конце дня", rooms: "КОМНАТЫ", roomSlots: "Места для комнат", addRoom: "ДОБАВИТЬ КОМНАТУ", full: "Нет свободных мест для комнат", roomBuilding: "Строится" },
+  uk: { back: "ГЛОБАЛЬНА МАПА", build: "БУДУВАТИ", cancel: "СКАСУВАТИ", caps: "Кришки", food: "Їжа", water: "Вода", power: "Енергія", people: "Люди", defense: "Захист", beds: "Ліжка", happiness: "Щастя", income: "Дохід", construction: "Будівництво", cannotPlace: "Тут будувати не можна", insufficient: "Недостатньо матеріалів у запасах", tapMap: "Оберіть вільне місце на мапі", empty: "Оберіть споруду знизу", manage: "СПОРУДА", move: "ПЕРЕМІСТИТИ", demolish: "РОЗІБРАТИ", active: "Працює", attack: "АТАКА", warning: "Ворог наближається", attackActive: "Триває напад", strength: "Сила ворога", autoDefense: "АВТООБОРОНА", startsIn: "Початок через", noThreat: "Активних загроз немає", victory: "Перемога", defeat: "Поразка", hqLocked: "Штаб поселення не можна переміщати або розбирати", stockpile: "ЗАПАСИ", common: "Звичайні", uncommon: "Незвичайні", rare: "Рідкісні", day: "День", nextDay: "Наступний день поселення", target: "Ціль будівництва", none: "Немає", progress: "Прогрес", riskCheck: "Кості ризику наприкінці дня", rooms: "КІМНАТИ", roomSlots: "Місця для кімнат", addRoom: "ДОДАТИ КІМНАТУ", full: "Немає вільних місць для кімнат", roomBuilding: "Будується" },
+  pl: { back: "MAPA ŚWIATA", build: "BUDUJ", cancel: "ANULUJ", caps: "Kapsle", food: "Żywność", water: "Woda", power: "Energia", people: "Ludzie", defense: "Obrona", beds: "Łóżka", happiness: "Szczęście", income: "Dochód", construction: "Budowa", cannotPlace: "Nie można tu budować", insufficient: "Za mało materiałów w zapasach", tapMap: "Wybierz wolne miejsce na mapie", empty: "Wybierz budynek poniżej", manage: "BUDYNEK", move: "PRZENIEŚ", demolish: "ROZBIERZ", active: "Aktywny", attack: "ATAK", warning: "Wróg się zbliża", attackActive: "Atak trwa", strength: "Siła wroga", autoDefense: "AUTOOBRONA", startsIn: "Początek za", noThreat: "Brak aktywnego zagrożenia", victory: "Zwycięstwo", defeat: "Porażka", hqLocked: "Centrum osady nie może być przenoszone ani rozbierane", stockpile: "ZAPASY", common: "Pospolite", uncommon: "Niepospolite", rare: "Rzadkie", day: "Dzień", nextDay: "Następny dzień osady", target: "Cel budowy", none: "Brak", progress: "Postęp", riskCheck: "Kości ryzyka na koniec dnia", rooms: "POMIESZCZENIA", roomSlots: "Miejsca na pomieszczenia", addRoom: "DODAJ POMIESZCZENIE", full: "Brak wolnych miejsc", roomBuilding: "W budowie" },
 };
 
+function roomName(type, language) {
+  return ROOM_NAMES[language]?.[type] || ROOM_NAMES.en[type] || type;
+}
+function roomCost(rule) {
+  const parts = [];
+  if (rule?.materials?.common) parts.push(`${rule.materials.common} C`);
+  if (rule?.materials?.uncommon) parts.push(`${rule.materials.uncommon} U`);
+  if (rule?.materials?.rare) parts.push(`${rule.materials.rare} R`);
+  return parts.join(" · ") || "—";
+}
+function roomEffects(rule) {
+  const effects = rule?.effects || {};
+  const parts = [];
+  if (effects.beds) parts.push(`🛏 +${effects.beds}`);
+  if (effects.happiness) parts.push(`☺ ${effects.happiness > 0 ? "+" : ""}${effects.happiness}`);
+  if (effects.storageLbs) parts.push(`📦 +${effects.storageLbs} lbs`);
+  if (effects.office) parts.push("OFFICE");
+  return parts.join(" · ");
+}
 function occupies(building, x, y) {
   const def = SETTLEMENT_BUILDINGS[building.type];
   return Boolean(def && x >= building.x && y >= building.y && x < building.x + def.footprint.width && y < building.y + def.footprint.height);
@@ -46,7 +78,6 @@ function canPlace(settlement, def, x, y, ignoreBuildingId = null) {
   }
   return true;
 }
-
 function BuildingVisual({ building, def, language }) {
   if (building.state === "construction") {
     const constructionAsset = getConstructionAsset(def.constructionSize || "medium");
@@ -70,7 +101,8 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const [hoverCell, setHoverCell] = useState(null);
   const [notice, setNotice] = useState("");
   const stats = useMemo(() => calculateSettlementStats(settlement), [settlement]);
-  const attributes = stats.attributes;
+  const snapshot = useMemo(() => getSettlementRulebookSnapshot(settlement), [settlement]);
+  const attributes = { ...stats.attributes, power: snapshot.power, defense: snapshot.defense, beds: snapshot.beds };
   const stockpile = normalizeStockpile(settlement.stockpile, settlement.resources?.materials);
   const attackDice = calculateAttackRisk(settlement);
   const activeAttack = (settlement.attacks || []).find((attack) => attack.state === "warning" || attack.state === "active") || null;
@@ -79,6 +111,8 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const selectedRule = selectedType ? getRulebookBuilding(selectedType) : null;
   const selectedBuilding = (settlement.buildings || []).find((building) => building.id === selectedBuildingId) || null;
   const selectedBuildingLocked = selectedBuilding?.type === "settlement_hq" || Boolean(selectedBuilding?.locked);
+  const selectedRoomCapacity = selectedBuilding ? getStructureRoomCapacity(selectedBuilding) : 0;
+  const selectedRooms = selectedBuilding?.rooms || [];
   const movingBuilding = (settlement.buildings || []).find((building) => building.id === movingBuildingId) || null;
   const movingDef = movingBuilding ? SETTLEMENT_BUILDINGS[movingBuilding.type] : null;
   const placementDef = movingDef || selectedDef;
@@ -86,6 +120,11 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const enoughResources = selectedType ? canAffordRulebookBuilding(settlement, selectedType) : true;
   const visibleBuildings = SETTLEMENT_BUILDING_LIST.filter((definition) => definition.category === selectedCategory && getRulebookBuilding(definition.id));
   const constructionBuildings = (settlement.buildings || []).filter((building) => building.state === "construction");
+  const constructionRooms = (settlement.buildings || []).flatMap((building) => (building.rooms || []).filter((room) => room.state === "construction").map((room) => ({ building, room })));
+  const constructionTargets = [
+    ...constructionBuildings.map((building) => ({ value: `building:${building.id}`, label: `${settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)} · ${getConstructionProgress(building).progress}/${getConstructionProgress(building).required}` })),
+    ...constructionRooms.map(({ building, room }) => ({ value: `room:${building.id}:${room.id}`, label: `${roomName(room.type, language)} @ ${settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)} · ${getRoomConstructionProgress(room).progress}/${getRoomConstructionProgress(room).required}` })),
+  ];
 
   function createBuildingAt(x, y) {
     if (!selectedDef || !selectedRule) return;
@@ -97,6 +136,36 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
       return { ...paid, buildings: [...(paid.buildings || []), createConstructionBuilding({ id: `building_${now}_${Math.random().toString(36).slice(2, 7)}`, type: selectedDef.id, x, y, now })] };
     });
     setSelectedType(null); setHoverCell(null); setNotice("");
+  }
+  function addRoom(type) {
+    if (!selectedBuilding || selectedBuilding.state !== "active" || !selectedRoomCapacity) return;
+    if (selectedRooms.length >= selectedRoomCapacity) { setNotice(text.full); return; }
+    if (!canAffordRoom(settlement, type)) { setNotice(text.insufficient); return; }
+    const room = createRoomConstruction(type);
+    if (!room) return;
+    onUpdate((current) => {
+      const paid = payRoomCost(current, type);
+      return { ...paid, buildings: (paid.buildings || []).map((building) => building.id === selectedBuilding.id ? { ...building, rooms: [...(building.rooms || []), room] } : building) };
+    });
+    setNotice("");
+  }
+  function removeRoom(roomId) {
+    if (!selectedBuilding) return;
+    onUpdate((current) => {
+      let happinessDelta = 0;
+      const buildings = (current.buildings || []).map((building) => {
+        if (building.id !== selectedBuilding.id) return building;
+        const room = (building.rooms || []).find((item) => item.id === roomId);
+        if (room?.state === "active" && room?.happinessApplied) happinessDelta = -Number(ROOMS[room.type]?.effects?.happiness || 0);
+        return { ...building, rooms: (building.rooms || []).filter((item) => item.id !== roomId) };
+      });
+      return {
+        ...current,
+        buildings,
+        attributes: { ...(current.attributes || {}), happiness: Math.max(1, Math.min(20, Number(current.attributes?.happiness || 10) + happinessDelta)) },
+        settlers: (current.settlers || []).map((settler) => settler.settlementAction?.targetRoomId === roomId ? { ...settler, settlementAction: null, status: "idle" } : settler),
+      };
+    });
   }
   function moveBuildingTo(x, y) {
     if (!movingBuilding || !movingDef || movingBuilding.locked || movingBuilding.type === "settlement_hq") return;
@@ -113,15 +182,27 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
     onUpdate((current) => ({
       ...current,
       buildings: (current.buildings || []).filter((building) => building.id !== selectedBuilding.id),
-      settlers: (current.settlers || []).map((settler) => settler.settlementAction?.targetBuildingId === selectedBuilding.id ? { ...settler, settlementAction: null, assignedBuildingId: null, status: "idle" } : settler),
+      settlers: (current.settlers || []).map((settler) => settler.settlementAction?.targetBuildingId === selectedBuilding.id || settler.settlementAction?.parentBuildingId === selectedBuilding.id ? { ...settler, settlementAction: null, assignedBuildingId: null, status: "idle" } : settler),
     }));
     setSelectedBuildingId(null);
   }
   function assignAction(settlerId, type) {
     onUpdate((current) => ({ ...current, settlers: (current.settlers || []).map((settler) => settler.id === settlerId ? { ...settler, settlementAction: type ? { type } : null, status: type ? "working" : "idle" } : settler) }));
   }
-  function assignBuildTarget(settlerId, buildingId) {
-    onUpdate((current) => ({ ...current, settlers: (current.settlers || []).map((settler) => settler.id === settlerId ? { ...settler, settlementAction: buildingId ? { type: "build", targetBuildingId: buildingId } : { type: "build" }, assignedBuildingId: buildingId || null, status: buildingId ? "working" : "idle" } : settler) }));
+  function assignBuildTarget(settlerId, value) {
+    onUpdate((current) => ({ ...current, settlers: (current.settlers || []).map((settler) => {
+      if (settler.id !== settlerId) return settler;
+      if (!value) return { ...settler, settlementAction: { type: "build" }, assignedBuildingId: null, status: "idle" };
+      const [kind, parentId, roomId] = value.split(":");
+      if (kind === "room") return { ...settler, settlementAction: { type: "build", parentBuildingId: parentId, targetRoomId: roomId }, assignedBuildingId: parentId, status: "working" };
+      return { ...settler, settlementAction: { type: "build", targetBuildingId: parentId }, assignedBuildingId: parentId, status: "working" };
+    }) }));
+  }
+  function currentBuildTargetValue(settler) {
+    const action = settler.settlementAction;
+    if (action?.targetRoomId) return `room:${action.parentBuildingId}:${action.targetRoomId}`;
+    if (action?.targetBuildingId) return `building:${action.targetBuildingId}`;
+    return "";
   }
   function resolveAttackNow() {
     if (activeAttack) onUpdate((current) => resolveSettlementAttack(current, activeAttack.id));
@@ -145,11 +226,11 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
 
       <aside className="settlement-summary pip-panel">
         <div className="pip-panel-title">{selectedBuilding ? text.manage : text.build}</div>
-        <div className="settlement-stockpile"><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div><small>{Math.floor(stockpile.capacityLbs)} lbs</small></div>
+        <div className="settlement-stockpile"><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div><small>{Math.floor(snapshot.stockpileCapacityLbs)} lbs</small></div>
         {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef, language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><button type="button" className="pip-action-button" onClick={() => { setSelectedType(null); setHoverCell(null); }}>{text.cancel}</button></div> : null}
-        {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(SETTLEMENT_BUILDINGS[selectedBuilding.type], language)}</strong>{selectedBuilding.state === "construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}{selectedBuildingLocked ? <span className="settlement-hq-note">{text.hqLocked}</span> : <><button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); }}>{text.move}</button><button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button></>}<button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
+        {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(SETTLEMENT_BUILDINGS[selectedBuilding.type], language)}</strong>{selectedBuilding.state === "construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}{selectedRoomCapacity > 0 ? <div className="settlement-rooms"><div className="pip-panel-title">{text.rooms} · {selectedRooms.length}/{selectedRoomCapacity}</div>{selectedRooms.map((room) => <div key={room.id} className="settlement-room-row"><span><strong>{roomName(room.type, language)}</strong><small>{roomEffects(ROOMS[room.type])}{room.state === "construction" ? ` · ${text.roomBuilding} ${getRoomConstructionProgress(room).progress}/${getRoomConstructionProgress(room).required}d` : ""}</small></span><button type="button" className="pip-action-button settlement-danger" onClick={() => removeRoom(room.id)}>×</button></div>)}{selectedBuilding.state === "active" && selectedRooms.length < selectedRoomCapacity ? <div className="settlement-room-build-list">{ROOM_ORDER.map((type) => <button key={type} type="button" className="pip-action-button" disabled={!canAffordRoom(settlement, type)} onClick={() => addRoom(type)}><span>{roomName(type, language)}</span><small>{roomCost(ROOMS[type])} · {ROOMS[type].constructionDays}d · {roomEffects(ROOMS[type])}</small></button>)}</div> : selectedRooms.length >= selectedRoomCapacity ? <small>{text.full}</small> : null}</div> : null}{selectedBuildingLocked ? <span className="settlement-hq-note">{text.hqLocked}</span> : <><button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); }}>{text.move}</button><button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button></>}<button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
         <div className={`settlement-defense-panel ${activeAttack ? "is-alert" : ""}`}><div className="pip-panel-title">{text.attack}</div><div className="settlement-balance"><span>{text.riskCheck}</span><b>{attackDice ? `${attackDice}d20` : "—"}</b></div>{activeAttack ? <><strong>{activeAttack.state === "warning" ? text.warning : text.attackActive}</strong><span>{activeAttack.faction?.replaceAll("_", " ")}</span><div className="settlement-balance"><span>{text.strength}</span><b>{activeAttack.strength}</b></div><span>{text.startsIn}: {formatBuildTime(Number(activeAttack.startsAt) - Date.now())}</span><button type="button" className="pip-action-button" onClick={resolveAttackNow}>{text.autoDefense}</button></> : <span>{lastResolvedAttack ? `${lastResolvedAttack.result === "victory" ? text.victory : text.defeat} · ${lastResolvedAttack.faction?.replaceAll("_", " ")}` : text.noThreat}</span>}</div>
-        <div className="settlement-people"><div className="pip-panel-title">{text.people}</div>{(settlement.settlers || []).map((settler) => <div key={settler.id} className="settlement-person settlement-person--actions"><span><strong>{settler.name}</strong><small>{settler.status}</small></span><select className="pip-input" value={settler.settlementAction?.type || ""} onChange={(event) => assignAction(settler.id, event.target.value)}><option value="">{text.none}</option>{Object.values(SETTLEMENT_ACTIONS).map((action) => <option key={action.id} value={action.id}>{settlementRuleName(action, language)}</option>)}</select>{settler.settlementAction?.type === "build" ? <select className="pip-input" value={settler.settlementAction?.targetBuildingId || ""} onChange={(event) => assignBuildTarget(settler.id, event.target.value)}><option value="">{text.target}</option>{constructionBuildings.map((building) => <option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)} · {getConstructionProgress(building).progress}/{getConstructionProgress(building).required}</option>)}</select> : null}</div>)}</div>
+        <div className="settlement-people"><div className="pip-panel-title">{text.people}</div>{(settlement.settlers || []).map((settler) => <div key={settler.id} className="settlement-person settlement-person--actions"><span><strong>{settler.name}</strong><small>{settler.status}</small></span><select className="pip-input" value={settler.settlementAction?.type || ""} onChange={(event) => assignAction(settler.id, event.target.value)}><option value="">{text.none}</option>{Object.values(SETTLEMENT_ACTIONS).map((action) => <option key={action.id} value={action.id}>{settlementRuleName(action, language)}</option>)}</select>{settler.settlementAction?.type === "build" ? <select className="pip-input" value={currentBuildTargetValue(settler)} onChange={(event) => assignBuildTarget(settler.id, event.target.value)}><option value="">{text.target}</option>{constructionTargets.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}</select> : null}</div>)}</div>
       </aside>
     </div>
 
