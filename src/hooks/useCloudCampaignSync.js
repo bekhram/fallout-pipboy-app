@@ -36,6 +36,23 @@ function cloneCompact(value) {
   return out;
 }
 
+function compactCampaignState(value) {
+  const compact = cloneCompact(value);
+  const cleanScene = (scene) => {
+    if (!scene || typeof scene !== "object") return scene;
+    const mapMarkup = scene.mapMarkup && typeof scene.mapMarkup === "object"
+      ? { ...scene.mapMarkup, strokes: [] }
+      : scene.mapMarkup;
+    return { ...scene, mapMarkup };
+  };
+
+  return {
+    ...compact,
+    scene: cleanScene(compact?.scene),
+    scenes: Array.isArray(compact?.scenes) ? compact.scenes.map(cleanScene) : compact?.scenes,
+  };
+}
+
 export function getStoredGmCampaignId() {
   try {
     return String(localStorage.getItem(GM_CAMPAIGN_ID_KEY) || "").trim();
@@ -110,7 +127,7 @@ export async function restoreLatestCloudCampaignToLocalCache() {
 function makeCampaignSnapshot(session) {
   const room = session?.roomState && typeof session.roomState === "object" ? session.roomState : null;
   const source = room || {};
-  const state = cloneCompact({
+  const state = compactCampaignState({
     ...source,
     campaignId: resolvedCampaignId(session) || source.campaignId || "",
     revision: Number(source.revision || session?.revision || 0),
