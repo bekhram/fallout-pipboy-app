@@ -19,8 +19,20 @@ function writeAll(settlements) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settlements));
 }
 
+function createInitialSettlers(createdAt, count = 4) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `settler_${createdAt}_${index + 1}`,
+    name: `Settler ${index + 1}`,
+    role: "unassigned",
+    assignedBuildingId: null,
+    health: 100,
+    status: "idle",
+  }));
+}
+
 export function createSettlement({ name, regionId, worldX, worldY, ownerCharacterId = null }) {
   const now = Date.now();
+  const population = Number(STARTING_SETTLEMENT_RESOURCES.population || 4);
   return {
     id: `settlement_${now}_${Math.random().toString(36).slice(2, 8)}`,
     name: String(name || "New Settlement").trim() || "New Settlement",
@@ -33,7 +45,7 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     basePopulationLimit: 8,
     resources: { ...STARTING_SETTLEMENT_RESOURCES },
     buildings: [],
-    settlers: [],
+    settlers: createInitialSettlers(now, population),
     events: [],
     attacks: [],
     createdAt: now,
