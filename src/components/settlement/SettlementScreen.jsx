@@ -8,7 +8,7 @@ import {
 } from "../../data/settlement/buildings.js";
 import { calculateSettlementStats, formatBuildTime } from "../../utils/settlementEconomy.js";
 import { calculateAttackRisk, resolveSettlementAttack } from "../../utils/settlementAttackEngine.js";
-import smallHouseAsset from "../../assets/settlement/small_house.png";
+import { getConstructionAsset, getSettlementAsset } from "./settlementAssets.js";
 import "./settlement.css";
 
 const BUILDING_ICONS = {
@@ -44,12 +44,19 @@ function canPlace(settlement, def, x, y, ignoreBuildingId = null) {
   return true;
 }
 
-function BuildingVisual({ building, def, language, staffed }) {
+function BuildingVisual({ building, def, language }) {
   if (building.state === "construction") {
-    return <div className="settlement-construction-scaffold"><span>🛠</span><small>{formatBuildTime(Number(building.completesAt) - Date.now())}</small></div>;
+    const constructionAsset = getConstructionAsset(def.constructionSize || "medium");
+    return (
+      <div className="settlement-construction-scaffold">
+        <img src={constructionAsset} alt="" draggable="false" />
+        <small>{formatBuildTime(Number(building.completesAt) - Date.now())}</small>
+      </div>
+    );
   }
-  if (building.type === "small_house") return <img src={smallHouseAsset} alt={settlementBuildingName(def, language)} draggable="false" />;
-  return <div className={`settlement-generic-building settlement-generic-building--${building.type} ${staffed === false ? "is-unstaffed" : ""}`}>{BUILDING_ICONS[building.type] || "⌂"}</div>;
+  const asset = getSettlementAsset(def.asset);
+  if (asset) return <img src={asset} alt={settlementBuildingName(def, language)} draggable="false" />;
+  return <div className={`settlement-generic-building settlement-generic-building--${building.type}`}>{BUILDING_ICONS[building.type] || "⌂"}</div>;
 }
 
 function getRepairCost(def, condition) {
@@ -175,7 +182,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
             })}
             {(settlement.buildings || []).map((building) => {
               const def = SETTLEMENT_BUILDINGS[building.type]; if (!def) return null; const status = stats.buildingStatus?.[building.id];
-              return <button type="button" key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""} ${selectedBuildingId === building.id ? "is-selected" : ""} ${movingBuildingId === building.id ? "is-moving" : ""} ${status && !status.staffed ? "is-unstaffed" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)} onClick={(event) => { event.stopPropagation(); if (!selectedType && !movingBuildingId) { setSelectedBuildingId(building.id); setNotice(""); } }}><BuildingVisual building={building} def={def} language={language} staffed={status?.staffed} /></button>;
+              return <button type="button" key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""} ${selectedBuildingId === building.id ? "is-selected" : ""} ${movingBuildingId === building.id ? "is-moving" : ""} ${status && !status.staffed ? "is-unstaffed" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)} onClick={(event) => { event.stopPropagation(); if (!selectedType && !movingBuildingId) { setSelectedBuildingId(building.id); setNotice(""); } }}><BuildingVisual building={building} def={def} language={language} /></button>;
             })}
             {placementDef && hoverCell ? <div className={`settlement-placement ${placementValid && enoughResources ? "is-valid" : "is-invalid"}`} style={{ left: `${hoverCell.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${hoverCell.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${placementDef.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${placementDef.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} /> : null}
           </div>
@@ -205,7 +212,10 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
       </div>
 
       <div className="settlement-build-menu">
-        {SETTLEMENT_BUILDING_LIST.map((def) => <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setSelectedBuildingId(null); setMovingBuildingId(null); setNotice(""); }}><div className="settlement-build-menu__preview">{def.id === "small_house" ? <img src={smallHouseAsset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · ⚙{def.cost?.materials || 0} · ●{def.cost?.caps || 0}</small></button>)}
+        {SETTLEMENT_BUILDING_LIST.map((def) => {
+          const asset = getSettlementAsset(def.asset);
+          return <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setSelectedBuildingId(null); setMovingBuildingId(null); setNotice(""); }}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · ⚙{def.cost?.materials || 0} · ●{def.cost?.caps || 0}</small></button>;
+        })}
       </div>
     </div>
   );
