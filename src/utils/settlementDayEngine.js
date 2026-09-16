@@ -1,4 +1,3 @@
-import { SETTLEMENT_BUILDINGS } from "../data/settlement/buildings.js";
 import { SETTLEMENT_RULEBOOK } from "../data/settlement/rulebook.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 
@@ -50,9 +49,8 @@ export function canAffordRulebookBuilding(settlement, buildingType) {
   if (!rule) return false;
   const stockpile = normalizeStockpile(settlement.stockpile, settlement.resources?.materials);
   const caps = Number(settlement.resources?.caps || 0);
-  return ["common", "uncommon", "rare"].every((key) => (
-    Number(stockpile.materials[key] || 0) >= Number(rule.materials?.[key] || 0)
-  )) && caps >= Number(rule.caps || 0);
+  return ["common", "uncommon", "rare"].every((key) => Number(stockpile.materials[key] || 0) >= Number(rule.materials?.[key] || 0))
+    && caps >= Number(rule.caps || 0);
 }
 
 export function payRulebookBuildingCost(settlement, buildingType) {
@@ -78,10 +76,6 @@ function isActive(building) {
   return building?.state === "active" && Number(building.condition ?? 100) > 0;
 }
 
-function getBuildingRule(building) {
-  return getRulebookBuilding(building?.type);
-}
-
 function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
   const people = Array.isArray(settlement.settlers)
     ? settlement.settlers.length
@@ -100,10 +94,11 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
   let storageBonus = 0;
   let noisyCount = 0;
   let cropSlots = 0;
-  let guardActionBonus = 0;
+  let guardStructures = 0;
+  let powerRequired = 0;
   for (const building of settlement.buildings || []) {
     if (!isActive(building)) continue;
-    const rule = getBuildingRule(building);
+    const rule = getRulebookBuilding(building.type);
     if (!rule) continue;
     const effects = rule.effects || {};
     base.power += Number(effects.power || 0);
@@ -112,14 +107,15 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
     base.beds += Number(effects.beds || 0);
     storageBonus += Number(effects.storageLbs || 0);
     cropSlots += Number(effects.cropSlots || 0);
-    guardActionBonus += Number(effects.guardActionDefenseBonus || 0);
+    if (effects.guardActionDefenseBonus) guardStructures += 1;
     if (effects.noisy) noisyCount += 1;
+    powerRequired += Number(effects.requiresPower || 0);
   }
 
-  return { ...base, noisyCount, cropSlots, guardActionBonus, storageBonus };
+  return { ...base, noisyCount, cropSlots, guardStructures, storageBonus, powerRequired };
 }
 
-function resolveConstruction(settlement) {
+function resolveConstruction(settlement, now) {
   const buildersByTarget = new Map();
   for (const settler of settlement.settlers || []) {
     const action = settler.settlementAction;
@@ -132,30 +128,27 @@ function resolveConstruction(settlement) {
     if (building.state !== "construction") return building;
     const workers = buildersByTarget.get(building.id) || 0;
     if (!workers) return building;
-    const rule = getBuildingRule(building);
+    const rule = getRulebookBuilding(building.type);
     const required = Math.max(1, Number(building.constructionDaysRequired || rule?.constructionDays || 1));
     const progress = Number(building.constructionProgressDays || 0) + workers;
     if (progress < required) return { ...building, constructionDaysRequired: required, constructionProgressDays: progress };
     completed.push(building.id);
-    return { ...building, state: "active", constructionDaysRequired: required, constructionProgressDays: required, completedAt: Date.now() };
+    return { ...building, state: "active", constructionDaysRequired: required, constructionProgressDays: required, completedAt: now };
   });
 
   if (!completed.length) return { ...settlement, buildings };
-  const settlers = (settlement.settlers || []).map((settler) => (
-    completed.includes(settler.settlementAction?.targetBuildingId)
-      ? { ...settler, settlementAction: null, status: "idle", assignedBuildingId: null }
-      : settler
-  ));
+  const settlers = (settlement.settlers || []).map((settler) => completed.includes(settler.settlementAction?.targetBuildingId)
+    ? { ...settler, settlementAction: null, status: "idle", assignedBuildingId: null }
+    : settler);
   return { ...settlement, buildings, settlers };
 }
 
-function resolveResidentActions(input) {
-  let settlement = resolveConstruction(input);
+function resolveResidentActions(input, now) {
+  let settlement = resolveConstruction(input, now);
   const settlers = settlement.settlers || [];
   const actionCounts = settlers.reduce((acc, settler) => {
     const type = settler.settlementAction?.type;
-    if (!type) return acc;
-    acc[type] = (acc[type] || 0) + 1;
+    if (type) acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
 
@@ -189,7 +182,7 @@ function resolveResidentActions(input) {
   const guards = Number(actionCounts.guard || 0);
   if (guards > 0) {
     const staticStats = calculateStaticAttributes({ ...settlement, attributes }, 0);
-    dailyDefenseBonus = guards * (1 + Math.max(0, staticStats.guardActionBonus));
+    dailyDefenseBonus = guards + Math.min(staticStats.guardStructures, guards * 3);
     events.push({ type: "guard", workers: guards, defense: dailyDefenseBonus });
   }
 
@@ -202,12 +195,24 @@ function resolveResidentActions(input) {
     events.push({ type: "tend_crops", workers: cropWorkers, crops: tended, food });
   }
 
+  const businessWorkers = Number(actionCounts.business || 0);
+  if (businessWorkers > 0) {
+    const stores = (settlement.buildings || []).filter((building) => isActive(building) && getRulebookBuilding(building.type)?.effects?.store);
+    const multiplier = Math.floor((settlement.settlers || []).length / 5);
+    const staffedStores = stores.slice(0, businessWorkers);
+    const income = multiplier * staffedStores.reduce((sum, building) => sum + Number(getRulebookBuilding(building.type)?.effects?.income || 0), 0);
+    attributes.income = Math.max(0, Number(attributes.income || 0) + income);
+    events.push({ type: "business", workers: businessWorkers, stores: staffedStores.length, income });
+  }
+
+  const caravanWorkers = Number(actionCounts.trade_caravan || 0);
+  if (caravanWorkers > 0) events.push({ type: "trade_caravan", workers: caravanWorkers });
+
   return { settlement: { ...settlement, attributes, stockpile }, dailyDefenseBonus, actionEvents: events };
 }
 
 function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
-  let settlement = input;
-  const stats = calculateStaticAttributes(settlement, dailyDefenseBonus);
+  const stats = calculateStaticAttributes(input, dailyDefenseBonus);
   let happiness = clamp(stats.happiness, 1, 20);
   const failedNeeds = [];
   for (const key of ["beds", "food", "water", "defense"]) {
@@ -217,29 +222,22 @@ function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
     }
   }
 
-  let settlers = [...(settlement.settlers || [])];
+  let settlers = [...(input.settlers || [])];
   let departed = null;
   if (settlers.length && happiness < settlers.length) {
     departed = settlers[settlers.length - 1];
     settlers = settlers.slice(0, -1);
   }
 
-  const nextStats = calculateStaticAttributes({ ...settlement, settlers, attributes: { ...(settlement.attributes || {}), happiness } }, dailyDefenseBonus);
   const attributes = {
+    ...(input.attributes || {}),
     people: settlers.length,
-    food: Number(settlement.attributes?.food ?? nextStats.food),
-    water: nextStats.water,
-    power: nextStats.power,
-    defense: nextStats.defense,
-    beds: nextStats.beds,
     happiness,
-    income: nextStats.income,
   };
-
   const events = [];
   if (failedNeeds.length) events.push({ id: randomId("event", now), type: "needs_failed", failedNeeds, createdAt: now });
   if (departed) events.push({ id: randomId("event", now + 1), type: "settler_left", settlerId: departed.id, settlerName: departed.name, createdAt: now });
-  return { ...settlement, settlers, attributes, events: [...events, ...(settlement.events || [])].slice(0, 100) };
+  return { ...input, settlers, attributes, events: [...events, ...(input.events || [])].slice(0, 100) };
 }
 
 function scheduleAttackAtEndOfDay(input, now) {
@@ -251,15 +249,11 @@ function scheduleAttackAtEndOfDay(input, now) {
   if (!foodSurplus && !waterSurplus) return input;
 
   const diceCount = foodSurplus && waterSurplus ? 2 : 1;
-  const noisyCount = Number(stats.noisyCount || 0);
   const rolls = Array.from({ length: diceCount }, () => 1 + Math.floor(Math.random() * 20));
-  if (rolls.length && noisyCount > 0) rolls[0] += noisyCount;
+  if (rolls.length && stats.noisyCount > 0) rolls[0] += stats.noisyCount;
   const attacked = rolls.some((roll) => roll > Number(stats.defense || 0));
   if (!attacked) {
-    return {
-      ...input,
-      events: [{ id: randomId("event", now), type: "attack_check", rolls, defense: stats.defense, result: "safe", createdAt: now }, ...(input.events || [])].slice(0, 100),
-    };
+    return { ...input, events: [{ id: randomId("event", now), type: "attack_check", rolls, defense: stats.defense, result: "safe", createdAt: now }, ...(input.events || [])].slice(0, 100) };
   }
 
   const delayRoll = rollCombatDice(3);
@@ -270,12 +264,7 @@ function scheduleAttackAtEndOfDay(input, now) {
   const factionPool = ["raiders", "feral_ghouls", "super_mutants"];
   const faction = factionPool[Math.floor(Math.random() * factionPool.length)];
   const attack = {
-    id: randomId("attack", now),
-    faction,
-    strength,
-    state: "warning",
-    createdAt: now,
-    startsAt,
+    id: randomId("attack", now), faction, strength, state: "warning", createdAt: now, startsAt,
     resolveAt: startsAt + SETTLEMENT_DAY_MS,
     rulebookRiskRolls: rolls,
     rulebookDelayRoll: delayRoll.rolls,
@@ -290,11 +279,11 @@ function scheduleAttackAtEndOfDay(input, now) {
 }
 
 export function advanceSettlementDay(input, now = Date.now()) {
-  const actionResult = resolveResidentActions(input);
+  const actionResult = resolveResidentActions(input, now);
   let settlement = applyNeedsAndDeparture(actionResult.settlement, actionResult.dailyDefenseBonus, now);
   settlement = scheduleAttackAtEndOfDay(settlement, now);
   const stockpile = normalizeStockpile(settlement.stockpile, settlement.resources?.materials);
-  const nextStatic = calculateStaticAttributes(settlement, 0);
+  const derived = calculateStaticAttributes(settlement, 0);
   return {
     ...settlement,
     settlementDay: Math.max(1, Number(settlement.settlementDay || 1) + 1),
@@ -302,24 +291,20 @@ export function advanceSettlementDay(input, now = Date.now()) {
     nextDayAt: now + SETTLEMENT_DAY_MS,
     stockpile,
     attributes: {
-      ...settlement.attributes,
-      people: nextStatic.people,
-      power: nextStatic.power,
-      defense: nextStatic.defense,
-      beds: nextStatic.beds,
-      happiness: clamp(settlement.attributes?.happiness ?? nextStatic.happiness, 1, 20),
-      income: nextStatic.income,
+      ...(settlement.attributes || {}),
+      people: derived.people,
+      happiness: clamp(settlement.attributes?.happiness ?? derived.happiness, 1, 20),
     },
     resources: {
       ...(settlement.resources || {}),
-      population: nextStatic.people,
-      food: Number(settlement.attributes?.food ?? nextStatic.food),
-      water: nextStatic.water,
-      power: nextStatic.power,
-      defense: nextStatic.defense,
-      beds: nextStatic.beds,
-      happiness: clamp(settlement.attributes?.happiness ?? nextStatic.happiness, 1, 20),
-      income: nextStatic.income,
+      population: derived.people,
+      food: derived.food,
+      water: derived.water,
+      power: derived.power,
+      defense: derived.defense,
+      beds: derived.beds,
+      happiness: clamp(settlement.attributes?.happiness ?? derived.happiness, 1, 20),
+      income: Number(settlement.attributes?.income || 0),
       materials: Number(stockpile.materials.common || 0),
     },
     events: actionResult.actionEvents.map((event, index) => ({ id: randomId("event", now + 10 + index), createdAt: now, ...event })).concat(settlement.events || []).slice(0, 100),
@@ -344,14 +329,7 @@ export function processAutomaticSettlementDays(input, now = Date.now()) {
 export function createConstructionBuilding({ id, type, x, y, now = Date.now() }) {
   const rule = getRulebookBuilding(type);
   return {
-    id,
-    type,
-    x,
-    y,
-    rotation: 0,
-    state: "construction",
-    condition: 100,
-    startedAt: now,
+    id, type, x, y, rotation: 0, state: "construction", condition: 100, startedAt: now,
     constructionDaysRequired: Math.max(1, Number(rule?.constructionDays || 1)),
     constructionProgressDays: 0,
   };
