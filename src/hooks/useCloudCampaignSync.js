@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCloudAuthSession } from "../cloud/googleAuth.js";
 import {
+  listCloudCampaignsByOwner,
   loadCloudCampaign,
   saveCampaignPlayerSnapshot,
   saveCloudCampaign,
@@ -43,6 +44,17 @@ export function getStoredGmCampaignId() {
   }
 }
 
+export function setStoredGmCampaignId(campaignId) {
+  const id = String(campaignId || "").trim();
+  try {
+    if (id) localStorage.setItem(GM_CAMPAIGN_ID_KEY, id);
+    else localStorage.removeItem(GM_CAMPAIGN_ID_KEY);
+  } catch {
+    // Local storage is best effort only.
+  }
+  return id;
+}
+
 function resolvedCampaignId(session) {
   const direct = String(session?.campaignId || session?.roomState?.campaignId || "").trim();
   return direct || getStoredGmCampaignId();
@@ -77,7 +89,22 @@ export async function restoreCloudCampaignToLocalCache(campaignId = getStoredGmC
     state: cloud.payload.state,
     manifest: local?.manifest || null,
   });
-  return { restored: true, cloud };
+  setStoredGmCampaignId(id);
+  return { restored: true, cloud, campaignId: id };
+}
+
+export async function restoreLatestCloudCampaignToLocalCache() {
+  const auth = getCloudAuthSession();
+  const ownerUid = String(auth?.firebase?.localId || auth?.user?.id || "").trim();
+  if (!ownerUid) return { restored: false, reason: "NOT_SIGNED_IN" };
+
+  const campaigns = await listCloudCampaignsByOwner(ownerUid);
+  const latest = campaigns[0];
+  if (!latest?.id) return { restored: false, reason: "NO_CLOUD_CAMPAIGN" };
+
+  setStoredGmCampaignId(latest.id);
+  const result = await restoreCloudCampaignToLocalCache(latest.id, { force: true });
+  return { ...result, campaign: latest, campaignId: latest.id };
 }
 
 function makeCampaignSnapshot(session) {
