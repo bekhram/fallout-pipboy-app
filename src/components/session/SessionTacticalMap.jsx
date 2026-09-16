@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import SessionTacticalMapV3 from "./SessionTacticalMapV3.jsx";
 import PlayerTokenAssignmentBridge from "./PlayerTokenAssignmentBridge.jsx";
 import PlayerBattlemapControls from "./PlayerBattlemapControls.jsx";
+import BattlemapSharedLayer from "../gm/BattlemapSharedLayer.jsx";
 
 function findMapModeSwitch() {
   if (typeof document === "undefined") return null;
@@ -43,6 +44,9 @@ export default function SessionTacticalMap({ session, openRequest = 0 }) {
 
   return <>
     <SessionTacticalMapV3 session={tacticalSession} openRequest={openRequest} />
+    {isPlayerSession && tacticalSession?.tacticalScene ? (
+      <BattlemapSharedLayer scene={tacticalSession.tacticalScene} role="player" />
+    ) : null}
     <PlayerBattlemapControls session={tacticalSession} />
     <PlayerTokenAssignmentBridge session={tacticalSession} />
     {shortcut}
