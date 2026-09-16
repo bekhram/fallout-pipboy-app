@@ -16,9 +16,7 @@ function cloneCompact(value) {
   if (value == null) return value;
   if (Array.isArray(value)) return value.map(cloneCompact);
   if (typeof value !== "object") {
-    if (typeof value === "string" && value.startsWith("data:") && value.length > MAX_INLINE_DATA_URL_LENGTH) {
-      return "";
-    }
+    if (typeof value === "string" && value.startsWith("data:") && value.length > MAX_INLINE_DATA_URL_LENGTH) return "";
     return value;
   }
 
@@ -37,9 +35,7 @@ function cloneCompact(value) {
   return out;
 }
 
-function resolvedCampaignId(session) {
-  const direct = String(session?.campaignId || session?.roomState?.campaignId || "").trim();
-  if (direct) return direct;
+export function getStoredGmCampaignId() {
   try {
     return String(localStorage.getItem(GM_CAMPAIGN_ID_KEY) || "").trim();
   } catch {
@@ -47,12 +43,45 @@ function resolvedCampaignId(session) {
   }
 }
 
-function makeCampaignSnapshot(session) {
-  const room = session?.roomState && typeof session.roomState === "object"
-    ? session.roomState
-    : null;
-  const source = room || {};
+function resolvedCampaignId(session) {
+  const direct = String(session?.campaignId || session?.roomState?.campaignId || "").trim();
+  return direct || getStoredGmCampaignId();
+}
 
+export async function restoreCloudCampaignToLocalCache(campaignId = getStoredGmCampaignId()) {
+  const id = String(campaignId || "").trim();
+  if (!id) return { restored: false, reason: "NO_CAMPAIGN_ID" };
+
+  const auth = getCloudAuthSession();
+  if (!auth?.firebase?.idToken) return { restored: false, reason: "NOT_SIGNED_IN" };
+
+  const cloud = await loadCloudCampaign(id);
+  if (!cloud?.payload?.state) return { restored: false, reason: "NO_CLOUD_CAMPAIGN" };
+
+  const local = await getCampaign(id).catch(() => null);
+  const cloudRevision = Number(cloud.payload.state.revision || 0);
+  const localRevision = Number(local?.state?.revision || 0);
+  const cloudTime = Date.parse(cloud.updatedAt || cloud.payload.savedAt || 0) || 0;
+  const localTime = Number(local?.updatedAt || 0);
+  const shouldRestore = !local
+    || cloudRevision > localRevision
+    || (cloudRevision === localRevision && cloudTime > localTime);
+
+  if (!shouldRestore) return { restored: false, reason: "LOCAL_IS_CURRENT", cloud };
+
+  await putCampaign({
+    campaignId: id,
+    role: "gm",
+    revision: cloudRevision,
+    state: cloud.payload.state,
+    manifest: local?.manifest || null,
+  });
+  return { restored: true, cloud };
+}
+
+function makeCampaignSnapshot(session) {
+  const room = session?.roomState && typeof session.roomState === "object" ? session.roomState : null;
+  const source = room || {};
   const state = cloneCompact({
     ...source,
     campaignId: resolvedCampaignId(session) || source.campaignId || "",
@@ -83,11 +112,7 @@ function makeCampaignSnapshot(session) {
 }
 
 function snapshotFingerprint(snapshot) {
-  try {
-    return JSON.stringify(snapshot);
-  } catch {
-    return String(Date.now());
-  }
+  try { return JSON.stringify(snapshot); } catch { return String(Date.now()); }
 }
 
 export default function useCloudCampaignSync(session, form) {
@@ -97,41 +122,16 @@ export default function useCloudCampaignSync(session, form) {
   const lastHostFingerprintRef = useRef("");
   const lastPlayerFingerprintRef = useRef("");
   const restoreAttemptedRef = useRef(new Set());
-
   const campaignId = useMemo(() => resolvedCampaignId(session), [session?.campaignId, session?.roomState?.campaignId]);
 
   useEffect(() => {
-    if (session?.mode !== "host" || !campaignId) return;
-    if (restoreAttemptedRef.current.has(campaignId)) return;
+    if (session?.mode !== "host" || !campaignId || restoreAttemptedRef.current.has(campaignId)) return;
     restoreAttemptedRef.current.add(campaignId);
-
     let cancelled = false;
     (async () => {
-      const auth = getCloudAuthSession();
-      if (!auth?.firebase?.idToken) return;
       try {
         setCloudStatus("restoring");
-        const cloud = await loadCloudCampaign(campaignId);
-        if (!cloud?.payload?.state || cancelled) {
-          setCloudStatus("idle");
-          return;
-        }
-
-        const local = await getCampaign(campaignId).catch(() => null);
-        const cloudRevision = Number(cloud.payload.state.revision || 0);
-        const localRevision = Number(local?.state?.revision || 0);
-        const cloudTime = Date.parse(cloud.updatedAt || cloud.payload.savedAt || 0) || 0;
-        const localTime = Number(local?.updatedAt || 0);
-
-        if (cloudRevision > localRevision || (cloudRevision === localRevision && cloudTime > localTime)) {
-          await putCampaign({
-            campaignId,
-            role: "gm",
-            revision: cloudRevision,
-            state: cloud.payload.state,
-            manifest: local?.manifest || null,
-          });
-        }
+        await restoreCloudCampaignToLocalCache(campaignId);
         if (!cancelled) setCloudStatus("ready");
       } catch (error) {
         if (!cancelled) {
@@ -140,7 +140,6 @@ export default function useCloudCampaignSync(session, form) {
         }
       }
     })();
-
     return () => { cancelled = true; };
   }, [campaignId, session?.mode]);
 
@@ -151,8 +150,6 @@ export default function useCloudCampaignSync(session, form) {
     if (!ownerUid) return;
 
     let cancelled = false;
-    let timer = null;
-
     const flush = async () => {
       if (cancelled) return;
       const snapshot = makeCampaignSnapshot(session);
@@ -161,12 +158,7 @@ export default function useCloudCampaignSync(session, form) {
       try {
         setCloudStatus("saving");
         setCloudError("");
-        await saveCloudCampaign(
-          campaignId,
-          ownerUid,
-          snapshot,
-          snapshot.state?.name || `Campaign ${String(session?.sessionCode || campaignId)}`
-        );
+        await saveCloudCampaign(campaignId, ownerUid, snapshot, snapshot.state?.name || `Campaign ${String(session?.sessionCode || campaignId)}`);
         lastHostFingerprintRef.current = fingerprint;
         setLastCloudSavedAt(new Date().toISOString());
         setCloudStatus("saved");
@@ -176,15 +168,11 @@ export default function useCloudCampaignSync(session, form) {
       }
     };
 
-    const schedule = () => {
-      timer = window.setInterval(flush, AUTOSAVE_MS);
-      flush();
-    };
-    schedule();
-
+    const timer = window.setInterval(flush, AUTOSAVE_MS);
+    flush();
     return () => {
       cancelled = true;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [campaignId, session?.mode, session?.status, session?.sessionCode, session?.roomState, session?.players, session?.tacticalScenes, session?.merchants, session?.sceneMessage, session?.selectedSceneId, session?.liveSceneId]);
 
@@ -195,8 +183,6 @@ export default function useCloudCampaignSync(session, form) {
     if (!userId) return;
 
     let cancelled = false;
-    let timer = null;
-
     const flush = async () => {
       if (cancelled) return;
       let fingerprint = "";
@@ -210,11 +196,11 @@ export default function useCloudCampaignSync(session, form) {
       }
     };
 
-    timer = window.setInterval(flush, PLAYER_SNAPSHOT_MS);
+    const timer = window.setInterval(flush, PLAYER_SNAPSHOT_MS);
     flush();
     return () => {
       cancelled = true;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [campaignId, session?.mode, session?.status, form]);
 
