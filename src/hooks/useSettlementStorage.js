@@ -39,8 +39,59 @@ function ensureSettlementHQ(settlement) {
   };
 }
 
+function createInitialSettlers(createdAt, count = 4) {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `settler_${createdAt}_${index + 1}`,
+    name: `Settler ${index + 1}`,
+    role: "unassigned",
+    assignedBuildingId: null,
+    settlementAction: null,
+    health: 100,
+    status: "idle",
+  }));
+}
+
+function ensureRulebookState(input) {
+  const settlement = ensureSettlementHQ(input);
+  const resources = { ...(settlement.resources || {}) };
+  const people = Array.isArray(settlement.settlers) && settlement.settlers.length
+    ? settlement.settlers.length
+    : Math.max(0, Math.floor(Number(resources.population || 4)));
+
+  resources.population = people;
+  if (!Number.isFinite(Number(resources.food))) resources.food = people;
+  if (!Number.isFinite(Number(resources.water))) resources.water = people;
+  if (!Number.isFinite(Number(resources.power))) resources.power = 0;
+  if (!Number.isFinite(Number(resources.defense))) resources.defense = 0;
+  if (!Number.isFinite(Number(resources.beds))) resources.beds = 0;
+  if (!Number.isFinite(Number(resources.income))) resources.income = 0;
+  const oldHappiness = Number(resources.happiness);
+  resources.happiness = Math.max(1, Math.min(20, Number.isFinite(oldHappiness) ? (oldHappiness > 20 ? 10 : oldHappiness) : 10));
+
+  return {
+    ...settlement,
+    rulesVersion: 1,
+    settlementDay: Math.max(1, Math.floor(Number(settlement.settlementDay || 1))),
+    basePopulationLimit: 10,
+    leader: settlement.leader || { characterId: settlement.ownerCharacterId || null, charisma: 0 },
+    resources,
+    stockpile: {
+      capacityLbs: 300,
+      common: 0,
+      uncommon: 0,
+      rare: 0,
+      items: [],
+      ...(settlement.stockpile || {}),
+    },
+    settlers: (settlement.settlers || createInitialSettlers(Number(settlement.createdAt || Date.now()), people)).map((settler) => ({
+      settlementAction: null,
+      ...settler,
+    })),
+  };
+}
+
 function runSimulation(settlement) {
-  return processSettlementAttacks(simulateSettlement(ensureSettlementHQ(settlement)));
+  return processSettlementAttacks(simulateSettlement(ensureRulebookState(settlement)));
 }
 
 function readAll() {
@@ -58,21 +109,10 @@ function writeAll(settlements) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settlements));
 }
 
-function createInitialSettlers(createdAt, count = 4) {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `settler_${createdAt}_${index + 1}`,
-    name: `Settler ${index + 1}`,
-    role: "unassigned",
-    assignedBuildingId: null,
-    health: 100,
-    status: "idle",
-  }));
-}
-
 export function createSettlement({ name, regionId, worldX, worldY, ownerCharacterId = null }) {
   const now = Date.now();
   const population = Number(STARTING_SETTLEMENT_RESOURCES.population || 4);
-  return ensureSettlementHQ({
+  return ensureRulebookState({
     id: `settlement_${now}_${Math.random().toString(36).slice(2, 8)}`,
     name: String(name || "New Settlement").trim() || "New Settlement",
     regionId,
@@ -81,16 +121,28 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     ownerCharacterId,
     ownership: { type: "party" },
     map: { width: 24, height: 24 },
-    basePopulationLimit: 8,
-    resources: { ...STARTING_SETTLEMENT_RESOURCES },
+    basePopulationLimit: 10,
+    resources: {
+      ...STARTING_SETTLEMENT_RESOURCES,
+      population,
+      populationLimit: 10,
+      food: population,
+      water: population,
+      power: 0,
+      defense: 0,
+      beds: 0,
+      happiness: 10,
+      income: 0,
+    },
+    stockpile: { capacityLbs: 300, common: 0, uncommon: 0, rare: 0, items: [] },
     buildings: [],
     settlers: createInitialSettlers(now, population),
     events: [],
     attacks: [],
     attackRisk: 0,
-    nextAttackCheckAt: now + 6 * 60 * 60 * 1000,
     createdAt: now,
     lastSimulationAt: now,
+    settlementDay: 1,
   });
 }
 
