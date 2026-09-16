@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/scripts/apply_first_batch_weapon_content.py"
       - ".github/scripts/apply_settlers_guide_equipment.py"
+      - ".github/scripts/apply_settlers_guide_crafting.py"
       - ".github/workflows/apply-first-batch-weapon-content.yml"
 
 permissions:
@@ -21,10 +22,11 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Apply equipment source patches
+      - name: Apply equipment and crafting source patches
         run: |
           python .github/scripts/apply_first_batch_weapon_content.py
           python .github/scripts/apply_settlers_guide_equipment.py
+          python .github/scripts/apply_settlers_guide_crafting.py
 
       - name: Install dependencies
         run: npm ci
@@ -41,7 +43,7 @@ jobs:
             echo "No source changes"
             exit 0
           fi
-          git commit -m "feat: add Settler's Guide weapons ammo and mods"
+          git commit -m "feat: add Settler's Guide crafting and robot recipes"
           git push origin HEAD:main
 
-# settlers-guide-trigger: 1
+# settlers-guide-crafting-trigger: 1
