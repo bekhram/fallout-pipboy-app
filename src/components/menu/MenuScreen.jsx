@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TrackedButton from "../shared/TrackedButton.jsx";
 import QuickCharacterWizard, {
@@ -8,6 +8,7 @@ import AppDownloadPanel from "./AppDownloadPanel.jsx";
 import CharacterProfilesPanel from "./CharacterProfilesPanel.jsx";
 import CloudAccountPanel from "./CloudAccountPanel.jsx";
 import { createCharacterProfile } from "../../utils/characterProfiles.js";
+import { getSessionCodeFromUrl } from "../../utils/sessionShare.js";
 
 export default function MenuScreen({
   hasCharacter,
@@ -23,6 +24,11 @@ export default function MenuScreen({
   const copy = getCreationCopy(i18n.resolvedLanguage || i18n.language);
   const [showCreationMode, setShowCreationMode] = useState(false);
   const [showQuickCreation, setShowQuickCreation] = useState(false);
+
+  useEffect(() => {
+    if (!getSessionCodeFromUrl()) return;
+    onOpenSession?.();
+  }, [onOpenSession]);
 
   const handleNewCharacterClick = () => {
     setShowCreationMode(true);
