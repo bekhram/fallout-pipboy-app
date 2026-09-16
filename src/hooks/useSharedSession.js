@@ -17,9 +17,16 @@ export default function useSharedSession(form) {
   const session = useGmAuthoritativeSessionV15(form);
   const cloud = useCloudCampaignSync(session, form);
 
+  const waitingForGm = Boolean(
+    session?.mode === "player"
+    && session?.status !== "online"
+    && normalizeSessionCode(session?.sessionCode).length === SESSION_CODE_LENGTH
+  );
+
   const mergedSession = useMemo(() => ({
     ...session,
     ...cloud,
+    waitingForGm,
     startHost: async (...args) => {
       try {
         const campaignId = getStoredGmCampaignId();
@@ -35,7 +42,35 @@ export default function useSharedSession(form) {
       const started = await session.startHost?.(...args);
       return { ok: true, restored, started };
     },
-  }), [session, cloud]);
+  }), [session, cloud, waitingForGm]);
+
+  useEffect(() => {
+    if (!waitingForGm) return undefined;
+
+    let cancelled = false;
+    let inFlight = false;
+
+    const retry = async () => {
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      try {
+        await session.reconnectNow?.();
+      } catch {
+        // The player stays in waiting mode until the GM comes online.
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    const firstRetry = window.setTimeout(retry, 1200);
+    const interval = window.setInterval(retry, 5000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(firstRetry);
+      window.clearInterval(interval);
+    };
+  }, [waitingForGm, session.reconnectNow]);
 
   useEffect(() => {
     setLiveSessionBridge(mergedSession);
