@@ -224,6 +224,10 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   const players = session?.players || [];
   const sceneMessage = session?.sceneMessage || "";
   const sessionCode = session?.sessionCode || "";
+  const lastHostCode = session?.lastSession?.role === "host"
+    ? normalizeSessionCode(session.lastSession.code)
+    : "";
+  const shareCode = normalizeSessionCode(sessionCode || lastHostCode);
   const sessionError = session?.error?.key
     ? copy[session.error.key] || session.error.message || copy.networkError
     : session?.error?.message || "";
@@ -297,7 +301,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   };
 
   const handleCopyLink = async () => {
-    const url = buildSessionShareUrl(sessionCode);
+    const url = buildSessionShareUrl(shareCode);
     if (!url) return;
     try {
       await navigator.clipboard.writeText(url);
@@ -309,11 +313,11 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   };
 
   const handleShareLink = async () => {
-    const url = buildSessionShareUrl(sessionCode);
+    const url = buildSessionShareUrl(shareCode);
     if (!url) return;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Pip-2D20", text: "Join my Pip-2D20 session", url });
+        await navigator.share({ title: "Pip-2D20", text: `Join my Pip-2D20 session ${shareCode}`, url });
         return;
       } catch (error) {
         if (error?.name === "AbortError") return;
@@ -363,6 +367,18 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             >
               {copy.create}
             </button>
+            {shareCode.length === SESSION_CODE_LENGTH ? (
+              <div className="pip-logbox" style={{ marginTop: 12 }}>
+                <div className="pip-head" style={{ marginBottom: 8 }}>
+                  <strong>[ SESSION LINK ]</strong>
+                  <strong>{shareCode}</strong>
+                </div>
+                <div className="pip-actions-inline">
+                  <button type="button" className="pip-btn is-primary" onClick={handleShareLink}>SHARE LINK</button>
+                  <button type="button" className="pip-btn" onClick={handleCopyLink}>{linkCopied ? "LINK COPIED" : "COPY LINK"}</button>
+                </div>
+              </div>
+            ) : null}
             {localError ? <div className="session-error">{localError}</div> : null}
           </section>
 
@@ -427,8 +443,6 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             <span>{copy.players}: <strong>{players.length}</strong></span>
           </div>
           <div className="session-gm-hostbar__actions">
-            <button type="button" className="pip-btn" onClick={handleShareLink}>SHARE LINK</button>
-            <button type="button" className="pip-btn" onClick={handleCopyLink}>{linkCopied ? "LINK COPIED" : "COPY LINK"}</button>
             <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
             <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.end}</button>
           </div>
