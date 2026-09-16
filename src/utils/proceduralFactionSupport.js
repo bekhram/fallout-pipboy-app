@@ -1,7 +1,10 @@
 const SUPPORT_RULES = {
   institute: ["turret"],
   brotherhood: ["turret"],
+  enclave: ["turret"],
+  gunner: ["turret"],
   raider: ["turret"],
+  forged: ["turret"],
   super_mutant: ["turret"],
 };
 
