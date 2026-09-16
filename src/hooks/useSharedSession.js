@@ -7,6 +7,7 @@ import useGmAuthoritativeSessionV15, {
 import useCloudCampaignSync, {
   getStoredGmCampaignId,
   restoreCloudCampaignToLocalCache,
+  restoreLatestCloudCampaignToLocalCache,
 } from "./useCloudCampaignSync.js";
 import { setLiveSessionBridge } from "../utils/liveSessionBridge.js";
 
@@ -27,6 +28,12 @@ export default function useSharedSession(form) {
         console.warn("Cloud campaign restore before host start failed:", error);
       }
       return session.startHost?.(...args);
+    },
+    restoreLatestCloudCampaignAndStart: async (...args) => {
+      const restored = await restoreLatestCloudCampaignToLocalCache();
+      if (!restored?.restored) return { ok: false, reason: restored?.reason || "NOT_RESTORED" };
+      const started = await session.startHost?.(...args);
+      return { ok: true, restored, started };
     },
   }), [session, cloud]);
 
