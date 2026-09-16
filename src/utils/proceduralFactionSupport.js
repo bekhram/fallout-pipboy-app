@@ -2,7 +2,7 @@ const SUPPORT_RULES = {
   institute: ["turret"],
   brotherhood: ["turret"],
   raider: ["turret"],
-  super_mutant: ["turret"],
+  super_mutant: ["turret", "floater"],
 };
 
 function norm(value) {
@@ -13,6 +13,7 @@ export function proceduralSupportTypeForEntry(entry = {}) {
   const tags = Array.isArray(entry?.tags) ? entry.tags.map(norm) : [];
   const source = `${entry?.id || ""} ${entry?.name || ""} ${entry?.creatureType || ""}`.toLowerCase();
   if (tags.includes("turret") || /\bturret\b/.test(source)) return "turret";
+  if (tags.includes("super-mutant-ally") || tags.includes("floater") || /\bfloater\b/.test(source)) return "floater";
   return null;
 }
 
