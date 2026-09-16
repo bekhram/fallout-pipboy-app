@@ -6,49 +6,43 @@ import {
   SETTLEMENT_GRID_SIZE,
   settlementBuildingName,
 } from "../../data/settlement/buildings.js";
+import { SETTLEMENT_ACTIONS, settlementRuleName } from "../../data/settlement/rulebook.js";
+import { formatRulebookCost, getRulebookBuilding } from "../../data/settlement/rulebookCatalog.js";
 import { calculateSettlementStats, formatBuildTime } from "../../utils/settlementEconomy.js";
 import { calculateAttackRisk, resolveSettlementAttack } from "../../utils/settlementAttackEngine.js";
+import {
+  canAffordRulebookBuilding,
+  createConstructionBuilding,
+  getConstructionProgress,
+  normalizeStockpile,
+  payRulebookBuildingCost,
+} from "../../utils/settlementDayEngine.js";
 import { getConstructionAsset, getSettlementAsset } from "./settlementAssets.js";
 import "./settlement.css";
 
-const BUILDING_ICONS = {
-  crop_field: "🌾",
-  water_pump: "💧",
-  generator: "⚡",
-  workshop: "🔧",
-  trading_post: "¤",
-  clinic: "+",
-  guard_post: "▲",
-  turret: "⌖",
-};
-
+const BUILDING_ICONS = { crop_field: "🌾", water_pump: "💧", generator: "⚡", workshop: "🔧", trading_post: "¤", clinic: "+", guard_post: "▲", turret: "⌖" };
 const BUILD_CATEGORIES = ["housing", "food", "water", "power", "production", "commerce", "services", "defense"];
-
 const CATEGORY_LABELS = {
   en: { housing: "HOUSING", food: "FOOD", water: "WATER", power: "POWER", production: "PRODUCTION", commerce: "TRADE", services: "SERVICES", defense: "DEFENSE" },
   ru: { housing: "ЖИЛЬЁ", food: "ЕДА", water: "ВОДА", power: "ЭНЕРГИЯ", production: "ПРОИЗВОДСТВО", commerce: "ТОРГОВЛЯ", services: "СЕРВИС", defense: "ОБОРОНА" },
   uk: { housing: "ЖИТЛО", food: "ЇЖА", water: "ВОДА", power: "ЕНЕРГІЯ", production: "ВИРОБНИЦТВО", commerce: "ТОРГІВЛЯ", services: "СЕРВІС", defense: "ОБОРОНА" },
   pl: { housing: "MIESZKANIA", food: "ŻYWNOŚĆ", water: "WODA", power: "ENERGIA", production: "PRODUKCJA", commerce: "HANDEL", services: "USŁUGI", defense: "OBRONA" },
 };
-
 const COPY = {
-  en: { back: "WORLD MAP", build: "BUILD", cancel: "CANCEL", materials: "Materials", caps: "Caps", food: "Food", water: "Water", power: "Power", population: "People", defense: "Defense", beds: "Beds", happiness: "Happiness", income: "Income", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough resources", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DEMOLISH", repair: "REPAIR", condition: "Condition", moving: "Choose a new location", active: "Active", building: "Building", people: "PEOPLE", unassigned: "Unassigned", workers: "Workers", needsWorker: "Needs worker", attackRisk: "Attack risk", attack: "ATTACK", warning: "Raid warning", attackActive: "Attack in progress", strength: "Enemy strength", autoDefense: "AUTO DEFENSE", startsIn: "Starts in", resolvesIn: "Auto resolves in", noThreat: "No active threat", victory: "Victory", defeat: "Defeat", hqLocked: "Settlement HQ cannot be moved or demolished" },
-  ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", cancel: "ОТМЕНА", materials: "Материалы", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", population: "Люди", defense: "Защита", beds: "Кровати", happiness: "Счастье", income: "Доход", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно ресурсов", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "СНЕСТИ", repair: "РЕМОНТ", condition: "Состояние", moving: "Выберите новое место", active: "Работает", building: "Строится", people: "ЖИТЕЛИ", unassigned: "Не назначен", workers: "Работники", needsWorker: "Нужен работник", attackRisk: "Риск атаки", attack: "АТАКА", warning: "Обнаружены враги", attackActive: "Идёт нападение", strength: "Сила врага", autoDefense: "АВТООБОРОНА", startsIn: "Начало через", resolvesIn: "Автобой через", noThreat: "Активных угроз нет", victory: "Победа", defeat: "Поражение", hqLocked: "Штаб поселения нельзя перемещать или сносить" },
-  uk: { back: "ГЛОБАЛЬНА МАПА", build: "БУДУВАТИ", cancel: "СКАСУВАТИ", materials: "Матеріали", caps: "Кришки", food: "Їжа", water: "Вода", power: "Енергія", population: "Люди", defense: "Захист", beds: "Ліжка", happiness: "Щастя", income: "Дохід", construction: "Будівництво", cannotPlace: "Тут будувати не можна", insufficient: "Недостатньо ресурсів", tapMap: "Оберіть вільне місце на мапі", empty: "Оберіть споруду знизу", manage: "СПОРУДА", move: "ПЕРЕМІСТИТИ", demolish: "ЗНЕСТИ", repair: "РЕМОНТ", condition: "Стан", moving: "Оберіть нове місце", active: "Працює", building: "Будується", people: "МЕШКАНЦІ", unassigned: "Не призначено", workers: "Працівники", needsWorker: "Потрібен працівник", attackRisk: "Ризик атаки", attack: "АТАКА", warning: "Ворог наближається", attackActive: "Триває напад", strength: "Сила ворога", autoDefense: "АВТООБОРОНА", startsIn: "Початок через", resolvesIn: "Автобій через", noThreat: "Активних загроз немає", victory: "Перемога", defeat: "Поразка", hqLocked: "Штаб поселення не можна переміщати або зносити" },
-  pl: { back: "MAPA ŚWIATA", build: "BUDUJ", cancel: "ANULUJ", materials: "Materiały", caps: "Kapsle", food: "Żywność", water: "Woda", power: "Energia", population: "Ludzie", defense: "Obrona", beds: "Łóżka", happiness: "Szczęście", income: "Dochód", construction: "Budowa", cannotPlace: "Nie można tu budować", insufficient: "Za mało zasobów", tapMap: "Wybierz wolne miejsce na mapie", empty: "Wybierz budynek poniżej", manage: "BUDYNEK", move: "PRZENIEŚ", demolish: "ROZBIERZ", repair: "NAPRAW", condition: "Stan", moving: "Wybierz nowe miejsce", active: "Aktywny", building: "W budowie", people: "MIESZKAŃCY", unassigned: "Nieprzydzielony", workers: "Pracownicy", needsWorker: "Wymaga pracownika", attackRisk: "Ryzyko ataku", attack: "ATAK", warning: "Wróg się zbliża", attackActive: "Atak trwa", strength: "Siła wroga", autoDefense: "AUTOOBRONA", startsIn: "Początek za", resolvesIn: "Autoobrona za", noThreat: "Brak aktywnego zagrożenia", victory: "Zwycięstwo", defeat: "Porażka", hqLocked: "Centrum osady nie może być przenoszone ani burzone" },
+  en: { back: "WORLD MAP", build: "BUILD", cancel: "CANCEL", materials: "Materials", caps: "Caps", food: "Food", water: "Water", power: "Power", people: "People", defense: "Defense", beds: "Beds", happiness: "Happiness", income: "Income", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough stockpile materials", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DISASSEMBLE", active: "Active", building: "Building", workers: "Workers", attack: "ATTACK", warning: "Raid warning", attackActive: "Attack in progress", strength: "Enemy strength", autoDefense: "AUTO DEFENSE", startsIn: "Starts in", noThreat: "No active threat", victory: "Victory", defeat: "Defeat", hqLocked: "Settlement HQ cannot be moved or disassembled", stockpile: "STOCKPILE", common: "Common", uncommon: "Uncommon", rare: "Rare", day: "Day", nextDay: "Next settlement day", action: "Settlement action", target: "Construction target", none: "None", progress: "Progress", riskCheck: "End-of-day risk dice" },
+  ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", cancel: "ОТМЕНА", materials: "Материалы", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", people: "Люди", defense: "Защита", beds: "Кровати", happiness: "Счастье", income: "Доход", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно материалов в запасах", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "РАЗОБРАТЬ", active: "Работает", building: "Строится", workers: "Работники", attack: "АТАКА", warning: "Обнаружены враги", attackActive: "Идёт нападение", strength: "Сила врага", autoDefense: "АВТООБОРОНА", startsIn: "Начало через", noThreat: "Активных угроз нет", victory: "Победа", defeat: "Поражение", hqLocked: "Штаб поселения нельзя перемещать или разбирать", stockpile: "ЗАПАСЫ", common: "Обычные", uncommon: "Необычные", rare: "Редкие", day: "День", nextDay: "Следующий день поселения", action: "Действие поселения", target: "Цель строительства", none: "Нет", progress: "Прогресс", riskCheck: "Кости риска в конце дня" },
+  uk: { back: "ГЛОБАЛЬНА МАПА", build: "БУДУВАТИ", cancel: "СКАСУВАТИ", materials: "Матеріали", caps: "Кришки", food: "Їжа", water: "Вода", power: "Енергія", people: "Люди", defense: "Захист", beds: "Ліжка", happiness: "Щастя", income: "Дохід", construction: "Будівництво", cannotPlace: "Тут будувати не можна", insufficient: "Недостатньо матеріалів у запасах", tapMap: "Оберіть вільне місце на мапі", empty: "Оберіть споруду знизу", manage: "СПОРУДА", move: "ПЕРЕМІСТИТИ", demolish: "РОЗІБРАТИ", active: "Працює", building: "Будується", workers: "Працівники", attack: "АТАКА", warning: "Ворог наближається", attackActive: "Триває напад", strength: "Сила ворога", autoDefense: "АВТООБОРОНА", startsIn: "Початок через", noThreat: "Активних загроз немає", victory: "Перемога", defeat: "Поразка", hqLocked: "Штаб поселення не можна переміщати або розбирати", stockpile: "ЗАПАСИ", common: "Звичайні", uncommon: "Незвичайні", rare: "Рідкісні", day: "День", nextDay: "Наступний день поселення", action: "Дія поселення", target: "Ціль будівництва", none: "Немає", progress: "Прогрес", riskCheck: "Кості ризику наприкінці дня" },
+  pl: { back: "MAPA ŚWIATA", build: "BUDUJ", cancel: "ANULUJ", materials: "Materiały", caps: "Kapsle", food: "Żywność", water: "Woda", power: "Energia", people: "Ludzie", defense: "Obrona", beds: "Łóżka", happiness: "Szczęście", income: "Dochód", construction: "Budowa", cannotPlace: "Nie można tu budować", insufficient: "Za mało materiałów w zapasach", tapMap: "Wybierz wolne miejsce na mapie", empty: "Wybierz budynek poniżej", manage: "BUDYNEK", move: "PRZENIEŚ", demolish: "ROZBIERZ", active: "Aktywny", building: "W budowie", workers: "Pracownicy", attack: "ATAK", warning: "Wróg się zbliża", attackActive: "Atak trwa", strength: "Siła wroga", autoDefense: "AUTOOBRONA", startsIn: "Początek za", noThreat: "Brak aktywnego zagrożenia", victory: "Zwycięstwo", defeat: "Porażka", hqLocked: "Centrum osady nie może być przenoszone ani rozbierane", stockpile: "ZAPASY", common: "Pospolite", uncommon: "Niepospolite", rare: "Rzadkie", day: "Dzień", nextDay: "Następny dzień osady", action: "Akcja osady", target: "Cel budowy", none: "Brak", progress: "Postęp", riskCheck: "Kości ryzyka na koniec dnia" },
 };
 
 function occupies(building, x, y) {
   const def = SETTLEMENT_BUILDINGS[building.type];
   return Boolean(def && x >= building.x && y >= building.y && x < building.x + def.footprint.width && y < building.y + def.footprint.height);
 }
-
 function canPlace(settlement, def, x, y, ignoreBuildingId = null) {
   if (!def || x < 0 || y < 0 || x + def.footprint.width > SETTLEMENT_GRID_SIZE || y + def.footprint.height > SETTLEMENT_GRID_SIZE) return false;
-  for (let yy = y; yy < y + def.footprint.height; yy += 1) {
-    for (let xx = x; xx < x + def.footprint.width; xx += 1) {
-      if ((settlement.buildings || []).some((building) => building.id !== ignoreBuildingId && occupies(building, xx, yy))) return false;
-    }
+  for (let yy = y; yy < y + def.footprint.height; yy += 1) for (let xx = x; xx < x + def.footprint.width; xx += 1) {
+    if ((settlement.buildings || []).some((building) => building.id !== ignoreBuildingId && occupies(building, xx, yy))) return false;
   }
   return true;
 }
@@ -56,24 +50,12 @@ function canPlace(settlement, def, x, y, ignoreBuildingId = null) {
 function BuildingVisual({ building, def, language }) {
   if (building.state === "construction") {
     const constructionAsset = getConstructionAsset(def.constructionSize || "medium");
-    return (
-      <div className="settlement-construction-scaffold">
-        <img src={constructionAsset} alt="" draggable="false" />
-        <small>{formatBuildTime(Number(building.completesAt) - Date.now())}</small>
-      </div>
-    );
+    const progress = getConstructionProgress(building);
+    return <div className="settlement-construction-scaffold"><img src={constructionAsset} alt="" draggable="false" /><small>{progress.progress}/{progress.required} d</small></div>;
   }
   const asset = getSettlementAsset(def.asset);
   if (asset) return <img src={asset} alt={settlementBuildingName(def, language)} draggable="false" />;
   return <div className={`settlement-generic-building settlement-generic-building--${building.type}`}>{BUILDING_ICONS[building.type] || "⌂"}</div>;
-}
-
-function getRepairCost(def, condition) {
-  const missing = Math.max(0, Math.min(1, (100 - Number(condition ?? 100)) / 100));
-  return {
-    materials: Math.ceil(Number(def?.cost?.materials || 0) * missing * 0.5),
-    caps: Math.ceil(Number(def?.cost?.caps || 0) * missing * 0.5),
-  };
 }
 
 export default function SettlementScreen({ settlement, onUpdate, onBack }) {
@@ -89,156 +71,89 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const [notice, setNotice] = useState("");
   const stats = useMemo(() => calculateSettlementStats(settlement), [settlement]);
   const attributes = stats.attributes;
-  const attackRisk = useMemo(() => calculateAttackRisk(settlement), [settlement]);
+  const stockpile = normalizeStockpile(settlement.stockpile, settlement.resources?.materials);
+  const attackDice = calculateAttackRisk(settlement);
   const activeAttack = (settlement.attacks || []).find((attack) => attack.state === "warning" || attack.state === "active") || null;
   const lastResolvedAttack = (settlement.attacks || []).find((attack) => attack.state === "resolved") || null;
   const selectedDef = selectedType ? SETTLEMENT_BUILDINGS[selectedType] : null;
+  const selectedRule = selectedType ? getRulebookBuilding(selectedType) : null;
   const selectedBuilding = (settlement.buildings || []).find((building) => building.id === selectedBuildingId) || null;
   const selectedBuildingLocked = selectedBuilding?.type === "settlement_hq" || Boolean(selectedBuilding?.locked);
   const movingBuilding = (settlement.buildings || []).find((building) => building.id === movingBuildingId) || null;
   const movingDef = movingBuilding ? SETTLEMENT_BUILDINGS[movingBuilding.type] : null;
   const placementDef = movingDef || selectedDef;
   const placementValid = hoverCell && placementDef ? canPlace(settlement, placementDef, hoverCell.x, hoverCell.y, movingBuildingId) : false;
-  const resource = (key) => Math.floor(Number(settlement.resources?.[key] || 0));
-  const enoughResources = selectedDef ? resource("materials") >= Number(selectedDef.cost?.materials || 0) && resource("caps") >= Number(selectedDef.cost?.caps || 0) : true;
-  const assignableBuildings = (settlement.buildings || []).filter((building) => building.state === "active" && Number(SETTLEMENT_BUILDINGS[building.type]?.workersRequired || 0) > 0);
-  const visibleBuildings = SETTLEMENT_BUILDING_LIST.filter((definition) => definition.category === selectedCategory);
+  const enoughResources = selectedType ? canAffordRulebookBuilding(settlement, selectedType) : true;
+  const visibleBuildings = SETTLEMENT_BUILDING_LIST.filter((definition) => definition.category === selectedCategory && getRulebookBuilding(definition.id));
+  const constructionBuildings = (settlement.buildings || []).filter((building) => building.state === "construction");
 
   function createBuildingAt(x, y) {
-    if (!selectedDef) return;
+    if (!selectedDef || !selectedRule) return;
     if (!canPlace(settlement, selectedDef, x, y)) { setNotice(text.cannotPlace); return; }
     if (!enoughResources) { setNotice(text.insufficient); return; }
     const now = Date.now();
-    onUpdate((current) => ({
-      ...current,
-      resources: { ...current.resources, materials: Math.max(0, Number(current.resources?.materials || 0) - Number(selectedDef.cost?.materials || 0)), caps: Math.max(0, Number(current.resources?.caps || 0) - Number(selectedDef.cost?.caps || 0)) },
-      buildings: [...(current.buildings || []), { id: `building_${now}_${Math.random().toString(36).slice(2, 7)}`, type: selectedDef.id, x, y, rotation: 0, state: "construction", condition: 100, startedAt: now, completesAt: now + selectedDef.buildTimeMs }],
-    }));
+    onUpdate((current) => {
+      const paid = payRulebookBuildingCost(current, selectedDef.id);
+      return { ...paid, buildings: [...(paid.buildings || []), createConstructionBuilding({ id: `building_${now}_${Math.random().toString(36).slice(2, 7)}`, type: selectedDef.id, x, y, now })] };
+    });
     setSelectedType(null); setHoverCell(null); setNotice("");
   }
-
   function moveBuildingTo(x, y) {
     if (!movingBuilding || !movingDef || movingBuilding.locked || movingBuilding.type === "settlement_hq") return;
     if (!canPlace(settlement, movingDef, x, y, movingBuilding.id)) { setNotice(text.cannotPlace); return; }
     onUpdate((current) => ({ ...current, buildings: (current.buildings || []).map((building) => building.id === movingBuilding.id ? { ...building, x, y } : building) }));
     setMovingBuildingId(null); setSelectedBuildingId(movingBuilding.id); setHoverCell(null); setNotice("");
   }
-
   function handleCellClick(x, y) {
     setHoverCell({ x, y });
-    if (movingBuildingId) { moveBuildingTo(x, y); return; }
-    if (selectedType) createBuildingAt(x, y);
+    if (movingBuildingId) moveBuildingTo(x, y); else if (selectedType) createBuildingAt(x, y);
   }
-
   function demolishSelected() {
     if (!selectedBuilding || selectedBuildingLocked) return;
-    const def = SETTLEMENT_BUILDINGS[selectedBuilding.type];
-    if (!def) return;
-    const refundRate = selectedBuilding.state === "construction" ? 0.75 : 0.5;
-    const refundMaterials = Math.floor(Number(def.cost?.materials || 0) * refundRate);
-    const refundCaps = Math.floor(Number(def.cost?.caps || 0) * refundRate);
     onUpdate((current) => ({
       ...current,
-      resources: { ...current.resources, materials: Number(current.resources?.materials || 0) + refundMaterials, caps: Number(current.resources?.caps || 0) + refundCaps },
       buildings: (current.buildings || []).filter((building) => building.id !== selectedBuilding.id),
-      settlers: (current.settlers || []).map((settler) => settler.assignedBuildingId === selectedBuilding.id ? { ...settler, assignedBuildingId: null, role: "unassigned", status: "idle" } : settler),
+      settlers: (current.settlers || []).map((settler) => settler.settlementAction?.targetBuildingId === selectedBuilding.id ? { ...settler, settlementAction: null, assignedBuildingId: null, status: "idle" } : settler),
     }));
     setSelectedBuildingId(null);
   }
-
-  function repairSelected() {
-    if (!selectedBuilding) return;
-    const def = SETTLEMENT_BUILDINGS[selectedBuilding.type];
-    const cost = getRepairCost(def, selectedBuilding.condition);
-    if (resource("materials") < cost.materials || resource("caps") < cost.caps) { setNotice(text.insufficient); return; }
-    onUpdate((current) => ({
-      ...current,
-      resources: { ...current.resources, materials: Math.max(0, Number(current.resources?.materials || 0) - cost.materials), caps: Math.max(0, Number(current.resources?.caps || 0) - cost.caps) },
-      buildings: (current.buildings || []).map((building) => building.id === selectedBuilding.id ? { ...building, condition: 100, state: building.state === "destroyed" ? "active" : building.state } : building),
-    }));
+  function assignAction(settlerId, type) {
+    onUpdate((current) => ({ ...current, settlers: (current.settlers || []).map((settler) => settler.id === settlerId ? { ...settler, settlementAction: type ? { type } : null, status: type ? "working" : "idle" } : settler) }));
   }
-
-  function assignSettler(settlerId, buildingId) {
-    onUpdate((current) => ({
-      ...current,
-      settlers: (current.settlers || []).map((settler) => {
-        if (settler.id !== settlerId) return settler;
-        const building = (current.buildings || []).find((item) => item.id === buildingId);
-        const def = building ? SETTLEMENT_BUILDINGS[building.type] : null;
-        return { ...settler, assignedBuildingId: buildingId || null, role: def?.category || "unassigned", status: buildingId ? "working" : "idle" };
-      }),
-    }));
+  function assignBuildTarget(settlerId, buildingId) {
+    onUpdate((current) => ({ ...current, settlers: (current.settlers || []).map((settler) => settler.id === settlerId ? { ...settler, settlementAction: buildingId ? { type: "build", targetBuildingId: buildingId } : { type: "build" }, assignedBuildingId: buildingId || null, status: buildingId ? "working" : "idle" } : settler) }));
   }
-
   function resolveAttackNow() {
-    if (!activeAttack) return;
-    onUpdate((current) => resolveSettlementAttack(current, activeAttack.id));
+    if (activeAttack) onUpdate((current) => resolveSettlementAttack(current, activeAttack.id));
   }
 
-  const repairCost = selectedBuilding ? getRepairCost(SETTLEMENT_BUILDINGS[selectedBuilding.type], selectedBuilding.condition) : null;
-
-  return (
-    <div className="pip-screen settlement-screen">
-      <div className="settlement-topbar">
-        <button type="button" className="pip-action-button settlement-back" onClick={onBack}>{text.back}</button>
-        <div className="settlement-title"><strong>{settlement.name}</strong><span>24 × 24</span></div>
-        <div className="settlement-stats">
-          <span>👥 {text.population} <b>{attributes.people}/{stats.peopleMax}</b></span>
-          <span>🍲 {text.food} <b>{attributes.food}</b></span>
-          <span>💧 {text.water} <b>{attributes.water}</b></span>
-          <span>⚡ {text.power} <b>{attributes.power}</b></span>
-          <span>🛡 {text.defense} <b>{attributes.defense}</b></span>
-          <span>🛏 {text.beds} <b>{attributes.beds}</b></span>
-          <span>☺ {text.happiness} <b>{attributes.happiness}</b></span>
-          <span>¤ {text.income} <b>{attributes.income}</b></span>
-        </div>
-      </div>
-
-      <div className="settlement-layout">
-        <div className="settlement-map-wrap">
-          <div className="settlement-map" onMouseLeave={() => setHoverCell(null)}>
-            {Array.from({ length: SETTLEMENT_GRID_SIZE * SETTLEMENT_GRID_SIZE }, (_, index) => {
-              const x = index % SETTLEMENT_GRID_SIZE; const y = Math.floor(index / SETTLEMENT_GRID_SIZE);
-              return <button key={`${x}-${y}`} type="button" className="settlement-cell" aria-label={`${x},${y}`} onMouseEnter={() => setHoverCell({ x, y })} onFocus={() => setHoverCell({ x, y })} onClick={() => handleCellClick(x, y)} />;
-            })}
-            {(settlement.buildings || []).map((building) => {
-              const def = SETTLEMENT_BUILDINGS[building.type]; if (!def) return null; const status = stats.buildingStatus?.[building.id];
-              return <button type="button" key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""} ${building.type === "settlement_hq" ? "is-hq" : ""} ${selectedBuildingId === building.id ? "is-selected" : ""} ${movingBuildingId === building.id ? "is-moving" : ""} ${status && !status.staffed ? "is-unstaffed" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)} onClick={(event) => { event.stopPropagation(); if (!selectedType && !movingBuildingId) { setSelectedBuildingId(building.id); setNotice(""); } }}><BuildingVisual building={building} def={def} language={language} /></button>;
-            })}
-            {placementDef && hoverCell ? <div className={`settlement-placement ${placementValid && enoughResources ? "is-valid" : "is-invalid"}`} style={{ left: `${hoverCell.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${hoverCell.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${placementDef.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${placementDef.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} /> : null}
-          </div>
-          <div className="settlement-map-hint">{notice || (movingBuildingId ? text.moving : selectedDef ? text.tapMap : text.empty)}</div>
-        </div>
-
-        <aside className="settlement-summary pip-panel">
-          <div className="pip-panel-title">{selectedBuilding ? text.manage : text.build}</div>
-          <div className="settlement-balance"><span>{text.materials}</span><b>{resource("materials")}</b></div>
-          <div className="settlement-balance"><span>{text.caps}</span><b>{resource("caps")}</b></div>
-          {selectedDef ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef, language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{text.materials}: {selectedDef.cost?.materials || 0}</span><span>{text.caps}: {selectedDef.cost?.caps || 0}</span><span>{text.construction}: {formatBuildTime(selectedDef.buildTimeMs)}</span>{selectedDef.workersRequired ? <span>{text.workers}: {selectedDef.workersRequired}</span> : null}<button type="button" className="pip-action-button" onClick={() => { setSelectedType(null); setHoverCell(null); }}>{text.cancel}</button></div> : null}
-          {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(SETTLEMENT_BUILDINGS[selectedBuilding.type], language)}</strong><span>{selectedBuilding.state === "construction" ? `${text.building}: ${formatBuildTime(Number(selectedBuilding.completesAt) - Date.now())}` : text.active}</span><span>{text.condition}: {Math.round(Number(selectedBuilding.condition ?? 100))}%</span>{stats.buildingStatus?.[selectedBuilding.id]?.requiredWorkers ? <span>{text.workers}: {stats.buildingStatus[selectedBuilding.id].assignedWorkers}/{stats.buildingStatus[selectedBuilding.id].requiredWorkers}{!stats.buildingStatus[selectedBuilding.id].staffed ? ` · ${text.needsWorker}` : ""}</span> : null}{selectedBuildingLocked ? <span className="settlement-hq-note">{text.hqLocked}</span> : <><button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); setNotice(""); }}>{text.move}</button>{Number(selectedBuilding.condition ?? 100) < 100 ? <button type="button" className="pip-action-button" onClick={repairSelected}>{text.repair} · ⚙{repairCost.materials} · ●{repairCost.caps}</button> : null}<button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button></>}<button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
-
-          <div className={`settlement-defense-panel ${activeAttack ? "is-alert" : ""}`}>
-            <div className="pip-panel-title">{text.attack}</div>
-            <div className="settlement-balance"><span>{text.attackRisk}</span><b>{attackRisk}%</b></div>
-            {activeAttack ? <><strong>{activeAttack.state === "warning" ? text.warning : text.attackActive}</strong><span>{activeAttack.faction?.replaceAll("_", " ")}</span><div className="settlement-balance"><span>{text.strength}</span><b>{activeAttack.strength}</b></div><span>{activeAttack.state === "warning" ? `${text.startsIn}: ${formatBuildTime(Number(activeAttack.startsAt) - Date.now())}` : `${text.resolvesIn}: ${formatBuildTime(Number(activeAttack.resolveAt) - Date.now())}`}</span><button type="button" className="pip-action-button" onClick={resolveAttackNow}>{text.autoDefense}</button></> : <span>{lastResolvedAttack ? `${lastResolvedAttack.result === "victory" ? text.victory : text.defeat} · ${lastResolvedAttack.faction?.replaceAll("_", " ")}` : text.noThreat}</span>}
-          </div>
-
-          <div className="settlement-people">
-            <div className="pip-panel-title">{text.people}</div>
-            {(settlement.settlers || []).map((settler) => <label key={settler.id} className="settlement-person"><span><strong>{settler.name}</strong><small>{settler.status === "injured" ? `${settler.role} · HP ${settler.health}` : settler.role === "unassigned" ? text.unassigned : settler.role}</small></span><select className="pip-input" value={settler.assignedBuildingId || ""} onChange={(event) => assignSettler(settler.id, event.target.value)}><option value="">{text.unassigned}</option>{assignableBuildings.map((building) => <option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)}</option>)}</select></label>)}
-          </div>
-        </aside>
-      </div>
-
-      <div className="settlement-build-categories" role="tablist" aria-label={text.build}>
-        {BUILD_CATEGORIES.map((category) => <button key={category} type="button" className={selectedCategory === category ? "is-selected" : ""} onClick={() => { setSelectedCategory(category); setSelectedType(null); setHoverCell(null); setNotice(""); }}>{categoryLabels[category]}</button>)}
-      </div>
-      <div className="settlement-build-menu">
-        {visibleBuildings.map((def) => {
-          const asset = getSettlementAsset(def.asset);
-          return <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setSelectedBuildingId(null); setMovingBuildingId(null); setNotice(""); }}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · ⚙{def.cost?.materials || 0} · ●{def.cost?.caps || 0}</small></button>;
-        })}
+  return <div className="pip-screen settlement-screen">
+    <div className="settlement-topbar">
+      <button type="button" className="pip-action-button settlement-back" onClick={onBack}>{text.back}</button>
+      <div className="settlement-title"><strong>{settlement.name}</strong><span>{text.day} {settlement.settlementDay || 1} · {text.nextDay}: {formatBuildTime(Number(settlement.nextDayAt) - Date.now())}</span></div>
+      <div className="settlement-stats">
+        <span>👥 {text.people} <b>{attributes.people}/{stats.peopleMax}</b></span><span>🍲 {text.food} <b>{attributes.food}</b></span><span>💧 {text.water} <b>{attributes.water}</b></span><span>⚡ {text.power} <b>{attributes.power}</b></span><span>🛡 {text.defense} <b>{attributes.defense}</b></span><span>🛏 {text.beds} <b>{attributes.beds}</b></span><span>☺ {text.happiness} <b>{attributes.happiness}</b></span><span>¤ {text.income} <b>{attributes.income}</b></span>
       </div>
     </div>
-  );
+
+    <div className="settlement-layout">
+      <div className="settlement-map-wrap"><div className="settlement-map" onMouseLeave={() => setHoverCell(null)}>
+        {Array.from({ length: SETTLEMENT_GRID_SIZE * SETTLEMENT_GRID_SIZE }, (_, index) => { const x = index % SETTLEMENT_GRID_SIZE; const y = Math.floor(index / SETTLEMENT_GRID_SIZE); return <button key={`${x}-${y}`} type="button" className="settlement-cell" aria-label={`${x},${y}`} onMouseEnter={() => setHoverCell({ x, y })} onFocus={() => setHoverCell({ x, y })} onClick={() => handleCellClick(x, y)} />; })}
+        {(settlement.buildings || []).map((building) => { const def = SETTLEMENT_BUILDINGS[building.type]; if (!def) return null; return <button type="button" key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""} ${building.type === "settlement_hq" ? "is-hq" : ""} ${selectedBuildingId === building.id ? "is-selected" : ""} ${movingBuildingId === building.id ? "is-moving" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)} onClick={(event) => { event.stopPropagation(); if (!selectedType && !movingBuildingId) setSelectedBuildingId(building.id); }}><BuildingVisual building={building} def={def} language={language} /></button>; })}
+        {placementDef && hoverCell ? <div className={`settlement-placement ${placementValid && enoughResources ? "is-valid" : "is-invalid"}`} style={{ left: `${hoverCell.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${hoverCell.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${placementDef.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${placementDef.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} /> : null}
+      </div><div className="settlement-map-hint">{notice || (movingBuildingId ? text.move : selectedDef ? text.tapMap : text.empty)}</div></div>
+
+      <aside className="settlement-summary pip-panel">
+        <div className="pip-panel-title">{selectedBuilding ? text.manage : text.build}</div>
+        <div className="settlement-stockpile"><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div><small>{Math.floor(stockpile.capacityLbs)} lbs</small></div>
+        {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef, language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><button type="button" className="pip-action-button" onClick={() => { setSelectedType(null); setHoverCell(null); }}>{text.cancel}</button></div> : null}
+        {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(SETTLEMENT_BUILDINGS[selectedBuilding.type], language)}</strong>{selectedBuilding.state === "construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}{selectedBuildingLocked ? <span className="settlement-hq-note">{text.hqLocked}</span> : <><button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); }}>{text.move}</button><button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button></>}<button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
+        <div className={`settlement-defense-panel ${activeAttack ? "is-alert" : ""}`}><div className="pip-panel-title">{text.attack}</div><div className="settlement-balance"><span>{text.riskCheck}</span><b>{attackDice ? `${attackDice}d20` : "—"}</b></div>{activeAttack ? <><strong>{activeAttack.state === "warning" ? text.warning : text.attackActive}</strong><span>{activeAttack.faction?.replaceAll("_", " ")}</span><div className="settlement-balance"><span>{text.strength}</span><b>{activeAttack.strength}</b></div><span>{text.startsIn}: {formatBuildTime(Number(activeAttack.startsAt) - Date.now())}</span><button type="button" className="pip-action-button" onClick={resolveAttackNow}>{text.autoDefense}</button></> : <span>{lastResolvedAttack ? `${lastResolvedAttack.result === "victory" ? text.victory : text.defeat} · ${lastResolvedAttack.faction?.replaceAll("_", " ")}` : text.noThreat}</span>}</div>
+        <div className="settlement-people"><div className="pip-panel-title">{text.people}</div>{(settlement.settlers || []).map((settler) => <div key={settler.id} className="settlement-person settlement-person--actions"><span><strong>{settler.name}</strong><small>{settler.status}</small></span><select className="pip-input" value={settler.settlementAction?.type || ""} onChange={(event) => assignAction(settler.id, event.target.value)}><option value="">{text.none}</option>{Object.values(SETTLEMENT_ACTIONS).map((action) => <option key={action.id} value={action.id}>{settlementRuleName(action, language)}</option>)}</select>{settler.settlementAction?.type === "build" ? <select className="pip-input" value={settler.settlementAction?.targetBuildingId || ""} onChange={(event) => assignBuildTarget(settler.id, event.target.value)}><option value="">{text.target}</option>{constructionBuildings.map((building) => <option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)} · {getConstructionProgress(building).progress}/{getConstructionProgress(building).required}</option>)}</select> : null}</div>)}</div>
+      </aside>
+    </div>
+
+    <div className="settlement-build-categories" role="tablist" aria-label={text.build}>{BUILD_CATEGORIES.map((category) => <button key={category} type="button" className={selectedCategory === category ? "is-selected" : ""} onClick={() => { setSelectedCategory(category); setSelectedType(null); setHoverCell(null); setNotice(""); }}>{categoryLabels[category]}</button>)}</div>
+    <div className="settlement-build-menu">{visibleBuildings.map((def) => { const asset = getSettlementAsset(def.asset); const rule = getRulebookBuilding(def.id); return <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setSelectedBuildingId(null); setMovingBuildingId(null); setNotice(""); }}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · {formatRulebookCost(rule)} · {rule.constructionDays}d</small></button>; })}</div>
+  </div>;
 }
