@@ -51,29 +51,54 @@ function createInitialSettlers(createdAt, count = 4) {
   }));
 }
 
+function clampHappiness(value) {
+  return Math.max(1, Math.min(20, Math.round(Number(value) || 10)));
+}
+
 function ensureRulebookState(input) {
   const settlement = ensureSettlementHQ(input);
-  const resources = { ...(settlement.resources || {}) };
+  const legacy = { ...(settlement.resources || {}) };
+  const existingAttributes = settlement.attributes || {};
   const people = Array.isArray(settlement.settlers) && settlement.settlers.length
     ? settlement.settlers.length
-    : Math.max(0, Math.floor(Number(resources.population || 4)));
+    : Math.max(0, Math.floor(Number(existingAttributes.people ?? legacy.population ?? 4)));
 
-  resources.population = people;
-  if (!Number.isFinite(Number(resources.food))) resources.food = people;
-  if (!Number.isFinite(Number(resources.water))) resources.water = people;
-  if (!Number.isFinite(Number(resources.power))) resources.power = 0;
-  if (!Number.isFinite(Number(resources.defense))) resources.defense = 0;
-  if (!Number.isFinite(Number(resources.beds))) resources.beds = 0;
-  if (!Number.isFinite(Number(resources.income))) resources.income = 0;
-  const oldHappiness = Number(resources.happiness);
-  resources.happiness = Math.max(1, Math.min(20, Number.isFinite(oldHappiness) ? (oldHappiness > 20 ? 10 : oldHappiness) : 10));
+  const migratedHappiness = existingAttributes.happiness ?? legacy.happiness;
+  const attributes = {
+    people,
+    food: Math.max(0, Math.floor(Number(existingAttributes.food ?? legacy.food ?? people))),
+    water: Math.max(0, Math.floor(Number(existingAttributes.water ?? legacy.water ?? people))),
+    power: Math.max(0, Math.floor(Number(existingAttributes.power ?? legacy.power ?? 0))),
+    defense: Math.max(0, Math.floor(Number(existingAttributes.defense ?? legacy.defense ?? 0))),
+    beds: Math.max(0, Math.floor(Number(existingAttributes.beds ?? legacy.beds ?? 0))),
+    happiness: clampHappiness(Number(migratedHappiness) > 20 ? 10 : migratedHappiness),
+    income: Math.max(0, Math.floor(Number(existingAttributes.income ?? legacy.income ?? 0))),
+  };
+
+  // Keep build-currency fields separate from the settlement attributes. These
+  // remain temporarily for the current builder until Stockpile construction is wired.
+  const resources = {
+    materials: Math.max(0, Number(legacy.materials ?? STARTING_SETTLEMENT_RESOURCES.materials ?? 0)),
+    caps: Math.max(0, Number(legacy.caps ?? STARTING_SETTLEMENT_RESOURCES.caps ?? 0)),
+    // Legacy mirrors keep the existing attack engine compatible until it is
+    // replaced by the rulebook end-of-day attack procedure.
+    population: attributes.people,
+    food: attributes.food,
+    water: attributes.water,
+    power: attributes.power,
+    defense: attributes.defense,
+    beds: attributes.beds,
+    happiness: attributes.happiness,
+    income: attributes.income,
+  };
 
   return {
     ...settlement,
-    rulesVersion: 1,
+    rulesVersion: 2,
     settlementDay: Math.max(1, Math.floor(Number(settlement.settlementDay || 1))),
     basePopulationLimit: 10,
     leader: settlement.leader || { characterId: settlement.ownerCharacterId || null, charisma: 0 },
+    attributes,
     resources,
     stockpile: {
       capacityLbs: 300,
@@ -111,7 +136,7 @@ function writeAll(settlements) {
 
 export function createSettlement({ name, regionId, worldX, worldY, ownerCharacterId = null }) {
   const now = Date.now();
-  const population = Number(STARTING_SETTLEMENT_RESOURCES.population || 4);
+  const people = Math.max(1, Number(STARTING_SETTLEMENT_RESOURCES.population || 4));
   return ensureRulebookState({
     id: `settlement_${now}_${Math.random().toString(36).slice(2, 8)}`,
     name: String(name || "New Settlement").trim() || "New Settlement",
@@ -122,21 +147,23 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     ownership: { type: "party" },
     map: { width: 24, height: 24 },
     basePopulationLimit: 10,
-    resources: {
-      ...STARTING_SETTLEMENT_RESOURCES,
-      population,
-      populationLimit: 10,
-      food: population,
-      water: population,
+    attributes: {
+      people,
+      food: people,
+      water: people,
       power: 0,
       defense: 0,
       beds: 0,
       happiness: 10,
       income: 0,
     },
+    resources: {
+      materials: Number(STARTING_SETTLEMENT_RESOURCES.materials || 0),
+      caps: Number(STARTING_SETTLEMENT_RESOURCES.caps || 0),
+    },
     stockpile: { capacityLbs: 300, common: 0, uncommon: 0, rare: 0, items: [] },
     buildings: [],
-    settlers: createInitialSettlers(now, population),
+    settlers: createInitialSettlers(now, people),
     events: [],
     attacks: [],
     attackRisk: 0,
