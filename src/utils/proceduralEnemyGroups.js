@@ -6,8 +6,17 @@ const GROUPS = [
   "mirelurk",
   "insect",
   "deathclaw",
+  "amphibian",
+  "reptile",
+  "mammal",
+  "crustacean",
+  "cryptid",
   "ghoul",
+  "scorched",
+  "trog",
   "robot",
+  "cyber_animal",
+  "floater",
   "institute",
   "zetan",
   "mole_rat",
@@ -36,13 +45,22 @@ const LABELS = {
   en: {
     auto: "Auto",
     raider: "Raiders + dogs",
-    super_mutant: "Super Mutants + mutant hounds",
+    super_mutant: "Super Mutants + mutant hounds + floaters",
     brotherhood: "Brotherhood of Steel",
     mirelurk: "Mirelurks",
     insect: "Insects",
     deathclaw: "Deathclaws",
+    amphibian: "Amphibians",
+    reptile: "Reptiles",
+    mammal: "Mammals",
+    crustacean: "Crustaceans",
+    cryptid: "Cryptids",
     ghoul: "Feral Ghouls",
+    scorched: "Scorched",
+    trog: "Trogs",
     robot: "Robots / turrets",
+    cyber_animal: "Cyber Animals",
+    floater: "Floaters",
     institute: "Institute / Synths",
     zetan: "Zetans",
     mole_rat: "Mole Rats",
@@ -63,13 +81,22 @@ const LABELS = {
   ru: {
     auto: "Авто",
     raider: "Рейдеры + собаки",
-    super_mutant: "Супермутанты + мутировавшие собаки",
+    super_mutant: "Супермутанты + мутировавшие собаки + флоатеры",
     brotherhood: "Братство Стали",
     mirelurk: "Болотники",
     insect: "Насекомые",
     deathclaw: "Когти смерти",
+    amphibian: "Амфибии",
+    reptile: "Рептилии",
+    mammal: "Млекопитающие",
+    crustacean: "Ракообразные",
+    cryptid: "Криптиды",
     ghoul: "Дикие гули",
+    scorched: "Обгоревшие",
+    trog: "Троги",
     robot: "Роботы / турели",
+    cyber_animal: "Киберживотные",
+    floater: "Флоатеры",
     institute: "Институт / синты",
     zetan: "Зетаны",
     mole_rat: "Кротокрысы",
@@ -90,13 +117,22 @@ const LABELS = {
   uk: {
     auto: "Авто",
     raider: "Рейдери + собаки",
-    super_mutant: "Супермутанти + мутовані собаки",
+    super_mutant: "Супермутанти + мутовані собаки + флоатери",
     brotherhood: "Братство Сталі",
     mirelurk: "Болотники",
     insect: "Комахи",
     deathclaw: "Кігті смерті",
+    amphibian: "Амфібії",
+    reptile: "Рептилії",
+    mammal: "Ссавці",
+    crustacean: "Ракоподібні",
+    cryptid: "Криптиди",
     ghoul: "Дикі гулі",
+    scorched: "Обпалені",
+    trog: "Троги",
     robot: "Роботи / турелі",
+    cyber_animal: "Кібер-тварини",
+    floater: "Флоатери",
     institute: "Інститут / синти",
     zetan: "Зетани",
     mole_rat: "Кротощури",
@@ -117,13 +153,22 @@ const LABELS = {
   pl: {
     auto: "Auto",
     raider: "Najeźdźcy + psy",
-    super_mutant: "Supermutanci + zmutowane psy",
+    super_mutant: "Supermutanci + zmutowane psy + floatery",
     brotherhood: "Bractwo Stali",
     mirelurk: "Mirelurki",
     insect: "Owady",
     deathclaw: "Szpony śmierci",
+    amphibian: "Płazy",
+    reptile: "Gady",
+    mammal: "Ssaki",
+    crustacean: "Skorupiaki",
+    cryptid: "Kryptydy",
     ghoul: "Dzikie ghule",
+    scorched: "Scorched",
+    trog: "Trogi",
     robot: "Roboty / wieżyczki",
+    cyber_animal: "Cyberzwierzęta",
+    floater: "Floatery",
     institute: "Instytut / synthy",
     zetan: "Zetanie",
     mole_rat: "Kretoszczury",
@@ -144,11 +189,15 @@ const LABELS = {
 };
 
 const LOCATION_GROUPS = {
-  wasteland: ["raider", "super_mutant", "ghoul", "insect", "mirelurk", "deathclaw", "mole_rat", "yao_guai", "robot", "radstag", "brahmin"],
-  red_rocket: ["raider", "ghoul", "insect", "mole_rat", "robot", "deathclaw"],
-  super_duper_mart: ["ghoul", "raider", "insect", "robot", "institute"],
+  wasteland: [
+    "raider", "super_mutant", "ghoul", "scorched", "trog", "insect", "mirelurk", "deathclaw",
+    "amphibian", "reptile", "mammal", "crustacean", "cryptid", "floater", "cyber_animal",
+    "mole_rat", "yao_guai", "robot", "radstag", "brahmin",
+  ],
+  red_rocket: ["raider", "ghoul", "scorched", "insect", "reptile", "mammal", "floater", "mole_rat", "robot", "cyber_animal", "deathclaw"],
+  super_duper_mart: ["ghoul", "scorched", "trog", "raider", "insect", "robot", "cyber_animal", "institute"],
   raider_camp: ["raider"],
-  military_bunker: ["robot", "brotherhood", "ghoul", "super_mutant", "institute"],
+  military_bunker: ["robot", "cyber_animal", "brotherhood", "ghoul", "scorched", "super_mutant", "institute"],
 };
 
 function norm(value) {
@@ -221,6 +270,16 @@ export function enemyGroupForEntry(value) {
   if (/mutant hound|mutant-hound/.test(source)) return "super_mutant";
   if (/super mutant|super-mutant|\bnightkin\b/.test(source)) return "super_mutant";
 
+  // Floater is its own encounter family. It is also permitted as Super Mutant support.
+  if (/\bfloater\b/.test(source)) return "floater";
+
+  // Scorched are kept together, including Scorchbeasts that can call them into battle.
+  if (/\bscorched\b|\bscorchbeast\b/.test(source)) return "scorched";
+  if (/\btrogs?\b/.test(source)) return "trog";
+
+  // Cyber animals remain separate from ordinary robots and mammals.
+  if (/cyber animal|cyber-animal|cyber animals|cyber-animals|\bcyberdog\b/.test(source)) return "cyber_animal";
+
   // Ordinary dogs/mongrels are factionless in lore, but may accompany raiders in encounters.
   if (/wild mongrel|mongrel dog|\bdog\b|\bcanine\b/.test(source)) return "raider";
 
@@ -229,17 +288,24 @@ export function enemyGroupForEntry(value) {
   if (factionless) return factionless;
 
   if (/deathclaw|death-claw/.test(source)) return "deathclaw";
-  if (/mirelurk|\bcrustacean\b|\bhatchlings?\b/.test(source)) return "mirelurk";
+  if (/mirelurk|\bhatchlings?\b/.test(source)) return "mirelurk";
 
-  // All insect/arthropod enemies explicitly assigned by the GM belong to one compatible group.
-  // Current set: Radroach, Bloatfly, Bloodbug, Stingwing and Radscorpion.
-  if (/radroach|bloodbug|bloatfly|stingwing|radscorpion|rad-scorpion|\binsect\b|\barachnid\b/.test(source)) return "insect";
+  // All Radscorpions are intentionally part of Insects in this app.
+  if (/radroach|bloodbug|bloatfly|stingwing|radscorpion|rad-scorpion|cave cricket|cazador|giant ant|giant mantis|honey beast|bee swarm|\binsect\b|\barachnid\b/.test(source)) return "insect";
+
+  // Wanderer's Guide creature-family pools.
+  if (/\bangler\b|\bgulper\b|\bamphibian\b/.test(source)) return "amphibian";
+  if (/\bgatorclaw\b|\bgecko\b|\breptile\b|\blizard\b/.test(source)) return "reptile";
+  if (/\bhermit crab\b|\bcrustacean\b/.test(source)) return "crustacean";
+  if (/\bcryptid\b|grafton monster|mothman|sheepsquatch|snallygaster|wendigo/.test(source)) return "cryptid";
 
   if (/mole rat|mole-rat/.test(source)) return "mole_rat";
   if (/yao guai|yao-guai/.test(source)) return "yao_guai";
   if (/feral ghoul|glowing one|\bghoul\b|\bferal\b/.test(source)) return "ghoul";
 
-  if (/\brobot\b|protectron|turret|mister gutsy|mr gutsy|sentry bot|assaultron|eyebot|security robot/.test(source)) return "robot";
+  if (/\brobot\b|protectron|turret|mister gutsy|mr gutsy|sentry bot|assaultron|eyebot|security robot|\bliberator\b/.test(source)) return "robot";
+
+  if (/\bradrat\b|mega sloth|\bmammal\b/.test(source)) return "mammal";
 
   // No generic Human bucket: an otherwise factionless human profile gets its own
   // exact species/profile identity instead of being mixed with unrelated humans.
@@ -252,7 +318,11 @@ export function entriesCompatible(a, b) {
     if (typeof value === "string" && GROUPS.includes(value.toLowerCase())) return normalizeEnemyGroup(value);
     return enemyGroupForEntry(value);
   };
-  return directGroup(a) === directGroup(b);
+  const aGroup = directGroup(a);
+  const bGroup = directGroup(b);
+  if (aGroup === bGroup) return true;
+  // Floaters may accompany Super Mutants without losing their standalone pool.
+  return (aGroup === "floater" && bGroup === "super_mutant") || (aGroup === "super_mutant" && bGroup === "floater");
 }
 
 export function autoEnemyGroupsForLocation(type) {
