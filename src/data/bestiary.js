@@ -6,6 +6,7 @@ import coreRulebook05 from "./bestiary/coreRulebook05.js";
 import coreRulebook06 from "./bestiary/coreRulebook06.js";
 import coreRulebookRules from "./bestiary/coreRulebookRules.js";
 import coreRulebookVariants from "./bestiary/coreRulebookVariants.js";
+import settlersGuideBestiary from "./bestiary/settlersGuideBestiary.js";
 
 export const BESTIARY_CATEGORIES = [
   "all",
@@ -28,6 +29,7 @@ export const BESTIARY_ENTRIES = [
   ...coreRulebook06,
   ...coreRulebookRules,
   ...coreRulebookVariants,
+  ...settlersGuideBestiary,
 ];
 
 export function createEmptyBestiaryEntry(category = "creature") {
