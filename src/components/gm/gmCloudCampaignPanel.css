@@ -1,0 +1,86 @@
+.gm-cloud-campaign {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 70;
+  width: min(360px, calc(100vw - 24px));
+  padding: 10px 12px;
+  background: rgba(5, 24, 18, 0.94);
+  backdrop-filter: blur(6px);
+  border: 1px solid currentColor;
+  box-shadow: 0 0 18px rgba(0, 0, 0, 0.35);
+}
+
+.gm-cloud-campaign__header,
+.gm-cloud-campaign__meta,
+.gm-cloud-campaign__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.gm-cloud-campaign__header {
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.gm-cloud-campaign__status {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  border: 1px solid currentColor;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.gm-cloud-campaign__status.is-saving,
+.gm-cloud-campaign__status.is-restoring {
+  animation: gm-cloud-pulse 1s ease-in-out infinite alternate;
+}
+
+.gm-cloud-campaign__meta {
+  flex-direction: column;
+  font-size: 11px;
+  opacity: 0.88;
+}
+
+.gm-cloud-campaign__error,
+.gm-cloud-campaign__message {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.gm-cloud-campaign__error {
+  border-left: 2px solid currentColor;
+  padding-left: 7px;
+}
+
+.gm-cloud-campaign__actions {
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.gm-cloud-campaign__actions .pip-btn {
+  flex: 1 1 145px;
+  min-height: 34px;
+  font-size: 11px;
+}
+
+@keyframes gm-cloud-pulse {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 720px) {
+  .gm-cloud-campaign {
+    top: 8px;
+    right: 8px;
+    width: min(310px, calc(100vw - 16px));
+    padding: 8px;
+  }
+
+  .gm-cloud-campaign__actions .pip-btn {
+    flex-basis: 100%;
+  }
+}
