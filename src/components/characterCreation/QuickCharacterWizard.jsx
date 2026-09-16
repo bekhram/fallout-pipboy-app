@@ -309,8 +309,14 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
 
   const origin = originId ? ORIGINS[originId] : null;
   const originTraitRequired = Number(origin?.traitSelectCount || 0);
-  const selectedTraitReady =
-    !origin?.availableTraits?.length || selectedTraits.length === originTraitRequired;
+  const hasFlexibleTraitPerkChoice = Boolean(origin?.flexibleTraitPerkChoice);
+  const minFlexibleTraits = hasFlexibleTraitPerkChoice ? 1 : originTraitRequired;
+  const selectedTraitReady = !origin?.availableTraits?.length || (
+    hasFlexibleTraitPerkChoice
+      ? selectedTraits.length >= minFlexibleTraits && selectedTraits.length <= originTraitRequired
+      : selectedTraits.length === originTraitRequired
+  );
+  const flexibleBonusPerkCount = hasFlexibleTraitPerkChoice && selectedTraits.length === 1 ? 1 : 0;
 
   const specialTotal = SPECIAL_KEYS.reduce(
     (sum, key) => sum + Number(special?.[key] || 0),
@@ -381,7 +387,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
     usedSkillPoints === (Math.max(9, Number(special?.I || 0) + 9)) &&
     taggedSkills.length === tagLimit &&
     restrictedTaggedCount >= restrictedRequired;
-  const requiredPerkCount = 1 + Number(origin?.bonusPerkCount || 0);
+  const requiredPerkCount = 1 + Number(origin?.bonusPerkCount || 0) + flexibleBonusPerkCount;
   const perkReady = perkIds.length === requiredPerkCount;
 
   const canContinue =
@@ -612,6 +618,13 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                   {origin.availableTraits?.length > 0 && (
                     <div className="quick-create-subsection">
                       <strong>{copy.traits} ({selectedTraits.length}/{originTraitRequired})</strong>
+                      {hasFlexibleTraitPerkChoice && (
+                        <div className="pip-logbox" style={{ margin: "8px 0 10px" }}>
+                          {selectedTraits.length === 1
+                            ? "NCR: 1 trait selected — you will choose 1 additional Perk on the final step."
+                            : "NCR: choose 2 traits, or choose 1 trait and gain 1 additional Perk."}
+                        </div>
+                      )}
                       <div className="quick-trait-list">
                         {origin.availableTraits.map((traitId) => {
                           const checked = selectedTraits.includes(traitId);
@@ -783,6 +796,11 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
               <div className="quick-create-intro">
                 <h3>{copy.perkTitle} ({perkIds.length}/{requiredPerkCount})</h3>
                 <p>{copy.perkHelp}</p>
+                {flexibleBonusPerkCount > 0 && (
+                  <div className="pip-logbox" style={{ marginTop: 8 }}>
+                    NCR origin bonus: because you selected only 1 trait, choose 1 additional Perk.
+                  </div>
+                )}
               </div>
               <input
                 className="pip-input"
