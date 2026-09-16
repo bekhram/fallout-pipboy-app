@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmSessionMapV2 from "./GmSessionMapV2.jsx";
 import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
@@ -35,6 +35,7 @@ import "./gmDesktopLayoutV2.css";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
 const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens"];
+const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
   en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu" },
   ru: { battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC", scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ", waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ" },
@@ -60,11 +61,41 @@ export default function GmSessionMap(props) {
   const bridgedSession = useLiveSessionBridge();
   const session = props.session || bridgedSession;
   const [activeTab, setActiveTab] = useState(initialTab);
+  const rulerClearTimerRef = useRef(null);
   const labels = COPY[languageCode(i18n.resolvedLanguage || i18n.language)] || COPY.en;
+
+  const toolsSession = useMemo(() => {
+    if (!session) return session;
+    return {
+      ...session,
+      updateSharedMapMarkup: (payload = {}) => {
+        if (payload?.operation === "ruler:set") {
+          if (rulerClearTimerRef.current) {
+            window.clearTimeout(rulerClearTimerRef.current);
+            rulerClearTimerRef.current = null;
+          }
+          return session.updateSharedMapMarkup?.(payload);
+        }
+        if (payload?.operation === "ruler:clear") {
+          if (rulerClearTimerRef.current) window.clearTimeout(rulerClearTimerRef.current);
+          rulerClearTimerRef.current = window.setTimeout(() => {
+            session.updateSharedMapMarkup?.({ operation: "ruler:clear" });
+            rulerClearTimerRef.current = null;
+          }, SHARED_RULER_HOLD_MS);
+          return Promise.resolve({ ok: true, delayed: true });
+        }
+        return session.updateSharedMapMarkup?.(payload);
+      },
+    };
+  }, [session]);
 
   useEffect(() => {
     if (typeof window !== "undefined") window.localStorage.setItem(TAB_STORAGE_KEY, activeTab);
   }, [activeTab]);
+
+  useEffect(() => () => {
+    if (rulerClearTimerRef.current) window.clearTimeout(rulerClearTimerRef.current);
+  }, []);
 
   if (!session?.isActive || session?.mode !== "host" || !session?.tacticalScene) {
     return <section className="pip-panel gm-session-map tactical-map"><div className="gm-session-map__hint">{labels.waiting}</div></section>;
@@ -102,7 +133,7 @@ export default function GmSessionMap(props) {
         <BattlemapSharedLayer scene={session.tacticalScene} role="gm" />
         <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
         <GmZoomDrawerToggle />
-        {activeTab === "battle" ? <GmBattlemapTools session={session} /> : null}
+        {activeTab === "battle" ? <GmBattlemapTools session={toolsSession} /> : null}
         <GmTokenColorAndFocusEnhancer session={session} />
         <GmTokenStatusLayer session={session} />
         <GmTokenPointerGuard />
