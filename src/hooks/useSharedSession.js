@@ -26,6 +26,8 @@ export default function useSharedSession(form) {
   const mergedSession = useMemo(() => ({
     ...session,
     ...cloud,
+    status: waitingForGm ? "waiting" : session.status,
+    error: waitingForGm ? null : session.error,
     waitingForGm,
     startHost: async (...args) => {
       try {
