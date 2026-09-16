@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   normalizeSessionCode,
   SESSION_CODE_LENGTH,
 } from "../../hooks/useSharedSession.js";
+import { buildSessionShareUrl, getSessionCodeFromUrl } from "../../utils/sessionShare.js";
 import GmWorkspace from "../gm/GmWorkspace.jsx";
 import SessionChatDrawer from "./SessionChatDrawer.jsx";
 import "./session.css";
@@ -213,6 +214,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   const [playerName, setPlayerName] = useState(defaultPlayerName);
   const [localError, setLocalError] = useState("");
   const [copyState, setCopyState] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [syncState, setSyncState] = useState(false);
   const [restoreState, setRestoreState] = useState("idle");
   const [, forceCharacterRefresh] = useState(0);
@@ -226,6 +228,11 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
     ? copy[session.error.key] || session.error.message || copy.networkError
     : session?.error?.message || "";
   const error = localError || sessionError;
+
+  useEffect(() => {
+    const sharedCode = getSessionCodeFromUrl();
+    if (sharedCode.length === SESSION_CODE_LENGTH) setJoinCode(sharedCode);
+  }, []);
 
   const setCharacter = (updater) => {
     if (!form || typeof form !== "object") return;
@@ -287,6 +294,32 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
     } catch {
       setCopyState(false);
     }
+  };
+
+  const handleCopyLink = async () => {
+    const url = buildSessionShareUrl(sessionCode);
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      setLinkCopied(false);
+    }
+  };
+
+  const handleShareLink = async () => {
+    const url = buildSessionShareUrl(sessionCode);
+    if (!url) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Pip-2D20", text: "Join my Pip-2D20 session", url });
+        return;
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+      }
+    }
+    handleCopyLink();
   };
 
   const handleSync = () => {
@@ -394,6 +427,8 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             <span>{copy.players}: <strong>{players.length}</strong></span>
           </div>
           <div className="session-gm-hostbar__actions">
+            <button type="button" className="pip-btn" onClick={handleShareLink}>SHARE LINK</button>
+            <button type="button" className="pip-btn" onClick={handleCopyLink}>{linkCopied ? "LINK COPIED" : "COPY LINK"}</button>
             <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
             <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.end}</button>
           </div>
