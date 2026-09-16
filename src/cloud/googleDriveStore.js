@@ -49,6 +49,21 @@ async function findFileByName(name, parentId = null, mimeType = null) {
   return payload?.files?.[0] || null;
 }
 
+async function listFilesInFolder(parentId) {
+  const q = encodeURIComponent(`'${escapeQuery(parentId)}' in parents and trashed = false`);
+  const payload = await driveFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,modifiedTime,parents)&pageSize=100&orderBy=modifiedTime desc`);
+  return Array.isArray(payload?.files) ? payload.files : [];
+}
+
+async function readDriveJsonById(fileId) {
+  const token = getAccessToken();
+  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`Could not read Google Drive file ${fileId}.`);
+  return response.json();
+}
+
 export async function ensurePip2D20DriveFolder() {
   const mimeType = "application/vnd.google-apps.folder";
   const existing = await findFileByName(APP_FOLDER_NAME, null, mimeType);
@@ -105,20 +120,39 @@ export async function readDriveJson(name, { parentId = null } = {}) {
   const folder = parentId ? { id: parentId } : await ensurePip2D20DriveFolder();
   const file = await findFileByName(name, folder.id, "application/json");
   if (!file) return null;
-
-  const token = getAccessToken();
-  const response = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?alt=media`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) throw new Error(`Could not read ${name} from Google Drive.`);
-  return response.json();
+  return readDriveJsonById(file.id);
 }
 
-export async function backupCharacterToDrive(character, { characterId } = {}) {
+export async function listDriveCharacterBackups() {
+  const folder = await ensurePip2D20DriveFolder();
+  const files = (await listFilesInFolder(folder.id)).filter(
+    (file) => file?.mimeType === "application/json" && /^character-.+\.json$/i.test(String(file?.name || ""))
+  );
+
+  const backups = await Promise.all(
+    files.map(async (file) => {
+      try {
+        const payload = await readDriveJsonById(file.id);
+        if (payload?.kind !== "pip2d20-character" || !payload?.character) return null;
+        return { file, payload };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return backups
+    .filter(Boolean)
+    .sort((a, b) => String(b?.payload?.savedAt || b?.file?.modifiedTime || "").localeCompare(String(a?.payload?.savedAt || a?.file?.modifiedTime || "")));
+}
+
+export async function backupCharacterToDrive(character, { characterId, localUpdatedAt } = {}) {
   const id = String(characterId || character?.id || character?.profileId || "active").replace(/[^a-zA-Z0-9_-]+/g, "-");
   return upsertDriveJson(`character-${id}.json`, {
-    schemaVersion: 1,
+    schemaVersion: 2,
     kind: "pip2d20-character",
+    profileId: id,
+    localUpdatedAt: localUpdatedAt || null,
     savedAt: new Date().toISOString(),
     character,
   });
