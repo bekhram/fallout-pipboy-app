@@ -17,9 +17,13 @@ const BASE = {
     subtitle: "Shared Fallout 2d20 session",
     back: "BACK",
     host: "GAME MASTER",
-    hostDesc:
-      "Create a session. The GM workspace opens only after the room is online.",
+    hostDesc: "Create a new session or restore your latest cloud campaign before starting the GM workspace.",
     create: "CREATE GM SESSION",
+    restoreCloud: "RESTORE FROM CLOUD",
+    restoringCloud: "RESTORING FROM CLOUD...",
+    noCloudCampaign: "No cloud campaign was found for this account.",
+    signInForCloud: "Sign in with Google before restoring a cloud campaign.",
+    cloudRestoreFailed: "Cloud campaign restore failed.",
     player: "PLAYER",
     playerDesc: "Enter the code from the Game Master.",
     code: "SESSION CODE",
@@ -55,9 +59,13 @@ const BASE = {
     subtitle: "Общая сессия Fallout 2d20",
     back: "НАЗАД",
     host: "GAME MASTER",
-    hostDesc:
-      "Создайте комнату. Панель ГМ откроется только после запуска отдельной сессии.",
+    hostDesc: "Создайте новую сессию или восстановите последнюю облачную кампанию до запуска панели ГМ.",
     create: "СОЗДАТЬ СЕССИЮ ГМ",
+    restoreCloud: "ВОССТАНОВИТЬ ИЗ ОБЛАКА",
+    restoringCloud: "ВОССТАНОВЛЕНИЕ ИЗ ОБЛАКА...",
+    noCloudCampaign: "Для этого аккаунта облачная кампания не найдена.",
+    signInForCloud: "Войдите через Google перед восстановлением облачной кампании.",
+    cloudRestoreFailed: "Не удалось восстановить облачную кампанию.",
     player: "ИГРОК",
     playerDesc: "Введите код, который дал ведущий.",
     code: "КОД СЕССИИ",
@@ -93,9 +101,13 @@ const BASE = {
     subtitle: "Спільна сесія Fallout 2d20",
     back: "НАЗАД",
     host: "GAME MASTER",
-    hostDesc:
-      "Створіть кімнату. Панель ГМ відкриється лише після запуску окремої сесії.",
+    hostDesc: "Створіть нову сесію або відновіть останню хмарну кампанію до запуску панелі ГМ.",
     create: "СТВОРИТИ СЕСІЮ ГМ",
+    restoreCloud: "ВІДНОВИТИ З ХМАРИ",
+    restoringCloud: "ВІДНОВЛЕННЯ З ХМАРИ...",
+    noCloudCampaign: "Для цього облікового запису хмарну кампанію не знайдено.",
+    signInForCloud: "Увійдіть через Google перед відновленням хмарної кампанії.",
+    cloudRestoreFailed: "Не вдалося відновити хмарну кампанію.",
     player: "ГРАВЕЦЬ",
     playerDesc: "Введіть код, який дав ведучий.",
     code: "КОД СЕСІЇ",
@@ -131,9 +143,13 @@ const BASE = {
     subtitle: "Wspólna sesja Fallout 2d20",
     back: "WSTECZ",
     host: "GAME MASTER",
-    hostDesc:
-      "Utwórz pokój. Panel GM otworzy się dopiero po uruchomieniu osobnej sesji.",
+    hostDesc: "Utwórz nową sesję albo przywróć ostatnią kampanię z chmury przed uruchomieniem panelu GM.",
     create: "UTWÓRZ SESJĘ GM",
+    restoreCloud: "PRZYWRÓĆ Z CHMURY",
+    restoringCloud: "PRZYWRACANIE Z CHMURY...",
+    noCloudCampaign: "Nie znaleziono kampanii w chmurze dla tego konta.",
+    signInForCloud: "Zaloguj się przez Google przed przywróceniem kampanii z chmury.",
+    cloudRestoreFailed: "Nie udało się przywrócić kampanii z chmury.",
     player: "GRACZ",
     playerDesc: "Wpisz kod otrzymany od prowadzącego.",
     code: "KOD SESJI",
@@ -167,16 +183,12 @@ const BASE = {
 };
 
 function getLanguage(value) {
-  const language = String(value || "en")
-    .toLowerCase()
-    .split("-")[0];
+  const language = String(value || "en").toLowerCase().split("-")[0];
   return BASE[language] ? language : "en";
 }
 
 function getCharacterName(form) {
-  return String(
-    form?.characterName || form?.name || form?.playerName || ""
-  ).trim();
+  return String(form?.characterName || form?.name || form?.playerName || "").trim();
 }
 
 export function SessionFloatingButton({ session, onOpen }) {
@@ -188,9 +200,7 @@ export function SessionFloatingButton({ session, onOpen }) {
       <span className={`session-status-dot is-${session.status}`} />
       <strong>{copy.title}</strong>
       <span>{session.sessionCode}</span>
-      {session.mode === "host" ? (
-        <span>{session.players?.length || 0}</span>
-      ) : null}
+      {session.mode === "host" ? <span>{session.players?.length || 0}</span> : null}
     </button>
   );
 }
@@ -198,15 +208,13 @@ export function SessionFloatingButton({ session, onOpen }) {
 export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   const { i18n } = useTranslation();
   const copy = BASE[getLanguage(i18n.resolvedLanguage || i18n.language)];
-  const defaultPlayerName = useMemo(
-    () => getCharacterName(form) || "Player",
-    [form]
-  );
+  const defaultPlayerName = useMemo(() => getCharacterName(form) || "Player", [form]);
   const [joinCode, setJoinCode] = useState("");
   const [playerName, setPlayerName] = useState(defaultPlayerName);
   const [localError, setLocalError] = useState("");
   const [copyState, setCopyState] = useState(false);
   const [syncState, setSyncState] = useState(false);
+  const [restoreState, setRestoreState] = useState("idle");
   const [, forceCharacterRefresh] = useState(0);
 
   const mode = session?.mode || "lobby";
@@ -225,13 +233,10 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
     if (!next || typeof next !== "object") return;
     Object.assign(form, next);
     try {
-      localStorage.setItem(
-        SAVE_KEY,
-        JSON.stringify({
-          updatedAt: new Date().toISOString(),
-          data: { ...form },
-        })
-      );
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        updatedAt: new Date().toISOString(),
+        data: { ...form },
+      }));
     } catch {
       // Local persistence is best effort only.
     }
@@ -251,6 +256,27 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
     }
     setLocalError("");
     session?.joinSession?.({ code, name });
+  };
+
+  const handleRestoreCloud = async () => {
+    if (restoreState === "loading") return;
+    setRestoreState("loading");
+    setLocalError("");
+    try {
+      const result = await session?.restoreLatestCloudCampaignAndStart?.();
+      if (result?.ok) {
+        setRestoreState("done");
+        return;
+      }
+      const reason = result?.reason || "RESTORE_FAILED";
+      if (reason === "NOT_SIGNED_IN") setLocalError(copy.signInForCloud);
+      else if (reason === "NO_CLOUD_CAMPAIGN") setLocalError(copy.noCloudCampaign);
+      else setLocalError(copy.cloudRestoreFailed);
+      setRestoreState("error");
+    } catch (restoreError) {
+      setLocalError(restoreError?.message || copy.cloudRestoreFailed);
+      setRestoreState("error");
+    }
   };
 
   const handleCopy = async () => {
@@ -279,9 +305,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
               <h1 className="pip-title">{copy.title}</h1>
               <p className="pip-subtitle">{copy.subtitle}</p>
             </div>
-            <button type="button" className="pip-btn" onClick={onBack}>
-              {copy.back}
-            </button>
+            <button type="button" className="pip-btn" onClick={onBack}>{copy.back}</button>
           </div>
         </section>
 
@@ -293,10 +317,20 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             <button
               type="button"
               className="pip-btn is-primary session-main-button"
+              onClick={handleRestoreCloud}
+              disabled={restoreState === "loading"}
+            >
+              {restoreState === "loading" ? copy.restoringCloud : copy.restoreCloud}
+            </button>
+            <button
+              type="button"
+              className="pip-btn session-main-button"
               onClick={() => session?.startHost?.()}
+              disabled={restoreState === "loading"}
             >
               {copy.create}
             </button>
+            {localError ? <div className="session-error">{localError}</div> : null}
           </section>
 
           <section className="pip-panel pip-block session-role-card">
@@ -312,9 +346,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
                 autoCapitalize="characters"
                 autoComplete="off"
                 placeholder="ABC234"
-                onChange={(event) =>
-                  setJoinCode(normalizeSessionCode(event.target.value))
-                }
+                onChange={(event) => setJoinCode(normalizeSessionCode(event.target.value))}
               />
             </label>
             <label className="session-field">
@@ -333,7 +365,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             >
               {copy.join}
             </button>
-            {error ? <div className="session-error">{error}</div> : null}
+            {error && !localError ? <div className="session-error">{error}</div> : null}
           </section>
         </div>
       </section>
@@ -350,9 +382,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
           </div>
           <div className="session-gm-hostbar__session">
             <span className={`session-status-dot is-${status}`} />
-            <span>
-              {copy.status}: <strong>{copy[status] || status}</strong>
-            </span>
+            <span>{copy.status}: <strong>{copy[status] || status}</strong></span>
             <button
               type="button"
               className="session-gm-code"
@@ -361,27 +391,15 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             >
               {sessionCode}
             </button>
-            <span>
-              {copy.players}: <strong>{players.length}</strong>
-            </span>
+            <span>{copy.players}: <strong>{players.length}</strong></span>
           </div>
           <div className="session-gm-hostbar__actions">
-            <button type="button" className="pip-btn" onClick={onOpenSheet}>
-              {copy.openSheet}
-            </button>
-            <button
-              type="button"
-              className="pip-btn"
-              onClick={() => session?.exitSession?.()}
-            >
-              {copy.end}
-            </button>
+            <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
+            <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.end}</button>
           </div>
         </header>
 
-        {error ? (
-          <div className="session-error session-gm-host-error">{error}</div>
-        ) : null}
+        {error ? <div className="session-error session-gm-host-error">{error}</div> : null}
 
         <div className="session-gm-workspace-wrap session-gm-workspace-wrap--single">
           <GmWorkspace
@@ -406,24 +424,14 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
             <h1 className="pip-title">{copy.player}</h1>
           </div>
           <div className="session-top-actions">
-            <button type="button" className="pip-btn" onClick={onOpenSheet}>
-              {copy.openSheet}
-            </button>
-            <button
-              type="button"
-              className="pip-btn"
-              onClick={() => session?.exitSession?.()}
-            >
-              {copy.leave}
-            </button>
+            <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
+            <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.leave}</button>
           </div>
         </div>
         <div className="session-status-strip">
           <div>
             <span className={`session-status-dot is-${status}`} />
-            <span>
-              {copy.status}: <strong>{copy[status] || status}</strong>
-            </span>
+            <span>{copy.status}: <strong>{copy[status] || status}</strong></span>
           </div>
           <div className="session-code-display">{sessionCode}</div>
         </div>
@@ -431,9 +439,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
       </section>
 
       <section className="pip-panel pip-block">
-        <div className="pip-head">
-          <h2>[ {copy.currentMessage} ]</h2>
-        </div>
+        <div className="pip-head"><h2>[ {copy.currentMessage} ]</h2></div>
         <div className="pip-logbox session-current-message session-current-message-large">
           {sceneMessage || copy.noMessage}
         </div>
