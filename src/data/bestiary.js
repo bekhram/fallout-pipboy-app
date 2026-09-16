@@ -20,6 +20,14 @@ export const BESTIARY_CATEGORIES = [
   "obstacle",
 ];
 
+function normalizeBestiaryEntry(entry) {
+  if (!entry || typeof entry !== "object") return entry;
+  const statKind = String(entry.statKind || "").toLowerCase();
+  const category = String(entry.category || "").toLowerCase();
+  const cardKind = entry.cardKind || (statKind === "character" || category === "npc" || category === "ally" ? "npc" : "creature");
+  return { ...entry, cardKind };
+}
+
 export const BESTIARY_ENTRIES = [
   ...coreRulebook01,
   ...coreRulebook02,
@@ -30,7 +38,7 @@ export const BESTIARY_ENTRIES = [
   ...coreRulebookRules,
   ...coreRulebookVariants,
   ...settlersGuideBestiary,
-];
+].map(normalizeBestiaryEntry);
 
 export function createEmptyBestiaryEntry(category = "creature") {
   return {
