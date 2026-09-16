@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import "./gmBattlemapTools.css";
 
 const ZONE_CELLS = 6;
+const STROKE_TTL_MS = 5000;
 
 function selectorFor(role) {
   return role === "player"
@@ -19,10 +20,24 @@ function sceneSize(scene) {
 
 export default function BattlemapSharedLayer({ scene, role = "gm" }) {
   const [grid, setGrid] = useState(null);
+  const [now, setNow] = useState(() => Date.now());
   const { cols, rows } = sceneSize(scene);
-  const strokes = useMemo(() => Array.isArray(scene?.mapMarkup?.strokes) ? scene.mapMarkup.strokes : [], [scene?.mapMarkup?.strokes]);
+  const allStrokes = useMemo(() => Array.isArray(scene?.mapMarkup?.strokes) ? scene.mapMarkup.strokes : [], [scene?.mapMarkup?.strokes]);
+  const strokes = useMemo(
+    () => allStrokes.filter((stroke) => {
+      const createdAt = Number(stroke?.at || 0);
+      return createdAt > 0 && now - createdAt < STROKE_TTL_MS;
+    }),
+    [allStrokes, now]
+  );
   const rulers = useMemo(() => Array.isArray(scene?.mapMarkup?.rulers) ? scene.mapMarkup.rulers : [], [scene?.mapMarkup?.rulers]);
   const ping = scene?.mapMarkup?.ping || null;
+
+  useEffect(() => {
+    if (!allStrokes.length) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, [allStrokes.length]);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -45,7 +60,9 @@ export default function BattlemapSharedLayer({ scene, role = "gm" }) {
         {strokes.map((stroke) => {
           const points = Array.isArray(stroke?.points) ? stroke.points : [];
           if (points.length < 2) return null;
-          return <polyline key={stroke.id} points={points.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="0.12" strokeLinecap="round" strokeLinejoin="round" />;
+          const age = Math.max(0, now - Number(stroke?.at || now));
+          const opacity = Math.max(0, Math.min(1, (STROKE_TTL_MS - age) / 1200));
+          return <polyline key={stroke.id} points={points.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke="currentColor" strokeWidth="0.12" strokeLinecap="round" strokeLinejoin="round" opacity={opacity} />;
         })}
         {rulers.map((ruler) => {
           const start = ruler?.start;
