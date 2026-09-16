@@ -21,7 +21,7 @@ export default defineConfig({
         enabled: true,
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /\/assets\/(?:wasteland-|road-|car-|cliff-|crater-|dead-tree-|rocks-|truck-|ruins-|ravine-|lake-|swamp-|hills-)[^/]*\.png$/,
