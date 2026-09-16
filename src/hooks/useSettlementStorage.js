@@ -4,38 +4,37 @@ import {
   SETTLEMENT_GRID_SIZE,
   STARTING_SETTLEMENT_RESOURCES,
 } from "../data/settlement/buildings.js";
-import { simulateSettlement } from "../utils/settlementEconomy.js";
 import { processSettlementAttacks } from "../utils/settlementAttackEngine.js";
+import {
+  normalizeStockpile,
+  processAutomaticSettlementDays,
+  SETTLEMENT_DAY_MS,
+} from "../utils/settlementDayEngine.js";
 
 const STORAGE_KEY = "pip2d20:settlements:v1";
 
 function ensureSettlementHQ(settlement) {
   if (!settlement || (settlement.buildings || []).some((building) => building.type === "settlement_hq")) return settlement;
-
   const def = SETTLEMENT_BUILDINGS.settlement_hq;
   const width = Number(def?.footprint?.width || 4);
   const height = Number(def?.footprint?.height || 4);
   const x = Math.max(0, Math.floor((SETTLEMENT_GRID_SIZE - width) / 2));
   const y = Math.max(0, Math.floor((SETTLEMENT_GRID_SIZE - height) / 2));
   const createdAt = Number(settlement.createdAt || Date.now());
-
   return {
     ...settlement,
-    buildings: [
-      {
-        id: `settlement_hq_${settlement.id || createdAt}`,
-        type: "settlement_hq",
-        x,
-        y,
-        rotation: 0,
-        state: "active",
-        condition: 100,
-        startedAt: createdAt,
-        completesAt: createdAt,
-        locked: true,
-      },
-      ...(settlement.buildings || []),
-    ],
+    buildings: [{
+      id: `settlement_hq_${settlement.id || createdAt}`,
+      type: "settlement_hq",
+      x,
+      y,
+      rotation: 0,
+      state: "active",
+      condition: 100,
+      startedAt: createdAt,
+      completedAt: createdAt,
+      locked: true,
+    }, ...(settlement.buildings || [])],
   };
 }
 
@@ -62,8 +61,10 @@ function ensureRulebookState(input) {
   const people = Array.isArray(settlement.settlers) && settlement.settlers.length
     ? settlement.settlers.length
     : Math.max(0, Math.floor(Number(existingAttributes.people ?? legacy.population ?? 4)));
-
   const migratedHappiness = existingAttributes.happiness ?? legacy.happiness;
+  const now = Date.now();
+  const lastDayAt = Number(settlement.lastDayAt || now);
+  const stockpile = normalizeStockpile(settlement.stockpile, legacy.materials);
   const attributes = {
     people,
     food: Math.max(0, Math.floor(Number(existingAttributes.food ?? legacy.food ?? people))),
@@ -75,48 +76,39 @@ function ensureRulebookState(input) {
     income: Math.max(0, Math.floor(Number(existingAttributes.income ?? legacy.income ?? 0))),
   };
 
-  // Keep build-currency fields separate from the settlement attributes. These
-  // remain temporarily for the current builder until Stockpile construction is wired.
-  const resources = {
-    materials: Math.max(0, Number(legacy.materials ?? STARTING_SETTLEMENT_RESOURCES.materials ?? 0)),
-    caps: Math.max(0, Number(legacy.caps ?? STARTING_SETTLEMENT_RESOURCES.caps ?? 0)),
-    // Legacy mirrors keep the existing attack engine compatible until it is
-    // replaced by the rulebook end-of-day attack procedure.
-    population: attributes.people,
-    food: attributes.food,
-    water: attributes.water,
-    power: attributes.power,
-    defense: attributes.defense,
-    beds: attributes.beds,
-    happiness: attributes.happiness,
-    income: attributes.income,
-  };
-
   return {
     ...settlement,
-    rulesVersion: 2,
+    rulesVersion: 3,
     settlementDay: Math.max(1, Math.floor(Number(settlement.settlementDay || 1))),
+    lastDayAt,
+    nextDayAt: Number(settlement.nextDayAt || (lastDayAt + SETTLEMENT_DAY_MS)),
     basePopulationLimit: 10,
     leader: settlement.leader || { characterId: settlement.ownerCharacterId || null, charisma: 0 },
     attributes,
-    resources,
-    stockpile: {
-      capacityLbs: 300,
-      common: 0,
-      uncommon: 0,
-      rare: 0,
-      items: [],
-      ...(settlement.stockpile || {}),
+    resources: {
+      ...legacy,
+      population: people,
+      food: attributes.food,
+      water: attributes.water,
+      power: attributes.power,
+      defense: attributes.defense,
+      beds: attributes.beds,
+      happiness: attributes.happiness,
+      income: attributes.income,
+      materials: Number(stockpile.materials.common || 0),
     },
-    settlers: (settlement.settlers || createInitialSettlers(Number(settlement.createdAt || Date.now()), people)).map((settler) => ({
+    stockpile,
+    settlers: (settlement.settlers || createInitialSettlers(Number(settlement.createdAt || now), people)).map((settler) => ({
       settlementAction: null,
       ...settler,
     })),
   };
 }
 
-function runSimulation(settlement) {
-  return processSettlementAttacks(simulateSettlement(ensureRulebookState(settlement)));
+function runSimulation(settlement, now = Date.now()) {
+  const normalized = ensureRulebookState(settlement);
+  const advanced = processAutomaticSettlementDays(normalized, now);
+  return processSettlementAttacks(advanced, now);
 }
 
 function readAll() {
@@ -134,7 +126,7 @@ function writeAll(settlements) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settlements));
 }
 
-export function createSettlement({ name, regionId, worldX, worldY, ownerCharacterId = null }) {
+export function createSettlement({ name, regionId, worldX, worldY, ownerCharacterId = null, leaderCharisma = 0 }) {
   const now = Date.now();
   const people = Math.max(1, Number(STARTING_SETTLEMENT_RESOURCES.population || 4));
   return ensureRulebookState({
@@ -147,29 +139,24 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     ownership: { type: "party" },
     map: { width: 24, height: 24 },
     basePopulationLimit: 10,
-    attributes: {
-      people,
-      food: people,
-      water: people,
-      power: 0,
-      defense: 0,
-      beds: 0,
-      happiness: 10,
-      income: 0,
+    leader: { characterId: ownerCharacterId, charisma: Math.max(0, Number(leaderCharisma || 0)) },
+    attributes: { people, food: people, water: people, power: 0, defense: 0, beds: 0, happiness: 10, income: 0 },
+    resources: { ...STARTING_SETTLEMENT_RESOURCES, population: people, food: people, water: people, power: 0, defense: 0, beds: 0, happiness: 10, income: 0 },
+    stockpile: {
+      capacityLbs: 300,
+      materials: { common: Number(STARTING_SETTLEMENT_RESOURCES.materials || 0), uncommon: 0, rare: 0 },
+      items: [],
+      foragingItems: 0,
     },
-    resources: {
-      materials: Number(STARTING_SETTLEMENT_RESOURCES.materials || 0),
-      caps: Number(STARTING_SETTLEMENT_RESOURCES.caps || 0),
-    },
-    stockpile: { capacityLbs: 300, common: 0, uncommon: 0, rare: 0, items: [] },
     buildings: [],
     settlers: createInitialSettlers(now, people),
     events: [],
     attacks: [],
-    attackRisk: 0,
+    attackRiskBlockedUntil: 0,
     createdAt: now,
-    lastSimulationAt: now,
     settlementDay: 1,
+    lastDayAt: now,
+    nextDayAt: now + SETTLEMENT_DAY_MS,
   });
 }
 
