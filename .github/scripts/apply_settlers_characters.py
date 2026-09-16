@@ -220,7 +220,7 @@ if "// SETTLERS_GUIDE_STARTING_PACKS" not in start:
     { type: "randomWares", count: 2 },
   ],
 '''
-    needle = "\n};\n\nexport function getOriginEquipmentGrant"
+    needle = "\n};\n\nfunction rollCombatDice"
     pos = start.index(needle)
     before = start[:pos].rstrip()
     if before.endswith("]") and not before.endswith("],"):

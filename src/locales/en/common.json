@@ -996,7 +996,13 @@
     "brotherhood_outcast": "Brotherhood Outcast",
     "child_of_atom": "Child of Atom",
     "nightkin": "Nightkin",
-    "tribal": "Tribal"
+    "tribal": "Tribal",
+    "commonwealth_minuteman": "Commonwealth Minuteman",
+    "new_california_republic": "New California Republic",
+    "protectron": "Protectron",
+    "robobrain": "Robobrain",
+    "securitron": "Securitron",
+    "generation_3_synth": "Generation 3 Synth"
   },
   "characterCreation": {
     "selectOriginTitle": "SELECT ORIGIN",
@@ -1085,6 +1091,46 @@
     "chosen_one": {
       "name": "The Chosen One",
       "desc": "The first d20 bought for tests tied to your tribe’s quest is free, and success at a cost is always available; the GM gains AP when the quest appears."
+    },
+    "united_we_stand": {
+      "name": "United We Stand",
+      "desc": "Gain Energy Weapons or Small Guns as a bonus Tag Skill. Gain +1 DR while in cover and +1 CD damage while you and your companions are outnumbered; your settlements also begin with stronger defense and attract caravans sooner."
+    },
+    "protect_or_destroy": {
+      "name": "Protect or Destroy",
+      "desc": "Once per scene reroll a test against an environmental hazard. You are a robot immune to disease, radiation and poison, require repairs instead of normal healing, can install up to two robot mods, and gain a free first AP-bought d20 on tests directly related to your programmed purpose."
+    },
+    "robobrain_robot": {
+      "name": "Robobrain Robot",
+      "desc": "You are a robot with infrared-capable sensors, radiation and poison immunity, tracked movement, manipulators, an integrated mesmetron, and a fixed 150 lb carry weight."
+    },
+    "mark_i_securitron": {
+      "name": "Mark I Securitron",
+      "desc": "You are a radiation- and poison-immune security robot on a single wheel with integrated arm weapons. Your missile and grenade launchers remain unavailable until upgraded to Mk II."
+    },
+    "more_than_human": {
+      "name": "More Than Human",
+      "desc": "Gain one additional Tag Skill. You do not suffer starvation, dehydration, sleep deprivation, disease, poison or radiation damage, though known synths may face increased social difficulty and you possess a recall code."
+    },
+    "good_natured": {
+      "name": "Good Natured",
+      "desc": "Tag two of Speech, Medicine, Repair, Science, and Barter; the maximum rating of the other listed skills is reduced."
+    },
+    "grunt": {
+      "name": "Grunt",
+      "desc": "Deal extra damage with common military small arms and combat knives, but attacks with big guns or energy weapons have a wider complication range."
+    },
+    "home_on_the_range": {
+      "name": "Home on the Range",
+      "desc": "Resting by a campfire improves injury recovery, but you cannot gain the Well Rested bonus."
+    },
+    "trigger_discipline": {
+      "name": "Trigger Discipline",
+      "desc": "Reroll one d20 on ranged attacks with small guns or energy weapons, but those weapons lose 1 Fire Rate while you wield them."
+    },
+    "brahmin_baron": {
+      "name": "Brahmin Baron",
+      "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
     }
   },
   "perksInfo": {
@@ -1291,6 +1337,118 @@
     "toughness": {
       "name": "Toughness",
       "desc": "Your physical Damage Resistance to all hit locations increases by +1 per rank in this perk."
+    },
+    "all_night_long": {
+      "name": "All Night Long",
+      "desc": "Nighttime does not advance hunger or thirst and starvation causes Fatigue more slowly."
+    },
+    "bodyguards": {
+      "name": "Bodyguards",
+      "desc": "Nearby allies increase your Physical and Energy DR."
+    },
+    "community_organizer": {
+      "name": "Community Organizer",
+      "desc": "Improve settlement Food, Defense, and resource-gathering actions."
+    },
+    "contractor": {
+      "name": "Contractor",
+      "desc": "Make settlement construction cheaper and let settlers assist despite missing skills or perks."
+    },
+    "covert_operator": {
+      "name": "Covert Operator",
+      "desc": "Ranged sneak attacks with small guns or energy weapons deal extra damage outside Power Armor."
+    },
+    "enforcer": {
+      "name": "Enforcer",
+      "desc": "Called shots with shotguns gain Debilitating."
+    },
+    "green_thumb": {
+      "name": "Green Thumb",
+      "desc": "Foraging yields extra items."
+    },
+    "gun_runner": {
+      "name": "Gun Runner",
+      "desc": "Spend AP while sprinting with a one-handed ranged weapon to move farther."
+    },
+    "happy_camper": {
+      "name": "Happy Camper",
+      "desc": "A prepared camp can stop hunger and later thirst from worsening."
+    },
+    "hired_help": {
+      "name": "Hired Help",
+      "desc": "Recruit a humanoid companion."
+    },
+    "home_defense": {
+      "name": "Home Defense",
+      "desc": "Craft and set traps more safely."
+    },
+    "homebody": {
+      "name": "Homebody",
+      "desc": "Recover HP and injuries more efficiently in your settlement."
+    },
+    "local_leader": {
+      "name": "Local Leader",
+      "desc": "Create supply lines and unlock settlement stores and workbenches."
+    },
+    "mechanical_menace": {
+      "name": "Mechanical Menace",
+      "desc": "Robots may refuse to attack you and are easier to influence."
+    },
+    "class_freak": {
+      "name": "Class Freak",
+      "desc": "Mutated humans may refuse to attack you and are easier to influence."
+    },
+    "nocturnal_fortitude": {
+      "name": "Nocturnal Fortitude",
+      "desc": "Gain temporary maximum HP at night."
+    },
+    "pannapictagraphist": {
+      "name": "Pannapictagraphist",
+      "desc": "Reroll duplicate random magazine results."
+    },
+    "pharmacist": {
+      "name": "Pharmacist",
+      "desc": "RadAway you administer removes additional Radiation damage."
+    },
+    "photosynthetic": {
+      "name": "Photosynthetic",
+      "desc": "Regenerate HP while in direct sunlight."
+    },
+    "quack_surgeon": {
+      "name": "Quack Surgeon",
+      "desc": "Use alcohol during First Aid to improve healing."
+    },
+    "rejuvenated": {
+      "name": "Rejuvenated",
+      "desc": "Being fully fed and quenched grants stronger bonuses."
+    },
+    "retribution": {
+      "name": "Retribution",
+      "desc": "Fully blocked attacks can restore HP and add AP."
+    },
+    "robot_wrangler": {
+      "name": "Robot Wrangler",
+      "desc": "Gain a robot companion."
+    },
+    "squad_maneuvers": {
+      "name": "Squad Maneuvers",
+      "desc": "Coordinate allies during travel and combat movement."
+    },
+    "super_duper": {
+      "name": "Super Duper",
+      "desc": "Crafting can refund some spent components."
+    },
+    "taking_one_for_the_team": {
+      "name": "Taking One for the Team",
+      "desc": "Intercept attacks against nearby allies and gain stronger counterplay at higher ranks."
+    },
+    "tinkerer": {
+      "name": "Tinkerer",
+      "desc": "Repair and tune robots more efficiently."
+    },
+    "true_friends": {
+      "name": "True Friends",
+      "desc": "Protect reputation and improve affinity gains."
     }
   },
   "equipmentPacks": {
@@ -1434,6 +1592,12 @@
     "brotherhood_outcast": "A former Brotherhood member who rejected the order’s direction and now applies military training and pre-War technical knowledge on their own terms.",
     "child_of_atom": "A devotee of Atom who treats radiation as a sacred gift. The origin grants an extra level-1 perk and special interaction with radiation.",
     "nightkin": "A blue-skinned super mutant shaped by long-term Stealth Boy use. Nightkin are powerful and resistant, but have tighter Intelligence, Charisma and Skill limits.",
-    "tribal": "A member of a strong wasteland community whose identity is defined by traditions, survival knowledge and one of several cultural traits."
+    "tribal": "A member of a strong wasteland community whose identity is defined by traditions, survival knowledge and one of several cultural traits.",
+    "commonwealth_minuteman": "A militia defender dedicated to protecting settlements.",
+    "new_california_republic": "A citizen shaped by the institutions and frontier of the NCR.",
+    "protectron": "A purpose-built RobCo work robot adapted to life in the wasteland.",
+    "robobrain": "A cybernetic robot whose processor is a preserved human brain.",
+    "securitron": "A RobCo security robot built for policing and combat around New Vegas.",
+    "generation_3_synth": "A bio-synthetic humanoid created by the Institute and nearly indistinguishable from a human."
   }
 }

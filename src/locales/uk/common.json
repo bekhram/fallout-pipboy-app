@@ -987,7 +987,13 @@
     "brotherhood_outcast": "Вигнанець Братства",
     "child_of_atom": "Дитя Атома",
     "nightkin": "Найткін",
-    "tribal": "Племінний"
+    "tribal": "Племінний",
+    "commonwealth_minuteman": "Мінітмен Співдружності",
+    "new_california_republic": "Нова Каліфорнійська Республіка",
+    "protectron": "Протектрон",
+    "robobrain": "Робомозок",
+    "securitron": "Сек'юритрон",
+    "generation_3_synth": "Синт 3-го покоління"
   },
   "characterCreation": {
     "selectOriginTitle": "ВИБІР ПОХОДЖЕННЯ",
@@ -1076,6 +1082,46 @@
     "chosen_one": {
       "name": "Обраний",
       "desc": "Перший придбаний d20 у перевірках, пов’язаних із метою племені, безкоштовний; завжди доступний успіх із ціною."
+    },
+    "united_we_stand": {
+      "name": "United We Stand",
+      "desc": "Gain Energy Weapons or Small Guns as a bonus Tag Skill. Gain +1 DR while in cover and +1 CD damage while you and your companions are outnumbered; your settlements also begin with stronger defense and attract caravans sooner."
+    },
+    "protect_or_destroy": {
+      "name": "Protect or Destroy",
+      "desc": "Once per scene reroll a test against an environmental hazard. You are a robot immune to disease, radiation and poison, require repairs instead of normal healing, can install up to two robot mods, and gain a free first AP-bought d20 on tests directly related to your programmed purpose."
+    },
+    "robobrain_robot": {
+      "name": "Robobrain Robot",
+      "desc": "You are a robot with infrared-capable sensors, radiation and poison immunity, tracked movement, manipulators, an integrated mesmetron, and a fixed 150 lb carry weight."
+    },
+    "mark_i_securitron": {
+      "name": "Mark I Securitron",
+      "desc": "You are a radiation- and poison-immune security robot on a single wheel with integrated arm weapons. Your missile and grenade launchers remain unavailable until upgraded to Mk II."
+    },
+    "more_than_human": {
+      "name": "More Than Human",
+      "desc": "Gain one additional Tag Skill. You do not suffer starvation, dehydration, sleep deprivation, disease, poison or radiation damage, though known synths may face increased social difficulty and you possess a recall code."
+    },
+    "good_natured": {
+      "name": "Good Natured",
+      "desc": "Tag two of Speech, Medicine, Repair, Science, and Barter; the maximum rating of the other listed skills is reduced."
+    },
+    "grunt": {
+      "name": "Grunt",
+      "desc": "Deal extra damage with common military small arms and combat knives, but attacks with big guns or energy weapons have a wider complication range."
+    },
+    "home_on_the_range": {
+      "name": "Home on the Range",
+      "desc": "Resting by a campfire improves injury recovery, but you cannot gain the Well Rested bonus."
+    },
+    "trigger_discipline": {
+      "name": "Trigger Discipline",
+      "desc": "Reroll one d20 on ranged attacks with small guns or energy weapons, but those weapons lose 1 Fire Rate while you wield them."
+    },
+    "brahmin_baron": {
+      "name": "Brahmin Baron",
+      "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
     }
   },
   "perksInfo": {
@@ -1282,6 +1328,118 @@
     "toughness": {
       "name": "Стійкість",
       "desc": "Ваш опір фізичній шкоді збільшується на +1 за кожен ранг."
+    },
+    "all_night_long": {
+      "name": "Усю ніч",
+      "desc": "Nighttime does not advance hunger or thirst and starvation causes Fatigue more slowly."
+    },
+    "bodyguards": {
+      "name": "Охоронці",
+      "desc": "Nearby allies increase your Physical and Energy DR."
+    },
+    "community_organizer": {
+      "name": "Організатор громади",
+      "desc": "Improve settlement Food, Defense, and resource-gathering actions."
+    },
+    "contractor": {
+      "name": "Підрядник",
+      "desc": "Make settlement construction cheaper and let settlers assist despite missing skills or perks."
+    },
+    "covert_operator": {
+      "name": "Таємний оператор",
+      "desc": "Ranged sneak attacks with small guns or energy weapons deal extra damage outside Power Armor."
+    },
+    "enforcer": {
+      "name": "Примус",
+      "desc": "Called shots with shotguns gain Debilitating."
+    },
+    "green_thumb": {
+      "name": "Зелений палець",
+      "desc": "Foraging yields extra items."
+    },
+    "gun_runner": {
+      "name": "Збройний кур'єр",
+      "desc": "Spend AP while sprinting with a one-handed ranged weapon to move farther."
+    },
+    "happy_camper": {
+      "name": "Щасливий турист",
+      "desc": "A prepared camp can stop hunger and later thirst from worsening."
+    },
+    "hired_help": {
+      "name": "Наймана допомога",
+      "desc": "Recruit a humanoid companion."
+    },
+    "home_defense": {
+      "name": "Оборона дому",
+      "desc": "Craft and set traps more safely."
+    },
+    "homebody": {
+      "name": "Домосід",
+      "desc": "Recover HP and injuries more efficiently in your settlement."
+    },
+    "local_leader": {
+      "name": "Місцевий лідер",
+      "desc": "Create supply lines and unlock settlement stores and workbenches."
+    },
+    "mechanical_menace": {
+      "name": "Механічна загроза",
+      "desc": "Robots may refuse to attack you and are easier to influence."
+    },
+    "class_freak": {
+      "name": "Класовий дивак",
+      "desc": "Mutated humans may refuse to attack you and are easier to influence."
+    },
+    "nocturnal_fortitude": {
+      "name": "Нічна стійкість",
+      "desc": "Gain temporary maximum HP at night."
+    },
+    "pannapictagraphist": {
+      "name": "Паннапіктаграфіст",
+      "desc": "Reroll duplicate random magazine results."
+    },
+    "pharmacist": {
+      "name": "Фармацевт",
+      "desc": "RadAway you administer removes additional Radiation damage."
+    },
+    "photosynthetic": {
+      "name": "Фотосинтез",
+      "desc": "Regenerate HP while in direct sunlight."
+    },
+    "quack_surgeon": {
+      "name": "Шарлатан-хірург",
+      "desc": "Use alcohol during First Aid to improve healing."
+    },
+    "rejuvenated": {
+      "name": "Омолодження",
+      "desc": "Being fully fed and quenched grants stronger bonuses."
+    },
+    "retribution": {
+      "name": "Відплата",
+      "desc": "Fully blocked attacks can restore HP and add AP."
+    },
+    "robot_wrangler": {
+      "name": "Приборкувач роботів",
+      "desc": "Gain a robot companion."
+    },
+    "squad_maneuvers": {
+      "name": "Маневри загону",
+      "desc": "Coordinate allies during travel and combat movement."
+    },
+    "super_duper": {
+      "name": "Супер-дупер",
+      "desc": "Crafting can refund some spent components."
+    },
+    "taking_one_for_the_team": {
+      "name": "Прийняти удар за команду",
+      "desc": "Intercept attacks against nearby allies and gain stronger counterplay at higher ranks."
+    },
+    "tinkerer": {
+      "name": "Майстер",
+      "desc": "Repair and tune robots more efficiently."
+    },
+    "true_friends": {
+      "name": "Справжні друзі",
+      "desc": "Protect reputation and improve affinity gains."
     }
   },
   "equipmentPacks": {
@@ -1425,6 +1583,12 @@
     "brotherhood_outcast": "Колишній член Братства, який відкинув курс керівництва й застосовує військовий досвід та знання довоєнних технологій на власний розсуд.",
     "child_of_atom": "Послідовник Атома, що вважає радіацію священним даром. Походження дає додатковий перк на 1 рівні та особливі взаємодії з радіацією.",
     "nightkin": "Синьошкірий супермутант, змінений тривалим використанням Стелс-Боїв. Дуже сильний і витривалий, але має суворіші межі Інтелекту, Харизми та навичок.",
-    "tribal": "Член згуртованого племені Пустки, чиє життя визначають традиції, виживання та обрані культурні трейти."
+    "tribal": "Член згуртованого племені Пустки, чиє життя визначають традиції, виживання та обрані культурні трейти.",
+    "commonwealth_minuteman": "Ополченець, присвячений захисту поселень.",
+    "new_california_republic": "Громадянин, сформований суспільством і фронтиром НКР.",
+    "protectron": "Робочий робот RobCo, пристосований до життя в Пустці.",
+    "robobrain": "Кібернетичний робот зі збереженим людським мозком як процесором.",
+    "securitron": "Охоронний робот RobCo для патрулювання та бою біля Нью-Вегаса.",
+    "generation_3_synth": "Біосинтетичний гуманоїд Інституту, майже невідрізнимий від людини."
   }
 }

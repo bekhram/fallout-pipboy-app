@@ -244,9 +244,9 @@ function getPerkWarnings(perk, form) {
     LCK: Number(form?.special?.L || 0),
   };
   const level = Number(form?.level || 1);
-  const isRobot = ["mister_handy", "assaultron"].includes(form?.origin);
+  const isRobot = ["mister_handy", "assaultron", "protectron", "robobrain", "securitron"].includes(form?.origin);
   const isGhoul = form?.origin === "ghoul";
-  const radiationImmune = ["ghoul", "super_mutant", "nightkin", "mister_handy", "assaultron"].includes(form?.origin);
+  const radiationImmune = ["ghoul", "super_mutant", "nightkin", "mister_handy", "assaultron", "protectron", "robobrain", "securitron", "generation_3_synth"].includes(form?.origin);
 
   String(reqString)
     .split(",")

@@ -329,7 +329,94 @@ export const ORIGIN_EQUIPMENT_PACKS = {
     item("Hunter's Pelt Outfit", "armor"), item("Hunter's Hood", "armor"), item("Wood Armor Chest Piece", "armor"),
     choice("woodLimb", [[item("Wooden Arm", "armor")], [item("Wooden Leg", "armor")]]),
     { type: "randomFood", count: 3 }, { type: "randomBeverage", count: 3 },
-  ]
+  ],
+
+  // SETTLERS_GUIDE_STARTING_PACKS
+  minuteman_rifleman: [
+    item("Casual Clothing", "armor"), item("Casual Hat", "armor"),
+    choice("minutemanArmor", [[item("Leather Chest Piece", "armor")], [item("Leather Arm", "armor")]]),
+    choice("minutemanRifle", [[item("Laser Musket", "weapons"), item("Fusion Cell", "ammo", cd(14, 7))], [item("Hunting Rifle", "weapons"), item(".308", "ammo", cd(6, 3))]]),
+    { type: "randomFood", count: 2 }, item("Personal Trinket", "misc"), caps(5),
+  ],
+  minuteman_tough: [
+    item("Casual Clothing", "armor"), item("Army Helmet", "armor"), item("Metal Chest Piece", "armor"),
+    choice("minutemanClose", [[item("Double-Barrel Shotgun", "weapons"), item("Shotgun Shell", "ammo", cd(6, 3))], [item("Submachine Gun", "weapons"), item(".45", "ammo", cd(8, 4))]]),
+    { type: "randomChems", count: 1 }, item("Personal Trinket", "misc"), caps(5),
+  ],
+  ncr_trooper: [
+    item("Military Fatigues", "armor"), item("Army Helmet", "armor"),
+    choice("ncrLongarm", [[item("Combat Rifle", "weapons"), item(".45", "ammo", cd(8, 4))], [item("Combat Shotgun", "weapons"), item("Shotgun Shell", "ammo", cd(6, 3))]]),
+    choice("ncrSidearm", [[item("10mm Pistol", "weapons"), item("10mm", "ammo", cd(8, 4))], [item("Combat Knife", "weapons")]]),
+    { type: "randomFood", count: 1 }, item("Purified Water", "beverages"), item("NCR Dollars", "misc", cd(5, 5)),
+  ],
+  ncr_marksman: [
+    item("Military Fatigues", "armor"), item("Army Helmet", "armor"), item("Hardened Hunting Rifle", "weapons", 1, { effect: "Long scope." }), item(".308", "ammo", cd(6, 3)),
+    item("Calmex", "aid"), item("Random U.S. Covert Operations Manual", "misc"), { type: "randomFood", count: 1 },
+  ],
+  ncr_crimson_caravaneer: [
+    item("Tough Clothing", "armor"),
+    choice("ncrLeather", [[item("Leather Chest Piece", "armor")], [item("Leather Arm", "armor"), item("Leather Leg", "armor")]]),
+    choice("ncrCaravanGun", [[item("Double-Barrel Shotgun", "weapons"), item("Shotgun Shell", "ammo", cd(6, 3))], [item(".44 Pistol", "weapons"), item(".44 Magnum", "ammo", cd(4, 2))]]),
+    choice("ncrCaravanMelee", [[item("Combat Knife", "weapons")], [item("Knuckles", "weapons")]]),
+    item("Pack Brahmin", "tools"), item("Personal Trinket", "misc"), item("Foraging Supplies", "food", 15), { type: "randomBeverages", count: 2 }, item("Deck of Cards", "misc"), item("NCR Dollars", "misc", { type: "d20", dice: 2 }),
+  ],
+  protectron_standard: [
+    item("Standard Plating", "armor"), item("Claw", "weapons", 2), item("Laser Gun", "weapons", 2), item("Fusion Cell", "ammo", cd(14, 7)),
+    item("Recon Sensors Mod", "misc"), item("Hazard Detection Mod", "misc"), item("Robot Repair Kit", "tools"), caps(20),
+  ],
+  protectron_fire_brigadier: [
+    item("Standard Plating", "armor"), item("Cryojet", "weapons"), item("Cryo Cell", "ammo", cd(14, 7)), item("Axe", "weapons"),
+    choice("fireSensors", [[item("Hazard Detection Mod", "misc")], [item("Sensor Array", "misc")]]), item("Stimpak", "aid"), caps(10),
+  ],
+  protectron_medic: [
+    item("Standard Plating", "armor"), item("Shock Hands", "weapons"), item("Diagnosis Mod", "misc"), item("Stimpak", "aid", 2), item("RadAway", "aid"),
+  ],
+  protectron_utility: [
+    item("Factory Armor Body", "armor"), item("Factory Armor Arms", "armor"), item("Claw", "weapons"),
+    choice("utilityWeapon", [[item("Sledgehammer", "weapons")], [item("Baton", "weapons")], [item("Railway Rifle", "weapons"), item("Railway Spike", "ammo", cd(6, 3))]]),
+    choice("utilitySensor", [[item("Hazard Detection Mod", "misc")], [item("Sensor Array", "misc")]]), item("Robot Repair Kit", "tools"),
+  ],
+  nukatron: [
+    item("Standard Plating", "armor"), item("Claw", "weapons"), choice("nukatronMod", [[item("Behavioral Analysis Mod", "misc")], [item("Integral Boiler Mod", "misc")]]),
+    item("Perfectly Preserved Pie", "food"), choice("nukaDrinks", [[item("Nuka-Cola", "beverages", 4)], [item("Nuka-Cherry", "beverages", 2)]]),
+  ],
+  protectron_x: [
+    item("Standard Plating", "armor"), item("Claw", "weapons", 2),
+    choice("pxPrimary", [[item("Factory Armor Body", "armor"), item("Factory Armor Arms", "armor")], [item("Behavioral Analysis Mod", "misc")], [item("Diagnosis Mod", "misc")], [item("Hacking Module", "misc")], [item("Hazard Detection Mod", "misc")]]),
+    choice("pxSensor", [[item("Radiation Coils", "misc")], [item("Recon Sensors Mod", "misc")], [item("Sensor Array", "misc")]]),
+    choice("pxWeapon", [[item("Machete", "weapons")], [item("Aluminum Baseball Bat", "weapons")], [item("Syringer", "weapons"), item("Bleed-Out Syringe", "ammo", 10)]]),
+    choice("pxLoot", [[item("Random Oddity or Valuable", "misc")], [item("Robot Repair Kit", "tools")]]),
+  ],
+  robobrain_servomech: [
+    item("Mesmetron", "weapons"), item("Tesla Rifle", "weapons"), item("Smoke Claw", "weapons"), item("Fusion Cell", "ammo", cd(14, 7)), item("Robot Repair Kit", "tools", 2),
+    choice("roboHat", [[item("Casual Hat", "armor")], [item("Formal Hat", "armor")]]), item("Personal Trinket", "misc"),
+  ],
+  robobrain_us_army: [
+    item("Mesmetron", "weapons"), item("Smoke Claw", "weapons", 2), item("Fusion Cell", "ammo", cd(14, 7)), item("Combat Rifle", "weapons"), item(".45", "ammo", cd(8, 4)),
+    item("Factory Armor Torso", "armor"), item("Factory Armor Left Arm", "armor"), item("Factory Armor Right Arm", "armor"),
+  ],
+  robobrain_errant: [
+    item("Mesmetron", "weapons"),
+    choice("roboArm1", [[item("Smoke Claw", "weapons")], [item("Tesla Rifle", "weapons")], [item("Flamer", "weapons")], [item("Laser Gun", "weapons")], [item("Sledgehammer", "weapons")]]),
+    choice("roboArm2", [[item("Smoke Claw", "weapons")], [item("Tesla Rifle", "weapons")], [item("Flamer", "weapons")], [item("Laser Gun", "weapons")], [item("Sledgehammer", "weapons")]]),
+    choice("roboAmmo", [[item("Fusion Cell", "ammo", cd(14, 7))], [item("Flamer Fuel", "ammo", cd(12, 6))]]), item("Personal Trinket", "misc", 2), item("Random Oddity or Valuable", "misc"), caps(10),
+  ],
+  securitron_standard: [
+    item("Automatic Laser Gun", "weapons"), item("Fusion Cell", "ammo", cd(14, 7)), item("Submachine Gun", "weapons"), item(".45", "ammo", cd(8, 4)),
+    item("Missile Launcher (Inoperable)", "weapons"), item("Grenade Launcher (Inoperable)", "weapons"), item("Factory Armor Torso", "armor"), item("Factory Armor Head", "armor"), item("Factory Armor Arms", "armor"), item("Integrated Printer", "misc"),
+  ],
+  synth_infiltrator: [
+    item("Tough Clothing", "armor"), choice("synthMelee", [[item("Baseball Bat", "weapons")], [item("Switchblade", "weapons")]]),
+    choice("synthGun", [[item("Pipe Gun", "weapons"), item(".38", "ammo", cd(10, 5))], [item("10mm Pistol", "weapons"), item("10mm", "ammo", cd(8, 4))]]),
+    item("Personal Trinket", "misc"), { type: "randomChems", count: 2 },
+  ],
+  synth_seeker: [
+    item("Tough Clothing", "armor"), choice("synthLeather", [[item("Leather Chest Piece", "armor")], [item("Leather Arm", "armor"), item("Leather Leg", "armor")]]),
+    choice("synthMelee2", [[item("Knuckles", "weapons")], [item("Lead Pipe", "weapons")]]),
+    choice("synthRanged", [[item("10mm Pistol", "weapons"), item("10mm", "ammo", cd(3, 3))], [item("Flare Gun", "weapons"), item("Flare", "ammo", cd(3, 3))], [item("Hunting Rifle", "weapons"), item(".308", "ammo", cd(3, 3))]]),
+    { type: "randomWares", count: 2 },
+  ],
+
 };
 
 function rollCombatDice(count = 0) {

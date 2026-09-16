@@ -1005,14 +1005,26 @@
     "brotherhood_outcast": "Wyrzutek Bractwa",
     "child_of_atom": "Dziecko Atomu",
     "nightkin": "Nightkin",
-    "tribal": "Plemienny"
+    "tribal": "Plemienny",
+    "commonwealth_minuteman": "Minuteman Wspólnoty",
+    "new_california_republic": "Republika Nowej Kalifornii",
+    "protectron": "Protectron",
+    "robobrain": "Robobrain",
+    "securitron": "Securitron",
+    "generation_3_synth": "Syntezator 3. generacji"
   },
   "originDescriptions": {
     "assaultron": "Robot bojowy pierwszej linii stworzony do przetrwania na Pustkowiu. Jest odporny na promieniowanie, trucizny i choroby, ma stały udźwig 150 funtów i odzyskuje sprawność dzięki naprawom.",
     "brotherhood_outcast": "Były członek Bractwa, który odrzucił kierunek dowództwa i wykorzystuje wojskowe szkolenie oraz wiedzę o technologii sprzed wojny na własnych zasadach.",
     "child_of_atom": "Wyznawca Atomu traktujący promieniowanie jako święty dar. Pochodzenie daje dodatkowy perk na 1. poziomie i specjalne zasady promieniowania.",
     "nightkin": "Niebieskoskóry supermutant zmieniony przez długotrwałe używanie Stealth Boyów. Jest bardzo silny i odporny, lecz ma niższe limity Inteligencji, Charyzmy i Umiejętności.",
-    "tribal": "Członek zwartej społeczności plemiennej Pustkowia, którego życie kształtują tradycje, przetrwanie i wybrane cechy kulturowe."
+    "tribal": "Członek zwartej społeczności plemiennej Pustkowia, którego życie kształtują tradycje, przetrwanie i wybrane cechy kulturowe.",
+    "commonwealth_minuteman": "Członek milicji poświęcony ochronie osad.",
+    "new_california_republic": "Obywatel ukształtowany przez społeczeństwo i pogranicze NCR.",
+    "protectron": "Robot roboczy RobCo przystosowany do życia na pustkowiu.",
+    "robobrain": "Cybernetyczny robot wykorzystujący zachowany ludzki mózg jako procesor.",
+    "securitron": "Robot ochronny RobCo przeznaczony do patrolowania i walki w rejonie New Vegas.",
+    "generation_3_synth": "Bio-syntetyczny humanoid Instytutu, niemal nieodróżnialny od człowieka."
   },
   "traitsInfo": {
     "designed_for_frontline": {
@@ -1050,6 +1062,46 @@
     "chosen_one": {
       "name": "Wybraniec",
       "desc": "Pierwsze kupione k20 w testach związanych z celem plemienia jest darmowe; sukces za cenę jest zawsze dostępny."
+    },
+    "united_we_stand": {
+      "name": "United We Stand",
+      "desc": "Gain Energy Weapons or Small Guns as a bonus Tag Skill. Gain +1 DR while in cover and +1 CD damage while you and your companions are outnumbered; your settlements also begin with stronger defense and attract caravans sooner."
+    },
+    "protect_or_destroy": {
+      "name": "Protect or Destroy",
+      "desc": "Once per scene reroll a test against an environmental hazard. You are a robot immune to disease, radiation and poison, require repairs instead of normal healing, can install up to two robot mods, and gain a free first AP-bought d20 on tests directly related to your programmed purpose."
+    },
+    "robobrain_robot": {
+      "name": "Robobrain Robot",
+      "desc": "You are a robot with infrared-capable sensors, radiation and poison immunity, tracked movement, manipulators, an integrated mesmetron, and a fixed 150 lb carry weight."
+    },
+    "mark_i_securitron": {
+      "name": "Mark I Securitron",
+      "desc": "You are a radiation- and poison-immune security robot on a single wheel with integrated arm weapons. Your missile and grenade launchers remain unavailable until upgraded to Mk II."
+    },
+    "more_than_human": {
+      "name": "More Than Human",
+      "desc": "Gain one additional Tag Skill. You do not suffer starvation, dehydration, sleep deprivation, disease, poison or radiation damage, though known synths may face increased social difficulty and you possess a recall code."
+    },
+    "good_natured": {
+      "name": "Good Natured",
+      "desc": "Tag two of Speech, Medicine, Repair, Science, and Barter; the maximum rating of the other listed skills is reduced."
+    },
+    "grunt": {
+      "name": "Grunt",
+      "desc": "Deal extra damage with common military small arms and combat knives, but attacks with big guns or energy weapons have a wider complication range."
+    },
+    "home_on_the_range": {
+      "name": "Home on the Range",
+      "desc": "Resting by a campfire improves injury recovery, but you cannot gain the Well Rested bonus."
+    },
+    "trigger_discipline": {
+      "name": "Trigger Discipline",
+      "desc": "Reroll one d20 on ranged attacks with small guns or energy weapons, but those weapons lose 1 Fire Rate while you wield them."
+    },
+    "brahmin_baron": {
+      "name": "Brahmin Baron",
+      "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
     }
   },
   "equipmentPacks": {
@@ -1096,6 +1148,120 @@
     "tribal_naturalist": {
       "name": "Naturalista",
       "items": "Łuk i strzały; maczeta i nóż bojowy; strój i kaptur myśliwego; drewniany pancerz; 3 losowe jedzenia; 3 losowe napoje."
+    }
+  },
+  "perksInfo": {
+    "all_night_long": {
+      "name": "Całą noc",
+      "desc": "Nighttime does not advance hunger or thirst and starvation causes Fatigue more slowly."
+    },
+    "bodyguards": {
+      "name": "Ochroniarze",
+      "desc": "Nearby allies increase your Physical and Energy DR."
+    },
+    "community_organizer": {
+      "name": "Organizator społeczności",
+      "desc": "Improve settlement Food, Defense, and resource-gathering actions."
+    },
+    "contractor": {
+      "name": "Wykonawca",
+      "desc": "Make settlement construction cheaper and let settlers assist despite missing skills or perks."
+    },
+    "covert_operator": {
+      "name": "Tajny operator",
+      "desc": "Ranged sneak attacks with small guns or energy weapons deal extra damage outside Power Armor."
+    },
+    "enforcer": {
+      "name": "Egzekutor",
+      "desc": "Called shots with shotguns gain Debilitating."
+    },
+    "green_thumb": {
+      "name": "Zielony kciuk",
+      "desc": "Foraging yields extra items."
+    },
+    "gun_runner": {
+      "name": "Kurier broni",
+      "desc": "Spend AP while sprinting with a one-handed ranged weapon to move farther."
+    },
+    "happy_camper": {
+      "name": "Szczęśliwy obozowicz",
+      "desc": "A prepared camp can stop hunger and later thirst from worsening."
+    },
+    "hired_help": {
+      "name": "Najemna pomoc",
+      "desc": "Recruit a humanoid companion."
+    },
+    "home_defense": {
+      "name": "Obrona domu",
+      "desc": "Craft and set traps more safely."
+    },
+    "homebody": {
+      "name": "Domator",
+      "desc": "Recover HP and injuries more efficiently in your settlement."
+    },
+    "local_leader": {
+      "name": "Lokalny lider",
+      "desc": "Create supply lines and unlock settlement stores and workbenches."
+    },
+    "mechanical_menace": {
+      "name": "Mechaniczne zagrożenie",
+      "desc": "Robots may refuse to attack you and are easier to influence."
+    },
+    "class_freak": {
+      "name": "Dziwak klasowy",
+      "desc": "Mutated humans may refuse to attack you and are easier to influence."
+    },
+    "nocturnal_fortitude": {
+      "name": "Nocna wytrzymałość",
+      "desc": "Gain temporary maximum HP at night."
+    },
+    "pannapictagraphist": {
+      "name": "Pannapiktografista",
+      "desc": "Reroll duplicate random magazine results."
+    },
+    "pharmacist": {
+      "name": "Farmaceuta",
+      "desc": "RadAway you administer removes additional Radiation damage."
+    },
+    "photosynthetic": {
+      "name": "Fotosynteza",
+      "desc": "Regenerate HP while in direct sunlight."
+    },
+    "quack_surgeon": {
+      "name": "Konował",
+      "desc": "Use alcohol during First Aid to improve healing."
+    },
+    "rejuvenated": {
+      "name": "Odmłodzenie",
+      "desc": "Being fully fed and quenched grants stronger bonuses."
+    },
+    "retribution": {
+      "name": "Odpłata",
+      "desc": "Fully blocked attacks can restore HP and add AP."
+    },
+    "robot_wrangler": {
+      "name": "Poganiacz robotów",
+      "desc": "Gain a robot companion."
+    },
+    "squad_maneuvers": {
+      "name": "Manewry oddziału",
+      "desc": "Coordinate allies during travel and combat movement."
+    },
+    "super_duper": {
+      "name": "Super Duper",
+      "desc": "Crafting can refund some spent components."
+    },
+    "taking_one_for_the_team": {
+      "name": "Wziąć cios za drużynę",
+      "desc": "Intercept attacks against nearby allies and gain stronger counterplay at higher ranks."
+    },
+    "tinkerer": {
+      "name": "Majsterkowicz",
+      "desc": "Repair and tune robots more efficiently."
+    },
+    "true_friends": {
+      "name": "Prawdziwi przyjaciele",
+      "desc": "Protect reputation and improve affinity gains."
     }
   }
 }

@@ -39,7 +39,7 @@ function getRequirementsWarnings(reqString, form, perk = null, rank = 1) {
   };
   const level = Number(form?.level || 1);
   const origin = String(form?.origin || "").toLowerCase();
-  const isRobot = origin.includes("handy") || origin.includes("robot");
+  const isRobot = origin.includes("handy") || origin.includes("robot") || ["protectron", "robobrain", "securitron", "assaultron"].some((value) => origin.includes(value));
   const isGhoul = origin.includes("ghoul");
   const ignoreFirstRankLevel = Number(rank || 1) === 1
     && (perk?.ignoreFirstRankLevelForOrigins || []).some((value) =>
