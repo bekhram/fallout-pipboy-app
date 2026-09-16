@@ -5,7 +5,6 @@ import { buildProceduralNpcLevelStats } from "./proceduralNpcLeveling.js";
 import {
   applyCombatBuffsToAttack,
   applyCombatBuffsToStats,
-  generateNpcCombatBuffs,
 } from "./combatBuffs.js";
 
 function num(value, fallback = 0) {
@@ -380,18 +379,9 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     legendaryReward: enemy?.legendaryReward || "",
   });
 
-  const buffSeed = [
-    context.stamp || "",
-    context.locationId || "",
-    context.roomId || "",
-    context.poiId || "",
-    entry?.id || entry?.name || "npc",
-    leveled?.level || enemy?.level || 1,
-    rank,
-  ].join(":");
-  const combatBuffs = generateNpcCombatBuffs(rank, buffSeed, {
-    ids: Array.isArray(enemy?.combatBuffIds) ? enemy.combatBuffIds : [],
-  });
+  // Procedural encounters no longer assign random combat buffs. Explicit buff IDs
+  // are still respected for manually-authored/custom encounter data.
+  const combatBuffs = Array.isArray(enemy?.combatBuffIds) ? enemy.combatBuffIds : [];
   const combat = buildBuffedCombat(ranked.attacks, ranked.customAttacks, ranked.weapons, combatBuffs);
   const buffed = applyCombatBuffsToStats({
     ...ranked,
