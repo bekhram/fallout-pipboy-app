@@ -48,7 +48,7 @@ function resolvedCampaignId(session) {
   return direct || getStoredGmCampaignId();
 }
 
-export async function restoreCloudCampaignToLocalCache(campaignId = getStoredGmCampaignId()) {
+export async function restoreCloudCampaignToLocalCache(campaignId = getStoredGmCampaignId(), { force = false } = {}) {
   const id = String(campaignId || "").trim();
   if (!id) return { restored: false, reason: "NO_CAMPAIGN_ID" };
 
@@ -63,7 +63,8 @@ export async function restoreCloudCampaignToLocalCache(campaignId = getStoredGmC
   const localRevision = Number(local?.state?.revision || 0);
   const cloudTime = Date.parse(cloud.updatedAt || cloud.payload.savedAt || 0) || 0;
   const localTime = Number(local?.updatedAt || 0);
-  const shouldRestore = !local
+  const shouldRestore = force
+    || !local
     || cloudRevision > localRevision
     || (cloudRevision === localRevision && cloudTime > localTime);
 
@@ -123,6 +124,55 @@ export default function useCloudCampaignSync(session, form) {
   const lastPlayerFingerprintRef = useRef("");
   const restoreAttemptedRef = useRef(new Set());
   const campaignId = useMemo(() => resolvedCampaignId(session), [session?.campaignId, session?.roomState?.campaignId]);
+
+  const saveCloudCampaignNow = async () => {
+    if (session?.mode !== "host" || !campaignId) return { ok: false, reason: "HOST_ONLY" };
+    const auth = getCloudAuthSession();
+    const ownerUid = String(auth?.firebase?.localId || auth?.user?.id || "").trim();
+    if (!ownerUid) return { ok: false, reason: "NOT_SIGNED_IN" };
+
+    try {
+      setCloudStatus("saving");
+      setCloudError("");
+      const snapshot = makeCampaignSnapshot(session);
+      const saved = await saveCloudCampaign(
+        campaignId,
+        ownerUid,
+        snapshot,
+        snapshot.state?.name || `Campaign ${String(session?.sessionCode || campaignId)}`
+      );
+      lastHostFingerprintRef.current = snapshotFingerprint({ ...snapshot, savedAt: "" });
+      const savedAt = new Date().toISOString();
+      setLastCloudSavedAt(savedAt);
+      setCloudStatus("saved");
+      return { ok: true, saved, savedAt };
+    } catch (error) {
+      const message = error?.message || String(error);
+      setCloudError(message);
+      setCloudStatus("error");
+      return { ok: false, reason: message };
+    }
+  };
+
+  const restoreCloudCampaignNow = async () => {
+    if (session?.mode !== "host" || !campaignId) return { ok: false, reason: "HOST_ONLY" };
+    try {
+      setCloudStatus("restoring");
+      setCloudError("");
+      const result = await restoreCloudCampaignToLocalCache(campaignId, { force: true });
+      if (!result.restored) {
+        setCloudStatus("ready");
+        return { ok: false, reason: result.reason || "NOT_RESTORED" };
+      }
+      setCloudStatus("restored");
+      return { ok: true, ...result };
+    } catch (error) {
+      const message = error?.message || String(error);
+      setCloudError(message);
+      setCloudStatus("error");
+      return { ok: false, reason: message };
+    }
+  };
 
   useEffect(() => {
     if (session?.mode !== "host" || !campaignId || restoreAttemptedRef.current.has(campaignId)) return;
@@ -209,5 +259,7 @@ export default function useCloudCampaignSync(session, form) {
     cloudCampaignStatus: cloudStatus,
     cloudCampaignError: cloudError,
     cloudCampaignLastSavedAt: lastCloudSavedAt,
+    saveCloudCampaignNow,
+    restoreCloudCampaignNow,
   };
 }
