@@ -7,6 +7,7 @@ import {
   settlementBuildingName,
 } from "../../data/settlement/buildings.js";
 import { calculateSettlementStats, formatBuildTime } from "../../utils/settlementEconomy.js";
+import { calculateAttackRisk, resolveSettlementAttack } from "../../utils/settlementAttackEngine.js";
 import smallHouseAsset from "../../assets/settlement/small_house.png";
 import "./settlement.css";
 
@@ -22,10 +23,10 @@ const BUILDING_ICONS = {
 };
 
 const COPY = {
-  en: { back: "WORLD MAP", build: "BUILD", cancel: "CANCEL", materials: "Materials", caps: "Caps", food: "Food", water: "Water", power: "Power", population: "Population", defense: "Defense", happiness: "Happiness", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough resources", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DEMOLISH", repair: "REPAIR", condition: "Condition", moving: "Choose a new location", active: "Active", building: "Building", people: "PEOPLE", unassigned: "Unassigned", workers: "Workers", needsWorker: "Needs worker" },
-  ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", cancel: "ОТМЕНА", materials: "Материалы", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", population: "Население", defense: "Защита", happiness: "Счастье", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно ресурсов", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "СНЕСТИ", repair: "РЕМОНТ", condition: "Состояние", moving: "Выберите новое место", active: "Работает", building: "Строится", people: "ЖИТЕЛИ", unassigned: "Не назначен", workers: "Работники", needsWorker: "Нужен работник" },
-  uk: { back: "ГЛОБАЛЬНА МАПА", build: "БУДУВАТИ", cancel: "СКАСУВАТИ", materials: "Матеріали", caps: "Кришки", food: "Їжа", water: "Вода", power: "Енергія", population: "Населення", defense: "Захист", happiness: "Щастя", construction: "Будівництво", cannotPlace: "Тут будувати не можна", insufficient: "Недостатньо ресурсів", tapMap: "Оберіть вільне місце на мапі", empty: "Оберіть споруду знизу", manage: "СПОРУДА", move: "ПЕРЕМІСТИТИ", demolish: "ЗНЕСТИ", repair: "РЕМОНТ", condition: "Стан", moving: "Оберіть нове місце", active: "Працює", building: "Будується", people: "МЕШКАНЦІ", unassigned: "Не призначено", workers: "Працівники", needsWorker: "Потрібен працівник" },
-  pl: { back: "MAPA ŚWIATA", build: "BUDUJ", cancel: "ANULUJ", materials: "Materiały", caps: "Kapsle", food: "Żywność", water: "Woda", power: "Energia", population: "Ludność", defense: "Obrona", happiness: "Szczęście", construction: "Budowa", cannotPlace: "Nie można tu budować", insufficient: "Za mało zasobów", tapMap: "Wybierz wolne miejsce na mapie", empty: "Wybierz budynek poniżej", manage: "BUDYNEK", move: "PRZENIEŚ", demolish: "ROZBIERZ", repair: "NAPRAW", condition: "Stan", moving: "Wybierz nowe miejsce", active: "Aktywny", building: "W budowie", people: "MIESZKAŃCY", unassigned: "Nieprzydzielony", workers: "Pracownicy", needsWorker: "Wymaga pracownika" },
+  en: { back: "WORLD MAP", build: "BUILD", cancel: "CANCEL", materials: "Materials", caps: "Caps", food: "Food", water: "Water", power: "Power", population: "Population", defense: "Defense", happiness: "Happiness", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough resources", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DEMOLISH", repair: "REPAIR", condition: "Condition", moving: "Choose a new location", active: "Active", building: "Building", people: "PEOPLE", unassigned: "Unassigned", workers: "Workers", needsWorker: "Needs worker", attackRisk: "Attack risk", attack: "ATTACK", warning: "Raid warning", attackActive: "Attack in progress", strength: "Enemy strength", autoDefense: "AUTO DEFENSE", startsIn: "Starts in", resolvesIn: "Auto resolves in", noThreat: "No active threat", victory: "Victory", defeat: "Defeat" },
+  ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", cancel: "ОТМЕНА", materials: "Материалы", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", population: "Население", defense: "Защита", happiness: "Счастье", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно ресурсов", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "СНЕСТИ", repair: "РЕМОНТ", condition: "Состояние", moving: "Выберите новое место", active: "Работает", building: "Строится", people: "ЖИТЕЛИ", unassigned: "Не назначен", workers: "Работники", needsWorker: "Нужен работник", attackRisk: "Риск атаки", attack: "АТАКА", warning: "Обнаружены враги", attackActive: "Идёт нападение", strength: "Сила врага", autoDefense: "АВТООБОРОНА", startsIn: "Начало через", resolvesIn: "Автобой через", noThreat: "Активных угроз нет", victory: "Победа", defeat: "Поражение" },
+  uk: { back: "ГЛОБАЛЬНА МАПА", build: "БУДУВАТИ", cancel: "СКАСУВАТИ", materials: "Матеріали", caps: "Кришки", food: "Їжа", water: "Вода", power: "Енергія", population: "Населення", defense: "Захист", happiness: "Щастя", construction: "Будівництво", cannotPlace: "Тут будувати не можна", insufficient: "Недостатньо ресурсів", tapMap: "Оберіть вільне місце на мапі", empty: "Оберіть споруду знизу", manage: "СПОРУДА", move: "ПЕРЕМІСТИТИ", demolish: "ЗНЕСТИ", repair: "РЕМОНТ", condition: "Стан", moving: "Оберіть нове місце", active: "Працює", building: "Будується", people: "МЕШКАНЦІ", unassigned: "Не призначено", workers: "Працівники", needsWorker: "Потрібен працівник", attackRisk: "Ризик атаки", attack: "АТАКА", warning: "Ворог наближається", attackActive: "Триває напад", strength: "Сила ворога", autoDefense: "АВТООБОРОНА", startsIn: "Початок через", resolvesIn: "Автобій через", noThreat: "Активних загроз немає", victory: "Перемога", defeat: "Поразка" },
+  pl: { back: "MAPA ŚWIATA", build: "BUDUJ", cancel: "ANULUJ", materials: "Materiały", caps: "Kapsle", food: "Żywność", water: "Woda", power: "Energia", population: "Ludność", defense: "Obrona", happiness: "Szczęście", construction: "Budowa", cannotPlace: "Nie można tu budować", insufficient: "Za mało zasobów", tapMap: "Wybierz wolne miejsce na mapie", empty: "Wybierz budynek poniżej", manage: "BUDYNEK", move: "PRZENIEŚ", demolish: "ROZBIERZ", repair: "NAPRAW", condition: "Stan", moving: "Wybierz nowe miejsce", active: "Aktywny", building: "W budowie", people: "MIESZKAŃCY", unassigned: "Nieprzydzielony", workers: "Pracownicy", needsWorker: "Wymaga pracownika", attackRisk: "Ryzyko ataku", attack: "ATAK", warning: "Wróg się zbliża", attackActive: "Atak trwa", strength: "Siła wroga", autoDefense: "AUTOOBRONA", startsIn: "Początek za", resolvesIn: "Autoobrona za", noThreat: "Brak aktywnego zagrożenia", victory: "Zwycięstwo", defeat: "Porażka" },
 };
 
 function occupies(building, x, y) {
@@ -69,6 +70,9 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const [hoverCell, setHoverCell] = useState(null);
   const [notice, setNotice] = useState("");
   const stats = useMemo(() => calculateSettlementStats(settlement), [settlement]);
+  const attackRisk = useMemo(() => calculateAttackRisk(settlement), [settlement]);
+  const activeAttack = (settlement.attacks || []).find((attack) => attack.state === "warning" || attack.state === "active") || null;
+  const lastResolvedAttack = (settlement.attacks || []).find((attack) => attack.state === "resolved") || null;
   const selectedDef = selectedType ? SETTLEMENT_BUILDINGS[selectedType] : null;
   const selectedBuilding = (settlement.buildings || []).find((building) => building.id === selectedBuildingId) || null;
   const movingBuilding = (settlement.buildings || []).find((building) => building.id === movingBuildingId) || null;
@@ -86,26 +90,17 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
     const now = Date.now();
     onUpdate((current) => ({
       ...current,
-      resources: {
-        ...current.resources,
-        materials: Math.max(0, Number(current.resources?.materials || 0) - Number(selectedDef.cost?.materials || 0)),
-        caps: Math.max(0, Number(current.resources?.caps || 0) - Number(selectedDef.cost?.caps || 0)),
-      },
+      resources: { ...current.resources, materials: Math.max(0, Number(current.resources?.materials || 0) - Number(selectedDef.cost?.materials || 0)), caps: Math.max(0, Number(current.resources?.caps || 0) - Number(selectedDef.cost?.caps || 0)) },
       buildings: [...(current.buildings || []), { id: `building_${now}_${Math.random().toString(36).slice(2, 7)}`, type: selectedDef.id, x, y, rotation: 0, state: "construction", condition: 100, startedAt: now, completesAt: now + selectedDef.buildTimeMs }],
     }));
-    setSelectedType(null);
-    setHoverCell(null);
-    setNotice("");
+    setSelectedType(null); setHoverCell(null); setNotice("");
   }
 
   function moveBuildingTo(x, y) {
     if (!movingBuilding || !movingDef) return;
     if (!canPlace(settlement, movingDef, x, y, movingBuilding.id)) { setNotice(text.cannotPlace); return; }
     onUpdate((current) => ({ ...current, buildings: (current.buildings || []).map((building) => building.id === movingBuilding.id ? { ...building, x, y } : building) }));
-    setMovingBuildingId(null);
-    setSelectedBuildingId(movingBuilding.id);
-    setHoverCell(null);
-    setNotice("");
+    setMovingBuildingId(null); setSelectedBuildingId(movingBuilding.id); setHoverCell(null); setNotice("");
   }
 
   function handleCellClick(x, y) {
@@ -138,7 +133,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
     onUpdate((current) => ({
       ...current,
       resources: { ...current.resources, materials: Math.max(0, Number(current.resources?.materials || 0) - cost.materials), caps: Math.max(0, Number(current.resources?.caps || 0) - cost.caps) },
-      buildings: (current.buildings || []).map((building) => building.id === selectedBuilding.id ? { ...building, condition: 100 } : building),
+      buildings: (current.buildings || []).map((building) => building.id === selectedBuilding.id ? { ...building, condition: 100, state: building.state === "destroyed" ? "active" : building.state } : building),
     }));
   }
 
@@ -149,14 +144,14 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
         if (settler.id !== settlerId) return settler;
         const building = (current.buildings || []).find((item) => item.id === buildingId);
         const def = building ? SETTLEMENT_BUILDINGS[building.type] : null;
-        return {
-          ...settler,
-          assignedBuildingId: buildingId || null,
-          role: def?.category || "unassigned",
-          status: buildingId ? "working" : "idle",
-        };
+        return { ...settler, assignedBuildingId: buildingId || null, role: def?.category || "unassigned", status: buildingId ? "working" : "idle" };
       }),
     }));
+  }
+
+  function resolveAttackNow() {
+    if (!activeAttack) return;
+    onUpdate((current) => resolveSettlementAttack(current, activeAttack.id));
   }
 
   const repairCost = selectedBuilding ? getRepairCost(SETTLEMENT_BUILDINGS[selectedBuilding.type], selectedBuilding.condition) : null;
@@ -175,14 +170,11 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
         <div className="settlement-map-wrap">
           <div className="settlement-map" onMouseLeave={() => setHoverCell(null)}>
             {Array.from({ length: SETTLEMENT_GRID_SIZE * SETTLEMENT_GRID_SIZE }, (_, index) => {
-              const x = index % SETTLEMENT_GRID_SIZE;
-              const y = Math.floor(index / SETTLEMENT_GRID_SIZE);
+              const x = index % SETTLEMENT_GRID_SIZE; const y = Math.floor(index / SETTLEMENT_GRID_SIZE);
               return <button key={`${x}-${y}`} type="button" className="settlement-cell" aria-label={`${x},${y}`} onMouseEnter={() => setHoverCell({ x, y })} onFocus={() => setHoverCell({ x, y })} onClick={() => handleCellClick(x, y)} />;
             })}
             {(settlement.buildings || []).map((building) => {
-              const def = SETTLEMENT_BUILDINGS[building.type];
-              if (!def) return null;
-              const status = stats.buildingStatus?.[building.id];
+              const def = SETTLEMENT_BUILDINGS[building.type]; if (!def) return null; const status = stats.buildingStatus?.[building.id];
               return <button type="button" key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""} ${selectedBuildingId === building.id ? "is-selected" : ""} ${movingBuildingId === building.id ? "is-moving" : ""} ${status && !status.staffed ? "is-unstaffed" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)} onClick={(event) => { event.stopPropagation(); if (!selectedType && !movingBuildingId) { setSelectedBuildingId(building.id); setNotice(""); } }}><BuildingVisual building={building} def={def} language={language} staffed={status?.staffed} /></button>;
             })}
             {placementDef && hoverCell ? <div className={`settlement-placement ${placementValid && enoughResources ? "is-valid" : "is-invalid"}`} style={{ left: `${hoverCell.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${hoverCell.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${placementDef.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${placementDef.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} /> : null}
@@ -199,9 +191,15 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
           {selectedDef ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef, language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{text.materials}: {selectedDef.cost?.materials || 0}</span><span>{text.caps}: {selectedDef.cost?.caps || 0}</span><span>{text.construction}: {formatBuildTime(selectedDef.buildTimeMs)}</span>{selectedDef.workersRequired ? <span>{text.workers}: {selectedDef.workersRequired}</span> : null}<button type="button" className="pip-action-button" onClick={() => { setSelectedType(null); setHoverCell(null); }}>{text.cancel}</button></div> : null}
           {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(SETTLEMENT_BUILDINGS[selectedBuilding.type], language)}</strong><span>{selectedBuilding.state === "construction" ? `${text.building}: ${formatBuildTime(Number(selectedBuilding.completesAt) - Date.now())}` : text.active}</span><span>{text.condition}: {Math.round(Number(selectedBuilding.condition ?? 100))}%</span>{stats.buildingStatus?.[selectedBuilding.id]?.requiredWorkers ? <span>{text.workers}: {stats.buildingStatus[selectedBuilding.id].assignedWorkers}/{stats.buildingStatus[selectedBuilding.id].requiredWorkers}{!stats.buildingStatus[selectedBuilding.id].staffed ? ` · ${text.needsWorker}` : ""}</span> : null}<button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); setNotice(""); }}>{text.move}</button>{Number(selectedBuilding.condition ?? 100) < 100 ? <button type="button" className="pip-action-button" onClick={repairSelected}>{text.repair} · ⚙{repairCost.materials} · ●{repairCost.caps}</button> : null}<button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button><button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
 
+          <div className={`settlement-defense-panel ${activeAttack ? "is-alert" : ""}`}>
+            <div className="pip-panel-title">{text.attack}</div>
+            <div className="settlement-balance"><span>{text.attackRisk}</span><b>{attackRisk}%</b></div>
+            {activeAttack ? <><strong>{activeAttack.state === "warning" ? text.warning : text.attackActive}</strong><span>{activeAttack.faction?.replaceAll("_", " ")}</span><div className="settlement-balance"><span>{text.strength}</span><b>{activeAttack.strength}</b></div><span>{activeAttack.state === "warning" ? `${text.startsIn}: ${formatBuildTime(Number(activeAttack.startsAt) - Date.now())}` : `${text.resolvesIn}: ${formatBuildTime(Number(activeAttack.resolveAt) - Date.now())}`}</span><button type="button" className="pip-action-button" onClick={resolveAttackNow}>{text.autoDefense}</button></> : <span>{lastResolvedAttack ? `${lastResolvedAttack.result === "victory" ? text.victory : text.defeat} · ${lastResolvedAttack.faction?.replaceAll("_", " ")}` : text.noThreat}</span>}
+          </div>
+
           <div className="settlement-people">
             <div className="pip-panel-title">{text.people}</div>
-            {(settlement.settlers || []).map((settler) => <label key={settler.id} className="settlement-person"><span><strong>{settler.name}</strong><small>{settler.role === "unassigned" ? text.unassigned : settler.role}</small></span><select className="pip-input" value={settler.assignedBuildingId || ""} onChange={(event) => assignSettler(settler.id, event.target.value)}><option value="">{text.unassigned}</option>{assignableBuildings.map((building) => <option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)}</option>)}</select></label>)}
+            {(settlement.settlers || []).map((settler) => <label key={settler.id} className="settlement-person"><span><strong>{settler.name}</strong><small>{settler.status === "injured" ? `${settler.role} · HP ${settler.health}` : settler.role === "unassigned" ? text.unassigned : settler.role}</small></span><select className="pip-input" value={settler.assignedBuildingId || ""} onChange={(event) => assignSettler(settler.id, event.target.value)}><option value="">{text.unassigned}</option>{assignableBuildings.map((building) => <option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type], language)}</option>)}</select></label>)}
           </div>
         </aside>
       </div>
