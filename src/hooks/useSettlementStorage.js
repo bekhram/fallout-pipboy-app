@@ -1,12 +1,46 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { STARTING_SETTLEMENT_RESOURCES } from "../data/settlement/buildings.js";
+import {
+  SETTLEMENT_BUILDINGS,
+  SETTLEMENT_GRID_SIZE,
+  STARTING_SETTLEMENT_RESOURCES,
+} from "../data/settlement/buildings.js";
 import { simulateSettlement } from "../utils/settlementEconomy.js";
 import { processSettlementAttacks } from "../utils/settlementAttackEngine.js";
 
 const STORAGE_KEY = "pip2d20:settlements:v1";
 
+function ensureSettlementHQ(settlement) {
+  if (!settlement || (settlement.buildings || []).some((building) => building.type === "settlement_hq")) return settlement;
+
+  const def = SETTLEMENT_BUILDINGS.settlement_hq;
+  const width = Number(def?.footprint?.width || 4);
+  const height = Number(def?.footprint?.height || 4);
+  const x = Math.max(0, Math.floor((SETTLEMENT_GRID_SIZE - width) / 2));
+  const y = Math.max(0, Math.floor((SETTLEMENT_GRID_SIZE - height) / 2));
+  const createdAt = Number(settlement.createdAt || Date.now());
+
+  return {
+    ...settlement,
+    buildings: [
+      {
+        id: `settlement_hq_${settlement.id || createdAt}`,
+        type: "settlement_hq",
+        x,
+        y,
+        rotation: 0,
+        state: "active",
+        condition: 100,
+        startedAt: createdAt,
+        completesAt: createdAt,
+        locked: true,
+      },
+      ...(settlement.buildings || []),
+    ],
+  };
+}
+
 function runSimulation(settlement) {
-  return processSettlementAttacks(simulateSettlement(settlement));
+  return processSettlementAttacks(simulateSettlement(ensureSettlementHQ(settlement)));
 }
 
 function readAll() {
@@ -38,7 +72,7 @@ function createInitialSettlers(createdAt, count = 4) {
 export function createSettlement({ name, regionId, worldX, worldY, ownerCharacterId = null }) {
   const now = Date.now();
   const population = Number(STARTING_SETTLEMENT_RESOURCES.population || 4);
-  return {
+  return ensureSettlementHQ({
     id: `settlement_${now}_${Math.random().toString(36).slice(2, 8)}`,
     name: String(name || "New Settlement").trim() || "New Settlement",
     regionId,
@@ -57,7 +91,7 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     nextAttackCheckAt: now + 6 * 60 * 60 * 1000,
     createdAt: now,
     lastSimulationAt: now,
-  };
+  });
 }
 
 export default function useSettlementStorage() {
