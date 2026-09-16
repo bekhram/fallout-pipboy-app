@@ -7,6 +7,10 @@ import coreRulebook06 from "./bestiary/coreRulebook06.js";
 import coreRulebookRules from "./bestiary/coreRulebookRules.js";
 import coreRulebookVariants from "./bestiary/coreRulebookVariants.js";
 import settlersGuideBestiary from "./bestiary/settlersGuideBestiary.js";
+import settlersWastelandNpcs01 from "./bestiary/settlersWastelandNpcs01.js";
+import settlersWastelandNpcs02 from "./bestiary/settlersWastelandNpcs02.js";
+import settlersWastelandNpcs03 from "./bestiary/settlersWastelandNpcs03.js";
+import settlersWastelandRobotsTraps from "./bestiary/settlersWastelandRobotsTraps.js";
 
 export const BESTIARY_CATEGORIES = [
   "all",
@@ -38,6 +42,10 @@ export const BESTIARY_ENTRIES = [
   ...coreRulebookRules,
   ...coreRulebookVariants,
   ...settlersGuideBestiary,
+  ...settlersWastelandNpcs01,
+  ...settlersWastelandNpcs02,
+  ...settlersWastelandNpcs03,
+  ...settlersWastelandRobotsTraps,
 ].map(normalizeBestiaryEntry);
 
 export function createEmptyBestiaryEntry(category = "creature") {
