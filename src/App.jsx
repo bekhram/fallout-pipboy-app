@@ -26,6 +26,7 @@ import { parseCSV } from "./utils/csvParser.js";
 import { calculatePowerArmorLocations } from "./data/powerArmor.js";
 import { readCompanionState, writeCompanionState } from "./utils/companionStorage.js";
 import { getConsumableUsePlan, PIPBOY_USE_ITEM_EVENT } from "./utils/consumableEffects.js";
+import { readLastUiState, writeLastUiState } from "./utils/uiViewState.js";
 
 import {
   ARMOR_PARTS,
@@ -121,9 +122,14 @@ function chooseNumberedTarget(title, targets, lineForTarget) {
 }
 
 export default function App() {
+  const startupUiStateRef = useRef(null);
+  if (startupUiStateRef.current === null) startupUiStateRef.current = readLastUiState();
+  const startupUiState = startupUiStateRef.current;
   const [pendingAutoD6, setPendingAutoD6] = useState(null);
   const { t, i18n } = useTranslation();
-  const [screen, setScreen] = useState("menu");
+  const [screen, setScreen] = useState(() => (
+    startupUiState.view === "battlemap" ? "sheet" : startupUiState.screen
+  ));
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
 
@@ -205,7 +211,7 @@ export default function App() {
     setDiceRoll(null);
   };
 
-  const [activeTab, setActiveTab] = useState("status");
+  const [activeTab, setActiveTab] = useState(() => startupUiState.activeTab);
   const [sideMenuOpen, setSideMenuOpen] = useState(false);
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -235,6 +241,45 @@ export default function App() {
   } = useCharacterStorage(buildDefaultForm());
 
   const sharedSession = useSharedSession(form);
+
+  useEffect(() => {
+    const current = readLastUiState();
+    const preserveBattlemap = screen === "sheet" && current.view === "battlemap";
+    writeLastUiState({
+      screen,
+      activeTab,
+      view: preserveBattlemap ? "battlemap" : screen,
+    });
+  }, [screen, activeTab]);
+
+  useEffect(() => {
+    const shouldResume = startupUiState.view === "battlemap" || startupUiState.screen === "session";
+    const lastCode = sharedSession.lastSession?.code;
+    if (!shouldResume || sharedSession.isActive || !lastCode) return undefined;
+
+    let cancelled = false;
+    let inFlight = false;
+    const resume = async () => {
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      try {
+        await sharedSession.resumeLastSession?.();
+      } catch (error) {
+        console.warn("Could not restore the last Pip-2D20 session:", error);
+      } finally {
+        inFlight = false;
+      }
+    };
+
+    void resume();
+    const interval = window.setInterval(() => void resume(), 5000);
+    window.addEventListener("online", resume);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("online", resume);
+    };
+  }, [sharedSession.isActive, sharedSession.lastSession?.code, startupUiState]);
 
   useEffect(() => {
     if (

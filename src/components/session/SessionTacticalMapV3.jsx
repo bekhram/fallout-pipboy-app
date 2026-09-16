@@ -7,6 +7,7 @@ import { RedRocketAssetLayer, redRocketBackgroundForSpec } from "../gm/RedRocket
 import { SuperDuperMartAssetLayer, superDuperMartBackgroundForSpec } from "../gm/SuperDuperMartAssetPortal.jsx";
 import TacticalSessionHud from "./TacticalSessionHud.jsx";
 import GmBattlemapTools from "../gm/GmBattlemapTools.jsx";
+import { readLastUiState, rememberBattlemapClosed, rememberBattlemapOpen } from "../../utils/uiViewState.js";
 import "../gm/gmSessionMap.css";
 import "../gm/sceneLibrary.css";
 import "../gm/gmTokenStatusLayer.css";
@@ -27,6 +28,14 @@ export default function SessionTacticalMapV3({session,openRequest=0}){
   const dragRef=useRef(null);
   const lastOpenRequestRef=useRef(openRequest);
   const previousSceneActiveRef=useRef(Boolean(scene?.active));
+  const restoreBattlemapRef=useRef(readLastUiState().view==="battlemap");
+
+  const openBattlemap=useCallback(()=>{
+    if(!scene?.active)return;
+    restoreBattlemapRef.current=true;
+    rememberBattlemapOpen();
+    setOpen(true);
+  },[scene?.active]);
 
   const rawTokens=Array.isArray(scene?.tokens)?scene.tokens:[];
   const tokens=useMemo(()=>rawTokens.filter((token)=>!hiddenForPlayers(token)),[rawTokens]);
@@ -59,22 +68,29 @@ export default function SessionTacticalMapV3({session,openRequest=0}){
     const wasActive=previousSceneActiveRef.current;
     const isActive=Boolean(scene?.active);
     previousSceneActiveRef.current=isActive;
-    if(!isActive){setOpen(false);setDragState(null);dragRef.current=null;return;}
-    if(!wasActive)setOpen(true);
-  },[scene?.active,scene?.sceneId]);
+    if(!isActive){
+      setOpen(false);setDragState(null);dragRef.current=null;
+      if(session?.isActive&&session?.mode==="player"&&session?.status==="online"){
+        restoreBattlemapRef.current=false;
+        rememberBattlemapClosed();
+      }
+      return;
+    }
+    if(restoreBattlemapRef.current||!wasActive)openBattlemap();
+  },[scene?.active,scene?.sceneId,session?.isActive,session?.mode,session?.status,openBattlemap]);
 
   useEffect(()=>{
     if(openRequest===lastOpenRequestRef.current)return;
     lastOpenRequestRef.current=openRequest;
-    if(scene?.active)setOpen(true);
-  },[openRequest,scene?.active]);
+    openBattlemap();
+  },[openRequest,openBattlemap]);
 
   useEffect(()=>{
     if(typeof document==="undefined")return undefined;
-    const openFromShortcut=()=>{if(scene?.active)setOpen(true);};
+    const openFromShortcut=()=>openBattlemap();
     document.addEventListener("pip2d20:open-battlemap",openFromShortcut);
     return()=>document.removeEventListener("pip2d20:open-battlemap",openFromShortcut);
-  },[scene?.active]);
+  },[openBattlemap]);
 
   const showError=useCallback((response)=>{if(response?.ok===false)setError(response.error||"MOVE_FAILED");else setError("");},[]);
 
@@ -110,7 +126,7 @@ export default function SessionTacticalMapV3({session,openRequest=0}){
   if(!session?.isActive||session?.mode!=="player"||!scene?.active)return null;
 
   const canMove=Boolean(selectedToken&&session.status==="online");
-  const close=()=>{setOpen(false);setDragState(null);dragRef.current=null;};
+  const close=()=>{restoreBattlemapRef.current=false;rememberBattlemapClosed();setOpen(false);setDragState(null);dragRef.current=null;};
 
   const beginDrag=(event,token)=>{
     if(!canMove||!ownedTokens.some((item)=>item.id===token.id)||(event.pointerType==="mouse"&&event.button!==0))return;
