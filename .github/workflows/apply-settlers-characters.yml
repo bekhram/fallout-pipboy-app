@@ -1,0 +1,40 @@
+name: Apply Settlers Guide characters
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/scripts/apply_settlers_characters.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply Settlers Guide character content
+        run: python3 .github/scripts/apply_settlers_characters.py
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/data/origins.js src/components/data/perks.js src/data/startingEquipment.js src/components/characterCreation/QuickCharacterWizard.jsx src/components/perks/PerksScreen.jsx src/locales/*/common.json
+          git commit -m 'feat: add Settlers Guide origins and perks'
+          git push
