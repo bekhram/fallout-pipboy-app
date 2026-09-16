@@ -35,12 +35,7 @@ function canPlace(settlement, def, x, y) {
 
 function BuildingVisual({ building, def, language }) {
   if (building.state === "construction") {
-    return (
-      <div className="settlement-construction-scaffold">
-        <span>🛠</span>
-        <small>{formatBuildTime(Number(building.completesAt) - Date.now())}</small>
-      </div>
-    );
+    return <div className="settlement-construction-scaffold"><span>🛠</span><small>{formatBuildTime(Number(building.completesAt) - Date.now())}</small></div>;
   }
   if (building.type === "small_house") return <img src={smallHouseAsset} alt={settlementBuildingName(def, language)} draggable="false" />;
   return <div className={`settlement-generic-building settlement-generic-building--${building.type}`}>{BUILDING_ICONS[building.type] || "⌂"}</div>;
@@ -59,9 +54,10 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const resource = (key) => Math.floor(Number(settlement.resources?.[key] || 0));
   const enoughResources = selectedDef ? resource("materials") >= Number(selectedDef.cost?.materials || 0) && resource("caps") >= Number(selectedDef.cost?.caps || 0) : false;
 
-  function placeBuilding() {
-    if (!selectedDef || !hoverCell) return;
-    if (!placementValid) { setNotice(text.cannotPlace); return; }
+  function placeBuildingAt(x, y) {
+    if (!selectedDef) return;
+    setHoverCell({ x, y });
+    if (!canPlace(settlement, selectedDef, x, y)) { setNotice(text.cannotPlace); return; }
     if (!enoughResources) { setNotice(text.insufficient); return; }
     const now = Date.now();
     onUpdate((current) => ({
@@ -74,8 +70,8 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
       buildings: [...(current.buildings || []), {
         id: `building_${now}_${Math.random().toString(36).slice(2, 7)}`,
         type: selectedDef.id,
-        x: hoverCell.x,
-        y: hoverCell.y,
+        x,
+        y,
         rotation: 0,
         state: "construction",
         condition: 100,
@@ -107,21 +103,17 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
 
       <div className="settlement-layout">
         <div className="settlement-map-wrap">
-          <div className="settlement-map" onMouseLeave={() => setHoverCell(null)} onClick={placeBuilding}>
+          <div className="settlement-map" onMouseLeave={() => setHoverCell(null)}>
             {Array.from({ length: SETTLEMENT_GRID_SIZE * SETTLEMENT_GRID_SIZE }, (_, index) => {
               const x = index % SETTLEMENT_GRID_SIZE;
               const y = Math.floor(index / SETTLEMENT_GRID_SIZE);
-              return <button key={`${x}-${y}`} type="button" className="settlement-cell" aria-label={`${x},${y}`} onMouseEnter={() => setHoverCell({ x, y })} onFocus={() => setHoverCell({ x, y })} />;
+              return <button key={`${x}-${y}`} type="button" className="settlement-cell" aria-label={`${x},${y}`} onMouseEnter={() => setHoverCell({ x, y })} onFocus={() => setHoverCell({ x, y })} onClick={() => placeBuildingAt(x, y)} />;
             })}
 
             {(settlement.buildings || []).map((building) => {
               const def = SETTLEMENT_BUILDINGS[building.type];
               if (!def) return null;
-              return (
-                <div key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)}>
-                  <BuildingVisual building={building} def={def} language={language} />
-                </div>
-              );
+              return <div key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)}><BuildingVisual building={building} def={def} language={language} /></div>;
             })}
 
             {selectedDef && hoverCell ? <div className={`settlement-placement ${placementValid && enoughResources ? "is-valid" : "is-invalid"}`} style={{ left: `${hoverCell.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${hoverCell.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${selectedDef.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${selectedDef.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} /> : null}
@@ -138,13 +130,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
       </div>
 
       <div className="settlement-build-menu">
-        {SETTLEMENT_BUILDING_LIST.map((def) => (
-          <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setNotice(""); }}>
-            <div className="settlement-build-menu__preview">{def.id === "small_house" ? <img src={smallHouseAsset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div>
-            <span>{settlementBuildingName(def, language)}</span>
-            <small>{def.footprint.width}×{def.footprint.height} · ⚙{def.cost?.materials || 0} · ●{def.cost?.caps || 0}</small>
-          </button>
-        ))}
+        {SETTLEMENT_BUILDING_LIST.map((def) => <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setNotice(""); }}><div className="settlement-build-menu__preview">{def.id === "small_house" ? <img src={smallHouseAsset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · ⚙{def.cost?.materials || 0} · ●{def.cost?.caps || 0}</small></button>)}
       </div>
     </div>
   );
