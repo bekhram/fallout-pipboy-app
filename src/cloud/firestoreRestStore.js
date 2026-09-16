@@ -25,9 +25,13 @@ async function authHeaders() {
   };
 }
 
-function baseUrl() {
+function databaseBaseUrl() {
   assertConfigured();
-  return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(CLOUD_CONFIG.firebaseProjectId)}/databases/(default)/documents`;
+  return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(CLOUD_CONFIG.firebaseProjectId)}/databases/(default)`;
+}
+
+function baseUrl() {
+  return `${databaseBaseUrl()}/documents`;
 }
 
 function stringField(value) {
@@ -68,6 +72,22 @@ async function request(path, options = {}) {
     throw new Error(payload?.error?.message || `Firestore request failed (${response.status}).`);
   }
   return payload;
+}
+
+async function runQuery(structuredQuery) {
+  const headers = await authHeaders();
+  const response = await fetch(`${databaseBaseUrl()}/documents:runQuery`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ structuredQuery }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error?.message || `Firestore query failed (${response.status}).`);
+  }
+  return Array.isArray(payload)
+    ? payload.map((row) => parseDocument(row?.document)).filter(Boolean)
+    : [];
 }
 
 export async function setCloudDocument(path, {
@@ -140,6 +160,26 @@ export async function saveCloudCampaign(campaignId, ownerUid, campaignState, tit
 
 export async function loadCloudCampaign(campaignId) {
   return getCloudDocument(`campaigns/${campaignId}`);
+}
+
+export async function listCloudCampaignsByOwner(ownerUid) {
+  const uid = String(ownerUid || "").trim();
+  if (!uid) throw new Error("Missing campaign owner uid.");
+  const documents = await runQuery({
+    from: [{ collectionId: "campaigns" }],
+    where: {
+      fieldFilter: {
+        field: { fieldPath: "ownerUid" },
+        op: "EQUAL",
+        value: { stringValue: uid },
+      },
+    },
+  });
+  return documents.sort((a, b) => {
+    const aTime = Date.parse(a?.updatedAt || a?.createdAt || 0) || 0;
+    const bTime = Date.parse(b?.updatedAt || b?.createdAt || 0) || 0;
+    return bTime - aTime;
+  });
 }
 
 export async function saveCampaignPlayerSnapshot(campaignId, userId, character) {
