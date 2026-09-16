@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - '.github/scripts/apply_settlers_characters.py'
+      - '.github/workflows/apply-settlers-characters.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,6 +22,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      - name: Repair migration insertion point
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/scripts/apply_settlers_characters.py')
+          s = p.read_text()
+          s = s.replace('needle = "\\n};\\n\\nexport function getOriginEquipmentGrant"', 'needle = "\\n};\\n\\nfunction rollCombatDice"')
+          p.write_text(s)
+          PY
       - name: Apply Settlers Guide character content
         run: python3 .github/scripts/apply_settlers_characters.py
       - name: Install dependencies
@@ -35,6 +45,6 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/components/data/origins.js src/components/data/perks.js src/data/startingEquipment.js src/components/characterCreation/QuickCharacterWizard.jsx src/components/perks/PerksScreen.jsx src/locales/*/common.json
+          git add .github/scripts/apply_settlers_characters.py src/components/data/origins.js src/components/data/perks.js src/data/startingEquipment.js src/components/characterCreation/QuickCharacterWizard.jsx src/components/perks/PerksScreen.jsx src/locales/*/common.json
           git commit -m 'feat: add Settlers Guide origins and perks'
           git push
