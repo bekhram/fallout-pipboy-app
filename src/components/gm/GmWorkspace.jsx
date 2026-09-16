@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import GmSessionMap from "./GmSessionMap.jsx";
+import GmSessionShareBar from "./GmSessionShareBar.jsx";
 import QuestTypeSelectorPortal from "./QuestTypeSelectorPortal.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./gmWorkspace.css";
@@ -12,6 +13,7 @@ export default function GmWorkspace({ character = null, session = null }) {
 
   return (
     <div className="gm-workspace gm-workspace--tactical-only">
+      <GmSessionShareBar session={effectiveSession} />
       <div ref={tacticalMapRef} className="gm-workspace__tactical-anchor">
         <GmSessionMap character={character} session={effectiveSession} />
         <QuestTypeSelectorPortal session={effectiveSession} />
