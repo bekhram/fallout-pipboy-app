@@ -5,6 +5,7 @@ import {
   signInWithGoogle,
   signOutCloud,
 } from "../../cloud/googleAuth.js";
+import { readDriveJson, upsertDriveJson } from "../../cloud/googleDriveStore.js";
 
 const COPY = {
   en: {
@@ -19,6 +20,10 @@ const COPY = {
     signedIn: "SIGNED IN",
     drive: "Google Drive access granted for Pip-2D20 files only.",
     setup: "Cloud migration scaffold is installed. Add the Google/Firebase environment variables to enable it.",
+    testDrive: "TEST GOOGLE DRIVE",
+    testingDrive: "TESTING DRIVE...",
+    driveTestOk: "Google Drive test passed. Pip2D20/test.json was written and read successfully.",
+    driveTestFailed: "Google Drive test failed",
   },
   ru: {
     title: "ОБЛАЧНЫЙ АККАУНТ",
@@ -32,6 +37,10 @@ const COPY = {
     signedIn: "ВЫПОЛНЕН ВХОД",
     drive: "Доступ к Google Drive ограничен файлами, созданными Pip-2D20.",
     setup: "Основа облачного переноса установлена. Добавьте переменные Google/Firebase, чтобы включить систему.",
+    testDrive: "ПРОВЕРИТЬ GOOGLE DRIVE",
+    testingDrive: "ПРОВЕРКА DRIVE...",
+    driveTestOk: "Проверка Google Drive успешна. Pip2D20/test.json записан и прочитан.",
+    driveTestFailed: "Ошибка проверки Google Drive",
   },
   uk: {
     title: "ХМАРНИЙ АКАУНТ",
@@ -45,6 +54,10 @@ const COPY = {
     signedIn: "ВХІД ВИКОНАНО",
     drive: "Доступ до Google Drive обмежено файлами, створеними Pip-2D20.",
     setup: "Основа хмарного перенесення встановлена. Додайте змінні Google/Firebase, щоб увімкнути систему.",
+    testDrive: "ПЕРЕВІРИТИ GOOGLE DRIVE",
+    testingDrive: "ПЕРЕВІРКА DRIVE...",
+    driveTestOk: "Перевірка Google Drive успішна. Pip2D20/test.json записано та прочитано.",
+    driveTestFailed: "Помилка перевірки Google Drive",
   },
   pl: {
     title: "KONTO W CHMURZE",
@@ -58,6 +71,10 @@ const COPY = {
     signedIn: "ZALOGOWANO",
     drive: "Dostęp do Google Drive jest ograniczony do plików utworzonych przez Pip-2D20.",
     setup: "Warstwa migracji do chmury jest gotowa. Dodaj zmienne Google/Firebase, aby ją włączyć.",
+    testDrive: "TESTUJ GOOGLE DRIVE",
+    testingDrive: "TESTOWANIE DRIVE...",
+    driveTestOk: "Test Google Drive zakończony powodzeniem. Pip2D20/test.json został zapisany i odczytany.",
+    driveTestFailed: "Test Google Drive nie powiódł się",
   },
 };
 
@@ -70,7 +87,9 @@ export default function CloudAccountPanel({ language = "en" }) {
   const copy = COPY[languageCode(language)];
   const [session, setSession] = useState(() => getCloudAuthSession());
   const [busy, setBusy] = useState(false);
+  const [driveBusy, setDriveBusy] = useState(false);
   const [error, setError] = useState("");
+  const [driveStatus, setDriveStatus] = useState("");
   const config = getCloudConfigurationState();
 
   useEffect(() => {
@@ -82,6 +101,7 @@ export default function CloudAccountPanel({ language = "en" }) {
   const handleSignIn = async () => {
     setBusy(true);
     setError("");
+    setDriveStatus("");
     try {
       setSession(await signInWithGoogle());
     } catch (nextError) {
@@ -95,6 +115,32 @@ export default function CloudAccountPanel({ language = "en" }) {
     signOutCloud();
     setSession(null);
     setError("");
+    setDriveStatus("");
+  };
+
+  const handleDriveTest = async () => {
+    setDriveBusy(true);
+    setError("");
+    setDriveStatus("");
+    try {
+      const marker = `pip2d20-drive-test-${Date.now()}`;
+      await upsertDriveJson("test.json", {
+        source: "Pip-2D20",
+        type: "drive-test",
+        marker,
+        user: session?.user?.email || "",
+        createdAt: new Date().toISOString(),
+      });
+      const saved = await readDriveJson("test.json");
+      if (!saved || saved.marker !== marker) {
+        throw new Error("Drive read-back verification failed.");
+      }
+      setDriveStatus(copy.driveTestOk);
+    } catch (nextError) {
+      setError(`${copy.driveTestFailed}: ${nextError?.message || String(nextError)}`);
+    } finally {
+      setDriveBusy(false);
+    }
   };
 
   return (
@@ -116,12 +162,23 @@ export default function CloudAccountPanel({ language = "en" }) {
         ) : (
           <div>{config.google ? copy.signedOut : copy.setup}</div>
         )}
+        {driveStatus ? <div>{driveStatus}</div> : null}
         {error ? <div className="pip-error">{error}</div> : null}
       </div>
 
       <div className="pip-actions-inline push-top">
         {session ? (
-          <button type="button" className="pip-btn" onClick={handleSignOut}>{copy.signOut}</button>
+          <>
+            <button
+              type="button"
+              className="pip-btn is-primary"
+              onClick={handleDriveTest}
+              disabled={driveBusy}
+            >
+              {driveBusy ? copy.testingDrive : copy.testDrive}
+            </button>
+            <button type="button" className="pip-btn" onClick={handleSignOut}>{copy.signOut}</button>
+          </>
         ) : (
           <button
             type="button"
