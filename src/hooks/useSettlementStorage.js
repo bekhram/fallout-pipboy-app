@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { STARTING_SETTLEMENT_RESOURCES } from "../data/settlement/buildings.js";
 import { simulateSettlement } from "../utils/settlementEconomy.js";
+import { processSettlementAttacks } from "../utils/settlementAttackEngine.js";
 
 const STORAGE_KEY = "pip2d20:settlements:v1";
+
+function runSimulation(settlement) {
+  return processSettlementAttacks(simulateSettlement(settlement));
+}
 
 function readAll() {
   if (typeof window === "undefined") return [];
@@ -48,20 +53,22 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     settlers: createInitialSettlers(now, population),
     events: [],
     attacks: [],
+    attackRisk: 0,
+    nextAttackCheckAt: now + 6 * 60 * 60 * 1000,
     createdAt: now,
     lastSimulationAt: now,
   };
 }
 
 export default function useSettlementStorage() {
-  const [settlements, setSettlements] = useState(() => readAll().map((item) => simulateSettlement(item)));
+  const [settlements, setSettlements] = useState(() => readAll().map((item) => runSimulation(item)));
 
   useEffect(() => {
     writeAll(settlements);
   }, [settlements]);
 
   const refreshSimulation = useCallback(() => {
-    setSettlements((current) => current.map((item) => simulateSettlement(item)));
+    setSettlements((current) => current.map((item) => runSimulation(item)));
   }, []);
 
   useEffect(() => {
@@ -78,9 +85,9 @@ export default function useSettlementStorage() {
   const update = useCallback((id, updater) => {
     setSettlements((current) => current.map((item) => {
       if (item.id !== id) return item;
-      const base = simulateSettlement(item);
+      const base = runSimulation(item);
       const next = typeof updater === "function" ? updater(base) : { ...base, ...updater };
-      return simulateSettlement(next);
+      return runSimulation(next);
     }));
   }, []);
 
