@@ -18,6 +18,9 @@ export const MOD_SLOT_LABELS = {
   blade: "Blade",
   head: "Weapon mod",
   frame: "Frame",
+  concentrate: "Concentrate",
+  container: "Container",
+  canister: "Canister",
 };
 
 const sights = [
@@ -241,6 +244,62 @@ const unique = {
 
 // === SUPPLEMENTAL WEAPON BATCH 2 ===
 const supplementalUnique = {
+
+  // === SETTLERS GUIDE EQUIPMENT ===
+  "m79-grenade-launcher": {
+    barrel: [mod("Long Barrel", "Increase Range by 1 step", 2, 40, "Gun Nut 1", "Long")],
+    stock: [mod("Full Stock", "Gain Two-Handed; remove Inaccurate", 1, 10, "", "")],
+  },
+  "acid-soaker": {
+    concentrate: [mod("Caustic", "+1 damage", 2, 30, "", "Caustic")],
+    container: [
+      mod("Large Ampoule", "+1 Fire Rate", 2, 22, "", "High Capacity"),
+      mod("Large Vial", "+3 Fire Rate", 4, 40, "", "Maximum Capacity"),
+    ],
+  },
+  "alien-blaster": { magazine: [mod("Fusion Mag", "Damage becomes 3; -1 Fire Rate; ammo becomes Fusion Cell", 0, 21, "Science! 1", "Converted")] },
+  "assaultron-head-laser": {
+    capacitor: [
+      mod("Capacitor Mk III", "+1 damage; consumes 3 shots per attack", 0, 4, "Robotics Expert", "Mk III"),
+      mod("Capacitor Mk IV", "+2 damage; consumes 4 shots per attack", 1, 8, "Robotics Expert, Science! 1", "Mk IV"),
+      mod("Capacitor Mk V", "+3 damage; consumes 5 shots per attack", 1, 12, "Robotics Expert, Science! 2", "Mk V"),
+      mod("Capacitor Mk VI", "+4 damage; consumes 6 shots per attack", 2, 16, "Robotics Expert, Science! 3", "Mk VI"),
+    ],
+  },
+  broadsider: {
+    barrel: [
+      mod("Long Barrel", "Increase Range by 1 step", 2, 40, "Gun Nut 1", "Long"),
+      mod("Light Barrel", "+2 damage; remove Blast", 3, 30, "Gun Nut 2", "Fluted"),
+    ],
+    canister: [
+      mod("Multi Shot Canister", "+1 Fire Rate; gain Inaccurate", 1, 45, "Gun Nut 3", "Repeating"),
+      mod("M79 Launcher", "Increase Range by 1 step; ammo becomes 40mm Grenade Round", 0, 3, "Science! 1", "Converted"),
+    ],
+  },
+  cryolator: {
+    barrel: [mod("Crystallizing Barrel", "+2 damage; increase Range by 1 step; -1 Fire Rate; remove Stun and Unreliable", 5, 40, "Science! 2", "Crystallized")],
+    magazine: [mod("Fusion Mag", "Damage becomes 2; -1 Fire Rate; ammo becomes Fusion Cell", 0, 21, "Science! 1", "Converted")],
+    stock: [mod("Recoil Compensating Stock", "+1 Fire Rate", 2, 45, "", "Recoil Compensating")],
+    sights: [mod("Reflex", "May re-roll hit location die", 0, 17, "", "Tactical")],
+  },
+  "harpoon-gun": {
+    magazine: [
+      mod("Barbed Harpoon", "Gain Vicious and Persistent", 0, 21, "", "Barbed"),
+      mod("Flechette Darts", "Gain Spread; reduce Range by 1 step", 0, 15, "Gun Nut 2", "Tiny"),
+    ],
+    stock: [mod("Recoil Compensating Stock", "+1 Fire Rate", 15, 45, "", "Recoil Compensating")],
+    sights: [
+      mod("Gunner Sight", "May re-roll hit location die", 0, 17, "", "Tactical"),
+      mod("Short Scope", "Gain Accurate", 1, 28, "Gun Nut 1", "Scoped"),
+    ],
+  },
+  claw: {
+    head: [
+      mod("Shock Mod", "+2 damage; damage type becomes Energy", 0, 15, "Blacksmith 2, Robotics Expert 1", "Shock"),
+      mod("Stun Mod", "+3 damage; gain Stun; damage type becomes Energy", 0, 30, "Blacksmith 2, Robotics Expert 1", "Stun"),
+    ],
+  },
+
   bow: {
     frame: [mod("Compound Frame", "+1 damage; -1 Fire Rate; remove Recoil (6)", 1, 30, "Gun Nut 1", "Compound")],
     sights: [
