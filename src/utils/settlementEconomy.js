@@ -2,12 +2,12 @@ import { SETTLEMENT_BUILDINGS } from "../data/settlement/buildings.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function add(target, key, value) {
-  target[key] = (Number(target[key]) || 0) + (Number(value) || 0);
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, Number(value) || 0));
 }
 
 function ensureSettlers(input) {
-  const wanted = Math.max(0, Math.floor(Number(input.resources?.population || 0)));
+  const wanted = Math.max(0, Math.floor(Number(input.attributes?.people ?? input.resources?.population ?? 0)));
   const settlers = Array.isArray(input.settlers) ? [...input.settlers] : [];
   if (settlers.length >= wanted) return input;
   const stamp = Number(input.createdAt || 0);
@@ -17,6 +17,7 @@ function ensureSettlers(input) {
       name: `Settler ${index + 1}`,
       role: "unassigned",
       assignedBuildingId: null,
+      settlementAction: null,
       health: 100,
       status: "idle",
     });
@@ -35,15 +36,19 @@ export function completeFinishedConstruction(settlement, now = Date.now()) {
 }
 
 export function calculateSettlementStats(settlement) {
-  const production = { food: 0, water: 0, power: 0, materials: 0, caps: 0 };
-  const population = Array.isArray(settlement.settlers) && settlement.settlers.length
+  const stored = settlement.attributes || {};
+  const people = Array.isArray(settlement.settlers) && settlement.settlers.length
     ? settlement.settlers.length
-    : Number(settlement.resources?.population || 0);
-  const consumption = { food: population, water: population, power: 0 };
-  let populationLimit = Number(settlement.basePopulationLimit || 8);
-  let defense = 0;
-  let happinessBonus = 0;
+    : Math.max(0, Math.floor(Number(stored.people ?? settlement.resources?.population ?? 0)));
+  const leaderCharisma = Math.max(0, Math.floor(Number(settlement.leader?.charisma || 0)));
+  const peopleMax = 10 + leaderCharisma;
   const buildingStatus = {};
+
+  let bedsBonus = 0;
+  let powerBonus = 0;
+  let defenseBonus = 0;
+  let happinessBonus = 0;
+  let incomeBonus = 0;
 
   for (const building of settlement.buildings || []) {
     const def = SETTLEMENT_BUILDINGS[building.type];
@@ -55,68 +60,70 @@ export function calculateSettlementStats(settlement) {
     buildingStatus[building.id] = { active, staffed, assignedWorkers, requiredWorkers };
     if (!active) continue;
 
-    const conditionMultiplier = Math.max(0, Math.min(1, Number(building.condition ?? 100) / 100));
-    populationLimit += Number(def.effects?.populationLimit || 0);
-    if (!staffed) continue;
-    for (const [key, value] of Object.entries(def.productionPerDay || {})) add(production, key, value * conditionMultiplier);
-    for (const [key, value] of Object.entries(def.consumptionPerDay || {})) add(consumption, key, value);
-    defense += Number(def.effects?.defense || 0) * conditionMultiplier;
-    happinessBonus += Number(def.effects?.happiness || 0);
+    // Only explicit rulebook effects participate in the canonical settlement
+    // attributes. The old productionPerDay/effects fields remain for the visual
+    // builder until each object is replaced by its rulebook definition.
+    const effects = def.rulebookEffects || {};
+    bedsBonus += Number(effects.beds || 0);
+    powerBonus += Number(effects.power || 0);
+    defenseBonus += Number(effects.defense || 0);
+    happinessBonus += Number(effects.happiness || 0);
+    incomeBonus += Number(effects.income || 0);
   }
 
-  const foodBalance = production.food - consumption.food;
-  const waterBalance = production.water - consumption.water;
-  const targetHappiness = Math.max(0, Math.min(100,
-    50 + happinessBonus +
-    (foodBalance >= 0 ? 5 : -15) +
-    (waterBalance >= 0 ? 5 : -20) +
-    (population <= populationLimit ? 3 : -10)
-  ));
+  const attributes = {
+    people,
+    food: Math.max(0, Math.floor(Number(stored.food ?? settlement.resources?.food ?? people))),
+    water: Math.max(0, Math.floor(Number(stored.water ?? settlement.resources?.water ?? people))),
+    power: Math.max(0, Math.floor(Number(stored.power ?? settlement.resources?.power ?? 0) + powerBonus)),
+    defense: Math.max(0, Math.floor(Number(stored.defense ?? settlement.resources?.defense ?? 0) + defenseBonus)),
+    beds: Math.max(0, Math.floor(Number(stored.beds ?? settlement.resources?.beds ?? 0) + bedsBonus)),
+    happiness: clamp(Number(stored.happiness ?? settlement.resources?.happiness ?? 10) + happinessBonus, 1, 20),
+    income: Math.max(0, Math.floor(Number(stored.income ?? settlement.resources?.income ?? 0) + incomeBonus)),
+  };
 
   return {
-    production,
-    consumption,
-    balance: {
-      food: foodBalance,
-      water: waterBalance,
-      power: production.power - consumption.power,
-      materials: production.materials,
-      caps: production.caps,
-    },
-    population,
-    populationLimit,
-    defense: Math.round(defense),
-    targetHappiness,
+    attributes,
+    people,
+    population: people,
+    peopleMax,
+    populationLimit: peopleMax,
+    defense: attributes.defense,
     buildingStatus,
+    // Transitional compatibility for the existing builder panels. These stop
+    // representing automatic daily production; the rulebook day turn will own
+    // all changes to Food, Water, Happiness and Income.
+    production: { food: 0, water: 0, power: attributes.power, materials: 0, caps: 0 },
+    consumption: { food: 0, water: 0, power: 0 },
+    balance: { food: 0, water: 0, power: attributes.power, materials: 0, caps: 0 },
   };
 }
 
 export function simulateSettlement(input, now = Date.now()) {
   let settlement = ensureSettlers(input);
   settlement = completeFinishedConstruction(settlement, now);
-  const last = Number(settlement.lastSimulationAt || now);
-  const elapsedMs = Math.max(0, now - last);
-  if (!elapsedMs) return settlement;
-
   const stats = calculateSettlementStats(settlement);
-  const days = elapsedMs / DAY_MS;
-  const resources = { ...(settlement.resources || {}) };
+  const attributes = { ...stats.attributes };
+  const resources = {
+    ...(settlement.resources || {}),
+    // Legacy mirrors are retained until the attack engine and construction
+    // costs are migrated in later rulebook steps.
+    population: attributes.people,
+    food: attributes.food,
+    water: attributes.water,
+    power: attributes.power,
+    defense: attributes.defense,
+    beds: attributes.beds,
+    happiness: attributes.happiness,
+    income: attributes.income,
+  };
 
-  for (const key of ["food", "water", "materials", "caps"]) {
-    const delta = Number(stats.balance[key] || 0) * days;
-    resources[key] = Math.max(0, Number(resources[key] || 0) + delta);
-  }
-  resources.population = stats.population;
-  resources.power = Number(stats.production.power || 0);
-  resources.populationLimit = stats.populationLimit;
-  resources.defense = stats.defense;
-
-  const currentHappiness = Number(resources.happiness ?? 50);
-  const maxShift = Math.max(0.25, 8 * days);
-  const happinessDelta = Math.max(-maxShift, Math.min(maxShift, stats.targetHappiness - currentHappiness));
-  resources.happiness = Math.max(0, Math.min(100, currentHappiness + happinessDelta));
-
-  return { ...settlement, resources, lastSimulationAt: now };
+  return {
+    ...settlement,
+    attributes,
+    resources,
+    lastSimulationAt: now,
+  };
 }
 
 export function formatBuildTime(ms) {
