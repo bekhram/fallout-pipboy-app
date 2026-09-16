@@ -5,7 +5,12 @@ import {
   signInWithGoogle,
   signOutCloud,
 } from "../../cloud/googleAuth.js";
-import { readDriveJson, upsertDriveJson } from "../../cloud/googleDriveStore.js";
+import {
+  backupCharacterToDrive,
+  readDriveJson,
+  upsertDriveJson,
+} from "../../cloud/googleDriveStore.js";
+import { getActiveCharacterRecord } from "../../utils/characterProfiles.js";
 
 const COPY = {
   en: {
@@ -24,6 +29,11 @@ const COPY = {
     testingDrive: "TESTING DRIVE...",
     driveTestOk: "Google Drive test passed. Pip2D20/test.json was written and read successfully.",
     driveTestFailed: "Google Drive test failed",
+    saveCharacter: "BACK UP CHARACTER",
+    savingCharacter: "BACKING UP...",
+    noCharacter: "No active character found.",
+    characterSaved: "Character backup saved to Google Drive",
+    characterSaveFailed: "Character backup failed",
   },
   ru: {
     title: "ОБЛАЧНЫЙ АККАУНТ",
@@ -41,6 +51,11 @@ const COPY = {
     testingDrive: "ПРОВЕРКА DRIVE...",
     driveTestOk: "Проверка Google Drive успешна. Pip2D20/test.json записан и прочитан.",
     driveTestFailed: "Ошибка проверки Google Drive",
+    saveCharacter: "СОХРАНИТЬ ПЕРСОНАЖА В DRIVE",
+    savingCharacter: "СОХРАНЕНИЕ...",
+    noCharacter: "Активный персонаж не найден.",
+    characterSaved: "Резервная копия персонажа сохранена в Google Drive",
+    characterSaveFailed: "Не удалось сохранить персонажа",
   },
   uk: {
     title: "ХМАРНИЙ АКАУНТ",
@@ -58,6 +73,11 @@ const COPY = {
     testingDrive: "ПЕРЕВІРКА DRIVE...",
     driveTestOk: "Перевірка Google Drive успішна. Pip2D20/test.json записано та прочитано.",
     driveTestFailed: "Помилка перевірки Google Drive",
+    saveCharacter: "ЗБЕРЕГТИ ПЕРСОНАЖА В DRIVE",
+    savingCharacter: "ЗБЕРЕЖЕННЯ...",
+    noCharacter: "Активного персонажа не знайдено.",
+    characterSaved: "Резервну копію персонажа збережено в Google Drive",
+    characterSaveFailed: "Не вдалося зберегти персонажа",
   },
   pl: {
     title: "KONTO W CHMURZE",
@@ -75,6 +95,11 @@ const COPY = {
     testingDrive: "TESTOWANIE DRIVE...",
     driveTestOk: "Test Google Drive zakończony powodzeniem. Pip2D20/test.json został zapisany i odczytany.",
     driveTestFailed: "Test Google Drive nie powiódł się",
+    saveCharacter: "ZAPISZ POSTAĆ W DRIVE",
+    savingCharacter: "ZAPISYWANIE...",
+    noCharacter: "Nie znaleziono aktywnej postaci.",
+    characterSaved: "Kopia zapasowa postaci została zapisana w Google Drive",
+    characterSaveFailed: "Nie udało się zapisać postaci",
   },
 };
 
@@ -83,11 +108,16 @@ function languageCode(value) {
   return COPY[code] ? code : "en";
 }
 
+function safeCharacterFileId(value) {
+  return String(value || "active").replace(/[^a-zA-Z0-9_-]+/g, "-");
+}
+
 export default function CloudAccountPanel({ language = "en" }) {
   const copy = COPY[languageCode(language)];
   const [session, setSession] = useState(() => getCloudAuthSession());
   const [busy, setBusy] = useState(false);
   const [driveBusy, setDriveBusy] = useState(false);
+  const [characterBusy, setCharacterBusy] = useState(false);
   const [error, setError] = useState("");
   const [driveStatus, setDriveStatus] = useState("");
   const config = getCloudConfigurationState();
@@ -143,6 +173,30 @@ export default function CloudAccountPanel({ language = "en" }) {
     }
   };
 
+  const handleCharacterBackup = async () => {
+    setCharacterBusy(true);
+    setError("");
+    setDriveStatus("");
+    try {
+      const record = getActiveCharacterRecord();
+      if (!record?.data) throw new Error(copy.noCharacter);
+
+      await backupCharacterToDrive(record.data, { characterId: record.id });
+
+      const fileName = `character-${safeCharacterFileId(record.id)}.json`;
+      const saved = await readDriveJson(fileName);
+      if (!saved?.character) {
+        throw new Error("Drive read-back verification failed.");
+      }
+
+      setDriveStatus(`${copy.characterSaved}: Pip2D20/${fileName}`);
+    } catch (nextError) {
+      setError(`${copy.characterSaveFailed}: ${nextError?.message || String(nextError)}`);
+    } finally {
+      setCharacterBusy(false);
+    }
+  };
+
   return (
     <section className="pip-panel pip-block">
       <div className="pip-head">
@@ -172,8 +226,16 @@ export default function CloudAccountPanel({ language = "en" }) {
             <button
               type="button"
               className="pip-btn is-primary"
+              onClick={handleCharacterBackup}
+              disabled={characterBusy || driveBusy}
+            >
+              {characterBusy ? copy.savingCharacter : copy.saveCharacter}
+            </button>
+            <button
+              type="button"
+              className="pip-btn"
               onClick={handleDriveTest}
-              disabled={driveBusy}
+              disabled={driveBusy || characterBusy}
             >
               {driveBusy ? copy.testingDrive : copy.testDrive}
             </button>
