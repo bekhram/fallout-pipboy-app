@@ -40,7 +40,6 @@ def patch_csv(path, incoming, name_col):
         rows = list(csv.reader(f))
     header = rows[0]
     width = len(header)
-    # Remove the earlier generic Assaultron Head row now superseded by the book's exact weapon name.
     if path == WEAPONS:
         rows = [rows[0]] + [r for r in rows[1:] if len(r) <= name_col or r[name_col].strip().lower() != "assaultron head"]
     index = {r[name_col].strip().lower(): i for i, r in enumerate(rows[1:], 1) if len(r) > name_col}
@@ -75,9 +74,7 @@ if marker not in mods:
       mod("Large Vial", "+3 Fire Rate", 4, 40, "", "Maximum Capacity"),
     ],
   },
-  "alien-blaster": {
-    magazine: [mod("Fusion Mag", "Damage becomes 3; -1 Fire Rate; ammo becomes Fusion Cell", 0, 21, "Science! 1", "Converted")],
-  },
+  "alien-blaster": { magazine: [mod("Fusion Mag", "Damage becomes 3; -1 Fire Rate; ammo becomes Fusion Cell", 0, 21, "Science! 1", "Converted")] },
   "assaultron-head-laser": {
     capacitor: [
       mod("Capacitor Mk III", "+1 damage; consumes 3 shots per attack", 0, 4, "Robotics Expert", "Mk III"),
