@@ -15,11 +15,10 @@ import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
 import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
-import FloatingDiceButton from "./components/dice/FloatingDiceButton";
 import DiceRollModal from "./components/dice/DiceRollModal";
 import MapScreen from "./components/map/MapScreen.jsx";
 import GamesScreen from "./components/minigames/GamesScreen.jsx";
-import PwaInstallButton from "./components/shared/PwaInstallButton.jsx";
+
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 import { parseCSV } from "./utils/csvParser.js"; 
@@ -130,6 +129,7 @@ export default function App() {
   const [screen, setScreen] = useState(() => (
     startupUiState.view === "battlemap" ? "sheet" : startupUiState.screen
   ));
+  const [menuSection, setMenuSection] = useState("home");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
 
@@ -230,6 +230,7 @@ export default function App() {
     form,
     setForm,
     saveStatus,
+    localSaveState,
     loadStatus,
     exportJson,
     importJson,
@@ -1039,12 +1040,20 @@ const updateSkill = (skillName, field, value) =>
   if (screen === "menu") {
     content = (
       <MenuScreen
+        initialSection={menuSection}
         hasCharacter={!!lastRecordMeta}
         saveMeta={lastRecordMeta}
         onNewCharacter={handleNewCharacter}
         onContinue={handleContinue}
         onImportClick={handleImportClick}
-        onOpenSession={() => setScreen("session")}
+        onOpenSession={(intent) => {
+          setScreen("session");
+          if (typeof intent === "string") requestAnimationFrame(() => {
+            const card = document.querySelector(intent === "host" ? ".session-role-card--gm" : ".session-role-card:not(.session-role-card--gm)");
+            card?.scrollIntoView({block:"center"});
+            card?.querySelector("input, button")?.focus({preventScroll:true});
+          });
+        }}
         lastSession={sharedSession.lastSession}
         onResumeSession={() => {
           setScreen("session");
@@ -1061,7 +1070,8 @@ const updateSkill = (skillName, field, value) =>
       <SessionScreen
         form={form}
         session={sharedSession}
-        onBack={() => setScreen("menu")}
+        onBack={() => {setMenuSection("home");setScreen("menu");}}
+        onNavigateMenu={section => {setMenuSection(section);setScreen("menu");}}
         onOpenSheet={() => {
           setScreen("sheet");
           setActiveTab("status");
@@ -1103,14 +1113,18 @@ const updateSkill = (skillName, field, value) =>
             onHpIncrease={handleHpIncrease}
             onOpenConditions={() => setShowConditions(true)}
             onOpenDerived={() => setShowDerived(true)}
+            onOpenDice={openFreeDiceRoll}
+            onOpenSkills={() => setActiveTab("skills")}
             onRoll={openContextDiceRoll}
           />
         );
         break;
 
+      case "skills":
       case "special":
         content = (
           <SpecialScreen
+            section={activeTab}
             form={form}
             derived={derived}
             currentLuckPoints={currentLuckPoints}
@@ -1571,16 +1585,12 @@ const SkillsEditorModal = () => {
       />
 
       {(screen === "menu" || screen === "session") ? (
-        <div className="pip-app">
+        <div className={`pip-app ${(screen === "menu" || (screen === "session" && (!sharedSession.mode || sharedSession.mode === "lobby"))) ? "pip-home-v2" : ""}`}>
           <div className="pip-vignette" />
           <div className="pip-container">
             <main className="pip-main">
               {content}
-              {screen === "menu" && (
-                <div className="pip-actions-inline push-top">
-                  <PwaInstallButton />
-                </div>
-              )}
+
             </main>
           </div>
         </div>
@@ -1592,6 +1602,19 @@ const SkillsEditorModal = () => {
           character={form}
           setCharacter={setForm}
           onRoll={openContextDiceRoll}
+          onOpenDice={openFreeDiceRoll}
+          onOpenChat={() => {
+            const toggle = document.querySelector(".session-utility-drawer-toggle");
+            if (toggle?.getAttribute("aria-expanded") !== "true") toggle?.click();
+          }}
+          onOpenMap={() => {
+            if (sharedSession.isActive && (sharedSession.tacticalScene || sharedSession.liveSceneId)) {
+              document.dispatchEvent(new CustomEvent("pip2d20:open-battlemap"));
+            } else setActiveTab("map");
+          }}
+          chatAvailable={sharedSession.isActive && sharedSession.mode === "player"}
+          localSaveState={localSaveState}
+          profileProps={{ form, portraitPreview: portrait.portraitPreview, onPickPortrait: portrait.openFileDialog, onRemovePortrait: portrait.clearPortrait, onTopLevelChange: updateTopLevel, onChangeOrigin: changeOrigin }}
         >
           {content}
           <SideMenu
@@ -1627,16 +1650,6 @@ const SkillsEditorModal = () => {
       <DerivedModal />
       <SkillsEditorModal />
 
-      {screen === "sheet" && !isDiceOpen && (
-        <FloatingDiceButton
-          onOpen={openFreeDiceRoll}
-          onOpenMenu={() => setSideMenuOpen(true)}
-          battlemapAvailable={Boolean(
-            sharedSession.isActive &&
-            (sharedSession.tacticalScene || sharedSession.liveSceneId)
-          )}
-        />
-      )}
 
       {screen === "sheet" && sharedSession.isActive && sharedSession.mode === "player" && (
         <SessionChatDrawer session={sharedSession} />

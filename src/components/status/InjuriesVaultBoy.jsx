@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { sheetCopy } from "../layout/sheetCopy.js";
 import { getAdjustedArmorSnapshotForPart } from "../../utils/characterMath.js";
 import {
   calculateNormalArmorLocations,
@@ -160,14 +161,17 @@ function PowerArmorDamagePart({ part, state }) {
 }
 
 export default function InjuriesVaultBoy({
+  showLabels = false,
   injuries = {},
   armor = {},
   derived = {},
   viewMode = "injuries",
   onPartClick,
   onArmorPartClick,
+  onArmorChange,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const c = sheetCopy(i18n.resolvedLanguage);
   const [armorDatabase, setArmorDatabase] = useState(null);
 
   useEffect(() => {
@@ -249,7 +253,62 @@ export default function InjuriesVaultBoy({
   const showIncomingBadge =
     incomingValues.radiation !== 0 || incomingValues.poison !== 0;
 
+  const armorValues = Object.fromEntries(PART_ORDER.map(part => {
+    const base = normalArmorStats?.[ARMOR_KEY_MAP[part]];
+    return [part, isPowerArmorVisible
+      ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || {physical:0, energy:0, radiation:0}
+      : base ? applyDerivedResistance(base, derived)
+      : getAdjustedArmorSnapshotForPart({armor, part, derived})];
+  }));
+
+  const normalMaximums = armorDatabase
+    ? calculateNormalArmorLocations({...armor, _condition: {parts: {}}}, armorDatabase)
+    : armor;
+  const normalCondition = part => {
+    const key = ARMOR_KEY_MAP[part];
+    const maximum = normalMaximums?.[key] || {};
+    const current = normalArmorStats?.[key] || maximum;
+    const fields = ["physical", "energy", "radiation", "poison"];
+    if (!fields.some(field => Number(maximum[field]) > 0)) return "empty";
+    const marked = armor?._condition?.parts?.[key]?.status;
+    if (["intact", "damaged", "broken"].includes(marked)) return marked;
+    if (fields.every(field => !Number(current[field]))) return "broken";
+    return fields.some(field => Number(current[field] || 0) < Number(maximum[field] || 0)) ? "damaged" : "intact";
+  };
+  const changeHp = (part, value) => {
+    const key = ARMOR_KEY_MAP[part];
+    const condition = powerConditions[part];
+    if (!condition || !Number.isFinite(Number(value))) return;
+    const loadout = armor._power.loadout;
+    onArmorChange?.("_power", "loadout", {...loadout, slots: {...loadout.slots,
+      [key]: {...loadout.slots?.[key], currentHp: Math.max(0, Math.min(condition.maximum, Math.round(Number(value))))}
+    }});
+  };
+  const cycleCondition = part => {
+    if (isPowerArmorVisible) {
+      const condition = powerConditions[part];
+      if (!condition) return;
+      changeHp(part, condition.state === "intact" ? Math.max(0, condition.maximum - 1) : condition.state === "damaged" ? 0 : condition.maximum);
+      return;
+    }
+    const key = ARMOR_KEY_MAP[part];
+    const state = normalCondition(part);
+    if (state === "empty") return;
+    const next = {intact: "damaged", damaged: "broken", broken: "intact"}[state];
+    const parts = armor?._condition?.parts || {};
+    const previous = parts[key] || {};
+    const maximum = normalMaximums[key];
+    const current = next === "broken"
+      ? {...maximum, physical: 0, energy: 0, radiation: 0, poison: 0}
+      : next === "intact" ? {...maximum} : {...maximum, ...previous.current};
+    onArmorChange?.("_condition", "parts", {...parts, [key]: {...previous, status: next, current}});
+  };
+  const statusIcon = state => <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    {state === "broken" ? <><path d="M11 3 3 6v6c0 4 3 7 7 9l-2-6 3-4-3-3Z" fill="currentColor"/><path d="m14 3 7 3v6c0 4-3 7-7 9l2-6-3-4 3-3Z" fill="currentColor"/></> : <><path d="m12 2 9 4v6c0 5-5 8-9 10C8 20 3 17 3 12V6Z" fill="none" stroke="currentColor" strokeWidth="2"/>{state === "damaged" && <path d="m13 4-3 7 5 1-4 8" fill="none" stroke="currentColor" strokeWidth="2"/>}</>}
+  </svg>;
+
   return (
+    <div className={showLabels ? "sheet-body-display" : undefined}>
     <div className="pip-injuries-vaultboy-wrap">
       <div className="pip-injuries-vaultboy">
         <img
@@ -295,7 +354,7 @@ export default function InjuriesVaultBoy({
           </div>
         )}
 
-        {PART_ORDER.map((part) => {
+        {(viewMode !== "armor" ? PART_ORDER : []).map((part) => {
           const box = HITBOXES[part];
           const armorCondition = powerConditions[part];
           const state = isPowerArmorVisible
@@ -326,19 +385,12 @@ export default function InjuriesVaultBoy({
           );
         })}
 
-        {PART_ORDER.map((part) => {
+        {showLabels && viewMode === "injuries" && PART_ORDER.map(part => <button key={`label-${part}`} type="button" className={`sheet-part-label is-${part}`} onClick={()=>onPartClick?.(part)} aria-label={`${t(PART_LABEL_KEYS[part])} ${t(`injuries.state.${injuries[part] || 'normal'}`)}`}>{t(PART_LABEL_KEYS[part])}</button>)}
+
+        {!showLabels && PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];
           const partLabel = t(PART_LABEL_KEYS[part]);
-          const normalBase = normalArmorStats?.[ARMOR_KEY_MAP[part]];
-          const adjusted = isPowerArmorVisible
-            ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || {
-                physical: 0,
-                energy: 0,
-                radiation: 0,
-              }
-            : normalBase
-            ? applyDerivedResistance(normalBase, derived)
-            : getAdjustedArmorSnapshotForPart({ armor, part, derived });
+          const adjusted = armorValues[part];
 
           const physical = formatArmorValue(adjusted.physical);
           const energy = formatArmorValue(adjusted.energy);
@@ -361,7 +413,7 @@ export default function InjuriesVaultBoy({
           );
         })}
 
-        {showResistBadge && (
+        {!showLabels && showResistBadge && (
           <div
             className="pip-armor-badge is-modifiers is-resist"
             style={{ top: "1%", left: "70%" }}
@@ -375,7 +427,7 @@ export default function InjuriesVaultBoy({
           </div>
         )}
 
-        {showIncomingBadge && (
+        {!showLabels && showIncomingBadge && (
           <div
             className="pip-armor-badge is-modifiers is-damage"
             style={{ top: "1%", left: "0%" }}
@@ -389,6 +441,26 @@ export default function InjuriesVaultBoy({
           </div>
         )}
       </div>
+    </div>
+    {showLabels && viewMode !== "injuries" && <table className="sheet-armor-table">
+      <caption>{isPowerArmorVisible ? t("injuries.powerArmor") : c.normalArmor}</caption>
+      <thead><tr><th scope="col">{c.bodyTab}</th>{["physical","energy","radiation"].map((type, index)=><th scope="col" key={type} title={t(`armorPanel.${type}`)}>{c.resistShort[index]}</th>)}{isPowerArmorVisible && <th scope="col">HP</th>}<th scope="col">{c.armorStatus}</th></tr></thead>
+      <tbody>{PART_ORDER.map(part=>{
+        const condition = powerConditions[part];
+        const state = isPowerArmorVisible ? condition?.state || "empty" : normalCondition(part);
+        const label = t(PART_LABEL_KEYS[part]);
+        return <tr key={part} data-part={part}>
+          <th scope="row">{label}</th>
+          {["physical","energy","radiation"].map(type=><td key={type}>{formatArmorValue(armorValues[part][type])}</td>)}
+          {isPowerArmorVisible && <td className="sheet-armor-hp">{condition ? <label>
+            <input type="number" min="0" max={condition.maximum} step="1" inputMode="numeric" aria-label={`${label} HP`} value={condition.current} onChange={event=>changeHp(part,event.target.value)}/><span>/{condition.maximum}</span>
+          </label> : "—"}</td>}
+          <td><button type="button" className={`sheet-armor-status is-${state}`} disabled={state === "empty" || !onArmorChange} onClick={()=>cycleCondition(part)} aria-label={`${label}: ${state === "empty" ? t("armorPanel.emptyPiece") : c.armorStates[state]}`} title={`${state === "empty" ? t("armorPanel.emptyPiece") : c.armorStates[state]} · ${c.changeStatus}`}>
+            {state === "empty" ? "—" : statusIcon(state)}
+          </button></td>
+        </tr>;
+      })}</tbody>
+    </table>}
     </div>
   );
 }

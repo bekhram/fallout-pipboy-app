@@ -29,6 +29,7 @@ const POWER_ARMOR_LABEL = {
 
 export default function SpecialScreen({
   form,
+  section = "special",
   currentLuckPoints,
   onSpecialChange,
   onSkillChange,
@@ -104,7 +105,7 @@ export default function SpecialScreen({
   };
 
   return (
-    <div ref={screenTopRef} className="pip-screen-grid pip-special-screen">
+    <div ref={screenTopRef} className={`pip-screen-grid pip-special-screen sheet-special--${section}`}>
       <section className="pip-panel pip-block pip-special-stats-panel">
         <div className="pip-head">
           <h2>[ {t("specialPanel.title")} ]</h2>

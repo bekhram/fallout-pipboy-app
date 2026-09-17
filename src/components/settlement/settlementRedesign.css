@@ -1,0 +1,59 @@
+.settlement-v2 {position:fixed;inset:12px;z-index:120;display:flex;overflow:hidden;border:1px solid #60816b;border-radius:14px;background:#03110b;color:#b4eaca;padding:0;gap:0;box-shadow:0 0 0 20px #020a06;isolation:isolate;}
+.settlement-v2 * {box-sizing:border-box;}
+.settlement-brand {display:flex;align-items:center;gap:16px;padding:12px 18px;border-bottom:1px solid #355e49;min-height:60px;flex-shrink:0;}
+.settlement-brand strong {font-size:21px;color:#acf2b9;text-transform:uppercase;}.settlement-brand-name {margin-left:auto;font-size:15px;overflow-wrap:anywhere;}
+.settlement-v2 .settlement-dashboard-grid {grid-template-columns:155px minmax(0,1fr) 285px;gap:10px;padding:10px;overflow:hidden;}
+.settlement-v2 .pip-panel,.settlement-v2 .settlement-center-panel {background:#04170edb;border:1px solid #355e49;box-shadow:none;border-radius:7px;}
+.settlement-v2 .pip-panel::before {display:none;}
+.settlement-v2 .settlement-left-rail {padding:6px;gap:10px;}
+.settlement-v2 .settlement-left-nav {gap:6px;}
+.settlement-v2 .settlement-left-nav button {display:flex;gap:10px;border:1px solid transparent;padding:12px 7px;min-height:48px;background:none;box-shadow:none;text-transform:none;font-size:12px;letter-spacing:0;font-weight:400;}
+.settlement-v2 .settlement-left-nav button.is-active {background:#153a28;border-left:3px solid #a4f2af;color:#adf7b9;}
+.settlement-v2 svg {flex-shrink:0;}
+.settlement-v2 .settlement-exit {margin-top:auto;font-size:11px;}
+.settlement-v2 .pip-action-button {display:flex;justify-content:center;align-items:center;gap:8px;min-height:42px;white-space:normal;border:1px solid #51765c;border-radius:5px;font-size:12px;color:inherit;background:#071b11;letter-spacing:0;}
+.settlement-v2 .settlement-primary {background:#a2ef9b;color:#082416;font-weight:700;}
+.settlement-v2 .settlement-center-panel {padding:0;gap:8px;overflow:hidden;border:0;background:none;}
+.settlement-v2 .settlement-resource-strip {position:static;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding:0;border:0;background:none;box-shadow:none;gap:5px;flex-shrink:0;}
+.settlement-v2 .settlement-resource-tile {flex-direction:row;align-items:center;gap:8px;padding:9px 5px;border:1px solid #355e49;border-radius:5px;background:#04170e;}
+.settlement-v2 .settlement-resource-tile small {font-size:10px;letter-spacing:0;text-transform:none;display:block;}.settlement-v2 .settlement-resource-tile b {display:block;font-size:17px;text-shadow:none;}.settlement-resource-tile svg {width:22px;}
+.settlement-map-viewport {overflow:auto;min-height:0;flex:1;position:relative;border:1px solid #45634c;border-radius:5px;background:#282d1d;}
+.settlement-v2 .settlement-map {max-height:none;aspect-ratio:1;min-height:100%;border:0;background:linear-gradient(#25331c33,#18201422),url('../../assets/wasteland/backgrounds/settlement-bg-1.png') center/cover;box-shadow:none;}
+.settlement-v2 .settlement-cell {border-color:#bbd7a518;cursor:crosshair;}
+.settlement-map-controls {display:flex;align-items:center;justify-content:flex-end;gap:12px;position:absolute;right:10px;bottom:104px;background:#03130eef;border:1px solid #65866a;border-radius:5px;z-index:7;font-size:12px;}
+.settlement-map-controls button {border:0;background:none;color:inherit;min-width:40px;min-height:38px;font:inherit;font-size:22px;cursor:pointer;}.settlement-map-controls button:disabled {opacity:.3;}
+.settlement-v2 .settlement-map-hint {position:static;padding:0 5px;border:0;box-shadow:none;background:none;font-size:12px;min-height:18px;flex-shrink:0;}
+.settlement-map-actions {display:flex;gap:8px;flex-shrink:0;}.settlement-map-actions>button {flex:1;}
+.settlement-v2 .settlement-right-panel {position:relative;overflow:auto;padding:14px;scrollbar-width:thin;}
+.settlement-v2 .settlement-right-panel h2 {font-size:20px;overflow-wrap:anywhere;margin:0 0 10px;}.settlement-v2 .settlement-right-panel h3 {font-size:15px;margin-top:24px;}.settlement-v2 .settlement-right-panel p {font-size:13px;line-height:1.5;}
+.settlement-v2 .settlement-building-hero {height:130px;}.settlement-v2 .settlement-stockpile.is-hidden {display:none;}
+.settlement-v2 .settlement-build-categories {display:flex;flex-wrap:wrap;border:0;padding:0;margin-bottom:10px;gap:4px;overflow:visible;}
+.settlement-v2 .settlement-build-categories button {min-width:0;font-size:10px;padding:8px 5px;border-radius:4px;}
+.settlement-v2 .settlement-build-menu {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:0;margin-bottom:14px;border:0;overflow:visible;}
+.settlement-v2 .settlement-build-menu button {min-width:0;max-width:none;width:100%;font:inherit;font-size:12px;border-radius:5px;}
+.settlement-v2 .settlement-balance {font-size:13px;}.settlement-v2 .settlement-person select {min-height:44px;font-size:13px;}
+.settlement-v2 .settlement-panel-close,.settlement-mobile-nav {display:none;}
+.settlement-more {display:grid;gap:12px;}.settlement-more>button {display:flex;align-items:center;gap:10px;background:none;color:inherit;border:1px solid #51765c;border-radius:5px;min-height:44px;font:inherit;padding:8px;}
+.settlement-v2 button:focus-visible {outline:2px solid #adf7b9;outline-offset:2px;}
+@media(max-width:1100px) and (min-width:900px) {.settlement-v2 .settlement-dashboard-grid {grid-template-columns:125px minmax(0,1fr) 240px;}.settlement-v2 .settlement-resource-tile {gap:3px;}.settlement-resource-tile svg {width:16px;}.settlement-v2 .settlement-resource-tile small {font-size:8px;}}
+@media(max-width:899px) {
+ .settlement-v2 {inset:0;border:0;border-radius:0;padding-bottom:calc(68px + env(safe-area-inset-bottom));}
+ .settlement-brand {padding:8px 10px;min-height:52px;gap:8px;flex-wrap:wrap;}.settlement-brand strong {font-size:18px;}.settlement-brand strong span {display:none;}.settlement-brand-name {font-size:12px;max-width:45%;}.settlement-brand>.pip-action-button {width:38px;min-height:38px;}
+ .settlement-v2 .settlement-dashboard-grid {display:flex;padding:8px;gap:8px;}
+ .settlement-v2 .settlement-left-rail {display:none;}.settlement-v2 .settlement-center-panel {flex:1;order:0;width:100%;}
+ .settlement-v2 .settlement-resource-strip {grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+ .settlement-v2 .settlement-resource-tile {justify-content:flex-start;padding:6px 10px;gap:9px;}.settlement-v2 .settlement-resource-tile small {font-size:10px;}.settlement-v2 .settlement-resource-tile b {font-size:16px;}
+ .settlement-v2 .settlement-map {min-height:0;}.settlement-map-controls {bottom:96px;}
+ .settlement-v2 .settlement-right-panel {display:none;position:absolute;left:8px;right:8px;bottom:calc(72px + env(safe-area-inset-bottom));max-height:57%;z-index:12;box-shadow:0 -12px 30px #0009;border-radius:16px 16px 5px 5px;padding:20px 14px 14px;}
+ .settlement-v2.is-panel-open .settlement-right-panel {display:block;}
+ .settlement-v2 .settlement-panel-close {display:flex;position:sticky;top:0;margin-left:auto;float:right;width:38px;min-height:38px;z-index:2;font-size:23px;background:#061c10;}
+ .settlement-v2 .settlement-building-hero {height:85px;width:100px;float:left;margin-right:12px;}.settlement-v2 .settlement-selected-card {clear:both;}
+ .settlement-mobile-nav {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:absolute;bottom:0;left:0;right:0;padding:5px 4px calc(5px + env(safe-area-inset-bottom));background:#03150d;border-top:1px solid #42694e;z-index:15;}
+ .settlement-mobile-nav button {display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-height:52px;min-width:0;padding:4px 0;border:0;border-radius:5px;background:none;color:inherit;font:inherit;font-size:9px;}.settlement-mobile-nav button.is-active {background:#173b29;color:#adf7b9;}
+ .settlement-v2 .settlement-build-menu {grid-template-columns:repeat(3,minmax(0,1fr));}.settlement-v2 .settlement-build-menu small {font-size:10px;}
+}
+.settlement-phaser-map {position:relative;flex:1;min-height:160px;min-width:0;overflow:hidden;border:1px solid #45634c;border-radius:5px;background:#192719;touch-action:none;}
+.settlement-phaser-map canvas {display:block;max-width:100%;}
+.settlement-map-loading {position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;}
+.settlement-building-picker {display:grid;gap:8px;font-size:13px;margin-top:20px;}.settlement-building-picker select {width:100%;min-height:44px;}
+.settlement-v2 .settlement-right-panel {background:#04170e;}

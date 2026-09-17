@@ -7,6 +7,7 @@ import {
 import { buildSessionShareUrl, getSessionCodeFromUrl } from "../../utils/sessionShare.js";
 import GmWorkspace from "../gm/GmWorkspace.jsx";
 import SessionChatDrawer from "./SessionChatDrawer.jsx";
+import SessionLobby from "./SessionLobby.jsx";
 import "./session.css";
 import "./sessionGmWorkspace.css";
 
@@ -206,13 +207,14 @@ export function SessionFloatingButton({ session, onOpen }) {
   );
 }
 
-export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
+export default function SessionScreen({ form, session, onBack, onOpenSheet, onNavigateMenu }) {
   const { i18n } = useTranslation();
   const copy = BASE[getLanguage(i18n.resolvedLanguage || i18n.language)];
   const defaultPlayerName = useMemo(() => getCharacterName(form) || "Player", [form]);
   const [joinCode, setJoinCode] = useState("");
   const [playerName, setPlayerName] = useState(defaultPlayerName);
   const [localError, setLocalError] = useState("");
+  const [errorTarget, setErrorTarget] = useState("player");
   const [copyState, setCopyState] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [syncState, setSyncState] = useState(false);
@@ -255,6 +257,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   };
 
   const handleJoin = () => {
+    setErrorTarget("player");
     const code = normalizeSessionCode(joinCode);
     const name = String(playerName || "").trim();
     if (code.length !== SESSION_CODE_LENGTH) {
@@ -271,6 +274,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
 
   const handleRestoreCloud = async () => {
     if (restoreState === "loading") return;
+    setErrorTarget("host");
     setRestoreState("loading");
     setLocalError("");
     try {
@@ -333,92 +337,15 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet }) {
   };
 
   if (mode === "lobby") {
-    return (
-      <section className="session-screen pip-screen-grid session-gm-entry">
-        <section className="pip-panel pip-block session-hero">
-          <div className="session-topline">
-            <div>
-              <div className="pip-bootline">PIP 2D20 NETWORK</div>
-              <h1 className="pip-title">{copy.title}</h1>
-              <p className="pip-subtitle">{copy.subtitle}</p>
-            </div>
-            <button type="button" className="pip-btn" onClick={onBack}>{copy.back}</button>
-          </div>
-        </section>
-
-        <div className="session-role-grid">
-          <section className="pip-panel pip-block session-role-card session-role-card--gm">
-            <div className="session-role-icon">GM</div>
-            <h2>[ {copy.host} ]</h2>
-            <p className="stat-sub">{copy.hostDesc}</p>
-            <button
-              type="button"
-              className="pip-btn is-primary session-main-button"
-              onClick={handleRestoreCloud}
-              disabled={restoreState === "loading"}
-            >
-              {restoreState === "loading" ? copy.restoringCloud : copy.restoreCloud}
-            </button>
-            <button
-              type="button"
-              className="pip-btn session-main-button"
-              onClick={() => session?.startHost?.()}
-              disabled={restoreState === "loading"}
-            >
-              {copy.create}
-            </button>
-            {shareCode.length === SESSION_CODE_LENGTH ? (
-              <div className="pip-logbox" style={{ marginTop: 12 }}>
-                <div className="pip-head" style={{ marginBottom: 8 }}>
-                  <strong>[ SESSION LINK ]</strong>
-                  <strong>{shareCode}</strong>
-                </div>
-                <div className="pip-actions-inline">
-                  <button type="button" className="pip-btn is-primary" onClick={handleShareLink}>SHARE LINK</button>
-                  <button type="button" className="pip-btn" onClick={handleCopyLink}>{linkCopied ? "LINK COPIED" : "COPY LINK"}</button>
-                </div>
-              </div>
-            ) : null}
-            {localError ? <div className="session-error">{localError}</div> : null}
-          </section>
-
-          <section className="pip-panel pip-block session-role-card">
-            <div className="session-role-icon">P</div>
-            <h2>[ {copy.player} ]</h2>
-            <p className="stat-sub">{copy.playerDesc}</p>
-            <label className="session-field">
-              <span>{copy.code}</span>
-              <input
-                className="pip-input session-code-input"
-                value={joinCode}
-                maxLength={SESSION_CODE_LENGTH}
-                autoCapitalize="characters"
-                autoComplete="off"
-                placeholder="ABC234"
-                onChange={(event) => setJoinCode(normalizeSessionCode(event.target.value))}
-              />
-            </label>
-            <label className="session-field">
-              <span>{copy.name}</span>
-              <input
-                className="pip-input"
-                value={playerName}
-                maxLength={40}
-                onChange={(event) => setPlayerName(event.target.value)}
-              />
-            </label>
-            <button
-              type="button"
-              className="pip-btn is-primary session-main-button"
-              onClick={handleJoin}
-            >
-              {copy.join}
-            </button>
-            {error && !localError ? <div className="session-error">{error}</div> : null}
-          </section>
-        </div>
-      </section>
-    );
+    return <SessionLobby language={i18n.resolvedLanguage || i18n.language} copy={copy}
+      onBack={onBack} onNavigate={onNavigateMenu || onBack}
+      onHost={()=>{setErrorTarget("host");setLocalError("");session?.startHost?.();}}
+      onRestore={handleRestoreCloud} onJoin={handleJoin}
+      joinCode={joinCode} onCode={value=>{setJoinCode(normalizeSessionCode(value));setLocalError("");}}
+      playerName={playerName} onName={value=>{setPlayerName(value);setLocalError("");}}
+      busy={restoreState === "loading"} error={error} errorTarget={errorTarget}
+      shareCode={shareCode.length === SESSION_CODE_LENGTH ? shareCode : ""}
+      onShare={handleShareLink} onCopy={handleCopyLink} linkCopied={linkCopied}/>;
   }
 
   if (mode === "host") {

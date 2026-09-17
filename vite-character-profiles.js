@@ -21,8 +21,8 @@ export function pip2d20CharacterProfilesPlugin() {
 
         code = replaceRequired(
           code,
-          `  useEffect(() => {\n    localStorage.setItem(\n      STORAGE_KEY,\n      JSON.stringify({\n        updatedAt: new Date().toISOString(),\n        data: form,\n      })\n    );\n  }, [form]);`,
-          `  useEffect(() => {\n    // Persist the complete character form. No field whitelist is used, so every\n    // current and future character-card property is kept in the active profile.\n    saveActiveCharacterProfile(form);\n  }, [form]);`,
+          `localStorage.setItem(STORAGE_KEY, JSON.stringify({ updatedAt: new Date().toISOString(), data: form }));`,
+          `saveActiveCharacterProfile(form);`,
           "full-form profile autosave"
         );
 

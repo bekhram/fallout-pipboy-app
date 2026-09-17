@@ -1,0 +1,40 @@
+.session-lobby .session-account {margin-left:auto;}
+.session-lobby .session-back {background:none;border:0;padding:0;min-height:36px;color:var(--home-text);font:inherit;font-size:13px;cursor:pointer;}
+.session-lobby .home-content {gap:20px;}
+.session-lobby .session-role-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;}
+.session-lobby .session-role-card {position:relative;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:22px;background:#04170b;border:1px solid var(--home-line);border-radius:8px;margin:0;}
+.session-lobby .session-role-card h2 {text-align:center;font-size:25px;}
+.session-lobby .session-role-card p {text-align:center;margin:0;font-size:14px;line-height:1.5;}
+.session-lobby .session-role-badge {position:absolute;top:16px;left:16px;border:1px solid var(--home-line);border-radius:5px;padding:6px;color:var(--home-bright);}
+.session-art {width:200px;height:150px;max-width:100%;margin:0 auto;background-image:url('../../assets/menu/session-roles.webp');background-repeat:no-repeat;background-size:400px 200px;background-position:left center;}
+.session-art--player {background-position:right center;}
+.session-lobby .session-host-actions {display:grid;gap:12px;margin:auto 0;padding-top:20px;}
+.session-lobby .pip-btn {width:100%;min-height:46px;font-size:15px;padding:10px;white-space:normal;}
+.session-lobby .session-field {font-size:13px;letter-spacing:0;gap:6px;font-weight:400;}
+.session-lobby .pip-input {width:100%;min-width:0;min-height:44px;padding:9px 12px;font-size:16px;border:1px solid var(--home-line);border-radius:4px;background:#020e06;color:var(--home-bright);}
+.session-lobby .session-code-input {text-align:left;letter-spacing:.16em;}
+.session-lobby input:focus-visible {outline:2px solid var(--home-bright);outline-offset:2px;}
+.session-lobby .session-error {font-size:13px;line-height:1.5;overflow-wrap:anywhere;}
+.session-lobby-share {font-size:12px;border-top:1px solid var(--home-line);padding-top:12px;}
+.session-lobby-share>div {display:flex;gap:8px;margin-top:8px;}
+.session-lobby-share .pip-btn {font-size:12px;}
+.session-network {text-align:center;color:#507c54;margin-top:auto;font-size:10px;letter-spacing:.25em;}
+.session-network svg {display:block;width:100%;max-height:95px;}
+@media(max-width:899px) {
+ .session-lobby .session-role-grid {grid-template-columns:minmax(0,1fr);gap:12px;}
+ .session-lobby .home-content {gap:12px;}
+ .session-lobby .session-role-card {padding:14px;gap:10px;}
+ .session-lobby .session-role-card h2 {font-size:21px;}
+ .session-lobby .session-role-card p {font-size:13px;}
+ .session-lobby .session-art {width:150px;height:80px;background-size:300px 150px;}
+ .session-lobby .session-role-badge {top:12px;left:12px;font-size:13px;}
+ .session-lobby .session-host-actions {margin:0;padding-top:4px;gap:8px;}
+ .session-network {display:none;}
+}
+.session-lobby .pip-btn.is-primary {font-weight:700;}
+@media(max-width:899px) {
+ .session-lobby .session-art {width:120px;height:94px;background-size:240px 120px;}
+ .session-lobby .session-role-card {gap:8px;}
+ .session-lobby .session-role-card h2 {line-height:1.2;}
+ .session-lobby .home-content {padding-bottom:12px;}
+}

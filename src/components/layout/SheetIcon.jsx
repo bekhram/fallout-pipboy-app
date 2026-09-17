@@ -1,0 +1,35 @@
+import React from "react";
+const paths = {
+  home: "m2 11 10-9 10 9M5 9v12h5v-7h4v7h5V9",
+  calendar: "M4 5h16v17H4V5Zm0 5h16M8 2v6M16 2v6",
+  download: "M12 2v13m-5-5 5 5 5-5M4 17v5h16v-5",
+  upload: "M12 16V3m-5 5 5-5 5 5M4 13v8h16v-8",
+  people: "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 22v-4a7 7 0 0 1 14 0v4M17 3a4 4 0 0 1 0 8m1 3a6 6 0 0 1 4 6v2",
+  person: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21v-2a8 8 0 0 1 16 0v2",
+  special: "M4 20V10h3v10M11 20V4h3v16M18 20v-8h3v8",
+  skills: "m2 9 10-5 10 5-10 5L2 9Zm4 2v7c4 3 8 3 12 0v-7M22 9v8",
+  bag: "M5 7h14l2 14H3L5 7Zm3 3V6a4 4 0 0 1 8 0v4",
+  star: "m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6Z",
+  notes: "M5 3h14v18H5V3Zm3 5h8M8 12h8M8 16h5",
+  more: "M4 12h1m6 0h1m6 0h1",
+  chat: "M4 4h16v13H9l-5 4V4Z",
+  dice: "m12 2 9 5v10l-9 5-9-5V7l9-5Zm0 10v10M3 7l9 5 9-5M8 7h.01M16 15h.01M7 15h.01",
+  map: "m3 5 6-3 6 3 6-3v17l-6 3-6-3-6 3V5Zm6-3v17M15 5v17",
+  settings: "m9 3 6 0 1 4 4 1 1 6-4 2-1 4H9l-1-4-4-2 1-6 4-1V3Zm3 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
+  heart: "M12 21 3 12C-2 5 7 0 12 7c5-7 14-2 9 5l-9 9Z",
+  target: "M12 2v5m0 10v5M2 12h5m10 0h5M12 5a7 7 0 1 0 0 14 7 7 0 0 0 0-14Z",
+  shield: "m12 2 8 4v6c0 5-8 10-8 10S4 17 4 12V6l8-4Zm0 3v14",
+  bolt: "m14 2-10 12h7l-1 8L21 9h-8l1-7Z",
+  melee: "m4 3 13 13M3 4l2-1 15 15-2 2L3 5V4Zm17-1L7 16M4 15l5 5M15 4l5 5M3 21l3-3",
+  luck: "M12 12C-2 13 4 0 10 5c4-8 14 1 7 5 10 5 0 14-4 7-5 7-15-3-1-5Zm0 0v10",
+  food: "M4 2v7m3-7v7M1 2v7c0 4 6 4 6 0M4 12v10M18 2c-5 5-5 11 0 11V2Zm0 11v9",
+  flask: "M9 2h6M10 2v7L4 20h16L14 9V2M7 15h10",
+  radiation: "M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM10 8 7 3a10 10 0 0 0-5 9h6M14 8l3-5a10 10 0 0 1 5 9h-6M9 16l-3 5a11 11 0 0 0 12 0l-3-5",
+  save: "M4 3h14l3 3v15H3V3h1Zm3 0v6h10V3M7 21v-8h10v8",
+  edit: "m4 16 12-12 4 4L8 20H4v-4Zm10-10 4 4",
+  chevron: "m5 9 7 7 7-7",
+  plus: "M12 4v16M4 12h16",
+};
+export default function SheetIcon({ name, ...props }) {
+  return <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}><path d={paths[name] || paths.more} /></svg>;
+}

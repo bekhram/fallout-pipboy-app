@@ -289,6 +289,8 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
     const hasArmor = FIELDS.some((field) => Number(maximum[field.key] || 0) > 0);
     if (!hasArmor) return null;
 
+    const marked = !powerArmorStats && condition[part]?.status;
+    if (["intact", "damaged", "broken"].includes(marked)) return marked === "intact" ? "healthy" : marked;
     const maximumHp = Number(maximum.hp || 0);
     const isBroken = maximumHp > 0
       ? Number(current.hp || 0) <= 0

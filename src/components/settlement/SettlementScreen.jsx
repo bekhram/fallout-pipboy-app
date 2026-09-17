@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   SETTLEMENT_BUILDINGS,
@@ -23,8 +23,11 @@ import {
   payRoomCost,
   payRulebookBuildingCost,
 } from "../../utils/settlementDayEngine.js";
-import { getConstructionAsset, getSettlementAsset } from "./settlementAssets.js";
+import { getSettlementAsset } from "./settlementAssets.js";
 import "./settlement.css";
+import "./settlementRedesign.css";
+import SheetIcon from "../layout/SheetIcon.jsx";
+import SettlementPhaserMap from "./SettlementPhaserMap.jsx";
 
 const BUILDING_ICONS = { crop_field: "🌾", water_pump: "💧", generator: "⚡", workshop: "🔧", trading_post: "¤", clinic: "+", guard_post: "▲", turret: "⌖" };
 const BUILD_CATEGORIES = ["housing", "food", "water", "power", "production", "commerce", "services", "defense"];
@@ -69,24 +72,18 @@ function canPlace(settlement, def, x, y, ignoreBuildingId = null) {
   }
   return true;
 }
-function BuildingVisual({ building, def, language }) {
-  if (building.state === "construction") {
-    const constructionAsset = getConstructionAsset(def.constructionSize || "medium");
-    const progress = getConstructionProgress(building);
-    return <div className="settlement-construction-scaffold"><img src={constructionAsset} alt="" draggable="false" /><small>{progress.progress}/{progress.required} d</small></div>;
-  }
-  const asset = getSettlementAsset(def.asset);
-  if (asset) return <img src={asset} alt={settlementBuildingName(def, language)} draggable="false" />;
-  return <div className={`settlement-generic-building settlement-generic-building--${building.type}`}>{BUILDING_ICONS[building.type] || "⌂"}</div>;
-}
-
 export default function SettlementScreen({ settlement, onUpdate, onBack }) {
   const { i18n } = useTranslation();
   const language = String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
   const text = COPY[language] || COPY.en;
   const categoryLabels = CATEGORY_LABELS[language] || CATEGORY_LABELS.en;
   const [selectedCategory, setSelectedCategory] = useState("housing");
-  const [panelMode, setPanelMode] = useState("build");
+  const [panelMode, setPanelMode] = useState("overview");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [zoom, setZoom] = useState(100);
+  const ui = ({en:{overview:'Overview',title:'Settlement',more:'More',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'},ru:{overview:'Обзор',title:'Поселение',more:'Ещё',close:'Закрыть панель',choose:'Выберите здание на карте',zoomIn:'Приблизить',zoomOut:'Отдалить'},uk:{overview:'Огляд',title:'Поселення',more:'Ще',close:'Закрити панель',choose:'Оберіть будівлю на мапі',zoomIn:'Збільшити',zoomOut:'Зменшити'},pl:{overview:'Przegląd',title:'Osada',more:'Więcej',close:'Zamknij panel',choose:'Wybierz budynek na mapie',zoomIn:'Przybliż',zoomOut:'Oddal'}})[language] || {overview:'Overview',title:'Settlement',more:'More',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'};
+  useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=previous;};},[]);
+  useEffect(()=>{const close=event=>{if(event.key==='Escape')setPanelOpen(false);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[]);
   const [selectedType, setSelectedType] = useState(null);
   const [selectedBuildingId, setSelectedBuildingId] = useState(null);
   const [movingBuildingId, setMovingBuildingId] = useState(null);
@@ -192,56 +189,41 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
     return "";
   }
   function resolveAttackNow() { if (activeAttack) onUpdate((current) => resolveSettlementAttack(current, activeAttack.id)); }
-  function selectPanel(mode) { setPanelMode(mode); if (mode !== "build") { setSelectedType(null); setHoverCell(null); setMovingBuildingId(null); } }
+  function selectPanel(mode) { setPanelMode(mode); setPanelOpen(mode !== "overview"); if(mode === "build") setSelectedBuildingId(null); if (mode !== "build") { setSelectedType(null); setHoverCell(null); setMovingBuildingId(null); } }
 
-  return <div className="pip-screen settlement-screen settlement-dashboard">
-    <header className="settlement-topbar settlement-resource-strip">
-      <button type="button" className="pip-action-button settlement-back" onClick={onBack}>{text.back}</button>
-      <div className="settlement-resource-tile"><small>{text.people}</small><b>👥 {attributes.people}/{stats.peopleMax}</b></div>
-      <div className="settlement-resource-tile"><small>{text.food}</small><b>🍲 {attributes.food}</b></div>
-      <div className="settlement-resource-tile"><small>{text.water}</small><b>💧 {attributes.water}</b></div>
-      <div className="settlement-resource-tile"><small>{text.power}</small><b>⚡ {attributes.power}</b></div>
-      <div className="settlement-resource-tile"><small>{text.defense}</small><b>⬟ {attributes.defense}</b></div>
-      <div className="settlement-resource-tile"><small>{text.happiness}</small><b>☺ {attributes.happiness}</b></div>
-      <div className="settlement-resource-tile"><small>{text.caps}</small><b>¤ {Math.floor(Number(settlement.resources?.caps || 0))}</b></div>
-      <div className="settlement-resource-tile"><small>{text.materials}</small><b>⚙ {materialTotal}</b></div>
-    </header>
-
+  const navigation = (mode) => <button type="button" key={mode} className={panelMode === mode ? "is-active" : ""} aria-current={panelMode === mode ? "page" : undefined} onClick={()=>selectPanel(mode)}><SheetIcon name={{overview:'home',build:'plus',people:'people',resources:'bag',defense:'shield',events:'notes',more:'more'}[mode]}/><span>{ui[mode] || text[mode]}</span></button>;
+  return <div className={`pip-screen settlement-screen settlement-dashboard settlement-v2 ${panelOpen ? 'is-panel-open' : ''}`}>
+    <header className="settlement-brand"><strong>PIP 2D20 <span>/ {ui.title}</span></strong><span className="settlement-brand-name">{settlement.name}</span><button type="button" className="pip-action-button" aria-label={ui.more} onClick={()=>selectPanel('more')}><SheetIcon name="settings"/></button></header>
     <div className="settlement-layout settlement-dashboard-grid">
-      <aside className="settlement-left-rail pip-panel">
-        <div className="settlement-left-title">{settlement.name}</div>
-        <div className="settlement-left-preview"><span>⌂</span><small>{text.grid}: 24 × 24</small></div>
-        <div className="settlement-left-meta">
-          <div><span>{text.status}</span><b>{statusText}</b></div>
-          <div><span>{text.income}</span><b>+{attributes.income}</b></div>
-          <div><span>{text.beds}</span><b>{attributes.beds}</b></div>
-          <div><span>{text.risk}</span><b>{attackDice ? `${attackDice}d20` : "—"}</b></div>
-          <div><span>{text.nextEvent}</span><b>{nextEvent}</b></div>
-          <small>{text.day} {settlement.settlementDay || 1} · {text.nextDay}: {formatBuildTime(Number(settlement.nextDayAt) - Date.now())}</small>
-        </div>
-        <nav className="settlement-left-nav">
-          {["build", "people", "resources", "defense", "events"].map((mode) => <button key={mode} type="button" className={panelMode === mode ? "is-active" : ""} onClick={() => selectPanel(mode)}><span>{PANEL_ICONS[mode]}</span>{text[mode]}</button>)}
-        </nav>
-        {activeAttack ? <div className="settlement-alert"><strong>⚠ {text.warning}</strong><span>{activeAttack.faction?.replaceAll("_", " ")}</span></div> : null}
-      </aside>
-
+      <aside className="settlement-left-rail pip-panel"><nav className="settlement-left-nav">{['overview','build','people','resources','defense','events'].map(navigation)}</nav><button type="button" className="pip-action-button settlement-exit" onClick={onBack}>← {text.back}</button></aside>
       <main className="settlement-map-wrap settlement-center-panel">
-        <div className="settlement-map-toolbar"><strong>{settlement.name}</strong><span>{text.grid}: 24 × 24</span></div>
-        <div className="settlement-map" onMouseLeave={() => setHoverCell(null)}>
-          {Array.from({ length: SETTLEMENT_GRID_SIZE * SETTLEMENT_GRID_SIZE }, (_, index) => { const x = index % SETTLEMENT_GRID_SIZE; const y = Math.floor(index / SETTLEMENT_GRID_SIZE); return <button key={`${x}-${y}`} type="button" className="settlement-cell" aria-label={`${x},${y}`} onMouseEnter={() => setHoverCell({ x, y })} onFocus={() => setHoverCell({ x, y })} onClick={() => handleCellClick(x, y)} />; })}
-          {(settlement.buildings || []).map((building) => { const def = SETTLEMENT_BUILDINGS[building.type]; if (!def) return null; return <button type="button" key={building.id} className={`settlement-building ${building.state === "construction" ? "is-construction" : ""} ${building.type === "settlement_hq" ? "is-hq" : ""} ${selectedBuildingId === building.id ? "is-selected" : ""} ${movingBuildingId === building.id ? "is-moving" : ""}`} style={{ left: `${building.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${building.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${def.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${def.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} title={settlementBuildingName(def, language)} onClick={(event) => { event.stopPropagation(); if (!selectedType && !movingBuildingId) { setSelectedBuildingId(building.id); setPanelMode("build"); } }}><BuildingVisual building={building} def={def} language={language} /></button>; })}
-          {placementDef && hoverCell ? <div className={`settlement-placement ${placementValid && enoughResources ? "is-valid" : "is-invalid"}`} style={{ left: `${hoverCell.x / SETTLEMENT_GRID_SIZE * 100}%`, top: `${hoverCell.y / SETTLEMENT_GRID_SIZE * 100}%`, width: `${placementDef.footprint.width / SETTLEMENT_GRID_SIZE * 100}%`, height: `${placementDef.footprint.height / SETTLEMENT_GRID_SIZE * 100}%` }} /> : null}
+        <div className="settlement-topbar settlement-resource-strip">
+          {[['people',attributes.people,'people'],['food',attributes.food,'food'],['water',attributes.water,'flask'],['power',attributes.power,'bolt'],['defense',attributes.defense,'shield'],['happiness',`${attributes.happiness}/20`,'heart']].map(([key,value,icon])=><div className="settlement-resource-tile" key={key}><SheetIcon name={icon}/><div><small>{text[key]}</small><b>{value}</b></div></div>)}
         </div>
-        <div className="settlement-map-hint">{notice || (movingBuildingId ? text.move : selectedDef ? text.tapMap : text.empty)}</div>
+        <SettlementPhaserMap settlement={settlement} language={language} label={ui.title}
+          zoom={zoom} onZoom={setZoom} selectedBuildingId={selectedBuildingId}
+          placementDef={placementDef} hoverCell={hoverCell} placementValid={placementValid && enoughResources}
+          onHover={cell=>setHoverCell(current=>current?.x===cell?.x && current?.y===cell?.y ? current : cell)}
+          onCell={handleCellClick} onSelect={id=>{setSelectedBuildingId(id);setPanelMode('build');setPanelOpen(true);}}/>
+        <div className="settlement-map-controls"><button type="button" aria-label={ui.zoomOut} disabled={zoom===100} onClick={()=>setZoom(value=>Math.max(100,value-25))}>−</button><span>{zoom}%</span><button type="button" aria-label={ui.zoomIn} disabled={zoom===200} onClick={()=>setZoom(value=>Math.min(200,value+25))}>+</button></div>
+        <div className="settlement-map-hint" role="status">{notice || (movingBuildingId ? text.move : selectedDef ? text.tapMap : ui.choose)}</div>
+        <div className="settlement-map-actions"><button type="button" className="pip-action-button settlement-primary" onClick={()=>selectPanel('build')}><SheetIcon name="plus"/>{text.build}</button>{(selectedType || movingBuildingId) && <button type="button" className="pip-action-button" onClick={()=>{setSelectedType(null);setMovingBuildingId(null);setNotice('');}}>{text.cancel}</button>}</div>
       </main>
 
-      <aside className="settlement-summary settlement-right-panel pip-panel">
+      <aside className="settlement-summary settlement-right-panel pip-panel" aria-label={ui[panelMode] || text[panelMode]}>
+        <button type="button" className="settlement-panel-close pip-action-button" aria-label={ui.close} onClick={()=>setPanelOpen(false)}>×</button>
+        {panelMode === 'more' && <div className="settlement-more">{['overview','defense','events'].map(navigation)}<button type="button" className="pip-action-button" onClick={onBack}>← {text.back}</button></div>}
+        {panelMode === 'overview' && <><h2>{settlement.name}</h2><p>{statusText}</p><div className="settlement-balance"><span>{text.day}</span><b>{settlement.settlementDay || 1}</b></div><div className="settlement-balance"><span>{text.beds}</span><b>{attributes.beds}</b></div><div className="settlement-balance"><span>{text.income}</span><b>+{attributes.income}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div><div className="settlement-balance"><span>{text.materials}</span><b>{materialTotal}</b></div><div className="settlement-balance"><span>{text.risk}</span><b>{attackDice}d20</b></div><label className="settlement-building-picker">{ui.choose}<select className="pip-input" value="" onChange={event=>{if(event.target.value){setSelectedBuildingId(event.target.value);setPanelMode("build");setPanelOpen(true);}}}><option value="">—</option>{(settlement.buildings || []).map(building=><option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type],language)}</option>)}</select></label><h3>{text.events}</h3>{(settlement.events || []).length ? settlement.events.slice(0,3).map((event,index)=><div className="settlement-event-row" key={event.id || index}>{String(event.type || '').replaceAll('_',' ')}</div>) : <p>{text.noEvents}</p>}</>}
+            {panelMode === "build" && !selectedBuilding ? <>
+      <div className="settlement-build-categories" role="tablist" aria-label={text.build}>{BUILD_CATEGORIES.map((category) => <button key={category} type="button" className={selectedCategory === category ? "is-selected" : ""} onClick={() => { setSelectedCategory(category); setSelectedType(null); setHoverCell(null); setNotice(""); }}>{categoryLabels[category]}</button>)}</div>
+      <div className="settlement-build-menu">{visibleBuildings.map((def) => { const asset = getSettlementAsset(def.asset); const rule = getRulebookBuilding(def.id); return <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setSelectedBuildingId(null); setMovingBuildingId(null); setNotice(""); setPanelOpen(false); }}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · {formatRulebookCost(rule)} · {rule.constructionDays}d</small></button>; })}</div>
+    </> : null}
         {panelMode === "build" ? <>
-          <div className="pip-panel-title">{selectedBuilding ? text.manage : text.build}</div>
+          <div className="pip-panel-title">{selectedBuilding ? settlementBuildingName(selectedBuildingDef, language) : text.build}</div>
           {selectedBuilding ? <div className="settlement-building-hero">{selectedBuildingAsset ? <img src={selectedBuildingAsset} alt="" /> : <span>{BUILDING_ICONS[selectedBuilding.type] || "⌂"}</span>}</div> : null}
-          <div className="settlement-stockpile"><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div></div>
+          <div className={`settlement-stockpile ${selectedBuilding ? "is-hidden" : ""}`}><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div></div>
           {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef, language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><button type="button" className="pip-action-button" onClick={() => { setSelectedType(null); setHoverCell(null); }}>{text.cancel}</button></div> : null}
-          {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedBuildingDef, language)}</strong><div className="settlement-balance"><span>{text.condition}</span><b>{Math.round(Number(selectedBuilding.condition ?? 100))}%</b></div>{selectedBuilding.state === "construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}{selectedBuildingRule?.effects?.water ? <div className="settlement-balance"><span>{text.production}</span><b>+{selectedBuildingRule.effects.water} 💧</b></div> : null}{selectedBuildingRule?.effects?.power ? <div className="settlement-balance"><span>{text.production}</span><b>+{selectedBuildingRule.effects.power} ⚡</b></div> : null}{selectedBuildingRule?.effects?.requiresPower ? <div className="settlement-balance"><span>{text.consumption}</span><b>{selectedBuildingRule.effects.requiresPower} ⚡</b></div> : null}{selectedRoomCapacity > 0 ? <div className="settlement-rooms"><div className="pip-panel-title">{text.rooms} · {selectedRooms.length}/{selectedRoomCapacity}</div>{selectedRooms.map((room) => <div key={room.id} className="settlement-room-row"><span><strong>{roomName(room.type, language)}</strong><small>{roomEffects(ROOMS[room.type])}{room.state === "construction" ? ` · ${text.roomBuilding} ${getRoomConstructionProgress(room).progress}/${getRoomConstructionProgress(room).required}d` : ""}</small></span><button type="button" className="pip-action-button settlement-danger" onClick={() => removeRoom(room.id)}>×</button></div>)}{selectedBuilding.state === "active" && selectedRooms.length < selectedRoomCapacity ? <div className="settlement-room-build-list">{ROOM_ORDER.map((type) => <button key={type} type="button" className="pip-action-button" disabled={!canAffordRoom(settlement, type)} onClick={() => addRoom(type)}><span>{roomName(type, language)}</span><small>{roomCost(ROOMS[type])} · {ROOMS[type].constructionDays}d · {roomEffects(ROOMS[type])}</small></button>)}</div> : selectedRooms.length >= selectedRoomCapacity ? <small>{text.full}</small> : null}</div> : null}{selectedBuildingLocked ? <span className="settlement-hq-note">{text.hqLocked}</span> : <><button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); }}>{text.move}</button><button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button></>}<button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
+          {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedBuildingDef, language)}</strong><div className="settlement-balance"><span>{text.condition}</span><b>{Math.round(Number(selectedBuilding.condition ?? 100))}%</b></div>{selectedBuilding.state === "construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}{selectedBuildingRule?.effects?.water ? <div className="settlement-balance"><span>{text.production}</span><b>+{selectedBuildingRule.effects.water} 💧</b></div> : null}{selectedBuildingRule?.effects?.power ? <div className="settlement-balance"><span>{text.production}</span><b>+{selectedBuildingRule.effects.power} ⚡</b></div> : null}{selectedBuildingRule?.effects?.requiresPower ? <div className="settlement-balance"><span>{text.consumption}</span><b>{selectedBuildingRule.effects.requiresPower} ⚡</b></div> : null}{selectedRoomCapacity > 0 ? <div className="settlement-rooms"><div className="pip-panel-title">{text.rooms} · {selectedRooms.length}/{selectedRoomCapacity}</div>{selectedRooms.map((room) => <div key={room.id} className="settlement-room-row"><span><strong>{roomName(room.type, language)}</strong><small>{roomEffects(ROOMS[room.type])}{room.state === "construction" ? ` · ${text.roomBuilding} ${getRoomConstructionProgress(room).progress}/${getRoomConstructionProgress(room).required}d` : ""}</small></span><button type="button" className="pip-action-button settlement-danger" onClick={() => removeRoom(room.id)}>×</button></div>)}{selectedBuilding.state === "active" && selectedRooms.length < selectedRoomCapacity ? <div className="settlement-room-build-list">{ROOM_ORDER.map((type) => <button key={type} type="button" className="pip-action-button" disabled={!canAffordRoom(settlement, type)} onClick={() => addRoom(type)}><span>{roomName(type, language)}</span><small>{roomCost(ROOMS[type])} · {ROOMS[type].constructionDays}d · {roomEffects(ROOMS[type])}</small></button>)}</div> : selectedRooms.length >= selectedRoomCapacity ? <small>{text.full}</small> : null}</div> : null}{selectedBuildingLocked ? <span className="settlement-hq-note">{text.hqLocked}</span> : <><button type="button" className="pip-action-button" onClick={() => { setMovingBuildingId(selectedBuilding.id); setSelectedType(null); setPanelOpen(false); }}>{text.move}</button><button type="button" className="pip-action-button settlement-danger" onClick={demolishSelected}>{text.demolish}</button></>}<button type="button" className="pip-action-button" onClick={() => { setSelectedBuildingId(null); setMovingBuildingId(null); }}>{text.cancel}</button></div> : null}
         </> : null}
 
         {panelMode === "people" ? <div className="settlement-people settlement-people--panel"><div className="pip-panel-title">{text.people}</div>{(settlement.settlers || []).map((settler) => <div key={settler.id} className="settlement-person settlement-person--actions"><span><strong>{settler.name}</strong><small>{settler.status}</small></span><select className="pip-input" value={settler.settlementAction?.type || ""} onChange={(event) => assignAction(settler.id, event.target.value)}><option value="">{text.none}</option>{Object.values(SETTLEMENT_ACTIONS).map((action) => <option key={action.id} value={action.id}>{settlementRuleName(action, language)}</option>)}</select>{settler.settlementAction?.type === "build" ? <select className="pip-input" value={currentBuildTargetValue(settler)} onChange={(event) => assignBuildTarget(settler.id, event.target.value)}><option value="">{text.target}</option>{constructionTargets.map((target) => <option key={target.value} value={target.value}>{target.label}</option>)}</select> : null}</div>)}</div> : null}
@@ -254,9 +236,6 @@ export default function SettlementScreen({ settlement, onUpdate, onBack }) {
       </aside>
     </div>
 
-    {panelMode === "build" ? <>
-      <div className="settlement-build-categories" role="tablist" aria-label={text.build}>{BUILD_CATEGORIES.map((category) => <button key={category} type="button" className={selectedCategory === category ? "is-selected" : ""} onClick={() => { setSelectedCategory(category); setSelectedType(null); setHoverCell(null); setNotice(""); }}>{categoryLabels[category]}</button>)}</div>
-      <div className="settlement-build-menu">{visibleBuildings.map((def) => { const asset = getSettlementAsset(def.asset); const rule = getRulebookBuilding(def.id); return <button key={def.id} type="button" className={selectedType === def.id ? "is-selected" : ""} onClick={() => { setSelectedType(def.id); setSelectedBuildingId(null); setMovingBuildingId(null); setNotice(""); }}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt="" /> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def, language)}</span><small>{def.footprint.width}×{def.footprint.height} · {formatRulebookCost(rule)} · {rule.constructionDays}d</small></button>; })}</div>
-    </> : null}
+    <nav className="settlement-mobile-nav">{['overview','build','people','resources','more'].map(navigation)}</nav>
   </div>;
 }

@@ -1,4 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react";
+import "./sheetRedesign.css";
+import SideMenu from "../shared/SideMenu.jsx";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
@@ -39,6 +41,7 @@ export default function PipboyShell({
   setCharacter = null,
   onRoll = null,
   children,
+  onOpenDice, onOpenChat, onOpenMap, chatAvailable, localSaveState, profileProps,
 }) {
   const touchStart = useRef(null);
   const mainRef = useRef(null);
@@ -131,7 +134,8 @@ export default function PipboyShell({
     if (nextTab) onTabChange(nextTab.key);
   };
 
-  let screenContent = children;
+  const overlays = childArray.filter(child => React.isValidElement(child) && child.type === SideMenu);
+  let screenContent = childArray.filter(child => !React.isValidElement(child) || child.type !== SideMenu);
   if (activeTab === "companion") screenContent = <CompanionPresetHub onRoll={onRoll} />;
   if (activeTab === "bestiary") screenContent = <BestiaryScreen />;
   if (activeTab === "crafting") {
@@ -159,10 +163,10 @@ export default function PipboyShell({
   }
 
   return (
-    <div className="pip-app">
+    <div className="pip-app pip-sheet-v3">
       <div className="pip-vignette" />
       <div className="pip-container">
-        <TopNav activeTab={activeTab} onTabChange={onTabChange} onToggleMenu={onToggleMenu} />
+        <TopNav activeTab={activeTab} onTabChange={onTabChange} onToggleMenu={onToggleMenu} onOpenDice={onOpenDice} onOpenChat={onOpenChat} onOpenMap={onOpenMap} chatAvailable={chatAvailable} localSaveState={localSaveState} profileProps={profileProps} />
         <main
           ref={mainRef}
           className="pip-main"
@@ -180,6 +184,7 @@ export default function PipboyShell({
           ) : null}
         </main>
       </div>
+      {overlays}
     </div>
   );
 }

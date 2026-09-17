@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import SheetIcon from "../layout/SheetIcon.jsx";
+import { sheetCopy } from "../layout/sheetCopy.js";
 import { STATUS_LIST } from "../../constants.js";
 import InjuriesVaultBoy from "./InjuriesVaultBoy";
 import { getPowerArmorPartCondition } from "../../data/powerArmor.js";
@@ -37,6 +39,7 @@ const CONSUMABLE_UI = {
 };
 
 export default function InjuryPanel({
+  bodyOnly = false,
   injuries,
   statuses,
   armor,
@@ -46,10 +49,11 @@ export default function InjuryPanel({
   survivalConditions = [],
 }) {
   const { t, i18n } = useTranslation();
+  const c = sheetCopy(i18n.resolvedLanguage);
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const consumableUi = CONSUMABLE_UI[language] || CONSUMABLE_UI.en;
   const [selectedStatusKey, setSelectedStatusKey] = useState(null);
-  const [vaultBoyMode, setVaultBoyMode] = useState("powerArmor");
+  const [vaultBoyMode, setVaultBoyMode] = useState("injuries");
 
   const values = Object.values(injuries || {});
   const crippledCount = values.filter((value) => value === "crippled").length;
@@ -85,7 +89,7 @@ export default function InjuryPanel({
   const hasPowerArmor = powerArmorSlotIds.some((slotId) =>
     Boolean(getPowerArmorPartCondition(armor?._power?.loadout, slotId))
   );
-  const activeVaultBoyMode = hasPowerArmor ? vaultBoyMode : "injuries";
+  const activeVaultBoyMode = vaultBoyMode === "powerArmor" && !hasPowerArmor ? "armor" : vaultBoyMode;
 
   const handlePartClick = (part) => {
     const current = injuries?.[part] || "normal";
@@ -139,9 +143,9 @@ export default function InjuryPanel({
   };
 
   return (
-    <section className="pip-panel pip-block">
+    <section className={`pip-panel pip-block ${bodyOnly ? "sheet-body-panel" : ""}`} data-body-mode={activeVaultBoyMode}>
       <div className="pip-head">
-        <h2>[ {t("injuries.title")} ]</h2>
+        <h2>{bodyOnly ? <><SheetIcon name="person"/>{c.body}</> : <>[ {t("injuries.title")} ]</>}</h2>
         <span>
           {crippledCount > 0
             ? `${crippledCount} ${t("injuries.crippled")}`
@@ -165,34 +169,44 @@ export default function InjuryPanel({
               onClick={() => setVaultBoyMode("injuries")}
               aria-pressed={activeVaultBoyMode === "injuries"}
             >
-              <span>[ {t("injuries.modeInjuries")} ]</span>
+              <span>{bodyOnly ? c.bodyTab : t("injuries.modeInjuries")}</span>
             </button>
             <button
               type="button"
               className={`pip-injury-condition-chip ${
-                activeVaultBoyMode === "powerArmor" ? "is-positive is-selected" : ""
+                activeVaultBoyMode === "armor" ? "is-positive is-selected" : ""
               }`}
+              onClick={() => setVaultBoyMode("armor")}
+              aria-pressed={activeVaultBoyMode === "armor"}
+
+              title={c.normalArmor}
+            >
+              <span>{c.normalArmor}</span>
+            </button>
+            <button type="button"
+              className={`pip-injury-condition-chip ${activeVaultBoyMode === "powerArmor" ? "is-positive is-selected" : ""}`}
               onClick={() => setVaultBoyMode("powerArmor")}
               aria-pressed={activeVaultBoyMode === "powerArmor"}
               disabled={!hasPowerArmor}
               title={hasPowerArmor ? t("injuries.powerArmor") : t("injuries.noPowerArmor")}
-            >
-              <span>[ {t("injuries.modePowerArmor")} ]</span>
-            </button>
+            ><span>{t("injuries.powerArmor")}</span></button>
           </div>
 
           <InjuriesVaultBoy
+            showLabels={bodyOnly}
             injuries={injuries}
             armor={armor}
             derived={derived}
             viewMode={activeVaultBoyMode}
             onPartClick={handlePartClick}
             onArmorPartClick={handleArmorPartClick}
+            onArmorChange={onArmorChange}
           />
         </div>
 
         <div className="pip-injuries-side">
-          {uniqueStatuses.length > 0 && (
+          {bodyOnly && activeEffects.length === 0 && <div className="sheet-no-injuries">{c.noInjuries}</div>}
+          {!bodyOnly && uniqueStatuses.length > 0 && (
             <div className="pip-injury-conditions">
               <div className="pip-injuries-label">
                 {t("injuries.conditions")}
@@ -232,7 +246,7 @@ export default function InjuryPanel({
             </div>
           )}
 
-          {consumableEffects.length > 0 && (
+          {!bodyOnly && consumableEffects.length > 0 && (
             <div className="pip-injury-effects">
               <div className="pip-injuries-label">[ {consumableUi.title} ]</div>
               <div className="pip-injury-effects-list">

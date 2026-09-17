@@ -163,6 +163,7 @@ export function useCharacterStorage(initialForm) {
     }
   });
 
+  const [localSave, setLocalSave] = useState({ form: null, state: "saving" });
   const [saveStatus, setSaveStatus] = useState("");
   const [loadStatus, setLoadStatus] = useState("");
   const [lastSavedSnapshot, setLastSavedSnapshot] = useState(() =>
@@ -823,13 +824,12 @@ export function useCharacterStorage(initialForm) {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        updatedAt: new Date().toISOString(),
-        data: form,
-      })
-    );
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ updatedAt: new Date().toISOString(), data: form }));
+      setLocalSave({ form, state: "saved" });
+    } catch {
+      setLocalSave({ form, state: "error" });
+    }
   }, [form]);
 
   const hasUnsavedChanges = useMemo(
@@ -1047,6 +1047,7 @@ export function useCharacterStorage(initialForm) {
     form,
     setForm,
     saveStatus,
+    localSaveState: localSave.form === form ? localSave.state : "saving",
     loadStatus,
     exportJson,
     importJson,

@@ -8,6 +8,9 @@ import {
   setActiveCharacter,
 } from "../../utils/characterProfiles.js";
 import "./characterProfiles.css";
+import SheetIcon from "../layout/SheetIcon.jsx";
+import {menuCopy} from "./menuCopy.js";
+import portraitFallback from "../../assets/injuries/vaultboy_healthy.png";
 
 const COPY = {
   en: { title: "CHARACTERS", local: "LOCAL PROFILES", active: "ACTIVE", use: "OPEN", copy: "COPY", remove: "DELETE", create: "NEW CHARACTER", empty: "No local characters yet.", confirm: "Delete this character?", level: "LVL" },
@@ -16,12 +19,16 @@ const COPY = {
   pl: { title: "POSTACIE", local: "PROFILE LOKALNE", active: "AKTYWNA", use: "OTWÓRZ", copy: "KOPIA", remove: "USUŃ", create: "NOWA POSTAĆ", empty: "Brak lokalnych postaci.", confirm: "Usunąć tę postać?", level: "POZ" },
 };
 
+function readPortrait(id) {
+  try { return localStorage.getItem(`fallout_pipboy_v5_portrait_${id}`) || portraitFallback; } catch { return portraitFallback; }
+}
+
 function lang(value) {
   const key = String(value || "en").toLowerCase().split("-")[0];
   return COPY[key] ? key : "en";
 }
 
-export default function CharacterProfilesPanel({ onCreateCharacter }) {
+export default function CharacterProfilesPanel({ onCreateCharacter, onOpenCharacter, onImportClick }) {
   const { i18n } = useTranslation();
   const copy = COPY[lang(i18n.resolvedLanguage || i18n.language)];
   const [revision, setRevision] = useState(0);
@@ -33,11 +40,13 @@ export default function CharacterProfilesPanel({ onCreateCharacter }) {
   }, []);
 
   const profiles = useMemo(() => listCharacterProfiles(), [revision]);
+  const c = menuCopy(i18n.resolvedLanguage);
+  const [expandedId,setExpandedId] = useState(null);
   const activeId = getActiveCharacterId();
 
   const openProfile = (id) => {
     if (!setActiveCharacter(id)) return;
-    window.location.reload();
+    if(onOpenCharacter) onOpenCharacter(); else window.location.reload();
   };
 
   const cloneProfile = (id) => {
@@ -55,32 +64,30 @@ export default function CharacterProfilesPanel({ onCreateCharacter }) {
 
   return (
     <section className="pip-panel pip-block character-profiles-panel">
-      <div className="pip-head">
-        <h2>[ {copy.title} ]</h2>
-        <span>{copy.local}</span>
-      </div>
+      <div className="home-profiles-heading"><h2>{c.characters}</h2><button type="button" className="pip-btn" onClick={onCreateCharacter} aria-label={copy.create}><SheetIcon name="plus"/><span>{copy.create}</span></button></div>
 
       <div className="character-profiles-list">
         {profiles.length ? profiles.map((profile) => (
           <article key={profile.id} className={`character-profile-card${profile.id === activeId ? " is-active" : ""}`}>
+            <button type="button" className="home-profile-open" onClick={()=>openProfile(profile.id)} aria-label={`${copy.use}: ${profile.name}`}>
+            <img src={readPortrait(profile.id)} alt=""/>
             <div className="character-profile-card__main">
-              <strong>{profile.name}</strong>
+              <strong>{profile.data?.characterName || i18n.t("menuScreen.unnamed")}</strong>
               <span>{profile.origin || "—"} · {copy.level} {profile.level || "1"}</span>
-              <small>{profile.updatedAt ? new Date(profile.updatedAt).toLocaleString() : ""}</small>
+              {profile.id === activeId && <span className="character-profile-active">● {copy.active}</span>}
             </div>
-            <div className="character-profile-card__actions">
-              {profile.id === activeId ? <span className="character-profile-active">{copy.active}</span> : (
-                <button type="button" className="pip-btn" onClick={() => openProfile(profile.id)}>{copy.use}</button>
-              )}
+            </button>
+            <button type="button" className="home-icon" aria-label={`${c.more}: ${profile.name}`} aria-expanded={expandedId===profile.id} onClick={()=>setExpandedId(expandedId===profile.id?null:profile.id)}><SheetIcon name="more"/></button>
+            {expandedId===profile.id && <div className="character-profile-card__actions">
               <button type="button" className="pip-btn" onClick={() => cloneProfile(profile.id)}>{copy.copy}</button>
               <button type="button" className="pip-btn" onClick={() => removeProfile(profile.id)}>{copy.remove}</button>
-            </div>
+            </div>}
           </article>
         )) : <div className="pip-logbox">{copy.empty}</div>}
       </div>
 
       <div className="pip-actions-inline push-top">
-        <button type="button" className="pip-btn is-primary" onClick={onCreateCharacter}>{copy.create}</button>
+        <button type="button" className="pip-btn home-import" onClick={onImportClick}><SheetIcon name="upload"/> {i18n.t("menuScreen.importJson")}</button>
       </div>
     </section>
   );
