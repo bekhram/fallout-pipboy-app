@@ -50,7 +50,6 @@ export function calculateSettlementStats(settlement) {
   let waterBonus = 0;
   let defense = 0;
   let bedsBonus = 0;
-  let incomeBonus = 0;
   let cropSlots = 0;
   let storageBonus = 0;
   let happinessBonus = 0;
@@ -60,7 +59,7 @@ export function calculateSettlementStats(settlement) {
   for (const building of settlement.buildings || []) {
     const def = SETTLEMENT_BUILDINGS[building.type];
     if (!def) continue;
-    const active = building.state === "active" && Number(building.condition ?? 100) > 0;
+    const active = building.state === "active" && Number(building.condition ?? 100) > 0 && !building.autoDisabled;
     const assignedWorkers = (settlement.settlers || []).filter((settler) => settler.assignedBuildingId === building.id).length;
     const actionWorkers = (settlement.settlers || []).filter((settler) => settler.settlementAction?.targetBuildingId === building.id).length;
     const requiredWorkers = Number(def.workersRequired || 0);
@@ -74,7 +73,6 @@ export function calculateSettlementStats(settlement) {
     waterBonus += Number(effects.water || 0);
     defense += Number(effects.defense || 0);
     bedsBonus += Number(effects.beds || 0);
-    incomeBonus += Number(effects.income || 0);
     cropSlots += Number(effects.cropSlots || 0);
     storageBonus += Number(effects.storageLbs || 0);
     happinessBonus += Number(effects.happiness || 0);
@@ -82,7 +80,6 @@ export function calculateSettlementStats(settlement) {
     poweredSirenBonusPerGuardPost += Number(effects.defensePerGuardPost || 0);
   }
 
-  // A powered siren adds its listed Defense bonus for every active Guard Post.
   defense += guardStructures * poweredSirenBonusPerGuardPost;
 
   for (const building of settlement.buildings || []) {
@@ -103,7 +100,7 @@ export function calculateSettlementStats(settlement) {
     defense: Math.max(0, Math.floor(defense)),
     beds: Math.max(0, Math.floor(bedsBonus)),
     happiness: clamp(Number(stored.happiness ?? settlement.resources?.happiness ?? 10), 1, 20),
-    income: Math.max(0, Math.floor(Number(stored.income ?? settlement.resources?.income ?? 0) + incomeBonus)),
+    income: Math.max(0, Math.floor(Number(stored.income ?? settlement.resources?.income ?? 0))),
   };
 
   return {
@@ -119,6 +116,7 @@ export function calculateSettlementStats(settlement) {
     storageCapacityLbs: Number(settlement.stockpile?.capacityLbs || 300) + storageBonus,
     buildingStatus,
     happinessBonus,
+    recruitment: settlement.recruitment || null,
     powerGrid: {
       produced: powerGrid.produced,
       required: powerGrid.required,
