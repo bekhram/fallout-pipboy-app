@@ -15,7 +15,6 @@ import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
 import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
-import FloatingDiceButton from "./components/dice/FloatingDiceButton";
 import DiceRollModal from "./components/dice/DiceRollModal";
 import MapScreen from "./components/map/MapScreen.jsx";
 import GamesScreen from "./components/minigames/GamesScreen.jsx";
@@ -230,6 +229,7 @@ export default function App() {
     form,
     setForm,
     saveStatus,
+    localSaveState,
     loadStatus,
     exportJson,
     importJson,
@@ -1103,14 +1103,18 @@ const updateSkill = (skillName, field, value) =>
             onHpIncrease={handleHpIncrease}
             onOpenConditions={() => setShowConditions(true)}
             onOpenDerived={() => setShowDerived(true)}
+            onOpenDice={openFreeDiceRoll}
+            onOpenSkills={() => setActiveTab("skills")}
             onRoll={openContextDiceRoll}
           />
         );
         break;
 
+      case "skills":
       case "special":
         content = (
           <SpecialScreen
+            section={activeTab}
             form={form}
             derived={derived}
             currentLuckPoints={currentLuckPoints}
@@ -1592,6 +1596,19 @@ const SkillsEditorModal = () => {
           character={form}
           setCharacter={setForm}
           onRoll={openContextDiceRoll}
+          onOpenDice={openFreeDiceRoll}
+          onOpenChat={() => {
+            const toggle = document.querySelector(".session-utility-drawer-toggle");
+            if (toggle?.getAttribute("aria-expanded") !== "true") toggle?.click();
+          }}
+          onOpenMap={() => {
+            if (sharedSession.isActive && (sharedSession.tacticalScene || sharedSession.liveSceneId)) {
+              document.dispatchEvent(new CustomEvent("pip2d20:open-battlemap"));
+            } else setActiveTab("map");
+          }}
+          chatAvailable={sharedSession.isActive && sharedSession.mode === "player"}
+          localSaveState={localSaveState}
+          profileProps={{ form, portraitPreview: portrait.portraitPreview, onPickPortrait: portrait.openFileDialog, onRemovePortrait: portrait.clearPortrait, onTopLevelChange: updateTopLevel, onChangeOrigin: changeOrigin }}
         >
           {content}
           <SideMenu
@@ -1627,16 +1644,6 @@ const SkillsEditorModal = () => {
       <DerivedModal />
       <SkillsEditorModal />
 
-      {screen === "sheet" && !isDiceOpen && (
-        <FloatingDiceButton
-          onOpen={openFreeDiceRoll}
-          onOpenMenu={() => setSideMenuOpen(true)}
-          battlemapAvailable={Boolean(
-            sharedSession.isActive &&
-            (sharedSession.tacticalScene || sharedSession.liveSceneId)
-          )}
-        />
-      )}
 
       {screen === "sheet" && sharedSession.isActive && sharedSession.mode === "player" && (
         <SessionChatDrawer session={sharedSession} />

@@ -160,6 +160,7 @@ function PowerArmorDamagePart({ part, state }) {
 }
 
 export default function InjuriesVaultBoy({
+  showLabels = false,
   injuries = {},
   armor = {},
   derived = {},
@@ -325,6 +326,8 @@ export default function InjuriesVaultBoy({
             />
           );
         })}
+
+        {showLabels && viewMode === "injuries" && PART_ORDER.map(part => <button key={`label-${part}`} type="button" className={`sheet-part-label is-${part}`} onClick={()=>onPartClick?.(part)} aria-label={`${t(PART_LABEL_KEYS[part])} ${t(`injuries.state.${injuries[part] || 'normal'}`)}`}>{t(PART_LABEL_KEYS[part])}</button>)}
 
         {PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];

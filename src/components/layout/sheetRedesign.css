@@ -1,77 +1,210 @@
-/* Character sheet shell. Scoped overrides keep session and GM layouts independent. */
-.pip-sheet-v3 .pip-container { max-width: 1500px; padding: 16px 20px 96px; }
-.pip-sheet-v3 .pip-main { min-width: 0; }
-.pip-sheet-v3 .pip-topnav { margin-bottom: 16px; }
-.pip-sheet-v3 .pip-brandline-nav { display: flex; align-items: center; gap: 12px; margin: 0; }
-.pip-sheet-v3 .pip-brandline-title { flex: 1; font-size: 15px; font-weight: 700; letter-spacing: .14em; }
-.pip-sheet-v3 .pip-icon-btn-menu { flex: 0 0 44px; width: 44px; height: 44px; }
-.pip-sheet-mobile-select { display: none; }
-.pip-sheet-v3 button:focus-visible,
-.pip-sheet-v3 select:focus-visible,
-.pip-sheet-v3 input:focus-visible { outline: 2px solid var(--pip-accent); outline-offset: 3px; }
-.pip-sheet-v3 .pip-overview-v3 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.pip-sheet-v3 .pip-overview-v3 > * { min-width: 0; }
-.pip-sheet-v3 .pip-hero-grid { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; }
-.pip-sheet-v3 .pip-hero-left { display: contents; }
-.pip-sheet-v3 .pip-portrait-card { grid-column: 1; grid-row: 1; width: 100%; max-width: none; }
-.pip-sheet-v3 .pip-portrait { min-height: 144px; height: 100%; max-height: none; aspect-ratio: auto; padding: 8px; }
-.pip-sheet-v3 .pip-portrait:has(img) { padding: 0; }
-.pip-sheet-v3 .pip-portrait-remove { width: 44px; height: 44px; }
-.pip-sheet-v3 .pip-hero-meta { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-.pip-sheet-v3 .pip-progression-grid { grid-column: 1 / -1; padding: 8px; }
-.pip-sheet-v3 .pip-identity-card { min-width: 0; padding: 8px; }
-.pip-sheet-v3 .pip-hero-meta .pip-input { min-height: 44px; font-size: 16px; }
-.pip-sheet-v3 .pip-portrait-actions { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
-.pip-sheet-v3 .pip-portrait-actions .pip-action-btn { min-height: 44px; flex-direction: row; gap: 8px; padding: 8px; }
-.pip-sheet-v3 .pip-portrait-actions small { font-size: 11px; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
-.pip-sheet-v3 .pip-hero-dashboard { margin: 0; display: grid; gap: 12px; }
-.pip-sheet-v3 .pip-combat-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-.pip-sheet-v3 .pip-combat-stat { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-left: 2px solid var(--pip-accent); }
-.pip-sheet-v3 .pip-combat-stat small { min-height: 0; font-size: 11px; line-height: 1.4; }
-.pip-sheet-v3 .pip-combat-stat strong { flex-shrink: 0; font-size: 26px; }
-.pip-sheet-v3 .pip-summary-title { font-size: 11px; line-height: 1.4; }
-.pip-sheet-v3 .pip-health-panel { align-self: start; }
-.pip-sheet-v3 .pip-health-panel .pip-head > span { color: var(--pip-accent); font-size: 22px; font-weight: 700; white-space: nowrap; }
-.pip-sheet-v3 .pip-flagbar-shell { grid-template-columns: 44px minmax(0,1fr) 44px; }
-.pip-sheet-v3 .pip-flagbar-btn { min-width: 44px; min-height: 44px; }
-.pip-sheet-v3 .pip-head { flex-wrap: wrap; }
-@media (min-width: 1100px) {
-  .pip-sheet-v3 .pip-container { display: grid; grid-template-columns: 220px minmax(0,1fr); align-items: start; gap: 24px; }
-  .pip-sheet-v3 .pip-topnav { position: sticky; top: 16px; max-height: calc(100dvh - 32px); overflow-y: auto; margin: 0; scrollbar-width: thin; }
-  .pip-sheet-v3 .pip-brandline-status { display: none; }
-  .pip-sheet-v3 .pip-tab-scroll { overflow: visible; margin-top: 16px; }
-  .pip-sheet-v3 .pip-tabrow { display: flex; flex-direction: column; flex-wrap: nowrap; width: 100%; min-width: 0; gap: 4px; }
-  .pip-sheet-v3 .pip-tab { width: 100%; height: auto; min-height: 44px; justify-content: flex-start; text-align: left; white-space: normal; overflow-wrap: anywhere; font-size: 12px; letter-spacing: .08em; border-color: transparent; background: transparent; }
-  .pip-sheet-v3 .pip-tab.is-active { border-color: var(--pip-line-strong); border-left: 3px solid var(--pip-accent); background: rgba(140,255,152,.08); }
-  .pip-sheet-v3 .pip-tab:hover { background: rgba(140,255,152,.05); }
-  .pip-sheet-v3 .pip-overview-v3 { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
-  .pip-sheet-v3 .pip-overview-v3 > .pip-hero,
-  .pip-sheet-v3 .pip-overview-v3 > .pip-block { grid-column: 1 / -1; }
+/* Reference layout: global header, grouped navigation, and a responsive overview. */
+.pip-sheet-v3 { --sheet-line: #315f40; --sheet-bright: #a5f79f; --sheet-text: #a7dbc0; --pip-accent: #a5f79f; --pip-text-dim: #8cc6a5; }
+.pip-sheet-v3 .pip-container { display: grid; grid-template-columns: 210px minmax(0,1fr); grid-template-rows: auto 1fr; max-width: 1440px; padding: 0; margin: 20px auto; width: calc(100% - 40px); border: 1px solid var(--sheet-line); border-radius: 16px; background: rgba(0,16,8,.7); min-height: calc(100dvh - 40px); }
+.pip-sheet-v3 .pip-vignette { box-shadow: inset 0 0 80px rgba(0,0,0,.35); }
+.pip-sheet-v3 .pip-main { padding: 16px; min-width: 0; grid-column: 2; grid-row: 2; }
+.pip-sheet-v3 .pip-panel { border-color: var(--sheet-line); background: linear-gradient(115deg,rgba(8,38,18,.65),rgba(0,14,7,.8)); box-shadow: none; border-radius: 9px; }
+.pip-sheet-v3 .pip-panel::before { display: none; }
+.pip-sheet-v3 button:focus-visible,.pip-sheet-v3 input:focus-visible,.pip-sheet-v3 summary:focus-visible { outline: 2px solid var(--sheet-bright); outline-offset: 3px; }
+.pip-sheet-v3 button { cursor: pointer; }
+.pip-sheet-v3 button:disabled { cursor: not-allowed; opacity: .45; }
+.sheet-topbar { grid-column: 1/-1; display: flex; align-items: center; gap: 20px; padding: 10px 14px; border-bottom: 1px solid var(--sheet-line); min-width: 0; }
+.sheet-brand { font-size: 22px; color: #99f4bc; width: 175px; letter-spacing: .04em; flex-shrink: 0; }
+.sheet-breadcrumb { color: var(--sheet-text); font-size: 13px; flex: 1; }
+.sheet-save-state { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--sheet-text); }
+.sheet-save-state svg { width: 20px; }
+.sheet-save-state.is-error { color: #ffc786; }
+.sheet-icon-button { width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border: 1px solid var(--sheet-line); border-radius: 5px; color: var(--sheet-bright); background: rgba(2,20,10,.75); font: inherit; }
+.sheet-sidebar { grid-row: 2; grid-column: 1; padding: 20px 12px; border-right: 1px solid var(--sheet-line); align-self: start; position: sticky; top: 0; max-height: 100dvh; overflow-y: auto; display: flex; flex-direction: column; min-height: calc(100dvh - 110px); }
+.sheet-nav-item { display: flex; align-items: center; gap: 16px; width: 100%; min-height: 48px; padding: 10px 14px; margin: 2px 0; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--sheet-text); text-align: left; font: inherit; font-size: 14px; }
+.sheet-nav-item svg { flex-shrink: 0; width: 24px; }
+.sheet-nav-item.is-active { border-color: #519f61; border-left: 3px solid var(--sheet-bright); background: rgba(77,165,81,.09); color: var(--sheet-bright); }
+.sheet-nav-item:hover:not(:disabled) { background: rgba(106,208,117,.08); }
+.sheet-session-tools { border-top: 1px solid var(--sheet-line); margin: 24px 10px 0; padding-top: 16px; }
+.sheet-session-tools small { color: var(--sheet-text); font-size: 10px; text-transform: uppercase; letter-spacing: .06em; }
+.sheet-session-tools .sheet-nav-item { padding-left: 0; }
+.sheet-sidebar footer { color: #699c83; font-size: 10px; line-height: 1.5; letter-spacing: .06em; margin: auto 10px 0; padding-top: 40px; }
+.sheet-mobile-context,.sheet-bottom-nav { display: none; }
+.sheet-more-panel { position: fixed !important; left: max(28px,calc((100vw - 1440px)/2 + 24px)); top: 115px; width: 310px; max-height: calc(100dvh - 150px); overflow-y: auto !important; z-index: 85; box-shadow: 0 15px 50px #000 !important; background: #06180e !important; }
+.sheet-overview { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-template-areas: 'profile profile' 'health combat' 'body survival' 'body effects' 'quick quick'; gap: 14px; align-items: stretch; }
+.sheet-overview>* { min-width: 0; }
+.sheet-profile { grid-area: profile; display: flex; gap: 22px; align-items: center; padding: 14px !important; overflow: visible !important; }
+.sheet-profile-portrait { position: relative; flex: 0 0 160px; height: 120px; }
+.sheet-profile-portrait>button:first-child { width: 100%; height: 100%; padding: 0; border: 1px solid var(--sheet-line); border-radius: 5px; overflow: hidden; background: radial-gradient(ellipse at center,#2a572b,#0b2514); }
+.sheet-profile-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+.sheet-remove-portrait { position: absolute; right: 0; top: 0; height: 36px; width: 36px; border: 1px solid var(--sheet-line); background: #07190e; color: var(--sheet-bright); }
+.sheet-profile-main { min-width: 0; flex: 1; }
+.sheet-profile-name { display: flex; align-items: center; gap: 4px; color: var(--sheet-bright); }
+.sheet-profile-name input { width: min(100%,340px); min-width: 0; border: 0; background: transparent; font: inherit; font-size: 23px; font-weight: 700; color: var(--sheet-bright); padding: 4px 0; }
+.sheet-profile-name input::placeholder { color: var(--sheet-bright); opacity: 1; }
+.sheet-profile-name .sheet-icon-button { border: 0; background: transparent; }
+.sheet-profile-name .sheet-icon-button svg { width: 18px; }
+.sheet-profile-origin { border: 0; background: transparent; padding: 4px 0; color: var(--sheet-text); font: inherit; text-align: left; min-height: 32px; }
+.sheet-profile-progression { display: grid; grid-template-columns: auto minmax(70px,100px) auto minmax(90px,130px); align-items: center; justify-content: start; gap: 12px; margin-top: 10px; }
+.sheet-profile-progression label { font-size: 12px; color: var(--sheet-text); }
+.sheet-profile-progression input { width: 100%; min-width: 0; height: 38px; border: 1px solid var(--sheet-line); border-radius: 5px; background: #001307; color: var(--sheet-bright); font: inherit; font-size: 22px; font-weight: 700; text-align: center; }
+.sheet-card-heading { display: flex; align-items: center; gap: 12px; min-height: 32px; color: var(--sheet-bright); margin: 0 0 12px; }
+.sheet-card-heading h2 { font: inherit; font-size: 16px; font-weight: 700; margin: 0; letter-spacing: .02em; }
+.sheet-card-heading>svg { flex-shrink: 0; }
+.sheet-card-heading .sheet-icon-button { margin-left: auto; }
+.sheet-health { grid-area: health; padding: 16px !important; }
+.sheet-health-number { text-align: center; font-size: 40px; line-height: 1.2; color: var(--sheet-bright); font-weight: 700; margin: 8px 0; }
+.sheet-health-controls { display: flex; gap: 14px; align-items: center; }
+.sheet-health-controls>button,.sheet-radiation>button { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid #629966; border-radius: 5px; color: var(--sheet-bright); background: linear-gradient(#15361d,#001608); font-size: 28px; line-height: 1; }
+.sheet-health-track { height: 22px; position: relative; flex: 1; border: 1px solid #629966; border-radius: 3px; background: #06100a; }
+.sheet-health-track::after { content:''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),#174421 calc(10% - 1px),#174421 10%); pointer-events: none; }
+.sheet-health-fill { height: 100%; background: linear-gradient(#baf9a4,#85d989); box-shadow: 0 0 8px #70d17c55; }
+.sheet-health-rad { position: absolute; right: 0; top: 0; bottom: 0; background: #6a3d24; }
+.sheet-health-track input { appearance: none; position: absolute; inset: -12px 0; width: 100%; height: 44px; margin: 0; opacity: 0; cursor: pointer; }
+.sheet-health-track:focus-within { outline: 2px solid var(--sheet-bright); outline-offset: 3px; }
+.sheet-radiation { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--sheet-line); margin-top: 18px; padding-top: 12px; color: var(--sheet-text); }
+.sheet-radiation>span { flex: 1; font-size: 13px; }
+.sheet-radiation strong { font-size: 20px; padding: 0 8px; }
+.sheet-radiation>svg { flex-shrink: 0; }
+.sheet-combat { grid-area: combat; padding: 16px !important; }
+.sheet-edit-stats { width: 30px; min-height: 30px; border: 0; background: none; }
+.sheet-edit-stats svg { width: 16px; }
+.sheet-combat-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.sheet-combat-stat { display: flex; align-items: center; gap: 14px; border: 1px solid var(--sheet-line); border-radius: 6px; padding: 14px; min-height: 80px; color: var(--sheet-text); }
+.sheet-combat-stat>svg { width: 28px; height: 28px; flex-shrink: 0; }
+.sheet-combat-stat small { font-size: 12px; }
+.sheet-combat-stat strong { display: block; font-size: 27px; color: var(--sheet-bright); margin-top: 4px; }
+.sheet-body { grid-area: body; }
+.pip-sheet-v3 .sheet-body-panel { height: 100%; padding: 14px; }
+.pip-sheet-v3 .sheet-body-panel>.pip-head { padding: 0; border: 0; margin-bottom: 6px; }
+.pip-sheet-v3 .sheet-body-panel>.pip-head h2 { display: flex; align-items: center; gap: 10px; font-size: 15px; letter-spacing: 0; }
+.pip-sheet-v3 .sheet-body-panel>.pip-head>span { display: none; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-card { display: flex; flex-direction: column; gap: 8px; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-visual { order: 0; max-width: none; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-side { order: 1; width: 100%; padding: 0; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-vaultboy-wrap { max-width: 255px; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-visual>.pip-injury-conditions-list { justify-content: flex-end !important; margin: 0 !important; border-bottom: 1px solid var(--sheet-line); padding-bottom: 6px; }
+.pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip { min-height: 32px; padding: 5px 18px; font-size: 12px; text-transform: none; }
+.pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip.is-selected { color: #042212; background: var(--sheet-bright); }
+.sheet-body-panel[data-body-mode='injuries'] .pip-armor-badge { display: none; }
+.sheet-no-injuries { border: 1px solid var(--sheet-line); background: #0c2814; color: var(--sheet-bright); padding: 8px; border-radius: 4px; text-align: center; font-size: 12px; }
+.sheet-part-label { position: absolute; z-index: 10; min-height: 28px; background: transparent; border: 0; border-bottom: 1px solid var(--sheet-line); padding: 3px; color: var(--sheet-text); font: inherit; font-size: 10px; }
+.sheet-part-label::after { content:''; width: 24px; height: 1px; background: var(--sheet-line); position: absolute; top: 50%; }
+.sheet-part-label.is-head,.sheet-part-label.is-torso,.sheet-part-label.is-leftArm { left: -7%; }
+.sheet-part-label.is-head::after,.sheet-part-label.is-torso::after,.sheet-part-label.is-leftArm::after { left: 100%; }
+.sheet-part-label.is-rightArm,.sheet-part-label.is-leftLeg,.sheet-part-label.is-rightLeg { right: -7%; }
+.sheet-part-label.is-rightArm::after,.sheet-part-label.is-leftLeg::after,.sheet-part-label.is-rightLeg::after { right: 100%; }
+.sheet-part-label.is-head { top: 17%; }.sheet-part-label.is-torso { top: 34%; }.sheet-part-label.is-leftArm { top: 52%; }
+.sheet-part-label.is-rightArm { top: 34%; }.sheet-part-label.is-leftLeg { top: 69%; }.sheet-part-label.is-rightLeg { top: 53%; }
+.sheet-survival { grid-area: survival; }
+.sheet-effects { grid-area: effects; }
+.sheet-disclosure { padding: 14px !important; }
+.sheet-disclosure-toggle { width: 100%; border: 0; border-bottom: 1px solid var(--sheet-line); background: none; padding: 0 0 10px; text-align: left; font: inherit; font-weight: 700; }
+.sheet-disclosure-toggle>span { flex: 1; }
+.sheet-disclosure-arrow { display: none; }
+.sheet-count { border: 1px solid var(--sheet-line); border-radius: 50%; min-width: 24px; padding: 3px; text-align: center; font-weight: 400; }
+.sheet-add-effect { display: flex; align-items: center; gap: 6px; border: 1px solid var(--sheet-line); background: transparent; color: var(--sheet-text); min-height: 36px; padding: 4px 10px; border-radius: 4px; margin: 0 0 8px auto; font: inherit; font-size: 12px; }
+.sheet-add-effect svg { width: 16px; }
+.sheet-empty { min-height: 72px; display: grid; place-items: center; padding: 12px; border: 1px dashed var(--sheet-line); border-radius: 5px; color: var(--sheet-text); font-size: 12px; }
+.sheet-effect { border-bottom: 1px solid var(--sheet-line); padding: 8px 0; font-size: 12px; color: var(--sheet-text); }
+.sheet-effect summary { cursor: pointer; min-height: 32px; }
+.sheet-quick { grid-area: quick; padding: 14px !important; }
+.sheet-quick-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; }
+.sheet-quick-grid>button { display: flex; align-items: center; gap: 16px; background: rgba(13,48,22,.5); border: 1px solid var(--sheet-line); color: var(--sheet-bright); border-radius: 6px; padding: 12px 16px; text-align: left; font: inherit; }
+.sheet-quick-grid small { display: block; color: var(--sheet-text); font-size: 11px; margin-top: 6px; }
+.sheet-quick-grid>button>svg { flex-shrink: 0; }
+.sheet-vitals { display: grid; gap: 10px; }
+.sheet-vital-row { display: grid; grid-template-columns: 90px minmax(0,1fr); align-items: center; color: var(--sheet-text); font-size: 13px; }
+.sheet-vital-segments { display: flex; gap: 4px; }
+.sheet-vital-segments button { position: relative; width: 30px; height: 32px; border: 0; background: transparent; padding: 0; }
+.sheet-vital-segments button::before { content:''; position: absolute; left: 1px; right: 1px; top: 8px; bottom: 8px; border: 1px solid #7cc48f; border-radius: 3px; background: #071c0e; }
+.sheet-vital-segments button[aria-pressed='true']::before { background: #a0ef96; box-shadow: 0 0 8px #84d78333; }
+.sheet-special--skills .pip-special-stats-panel { display: none; }
+@media (max-width: 1099px) and (min-width: 900px) {
+  .pip-sheet-v3 .pip-container { grid-template-columns: 180px minmax(0,1fr); width: calc(100% - 20px); }
+  .sheet-nav-item { gap: 10px; padding: 8px; font-size: 12px; }
+  .sheet-combat-stat { gap: 8px; padding: 8px; }
+  .sheet-profile-portrait { flex-basis: 120px; }
+  .sheet-part-label.is-head,.sheet-part-label.is-torso,.sheet-part-label.is-leftArm { left: 0; }
+  .sheet-part-label.is-rightArm,.sheet-part-label.is-leftLeg,.sheet-part-label.is-rightLeg { right: 0; }
+  .sheet-quick-grid { grid-template-columns: 1fr 1fr; }.sheet-luck-action { grid-column: 1/-1; }
 }
-@media (max-width: 1099px) {
-  .pip-sheet-v3 .pip-tab-scroll { display: none; }
-  .pip-sheet-v3 .pip-topnav { padding: 8px 12px; }
-  .pip-sheet-mobile-select { display: block; margin-top: 8px; }
-  .pip-sheet-mobile-select > span { display: none; }
-  .pip-sheet-mobile-select select { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--pip-line); border-radius: 6px; background: var(--pip-panel); color: var(--pip-accent); font: inherit; font-size: 16px; }
+@media (max-width: 899px) {
+  .pip-sheet-v3 .pip-container { display: flex; flex-direction: column; width: 100%; margin: 0; border: 0; border-radius: 0; padding: 0 10px calc(84px + env(safe-area-inset-bottom)); }
+  .pip-sheet-v3 .pip-main { padding: 0; }
+  .sheet-topbar { position: sticky; top: 0; z-index: 60; padding: 8px 2px; gap: 10px; background: #03120a; border: 0; }
+  .sheet-brand { font-size: 19px; width: auto; flex: 1; }
+  .sheet-breadcrumb,.sheet-sidebar { display: none; }
+  .sheet-save-state { font-size: 10px; gap: 5px; max-width: 135px; }
+  .sheet-save-state svg { width: 17px; flex-shrink: 0; }
+  .sheet-topbar .sheet-icon-button { border: 0; width: 36px; }
+  .sheet-mobile-context { display: block; margin-bottom: 10px; }
+  .sheet-profile--desktop { display: none; }
+  .sheet-profile--compact { gap: 12px; padding: 8px !important; }
+  .sheet-profile--compact .sheet-profile-portrait { flex-basis: 58px; height: 60px; }
+  .sheet-profile--compact .sheet-profile-name { font-size: 17px; }
+  .sheet-profile--compact .sheet-profile-name strong { overflow-wrap: anywhere; }
+  .sheet-profile--compact .sheet-profile-name input { font-size: 17px; }
+  .sheet-profile--compact .sheet-profile-name .sheet-icon-button { min-height: 32px; width: 32px; }
+  .sheet-profile--compact .sheet-profile-origin,.sheet-profile--compact .sheet-profile-progression { display: none; }
+  .sheet-profile-summary { color: var(--sheet-text); font-size: 11px; margin-top: 4px; }
+  .sheet-profile--compact.is-editing .sheet-profile-origin { display: block; font-size: 12px; }
+  .sheet-profile--compact.is-editing .sheet-profile-progression { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 6px; }
+  .sheet-profile--compact.is-editing .sheet-profile-progression input { height: 40px; font-size: 16px; }
+  .sheet-mobile-tabs { display: grid; grid-template-columns: 1fr 1fr 1fr 40px; gap: 4px; margin-top: 6px; }
+  .sheet-mobile-tabs .sheet-nav-item { justify-content: center; margin: 0; min-height: 40px; padding: 4px; font-size: 12px; border: 1px solid var(--sheet-line); }
+  .sheet-mobile-tabs .sheet-icon-button { width: 40px; min-height: 40px; }
+  .sheet-overview { display: flex; flex-direction: column; gap: 10px; }
+  .sheet-health,.sheet-combat { padding: 12px !important; }
+  .sheet-card-heading { gap: 8px; margin-bottom: 8px; }
+  .sheet-card-heading h2,.sheet-card-heading>span { font-size: 13px; }
+  .sheet-card-heading>svg { width: 20px; }
+  .sheet-health-number { font-size: 30px; margin: 4px 0; }
+  .sheet-health-controls { gap: 12px; }
+  .sheet-health-track { height: 18px; }
+  .sheet-radiation { margin-top: 10px; padding-top: 8px; }
+  .sheet-radiation>span { font-size: 12px; }
+  .sheet-combat-stat { min-height: 62px; padding: 8px; gap: 10px; }
+  .sheet-combat-stat small { font-size: 11px; }
+  .sheet-combat-stat strong { font-size: 21px; }
+  .sheet-combat-stat>svg { width: 22px; }
+  .pip-sheet-v3 .sheet-body-panel { padding: 10px; }
+  .pip-sheet-v3 .sheet-body-panel>.pip-head h2 { font-size: 13px; }
+  .pip-sheet-v3 .sheet-body-panel .pip-injuries-vaultboy-wrap { max-width: 205px; }
+  .pip-sheet-v3 .sheet-body-panel .pip-injuries-visual>.pip-injury-conditions-list { padding: 0 0 4px; }
+  .sheet-part-label { font-size: 9px; }
+  .sheet-part-label.is-head,.sheet-part-label.is-torso,.sheet-part-label.is-leftArm { left: -18%; }
+  .sheet-part-label.is-rightArm,.sheet-part-label.is-leftLeg,.sheet-part-label.is-rightLeg { right: -18%; }
+  .sheet-disclosure { padding: 8px 12px !important; }
+  .sheet-disclosure-toggle { min-height: 34px; border: 0; margin: 0; padding: 0; font-weight: 400; }
+  .sheet-disclosure-content:not([hidden]) { padding-top: 10px; }
+  .sheet-disclosure-arrow { display: block; width: 18px !important; }
+  .sheet-disclosure-toggle[aria-expanded='true'] .sheet-disclosure-arrow { transform: rotate(180deg); }
+  .sheet-quick { padding: 12px !important; }
+  .sheet-quick-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .sheet-quick-grid>button { padding: 10px; gap: 8px; font-size: 11px; }
+  .sheet-quick-grid small { display: none; }
+  .sheet-luck-action { grid-column: 1/-1; justify-content: center; }
+  .sheet-bottom-nav { position: fixed; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); left: 0; right: 0; bottom: 0; z-index: 75; border-top: 1px solid var(--sheet-line); background: #03170bf5; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  .sheet-bottom-nav button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 52px; color: var(--sheet-text); background: transparent; border: 0; font: inherit; font-size: 9px; padding: 4px 0; }
+  .sheet-bottom-nav button.is-active { color: var(--sheet-bright); background: #1c482433; border-radius: 6px; }
+  .sheet-more-panel { left: 10px; right: 10px; width: auto; top: auto; bottom: calc(78px + env(safe-area-inset-bottom)); max-height: calc(100dvh - 160px); }
+  .sheet-more-panel nav { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .sheet-more-panel .sheet-nav-item { font-size: 12px; gap: 8px; padding: 6px; }
 }
-@media (max-width: 600px) {
-  .pip-sheet-v3 .pip-container { padding: 8px 8px 96px; }
-  .pip-sheet-v3 .pip-topnav { margin-bottom: 10px; }
-  .pip-sheet-v3 .pip-overview-v3 { gap: 10px; }
-  .pip-sheet-v3 .pip-hero { padding: 12px; }
-  .pip-sheet-v3 .pip-hero-grid { grid-template-columns: 80px minmax(0,1fr); gap: 8px; }
-  .pip-sheet-v3 .pip-portrait { min-height: 100px; font-size: 11px; overflow-wrap: anywhere; }
-  .pip-sheet-v3 .pip-hero-meta { grid-template-columns: minmax(0,1fr); gap: 6px; }
-  .pip-sheet-v3 .pip-identity-card { padding: 0; background: none; border: 0; }
-  .pip-sheet-v3 .pip-progression-grid { padding: 0; border: 0; background: none; gap: 8px; }
-  .pip-sheet-v3 .pip-hero-meta label { margin-bottom: 3px; font-size: 10px; }
-  .pip-sheet-v3 .pip-portrait-actions .pip-action-btn { flex-direction: column; gap: 4px; padding: 6px 4px; }
-  .pip-sheet-v3 .pip-portrait-actions small { font-size: 10px; }
-  .pip-sheet-v3 .pip-input { min-height: 44px; font-size: 16px; width: 100%; }
-  .pip-sheet-v3 .pip-brandline-status,
-  .pip-sheet-v3 .pip-hero > .pip-head .pip-cursor { display: none; }
+@media (prefers-reduced-motion: reduce) { .pip-sheet-v3 .pip-screen-slide { animation: none; } }
+
+/* Keep the body heading and mode switch on the same compact row. */
+.pip-sheet-v3 .sheet-body-panel { position: relative; }
+.pip-sheet-v3 .sheet-body-panel>.pip-head { background: transparent; min-height: 32px; margin-bottom: 8px; padding-right: 150px; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-visual>.pip-injury-conditions-list { position: absolute; top: 10px; right: 14px; border: 0; }
+.pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip { padding: 5px 12px; }
+.pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip.is-selected span { color: #042212; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-vaultboy-wrap { margin-top: 0; margin-bottom: 0; }
+@media (max-width: 899px) {
+ .sheet-card-heading { min-height: 24px; }
+ .sheet-health,.sheet-combat { padding: 10px !important; }
+ .sheet-combat-grid { gap: 6px; }
+ .sheet-combat-stat { min-height: 56px; padding: 6px 8px; }
+ .sheet-combat-stat strong { margin-top: 2px; }
+ .pip-sheet-v3 .sheet-body-panel>.pip-head { padding-right: 125px; }
+ .pip-sheet-v3 .sheet-body-panel .pip-injury-conditions-list { right: 8px; top: 8px; }
+ .pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip { padding: 4px 10px; font-size: 10px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .pip-sheet-v3 .pip-screen-slide { animation: none; }
-}
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-visual { position: static; }
+.pip-sheet-v3 .sheet-body-panel>.pip-head h2 { background: transparent; }
