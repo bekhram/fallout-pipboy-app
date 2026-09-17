@@ -146,6 +146,7 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
   let noisyCount = 0;
   let cropSlots = 0;
   let guardStructures = 0;
+  let poweredSirenBonusPerGuardPost = 0;
   let officeCount = 0;
 
   for (const building of settlement.buildings || []) {
@@ -162,6 +163,7 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
         storageBonus += Number(effects.storageLbs || 0);
         cropSlots += Number(effects.cropSlots || 0);
         if (effects.guardActionDefenseBonus) guardStructures += 1;
+        poweredSirenBonusPerGuardPost += Number(effects.defensePerGuardPost || 0);
       }
       if (effects.noisy) noisyCount += 1;
     }
@@ -175,11 +177,15 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
     }
   }
 
+  const sirenDefenseBonus = guardStructures * poweredSirenBonusPerGuardPost;
+  base.defense += sirenDefenseBonus;
+
   return {
     ...base,
     noisyCount,
     cropSlots,
     guardStructures,
+    sirenDefenseBonus,
     storageBonus,
     stockpileCapacityLbs: SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs + storageBonus,
     powerRequired: powerGrid.required,
@@ -350,10 +356,10 @@ function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
   return { ...input, settlers, attributes, events: [...events, ...(input.events || [])].slice(0, 100) };
 }
 
-function scheduleAttackAtEndOfDay(input, now) {
+function scheduleAttackAtEndOfDay(input, now, dailyDefenseBonus = 0) {
   const unresolved = (input.attacks || []).some((attack) => attack.state === "warning" || attack.state === "active");
   if (unresolved || now < Number(input.attackRiskBlockedUntil || 0)) return input;
-  const stats = calculateStaticAttributes(input, 0);
+  const stats = calculateStaticAttributes(input, dailyDefenseBonus);
   const foodSurplus = Number(stats.food || 0) > Number(stats.people || 0);
   const waterSurplus = Number(stats.water || 0) > Number(stats.people || 0);
   if (!foodSurplus && !waterSurplus) return input;
@@ -379,19 +385,20 @@ function scheduleAttackAtEndOfDay(input, now) {
     rulebookRiskRolls: rolls,
     rulebookDelayRoll: delayRoll.rolls,
     rulebookDelayDays: delayDays,
+    defenseAtCheck: stats.defense,
   };
   return {
     ...input,
     attackRiskBlockedUntil: startsAt + 5 * SETTLEMENT_DAY_MS,
     attacks: [attack, ...(input.attacks || [])].slice(0, 50),
-    events: [{ id: randomId("event", now + 1), type: "attack_warning", attackId: attack.id, faction, startsAt, createdAt: now }, ...(input.events || [])].slice(0, 100),
+    events: [{ id: randomId("event", now + 1), type: "attack_warning", attackId: attack.id, faction, startsAt, defense: stats.defense, createdAt: now }, ...(input.events || [])].slice(0, 100),
   };
 }
 
 export function advanceSettlementDay(input, now = Date.now()) {
   const actionResult = resolveResidentActions(input, now);
   let settlement = applyNeedsAndDeparture(actionResult.settlement, actionResult.dailyDefenseBonus, now);
-  settlement = scheduleAttackAtEndOfDay(settlement, now);
+  settlement = scheduleAttackAtEndOfDay(settlement, now, actionResult.dailyDefenseBonus);
   const derived = calculateStaticAttributes(settlement, 0);
   const stockpile = {
     ...normalizeStockpile(settlement.stockpile, settlement.resources?.materials),
