@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react";
+import "./sheetRedesign.css";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
 import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
 import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
@@ -159,7 +160,7 @@ export default function PipboyShell({
   }
 
   return (
-    <div className="pip-app">
+    <div className="pip-app pip-sheet-v3">
       <div className="pip-vignette" />
       <div className="pip-container">
         <TopNav activeTab={activeTab} onTabChange={onTabChange} onToggleMenu={onToggleMenu} />

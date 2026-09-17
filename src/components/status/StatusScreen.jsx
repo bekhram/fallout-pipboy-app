@@ -213,7 +213,7 @@ if (derived?.immunities?.includes("radiation")) {
   }
 
   return (
-    <div className="pip-screen-grid">
+    <div className="pip-screen-grid pip-overview-v3">
       <section className="pip-panel pip-hero">
         <div className="pip-head">
           <h2>[ {t("main.title")} ]</h2>
@@ -337,6 +337,20 @@ if (derived?.immunities?.includes("radiation")) {
           </div>
         </div>
 
+
+      </section>
+
+      <HpPanel
+        maxHp={hpMax}
+        currentHp={hpCurrent}
+        radiationHp={radiationHp}
+        onHpSliderChange={onHpSliderChange}
+        onRadiationSliderChange={onRadiationSliderChange}
+        onHpDecrease={onHpDecrease}
+        onHpIncrease={onHpIncrease}
+      />
+
+      <section className="pip-panel pip-overview-summary">
         <div className="pip-hero-dashboard">
           <div className="pip-combat-summary">
             <div className="pip-summary-title">[ {t("main.combatData")} ]</div>
@@ -375,16 +389,6 @@ if (derived?.immunities?.includes("radiation")) {
           </div>
         </div>
       </section>
-
-      <HpPanel
-        maxHp={hpMax}
-        currentHp={hpCurrent}
-        radiationHp={radiationHp}
-        onHpSliderChange={onHpSliderChange}
-        onRadiationSliderChange={onRadiationSliderChange}
-        onHpDecrease={onHpDecrease}
-        onHpIncrease={onHpIncrease}
-      />
 
       <InjuryPanel
         injuries={form.injuries}

@@ -1,0 +1,46 @@
+/* Step 1: scoped character-sheet layout; existing game controls stay connected. */
+.pip-sheet-v3 .pip-container { max-width: 1500px; padding: 16px; }
+.pip-sheet-v3 .pip-main { min-width: 0; }
+.pip-sheet-mobile-select { display: none; }
+.pip-sheet-v3 button:focus-visible, .pip-sheet-v3 select:focus-visible { outline: 2px solid var(--pip-accent, #a5ffa2); outline-offset: 3px; }
+.pip-sheet-v3 .pip-overview-v3 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.pip-sheet-v3 .pip-overview-v3 > * { min-width: 0; }
+.pip-sheet-v3 .pip-hero-grid { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 16px; }
+.pip-sheet-v3 .pip-portrait { min-height: 120px; height: 140px; }
+.pip-sheet-v3 .pip-hero-meta { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.pip-sheet-v3 .pip-progression-grid { grid-column: 1 / -1; }
+.pip-sheet-v3 .pip-identity-card { min-width: 0; padding: 8px; }
+.pip-sheet-v3 .pip-portrait-actions { gap: 4px; }
+.pip-sheet-v3 .pip-action-btn { min-height: 44px; padding: 4px; }
+.pip-sheet-v3 .pip-hero-dashboard { margin: 0; display: grid; gap: 12px; }
+.pip-sheet-v3 .pip-combat-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.pip-sheet-v3 .pip-combat-stat { display: flex; justify-content: space-between; gap: 8px; padding: 10px; border: 1px solid var(--pip-line, #315d36); }
+.pip-sheet-v3 .pip-combat-stat strong { font-size: 24px; }
+.pip-sheet-v3 .pip-flagbar-btn { min-width: 44px; min-height: 44px; }
+@media (min-width: 1100px) {
+  .pip-sheet-v3 .pip-container { display: grid; grid-template-columns: 200px minmax(0,1fr); align-items: start; gap: 20px; }
+  .pip-sheet-v3 .pip-topnav { position: sticky; top: 16px; max-height: calc(100dvh - 110px); overflow-y: auto; margin: 0; }
+  .pip-sheet-v3 .pip-brandline-nav { flex-wrap: wrap; gap: 8px; }
+  .pip-sheet-v3 .pip-brandline-status { display: none; }
+  .pip-sheet-v3 .pip-tab-scroll { overflow: visible; }
+  .pip-sheet-v3 .pip-tabrow { display: flex; flex-direction: column; flex-wrap: nowrap; width: 100%; }
+  .pip-sheet-v3 .pip-tab { width: 100%; min-height: 44px; text-align: left; white-space: normal; }
+  .pip-sheet-v3 .pip-overview-v3 { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
+  .pip-sheet-v3 .pip-overview-v3 > .pip-hero, .pip-sheet-v3 .pip-overview-v3 > .pip-block { grid-column: 1 / -1; }
+}
+@media (max-width: 1099px) {
+  .pip-sheet-v3 .pip-tab-scroll { display: none; }
+  .pip-sheet-mobile-select { display: block; margin-top: 10px; }
+  .pip-sheet-mobile-select > span { display: none; }
+  .pip-sheet-mobile-select select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--pip-line, #315d36); border-radius: 6px; background: #09170d; color: var(--pip-accent, #a5ffa2); font: inherit; }
+}
+@media (max-width: 600px) {
+  .pip-sheet-v3 .pip-container { padding: 8px; }
+  .pip-sheet-v3 .pip-hero-grid { grid-template-columns: 88px minmax(0,1fr); gap: 8px; }
+  .pip-sheet-v3 .pip-portrait { height: 100px; min-height: 100px; }
+  .pip-sheet-v3 .pip-hero-meta { grid-template-columns: minmax(0,1fr); gap: 6px; }
+  .pip-sheet-v3 .pip-portrait-actions { grid-template-columns: 1fr; }
+  .pip-sheet-v3 .pip-identity-card { padding: 4px; }
+  .pip-sheet-v3 .pip-input { min-height: 44px; font-size: 16px; width: 100%; }
+  .pip-sheet-v3 .pip-brandline-status { display: none; }
+}
