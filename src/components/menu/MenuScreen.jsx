@@ -33,7 +33,7 @@ export default function MenuScreen({
   const record = activeRecord?.data || saveMeta;
   const canContinue = Boolean(activeRecord || hasCharacter);
   const go = (key) => {setSection(key); requestAnimationFrame(()=>document.getElementById(`home-${key}`)?.scrollIntoView({block:"start",behavior:"smooth"}));};
-  const nav = (key, icon, text) => <button type="button" className={section===key?'is-active':''} onClick={()=>go(key)} aria-current={section===key?'page':undefined}><SheetIcon name={icon}/><span>{text}</span></button>;
+  const nav = (key, icon, text) => <button type="button" className={section===key?'is-active':''} onClick={()=>key === "sessions" ? onOpenSession() : go(key)} aria-current={section===key?'page':undefined}><SheetIcon name={icon}/><span>{text}</span></button>;
   useEffect(() => { if (initialSection !== "home") requestAnimationFrame(()=>document.getElementById(`home-${initialSection}`)?.scrollIntoView({block:"start"})); }, [initialSection]);
   const copy = getCreationCopy(i18n.resolvedLanguage || i18n.language);
   const [showCreationMode, setShowCreationMode] = useState(false);

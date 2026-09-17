@@ -129,6 +129,7 @@ export default function App() {
   const [screen, setScreen] = useState(() => (
     startupUiState.view === "battlemap" ? "sheet" : startupUiState.screen
   ));
+  const [sessionLobbyOpen, setSessionLobbyOpen] = useState(false);
   const [menuSection, setMenuSection] = useState("home");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
@@ -1047,6 +1048,7 @@ const updateSkill = (skillName, field, value) =>
         onContinue={handleContinue}
         onImportClick={handleImportClick}
         onOpenSession={(intent) => {
+          setSessionLobbyOpen(true);
           setScreen("session");
           if (typeof intent === "string") requestAnimationFrame(() => {
             const card = document.querySelector(intent === "host" ? ".session-role-card--gm" : ".session-role-card:not(.session-role-card--gm)");
@@ -1056,6 +1058,7 @@ const updateSkill = (skillName, field, value) =>
         }}
         lastSession={sharedSession.lastSession}
         onResumeSession={() => {
+          setSessionLobbyOpen(false);
           setScreen("session");
           if (sharedSession.isActive) {
             if (sharedSession.status !== "online") void sharedSession.reconnectNow?.();
@@ -1068,6 +1071,9 @@ const updateSkill = (skillName, field, value) =>
   } else if (screen === "session") {
     content = (
       <SessionScreen
+        showLobby={sessionLobbyOpen}
+        onShowLobby={() => setSessionLobbyOpen(true)}
+        onEnterSession={() => setSessionLobbyOpen(false)}
         form={form}
         session={sharedSession}
         onBack={() => {setMenuSection("home");setScreen("menu");}}
@@ -1585,7 +1591,7 @@ const SkillsEditorModal = () => {
       />
 
       {(screen === "menu" || screen === "session") ? (
-        <div className={`pip-app ${(screen === "menu" || (screen === "session" && (!sharedSession.mode || sharedSession.mode === "lobby"))) ? "pip-home-v2" : ""}`}>
+        <div className={`pip-app ${(screen === "menu" || (screen === "session" && (sessionLobbyOpen || !sharedSession.mode || sharedSession.mode === "lobby"))) ? "pip-home-v2" : ""}`}>
           <div className="pip-vignette" />
           <div className="pip-container">
             <main className="pip-main">

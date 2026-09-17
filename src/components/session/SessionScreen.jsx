@@ -207,9 +207,10 @@ export function SessionFloatingButton({ session, onOpen }) {
   );
 }
 
-export default function SessionScreen({ form, session, onBack, onOpenSheet, onNavigateMenu }) {
+export default function SessionScreen({ form, session, onBack, onOpenSheet, onNavigateMenu, showLobby = false, onShowLobby, onEnterSession }) {
   const { i18n } = useTranslation();
   const copy = BASE[getLanguage(i18n.resolvedLanguage || i18n.language)];
+  const lobbyLabel = ({en:"Session menu",ru:"Меню сессии",uk:"Меню сесії",pl:"Menu sesji"})[getLanguage(i18n.resolvedLanguage || i18n.language)];
   const defaultPlayerName = useMemo(() => getCharacterName(form) || "Player", [form]);
   const [joinCode, setJoinCode] = useState("");
   const [playerName, setPlayerName] = useState(defaultPlayerName);
@@ -269,6 +270,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
       return;
     }
     setLocalError("");
+    onEnterSession?.();
     session?.joinSession?.({ code, name });
   };
 
@@ -280,6 +282,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
     try {
       const result = await session?.restoreLatestCloudCampaignAndStart?.();
       if (result?.ok) {
+        onEnterSession?.();
         setRestoreState("done");
         return;
       }
@@ -336,10 +339,10 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
     window.setTimeout(() => setSyncState(false), 1000);
   };
 
-  if (mode === "lobby") {
+  if (showLobby || mode === "lobby") {
     return <SessionLobby language={i18n.resolvedLanguage || i18n.language} copy={copy}
       onBack={onBack} onNavigate={onNavigateMenu || onBack}
-      onHost={()=>{setErrorTarget("host");setLocalError("");session?.startHost?.();}}
+      onHost={()=>{setErrorTarget("host");setLocalError("");onEnterSession?.();session?.startHost?.();}}
       onRestore={handleRestoreCloud} onJoin={handleJoin}
       joinCode={joinCode} onCode={value=>{setJoinCode(normalizeSessionCode(value));setLocalError("");}}
       playerName={playerName} onName={value=>{setPlayerName(value);setLocalError("");}}
@@ -370,6 +373,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
             <span>{copy.players}: <strong>{players.length}</strong></span>
           </div>
           <div className="session-gm-hostbar__actions">
+            <button type="button" className="pip-btn" onClick={onShowLobby}>{lobbyLabel}</button>
             <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
             <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.end}</button>
           </div>
@@ -404,6 +408,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
             <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.leave}</button>
           </div>
         </div>
+        <button type="button" className="pip-btn session-lobby-return" onClick={onShowLobby}>← {lobbyLabel}</button>
         <div className="session-status-strip">
           <div>
             <span className={`session-status-dot is-${status}`} />
