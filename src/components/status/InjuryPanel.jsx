@@ -200,6 +200,7 @@ export default function InjuryPanel({
             viewMode={activeVaultBoyMode}
             onPartClick={handlePartClick}
             onArmorPartClick={handleArmorPartClick}
+            onArmorChange={onArmorChange}
           />
         </div>
 

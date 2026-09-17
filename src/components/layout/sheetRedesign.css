@@ -229,3 +229,17 @@
  .pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip { font-size: 11px; padding: 6px 8px; }
  .sheet-armor-table { font-size: 11px; }
 }
+/* Compact armor controls; durability belongs only to power armor. */
+.pip-sheet-v3 .sheet-body-panel:not([data-body-mode='injuries']) .pip-injuries-vaultboy-wrap { max-width: 145px; }
+.sheet-armor-table { margin: 2px 0; }
+.sheet-armor-table caption { padding: 4px 0; font-size: 11px; }
+.sheet-armor-table th,.sheet-armor-table td { padding: 2px 1px; }
+.sheet-armor-table th:first-child { width: 25%; font-size: 10px; }
+.sheet-armor-table td { font-size: 13px; }
+.sheet-armor-table thead th { font-size: 9px; }
+.sheet-armor-table .sheet-armor-hp { width: 22%; }
+.sheet-armor-hp label { display:flex; align-items:center; justify-content:center; gap:1px; font-size:10px; white-space:nowrap; }
+.sheet-armor-hp input { appearance:textfield; -moz-appearance:textfield; width: 28px; min-width: 0; height:32px; padding:0; text-align:center; border:1px solid var(--sheet-line); border-radius:4px; background:#03160b; color:var(--sheet-bright); font:inherit; }
+.sheet-armor-hp input::-webkit-inner-spin-button,.sheet-armor-hp input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
+.sheet-armor-status { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border:0; border-radius:4px; background:transparent; }
+.sheet-armor-status.is-intact { color:#99ef91; }.sheet-armor-status.is-damaged { color:#f0d65b; }.sheet-armor-status.is-broken { color:#ff7466; }.sheet-armor-status.is-empty { color:var(--sheet-text); }
