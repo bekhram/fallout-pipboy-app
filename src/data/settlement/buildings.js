@@ -107,8 +107,38 @@ export const SETTLEMENT_BUILDINGS = {
 
   workshop: {
     id: "workshop", category: "production",
-    name: { en: "Workshop", ru: "Мастерская", uk: "Майстерня", pl: "Warsztat" },
-    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "medium", workersRequired: 1,
+    name: { en: "Workshop (legacy)", ru: "Мастерская (старая)", uk: "Майстерня (стара)", pl: "Warsztat (stary)" },
+    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "medium", workersRequired: 1, buildable: false,
+  },
+  armor_workbench: {
+    id: "armor_workbench", category: "production",
+    name: { en: "Armor workbench", ru: "Верстак брони", uk: "Верстак броні", pl: "Warsztat pancerza" },
+    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "medium",
+  },
+  chemistry_station: {
+    id: "chemistry_station", category: "production",
+    name: { en: "Chemistry station", ru: "Химическая станция", uk: "Хімічна станція", pl: "Stacja chemiczna" },
+    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "medium",
+  },
+  cooking_station: {
+    id: "cooking_station", category: "production",
+    name: { en: "Cooking station", ru: "Кулинарная станция", uk: "Кулінарна станція", pl: "Stacja gotowania" },
+    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "small",
+  },
+  power_armor_station: {
+    id: "power_armor_station", category: "production",
+    name: { en: "Power armor station", ru: "Станция силовой брони", uk: "Станція силової броні", pl: "Stacja pancerza wspomaganego" },
+    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "large",
+  },
+  weapons_workbench: {
+    id: "weapons_workbench", category: "production",
+    name: { en: "Weapons workbench", ru: "Оружейный верстак", uk: "Збройовий верстак", pl: "Warsztat broni" },
+    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "medium",
+  },
+  robot_workbench: {
+    id: "robot_workbench", category: "production",
+    name: { en: "Robot workbench", ru: "Верстак робототехники", uk: "Верстак робототехніки", pl: "Warsztat robotyczny" },
+    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "large",
   },
   scrap_yard: {
     id: "scrap_yard", category: "production",
