@@ -1,5 +1,10 @@
 import React from "react";
 const paths = {
+  home: "m2 11 10-9 10 9M5 9v12h5v-7h4v7h5V9",
+  calendar: "M4 5h16v17H4V5Zm0 5h16M8 2v6M16 2v6",
+  download: "M12 2v13m-5-5 5 5 5-5M4 17v5h16v-5",
+  upload: "M12 16V3m-5 5 5-5 5 5M4 13v8h16v-8",
+  people: "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM2 22v-4a7 7 0 0 1 14 0v4M17 3a4 4 0 0 1 0 8m1 3a6 6 0 0 1 4 6v2",
   person: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21v-2a8 8 0 0 1 16 0v2",
   special: "M4 20V10h3v10M11 20V4h3v16M18 20v-8h3v8",
   skills: "m2 9 10-5 10 5-10 5L2 9Zm4 2v7c4 3 8 3 12 0v-7M22 9v8",

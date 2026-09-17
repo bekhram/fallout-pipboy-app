@@ -18,7 +18,7 @@ import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
 import DiceRollModal from "./components/dice/DiceRollModal";
 import MapScreen from "./components/map/MapScreen.jsx";
 import GamesScreen from "./components/minigames/GamesScreen.jsx";
-import PwaInstallButton from "./components/shared/PwaInstallButton.jsx";
+
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 import { parseCSV } from "./utils/csvParser.js"; 
@@ -1044,7 +1044,14 @@ const updateSkill = (skillName, field, value) =>
         onNewCharacter={handleNewCharacter}
         onContinue={handleContinue}
         onImportClick={handleImportClick}
-        onOpenSession={() => setScreen("session")}
+        onOpenSession={(intent) => {
+          setScreen("session");
+          if (typeof intent === "string") requestAnimationFrame(() => {
+            const card = document.querySelector(intent === "host" ? ".session-role-card--gm" : ".session-role-card:not(.session-role-card--gm)");
+            card?.scrollIntoView({block:"center"});
+            card?.querySelector("input, button")?.focus({preventScroll:true});
+          });
+        }}
         lastSession={sharedSession.lastSession}
         onResumeSession={() => {
           setScreen("session");
@@ -1575,16 +1582,12 @@ const SkillsEditorModal = () => {
       />
 
       {(screen === "menu" || screen === "session") ? (
-        <div className="pip-app">
+        <div className={`pip-app ${screen === "menu" ? "pip-home-v2" : ""}`}>
           <div className="pip-vignette" />
           <div className="pip-container">
             <main className="pip-main">
               {content}
-              {screen === "menu" && (
-                <div className="pip-actions-inline push-top">
-                  <PwaInstallButton />
-                </div>
-              )}
+
             </main>
           </div>
         </div>

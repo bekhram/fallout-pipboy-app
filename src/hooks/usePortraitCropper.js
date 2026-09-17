@@ -66,6 +66,15 @@ export function usePortraitCropper(onApplyMeta) {
     }
   }, []);
 
+  useEffect(() => {
+    const refreshPortrait = () => {
+      try { setPortraitPreview(localStorage.getItem(portraitStorageKey()) || ""); }
+      catch { setPortraitPreview(""); }
+    };
+    window.addEventListener("pipboy:character-profiles-changed", refreshPortrait);
+    return () => window.removeEventListener("pipboy:character-profiles-changed", refreshPortrait);
+  }, []);
+
   const openFileDialog = () => inputRef.current?.click();
 
   const openCropper = (file) => {
