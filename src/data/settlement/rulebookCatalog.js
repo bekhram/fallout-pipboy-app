@@ -18,7 +18,44 @@ export const RULEBOOK_BUILDINGS = {
   lights: { materials: { common: 2, uncommon: 2 }, constructionDays: 1, effects: { happiness: 1, requiresPower: 1 }, skill: { name: "Science", rank: 2 }, rarity: "common" },
   radio_beacon: { materials: { common: 14, uncommon: 6, rare: 4 }, constructionDays: 3, effects: { requiresPower: 1, attractsPeople: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
 
-  workshop: { materials: { common: 10, uncommon: 14 }, constructionDays: 2, effects: { crafting: true }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Repair", rank: 3 }, rarity: "uncommon" },
+  workshop: { materials: { common: 10, uncommon: 14 }, constructionDays: 2, effects: { crafting: true, craftingType: "weapons" }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Repair", rank: 3 }, rarity: "uncommon", legacyAlias: true },
+  armor_workbench: {
+    materials: { common: 3, uncommon: 21 }, constructionDays: 2,
+    effects: { crafting: true, craftingType: "armor" },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Armorer", rank: 1 }],
+    skill: { name: "Repair", rank: 3 }, rarity: "uncommon",
+  },
+  chemistry_station: {
+    materials: { common: 14, uncommon: 14 }, constructionDays: 2,
+    effects: { crafting: true, craftingType: "chemistry" },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Chemist", rank: 1 }],
+    skill: { name: "Science", rank: 3 }, rarity: "uncommon",
+  },
+  cooking_station: {
+    materials: { common: 8, uncommon: 6 }, constructionDays: 1,
+    effects: { crafting: true, craftingType: "cooking" },
+    perk: { name: "Local Leader", rank: 2 },
+    skill: { name: "Survival", rank: 1 }, rarity: "uncommon",
+  },
+  power_armor_station: {
+    materials: { common: 4, uncommon: 32, rare: 3 }, constructionDays: 3,
+    effects: { crafting: true, craftingType: "power_armor" },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Armorer", rank: 2 }],
+    skill: { name: "Science", rank: 3 }, rarity: "uncommon",
+  },
+  weapons_workbench: {
+    materials: { common: 10, uncommon: 14 }, constructionDays: 2,
+    effects: { crafting: true, craftingType: "weapons" },
+    perk: { name: "Local Leader", rank: 2 },
+    perkAnyOf: [{ name: "Blacksmith", rank: 1 }, { name: "Gun Nut", rank: 1 }],
+    skill: { name: "Repair", rank: 3 }, rarity: "uncommon",
+  },
+  robot_workbench: {
+    materials: { common: 18, uncommon: 36, rare: 6 }, constructionDays: 4,
+    effects: { crafting: true, craftingType: "robots" },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Robotics Expert", rank: 2 }],
+    skills: [{ name: "Repair", rank: 2 }, { name: "Science", rank: 2 }], rarity: "uncommon",
+  },
   scrap_yard: { materials: { common: 8 }, constructionDays: 1, effects: { improvedScavenging: true }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
   warehouse: { materials: { common: 24 }, constructionDays: 6, effects: { storageLbs: 300 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
 
