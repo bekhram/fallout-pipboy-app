@@ -54,6 +54,8 @@ export function calculateSettlementStats(settlement) {
   let cropSlots = 0;
   let storageBonus = 0;
   let happinessBonus = 0;
+  let guardStructures = 0;
+  let poweredSirenBonusPerGuardPost = 0;
 
   for (const building of settlement.buildings || []) {
     const def = SETTLEMENT_BUILDINGS[building.type];
@@ -76,7 +78,12 @@ export function calculateSettlementStats(settlement) {
     cropSlots += Number(effects.cropSlots || 0);
     storageBonus += Number(effects.storageLbs || 0);
     happinessBonus += Number(effects.happiness || 0);
+    if (effects.guardActionDefenseBonus) guardStructures += 1;
+    poweredSirenBonusPerGuardPost += Number(effects.defensePerGuardPost || 0);
   }
+
+  // A powered siren adds its listed Defense bonus for every active Guard Post.
+  defense += guardStructures * poweredSirenBonusPerGuardPost;
 
   for (const building of settlement.buildings || []) {
     if (building.state !== "active") continue;
@@ -107,6 +114,8 @@ export function calculateSettlementStats(settlement) {
     populationLimit: peopleMax,
     defense: attributes.defense,
     cropSlots,
+    guardStructures,
+    sirenDefenseBonus: guardStructures * poweredSirenBonusPerGuardPost,
     storageCapacityLbs: Number(settlement.stockpile?.capacityLbs || 300) + storageBonus,
     buildingStatus,
     happinessBonus,
