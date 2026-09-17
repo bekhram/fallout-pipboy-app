@@ -78,7 +78,7 @@ function ensureRulebookState(input) {
 
   return {
     ...settlement,
-    rulesVersion: 3,
+    rulesVersion: 4,
     settlementDay: Math.max(1, Math.floor(Number(settlement.settlementDay || 1))),
     lastDayAt,
     nextDayAt: Number(settlement.nextDayAt || (lastDayAt + SETTLEMENT_DAY_MS)),
@@ -96,6 +96,9 @@ function ensureRulebookState(input) {
       happiness: attributes.happiness,
       income: attributes.income,
       materials: Number(stockpile.materials.common || 0),
+    },
+    livestock: {
+      brahmin: Math.max(0, Math.floor(Number(settlement.livestock?.brahmin || 0))),
     },
     stockpile,
     settlers: (settlement.settlers || createInitialSettlers(Number(settlement.createdAt || now), people)).map((settler) => ({
@@ -142,6 +145,7 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     leader: { characterId: ownerCharacterId, charisma: Math.max(0, Number(leaderCharisma || 0)) },
     attributes: { people, food: people, water: people, power: 0, defense: 0, beds: 0, happiness: 10, income: 0 },
     resources: { ...STARTING_SETTLEMENT_RESOURCES, population: people, food: people, water: people, power: 0, defense: 0, beds: 0, happiness: 10, income: 0 },
+    livestock: { brahmin: 0 },
     stockpile: {
       capacityLbs: 300,
       materials: { common: Number(STARTING_SETTLEMENT_RESOURCES.materials || 0), uncommon: 0, rare: 0 },
