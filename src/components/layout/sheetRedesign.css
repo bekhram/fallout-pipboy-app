@@ -208,3 +208,24 @@
 }
 .pip-sheet-v3 .sheet-body-panel .pip-injuries-visual { position: static; }
 .pip-sheet-v3 .sheet-body-panel>.pip-head h2 { background: transparent; }
+
+/* Armor data stays in normal document flow at every viewport size. */
+.pip-sheet-v3 .sheet-body-panel>.pip-head { padding-right: 0; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-visual>.pip-injury-conditions-list {
+ position: static; display: flex; flex-wrap: wrap; justify-content: flex-start !important;
+ gap: 6px; padding: 0 0 10px; margin: 0 !important;
+}
+.pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip { min-height: 40px; height: auto; white-space: normal; flex: 1 1 auto; }
+.pip-sheet-v3 .sheet-body-panel .sheet-body-display { width: 100%; min-width: 0; }
+.pip-sheet-v3 .sheet-body-panel .pip-injuries-vaultboy-wrap { margin: 0 auto; }
+.sheet-armor-table { width: 100%; table-layout: fixed; border-collapse: collapse; color: var(--sheet-text); font-size: 12px; margin: 8px 0; }
+.sheet-armor-table caption { text-align: left; color: var(--sheet-bright); padding: 8px 0; font-weight: 700; }
+.sheet-armor-table th,.sheet-armor-table td { padding: 8px 4px; border-bottom: 1px solid var(--sheet-line); overflow-wrap: anywhere; text-align: center; }
+.sheet-armor-table th:first-child { text-align: left; width: 31%; }
+.sheet-armor-table thead th { font-size: 10px; font-weight: 400; }
+.sheet-armor-table td { font-size: 16px; color: var(--sheet-bright); }
+.pip-sheet-v3 .sheet-body-panel .pip-injury-effect-row { min-width: 0; overflow-wrap: anywhere; }
+@media(max-width:899px) {
+ .pip-sheet-v3 .sheet-body-panel .pip-injury-condition-chip { font-size: 11px; padding: 6px 8px; }
+ .sheet-armor-table { font-size: 11px; }
+}

@@ -174,15 +174,22 @@ export default function InjuryPanel({
             <button
               type="button"
               className={`pip-injury-condition-chip ${
-                activeVaultBoyMode !== "injuries" ? "is-positive is-selected" : ""
+                activeVaultBoyMode === "armor" ? "is-positive is-selected" : ""
               }`}
-              onClick={() => setVaultBoyMode("powerArmor")}
-              aria-pressed={activeVaultBoyMode !== "injuries"}
-              disabled={!bodyOnly && !hasPowerArmor}
-              title={bodyOnly ? c.armorTab : hasPowerArmor ? t("injuries.powerArmor") : t("injuries.noPowerArmor")}
+              onClick={() => setVaultBoyMode("armor")}
+              aria-pressed={activeVaultBoyMode === "armor"}
+
+              title={c.normalArmor}
             >
-              <span>{bodyOnly ? c.armorTab : t("injuries.modePowerArmor")}</span>
+              <span>{c.normalArmor}</span>
             </button>
+            <button type="button"
+              className={`pip-injury-condition-chip ${activeVaultBoyMode === "powerArmor" ? "is-positive is-selected" : ""}`}
+              onClick={() => setVaultBoyMode("powerArmor")}
+              aria-pressed={activeVaultBoyMode === "powerArmor"}
+              disabled={!hasPowerArmor}
+              title={hasPowerArmor ? t("injuries.powerArmor") : t("injuries.noPowerArmor")}
+            ><span>{t("injuries.powerArmor")}</span></button>
           </div>
 
           <InjuriesVaultBoy

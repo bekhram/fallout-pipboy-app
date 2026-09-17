@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { sheetCopy } from "../layout/sheetCopy.js";
 import { getAdjustedArmorSnapshotForPart } from "../../utils/characterMath.js";
 import {
   calculateNormalArmorLocations,
@@ -168,7 +169,8 @@ export default function InjuriesVaultBoy({
   onPartClick,
   onArmorPartClick,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const c = sheetCopy(i18n.resolvedLanguage);
   const [armorDatabase, setArmorDatabase] = useState(null);
 
   useEffect(() => {
@@ -250,7 +252,16 @@ export default function InjuriesVaultBoy({
   const showIncomingBadge =
     incomingValues.radiation !== 0 || incomingValues.poison !== 0;
 
+  const armorValues = Object.fromEntries(PART_ORDER.map(part => {
+    const base = normalArmorStats?.[ARMOR_KEY_MAP[part]];
+    return [part, isPowerArmorVisible
+      ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || {physical:0, energy:0, radiation:0}
+      : base ? applyDerivedResistance(base, derived)
+      : getAdjustedArmorSnapshotForPart({armor, part, derived})];
+  }));
+
   return (
+    <div className={showLabels ? "sheet-body-display" : undefined}>
     <div className="pip-injuries-vaultboy-wrap">
       <div className="pip-injuries-vaultboy">
         <img
@@ -296,7 +307,7 @@ export default function InjuriesVaultBoy({
           </div>
         )}
 
-        {PART_ORDER.map((part) => {
+        {(viewMode !== "armor" ? PART_ORDER : []).map((part) => {
           const box = HITBOXES[part];
           const armorCondition = powerConditions[part];
           const state = isPowerArmorVisible
@@ -329,19 +340,10 @@ export default function InjuriesVaultBoy({
 
         {showLabels && viewMode === "injuries" && PART_ORDER.map(part => <button key={`label-${part}`} type="button" className={`sheet-part-label is-${part}`} onClick={()=>onPartClick?.(part)} aria-label={`${t(PART_LABEL_KEYS[part])} ${t(`injuries.state.${injuries[part] || 'normal'}`)}`}>{t(PART_LABEL_KEYS[part])}</button>)}
 
-        {PART_ORDER.map((part) => {
+        {!showLabels && PART_ORDER.map((part) => {
           const badge = ARMOR_BADGES[part];
           const partLabel = t(PART_LABEL_KEYS[part]);
-          const normalBase = normalArmorStats?.[ARMOR_KEY_MAP[part]];
-          const adjusted = isPowerArmorVisible
-            ? powerArmorStats?.[ARMOR_KEY_MAP[part]] || {
-                physical: 0,
-                energy: 0,
-                radiation: 0,
-              }
-            : normalBase
-            ? applyDerivedResistance(normalBase, derived)
-            : getAdjustedArmorSnapshotForPart({ armor, part, derived });
+          const adjusted = armorValues[part];
 
           const physical = formatArmorValue(adjusted.physical);
           const energy = formatArmorValue(adjusted.energy);
@@ -364,7 +366,7 @@ export default function InjuriesVaultBoy({
           );
         })}
 
-        {showResistBadge && (
+        {!showLabels && showResistBadge && (
           <div
             className="pip-armor-badge is-modifiers is-resist"
             style={{ top: "1%", left: "70%" }}
@@ -378,7 +380,7 @@ export default function InjuriesVaultBoy({
           </div>
         )}
 
-        {showIncomingBadge && (
+        {!showLabels && showIncomingBadge && (
           <div
             className="pip-armor-badge is-modifiers is-damage"
             style={{ top: "1%", left: "0%" }}
@@ -392,6 +394,15 @@ export default function InjuriesVaultBoy({
           </div>
         )}
       </div>
+    </div>
+    {showLabels && viewMode !== "injuries" && <table className="sheet-armor-table">
+      <caption>{isPowerArmorVisible ? t("injuries.powerArmor") : c.normalArmor}</caption>
+      <thead><tr><th scope="col">{c.bodyTab}</th>{["physical","energy","radiation"].map(type=><th scope="col" key={type}>{t(`armorPanel.${type}`)}</th>)}</tr></thead>
+      <tbody>{PART_ORDER.map(part=><tr key={part} data-part={part}>
+        <th scope="row">{t(PART_LABEL_KEYS[part])}</th>
+        {["physical","energy","radiation"].map(type=><td key={type}>{formatArmorValue(armorValues[part][type])}</td>)}
+      </tr>)}</tbody>
+    </table>}
     </div>
   );
 }
