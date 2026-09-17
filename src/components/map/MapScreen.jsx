@@ -3,12 +3,13 @@ import { useTranslation } from "react-i18next";
 import MapScreenCore from "./MapScreenCore.jsx";
 import SettlementScreen from "../settlement/SettlementScreen.jsx";
 import useSettlementStorage from "../../hooks/useSettlementStorage.js";
+import "./mapSettlement.css";
 
 const COPY = {
-  en: { found: "FOUND SETTLEMENT", open: "OPEN SETTLEMENT", name: "Settlement name", fallback: "New Settlement" },
-  ru: { found: "ОСНОВАТЬ ПОСЕЛЕНИЕ", open: "ОТКРЫТЬ ПОСЕЛЕНИЕ", name: "Название поселения", fallback: "Новое поселение" },
-  uk: { found: "ЗАСНУВАТИ ПОСЕЛЕННЯ", open: "ВІДКРИТИ ПОСЕЛЕННЯ", name: "Назва поселення", fallback: "Нове поселення" },
-  pl: { found: "ZAŁÓŻ OSADĘ", open: "OTWÓRZ OSADĘ", name: "Nazwa osady", fallback: "Nowa osada" },
+  en: { found: "FOUND SETTLEMENT", open: "OPEN SETTLEMENT", name: "Settlement name", fallback: "New Settlement", menu: "SETTLEMENT" },
+  ru: { found: "ОСНОВАТЬ ПОСЕЛЕНИЕ", open: "ОТКРЫТЬ ПОСЕЛЕНИЕ", name: "Название поселения", fallback: "Новое поселение", menu: "ПОСЕЛЕНИЕ" },
+  uk: { found: "ЗАСНУВАТИ ПОСЕЛЕННЯ", open: "ВІДКРИТИ ПОСЕЛЕННЯ", name: "Назва поселення", fallback: "Нове поселення", menu: "ПОСЕЛЕННЯ" },
+  pl: { found: "ZAŁÓŻ OSADĘ", open: "OTWÓRZ OSADĘ", name: "Nazwa osady", fallback: "Nowa osada", menu: "OSADA" },
 };
 
 function readCharisma(character) {
@@ -66,9 +67,11 @@ export default function MapScreen(props) {
     setActiveSettlementId(created.id);
   }
 
-  return <div style={{ position: "relative" }}>
-    <div style={{ position: "absolute", right: 10, top: 10, zIndex: 80 }}>
-      <button type="button" className="pip-action-button" onClick={handleSettlementButton}>
+  return <div className="pip-map-with-settlement-menu">
+    <div className="pip-map-settlement-toolbar">
+      <span className="pip-map-settlement-toolbar__title">⌂ {text.menu}</span>
+      <span className="pip-map-settlement-toolbar__coords">X:{position.worldX} · Y:{position.worldY}</span>
+      <button type="button" className="pip-action-button pip-map-settlement-toolbar__button" onClick={handleSettlementButton}>
         {currentSettlement ? text.open : text.found}
       </button>
     </div>
