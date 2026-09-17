@@ -21,9 +21,41 @@ export const RULEBOOK_BUILDINGS = {
   workshop: { materials: { common: 10, uncommon: 14 }, constructionDays: 2, effects: { crafting: true }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Repair", rank: 3 }, rarity: "uncommon" },
   scrap_yard: { materials: { common: 8 }, constructionDays: 1, effects: { improvedScavenging: true }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
   warehouse: { materials: { common: 24 }, constructionDays: 6, effects: { storageLbs: 300 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
-  trading_post: { materials: { common: 8 }, caps: 300, constructionDays: 1, effects: { happiness: 1, income: 1, store: true }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Barter", rank: 2 }, rarity: "uncommon" },
+
+  trading_post: {
+    materials: { common: 8 }, caps: 300, constructionDays: 1,
+    effects: { happiness: 1, income: 1, store: true, storeFamily: "trading", storeTier: 1 },
+    perk: { name: "Local Leader", rank: 2 }, skill: { name: "Barter", rank: 2 }, rarity: "uncommon",
+  },
+  trading_shop: {
+    materials: { common: 8 }, caps: 600, constructionDays: 2,
+    effects: { happiness: 2, income: 2, store: true, storeFamily: "trading", storeTier: 2 },
+    perk: { name: "Local Leader", rank: 2 }, skill: { name: "Barter", rank: 3 }, rarity: "uncommon",
+  },
+  trading_emporium: {
+    materials: { common: 8 }, caps: 1500, constructionDays: 3,
+    effects: { happiness: 3, income: 3, store: true, storeFamily: "trading", storeTier: 3, salvageBonusDice: 1 },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Cap Collector", rank: 1 }],
+    skill: { name: "Barter", rank: 4 }, rarity: "uncommon",
+  },
+  first_aid_station: {
+    materials: { common: 8 }, caps: 300, constructionDays: 1,
+    effects: { happiness: 1, income: 1, store: true, storeFamily: "medical", storeTier: 1, medical: true },
+    perk: { name: "Local Leader", rank: 2 }, skills: [{ name: "Barter", rank: 1 }, { name: "Medicine", rank: 2 }], rarity: "uncommon",
+  },
+  clinic: {
+    materials: { common: 8 }, caps: 600, constructionDays: 2,
+    effects: { happiness: 2, income: 2, store: true, storeFamily: "medical", storeTier: 2, medical: true },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Medic", rank: 1 }],
+    skills: [{ name: "Barter", rank: 2 }, { name: "Medicine", rank: 3 }], rarity: "uncommon",
+  },
+  surgery_center: {
+    materials: { common: 8 }, caps: 1500, constructionDays: 3,
+    effects: { happiness: 3, income: 3, store: true, storeFamily: "medical", storeTier: 3, medical: true, salvageBonusDice: 1 },
+    perks: [{ name: "Local Leader", rank: 2 }, { name: "Medic", rank: 1 }, { name: "Cap Collector", rank: 1 }],
+    skills: [{ name: "Barter", rank: 3 }, { name: "Medicine", rank: 4 }], rarity: "uncommon",
+  },
   caravan_post: { materials: { common: 5 }, constructionDays: 1, effects: { tradeOutpost: true }, rarity: "rare" },
-  clinic: { materials: { common: 8 }, caps: 600, constructionDays: 2, effects: { happiness: 2, income: 2, store: true, medical: true }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Medicine", rank: 3 }, rarity: "uncommon" },
 
   guard_post: { materials: { common: 14 }, constructionDays: 2, effects: { guardActionDefenseBonus: 1 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
   siren: { materials: { common: 10, uncommon: 6 }, constructionDays: 2, effects: { requiresPower: 1, defensePerGuardPost: 1 }, skill: { name: "Science", rank: 3 }, rarity: "common" },
