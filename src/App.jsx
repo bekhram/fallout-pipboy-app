@@ -129,6 +129,7 @@ export default function App() {
   const [screen, setScreen] = useState(() => (
     startupUiState.view === "battlemap" ? "sheet" : startupUiState.screen
   ));
+  const [menuSection, setMenuSection] = useState("home");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
 
@@ -1039,6 +1040,7 @@ const updateSkill = (skillName, field, value) =>
   if (screen === "menu") {
     content = (
       <MenuScreen
+        initialSection={menuSection}
         hasCharacter={!!lastRecordMeta}
         saveMeta={lastRecordMeta}
         onNewCharacter={handleNewCharacter}
@@ -1068,7 +1070,8 @@ const updateSkill = (skillName, field, value) =>
       <SessionScreen
         form={form}
         session={sharedSession}
-        onBack={() => setScreen("menu")}
+        onBack={() => {setMenuSection("home");setScreen("menu");}}
+        onNavigateMenu={section => {setMenuSection(section);setScreen("menu");}}
         onOpenSheet={() => {
           setScreen("sheet");
           setActiveTab("status");
@@ -1582,7 +1585,7 @@ const SkillsEditorModal = () => {
       />
 
       {(screen === "menu" || screen === "session") ? (
-        <div className={`pip-app ${screen === "menu" ? "pip-home-v2" : ""}`}>
+        <div className={`pip-app ${(screen === "menu" || (screen === "session" && (!sharedSession.mode || sharedSession.mode === "lobby"))) ? "pip-home-v2" : ""}`}>
           <div className="pip-vignette" />
           <div className="pip-container">
             <main className="pip-main">
