@@ -120,20 +120,42 @@ export const SETTLEMENT_BUILDINGS = {
     name: { en: "Warehouse", ru: "Склад", uk: "Склад", pl: "Magazyn" },
     footprint: { width: 4, height: 3 }, asset: "warehouse.png", constructionSize: "large",
   },
+
   trading_post: {
     id: "trading_post", category: "commerce",
-    name: { en: "Trading post", ru: "Торговая точка", uk: "Торгова точка", pl: "Punkt handlowy" },
+    name: { en: "Trading stand", ru: "Торговый прилавок", uk: "Торговий прилавок", pl: "Stoisko handlowe" },
+    footprint: { width: 2, height: 2 }, asset: "trading_post.png", constructionSize: "small", workersRequired: 1,
+  },
+  trading_shop: {
+    id: "trading_shop", category: "commerce",
+    name: { en: "Trading shop", ru: "Торговый магазин", uk: "Торгова крамниця", pl: "Sklep handlowy" },
     footprint: { width: 3, height: 3 }, asset: "trading_post.png", constructionSize: "medium", workersRequired: 1,
+  },
+  trading_emporium: {
+    id: "trading_emporium", category: "commerce",
+    name: { en: "Trading emporium", ru: "Торговый эмпориум", uk: "Торговий емпоріум", pl: "Emporium handlowe" },
+    footprint: { width: 4, height: 3 }, asset: "trading_post.png", constructionSize: "large", workersRequired: 1,
   },
   caravan_post: {
     id: "caravan_post", category: "commerce",
-    name: { en: "Caravan post", ru: "Караванный пост", uk: "Караванний пост", pl: "Posterunek karawan" },
+    name: { en: "Trade caravan post", ru: "Пост торгового каравана", uk: "Пост торгового каравану", pl: "Posterunek karawany handlowej" },
     footprint: { width: 4, height: 3 }, asset: "caravan_post.png", constructionSize: "large", workersRequired: 1,
+  },
+
+  first_aid_station: {
+    id: "first_aid_station", category: "services",
+    name: { en: "First aid station", ru: "Пункт первой помощи", uk: "Пункт першої допомоги", pl: "Punkt pierwszej pomocy" },
+    footprint: { width: 2, height: 2 }, asset: "clinic.png", constructionSize: "small", workersRequired: 1,
   },
   clinic: {
     id: "clinic", category: "services",
     name: { en: "Clinic", ru: "Клиника", uk: "Клініка", pl: "Klinika" },
     footprint: { width: 3, height: 3 }, asset: "clinic.png", constructionSize: "medium", workersRequired: 1,
+  },
+  surgery_center: {
+    id: "surgery_center", category: "services",
+    name: { en: "Surgery center", ru: "Хирургический центр", uk: "Хірургічний центр", pl: "Centrum chirurgiczne" },
+    footprint: { width: 4, height: 3 }, asset: "clinic.png", constructionSize: "large", workersRequired: 1,
   },
 
   guard_post: {
