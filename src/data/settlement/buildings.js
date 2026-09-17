@@ -135,20 +135,57 @@ export const SETTLEMENT_BUILDINGS = {
     name: { en: "Clinic", ru: "Клиника", uk: "Клініка", pl: "Klinika" },
     footprint: { width: 3, height: 3 }, asset: "clinic.png", constructionSize: "medium", workersRequired: 1,
   },
+
   guard_post: {
     id: "guard_post", category: "defense",
     name: { en: "Guard post", ru: "Пост охраны", uk: "Пост охорони", pl: "Posterunek" },
     footprint: { width: 2, height: 2 }, asset: "guard_post.png", constructionSize: "small", workersRequired: 1,
   },
-  watchtower: {
-    id: "watchtower", category: "defense",
-    name: { en: "Watchtower", ru: "Сторожевая вышка", uk: "Сторожова вежа", pl: "Wieża strażnicza" },
-    footprint: { width: 2, height: 2 }, asset: "watchtower.png", constructionSize: "medium", workersRequired: 1,
+  siren: {
+    id: "siren", category: "defense",
+    name: { en: "Siren", ru: "Сирена", uk: "Сирена", pl: "Syrena" },
+    footprint: { width: 1, height: 1 }, asset: null, constructionSize: "small",
   },
   turret: {
     id: "turret", category: "defense",
-    name: { en: "Turret", ru: "Турель", uk: "Турель", pl: "Wieżyczka" },
+    name: { en: "Machine gun turret", ru: "Пулемётная турель", uk: "Кулеметна турель", pl: "Wieżyczka karabinowa" },
     footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+  machine_gun_turret: {
+    id: "machine_gun_turret", category: "defense",
+    name: { en: "Machine gun turret", ru: "Пулемётная турель", uk: "Кулеметна турель", pl: "Wieżyczka karabinowa" },
+    footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+  heavy_machine_gun_turret: {
+    id: "heavy_machine_gun_turret", category: "defense",
+    name: { en: "Heavy machine gun turret", ru: "Тяжёлая пулемётная турель", uk: "Важка кулеметна турель", pl: "Ciężka wieżyczka karabinowa" },
+    footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+  laser_turret: {
+    id: "laser_turret", category: "defense",
+    name: { en: "Laser turret", ru: "Лазерная турель", uk: "Лазерна турель", pl: "Wieżyczka laserowa" },
+    footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+  heavy_laser_turret: {
+    id: "heavy_laser_turret", category: "defense",
+    name: { en: "Heavy laser turret", ru: "Тяжёлая лазерная турель", uk: "Важка лазерна турель", pl: "Ciężka wieżyczka laserowa" },
+    footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+  shotgun_turret: {
+    id: "shotgun_turret", category: "defense",
+    name: { en: "Shotgun turret", ru: "Дробовая турель", uk: "Дробова турель", pl: "Wieżyczka śrutowa" },
+    footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+  spotlight_turret: {
+    id: "spotlight_turret", category: "defense",
+    name: { en: "Spotlight turret", ru: "Турель-прожектор", uk: "Турель-прожектор", pl: "Wieżyczka reflektorowa" },
+    footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
+  },
+
+  watchtower: {
+    id: "watchtower", category: "defense",
+    name: { en: "Watchtower", ru: "Сторожевая вышка", uk: "Сторожова вежа", pl: "Wieża strażnicza" },
+    footprint: { width: 2, height: 2 }, asset: "watchtower.png", constructionSize: "medium", workersRequired: 1, buildable: false,
   },
   wall_straight: {
     id: "wall_straight", category: "defense",
