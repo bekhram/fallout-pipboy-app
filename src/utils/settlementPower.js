@@ -1,7 +1,9 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 
 function isActive(building) {
-  return building?.state === "active" && Number(building.condition ?? 100) > 0;
+  return building?.state === "active"
+    && Number(building.condition ?? 100) > 0
+    && !building.autoDisabled;
 }
 
 export function resolveSettlementPower(settlement) {
@@ -20,14 +22,12 @@ export function resolveSettlementPower(settlement) {
   const poweredBuildingIds = new Set();
   const unpoweredBuildingIds = new Set();
 
-  // Power producers and objects without a power requirement are always online.
   for (const building of activeBuildings) {
     const effects = getRulebookBuilding(building.type)?.effects || {};
     const need = Math.max(0, Number(effects.requiresPower || 0));
     if (!need) poweredBuildingIds.add(building.id);
   }
 
-  // Allocate the shared settlement power pool deterministically in map/build order.
   for (const building of activeBuildings) {
     const effects = getRulebookBuilding(building.type)?.effects || {};
     const need = Math.max(0, Number(effects.requiresPower || 0));
