@@ -5,6 +5,7 @@ import {
   STARTING_SETTLEMENT_RESOURCES,
 } from "../data/settlement/buildings.js";
 import { processSettlementAttacks } from "../utils/settlementAttackEngine.js";
+import { processSettlementCommerce } from "../utils/settlementCommerce.js";
 import {
   normalizeStockpile,
   processAutomaticSettlementDays,
@@ -78,7 +79,7 @@ function ensureRulebookState(input) {
 
   return {
     ...settlement,
-    rulesVersion: 4,
+    rulesVersion: 5,
     settlementDay: Math.max(1, Math.floor(Number(settlement.settlementDay || 1))),
     lastDayAt,
     nextDayAt: Number(settlement.nextDayAt || (lastDayAt + SETTLEMENT_DAY_MS)),
@@ -100,6 +101,13 @@ function ensureRulebookState(input) {
     livestock: {
       brahmin: Math.max(0, Math.floor(Number(settlement.livestock?.brahmin || 0))),
     },
+    recruitment: {
+      tally: Math.max(0, Number(settlement.recruitment?.tally || 0)),
+      pendingArrivalDay: settlement.recruitment?.pendingArrivalDay ?? null,
+      lastRoll: settlement.recruitment?.lastRoll || null,
+      status: settlement.recruitment?.status || "idle",
+    },
+    commerceLastProcessedDay: Math.max(0, Number(settlement.commerceLastProcessedDay || 0)),
     stockpile,
     settlers: (settlement.settlers || createInitialSettlers(Number(settlement.createdAt || now), people)).map((settler) => ({
       settlementAction: null,
@@ -111,7 +119,8 @@ function ensureRulebookState(input) {
 function runSimulation(settlement, now = Date.now()) {
   const normalized = ensureRulebookState(settlement);
   const advanced = processAutomaticSettlementDays(normalized, now);
-  return processSettlementAttacks(advanced, now);
+  const withCommerce = processSettlementCommerce(advanced);
+  return processSettlementAttacks(withCommerce, now);
 }
 
 function readAll() {
@@ -146,6 +155,8 @@ export function createSettlement({ name, regionId, worldX, worldY, ownerCharacte
     attributes: { people, food: people, water: people, power: 0, defense: 0, beds: 0, happiness: 10, income: 0 },
     resources: { ...STARTING_SETTLEMENT_RESOURCES, population: people, food: people, water: people, power: 0, defense: 0, beds: 0, happiness: 10, income: 0 },
     livestock: { brahmin: 0 },
+    recruitment: { tally: 0, pendingArrivalDay: null, lastRoll: null, status: "idle" },
+    commerceLastProcessedDay: 0,
     stockpile: {
       capacityLbs: 300,
       materials: { common: Number(STARTING_SETTLEMENT_RESOURCES.materials || 0), uncommon: 0, rare: 0 },
