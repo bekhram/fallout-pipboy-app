@@ -1,5 +1,6 @@
 import { ROOMS, SETTLEMENT_RULEBOOK } from "../data/settlement/rulebook.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
+import { resolveSettlementPower } from "./settlementPower.js";
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -138,11 +139,13 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
     income: Math.max(0, Number(settlement.attributes?.income ?? settlement.resources?.income ?? 0)),
   };
 
+  const powerGrid = resolveSettlementPower(settlement);
+  base.power = powerGrid.produced;
+
   let storageBonus = 0;
   let noisyCount = 0;
   let cropSlots = 0;
   let guardStructures = 0;
-  let powerRequired = 0;
   let officeCount = 0;
 
   for (const building of settlement.buildings || []) {
@@ -150,15 +153,17 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
     const rule = getRulebookBuilding(building.type);
     if (rule) {
       const effects = rule.effects || {};
-      base.power += Number(effects.power || 0);
-      base.water += Number(effects.water || 0);
-      base.defense += Number(effects.defense || 0);
-      base.beds += Number(effects.beds || 0);
-      storageBonus += Number(effects.storageLbs || 0);
-      cropSlots += Number(effects.cropSlots || 0);
-      if (effects.guardActionDefenseBonus) guardStructures += 1;
+      const requiresPower = Math.max(0, Number(effects.requiresPower || 0));
+      const powered = !requiresPower || powerGrid.poweredBuildingIds.has(building.id);
+      if (powered) {
+        base.water += Number(effects.water || 0);
+        base.defense += Number(effects.defense || 0);
+        base.beds += Number(effects.beds || 0);
+        storageBonus += Number(effects.storageLbs || 0);
+        cropSlots += Number(effects.cropSlots || 0);
+        if (effects.guardActionDefenseBonus) guardStructures += 1;
+      }
       if (effects.noisy) noisyCount += 1;
-      powerRequired += Number(effects.requiresPower || 0);
     }
 
     for (const room of building.rooms || []) {
@@ -177,7 +182,11 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0) {
     guardStructures,
     storageBonus,
     stockpileCapacityLbs: SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs + storageBonus,
-    powerRequired,
+    powerRequired: powerGrid.required,
+    powerConsumed: powerGrid.consumed,
+    powerAvailable: powerGrid.available,
+    powerDeficit: powerGrid.deficit,
+    unpoweredBuildings: powerGrid.unpoweredBuildingIds.size,
     officeCount,
   };
 }
@@ -296,7 +305,13 @@ function resolveResidentActions(input, now) {
 
   const businessWorkers = Number(actionCounts.business || 0);
   if (businessWorkers > 0) {
-    const stores = (settlement.buildings || []).filter((building) => isActive(building) && getRulebookBuilding(building.type)?.effects?.store);
+    const powerGrid = resolveSettlementPower(settlement);
+    const stores = (settlement.buildings || []).filter((building) => {
+      if (!isActive(building)) return false;
+      const effects = getRulebookBuilding(building.type)?.effects || {};
+      const powered = !Number(effects.requiresPower || 0) || powerGrid.poweredBuildingIds.has(building.id);
+      return powered && effects.store;
+    });
     const multiplier = Math.floor((settlement.settlers || []).length / 5);
     const staffedStores = stores.slice(0, businessWorkers);
     const income = multiplier * staffedStores.reduce((sum, building) => sum + Number(getRulebookBuilding(building.type)?.effects?.income || 0), 0);
