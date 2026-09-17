@@ -67,7 +67,8 @@ export default function SettlementPhaserMap(props) {
         }
         resize() {
           const camera=this.cameras.main;
-          this.fit=Math.min(this.scale.width/WORLD,this.scale.height/WORLD);
+          // Fill the viewport; users pan to reach areas outside the camera.
+          this.fit=Math.max(this.scale.width/WORLD,this.scale.height/WORLD);
           camera.setZoom(this.fit*latest.current.zoom/100);
           const extraX=Math.max(0,this.scale.width/camera.zoom-WORLD),extraY=Math.max(0,this.scale.height/camera.zoom-WORLD);
           camera.setBounds(-extraX/2,-extraY/2,WORLD+extraX,WORLD+extraY);
