@@ -283,8 +283,9 @@ if (derived?.immunities?.includes("radiation")) {
 
           <div className="pip-hero-meta">
             <div className="pip-identity-card">
-              <label>{t("main.name")}</label>
+              <label htmlFor="sheet-characterName">{t("main.name")}</label>
               <input
+                id="sheet-characterName"
                 value={form.characterName}
                 onChange={(e) =>
                   onTopLevelChange("characterName", e.target.value)
@@ -294,25 +295,27 @@ if (derived?.immunities?.includes("radiation")) {
             </div>
 
             <div className="pip-identity-card">
-              <label>{t("main.origin")}</label>
+              <label id="sheet-origin-label">{t("main.origin")}</label>
               <button
                 type="button"
                 className="pip-input"
+                aria-labelledby="sheet-origin-label sheet-origin-value"
                 style={{ textAlign: 'left', cursor: 'pointer' }}
                 onClick={() => setIsOriginModalOpen(true)}
               >
-                {form.origin && ORIGINS[form.origin]
+                <span id="sheet-origin-value">{form.origin && ORIGINS[form.origin]
                   ? t(ORIGINS[form.origin].translationKey)
-                  : form.origin || t("characterCreation.selectOriginTitle")}
+                  : form.origin || t("characterCreation.selectOriginTitle")}</span>
               </button>
             </div>
 
             <div className="pip-progression-grid">
               <div>
-                <label>{t("main.level")}</label>
+                <label htmlFor="sheet-level">{t("main.level")}</label>
                 <input
                   type="number"
                   min="1"
+                  id="sheet-level"
                   value={form.level}
                   onChange={(e) => onTopLevelChange("level", e.target.value)}
                   className="pip-input"
@@ -320,11 +323,12 @@ if (derived?.immunities?.includes("radiation")) {
               </div>
 
               <div>
-                <label>{t("main.xp")}</label>
+                <label htmlFor="sheet-xp">{t("main.xp")}</label>
                 <input
                   type="number"
                   min="0"
                   inputMode="numeric"
+                  id="sheet-xp"
                   value={form.xp ?? "0"}
                   onChange={(e) =>
                     onTopLevelChange("xp", String(Math.max(0, Number(e.target.value) || 0)))

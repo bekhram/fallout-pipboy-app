@@ -1,46 +1,77 @@
-/* Step 1: scoped character-sheet layout; existing game controls stay connected. */
-.pip-sheet-v3 .pip-container { max-width: 1500px; padding: 16px; }
+/* Character sheet shell. Scoped overrides keep session and GM layouts independent. */
+.pip-sheet-v3 .pip-container { max-width: 1500px; padding: 16px 20px 96px; }
 .pip-sheet-v3 .pip-main { min-width: 0; }
+.pip-sheet-v3 .pip-topnav { margin-bottom: 16px; }
+.pip-sheet-v3 .pip-brandline-nav { display: flex; align-items: center; gap: 12px; margin: 0; }
+.pip-sheet-v3 .pip-brandline-title { flex: 1; font-size: 15px; font-weight: 700; letter-spacing: .14em; }
+.pip-sheet-v3 .pip-icon-btn-menu { flex: 0 0 44px; width: 44px; height: 44px; }
 .pip-sheet-mobile-select { display: none; }
-.pip-sheet-v3 button:focus-visible, .pip-sheet-v3 select:focus-visible { outline: 2px solid var(--pip-accent, #a5ffa2); outline-offset: 3px; }
+.pip-sheet-v3 button:focus-visible,
+.pip-sheet-v3 select:focus-visible,
+.pip-sheet-v3 input:focus-visible { outline: 2px solid var(--pip-accent); outline-offset: 3px; }
 .pip-sheet-v3 .pip-overview-v3 { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .pip-sheet-v3 .pip-overview-v3 > * { min-width: 0; }
-.pip-sheet-v3 .pip-hero-grid { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 16px; }
-.pip-sheet-v3 .pip-portrait { min-height: 120px; height: 140px; }
-.pip-sheet-v3 .pip-hero-meta { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
-.pip-sheet-v3 .pip-progression-grid { grid-column: 1 / -1; }
+.pip-sheet-v3 .pip-hero-grid { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 14px; }
+.pip-sheet-v3 .pip-hero-left { display: contents; }
+.pip-sheet-v3 .pip-portrait-card { grid-column: 1; grid-row: 1; width: 100%; max-width: none; }
+.pip-sheet-v3 .pip-portrait { min-height: 144px; height: 100%; max-height: none; aspect-ratio: auto; padding: 8px; }
+.pip-sheet-v3 .pip-portrait:has(img) { padding: 0; }
+.pip-sheet-v3 .pip-portrait-remove { width: 44px; height: 44px; }
+.pip-sheet-v3 .pip-hero-meta { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.pip-sheet-v3 .pip-progression-grid { grid-column: 1 / -1; padding: 8px; }
 .pip-sheet-v3 .pip-identity-card { min-width: 0; padding: 8px; }
-.pip-sheet-v3 .pip-portrait-actions { gap: 4px; }
-.pip-sheet-v3 .pip-action-btn { min-height: 44px; padding: 4px; }
+.pip-sheet-v3 .pip-hero-meta .pip-input { min-height: 44px; font-size: 16px; }
+.pip-sheet-v3 .pip-portrait-actions { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.pip-sheet-v3 .pip-portrait-actions .pip-action-btn { min-height: 44px; flex-direction: row; gap: 8px; padding: 8px; }
+.pip-sheet-v3 .pip-portrait-actions small { font-size: 11px; white-space: normal; overflow-wrap: anywhere; line-height: 1.3; }
 .pip-sheet-v3 .pip-hero-dashboard { margin: 0; display: grid; gap: 12px; }
 .pip-sheet-v3 .pip-combat-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
-.pip-sheet-v3 .pip-combat-stat { display: flex; justify-content: space-between; gap: 8px; padding: 10px; border: 1px solid var(--pip-line, #315d36); }
-.pip-sheet-v3 .pip-combat-stat strong { font-size: 24px; }
+.pip-sheet-v3 .pip-combat-stat { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-left: 2px solid var(--pip-accent); }
+.pip-sheet-v3 .pip-combat-stat small { min-height: 0; font-size: 11px; line-height: 1.4; }
+.pip-sheet-v3 .pip-combat-stat strong { flex-shrink: 0; font-size: 26px; }
+.pip-sheet-v3 .pip-summary-title { font-size: 11px; line-height: 1.4; }
+.pip-sheet-v3 .pip-health-panel { align-self: start; }
+.pip-sheet-v3 .pip-health-panel .pip-head > span { color: var(--pip-accent); font-size: 22px; font-weight: 700; white-space: nowrap; }
+.pip-sheet-v3 .pip-flagbar-shell { grid-template-columns: 44px minmax(0,1fr) 44px; }
 .pip-sheet-v3 .pip-flagbar-btn { min-width: 44px; min-height: 44px; }
+.pip-sheet-v3 .pip-head { flex-wrap: wrap; }
 @media (min-width: 1100px) {
-  .pip-sheet-v3 .pip-container { display: grid; grid-template-columns: 200px minmax(0,1fr); align-items: start; gap: 20px; }
-  .pip-sheet-v3 .pip-topnav { position: sticky; top: 16px; max-height: calc(100dvh - 110px); overflow-y: auto; margin: 0; }
-  .pip-sheet-v3 .pip-brandline-nav { flex-wrap: wrap; gap: 8px; }
+  .pip-sheet-v3 .pip-container { display: grid; grid-template-columns: 220px minmax(0,1fr); align-items: start; gap: 24px; }
+  .pip-sheet-v3 .pip-topnav { position: sticky; top: 16px; max-height: calc(100dvh - 32px); overflow-y: auto; margin: 0; scrollbar-width: thin; }
   .pip-sheet-v3 .pip-brandline-status { display: none; }
-  .pip-sheet-v3 .pip-tab-scroll { overflow: visible; }
-  .pip-sheet-v3 .pip-tabrow { display: flex; flex-direction: column; flex-wrap: nowrap; width: 100%; }
-  .pip-sheet-v3 .pip-tab { width: 100%; min-height: 44px; text-align: left; white-space: normal; }
+  .pip-sheet-v3 .pip-tab-scroll { overflow: visible; margin-top: 16px; }
+  .pip-sheet-v3 .pip-tabrow { display: flex; flex-direction: column; flex-wrap: nowrap; width: 100%; min-width: 0; gap: 4px; }
+  .pip-sheet-v3 .pip-tab { width: 100%; height: auto; min-height: 44px; justify-content: flex-start; text-align: left; white-space: normal; overflow-wrap: anywhere; font-size: 12px; letter-spacing: .08em; border-color: transparent; background: transparent; }
+  .pip-sheet-v3 .pip-tab.is-active { border-color: var(--pip-line-strong); border-left: 3px solid var(--pip-accent); background: rgba(140,255,152,.08); }
+  .pip-sheet-v3 .pip-tab:hover { background: rgba(140,255,152,.05); }
   .pip-sheet-v3 .pip-overview-v3 { grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; }
-  .pip-sheet-v3 .pip-overview-v3 > .pip-hero, .pip-sheet-v3 .pip-overview-v3 > .pip-block { grid-column: 1 / -1; }
+  .pip-sheet-v3 .pip-overview-v3 > .pip-hero,
+  .pip-sheet-v3 .pip-overview-v3 > .pip-block { grid-column: 1 / -1; }
 }
 @media (max-width: 1099px) {
   .pip-sheet-v3 .pip-tab-scroll { display: none; }
-  .pip-sheet-mobile-select { display: block; margin-top: 10px; }
+  .pip-sheet-v3 .pip-topnav { padding: 8px 12px; }
+  .pip-sheet-mobile-select { display: block; margin-top: 8px; }
   .pip-sheet-mobile-select > span { display: none; }
-  .pip-sheet-mobile-select select { width: 100%; min-height: 44px; padding: 10px; border: 1px solid var(--pip-line, #315d36); border-radius: 6px; background: #09170d; color: var(--pip-accent, #a5ffa2); font: inherit; }
+  .pip-sheet-mobile-select select { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--pip-line); border-radius: 6px; background: var(--pip-panel); color: var(--pip-accent); font: inherit; font-size: 16px; }
 }
 @media (max-width: 600px) {
-  .pip-sheet-v3 .pip-container { padding: 8px; }
-  .pip-sheet-v3 .pip-hero-grid { grid-template-columns: 88px minmax(0,1fr); gap: 8px; }
-  .pip-sheet-v3 .pip-portrait { height: 100px; min-height: 100px; }
+  .pip-sheet-v3 .pip-container { padding: 8px 8px 96px; }
+  .pip-sheet-v3 .pip-topnav { margin-bottom: 10px; }
+  .pip-sheet-v3 .pip-overview-v3 { gap: 10px; }
+  .pip-sheet-v3 .pip-hero { padding: 12px; }
+  .pip-sheet-v3 .pip-hero-grid { grid-template-columns: 80px minmax(0,1fr); gap: 8px; }
+  .pip-sheet-v3 .pip-portrait { min-height: 100px; font-size: 11px; overflow-wrap: anywhere; }
   .pip-sheet-v3 .pip-hero-meta { grid-template-columns: minmax(0,1fr); gap: 6px; }
-  .pip-sheet-v3 .pip-portrait-actions { grid-template-columns: 1fr; }
-  .pip-sheet-v3 .pip-identity-card { padding: 4px; }
+  .pip-sheet-v3 .pip-identity-card { padding: 0; background: none; border: 0; }
+  .pip-sheet-v3 .pip-progression-grid { padding: 0; border: 0; background: none; gap: 8px; }
+  .pip-sheet-v3 .pip-hero-meta label { margin-bottom: 3px; font-size: 10px; }
+  .pip-sheet-v3 .pip-portrait-actions .pip-action-btn { flex-direction: column; gap: 4px; padding: 6px 4px; }
+  .pip-sheet-v3 .pip-portrait-actions small { font-size: 10px; }
   .pip-sheet-v3 .pip-input { min-height: 44px; font-size: 16px; width: 100%; }
-  .pip-sheet-v3 .pip-brandline-status { display: none; }
+  .pip-sheet-v3 .pip-brandline-status,
+  .pip-sheet-v3 .pip-hero > .pip-head .pip-cursor { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pip-sheet-v3 .pip-screen-slide { animation: none; }
 }

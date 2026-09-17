@@ -24,7 +24,7 @@ export default function HpPanel({
   const radMarkerLeft = `${Math.min(100, ((safeMax - safeRad) / safeMax) * 100)}%`;
 
   return (
-    <section className="pip-panel">
+    <section className="pip-panel pip-health-panel">
       <div className="pip-head">
         <h2>[ {t("hp.title")} ]</h2>
         <span>
@@ -37,6 +37,7 @@ export default function HpPanel({
           <button
             type="button"
             className="pip-flagbar-side pip-flagbar-btn"
+            aria-label={`${t("hp.title")} −1`}
             onClick={onHpDecrease}
           >
             -
@@ -70,6 +71,8 @@ export default function HpPanel({
             </div>
 
             <input
+              aria-label={t("hp.radiation")}
+              aria-valuetext={String(safeRad)}
               className="pip-flag-slider pip-flag-slider-rad"
               type="range"
               min={0}
@@ -82,6 +85,7 @@ export default function HpPanel({
             />
 
             <input
+              aria-label={t("hp.title")}
               className="pip-flag-slider pip-flag-slider-hp"
               type="range"
               min={0}
@@ -95,6 +99,7 @@ export default function HpPanel({
           <button
             type="button"
             className="pip-flagbar-side pip-flagbar-btn"
+            aria-label={`${t("hp.title")} +1`}
             onClick={onHpIncrease}
           >
             +
