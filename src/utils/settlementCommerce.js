@@ -57,28 +57,15 @@ function resolveBusinessIncome(settlement, day) {
     const officeBonus = index < officeCount ? 1 : 0;
     const effectiveIncome = baseIncome + officeBonus;
     incomePerFive += effectiveIncome;
-    return {
-      buildingId: building.id,
-      type: building.type,
-      baseIncome,
-      officeBonus,
-      effectiveIncome,
-    };
+    return { buildingId: building.id, type: building.type, baseIncome, officeBonus, effectiveIncome };
   });
 
   const income = populationMultiplier * incomePerFive;
   const attributes = { ...(settlement.attributes || {}), income };
   const resources = { ...(settlement.resources || {}), income };
   const event = {
-    id: randomId("event", day),
-    type: "store_income",
-    day,
-    workers,
-    stores: storeBreakdown,
-    people,
-    populationMultiplier,
-    income,
-    createdAt: Date.now(),
+    id: randomId("event", day), type: "store_income", day, workers,
+    stores: storeBreakdown, people, populationMultiplier, income, createdAt: Date.now(),
   };
   return { ...settlement, attributes, resources, events: [event, ...(settlement.events || [])].slice(0, 100) };
 }
@@ -131,9 +118,7 @@ function resolveRecruitment(settlement, day) {
     return powerGrid.poweredBuildingIds.has(building.id);
   });
 
-  if (!beacons.length) {
-    return { ...next, recruitment: { ...recruitment, status: "inactive" } };
-  }
+  if (!beacons.length) return { ...next, recruitment: { ...recruitment, status: "inactive" } };
 
   if (settlers.length >= maxPeople) {
     return {
@@ -148,28 +133,18 @@ function resolveRecruitment(settlement, day) {
     buildings: (next.buildings || []).map((building) => building.type === "radio_beacon" && building.autoDisabled ? { ...building, autoDisabled: false } : building),
   };
 
-  if (recruitment.pendingArrivalDay != null) {
-    return { ...next, recruitment: { ...recruitment, status: "arrival-pending" } };
-  }
+  if (recruitment.pendingArrivalDay != null) return { ...next, recruitment: { ...recruitment, status: "arrival-pending" } };
 
   const tally = recruitment.tally + 1;
   const overPeople = Math.max(0, tally - settlers.length);
-  if (!overPeople) {
-    return { ...next, recruitment: { ...recruitment, tally, status: "broadcasting" } };
-  }
+  if (!overPeople) return { ...next, recruitment: { ...recruitment, tally, status: "broadcasting" } };
 
   const roll = rollCombatDice(overPeople);
   const pendingArrivalDay = roll.effects > 0 ? day + 1 : null;
   const event = {
-    id: randomId("event", `${day}_beacon`),
-    type: "radio_beacon_roll",
-    tally,
-    people: settlers.length,
-    dice: overPeople,
-    rolls: roll.rolls,
-    effects: roll.effects,
-    recruited: Boolean(pendingArrivalDay),
-    createdAt: Date.now(),
+    id: randomId("event", `${day}_beacon`), type: "radio_beacon_roll", tally,
+    people: settlers.length, dice: overPeople, rolls: roll.rolls, effects: roll.effects,
+    recruited: Boolean(pendingArrivalDay), createdAt: Date.now(),
   };
 
   return {
@@ -185,15 +160,15 @@ function resolveRecruitment(settlement, day) {
 }
 
 export function processSettlementCommerce(settlement) {
-  const currentDay = Math.max(1, Math.floor(Number(settlement.settlementDay || 1)));
+  const completedDay = Math.max(0, Math.floor(Number(settlement.settlementDay || 1)) - 1);
   let next = { ...settlement };
   let lastProcessedDay = Math.max(0, Math.floor(Number(next.commerceLastProcessedDay || 0)));
 
-  while (lastProcessedDay < currentDay) {
+  while (lastProcessedDay < completedDay) {
     lastProcessedDay += 1;
     next = resolveBusinessIncome(next, lastProcessedDay);
     next = resolveRecruitment(next, lastProcessedDay);
   }
 
-  return { ...next, commerceLastProcessedDay: currentDay };
+  return { ...next, commerceLastProcessedDay: completedDay };
 }
