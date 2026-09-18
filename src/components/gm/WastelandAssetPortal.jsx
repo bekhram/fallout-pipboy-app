@@ -1,3 +1,4 @@
+import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -1404,7 +1405,7 @@ export function RoadAsset({ road, fullSize = false, visualScale = 1.35 }) {
     : road.centerY;
 
   return (
-    <img
+    <PhaserAsset
       src={road.src}
       alt=""
       draggable={false}
@@ -1582,7 +1583,7 @@ function removeRailOverlaps(
 
 function RailAsset({ rail }) {
   return (
-    <img
+    <PhaserAsset
       src={rail.src}
       alt=""
       draggable={false}
@@ -1674,7 +1675,7 @@ function SpriteImage({
         : 1;
 
   return (
-    <img
+    <PhaserAsset
       src={asset.src}
       alt=""
       draggable={false}
@@ -1937,7 +1938,7 @@ export function WastelandAssetLayer({
       }}
     >
       {showBackground ? (
-        <img
+        <PhaserAsset
           src={
             background
           }

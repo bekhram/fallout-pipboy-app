@@ -1,3 +1,5 @@
+import { PhaserToken } from "../phaser/PhaserAsset.jsx";
+import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
@@ -199,8 +201,8 @@ function pointerPlacement(grid, event, cols, rows, drag) {
     rect: grid.getBoundingClientRect(),
     scrollLeft: grid.scrollLeft,
     scrollTop: grid.scrollTop,
-    cellWidth: firstCell.offsetWidth,
-    cellHeight: firstCell.offsetHeight,
+    cellWidth: firstCell.getBoundingClientRect().width,
+    cellHeight: firstCell.getBoundingClientRect().height,
     cols,
     rows,
     size: drag.size,
@@ -210,7 +212,7 @@ function pointerPlacement(grid, event, cols, rows, drag) {
 }
 
 function autoScrollNearEdge(grid, clientX, clientY) {
-  if (!grid) return;
+  if (!grid || grid.dataset.phaserGrid) return;
   const rect = grid.getBoundingClientRect();
   const edge = Math.min(
     64,
@@ -343,8 +345,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     );
   }
 
-  const cols = Number(scene.cols || DEFAULT_COLS);
-  const rows = Number(scene.rows || DEFAULT_ROWS);
+  const cols = Number(scene.environment?.proceduralMapSpec?.cols || scene.cols || DEFAULT_COLS);
+  const rows = Number(scene.environment?.proceduralMapSpec?.rows || scene.rows || DEFAULT_ROWS);
   const tokens = Array.isArray(scene.tokens) ? scene.tokens : [];
   const playerTokens = tokens.filter((token) => token.kind === "player");
   const enemyTokens = tokens.filter((token) => token.kind !== "player");
@@ -678,15 +680,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                     onPointerUp={finishDrag}
                     onPointerCancel={cancelDrag}
                   >
-                    {token.avatar ? (
-                      <img src={token.avatar} alt="" draggable={false} />
-                    ) : (
-                      <b>
-                        {String(token.name || "T")
-                          .slice(0, 1)
-                          .toUpperCase()}
-                      </b>
-                    )}
+                    <PhaserToken token={token} selected={selectedTokenId === token.id} />
                     <small>{token.name}</small>
                   </span>
                 );
@@ -719,6 +713,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         </div>
       </div>
 
+      <details className="phaser-map-settings">
+        <summary>{text.scenes} · {text.background}</summary>
       <div className="gm-scene-library">
         <label>
           <span>{text.scenes}</span>
@@ -794,6 +790,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
             <option value="12x12">12×12</option>
             <option value="16x12">16×12</option>
             <option value="16x16">16×16</option>
+            {[18,24,36,48,60].map(size => <option key={size} value={`${size}x${size}`}>{size}×{size}</option>)}
+            {![[8,8],[12,12],[16,12],[16,16],[18,18],[24,24],[36,36],[48,48],[60,60]].some(([x,y]) => x === cols && y === rows) && <option value={`${cols}x${rows}`}>{cols}×{rows}</option>}
           </select>
         </label>
         <button
@@ -893,7 +891,10 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           {uploadError}
         </div>
       ) : null}
+      </details>
+      <PhaserMapViewport cols={cols} rows={rows} sceneKey={scene.sceneId} background={scene.backgroundUrl} gridRef={gridRef} player={playerTokens[0]} label={text.title}>
       <div
+        data-phaser-grid="true"
         ref={gridRef}
         className={`gm-session-map__grid tactical-grid${
           scene.backgroundUrl ? " has-background" : ""
@@ -901,13 +902,14 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         style={{
           gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`,
           gridTemplateRows: `repeat(${rows}, minmax(0,1fr))`,
-          backgroundImage: scene.backgroundUrl
-            ? `url(${JSON.stringify(scene.backgroundUrl)})`
-            : undefined,
+          "--battlemap-cell": "64px",
+          "--battlemap-world-width": `${cols * 64}px`,
+          "--battlemap-world-height": `${rows * 64}px`,
         }}
       >
         {cells}
       </div>
+      </PhaserMapViewport>
 
       <TacticalEnemyManager
         tokens={enemyTokens.map(managerToken)}

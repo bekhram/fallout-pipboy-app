@@ -1,3 +1,4 @@
+import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -29,7 +30,7 @@ export function superDuperMartBackgroundForSpec(spec = {}) {
 
 function SuperDuperMartAsset({ building, preview }) {
   return (
-    <img
+    <PhaserAsset
       src={building.assetSrc}
       alt=""
       draggable={false}

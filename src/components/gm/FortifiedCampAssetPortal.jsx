@@ -1,3 +1,4 @@
+import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -23,7 +24,7 @@ function wastelandSpec(spec = {}, reservedRects = []) {
 }
 
 function CampAsset({ building, preview = false }) {
-  return <img
+  return <PhaserAsset
     src={building.assetSrc}
     alt=""
     draggable={false}

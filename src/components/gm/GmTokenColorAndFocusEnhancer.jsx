@@ -42,6 +42,7 @@ function focusToken(token) {
     ".gm-tactical-map-core .gm-session-map__grid.tactical-grid"
   );
   if (!grid || !token) return;
+  if (grid.phaserMap) { grid.phaserMap.focus(Number(token.x), Number(token.y)); return; }
 
   const cell =
     Number.parseFloat(grid.style.getPropertyValue("--battlemap-cell")) ||

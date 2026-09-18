@@ -1,20 +1,14 @@
+import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { mapUiText } from "./mapUiText.js";
 
-const MIN_ZOOM = 0.65;
-const MAX_ZOOM = 2;
-const ZOOM_STEP = 0.2;
 const PADDING = 4;
 const LOCAL_GM_STORE_KEY = "fallout_pipboy_local_gm_sessions_v3";
 
 function fallbackLocationName(location) {
   if (!location) return "Unknown";
   return location.name || location.id?.replaceAll("_", " ") || "Unknown";
-}
-
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
 }
 
 function readLocalGmStore() {
@@ -43,7 +37,7 @@ function getLocationProgress(locationId, sessions) {
   };
 }
 
-export default function WorldOverview({ mapData, playerPosition, locations = [] }) {
+export default function WorldOverview({ background, mapData, playerPosition, locations = [] }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
@@ -63,7 +57,6 @@ export default function WorldOverview({ mapData, playerPosition, locations = [] 
   };
 
   const sessions = useMemo(() => readLocalGmStore(), []);
-  const [zoom, setZoom] = useState(1);
   const [selectedId, setSelectedId] = useState(() => {
     try {
       const select = document.querySelector(".pip-map-select-label select");
@@ -86,31 +79,6 @@ export default function WorldOverview({ mapData, playerPosition, locations = [] 
     return { minX, maxX, minY, maxY, width: Math.max(1, maxX - minX), height: Math.max(1, maxY - minY) };
   }, [playerWorld.x, playerWorld.y, locations]);
 
-  function point(worldX, worldY) {
-    return {
-      left: `${((worldX - bounds.minX) / bounds.width) * 100}%`,
-      top: `${((worldY - bounds.minY) / bounds.height) * 100}%`,
-    };
-  }
-
-  const sectorLines = useMemo(() => {
-    const vertical = [];
-    const horizontal = [];
-    const startSectorX = Math.floor(bounds.minX / cols);
-    const endSectorX = Math.ceil(bounds.maxX / cols);
-    const startSectorY = Math.floor(bounds.minY / rows);
-    const endSectorY = Math.ceil(bounds.maxY / rows);
-    for (let sx = startSectorX; sx <= endSectorX; sx += 1) {
-      const x = sx * cols;
-      vertical.push(((x - bounds.minX) / bounds.width) * 100);
-    }
-    for (let sy = startSectorY; sy <= endSectorY; sy += 1) {
-      const y = sy * rows;
-      horizontal.push(((y - bounds.minY) / bounds.height) * 100);
-    }
-    return { vertical, horizontal };
-  }, [bounds, cols, rows]);
-
   function chooseLocation(location) {
     setSelectedId(location.id);
     try {
@@ -125,12 +93,6 @@ export default function WorldOverview({ mapData, playerPosition, locations = [] 
     }
   }
 
-  const playerPoint = point(playerWorld.x, playerWorld.y);
-  const targetPoint = selected ? point(selected.worldX, selected.worldY) : null;
-  const routeX1 = parseFloat(playerPoint.left);
-  const routeY1 = parseFloat(playerPoint.top);
-  const routeX2 = targetPoint ? parseFloat(targetPoint.left) : routeX1;
-  const routeY2 = targetPoint ? parseFloat(targetPoint.top) : routeY1;
   const distance = selected
     ? Math.hypot(selected.worldX - playerWorld.x, selected.worldY - playerWorld.y)
     : 0;
@@ -147,54 +109,23 @@ export default function WorldOverview({ mapData, playerPosition, locations = [] 
             </span>
           ) : null}
         </div>
-        <div className="pip-world-overview__zoom">
-          <button type="button" onClick={() => setZoom((value) => clamp(value - ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}>−</button>
-          <span>{Math.round(zoom * 100)}%</span>
-          <button type="button" onClick={() => setZoom((value) => clamp(value + ZOOM_STEP, MIN_ZOOM, MAX_ZOOM))}>+</button>
-          <button type="button" onClick={() => setZoom(1)}>{tx("fit")}</button>
-        </div>
+
       </div>
 
-      <div className="pip-world-overview__viewport">
-        <div className="pip-world-overview__canvas" style={{ transform: `scale(${zoom})` }}>
-          {sectorLines.vertical.map((left, index) => (
-            <span key={`v-${index}`} className="pip-world-overview__sector-line is-vertical" style={{ left: `${left}%` }} />
-          ))}
-          {sectorLines.horizontal.map((top, index) => (
-            <span key={`h-${index}`} className="pip-world-overview__sector-line is-horizontal" style={{ top: `${top}%` }} />
-          ))}
-
-          {selected ? (
-            <svg className="pip-world-overview__route" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <line x1={routeX1} y1={routeY1} x2={routeX2} y2={routeY2} />
-            </svg>
-          ) : null}
-
-          {locations.map((location) => {
-            const pos = point(location.worldX, location.worldY);
-            const progress = getLocationProgress(location.id, sessions);
-            return (
-              <button
-                key={location.id}
-                type="button"
-                className={`pip-world-overview__poi${location.id === selectedId ? " is-selected" : ""}${location.major ? " is-major" : ""}${progress ? ` is-${progress.status}` : ""}`}
-                style={pos}
-                onClick={() => chooseLocation(location)}
-                title={`${displayName(location)}${progress ? ` · ${progress.status} · ${progress.discoveries} ${tx("discoveries")}` : ""}`}
-              >
-                <span>{location.icon || "◆"}</span>
-                {progress ? <b className="pip-world-overview__progress-dot">{progress.status === "cleared" ? "✓" : progress.status === "explored" ? "•" : "○"}</b> : null}
-                <em>{displayName(location)}</em>
-              </button>
-            );
-          })}
-
-          <div className="pip-world-overview__player" style={playerPoint} title={tx("currentPosition")}>
-            <span>▲</span>
-            <em>{tx("you")}</em>
-          </div>
-        </div>
-      </div>
+      <label className="phaser-location-select">
+        {tx("target")}
+        <select value={selectedId} onChange={event => { const location = locations.find(item => item.id === event.target.value); if (location) chooseLocation(location); }}>
+          {locations.map(location => <option key={location.id} value={location.id}>{displayName(location)}</option>)}
+        </select>
+      </label>
+      <PhaserMapViewport
+        cols={Math.ceil(bounds.width)} rows={Math.ceil(bounds.height)} sceneKey={background}
+        background={background} label={tx("worldOverview")}
+        markers={locations.map(location => ({ ...location, x: location.worldX - bounds.minX - .5, y: location.worldY - bounds.minY - .5 }))}
+        onMarker={chooseLocation}
+        player={{ x: playerWorld.x - bounds.minX - .5, y: playerWorld.y - bounds.minY - .5 }}
+        route={selected ? [{ x: playerWorld.x - bounds.minX - .5, y: playerWorld.y - bounds.minY - .5 }, { x: selected.worldX - bounds.minX - .5, y: selected.worldY - bounds.minY - .5 }] : []}
+      />
 
       <div className="pip-world-overview__status">
         <span>{tx("world")} {playerWorld.x},{playerWorld.y}</span>
