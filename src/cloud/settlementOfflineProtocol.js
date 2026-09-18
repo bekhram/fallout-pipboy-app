@@ -116,7 +116,7 @@ export function projectRecord(record, apply) {
   for (const op of record.entries) {
     try {
       if (commandPrecondition(campaign, op.command, record.uid) !== op.precondition) fail('LOCAL_CONFLICT');
-      campaign = apply(campaign, record.uid, op.command);
+      campaign = apply(campaign, record.uid, op.command, op.requestId);
     } catch (error) { conflicts.push({ requestId: op.requestId, error: error.message }); }
   }
   return { campaign, conflicts };
@@ -129,7 +129,7 @@ export function enqueue(record, input, requestId, now, apply) {
   const { campaign, conflicts } = projectRecord(record, apply);
   if (conflicts.length) fail('SYNC_REQUIRED');
   const precondition = commandPrecondition(campaign, command, record.uid);
-  apply(campaign, record.uid, command); // Validate before the transaction can commit.
+  apply(campaign, record.uid, command, requestId); // Validate and reserve against the projected character before commit.
   if (!Number.isSafeInteger(record.nextSequence) || record.nextSequence >= Number.MAX_SAFE_INTEGER) fail('OUTBOX_FULL');
   const op = { sequence: record.nextSequence, requestId, command, precondition, createdAt: now };
   if (precondition.length > 20000 || new TextEncoder().encode(JSON.stringify(op)).length > MAX_BATCH_BYTES - 512) fail('OUTBOX_ENTRY_TOO_LARGE');
