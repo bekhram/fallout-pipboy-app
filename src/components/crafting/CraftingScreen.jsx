@@ -5,12 +5,16 @@ import { buildBaseArmorRecipes, buildBaseWeaponRecipes } from "../../data/baseCr
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 import {
+  consumeCraftingMaterials,
   dismantleAmmunition,
   getAmmosmithRank,
   getCraftingRecipeState,
   getInventoryQuantity,
+  getRecipeMaterials,
   resolveCraftingAttempt,
 } from "../../utils/craftingEngine.js";
+import { playerResources } from "../../utils/settlementDevelopment.js";
+import useCampaignResourceReservations from "../../hooks/useCampaignResourceReservations.js";
 import "./crafting.css";
 
 const TEXT = {
@@ -23,7 +27,7 @@ const TEXT = {
     result: "LAST ATTEMPT", success: "SUCCESS", failure: "FAILURE", automatic: "AUTOMATIC SUCCESS (D0)", successes: "successes", complications: "complications",
     duration: "TIME", minutes: "min", apHint: "On success, 2 AP may halve crafting time.", failedConsumed: "Failure consumed all ingredients at this station.",
     complicationLoss: "Complications may waste ingredients; no amount is auto-invented.", missingMaterials: "Missing materials", missingPerks: "Missing required perk rank",
-    needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
+    needBench: "Mark the required workbench as available.", reserved: "Materials reserved for settlement construction", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
     common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.", ready: "READY", locked: "LOCKED",
     noBaseWeapons: "Base weapon and armor recipes are app-generated from the item archive; official modification recipes remain under MODS.",
     dismantle: "DISMANTLE 1", dismantled: "DISMANTLED", returned: "RETURNED", ammoOwned: "OWNED", needAmmo: "No ammunition to dismantle", needAmmosmith2: "Ammosmith rank 2 required",
@@ -37,7 +41,7 @@ const TEXT = {
     result: "ПОСЛЕДНЯЯ ПОПЫТКА", success: "УСПЕХ", failure: "ПРОВАЛ", automatic: "АВТОУСПЕХ (D0)", successes: "успехов", complications: "осложнений",
     duration: "ВРЕМЯ", minutes: "мин", apHint: "При успехе 2 AP могут уменьшить время вдвое.", failedConsumed: "При провале эта станция расходует все ингредиенты.",
     complicationLoss: "Осложнения могут испортить материалы; приложение не выдумывает их количество.", missingMaterials: "Не хватает материалов", missingPerks: "Не хватает ранга перка",
-    needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
+    needBench: "Отметьте доступ к нужному верстаку.", reserved: "Материалы зарезервированы для строительства поселения", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
     common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
     noBaseWeapons: "Базовые рецепты оружия и брони генерируются приложением из архива предметов; официальные модификации остаются в разделе МОДЫ.",
     dismantle: "РАЗОБРАТЬ 1", dismantled: "РАЗОБРАНО", returned: "ВОЗВРАЩЕНО", ammoOwned: "В НАЛИЧИИ", needAmmo: "Нет патронов для разбора", needAmmosmith2: "Требуется Ammosmith 2",
@@ -51,7 +55,7 @@ const TEXT = {
     result: "ОСТАННЯ СПРОБА", success: "УСПІХ", failure: "НЕВДАЧА", automatic: "АВТОУСПІХ (D0)", successes: "успіхів", complications: "ускладнень",
     duration: "ЧАС", minutes: "хв", apHint: "За успіху 2 AP можуть удвічі скоротити час.", failedConsumed: "За невдачі ця станція витрачає всі інгредієнти.",
     complicationLoss: "Ускладнення можуть зіпсувати матеріали; застосунок не вигадує їх кількість.", missingMaterials: "Не вистачає матеріалів", missingPerks: "Не вистачає рангу перка",
-    needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
+    needBench: "Позначте доступ до потрібного верстата.", reserved: "Матеріали зарезервовано для будівництва поселення", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
     common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
     noBaseWeapons: "Базові рецепти зброї та броні генеруються застосунком з архіву предметів; офіційні модифікації залишаються у розділі МОДИ.",
     dismantle: "РОЗІБРАТИ 1", dismantled: "РОЗІБРАНО", returned: "ПОВЕРНЕНО", ammoOwned: "В НАЯВНОСТІ", needAmmo: "Немає патронів для розбирання", needAmmosmith2: "Потрібен Ammosmith 2",
@@ -65,7 +69,7 @@ const TEXT = {
     result: "OSTATNIA PRÓBA", success: "SUKCES", failure: "PORAŻKA", automatic: "AUTOMATYCZNY SUKCES (D0)", successes: "sukcesów", complications: "komplikacji",
     duration: "CZAS", minutes: "min", apHint: "Po sukcesie 2 AP może skrócić czas o połowę.", failedConsumed: "Porażka zużywa wszystkie składniki na tej stacji.",
     complicationLoss: "Komplikacje mogą zmarnować materiały; aplikacja nie wymyśla ich liczby.", missingMaterials: "Brak materiałów", missingPerks: "Brak wymaganego poziomu atutu",
-    needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
+    needBench: "Zaznacz dostęp do wymaganego warsztatu.", reserved: "Materiały zarezerwowane na budowę osady", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
     common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.", ready: "GOTOWE", locked: "NIEDOSTĘPNE",
     noBaseWeapons: "Bazowe receptury broni i pancerza są generowane przez aplikację z archiwum przedmiotów; oficjalne modyfikacje pozostają w sekcji MODY.",
     dismantle: "ROZŁÓŻ 1", dismantled: "ROZŁOŻONO", returned: "ODZYSKANO", ammoOwned: "POSIADASZ", needAmmo: "Brak amunicji do rozłożenia", needAmmosmith2: "Wymagany Ammosmith 2",
@@ -159,6 +163,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const [lastResult, setLastResult] = useState(null);
   const [expandedRecipeId, setExpandedRecipeId] = useState(null);
   const [baseRecipes, setBaseRecipes] = useState([]);
+  const reservations = useCampaignResourceReservations();
 
   useEffect(() => {
     let active = true;
@@ -231,6 +236,13 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     }
     if (!state.knownRare) {
       setLastResult({ recipeId: recipe.id, error: "recipe_unknown" });
+      return;
+    }
+
+    const inventoryAfterCost = consumeCraftingMaterials(character?.inventoryItems || [], getRecipeMaterials(recipe));
+    const afterResources = playerResources({ ...character, inventoryItems: inventoryAfterCost });
+    if (["caps", "common", "uncommon", "rare"].some((key) => Number(afterResources[key] || 0) < Number(reservations[key] || 0))) {
+      setLastResult({ recipeId: recipe.id, error: "reserved" });
       return;
     }
 
@@ -315,6 +327,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     if (!lastResult || lastResult.recipeId !== recipe.id) return null;
     if (lastResult.error) {
       const message = lastResult.error === "bench" ? copy.needBench
+        : lastResult.error === "reserved" ? copy.reserved
         : lastResult.error === "materials" ? copy.missingMaterials
           : lastResult.error === "perks" ? copy.missingPerks
             : lastResult.error === "ammosmith_rank" ? copy.needAmmosmith2

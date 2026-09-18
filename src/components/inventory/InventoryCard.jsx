@@ -49,6 +49,8 @@ export default function InventoryCard({
   onEdit,
   onCopy,
   onRemove,
+  locked = false,
+  lockedLabel = "",
 }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
@@ -113,19 +115,20 @@ export default function InventoryCard({
               ▶
             </button>
           )}
-          <button type="button" className="pip-btn" onClick={() => onEdit(index)}>
+          <button type="button" className="pip-btn" onClick={() => onEdit(index)} disabled={locked} title={locked ? lockedLabel : undefined}>
             {t("common.edit")}
           </button>
           <button type="button" className="pip-btn" onClick={() => onCopy(index)}>
             {t("common.copy")}
           </button>
-          <button type="button" className="pip-btn is-danger" onClick={() => onRemove(index)}>
+          <button type="button" className="pip-btn is-danger" onClick={() => onRemove(index)} disabled={locked} title={locked ? lockedLabel : undefined}>
             {t("common.delete")}
           </button>
         </div>
       )}
 
       <div className="pip-floating-card-body">
+        {locked && lockedLabel ? <small className="pip-item-reserved-note">{lockedLabel}</small> : null}
         <div className="pip-item-title-row">
           <h3>{localized.displayName || t("inventory.unnamedItem")}</h3>
           <span className="pip-item-category-inline">

@@ -1,0 +1,54 @@
+name: Personal construction checks
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'api/**'
+      - 'tests/**'
+      - '.github/workflows/settlement-personal-checks.yml'
+permissions:
+  contents: read
+concurrency:
+  group: settlement-personal-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Source audit bundle for restricted-network development
+        run: |
+          python - <<'PY'
+          import pathlib, subprocess, zipfile
+          root = pathlib.Path('.')
+          tracked = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          allowed = {'.js', '.jsx', '.ts', '.tsx', '.json', '.css', '.mjs', '.cjs', '.yml', '.yaml', '.html', '.py', '.md'}
+          with zipfile.ZipFile('/tmp/settlement-source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+              for name in tracked:
+                  p = pathlib.Path(name)
+                  if not name or not p.is_file() or p.suffix not in allowed:
+                      continue
+                  if any(part.startswith('.env') or part in {'.git', 'node_modules', 'android', 'ios'} for part in p.parts):
+                      continue
+                  if p.parts[0] not in {'src', 'server', 'api', 'tests', 'tools', 'docs', '.github'} and len(p.parts) > 1:
+                      continue
+                  archive.write(p, name)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: settlement-source-${{ github.run_id }}
+          path: /tmp/settlement-source.zip
+          retention-days: 1
+      - name: Campaign and settlement regression suites
+        run: node --test tests/campaign*.test.js tests/settlement*.test.js
+      - run: npm run build

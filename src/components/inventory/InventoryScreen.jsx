@@ -6,6 +6,7 @@ import { getCompanionCarryWeight } from "../../utils/companionStorage.js";
 import InventoryCard from "./InventoryCard.jsx";
 import InventoryEditor from "./InventoryEditor.jsx";
 import { LegendaryBadge } from "../shared/LegendaryPropertyEditor.jsx";
+import useCampaignResourceReservations from "../../hooks/useCampaignResourceReservations.js";
 
 const CATEGORY_LABEL_KEYS = {
   all: "inventory.categories.all",
@@ -19,10 +20,10 @@ const CATEGORY_LABEL_KEYS = {
 };
 
 const CARRY_LABELS = {
-  en: { player: "Player", companions: "Companions", total: "Total", legendary: "Legendary", normal: "Non-legendary", any: "All items" },
-  ru: { player: "Игрок", companions: "Компаньоны", total: "Итого", legendary: "Легендарные", normal: "Обычные", any: "Все предметы" },
-  uk: { player: "Гравець", companions: "Компаньйони", total: "Разом", legendary: "Легендарні", normal: "Звичайні", any: "Усі предмети" },
-  pl: { player: "Gracz", companions: "Towarzysze", total: "Razem", legendary: "Legendarne", normal: "Zwykłe", any: "Wszystkie" },
+  en: { player: "Player", companions: "Companions", total: "Total", legendary: "Legendary", normal: "Non-legendary", any: "All items", reserved: "Reserved for settlement construction" },
+  ru: { player: "Игрок", companions: "Компаньоны", total: "Итого", legendary: "Легендарные", normal: "Обычные", any: "Все предметы", reserved: "Зарезервировано для строительства поселения" },
+  uk: { player: "Гравець", companions: "Компаньйони", total: "Разом", legendary: "Легендарні", normal: "Звичайні", any: "Усі предмети", reserved: "Зарезервовано для будівництва поселення" },
+  pl: { player: "Gracz", companions: "Towarzysze", total: "Razem", legendary: "Legendarne", normal: "Zwykłe", any: "Wszystkie", reserved: "Zarezerwowane na budowę osady" },
 };
 
 function isProtectedInventoryItem(item) {
@@ -54,6 +55,7 @@ export default function InventoryScreen({
   const [legendaryFilter, setLegendaryFilter] = useState("all");
   const language = String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
   const carryLabels = CARRY_LABELS[language] || CARRY_LABELS.en;
+  const reservations = useCampaignResourceReservations();
   const companionCarryWeight = getCompanionCarryWeight();
   const playerCarryWeight = Math.max(0, Number(carryWeight || 0));
   const totalCarryWeight = Number((playerCarryWeight + companionCarryWeight).toFixed(2));
@@ -95,8 +97,17 @@ export default function InventoryScreen({
     originalIndex: items.indexOf(item),
   }));
 
+  const itemReservationTier = (item) =>
+    item?.sourceType === "crafting_material" && ["common", "uncommon", "rare"].includes(item?.materialTier)
+      ? item.materialTier
+      : null;
+  const isSettlementReservedItem = (item) => {
+    const tier = itemReservationTier(item);
+    return Boolean(tier && Number(reservations[tier] || 0) > 0);
+  };
+
   const selectableFilteredItems = filteredItemsWithIndex.filter(
-    ({ item }) => !isProtectedInventoryItem(item)
+    ({ item }) => !isProtectedInventoryItem(item) && !isSettlementReservedItem(item)
   );
 
   const parsedBonusPercent = Math.max(0, Number(sellBonusPercent || 0));
@@ -123,8 +134,8 @@ export default function InventoryScreen({
   };
 
   const sellableSelectedIndices = useMemo(
-    () => selectedIndices.filter((index) => !isProtectedInventoryItem(items[index])),
-    [items, selectedIndices]
+    () => selectedIndices.filter((index) => !isProtectedInventoryItem(items[index]) && !isSettlementReservedItem(items[index])),
+    [items, selectedIndices, reservations.common, reservations.uncommon, reservations.rare]
   );
 
   const selectedFullValue = useMemo(() => {
@@ -200,7 +211,12 @@ export default function InventoryScreen({
                 boxSizing: "border-box",
               }}
               value={caps}
-              onChange={(e) => onCapsChange(e.target.value)}
+              min={Math.max(0, Number(reservations.caps || 0))}
+              onChange={(e) => {
+                const next = Number(e.target.value || 0);
+                if (next < Number(reservations.caps || 0)) return;
+                onCapsChange(e.target.value);
+              }}
             />
           </label>
         </div>
@@ -288,7 +304,8 @@ export default function InventoryScreen({
 
         <div className="pip-stack">
           {filteredItemsWithIndex.map(({ item, originalIndex }) => {
-            const isProtected = isProtectedInventoryItem(item);
+            const settlementReserved = isSettlementReservedItem(item);
+            const isProtected = isProtectedInventoryItem(item) || settlementReserved;
             return (
               <div
                 key={`${item.name}-${originalIndex}`}
@@ -316,6 +333,8 @@ export default function InventoryScreen({
                     onEdit={onEdit}
                     onCopy={onCopy}
                     onRemove={onRemove}
+                    locked={settlementReserved}
+                    lockedLabel={settlementReserved ? carryLabels.reserved : ""}
                   />
                 </div>
               </div>

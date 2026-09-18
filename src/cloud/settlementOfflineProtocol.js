@@ -1,3 +1,4 @@
+import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 /** Wire format for the first local-first increment. Financial commands deliberately
  * stay outside this protocol until inventory reservations are shared by all screens. */
 export const OFFLINE_PROTOCOL = 1;
@@ -5,7 +6,7 @@ export const SYNC_INTERVAL = 24 * 60 * 60 * 1000;
 export const MAX_BATCH = 32;
 export const MAX_PENDING = 400;
 export const MAX_BATCH_BYTES = 48000;
-export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority']);
+export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority', 'build']);
 const id = value => typeof value === 'string' && /^[a-zA-Z0-9_:-]{1,160}$/.test(value);
 const uuid = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{8,100}$/.test(value);
 export const fail = code => { throw new Error(code); };
@@ -19,10 +20,13 @@ export function localCommand(input) {
   if (!input || input.type !== 'settlement' || !id(input.settlementId)) fail('ONLINE_ACTION_REQUIRED');
   const c = input.command;
   if (!c || !LOCAL_ACTIONS.includes(c.type)) fail('ONLINE_ACTION_REQUIRED');
-  const required = c.type === 'move' ? ['buildingId'] : c.type === 'priority' ? ['key'] : ['workerId'];
+  const required = c.type === 'move' ? ['buildingId'] : c.type === 'priority' ? ['key'] : c.type === 'build' ? ['buildingType'] : ['workerId'];
   if (required.some(key => !id(c[key]))) fail('INVALID_COMMAND');
   let command;
-  if (c.type === 'move') {
+  if (c.type === 'build') {
+    if (c.paymentSource !== 'personal' || ![c.x, c.y].every(v => Number.isInteger(v) && v >= 0 && v < 24)) fail('ONLINE_ACTION_REQUIRED');
+    command = { type: c.type, buildingType: c.buildingType, x: c.x, y: c.y, paymentSource: 'personal' };
+  } else if (c.type === 'move') {
     if (![c.x, c.y].every(v => Number.isInteger(v) && v >= 0 && v < 24)) fail('PLACEMENT');
     command = { type: c.type, buildingId: c.buildingId, x: c.x, y: c.y };
   } else if (c.type === 'priority') {
@@ -46,10 +50,24 @@ const buildingToken = b => b ? {
 } : null;
 /** Compare the specific affected entity, not the whole campaign revision. Changes
  * to a different resident may merge; competing orders for one resident may not. */
-export function commandPrecondition(campaign, input) {
+export function commandPrecondition(campaign, input, uid = null) {
   const clean = localCommand(input), c = clean.command;
   const s = campaign?.settlements?.find(s => s.id === clean.settlementId);
   if (!s) fail('NOT_FOUND');
+  if (c.type === 'build') {
+    const character = campaign?.character || campaign?.accounts?.[uid] || null;
+    const resources = character ? {
+      caps: Number(character.caps || 0),
+      inventoryItems: (character.inventoryItems || []).filter(item => item?.sourceType === 'crafting_material').map(item => ({
+        materialTier: item.materialTier || null,
+        quantity: String(item.quantity ?? item.qty ?? 0),
+      })),
+    } : null;
+    return canonical({
+      buildings: (s.buildings || []).map(b => ({ id: b.id, type: b.type, state: b.state, x: b.x, y: b.y })),
+      resources,
+    });
+  }
   if (c.type === 'move') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
   if (c.type === 'priority') return canonical((s.buildings || []).map(b => ({
     id: b.id, state: b.state, priority: b.queuePriority ?? null,
@@ -78,10 +96,31 @@ export function validateBatch(body) {
   }
   return body;
 }
+function personalBuildCost(command) {
+  if (command?.type !== 'settlement' || command.command?.type !== 'build' || command.command?.paymentSource !== 'personal') return null;
+  const rule = getRulebookBuilding(command.command.buildingType);
+  if (!rule) return null;
+  return {
+    caps: Math.max(0, Number(rule.caps || 0)),
+    common: Math.max(0, Number(rule.materials?.common || 0)),
+    uncommon: Math.max(0, Number(rule.materials?.uncommon || 0)),
+    rare: Math.max(0, Number(rule.materials?.rare || 0)),
+  };
+}
+export function reservationTotals(record) {
+  const totals = { caps: 0, common: 0, uncommon: 0, rare: 0 };
+  for (const key of Object.keys(totals)) totals[key] += Math.max(0, Number(record?.sheetSpent?.[key] || 0));
+  for (const op of record?.entries || []) {
+    const cost = personalBuildCost(op.command);
+    if (!cost) continue;
+    for (const key of Object.keys(totals)) totals[key] += cost[key];
+  }
+  return totals;
+}
 export function newRecord(uid, campaignId, deviceId) {
   return { schema: 1, uid, campaignId, deviceId, nextSequence: 1, snapshot: null,
     receivedAt: 0, lastSyncAt: 0, nextAttemptAt: 0, failures: 0, blocked: false,
-    entries: [], inflight: null, immediate: null, history: [], lease: null };
+    entries: [], inflight: null, immediate: null, history: [], sheetSpent: { caps: 0, common: 0, uncommon: 0, rare: 0 }, lease: null };
 }
 export function mergeSnapshot(record, snapshot, now) {
   if (!snapshot || snapshot.id !== record.campaignId || !Number.isSafeInteger(snapshot.revision) || snapshot.revision < 0 ||
@@ -98,8 +137,8 @@ export function projectRecord(record, apply) {
   if (!campaign) return { campaign, conflicts };
   for (const op of record.entries) {
     try {
-      if (commandPrecondition(campaign, op.command) !== op.precondition) fail('LOCAL_CONFLICT');
-      campaign = apply(campaign, record.uid, op.command);
+      if (commandPrecondition(campaign, op.command, record.uid) !== op.precondition) fail('LOCAL_CONFLICT');
+      campaign = apply(campaign, record.uid, op.command, op.requestId);
     } catch (error) { conflicts.push({ requestId: op.requestId, error: error.message }); }
   }
   return { campaign, conflicts };
@@ -111,8 +150,8 @@ export function enqueue(record, input, requestId, now, apply) {
   const command = localCommand(input);
   const { campaign, conflicts } = projectRecord(record, apply);
   if (conflicts.length) fail('SYNC_REQUIRED');
-  const precondition = commandPrecondition(campaign, command);
-  apply(campaign, record.uid, command); // Validate before the transaction can commit.
+  const precondition = commandPrecondition(campaign, command, record.uid);
+  apply(campaign, record.uid, command, requestId); // Validate and reserve against the projected character before commit.
   if (!Number.isSafeInteger(record.nextSequence) || record.nextSequence >= Number.MAX_SAFE_INTEGER) fail('OUTBOX_FULL');
   const op = { sequence: record.nextSequence, requestId, command, precondition, createdAt: now };
   if (precondition.length > 20000 || new TextEncoder().encode(JSON.stringify(op)).length > MAX_BATCH_BYTES - 512) fail('OUTBOX_ENTRY_TOO_LARGE');
@@ -144,7 +183,15 @@ export function acknowledge(record, response, now) {
   mergeSnapshot(record, response.campaign, now);
   const acknowledged = new Set(batch.entries.map(op => op.requestId));
   record.entries = record.entries.filter(op => !acknowledged.has(op.requestId));
-  record.history = [...response.results.map(r => ({ ...r, acknowledgedAt: now })), ...record.history].slice(0, 100);
+  const spent = { caps: 0, common: 0, uncommon: 0, rare: 0, ...(record.sheetSpent || {}) };
+  response.results.forEach((result, index) => {
+    if (result.state !== 'accepted') return;
+    const cost = personalBuildCost(batch.entries[index]?.command);
+    if (!cost) return;
+    for (const key of ['caps', 'common', 'uncommon', 'rare']) spent[key] = Math.max(0, Number(spent[key] || 0)) + cost[key];
+  });
+  record.sheetSpent = spent;
+  record.history = [...response.results.map((r, i) => ({ ...r, command: structuredClone(batch.entries[i]?.command || null), acknowledgedAt: now })), ...record.history].slice(0, 100);
   record.inflight = null; record.failures = 0; record.nextAttemptAt = 0;
   record.lastSyncAt = now;
   return record;

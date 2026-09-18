@@ -43,7 +43,7 @@ export function createSettlementSyncHandler(getServices = services) {
         apply(campaign, uid, input, requestId, now) {
           // The same validation powers the local preview; canonical gameplay still
           // runs in the existing server command handler at SERVER time only.
-          applyOfflineCommand({ ...campaign, character: campaign.accounts[uid] || null }, uid, input);
+          applyOfflineCommand({ ...campaign, character: campaign.accounts[uid] || null }, uid, input, requestId);
           return campaignCommand(campaign, uid, { ...input, requestId }, now);
         },
       });
