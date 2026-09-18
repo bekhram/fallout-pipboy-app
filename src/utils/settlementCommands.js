@@ -1,3 +1,5 @@
+import { reserveProvisions } from "./settlementProvisions.js";
+import { availableSettlementActions } from "./settlementResidents.js";
 import * as dev from './settlementDevelopment.js';
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { ROOMS, SETTLEMENT_ACTIONS } from '../data/settlement/rulebook.js';
@@ -18,6 +20,7 @@ export function applySettlementCommand(settlement, character, actor, command, no
   const unlocked = () => { if (!b || b.locked || b.type === 'settlement_hq') fail('LOCKED'); };
   const checkedRule = rule => { if (dev.buildBlockers(s, character, rule, actor).length) fail('REQUIREMENTS'); };
   switch (c.type) {
+    case 'supplies': s = reserveProvisions(s, c.resource); break;
     case 'build': {
       if (!Number.isInteger(c.x) || !Number.isInteger(c.y) || !dev.canFit(s, c.buildingType, c.x, c.y) || c.buildingType === 'settlement_hq') fail('PLACEMENT');
       checkedRule(getRulebookBuilding(c.buildingType));
@@ -64,7 +67,8 @@ export function applySettlementCommand(settlement, character, actor, command, no
       s = { ...s, buildings: s.buildings.map(item => item.id === b.id ? { ...item, rooms: item.rooms.filter(r => r.id !== room.id) } : item), attributes: { ...s.attributes, happiness: Math.max(1, Math.min(20, Number(s.attributes?.happiness || 10) - (room.happinessApplied ? Number(ROOMS[room.type]?.effects?.happiness || 0) : 0))) }, settlers: s.settlers.map(w => w.settlementAction?.targetRoomId === room.id ? { ...w, settlementAction: null, assignedBuildingId: null, status: 'idle' } : w) }; break;
     }
     case 'action':
-      if (c.action && !Object.values(SETTLEMENT_ACTIONS).some(a => a.id === c.action)) fail('INVALID_ACTION');
+      if (!(s.settlers || []).some(w => w.id === c.workerId)) fail('NOT_FOUND');
+      if (c.action && !availableSettlementActions(s).some(a => a.id === c.action)) fail('INVALID_ACTION');
       s = { ...s, settlers: s.settlers.map(w => w.id === c.workerId ? { ...w, settlementAction: c.action ? { type: c.action } : null, assignedBuildingId: null, status: c.action ? 'working' : 'idle' } : w) }; break;
     case 'attack': s = resolveSettlementAttack(s, c.attackId); break;
     default: fail('INVALID_COMMAND');

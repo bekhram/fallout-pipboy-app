@@ -1,3 +1,5 @@
+import { provisions, collectDailySurplus } from "./settlementProvisions.js";
+import { guardDefense, populationNeeds, residentNeeds } from "./settlementResidents.js";
 import { advanceConstruction, cost } from "./settlementDevelopment.js";
 import { ROOMS, SETTLEMENT_RULEBOOK } from "../data/settlement/rulebook.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
@@ -34,6 +36,7 @@ function rollCombatDice(count) {
 export function normalizeStockpile(stockpile = {}, legacyMaterials = 0) {
   const legacyCommon = Number(stockpile.common ?? legacyMaterials ?? 0) || 0;
   return {
+    provisions: provisions(stockpile),
     capacityLbs: Number(stockpile.capacityLbs || SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs),
     materials: {
       common: Number(stockpile.materials?.common ?? legacyCommon) || 0,
@@ -120,7 +123,7 @@ function isActive(building) {
   return building?.state === "active" && Number(building.condition ?? 100) > 0;
 }
 
-function calculateStaticAttributes(settlement, dailyDefenseBonus = 0, foodOverride = null) {
+function calculateStaticAttributes(settlement, dailyDefenseBonus = null, foodOverride = null) {
   const people = Array.isArray(settlement.settlers)
     ? settlement.settlers.length
     : Math.max(0, Math.floor(Number(settlement.attributes?.people ?? settlement.resources?.population ?? 0)));
@@ -129,8 +132,9 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0, foodOverri
   const resourceGrid = resolveSettlementResources(settlement);
   const base = {
     people,
+    needsPeople: populationNeeds(settlement),
     food: Math.max(0, Number(foodOverride ?? settlement.attributes?.food ?? settlement.resources?.food ?? 0)),
-    water: Math.max(0, Number(resourceGrid.water || 0)),
+    water: Math.max(0, Number(resourceGrid.water || 0) + Number(settlement.activeDaySupplies?.water || 0)),
     power: Math.max(0, Number(powerGrid.produced || 0)),
     defense: Math.max(0, Number(dailyDefenseBonus || 0)),
     beds: 0,
@@ -142,7 +146,7 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0, foodOverri
   let noisyCount = 0;
   let guardStructures = 0;
   let officeCount = 0;
-  let sirenBonus = 0;
+  let sirenCount = 0;
 
   for (const building of settlement.buildings || []) {
     if (!isActive(building)) continue;
@@ -157,7 +161,7 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0, foodOverri
       base.beds += Number(effects.beds || 0);
       storageBonus += Number(effects.storageLbs || 0);
       if (effects.guardActionDefenseBonus) guardStructures += 1;
-      if (effects.defensePerGuardPost) sirenBonus += guardStructures * Number(effects.defensePerGuardPost || 0);
+      if (effects.defensePerGuardPost) sirenCount += Number(effects.defensePerGuardPost || 0);
     }
     if (effects.noisy) noisyCount += 1;
 
@@ -170,7 +174,8 @@ function calculateStaticAttributes(settlement, dailyDefenseBonus = 0, foodOverri
     }
   }
 
-  base.defense += sirenBonus;
+  base.defense += sirenCount * guardStructures;
+  if (dailyDefenseBonus === null) base.defense += guardDefense(settlement, guardStructures);
 
   return {
     ...base,
@@ -265,12 +270,12 @@ function resolveResidentActions(input, now) {
   const resourceGrid = resolveSettlementResources(settlement);
   const attributes = {
     ...(settlement.attributes || {}),
-    food: dailyFood,
+    food: dailyFood + Number(settlement.nextDaySupplies?.food || 0),
     water: resourceGrid.water,
     income: dailyIncome,
   };
 
-  return { settlement: { ...settlement, attributes, stockpile }, dailyDefenseBonus, actionEvents: events };
+  return { settlement: { ...settlement, activeDaySupplies: settlement.nextDaySupplies || {}, attributes, stockpile }, dailyDefenseBonus, actionEvents: events };
 }
 
 function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
@@ -278,7 +283,7 @@ function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
   let happiness = clamp(stats.happiness, 1, 20);
   const failedNeeds = [];
   for (const key of ["beds", "food", "water", "defense"]) {
-    if (Number(stats[key] || 0) < Number(stats.people || 0)) {
+    if (Number(stats[key] || 0) < Number(stats.needsPeople || 0)) {
       happiness = Math.max(1, happiness - 1);
       failedNeeds.push(key);
     }
@@ -286,9 +291,9 @@ function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
 
   let settlers = [...(input.settlers || [])];
   let departed = null;
-  if (settlers.length && happiness < settlers.length) {
-    departed = settlers[settlers.length - 1];
-    settlers = settlers.slice(0, -1);
+  if (populationNeeds(input) && happiness < populationNeeds(input)) {
+    departed = [...settlers].reverse().find(residentNeeds);
+    settlers = settlers.filter(w => w.id !== departed.id);
   }
 
   const attributes = { ...(input.attributes || {}), people: settlers.length, happiness };
@@ -301,7 +306,7 @@ function applyNeedsAndDeparture(input, dailyDefenseBonus, now) {
 function scheduleAttackAtEndOfDay(input, now) {
   const unresolved = (input.attacks || []).some((attack) => attack.state === "warning" || attack.state === "active");
   if (unresolved || now < Number(input.attackRiskBlockedUntil || 0)) return input;
-  const stats = calculateStaticAttributes(input, 0, input.attributes?.food);
+  const stats = calculateStaticAttributes(input, null, input.attributes?.food);
   const foodSurplus = Number(stats.food || 0) > Number(stats.people || 0);
   const waterSurplus = Number(stats.water || 0) > Number(stats.people || 0);
   if (!foodSurplus && !waterSurplus) return input;
@@ -338,9 +343,11 @@ function scheduleAttackAtEndOfDay(input, now) {
 
 export function advanceSettlementDay(input, now = Date.now()) {
   const actionResult = resolveResidentActions(input, now);
+  const production = calculateStaticAttributes(actionResult.settlement, actionResult.dailyDefenseBonus, actionResult.settlement.attributes.food);
   let settlement = applyNeedsAndDeparture(actionResult.settlement, actionResult.dailyDefenseBonus, now);
+  settlement = collectDailySurplus(settlement, production);
   settlement = scheduleAttackAtEndOfDay(settlement, now);
-  const derived = calculateStaticAttributes(settlement, 0, settlement.attributes?.food);
+  const derived = calculateStaticAttributes(settlement, null, settlement.attributes?.food);
   const stockpile = {
     ...normalizeStockpile(settlement.stockpile, settlement.resources?.materials),
     capacityLbs: derived.stockpileCapacityLbs,
@@ -424,5 +431,5 @@ export function getConstructionProgress(building) {
 }
 
 export function getSettlementRulebookSnapshot(settlement) {
-  return calculateStaticAttributes(settlement, 0, settlement.attributes?.food);
+  return calculateStaticAttributes(settlement, null, settlement.attributes?.food);
 }

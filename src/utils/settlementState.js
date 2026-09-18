@@ -56,7 +56,7 @@ function ensureRulebookState(input) {
   const settlement = ensureSettlementHQ(input);
   const legacy = { ...(settlement.resources || {}) };
   const existingAttributes = settlement.attributes || {};
-  const people = Array.isArray(settlement.settlers) && settlement.settlers.length
+  const people = Array.isArray(settlement.settlers)
     ? settlement.settlers.length
     : Math.max(0, Math.floor(Number(existingAttributes.people ?? legacy.population ?? 4)));
   const migratedHappiness = existingAttributes.happiness ?? legacy.happiness;

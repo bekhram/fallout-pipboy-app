@@ -1,3 +1,4 @@
+import { SettlementResidents } from './SettlementResidents.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlement/buildings.js';
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
@@ -34,6 +35,7 @@ export default function SettlementPhaserMap(props) {
           this.grid.lineStyle(1,0xc0dda4,0.12);
           for(let i=0;i<=24;i++){this.grid.lineBetween(i*CELL,0,i*CELL,WORLD);this.grid.lineBetween(0,i*CELL,WORLD,i*CELL);}
           this.buildingLayer=this.add.container(0,0);
+          this.residents=new SettlementResidents(this);
           this.highlight=this.add.graphics();
           this.preview=this.add.graphics();
           this.cameras.main.setBounds(0,0,WORLD,WORLD);
@@ -60,6 +62,7 @@ export default function SettlementPhaserMap(props) {
           this.sync();this.resize();setReady(true);
           this.scale.on('resize',this.resize,this);
         }
+        update(time,delta) { this.residents?.update(time,delta); }
         cellAt(pointer) {
           const pt=this.cameras.main.getWorldPoint(pointer.x,pointer.y);
           const x=Math.floor(pt.x/CELL),y=Math.floor(pt.y/CELL);
@@ -77,6 +80,7 @@ export default function SettlementPhaserMap(props) {
         sync() {
           if(!this.buildingLayer)return;
           const p=latest.current;
+          this.residents.sync(p.settlement,p.language);
           if(this.previousBuildings !== p.settlement.buildings || this.previousLanguage !== p.language){
             this.buildingLayer.removeAll(true);
             for(const b of p.settlement.buildings || []){

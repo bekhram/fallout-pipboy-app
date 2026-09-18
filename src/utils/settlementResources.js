@@ -49,7 +49,9 @@ export function resolveSettlementResources(settlement) {
   const brahmin = Math.max(0, Math.floor(Number(settlement.livestock?.brahmin || 0)));
 
   return {
-    water,
+    water: Math.max(0, water - Math.ceil(cropSlots / 3)),
+    waterProduced: water,
+    cropWater: Math.ceil(cropSlots / 3),
     cropSlots,
     cropStructures,
     brahmin,
