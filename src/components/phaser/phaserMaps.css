@@ -48,11 +48,18 @@ body:has(.phaser-map.is-expanded) { overflow: hidden; }
 .gm-session-map:has(.phaser-map) > .phaser-map { grid-area: map; }
 .gm-session-map:has(.phaser-map) { display: flex !important; flex-direction: column; }
 .gm-session-map:has(.phaser-map) > .phaser-map { flex: none; }
+/* Phaser has no legacy grid offset: keep drawing tools in normal flow. */
+.gm-session-map:has(.phaser-map) > .battlemap-tools-drawer { position: static; inset: auto; order: -1; flex: none; flex-wrap: wrap; max-width: 100%; gap: 8px; margin: 0 0 8px; }
+.gm-session-map:has(.phaser-map) > .battlemap-tools-drawer .battlemap-tools-toggle,
+.gm-session-map:has(.phaser-map) > .battlemap-tools-drawer .battlemap-tools-panel button { min-width: 44px; min-height: 44px; }
+.gm-session-map:has(.phaser-map) > .battlemap-tools-drawer .battlemap-tools-toggle b { display: inline; }
+.gm-session-map:has(.phaser-map) > .battlemap-tools-drawer .battlemap-tools-toggle { width: auto; padding: 6px 10px; font-size: 11px; }
 .gm-session-map:has(.phaser-map) .tactical-background-bar { font-size: 11px; padding: 6px; }
 .gm-session-map:has(.phaser-map) .gm-session-map__hint { display: none; }
 @media (max-width: 780px) {
   .phaser-map { height: 62dvh; min-height: 360px; border-radius: 12px; }
-  .phaser-map__controls { bottom: 10px; gap: 0; padding: 3px; }
+  .phaser-map__controls { top: 10px; bottom: auto; gap: 0; padding: 3px; flex-wrap: wrap; justify-content: center; width: max-content; }
+  .phaser-map.is-expanded .phaser-map__controls { top: max(10px, env(safe-area-inset-top)); bottom: auto; }
   .phaser-map__controls button { min-width: 35px; padding: 7px; font-size: 11px; }
   .phaser-map__controls button span { display: none; }
   .pip-map-screen:has(.phaser-map) { padding: 0; }
