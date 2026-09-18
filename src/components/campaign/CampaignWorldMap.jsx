@@ -45,7 +45,7 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
     if (!campaignId || !uid || !world.refreshWorld) return undefined;
     let cancelled=false;
     const poll=()=>{ if(!cancelled && document.visibilityState === 'visible') void world.refreshWorld(); };
-    const timer=window.setInterval(poll, 30000);
+    const timer=window.setInterval(poll, 15000);
     const visible=()=>{ if(document.visibilityState === 'visible') poll(); };
     document.addEventListener('visibilitychange', visible);
     return()=>{cancelled=true;window.clearInterval(timer);document.removeEventListener('visibilitychange',visible);};
@@ -118,7 +118,7 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
         onCell={(x, y) => { setSelected({ x, y }); setSelectedMarkerId(null); }}
         markers={[
           ...region.locations.map(l => ({ id: l.id, x: l.worldX, y: l.worldY, icon: l.icon || '◆' })),
-          ...members.map(([id, m], index) => ({ id: `member-${id}`, ...(campaign.worldMap?.positions?.[id] || region.start), icon: String(index + 1), label: m.name, memberMarker: true, memberId: id })),
+          ...members.map(([id, m], index) => ({ id: `member-${id}`, ...(campaign.worldMap?.positions?.[id] || region.start), icon: String(index + 1), label: m.name, kind: 'member', memberMarker: true, memberId: id })),
           ...settlements.filter(s => s.regionId === region.id).map(s => ({ id: s.id, x: s.worldX, y: s.worldY, icon: '⌂', label: s.name, settlement: true })),
           ...sharedMarkers.map(marker => ({ ...marker, x: marker.x, y: marker.y, icon: MARKER_ICONS[marker.category] || (marker.kind === 'gm' ? '★' : '●'), label: marker.label, sharedMarker: true })),
         ]}
