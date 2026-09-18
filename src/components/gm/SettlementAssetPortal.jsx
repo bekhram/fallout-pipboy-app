@@ -1,3 +1,4 @@
+import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -30,7 +31,7 @@ function SettlementHouseAsset({ house, preview = false }) {
   const visualH = Math.max(1, Math.min(GRID - visualY, Math.round(Number(house?.h || 10))));
 
   return (
-    <img
+    <PhaserAsset
       src={house.assetSrc}
       alt=""
       draggable={false}

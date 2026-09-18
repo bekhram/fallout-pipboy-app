@@ -193,7 +193,7 @@ export default function BattlemapViewportControls({
   useEffect(() => {
     const grid = targets.grid;
     const container = targets.container;
-    if (!grid || !container) return undefined;
+    if (!grid || !container || grid.dataset.phaserGrid) return undefined;
 
     const apply = () => {
       const nextMetrics = {
@@ -290,7 +290,7 @@ export default function BattlemapViewportControls({
 
   const focusMap = (behavior = "smooth") => {
     const grid = targets.grid;
-    if (!grid) return;
+    if (!grid || grid.dataset.phaserGrid) return;
 
     let x = 0;
     let y = 0;
@@ -329,7 +329,7 @@ export default function BattlemapViewportControls({
     return () => cancelAnimationFrame(frame);
   }, [scene?.sceneId, targets.grid]);
 
-  if (!scene || !targets.container || !targets.grid) return null;
+  if (!scene || !targets.container || !targets.grid || targets.grid.dataset.phaserGrid) return null;
 
   const fit = () => {
     const grid = targets.grid;

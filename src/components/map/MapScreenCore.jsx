@@ -890,49 +890,20 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           ) : null}
 
           <div className="pip-panel pip-map-panel">
+          <nav className="phaser-sector-nav" aria-label={tx("direction")}>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--north" onClick={() => shiftMap("north")} disabled={!atTopEdge}>{t("mapPanel.north")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--west" onClick={() => shiftMap("west")} disabled={!atLeftEdge}>{t("mapPanel.west")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} disabled={!atRightEdge}>{t("mapPanel.east")}</button>
           <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} disabled={!atBottomEdge}>{t("mapPanel.south")}</button>
+          </nav>
 
           <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: `url(${REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage})`, backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
-            <div className="pip-map-poi-layer">
-              {visibleWorldLocations.map((location) => (
-                <button
-                  key={`world-${location.id}`}
-                  type="button"
-                  className={`pip-map-poi ${getWorldLocationClass(location)} ${trackedLocationId === location.id ? "is-selected" : ""}`}
-                  style={{ left: `${((location.localX - viewStartX + 0.5) / VIEW_COLS) * 100}%`, top: `${((location.localY - viewStartY + 0.5) / VIEW_ROWS) * 100}%` }}
-                  title={getWorldLocationDisplayName(location, t)}
-                  onClick={() => selectStaticLocation(location)}
-                >
-                  <span className="pip-map-poi__icon">{location.icon}</span>
-                </button>
-              ))}
-
-              {visibleRandomPoiCells.map((cell) => (
-                <button
-                  key={`random-poi-${cell.x}-${cell.y}-${cell.poi.id}`}
-                  type="button"
-                  className={`pip-map-poi pip-map-poi--random ${getRandomPoiClass(cell.poi)} ${selectedCell && selectedCell.x === cell.x && selectedCell.y === cell.y ? "is-selected" : ""}`}
-                  style={{ left: `${((cell.x - viewStartX + 0.5) / VIEW_COLS) * 100}%`, top: `${((cell.y - viewStartY + 0.5) / VIEW_ROWS) * 100}%` }}
-                  title={getPoiDisplayName(cell.poi, t)}
-                  onClick={() => setSelectedCell(cell)}
-                >
-                  <span className="pip-map-poi__icon">{getPoiIcon(cell.poi)}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="pip-map-player-layer">
-              <div className="pip-map-player-marker" style={{ left: `${((playerPosition.x - viewStartX + 0.5) / VIEW_COLS) * 100}%`, top: `${((playerPosition.y - viewStartY + 0.5) / VIEW_ROWS) * 100}%` }} title={tx("currentPosition")}>
-                <span className="pip-map-player-marker__inner">●</span>
-              </div>
-            </div>
-
             <div className="pip-map-grid-layer">
               <MapGrid
                 key={activeRegion.id}
+                background={REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage}
+                markers={[...visibleWorldLocations.map(location => ({ ...location, x: location.localX, y: location.localY })), ...visibleRandomPoiCells.map(cell => ({ id: `poi-${cell.x}-${cell.y}`, x: cell.x, y: cell.y, icon: getPoiIcon(cell.poi), cell }))]}
+                onMarker={marker => marker.cell ? setSelectedCell(marker.cell) : selectStaticLocation(marker)}
                 mapData={mapData}
                 playerPosition={playerPosition}
                 selectedCell={selectedCell}

@@ -18,6 +18,11 @@ function readOpen(role) {
 function pointFor(grid, event) {
   if (!grid) return null;
   const rect = grid.getBoundingClientRect();
+  if (grid.dataset.phaserGrid) {
+    const cols = getComputedStyle(grid).gridTemplateColumns.split(" ").length;
+    const rows = getComputedStyle(grid).gridTemplateRows.split(" ").length;
+    return { x: (event.clientX - rect.left) / rect.width * cols, y: (event.clientY - rect.top) / rect.height * rows };
+  }
   const cell = Number.parseFloat(grid.style.getPropertyValue("--battlemap-cell")) || grid.querySelector(".gm-session-map__cell")?.offsetWidth || 1;
   return {
     x: (event.clientX - rect.left + grid.scrollLeft) / Math.max(1, cell),

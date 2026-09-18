@@ -1,0 +1,65 @@
+.phaser-map { position: relative; isolation: isolate; width: 100%; height: clamp(380px, 65dvh, 820px); min-width: 0; overflow: hidden; touch-action: none; border: 1px solid #395448; border-radius: 16px; background: #07120c; color: #c3e9c4; outline-offset: 3px; }
+.phaser-map__canvas { position: absolute; inset: 0; z-index: 0; }
+.phaser-map__canvas canvas { display: block; }
+.phaser-map__plane { position: absolute; top: 0; left: 0; transform-origin: 0 0; z-index: 1; }
+.phaser-map__controls { position: absolute; z-index: 20; bottom: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; max-width: calc(100% - 16px); padding: 5px; border: 1px solid #466655; border-radius: 13px; background: #071b13f5; box-shadow: 0 8px 25px #0008; touch-action: manipulation; }
+.phaser-map__controls button { color: #c3e9c4; font: 600 12px/1.2 system-ui; min-width: 40px; min-height: 42px; padding: 8px; white-space: nowrap; border: 0; border-radius: 8px; background: transparent; cursor: pointer; }
+.phaser-map__controls button:hover, .phaser-map__controls button[aria-pressed="true"] { background: #294c35; color: #e7ffd3; }
+.phaser-map__controls button:disabled { opacity: .4; cursor: wait; }
+.phaser-map.is-panning { cursor: grab; }
+.phaser-map.is-panning:active { cursor: grabbing; }
+.phaser-map.is-expanded { position: fixed; inset: 0; width: 100vw; height: 100dvh; border-radius: 0; z-index: 2147483001; }
+body:has(.phaser-map.is-expanded) { overflow: hidden; }
+.phaser-map.is-expanded .phaser-map__controls { bottom: max(16px, env(safe-area-inset-bottom)); }
+.phaser-map__message { position: absolute; inset: 0; display: grid; place-content: center; z-index: 22; background: #07120ce8; }
+.phaser-map .phaser-map__plane > .gm-session-map__grid { width: 100% !important; height: 100% !important; min-height: 0 !important; max-height: none !important; aspect-ratio: auto !important; overflow: visible !important; margin: 0 !important; border: 0 !important; box-shadow: none !important; background-color: transparent !important; }
+.phaser-map .gm-session-map__cell { min-width: 0 !important; min-height: 0 !important; width: auto !important; height: auto !important; }
+.phaser-map .gm-session-map__grid::after { display: none; }
+.phaser-map .phaser-map__plane > .gm-session-map__grid { background-image: none !important; }
+.phaser-map .gm-session-token.is-phaser-token { background: transparent !important; border-color: transparent !important; box-shadow: none !important; outline: none !important; }
+.phaser-map .gm-session-token.is-phaser-token.is-size-1 { width: calc(100% - 10px); height: calc(100% - 10px); transform: translate(-50%, -50%); }
+.phaser-map .gm-session-token.is-phaser-token > .phaser-token-fallback { visibility: hidden; }
+.phaser-token-fallback { display: contents; }
+.phaser-map .tactical-grid .gm-session-token.is-size-3 { width: calc(300% - 6px) !important; height: calc(300% - 6px) !important; }
+.phaser-map-settings { border: 1px solid #29493b; border-radius: 10px; padding: 10px 12px; }
+.phaser-map-settings > summary { cursor: pointer; min-height: 28px; font: 600 12px/28px system-ui; }
+.phaser-map-settings[open] > summary { margin-bottom: 10px; }
+.phaser-location-select { display: flex; align-items: center; gap: 12px; font: 12px system-ui; }
+.phaser-location-select select { min-width: 0; flex: 1; min-height: 44px; background: #0c1d15; color: #c3e9c4; border: 1px solid #34513d; border-radius: 8px; }
+.pip-map-screen:has(.phaser-map) .phaser-sector-nav { display: flex; gap: 6px; margin-bottom: 8px; }
+.pip-map-screen:has(.phaser-map) .phaser-sector-nav .pip-map-edge-button { position: static; transform: none; flex: 1; width: auto; }
+.pip-map-screen:has(.phaser-map) .pip-map-panel { padding: 0; border: 0; background: transparent; overflow: visible; }
+.pip-map-screen:has(.phaser-map) .pip-map-board { background: none !important; aspect-ratio: auto; height: auto; min-height: 0; overflow: visible; }
+.pip-map-screen:has(.phaser-map) .pip-map-grid-layer, .pip-map-screen:has(.phaser-map) .pip-map-mode-shell { position: relative; inset: auto; }
+.pip-map-screen:has(.phaser-map) .pip-map-mode-shell.is-world { display: flex; flex-direction: column; gap: 10px; }
+.pip-map-screen:has(.phaser-map) .pip-map-nav-hud { position: static; order: 2; transform: none; display: flex; flex-wrap: wrap; width: auto; padding: 10px 12px; border: 1px solid #29493b; border-radius: 10px; background: #0b1b13; font: 12px/1.5 system-ui; }
+.pip-map-screen:has(.phaser-map) .pip-map-route-card { position: static; order: 1; transform: none; width: auto; max-width: none; border: 1px solid #897246; border-radius: 12px; background: #192317; }
+.pip-map-screen:has(.phaser-map) .pip-map-compass { display: none; }
+.pip-map-screen:has(.phaser-map) .pip-map-edge-button { z-index: 25; border-radius: 8px; min-height: 36px; font-size: 10px; }
+.pip-map-screen:has(.phaser-map) .pip-screen-header { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 0; }
+.pip-map-screen:has(.phaser-map) .pip-map-region-select { flex: 1 1 250px; margin: 0; }
+.pip-map-screen:has(.phaser-map) .pip-map-screen__time { font-size: 11px; opacity: .75; }
+.pip-map-screen:has(.phaser-map) .pip-map-inline-hazards { font-size: 11px; }
+.pip-map-screen:has(.phaser-map) .pip-map-mode-switch { border: 1px solid #304f40; border-radius: 10px; overflow: hidden; margin: 0 0 10px; width: 100%; max-width: 100%; display: flex; }
+.pip-map-screen:has(.phaser-map) .pip-map-mode-switch button { flex: 1; min-width: 0; min-height: 44px; font: 600 12px system-ui; letter-spacing: .03em; }
+.pip-map-screen:has(.phaser-map) .pip-map-sidebar .pip-panel { border-radius: 12px; background: #0b1b13; border-color: #29493b; }
+.pip-world-overview:has(.phaser-map) { display: flex; flex-direction: column; gap: 10px; }
+.gm-session-map:has(.phaser-map) > .phaser-map { grid-area: map; }
+.gm-session-map:has(.phaser-map) { display: flex !important; flex-direction: column; }
+.gm-session-map:has(.phaser-map) > .phaser-map { flex: none; }
+.gm-session-map:has(.phaser-map) .tactical-background-bar { font-size: 11px; padding: 6px; }
+.gm-session-map:has(.phaser-map) .gm-session-map__hint { display: none; }
+@media (max-width: 780px) {
+  .phaser-map { height: 62dvh; min-height: 360px; border-radius: 12px; }
+  .phaser-map__controls { bottom: 10px; gap: 0; padding: 3px; }
+  .phaser-map__controls button { min-width: 35px; padding: 7px; font-size: 11px; }
+  .phaser-map__controls button span { display: none; }
+  .pip-map-screen:has(.phaser-map) { padding: 0; }
+  .pip-map-screen:has(.phaser-map) .pip-screen-header { gap: 6px; }
+  .pip-map-screen:has(.phaser-map) .pip-map-region-select { flex-basis: 100%; }
+  .pip-map-screen:has(.phaser-map) .pip-map-sidebar { margin-top: 12px; }
+  .pip-map-with-settlement-menu:has(.phaser-map) .pip-map-settlement-toolbar { padding: 8px; gap: 6px; border-radius: 10px; }
+  .pip-map-with-settlement-menu:has(.phaser-map) .pip-map-settlement-toolbar__button { min-height: 40px; padding: 8px; font-size: 11px; }
+  .session-tactical-player:has(.phaser-map) { overflow-y: auto !important; display: flex !important; flex-direction: column; }
+  .session-tactical-player:has(.phaser-map) .phaser-map { flex: 0 0 62dvh; }
+}

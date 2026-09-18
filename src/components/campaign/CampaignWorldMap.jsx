@@ -1,3 +1,4 @@
+import PhaserMapViewport from '../phaser/PhaserMapViewport.jsx';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -66,15 +67,17 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns }) 
     {status}
     <div className="campaign-world-layout"><div>
       <p>{c.select}</p>
-      <div className="campaign-world-scroll" tabIndex={0} aria-label={c.title}>
-        <div className="campaign-world-board" onClick={e => { const rect = e.currentTarget.getBoundingClientRect(); setSelected({ x: Math.max(0, Math.min(63, Math.floor((e.clientX - rect.left) / rect.width * 64))), y: Math.max(0, Math.min(63, Math.floor((e.clientY - rect.top) / rect.height * 64))) }); }}>
-          <span className="campaign-world-watermark">{getRegionName(region, language)}</span>
-          {region.locations.map(l => <button type="button" key={l.id} className="campaign-world-marker is-location" style={{left:`${(l.worldX+.5)/64*100}%`,top:`${(l.worldY+.5)/64*100}%`}} title={locationName(l)} aria-label={locationName(l)} onClick={e => {e.stopPropagation();setSelected({x:l.worldX,y:l.worldY});}}>{l.icon || '◆'}</button>)}
-          {settlements.filter(s => s.regionId === region.id).map(s => <button type="button" className="campaign-world-marker is-settlement" key={s.id} title={s.name} aria-label={`${c.open}: ${s.name}`} style={{left:`${(s.worldX+.5)/64*100}%`,top:`${(s.worldY+.5)/64*100}%`}} onClick={e => {e.stopPropagation();setActiveId(s.id);}}>⌂<small>{s.name}</small></button>)}
-          {members.map(([id,m], index) => { const p=campaign.worldMap?.positions?.[id] || region.start; return <span className={`campaign-world-marker is-member ${id===uid?'is-self':''}`} key={id} style={{left:`${(p.x+.5)/64*100}%`,top:`${(p.y+.5)/64*100}%`,marginLeft:index*5}} title={`${m.name} · X:${p.x} Y:${p.y}`}>{index+1}</span>; })}
-          {validPoint && <span className="campaign-world-selection" style={{left:`${(point.x+.5)/64*100}%`,top:`${(point.y+.5)/64*100}%`}}>＋</span>}
-        </div>
-      </div>
+      <PhaserMapViewport cols={64} rows={64} sceneKey={`${campaignId}:${region.id}`} label={c.title}
+        selected={validPoint ? point : null}
+        player={campaign.worldMap?.positions?.[uid] || region.start}
+        onCell={(x, y) => setSelected({ x, y })}
+        markers={[
+          ...region.locations.map(l => ({ id: l.id, x: l.worldX, y: l.worldY, icon: l.icon || '◆' })),
+          ...members.map(([id, m], index) => ({ id: `member-${id}`, ...(campaign.worldMap?.positions?.[id] || region.start), icon: String(index + 1) })),
+          ...settlements.filter(s => s.regionId === region.id).map(s => ({ id: s.id, x: s.worldX, y: s.worldY, icon: '⌂', settlement: true })),
+        ]}
+        onMarker={marker => marker.settlement ? setActiveId(marker.id) : setSelected({ x: marker.x, y: marker.y })}
+      />
     </div><aside className="campaign-world-sidebar">
       <label>{c.choose}<select aria-label={c.choose} value="" onChange={e => {const l=region.locations.find(l=>l.id===e.target.value);if(l)setSelected({x:l.worldX,y:l.worldY});}}><option value="">{c.choose}…</option>{region.locations.map(l=><option key={l.id} value={l.id}>{locationName(l)}</option>)}</select></label>
       <div className="campaign-world-coordinates">{['x','y'].map(axis => <label key={axis}>{axis.toUpperCase()}<input type="number" min="0" max="63" step="1" value={point[axis]} onChange={e=>setSelected({...point,[axis]:e.target.value===''?'':Number(e.target.value)})}/></label>)}</div>

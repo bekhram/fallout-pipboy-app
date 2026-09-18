@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import MapCell from "./MapCell.jsx";
+import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import CombatAwareLocalGmChat from "./CombatAwareLocalGmChat.jsx";
 import WorldOverview from "./WorldOverview.jsx";
 import SessionMapPositionSync from "./SessionMapPositionSync.jsx";
 import SettlementScreen from "../settlement/SettlementScreen.jsx";
 import useSettlementStorage from "../../hooks/useSettlementStorage.js";
-import { canTravelToCell, findTravelRoute, getCellKey } from "../../utils/mapMath.js";
+import { findTravelRoute, getCellKey } from "../../utils/mapMath.js";
 import { getMapLanguageCode, mapUiText } from "./mapUiText.js";
 import "./localMapMode.css";
 
@@ -38,6 +38,9 @@ function getStaticLocation(mapData, cell, locations = []) {
 }
 
 function MapGrid({
+  background,
+  markers = [],
+  onMarker,
   mapData,
   playerPosition,
   selectedCell,
@@ -88,24 +91,10 @@ function MapGrid({
     return result;
   }, [viewport, cellIndex]);
 
-  const reachableMap = useMemo(() => {
-    const result = new Map();
-    for (const cell of visibleCells) {
-      result.set(getCellKey(cell.x, cell.y), canTravelToCell(mapData, playerPosition, cell));
-    }
-    return result;
-  }, [visibleCells, mapData, playerPosition]);
-
   const route = useMemo(
     () => selectedCell ? findTravelRoute(mapData, playerPosition, selectedCell) : null,
     [mapData, playerPosition, selectedCell]
   );
-  const routeKeys = useMemo(
-    () => new Set((route?.cells || []).map((cell) => getCellKey(cell.x, cell.y))),
-    [route]
-  );
-
-  const selectedKey = selectedCell ? getCellKey(selectedCell.x, selectedCell.y) : null;
   const deltaX = selectedCell ? selectedCell.x - playerPosition.x : 0;
   const deltaY = selectedCell ? selectedCell.y - playerPosition.y : 0;
   const direction = selectedCell
@@ -206,7 +195,7 @@ function MapGrid({
           </div>
         </div>
       ) : mapMode === "overview" ? (
-        <WorldOverview mapData={mapData} playerPosition={playerPosition} locations={locations} />
+        <WorldOverview background={background} mapData={mapData} playerPosition={playerPosition} locations={locations} />
       ) : (
         <>
           <div className="pip-map-nav-hud">
@@ -255,26 +244,19 @@ function MapGrid({
           ) : null}
 
           <div className="pip-map-compass" aria-hidden="true"><span>N</span><span>W</span><b>+</b><span>E</span><span>S</span></div>
-          <div
-            className="pip-map-grid pip-map-grid--wasteland"
-            style={{ gridTemplateColumns: `repeat(${VIEW_COLS}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${VIEW_ROWS}, minmax(0, 1fr))` }}
-          >
-            {visibleCells.map((cell) => {
-              const key = getCellKey(cell.x, cell.y);
-              return (
-                <MapCell
-                  key={key}
-                  cell={cell}
-                  isPlayerHere={playerPosition.x === cell.x && playerPosition.y === cell.y}
-                  isSelected={selectedKey === key}
-                  isDiscovered={discoveredSet.has(key)}
-                  isReachable={reachableMap.get(key)}
-                  isRoute={routeKeys.has(key)}
-                  onSelect={onSelectCell}
-                />
-              );
-            })}
-          </div>
+          <PhaserMapViewport
+            cols={VIEW_COLS} rows={VIEW_ROWS}
+            sceneKey={`${region?.id}:${mapData.worldOffset?.x}:${mapData.worldOffset?.y}`}
+            background={background}
+            cells={visibleCells.map(cell => ({ ...cell, x: cell.x - viewport.startX, y: cell.y - viewport.startY, discovered: discoveredSet.has(getCellKey(cell.x, cell.y)) }))}
+            markers={markers.map(marker => ({ ...marker, source: marker, x: marker.x - viewport.startX, y: marker.y - viewport.startY }))}
+            onMarker={marker => onMarker?.(marker.source)}
+            onCell={(x, y) => onSelectCell(cellIndex.get(getCellKey(x + viewport.startX, y + viewport.startY)))}
+            player={{ x: playerPosition.x - viewport.startX, y: playerPosition.y - viewport.startY }}
+            selected={selectedCell ? { x: selectedCell.x - viewport.startX, y: selectedCell.y - viewport.startY } : null}
+            route={[playerPosition, ...(route?.cells || [])].map(cell => ({ x: cell.x - viewport.startX, y: cell.y - viewport.startY }))}
+            label={tx("world")}
+          />
         </>
       )}
     </div>
