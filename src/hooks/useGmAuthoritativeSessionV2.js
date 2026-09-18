@@ -384,6 +384,7 @@ export default function useGmAuthoritativeSessionV2(form) {
   const gmStateRef = useRef(null);
   const playerProfileRef = useRef(playerTokenProfile);
   const leavingRef = useRef(false);
+  const resumeInFlightRef = useRef(null);
   const knownPresenceRef = useRef(new Set());
   const hashCacheRef = useRef(new Map());
   const bundleRef = useRef(null);
@@ -839,19 +840,48 @@ export default function useGmAuthoritativeSessionV2(form) {
     }
   };
 
-  const resumeCurrentRole = async () => {
+  const resumeCurrentRole = () => {
+    if (resumeInFlightRef.current) return resumeInFlightRef.current;
+    const attempt = performRoleResume();
+    resumeInFlightRef.current = attempt;
+    attempt.finally(() => {
+      if (resumeInFlightRef.current === attempt) resumeInFlightRef.current = null;
+    }).catch(() => {});
+    return attempt;
+  };
+
+  const performRoleResume = async () => {
     if (!socketRef.current?.connected || leavingRef.current) return false;
     const currentMode = modeRef.current;
     const code = codeRef.current;
     if (!code || !["host", "player"].includes(currentMode)) return false;
     setStatus("connecting");
-    const response = currentMode === "host"
+    let response = currentMode === "host"
       ? await emitAck("room:resume-gm", { roomCode: code, clientId: clientIdRef.current, gmName: nameRef.current || "GM", gmSecret: gmSecretRef.current })
       : await emitAck("room:join", { roomCode: code, clientId: clientIdRef.current, playerName: nameRef.current || getCharacterName(formRef.current) || "Player", avatar: "" });
+    // Relay rooms are temporary; the GM's campaign remains in the local cache.
+    // Only recreate a missing room, never bypass an invalid GM secret.
+    if (currentMode === "host" && response?.error === "ROOM_NOT_FOUND"
+      && campaignIdRef.current && gmStateRef.current && !leavingRef.current) {
+      response = await emitAck("room:create", {
+        gmName: nameRef.current || "GM", clientId: clientIdRef.current,
+        protocol: 3, campaignId: campaignIdRef.current,
+      });
+      if (response?.ok) {
+        gmSecretRef.current = String(response.gmSecret || "");
+        codeRef.current = normalizeSessionCode(response.roomCode || response.state?.code || "");
+        setSessionCode(codeRef.current);
+        knownPresenceRef.current = new Set();
+      }
+    }
     if (!response?.ok) {
       setStatus("disconnected");
       setError(socketError(response?.error));
       return false;
+    }
+    if (currentMode === "host") {
+      rememberSession({ role: "host", code: codeRef.current, name: nameRef.current || "GM",
+        gmSecret: gmSecretRef.current, campaignId: campaignIdRef.current });
     }
     if (response.state) applyPresence(response.state);
     setStatus("online");
@@ -951,6 +981,10 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const startHost = async () => {
     leavingRef.current = false;
+    // Do not auto-resume a previous room when this new connection opens.
+    codeRef.current = "";
+    gmSecretRef.current = "";
+    setSessionCode("");
     setMode("host");
     modeRef.current = "host";
     setStatus("connecting");
@@ -1061,7 +1095,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     }
 
     const resumed = await resumeCurrentRole();
-    if (resumed) rememberSession(saved);
+    if (resumed && saved.role === "player") rememberSession(saved);
     return resumed;
   };
 

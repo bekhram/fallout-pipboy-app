@@ -37,7 +37,9 @@ export default function useSharedSession(form) {
       const auth = getCloudAuthSession();
       if (campaign.ownerUid !== (auth?.firebase?.localId || auth?.user?.id)) throw new Error('FORBIDDEN');
       if (session.mode !== 'lobby') {
-        if (session.mode === 'host' && session.campaignId === id) return true;
+        if (session.mode === 'host' && session.campaignId === id) {
+          return session.status === 'online' || await session.reconnectNow();
+        }
         throw new Error('SESSION_ALREADY_OPEN');
       }
       await restoreCloudCampaignToLocalCache(id, { force: true });
