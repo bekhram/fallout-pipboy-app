@@ -66,7 +66,7 @@ export default function GmZoomDrawerToggle() {
     }
   }, [open]);
 
-  if (!container) return null;
+  if (!container || !controls) return null;
 
   const label = labelFor(open);
   return createPortal(
