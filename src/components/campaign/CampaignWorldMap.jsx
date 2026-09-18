@@ -22,7 +22,24 @@ const MARKER_COPY = {
   uk: { title: 'СПІЛЬНІ МІТКИ', name: 'Назва мітки', description: 'Опис', add: 'ДОДАТИ МІТКУ', save: 'ЗБЕРЕГТИ МІТКУ', gm: 'ГМ', player: 'ГРАВЕЦЬ', public: 'ДЛЯ ВСІХ', gmOnly: 'ЛИШЕ ГМ', delete: 'ВИДАЛИТИ', empty: 'У цьому регіоні ще немає спільних міток.', hint: 'Оберіть точку на мапі, назвіть її та додайте мітку. Публічні мітки бачать усі.', objective:'Ціль', danger:'Небезпека', loot:'Лут', quest:'Квест', note:'Нотатка', settlement:'Поселення', live:'ПОЗИЦІЇ ГРАВЦІВ' },
   pl: { title: 'WSPÓLNE ZNACZNIKI', name: 'Nazwa znacznika', description: 'Opis', add: 'DODAJ ZNACZNIK', save: 'ZAPISZ ZNACZNIK', gm: 'MG', player: 'GRACZ', public: 'PUBLICZNY', gmOnly: 'TYLKO MG', delete: 'USUŃ', empty: 'Brak wspólnych znaczników w tym regionie.', hint: 'Wybierz punkt na mapie, nazwij go i dodaj znacznik. Publiczne znaczniki widzą wszyscy.', objective:'Cel', danger:'Niebezpieczeństwo', loot:'Łup', quest:'Zadanie', note:'Notatka', settlement:'Osada', live:'POZYCJE GRACZY' },
 };
-const MARKER_ICONS = { objective:'◎', danger:'!', loot:'
+const MARKER_ICONS = { objective:'◎', danger:'!', loot:'$', quest:'?', note:'●', settlement:'⌂' };
+const MARKER_CATEGORIES = Object.keys(MARKER_ICONS);
+
+function routeLine(start, end) {
+  if (!start || !end) return [];
+  let x0 = Number(start.x), y0 = Number(start.y), x1 = Number(end.x), y1 = Number(end.y);
+  const points = [{ x: x0, y: y0 }];
+  const dx = Math.abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+  const dy = -Math.abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy, guard = 0;
+  while ((x0 !== x1 || y0 !== y1) && guard++ < 128) {
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+    points.push({ x: x0, y: y0 });
+  }
+  return points;
+}
 
 export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, settlementsOnly = false }) {
   const { t, i18n } = useTranslation();
