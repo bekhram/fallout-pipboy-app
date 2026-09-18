@@ -1,3 +1,4 @@
+import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 /** Wire format for the first local-first increment. Financial commands deliberately
  * stay outside this protocol until inventory reservations are shared by all screens. */
 export const OFFLINE_PROTOCOL = 1;
@@ -95,10 +96,31 @@ export function validateBatch(body) {
   }
   return body;
 }
+function personalBuildCost(command) {
+  if (command?.type !== 'settlement' || command.command?.type !== 'build' || command.command?.paymentSource !== 'personal') return null;
+  const rule = getRulebookBuilding(command.command.buildingType);
+  if (!rule) return null;
+  return {
+    caps: Math.max(0, Number(rule.caps || 0)),
+    common: Math.max(0, Number(rule.materials?.common || 0)),
+    uncommon: Math.max(0, Number(rule.materials?.uncommon || 0)),
+    rare: Math.max(0, Number(rule.materials?.rare || 0)),
+  };
+}
+export function reservationTotals(record) {
+  const totals = { caps: 0, common: 0, uncommon: 0, rare: 0 };
+  for (const key of Object.keys(totals)) totals[key] += Math.max(0, Number(record?.sheetSpent?.[key] || 0));
+  for (const op of record?.entries || []) {
+    const cost = personalBuildCost(op.command);
+    if (!cost) continue;
+    for (const key of Object.keys(totals)) totals[key] += cost[key];
+  }
+  return totals;
+}
 export function newRecord(uid, campaignId, deviceId) {
   return { schema: 1, uid, campaignId, deviceId, nextSequence: 1, snapshot: null,
     receivedAt: 0, lastSyncAt: 0, nextAttemptAt: 0, failures: 0, blocked: false,
-    entries: [], inflight: null, immediate: null, history: [], lease: null };
+    entries: [], inflight: null, immediate: null, history: [], sheetSpent: { caps: 0, common: 0, uncommon: 0, rare: 0 }, lease: null };
 }
 export function mergeSnapshot(record, snapshot, now) {
   if (!snapshot || snapshot.id !== record.campaignId || !Number.isSafeInteger(snapshot.revision) || snapshot.revision < 0 ||
@@ -161,7 +183,15 @@ export function acknowledge(record, response, now) {
   mergeSnapshot(record, response.campaign, now);
   const acknowledged = new Set(batch.entries.map(op => op.requestId));
   record.entries = record.entries.filter(op => !acknowledged.has(op.requestId));
-  record.history = [...response.results.map(r => ({ ...r, acknowledgedAt: now })), ...record.history].slice(0, 100);
+  const spent = { caps: 0, common: 0, uncommon: 0, rare: 0, ...(record.sheetSpent || {}) };
+  response.results.forEach((result, index) => {
+    if (result.state !== 'accepted') return;
+    const cost = personalBuildCost(batch.entries[index]?.command);
+    if (!cost) return;
+    for (const key of ['caps', 'common', 'uncommon', 'rare']) spent[key] = Math.max(0, Number(spent[key] || 0)) + cost[key];
+  });
+  record.sheetSpent = spent;
+  record.history = [...response.results.map((r, i) => ({ ...r, command: structuredClone(batch.entries[i]?.command || null), acknowledgedAt: now })), ...record.history].slice(0, 100);
   record.inflight = null; record.failures = 0; record.nextAttemptAt = 0;
   record.lastSyncAt = now;
   return record;
