@@ -11,7 +11,7 @@ export default function CampaignPanel({language, session, form, onEnterSession})
   const [name,setName]=useState(''),[code,setCode]=useState(''),[invite,setInvite]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[retry,setRetry]=useState(null),[copied,setCopied]=useState(false);
   const lock=useRef(false), generation=useRef(0);
   const uid=auth?.firebase?.localId;
-  const explain=e=>({INVITE_INVALID:c.expired,FORBIDDEN:c.forbidden,SIGN_IN_REQUIRED:c.signRequired,SERVER_NOT_CONFIGURED:c.configure,GM_OFFLINE:c.offline,SESSION_ALREADY_OPEN:c.active,SERVER_UNAVAILABLE:c.noNetwork}[e.message] || c.error);
+  const explain=e=>({INVITE_INVALID:c.expired,FORBIDDEN:c.forbidden,SIGN_IN_REQUIRED:c.signRequired,SERVER_NOT_CONFIGURED:c.configure,GM_OFFLINE:c.offline,SESSION_ALREADY_OPEN:c.active,DATABASE_QUOTA_EXCEEDED:c.quota,SERVER_UNAVAILABLE:c.noNetwork}[e.message] || c.error);
   useEffect(()=>{const change=()=>{generation.current++;setAuth(getCloudAuthSession());setCampaign(null);setCampaigns([]);setInvite('');setRetry(null);setError('');setBusy(false);};window.addEventListener('pip2d20:cloud-auth-changed',change);return()=>{generation.current++;window.removeEventListener('pip2d20:cloud-auth-changed',change);};},[]);
   async function run(input) {
     if(lock.current)return;
@@ -44,7 +44,7 @@ export default function CampaignPanel({language, session, form, onEnterSession})
     if(!uid||!campaign?.id)return;
     let cancelled=false;
     const poll=async()=>{if(lock.current||document.hidden)return;try{const data=await campaignRequest({type:'worldRead',campaignId:campaign.id});if(!cancelled)setCampaign(old=>old?.id===data.campaign.id&&data.campaign.revision>=old.revision?data.campaign:old);}catch{/* Explicit refresh reports errors without clearing a pending action. */}};
-    const timer=setInterval(poll,15000);return()=>{cancelled=true;clearInterval(timer);};
+    const timer=setInterval(poll,30000);return()=>{cancelled=true;clearInterval(timer);};
   },[uid,campaign?.id]);
   const gm=campaign?.ownerUid===uid;
   async function sessionAction(leave=false){

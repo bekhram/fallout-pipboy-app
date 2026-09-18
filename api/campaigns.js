@@ -1,4 +1,4 @@
-import { campaignDiagnostic } from '../server/campaignDiagnostics.js';
+import { campaignDiagnostic, isCampaignQuotaError } from '../server/campaignDiagnostics.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { initializeApp, getApps, cert, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -130,10 +130,15 @@ return async function handler(req, res) {
   } catch (error) {
     const code = String(error?.message || 'SERVER_ERROR');
     const safe = /^[A-Z_]+$/.test(code) || ['invalid','insufficient','capacity','unavailable'].includes(code);
-    if (!safe || code === 'SERVER_NOT_CONFIGURED') {
+    const quota = isCampaignQuotaError(error);
+    if (quota || !safe || code === 'SERVER_NOT_CONFIGURED') {
       const diagnostic = campaignDiagnostic(error, operation, stage);
       console.error('campaign_api_failure', diagnostic);
       res.setHeader('X-Campaign-Trace', diagnostic.traceId);
+    }
+    if (quota) {
+      res.setHeader('Retry-After', '300');
+      return res.status(503).json({ error: 'DATABASE_QUOTA_EXCEEDED', retryAfter: 300 });
     }
     return res.status(code === 'FORBIDDEN' ? 403 : code === 'SERVER_NOT_CONFIGURED' ? 503 : safe ? 400 : 500).json({ error: safe ? code : 'SERVER_ERROR' });
   }
