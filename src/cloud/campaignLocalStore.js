@@ -70,6 +70,17 @@ async function transaction(storeName, key, update) {
     tx.onerror = () => { /* onabort rejects; no success signal on a failed write. */ };
   });
 }
+async function readWorlds(uid) {
+  if (!uid) return [];
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('worlds', 'readonly');
+    const request = tx.objectStore('worlds').getAll();
+    request.onsuccess = () => resolve((request.result || []).filter(record => record?.uid === uid).map(record => structuredClone(record)));
+    request.onerror = () => reject(new Error('LOCAL_STORAGE_UNAVAILABLE'));
+  });
+}
+
 export const campaignLocalStore = {
   async get(uid, campaignId) {
     scope(uid, campaignId);
@@ -92,6 +103,9 @@ export const campaignLocalStore = {
   async list(uid) {
     if (!uid) return null;
     return transaction('lists', uid);
+  },
+  async worlds(uid) {
+    return readWorlds(uid);
   },
   async rememberList(uid, campaigns, now = Date.now()) {
     if (!uid || !Array.isArray(campaigns)) fail('INVALID_LOCAL_SCOPE');
