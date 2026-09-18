@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { CELL, anchoredZoom, clampScroll } from "./mapCamera.js";
+import { CELL, anchoredZoom, clampScroll, frameCamera } from "./mapCamera.js";
 import "./phaserMaps.css";
 
 const COPY = {
@@ -35,8 +35,12 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           this.labels = [];
           this.textureUrls = new Map();
           this.failedUrls = new Set();
+          this.worldClip = this.make.graphics({ x: 0, y: 0 }, false);
+          this.worldClip.fillStyle(0xffffff).fillRect(0, 0, cols * CELL, rows * CELL);
+          this.worldMask = this.worldClip.createGeometryMask();
+          this.events.once('shutdown', () => { this.worldMask.destroy(); this.worldClip.destroy(); });
           this.refresh();
-          this.fit();
+          this.fit(children ? 'fill' : 'fit');
           api.current = this;
           setReady(true);
           const root = host.current;
@@ -75,7 +79,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
               pinch = next; this.sync(); e.stopPropagation(); e.preventDefault();
             } else if (drag?.pan && !pinch) {
               if (!drag.moved && Math.hypot(p.x - drag.x, p.y - drag.y) < 6) return;
-              drag.moved = true; suppress = true;
+              drag.moved = true; suppress = true; this.framing = null;
               const cam = this.cameras.main;
               cam.scrollX -= (p.x - drag.x) / cam.zoom; cam.scrollY -= (p.y - drag.y) / cam.zoom;
               drag.x = p.x; drag.y = p.y; this.sync(); e.preventDefault(); e.stopPropagation();
@@ -111,7 +115,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
             else if (e.key === 'ArrowUp') cam.scrollY -= step;
             else if (e.key === 'ArrowDown') cam.scrollY += step;
             else return;
-            this.sync(); e.preventDefault();
+            this.framing = null; this.sync(); e.preventDefault();
           };
           const blur = () => {
             for (const id of pointers.keys()) { try { if (root.hasPointerCapture(id)) root.releasePointerCapture(id); } catch { /* already released */ } }
@@ -123,21 +127,28 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           disposeInput = () => { events.forEach(([name, fn]) => root.removeEventListener(name, fn, true)); window.removeEventListener('blur', blur); };
           observer = new ResizeObserver(() => {
             if (!root.clientWidth || !root.clientHeight || cancelled) return;
-            game.scale.resize(root.clientWidth, root.clientHeight); this.sync();
+            const cam = this.cameras.main;
+            const center = { x: cam.scrollX + cam.width / cam.zoom / 2, y: cam.scrollY + cam.height / cam.zoom / 2 };
+            game.scale.resize(root.clientWidth, root.clientHeight);
+            if (this.framing) this.fit(this.framing);
+            else { cam.setScroll(center.x - cam.width / cam.zoom / 2, center.y - cam.height / cam.zoom / 2); this.sync(); }
           });
           observer.observe(root);
         }
-        fit() {
+        fit(mode = 'fit') {
           const d = latest.current, cam = this.cameras.main;
-          cam.setZoom(Math.min(cam.width / (d.cols * CELL), cam.height / (d.rows * CELL)) * .96);
-          cam.setScroll((d.cols * CELL - cam.width / cam.zoom) / 2, (d.rows * CELL - cam.height / cam.zoom) / 2);
+          this.framing = mode;
+          const framed = frameCamera(d.cols * CELL, d.rows * CELL, cam.width, cam.height, mode);
+          cam.setZoom(framed.zoom).setScroll(framed.scrollX, framed.scrollY);
           this.sync();
         }
         focus(x, y) {
+          this.framing = null;
           const cam = this.cameras.main;
           cam.setScroll((x + .5) * CELL - cam.width / cam.zoom / 2, (y + .5) * CELL - cam.height / cam.zoom / 2); this.sync();
         }
         zoomAt(value, x, y) {
+          this.framing = null;
           const cam = this.cameras.main, d = latest.current;
           const minimum = Math.min(cam.width / (d.cols * CELL), cam.height / (d.rows * CELL)) * .7;
           const next = anchoredZoom(cam, Phaser.Math.Clamp(value, minimum, 4), x ?? cam.width / 2, y ?? cam.height / 2);
@@ -184,7 +195,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
               const ratio = Math.min(width / sprite.width, height / sprite.height);
               sprite.setScale(ratio * Number(scale?.[1] || 1), ratio * Number(scale?.[2] || 1));
             } else sprite.setDisplaySize(width * Number(scale?.[1] || 1), height * Number(scale?.[2] || 1));
-            sprite.setAngle(angle); onReady();
+            sprite.setAngle(angle).setMask(this.worldMask); onReady();
           });
           return () => { stop(); sprite?.destroy(); };
         }

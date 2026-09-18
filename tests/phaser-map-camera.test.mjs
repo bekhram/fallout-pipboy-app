@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CELL, anchoredZoom, clampScroll } from '../src/components/phaser/mapCamera.js';
+import { CELL, anchoredZoom, clampScroll, frameCamera } from '../src/components/phaser/mapCamera.js';
 import { gridDropCell } from '../src/utils/battlemapCoordinates.js';
 
 test('zoom preserves the map coordinate below the pointer', () => {
@@ -34,4 +34,15 @@ test('drop keeps the grabbed cell of large tokens under the pointer at every zoo
 
 test('drop outside map rejects instead of jumping a token to the edge', () => {
   assert.equal(gridDropCell({ clientX: 50, clientY: 150, rect: { left:100, top:100, right:500, bottom:500 }, cellWidth:32, cellHeight:32, cols:12, rows:12 }), null);
+});
+
+test('tactical fill covers wide and tall viewports; overview keeps every edge visible', () => {
+  for (const [w,h] of [[1414,680],[390,600],[1920,1080]]) {
+    const fill=frameCamera(1536,1536,w,h,'fill');
+    assert.ok(1536*fill.zoom>=w && 1536*fill.zoom>=h);
+    assert.ok(fill.scrollX>=0 && fill.scrollY>=0);
+    const fit=frameCamera(1536,1536,w,h);
+    assert.ok(1536*fit.zoom<=w && 1536*fit.zoom<=h);
+    assert.ok(Math.abs(fit.scrollX+ w/fit.zoom/2-768)<1e-8);
+  }
 });

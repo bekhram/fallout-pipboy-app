@@ -8,3 +8,9 @@ export function anchoredZoom(camera, nextZoom, x, y) {
   const worldY = camera.scrollY + y / camera.zoom;
   return { zoom: nextZoom, scrollX: worldX - x / nextZoom, scrollY: worldY - y / nextZoom };
 }
+
+export function frameCamera(worldWidth, worldHeight, viewportWidth, viewportHeight, mode = 'fit') {
+  const ratios = [viewportWidth / worldWidth, viewportHeight / worldHeight];
+  const zoom = mode === 'fill' ? Math.max(...ratios) : Math.min(...ratios) * .96;
+  return { zoom, scrollX: (worldWidth - viewportWidth / zoom) / 2, scrollY: (worldHeight - viewportHeight / zoom) / 2 };
+}
