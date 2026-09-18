@@ -1,3 +1,4 @@
+import { processSettlementCommerce } from './settlementCommerce.js';
 import { provisions, collectDailySurplus } from "./settlementProvisions.js";
 import { guardDefense, populationNeeds, residentNeeds } from "./settlementResidents.js";
 import { advanceConstruction, cost } from "./settlementDevelopment.js";
@@ -400,7 +401,7 @@ export function processAutomaticSettlementDays(input, now = Date.now()) {
   let safety = 0;
   while (now >= Number(settlement.nextDayAt || Infinity) && safety < 90) {
     safety += 1;
-    settlement = advanceSettlementDay(settlement, Number(settlement.nextDayAt));
+    settlement = processSettlementCommerce(advanceSettlementDay(settlement, Number(settlement.nextDayAt)));
   }
   return advanceConstruction(settlement, now);
 }
@@ -416,6 +417,7 @@ export function createConstructionBuilding({ id, type, x, y, now = Date.now() })
     state: "construction",
     condition: 100,
     rooms: [],
+    ...(rule?.effects?.cropSlots ? { crops: [] } : {}),
     startedAt: now,
     constructionDaysRequired: Math.max(1, Number(rule?.constructionDays || 1)),
     constructionProgressDays: 0,

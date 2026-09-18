@@ -1,0 +1,48 @@
+import React, { useState } from 'react';
+import { getRulebookBuilding } from '../../data/settlement/rulebookCatalog.js';
+import { gardenItemKind, plantedCrops } from '../../utils/settlementGarden.js';
+import { merchantPresent, reputationRank } from '../../utils/settlementTrade.js';
+import { applySettlementCommand } from '../../utils/settlementCommands.js';
+const words = {
+ en:['Trade','Garden','Reputation','Income treasury','Merchant is here','Merchant visits every 7 settlement days with a caravan post','Invite merchant (GM)','Food','Water','Quantity','Sell reserves','Buy supply','Supply next day (+1)','Reserve trade is an app adaptation: sell stored surplus for 1 + combat dice income. Buy supply with income; it cannot be resold.','Plant','Fertilize (1 item, up to 6 crops)','Uproot','Donate 1 from inventory','No suitable inventory items','Assign residents to tend crops: 6 crops per worker; 2 crops = 1 food. Fertilizer doubles their yield. Every 3 crops need 1 water.','No garden plots','Reason for GM decision','Save reputation','GM confirms reputation after a story event or test.','Could not complete this action. Check resources and permissions.','Hostile','Cautious','Neutral','Friendly','Trusting','Allied','No stored seeds or fertilizer','History','Purchased supply','Crops','Fertilized'],
+ ru:['Торговля','Сад','Репутация','Казна дохода','Торговец в поселении','Торговец приходит каждые 7 дней поселения при наличии караванного поста','Пригласить торговца (ГМ)','Еда','Вода','Количество','Продать запасы','Купить снабжение','На следующий день (+1)','Торговля запасами — адаптация приложения: излишки продаются за 1 + боевые кости дохода. Снабжение покупается за доход и не перепродаётся.','Посадить','Удобрить (1 предмет, до 6 культур)','Убрать растение','Внести 1 из инвентаря','Нет подходящих предметов в инвентаре','Назначьте жителей на уход: до 6 культур на работника; 2 культуры = 1 еда. Удобрение удваивает урожай. Каждым 3 культурам нужна 1 вода.','Нет грядок','Причина решения ГМ','Сохранить репутацию','ГМ подтверждает репутацию после события или проверки.','Действие не выполнено. Проверьте ресурсы и права.','Враждебность','Осторожность','Нейтралитет','Дружелюбие','Доверие','Союз','Нет семян или удобрения на складе','История','Купленное снабжение','Культуры','Удобрено'],
+ uk:['Торгівля','Сад','Репутація','Скарбниця доходу','Торговець у поселенні','Торговець приходить кожні 7 днів поселення за наявності караванного поста','Запросити торговця (ГМ)','Їжа','Вода','Кількість','Продати запаси','Купити постачання','На наступний день (+1)','Торгівля запасами — адаптація застосунку: надлишки продаються за 1 + бойові кістки доходу. Куплене постачання не можна перепродати.','Посадити','Удобрити (1 предмет, до 6 культур)','Прибрати рослину','Внести 1 з інвентарю','Немає відповідних предметів','Призначте жителів на догляд: до 6 культур на працівника; 2 культури = 1 їжа. Добриво подвоює врожай. Кожним 3 культурам потрібна 1 вода.','Немає грядок','Причина рішення ГМ','Зберегти репутацію','ГМ підтверджує репутацію після події або перевірки.','Дію не виконано. Перевірте ресурси та права.','Ворожість','Обережність','Нейтралітет','Дружність','Довіра','Союз','Немає насіння або добрива на складі','Історія','Куплене постачання','Культури','Удобрено'],
+ pl:['Handel','Ogród','Reputacja','Skarbiec dochodu','Kupiec jest w osadzie','Kupiec przybywa co 7 dni osady, jeśli istnieje posterunek karawany','Zaproś kupca (MG)','Żywność','Woda','Ilość','Sprzedaj zapasy','Kup zaopatrzenie','Na następny dzień (+1)','Handel zapasami jest adaptacją aplikacji: sprzedaż daje 1 + kości walki dochodu. Zakupionego zaopatrzenia nie można odsprzedać.','Posadź','Nawieź (1 przedmiot, do 6 roślin)','Usuń roślinę','Przekaż 1 z ekwipunku','Brak odpowiednich przedmiotów','Przydziel mieszkańców: do 6 roślin na pracownika; 2 rośliny = 1 żywność. Nawóz podwaja plony. Każde 3 rośliny potrzebują 1 wody.','Brak grządek','Powód decyzji MG','Zapisz reputację','MG potwierdza reputację po wydarzeniu lub teście.','Nie udało się wykonać działania. Sprawdź zasoby i uprawnienia.','Wrogość','Ostrożność','Neutralność','Przyjaźń','Zaufanie','Sojusz','Brak nasion lub nawozu w magazynie','Historia','Kupione zaopatrzenie','Rośliny','Nawożone'],
+};
+export default function SettlementActivities({settlement:s,language,canEdit,onCommand,onUpdate,actor,character,members=[],canContribute=true}) {
+ const w=words[language?.split('-')[0]]||words.en;
+ const [busy,setBusy]=useState(false),[error,setError]=useState(''),[quantity,setQuantity]=useState(1),[resource,setResource]=useState('food'),[memberId,setMemberId]=useState(''),[rank,setRank]=useState(2),[reason,setReason]=useState('');
+ const blocked=busy||!canEdit,gm=actor?.isGM??!onCommand;
+ const inventory=(character?.inventoryItems||[]).filter(i=>gardenItemKind(i)&&Number(i.quantity??i.qty)>0);
+ const seeds=(s.stockpile?.items||[]).filter(i=>gardenItemKind(i)&&Number(i.quantity??i.qty)>0);
+ const gardens=(s.buildings||[]).filter(b=>b.state==='active'&&Number(b.condition??100)>0&&getRulebookBuilding(b.type)?.effects?.cropSlots);
+ async function send(command) {
+  setBusy(true);setError('');
+  try {if(onCommand){if(!(await onCommand(command)))setError(w[24]);}else{
+   // Pure updater is safe when React evaluates it more than once; random commands are computed once.
+   const next=applySettlementCommand(s,character,actor||{id:s.ownerCharacterId||'solo',isGM:true},command);
+   onUpdate(()=>next.settlement);
+  }}catch{setError(w[24]);}finally{setBusy(false);}
+ }
+ return <div className="settlement-activities">
+ {error&&<p role="alert">{error}</p>}
+ <details><summary>{w[0]}</summary><strong>{w[3]}: {s.trade?.income||0}</strong><p>{merchantPresent(s)?w[4]:w[5]}</p>{gm&&<button className="pip-action-button" disabled={blocked||merchantPresent(s)} onClick={()=>send({type:'merchant'})}>{w[6]}</button>}<p>{w[13]}</p>
+ <label>{w[9]}<input className="pip-input" type="number" min="1" max="100" step="1" value={quantity} onChange={e=>setQuantity(Number(e.target.value))}/></label>
+ <select className="pip-input" aria-label={w[0]} value={resource} onChange={e=>setResource(e.target.value)}><option value="food">{w[7]}</option><option value="water">{w[8]}</option></select>
+ <p>{w[resource==='food'?7:8]}: {s.stockpile?.provisions?.[resource]||0} · {w[33]}: {s.trade?.supplies?.[resource]||0}</p>
+ <button className="pip-action-button" disabled={blocked||!merchantPresent(s)||!Number.isInteger(quantity)||quantity<1||quantity>100||Number(s.stockpile?.provisions?.[resource]||0)<quantity} onClick={()=>send({type:'tradeSell',resource,quantity})}>{w[10]}</button>
+ <button className="pip-action-button" disabled={blocked||!merchantPresent(s)||!Number.isInteger(quantity)||quantity<1||quantity>100||Number(s.trade?.income||0)<quantity} onClick={()=>send({type:'tradeBuy',resource,quantity})}>{w[11]}</button>
+ <button className="pip-action-button" disabled={blocked||!s.trade?.supplies?.[resource]} onClick={()=>send({type:'tradeSupply',resource})}>{w[12]}</button>
+ <h4>{w[32]}</h4>{(s.trade?.history||[]).slice(0,5).map((h,i)=><p key={i}>{h.type==='tradeBuy'?w[11]:w[10]} · {w[h.resource==='food'?7:8]} ×{h.quantity} · [{h.rolls.join(', ')}]</p>)}</details>
+ <details><summary>{w[1]}</summary><p>{w[19]}</p>
+ {onCommand&&<><h4>{w[17]}</h4>{inventory.length?inventory.map(i=><button key={i.id} className="pip-action-button" disabled={busy||!canContribute} onClick={()=>send({type:'gardenDonate',itemId:i.id,quantity:1})}>{i.name} · {i.quantity??i.qty} → +1</button>):<p>{w[18]}</p>}</>}
+ {!gardens.length&&<p>{w[20]}</p>}{!seeds.length&&<p>{w[31]}</p>}
+ {gardens.map(b=><section key={b.id}><h4>{getRulebookBuilding(b.type)?.name?.[language]||b.type} · {w[34]} {plantedCrops(b).length}/{getRulebookBuilding(b.type).effects.cropSlots}</h4>
+ {plantedCrops(b).map((p,i)=><div className="settlement-garden-row" key={i}><span>{p.kind}{p.fertilized?` · ${w[35]}`:''}</span><button className="pip-action-button" disabled={blocked} onClick={()=>send({type:'uproot',buildingId:b.id,index:i})}>{w[16]}</button></div>)}
+ {seeds.map(i=><button className="pip-action-button" key={i.id} disabled={blocked||(gardenItemKind(i)==='fertilizer'?!plantedCrops(b).some(p=>!p.fertilized):plantedCrops(b).length>=getRulebookBuilding(b.type).effects.cropSlots)} onClick={()=>send({type:gardenItemKind(i)==='fertilizer'?'fertilize':'plant',buildingId:b.id,itemId:i.id})}>{gardenItemKind(i)==='fertilizer'?w[15]:w[14]} · {i.name} ({i.quantity??i.qty})</button>)}
+ </section>)}</details>
+ <details><summary>{w[2]}</summary><p>{w[23]}</p>{members.map(([id,m])=><p key={id}>{m.name}: {reputationRank(s,id)}/5 · {w[25+reputationRank(s,id)]}</p>)}
+ {gm&&members.length>0&&<form onSubmit={e=>{e.preventDefault();void send({type:'reputation',memberId,rank,reason});}}><select required className="pip-input" aria-label={w[2]} value={memberId} onChange={e=>{setMemberId(e.target.value);setRank(reputationRank(s,e.target.value));}}><option value="">—</option>{members.map(([id,m])=><option key={id} value={id}>{m.name}</option>)}</select><select className="pip-input" value={rank} aria-label={w[2]} onChange={e=>setRank(Number(e.target.value))}>{Array.from({length:6},(_,i)=><option value={i} key={i}>{i} · {w[25+i]}</option>)}</select><input className="pip-input" aria-label={w[21]} placeholder={w[21]} required maxLength={300} value={reason} onChange={e=>setReason(e.target.value)}/><button className="pip-action-button" disabled={blocked||!memberId||!reason.trim()}>{w[22]}</button></form>}
+ {(s.reputationHistory||[]).slice(0,5).map((h,i)=><p key={i}>{members.find(([id])=>id===h.memberId)?.[1]?.name||h.memberId}: {h.previous} → {h.rank} · {h.reason}</p>)}</details>
+ </div>;
+}

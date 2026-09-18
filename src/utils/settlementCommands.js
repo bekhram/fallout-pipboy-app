@@ -1,3 +1,5 @@
+import { gardenCommand, donateGardenItem } from './settlementGarden.js';
+import { tradeCommand, useTradeSupply, reputationCommand } from './settlementTrade.js';
 import { reserveProvisions } from "./settlementProvisions.js";
 import { availableSettlementActions } from "./settlementResidents.js";
 import * as dev from './settlementDevelopment.js';
@@ -10,6 +12,7 @@ export function applySettlementCommand(settlement, character, actor, command, no
   let s = dev.advanceConstruction(settlement, now);
   const c = command || {};
   const fail = code => { throw new Error(code); };
+  if (c.type === 'gardenDonate') return donateGardenItem(s, character, c);
   if (c.type === 'deposit') {
     const result = dev.deposit(s, character, c.amounts || {}, now);
     if (result.error) fail(result.error);
@@ -20,6 +23,10 @@ export function applySettlementCommand(settlement, character, actor, command, no
   const unlocked = () => { if (!b || b.locked || b.type === 'settlement_hq') fail('LOCKED'); };
   const checkedRule = rule => { if (dev.buildBlockers(s, character, rule, actor).length) fail('REQUIREMENTS'); };
   switch (c.type) {
+    case 'plant': case 'fertilize': case 'uproot': s = gardenCommand(s,c); break;
+    case 'tradeBuy': case 'tradeSell': case 'merchant': s = tradeCommand(s,c,actor,now); break;
+    case 'tradeSupply': s = useTradeSupply(s,c.resource); break;
+    case 'reputation': s = reputationCommand(s,c,actor,now); break;
     case 'supplies': s = reserveProvisions(s, c.resource); break;
     case 'build': {
       if (!Number.isInteger(c.x) || !Number.isInteger(c.y) || !dev.canFit(s, c.buildingType, c.x, c.y) || c.buildingType === 'settlement_hq') fail('PLACEMENT');

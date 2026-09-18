@@ -65,3 +65,11 @@
 .settlement-v2 .settlement-left-nav button span {min-width:0;overflow-wrap:anywhere;}
 .settlement-v2 .settlement-resource-tile small {line-height:1.3;}
 .settlement-daily-summary{padding:12px;border:1px solid #42614a;border-radius:12px;background:#10251a;margin-bottom:12px}.settlement-daily-summary h3{margin:0 0 10px;font-size:15px}.settlement-daily-summary p{font-size:12px;line-height:1.5;opacity:.8}.settlement-daily-summary>div>small{display:block;margin:6px 0 12px}.settlement-daily-summary button{white-space:normal;min-height:44px;width:100%}
+
+.settlement-activities {display:grid;gap:10px;margin-bottom:16px;min-width:0}
+.settlement-activities details {border:1px solid #64856366;border-radius:10px;padding:12px;min-width:0}
+.settlement-activities summary {cursor:pointer;font-weight:700;padding:5px 0}
+.settlement-activities p {font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.settlement-activities button,.settlement-activities select,.settlement-activities input {max-width:100%;margin:4px 0;white-space:normal;min-height:44px}
+.settlement-activities form,.settlement-activities label {display:grid;gap:6px}
+.settlement-garden-row {display:flex;align-items:center;justify-content:space-between;gap:8px}

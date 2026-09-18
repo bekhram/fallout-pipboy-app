@@ -91,8 +91,8 @@ export function campaignCommand(original, uid, cmd, now) {
       if (index < 0) throw new Error('NOT_FOUND');
       const actor = { id: uid, name: c.members[uid].name, isGM: gm, campaignId: c.id };
       const action = { ...cmd.command, requestId: cmd.requestId };
-      if (action.type === 'spender') requireMember(c, action.memberId);
-      if (['build','room','upgrade','deposit'].includes(action.type) && !c.accounts[uid]) throw new Error('CHARACTER_NOT_APPROVED');
+      if (['spender','reputation'].includes(action.type)) requireMember(c, action.memberId);
+      if (['build','room','upgrade','deposit','gardenDonate'].includes(action.type) && !c.accounts[uid]) throw new Error('CHARACTER_NOT_APPROVED');
       const result = applySettlementCommand(runSimulation(c.settlements[index], now), c.accounts[uid], actor, action, now);
       c.settlements[index] = result.settlement;
       if (result.character) c.accounts[uid] = result.character;
