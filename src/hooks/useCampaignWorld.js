@@ -87,6 +87,18 @@ export default function useCampaignWorld(campaignId) {
       return view;
     } catch { return { campaign: valid?.snapshot || null, conflicts: [{ error: 'LOCAL_CONFLICT' }] }; }
   }, [valid]);
+  const refreshWorld = useCallback(async () => {
+    if (!uid || !campaignId || navigator.onLine === false || storageFailure.current) return false;
+    try {
+      await campaignRequest({ type: 'worldRead', campaignId }, { expectedUid: uid });
+      await refresh();
+      return true;
+    } catch (e) {
+      if (mounted.current && scopeRef.current === scope) setError(e.message);
+      return false;
+    }
+  }, [uid, campaignId, refresh, scope]);
+
   const run = useCallback(async input => {
     if (!controller || running.current || storageFailure.current) return null;
     const runToken = Symbol(scope); running.current = runToken; setBusy(true); setError('');
@@ -113,7 +125,7 @@ export default function useCampaignWorld(campaignId) {
   }, [uid, campaignId]);
   const canQueue = Boolean(valid?.snapshot && !valid.blocked && !valid.authRequired && !valid.immediate && !valid.halted && !storageFailure.current);
   return { campaign: projected.campaign, uid, busy, error: error || valid?.lastError || (valid?.blocked ? 'FORBIDDEN' : ''), run, connected: online && !valid?.failures && !valid?.authRequired,
-    retry: valid?.immediate?.command || null, retryLast: () => attempt(true), syncNow: () => attempt(true),
+    retry: valid?.immediate?.command || null, retryLast: () => attempt(true), syncNow: () => attempt(true), refreshWorld,
     linkPersonalSource,sourceCharacterId:valid?.sourceCharacterId,sourceAvailable:valid?.sourceAvailable,sourceReserved:valid?.sourceReserved,
     personalReady:Boolean(canQueue && valid?.snapshot?.character?.constructionSource?.characterId===valid?.sourceCharacterId && valid?.snapshot?.character?.constructionSource?.deviceId===valid?.deviceId),
     localReady: canQueue, pendingCount: (valid?.entries.length || 0) + (valid?.immediate ? 1 : 0),
