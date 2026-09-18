@@ -48,7 +48,7 @@ export default function useCampaignWorld(campaignId) {
       } finally { reading = false; }
     };
     void read();
-    const timer = setInterval(read, 5000);
+    const timer = setInterval(read, 15000);
     window.addEventListener('online', read);
     document.addEventListener('visibilitychange', read);
     const offline = () => setConnected(false);
