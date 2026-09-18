@@ -45,10 +45,12 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           setReady(true);
           const root = host.current;
           const pointers = new Map();
+          const toolActive = () => Boolean(root.querySelector(".is-map-tool-active"));
           let drag = null, pinch = null, suppress = false, cancellingToken = false;
           const point = (e) => { const r = root.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
           const pair = () => { const [a, b] = [...pointers.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, distance: Math.hypot(a.x - b.x, a.y - b.y) }; };
           const down = (e) => {
+            if (toolActive()) { pointers.clear(); drag = null; pinch = null; this.framing = null; return; }
             if (e.target.closest('.phaser-map__controls, .phaser-map__message')) return;
             if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 1) return;
             if (!pointers.size) suppress = false;
@@ -69,6 +71,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
             }
           };
           const move = (e) => {
+            if (toolActive()) return;
             if (!pointers.has(e.pointerId)) return;
             const p = point(e); pointers.set(e.pointerId, p);
             if (pointers.size > 1 && pinch) {
@@ -105,7 +108,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
             if (marker) d.onMarker?.(marker);
             else if (x >= 0 && x < d.cols && y >= 0 && y < d.rows) d.onCell?.(Math.floor(x), Math.floor(y));
           };
-          const wheel = (e) => { if (e.target.closest('.phaser-map__controls')) return; e.preventDefault(); e.stopPropagation(); const p = point(e); this.zoomAt(this.cameras.main.zoom * Math.exp(-e.deltaY * .0015), p.x, p.y); };
+          const wheel = (e) => { if (toolActive()) { e.preventDefault(); return; } if (e.target.closest('.phaser-map__controls')) return; e.preventDefault(); e.stopPropagation(); const p = point(e); this.zoomAt(this.cameras.main.zoom * Math.exp(-e.deltaY * .0015), p.x, p.y); };
           const key = (e) => {
             if (e.key === 'Escape') { setExpanded(false); return; }
             if (e.target !== root) return;
@@ -130,12 +133,13 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
             const cam = this.cameras.main;
             const center = { x: cam.scrollX + cam.width / cam.zoom / 2, y: cam.scrollY + cam.height / cam.zoom / 2 };
             game.scale.resize(root.clientWidth, root.clientHeight);
-            if (this.framing) this.fit(this.framing);
+            if (this.framing && !children && !toolActive()) this.fit(this.framing);
             else { cam.setScroll(center.x - cam.width / cam.zoom / 2, center.y - cam.height / cam.zoom / 2); this.sync(); }
           });
           observer.observe(root);
         }
         fit(mode = 'fit') {
+          if (host.current?.querySelector('.is-map-tool-active')) return;
           const d = latest.current, cam = this.cameras.main;
           this.framing = mode;
           const framed = frameCamera(d.cols * CELL, d.rows * CELL, cam.width, cam.height, mode);
@@ -149,6 +153,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
         }
         zoomAt(value, x, y) {
           this.framing = null;
+          if (host.current?.querySelector(".is-map-tool-active")) return;
           const cam = this.cameras.main, d = latest.current;
           const minimum = Math.min(cam.width / (d.cols * CELL), cam.height / (d.rows * CELL)) * .7;
           const next = anchoredZoom(cam, Phaser.Math.Clamp(value, minimum, 4), x ?? cam.width / 2, y ?? cam.height / 2);

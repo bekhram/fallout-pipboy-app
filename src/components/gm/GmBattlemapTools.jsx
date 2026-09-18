@@ -109,6 +109,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
     };
 
     const down = (event) => {
+      if (gestureRef.current || event.isPrimary === false) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       if (event.target?.closest?.(".gm-session-token")) return;
       const point = pointFor(grid, event);

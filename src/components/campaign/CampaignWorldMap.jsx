@@ -11,7 +11,7 @@ import SettlementScreen from '../settlement/SettlementScreen.jsx';
 import { worldCopy, worldError } from './worldCopy.js';
 import './campaignWorld.css';
 
-export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns }) {
+export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, settlementsOnly = false }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language;
   const c = worldCopy(language);
@@ -65,7 +65,7 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns }) 
   return <section className="campaign-world" aria-label={c.title}>
     <header className="campaign-world-heading"><div><h2>{c.title}</h2><p>{campaign.name} · {c.shared}</p></div><label>{c.region}<select aria-label={c.region} value={region.id} disabled={!gm || disabled} onChange={e => run({ type: 'worldRegion', regionId: e.target.value })}>{MAP_REGIONS.map(r => <option key={r.id} value={r.id}>{getRegionName(r, language)} · {r.game}</option>)}</select></label></header>
     {status}
-    <div className="campaign-world-layout"><div>
+    <div className="campaign-world-layout" hidden={settlementsOnly}><div>
       <p>{c.select}</p>
       <PhaserMapViewport cols={64} rows={64} sceneKey={`${campaignId}:${region.id}`} label={c.title}
         selected={validPoint ? point : null}
