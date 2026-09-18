@@ -312,7 +312,6 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     const pending = safeMapState.pendingTravelEncounter;
     if (!pending?.token) return;
 
-    setMapMode("local");
     if (pending.resolution) return;
 
     const resolution = resolveTravelEncounter(pending, character);
@@ -586,7 +585,6 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       }));
     }
     dispatchEnvironmentEffects(environmentExposure.effects);
-    if (stoppedEncounter) setMapMode("local");
     if (reachedDestination && !stoppedEncounter) setSelectedCell(null);
   }
 
@@ -728,7 +726,6 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       }));
     }
     dispatchEnvironmentEffects(environmentExposure.effects);
-    if (stoppedEncounter) setMapMode("local");
     setSelectedCell(null);
     setSelectedWorldTarget(null);
   }
