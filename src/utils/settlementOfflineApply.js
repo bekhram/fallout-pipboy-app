@@ -4,8 +4,8 @@ import { localCommand, fail } from '../cloud/settlementOfflineProtocol.js';
 
 /** Reuse existing gameplay validation, without awarding offline days, advancing
  * clocks, mutating an inventory, or persisting speculative construction results. */
-export function applyOfflineCommand(campaign, uid, input) {
-  const clean = localCommand(input), command = clean.command;
+export function applyOfflineCommand(campaign, uid, input, requestId = null) {
+  const clean = localCommand(input), command = requestId ? { ...clean.command, requestId } : clean.command;
   if (!campaign?.members?.[uid] || campaign.members[uid].revoked) fail('FORBIDDEN');
   const index = campaign.settlements?.findIndex(s => s.id === clean.settlementId);
   if (index === undefined || index < 0) fail('NOT_FOUND');
