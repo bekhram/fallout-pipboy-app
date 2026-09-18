@@ -1,0 +1,15 @@
+.campaign-offline-status,.campaign-offline-hub{min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
+.campaign-offline-status{border:1px solid var(--pip-border,rgba(155,223,153,.35));padding:.75rem;border-radius:8px;background:var(--pip-panel-bg,rgba(5,21,16,.8));margin:.5rem 0}
+.campaign-offline-status p,.campaign-offline-hub p{margin:.5rem 0;line-height:1.5}
+.campaign-offline-status__line,.campaign-offline-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.campaign-offline-status__line h2{margin:.25rem 0;font-size:1.1rem}
+.campaign-offline-status__dates{display:flex;flex-wrap:wrap;gap:.25rem 1rem;margin:.5rem 0;font-size:.8rem;opacity:.9}
+.campaign-offline-actions{justify-content:flex-start;margin:.5rem 0}
+.campaign-offline-actions .pip-btn,.campaign-offline-hub .pip-btn{min-height:44px;white-space:normal;max-width:100%;box-sizing:border-box;touch-action:manipulation}
+.campaign-offline-scope,.campaign-offline-review{margin-top:.5rem;font-size:.85rem}
+.campaign-offline-scope summary,.campaign-offline-review summary{cursor:pointer;padding:.3rem 0}
+.campaign-offline-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:.5rem}
+.campaign-offline-row{display:flex;flex-direction:column;align-items:flex-start;gap:.25rem;padding:.75rem;text-align:left}
+.campaign-offline-row small{font-size:.75rem;opacity:.85}
+.campaign-offline-hub>.pip-btn{margin-bottom:.5rem}
+@media(max-width:600px){.campaign-offline-actions .pip-btn{flex:1 1 160px}.campaign-offline-status{padding:.55rem}.campaign-offline-status__dates{flex-direction:column}}
