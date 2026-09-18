@@ -66,7 +66,7 @@ export function campaignCommand(original, uid, cmd, now) {
         description,
         category,
         visibility,
-        kind: gm ? 'gm' : 'player',
+        kind: existing?.kind || (gm ? 'gm' : 'player'),
         createdBy: existing?.createdBy || uid,
         createdByName: existing?.createdByName || c.members[uid]?.name || 'Player',
         createdAt: existing?.createdAt || now,
