@@ -1,10 +1,11 @@
+import { personalConstructionCopy } from './personalConstructionCopy.js';
 const COPY = {
   en: {
-    shortScope: 'Offline in stage 1: assignments and building moves. Purchases still need the server.',
+    shortScope: 'Offline: assignments, placement and personally funded projects after inventory linking.',
     title: 'Shared settlements', lobby: 'Campaign lobby', offline: 'Saved settlements', refresh: 'Refresh campaign list', back: 'Back to campaigns',
     saved: 'Saved on this device', syncing: 'Processing…', confirmed: 'Last synchronization', next: 'Next automatic attempt', never: 'Not synchronized yet',
     pending: 'Actions waiting to synchronize', sync: 'Synchronize now', export: 'Export backup', review: 'Synchronization results', conflict: 'Some local orders require review after synchronization.',
-    scope: 'Stage 1: worker assignments and moving existing buildings can be saved offline. Construction, purchases and account changes still require the server. Pending orders take effect on the server when synchronized; this stage does not credit backdated work or production.',
+    scope: 'Personal projects reserve materials in the same local inventory used by the character sheet and crafting. Link this device online first. Conflicting new buildings go to storage. Orders and construction take effect on the server at synchronization; backdated work and production are not credited. Account changes and refunds require the server. Territory expansion is not included yet.',
     first: 'Open a campaign online once to save it on this device. A cached campaign list alone does not contain its settlements.',
     empty: 'No cached campaigns on this device.', open: 'Open', stored: 'Offline copy available', uncached: 'First load requires a connection', auth: 'Sign in to access this account’s saved campaigns.', signIn: 'Sign in with Google',
     persist: 'Request persistent storage', persisted: 'Persistent storage granted. Keep an exported backup too.', bestEffort: 'Persistent storage was not granted. Export a backup before clearing browser data.',
@@ -24,11 +25,11 @@ const COPY = {
     },
   },
   ru: {
-    shortScope: 'Автономно на этапе 1: назначения и перемещение. Покупки пока требуют сервера.',
+    shortScope: 'Автономно: назначения, размещение и личные проекты после привязки инвентаря.',
     title: 'Общие поселения', lobby: 'Лобби кампании', offline: 'Сохранённые поселения', refresh: 'Обновить список кампаний', back: 'Назад к кампаниям',
     saved: 'Сохранено на устройстве', syncing: 'Обработка…', confirmed: 'Последняя синхронизация', next: 'Следующая автоматическая попытка', never: 'Синхронизации ещё не было',
     pending: 'Действий ожидает отправки', sync: 'Синхронизировать сейчас', export: 'Экспорт резервной копии', review: 'Результаты синхронизации', conflict: 'Часть локальных приказов требует проверки после синхронизации.',
-    scope: 'Этап 1: без связи сохраняются назначения рабочих и перемещение существующих зданий. Строительство, покупки и изменения аккаунта пока требуют сервера. Приказы вступают в силу на сервере при синхронизации; работа и производство задним числом на этом этапе не начисляются.',
+    scope: 'Личные проекты резервируют материалы в том же локальном инвентаре, который используют карточка персонажа и крафт. Сначала привяжите устройство онлайн. При наложении новая постройка уходит в склад. Приказы и стройки вступают в силу на сервере при синхронизации; работа и производство задним числом не начисляются. Изменение прав и возвраты требуют сервера. Покупка территории пока не включена.',
     first: 'Один раз откройте кампанию онлайн, чтобы сохранить её на устройстве. Один лишь сохранённый список кампаний не содержит поселений.',
     empty: 'На этом устройстве ещё нет сохранённых кампаний.', open: 'Открыть', stored: 'Есть автономная копия', uncached: 'Первое открытие требует связи', auth: 'Войдите, чтобы открыть сохранённые кампании своего аккаунта.', signIn: 'Войти через Google',
     persist: 'Запросить постоянное хранение', persisted: 'Постоянное хранение разрешено. Также сохраняйте экспортную копию.', bestEffort: 'Постоянное хранение не разрешено. Экспортируйте копию перед очисткой данных браузера.',
@@ -48,11 +49,11 @@ const COPY = {
     },
   },
   uk: {
-    shortScope: 'Автономно на етапі 1: призначення й переміщення. Покупки поки потребують сервера.',
+    shortScope: 'Автономно: призначення, розміщення й особисті проєкти після прив’язки інвентарю.',
     title: 'Спільні поселення', lobby: 'Лобі кампанії', offline: 'Збережені поселення', refresh: 'Оновити список кампаній', back: 'Назад до кампаній',
     saved: 'Збережено на пристрої', syncing: 'Обробка…', confirmed: 'Остання синхронізація', next: 'Наступна автоматична спроба', never: 'Синхронізації ще не було',
     pending: 'Дій очікує на надсилання', sync: 'Синхронізувати зараз', export: 'Експорт резервної копії', review: 'Результати синхронізації', conflict: 'Частина локальних наказів потребує перевірки після синхронізації.',
-    scope: 'Етап 1: без зв’язку зберігаються призначення робітників і переміщення наявних будівель. Будівництво, покупки й зміни облікового запису поки потребують сервера. Накази набувають чинності на сервері під час синхронізації; робота й виробництво заднім числом на цьому етапі не нараховуються.',
+    scope: 'Особисті проєкти резервують матеріали в тому самому локальному інвентарі, який використовують картка персонажа й крафт. Спочатку прив’яжіть пристрій онлайн. У разі накладання нова споруда потрапляє на склад. Накази й будівництво набувають чинності на сервері при синхронізації; робота й виробництво заднім числом не нараховуються. Зміни прав і повернення потребують сервера. Купівлю території поки не включено.',
     first: 'Один раз відкрийте кампанію онлайн, щоб зберегти її на пристрої. Сам список кампаній не містить поселень.',
     empty: 'На цьому пристрої ще немає збережених кампаній.', open: 'Відкрити', stored: 'Є автономна копія', uncached: 'Перше відкриття потребує зв’язку', auth: 'Увійдіть, щоб відкрити збережені кампанії свого облікового запису.', signIn: 'Увійти через Google',
     persist: 'Запросити постійне зберігання', persisted: 'Постійне зберігання дозволено. Також зберігайте експортну копію.', bestEffort: 'Постійне зберігання не дозволено. Експортуйте копію перед очищенням даних браузера.',
@@ -72,11 +73,11 @@ const COPY = {
     },
   },
   pl: {
-    shortScope: 'Offline w etapie 1: przydziały i przenoszenie. Zakupy nadal wymagają serwera.',
+    shortScope: 'Offline: przydziały, rozmieszczanie i osobiste projekty po powiązaniu ekwipunku.',
     title: 'Wspólne osady', lobby: 'Lobby kampanii', offline: 'Zapisane osady', refresh: 'Odśwież listę kampanii', back: 'Wróć do kampanii',
     saved: 'Zapisano na urządzeniu', syncing: 'Przetwarzanie…', confirmed: 'Ostatnia synchronizacja', next: 'Następna automatyczna próba', never: 'Jeszcze nie zsynchronizowano',
     pending: 'Działania oczekujące na wysłanie', sync: 'Synchronizuj teraz', export: 'Eksportuj kopię zapasową', review: 'Wyniki synchronizacji', conflict: 'Niektóre lokalne rozkazy wymagają sprawdzenia po synchronizacji.',
-    scope: 'Etap 1: przydziały pracowników i przenoszenie istniejących budynków można zapisać offline. Budowa, zakupy i zmiany konta nadal wymagają serwera. Rozkazy obowiązują na serwerze od synchronizacji; ten etap nie nalicza pracy ani produkcji wstecz.',
+    scope: 'Osobiste projekty rezerwują materiały w tym samym lokalnym ekwipunku co karta postaci i rzemiosło. Najpierw powiąż urządzenie online. Nowe budynki kolidujące z innymi trafiają do magazynu. Rozkazy i budowa obowiązują na serwerze od synchronizacji; praca i produkcja nie są naliczane wstecz. Zmiany uprawnień i zwroty wymagają serwera. Zakup terenu nie jest jeszcze dostępny.',
     first: 'Otwórz kampanię online co najmniej raz, aby zapisać ją na urządzeniu. Sama lista kampanii nie zawiera osad.',
     empty: 'Brak zapisanych kampanii na tym urządzeniu.', open: 'Otwórz', stored: 'Kopia offline dostępna', uncached: 'Pierwsze otwarcie wymaga połączenia', auth: 'Zaloguj się, aby otworzyć zapisane kampanie tego konta.', signIn: 'Zaloguj przez Google',
     persist: 'Poproś o trwałe przechowywanie', persisted: 'Przyznano trwałe przechowywanie. Zachowuj także eksportowaną kopię.', bestEffort: 'Nie przyznano trwałego przechowywania. Eksportuj kopię przed usunięciem danych przeglądarki.',
@@ -97,4 +98,4 @@ const COPY = {
   },
 };
 export function offlineCopy(language) { return COPY[String(language || 'en').split('-')[0]] || COPY.en; }
-export function offlineError(code, language, fallback) { return offlineCopy(language).errors[code] || fallback || code; }
+export function offlineError(code, language, fallback) { return personalConstructionCopy(language).errors[code] || offlineCopy(language).errors[code] || fallback || code; }

@@ -43,8 +43,8 @@ export function createSettlementSyncHandler(getServices = services) {
         apply(campaign, uid, input, requestId, now) {
           // The same validation powers the local preview; canonical gameplay still
           // runs in the existing server command handler at SERVER time only.
-          applyOfflineCommand({ ...campaign, character: campaign.accounts[uid] || null }, uid, input);
-          return campaignCommand(campaign, uid, { ...input, requestId }, now);
+          if (!['buildPersonal','roomPersonal','upgradePersonal'].includes(input.command?.type)) applyOfflineCommand({ ...campaign, character: campaign.accounts[uid] || null }, uid, input, {requestId,deviceId:body.deviceId});
+          return campaignCommand(campaign, uid, { ...input, requestId, deviceId:body.deviceId }, now);
         },
       });
       return res.json(result);

@@ -96,6 +96,13 @@ export default function useCampaignWorld(campaignId) {
       try { await refresh(); } catch (e) { setError(e.message); storageFailure.current = true; } setBusy(false);
     } }
   }, [controller, refresh, scope]);
+  const linkPersonalSource = useCallback(async sourceId => {
+    if (!controller || running.current) return false;
+    const token=Symbol(scope);running.current=token;setBusy(true);setError('');
+    try { await controller.linkSource(sourceId);return true; }
+    catch(e){if(mounted.current&&scopeRef.current===scope)setError(e.message);return false;}
+    finally{if(running.current===token)running.current=false;if(mounted.current&&scopeRef.current===scope){try{await refresh();}catch(e){setError(e.message);}setBusy(false);}}
+  },[controller,refresh,scope]);
   const exportSave = useCallback(async () => {
     try {
       const json = await campaignLocalStore.export(uid, campaignId);
@@ -107,6 +114,8 @@ export default function useCampaignWorld(campaignId) {
   const canQueue = Boolean(valid?.snapshot && !valid.blocked && !valid.authRequired && !valid.immediate && !valid.halted && !storageFailure.current);
   return { campaign: projected.campaign, uid, busy, error: error || valid?.lastError || (valid?.blocked ? 'FORBIDDEN' : ''), run, connected: online && !valid?.failures && !valid?.authRequired,
     retry: valid?.immediate?.command || null, retryLast: () => attempt(true), syncNow: () => attempt(true),
+    linkPersonalSource,sourceCharacterId:valid?.sourceCharacterId,sourceAvailable:valid?.sourceAvailable,sourceReserved:valid?.sourceReserved,
+    personalReady:Boolean(canQueue && valid?.snapshot?.character?.constructionSource?.characterId===valid?.sourceCharacterId && valid?.snapshot?.character?.constructionSource?.deviceId===valid?.deviceId),
     localReady: canQueue, pendingCount: (valid?.entries.length || 0) + (valid?.immediate ? 1 : 0),
     lastSyncAt: valid?.lastSyncAt || 0, nextSyncAt: valid?.nextAttemptAt || (valid?.lastSyncAt ? valid.lastSyncAt + SYNC_INTERVAL : 0),
     conflicts: projected.conflicts, history: valid?.history || [], blocked: Boolean(valid?.blocked), exportSave,

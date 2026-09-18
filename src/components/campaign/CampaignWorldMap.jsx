@@ -1,3 +1,6 @@
+import PersonalConstructionPanel from './PersonalConstructionPanel.jsx';
+import { personalQuote, personalBlockers } from '../../utils/personalConstruction.js';
+import { playerResources, RESOURCE_KEYS } from '../../utils/settlementDevelopment.js';
 import PhaserMapViewport from '../phaser/PhaserMapViewport.jsx';
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -36,6 +39,25 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   const active = settlements.find(s => s.id === activeId);
   const actor = { id: uid, isGM: gm, campaignId };
   const editable = active && canSpend(active, actor);
+  const personalReady = world.personalReady && world.sourceCharacterId === form?._localCharacterId;
+  const approvedBalance=playerResources(campaign?.character);
+  const available=Object.fromEntries(RESOURCE_KEYS.map(k=>[k,Math.min(approvedBalance[k]||0,world.sourceAvailable?.[k]||0)]));
+  const payer=campaign?.character ? {...campaign.character,caps:available.caps,inventoryItems:['common','uncommon','rare'].map(materialTier=>({sourceType:'crafting_material',materialTier,quantity:available[materialTier]}))} : null;
+  function canAffordPersonal(command) {
+    if(!personalReady || !active)return false;
+    try{return personalBlockers(active,payer,personalQuote(active,command).rule,actor).length===0;}catch{return false;}
+  }
+  async function settlementCommand(command) {
+    if(localDisabled||!editable)return false;
+    const kinds={build:'buildPersonal',room:'roomPersonal',upgrade:'upgradePersonal'};
+    if(kinds[command.type]) {
+      if(!personalReady)return false;
+      const cmd={...command,type:kinds[command.type],sourceId:world.sourceCharacterId};
+      cmd.quote=personalQuote(active,cmd).amounts;
+      return Boolean(await run({type:'settlement',settlementId:active.id,command:cmd}));
+    }
+    return Boolean(await run({type:'settlement',settlementId:active.id,command}));
+  }
   const locationName = location => location.nameKey ? t(location.nameKey, { defaultValue: location.name }) : location.name;
   async function submitCharacter() {
     try { setAuthError(''); await run({type: 'submitCharacter', character: characterImport(form, uid)}); } catch { setAuthError(c.error); }
@@ -51,12 +73,12 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   if (!campaign) return <section className="pip-panel campaign-world"><h2>{c.title}</h2>{status}<p>{world.blocked ? c.readOnly : offlineCopy(language).first}</p></section>;
 
   const settlementControls = <div className="campaign-world-controls">
-    {status}{characterPanel}
+    {status}{characterPanel}<PersonalConstructionPanel world={world} form={form} language={language}/>
     {!editable && <p>{c.readOnly}</p>}
     {gm && <details><summary>{c.manage}</summary>{members.filter(([id]) => id !== uid).map(([id, m]) => <label className="campaign-world-spender" key={id}><input type="checkbox" disabled={disabled} checked={Boolean(active?.access?.spenders?.includes(id))} onChange={e => run({ type: 'settlement', settlementId: active.id, command: { type: 'spender', memberId: id, allowed: e.target.checked } })}/>{m.name} · {c.spend}</label>)}</details>}
     {campaign.character && <details><summary>{c.deposit}</summary><p>{c.stock}</p><form className="campaign-world-deposit" onSubmit={async e => { e.preventDefault(); const result = await run({ type: 'settlement', settlementId: active.id, command: { type: 'deposit', amounts: Object.fromEntries(Object.entries(amounts).map(([k,v]) => [k, Number(v) || 0])) } }); if (result) setAmounts({ caps:'', common:'', uncommon:'', rare:'' }); }}>
       {Object.keys(amounts).map(key => <label key={key}>{c[key]}<input type="number" min="0" step="1" value={amounts[key]} onChange={e => setAmounts(old => ({ ...old, [key]: e.target.value }))}/></label>)}
-      <button className="pip-btn" disabled={disabled || !Object.values(amounts).some(v => Number(v) > 0)}>{c.deposit}</button>
+      <button className="pip-btn" disabled={disabled || (world.sourceCharacterId && !personalReady) || !Object.values(amounts).some(v => Number(v) > 0)}>{c.deposit}</button>
     </form></details>}
   </div>;
 
@@ -85,6 +107,6 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
     </aside></div>
     <div className="campaign-world-settlements"><h3>{c.settlements} · {settlements.length}/5</h3>{!settlements.length && <p>{c.empty}</p>}{settlements.map(s=><button className="pip-btn" key={s.id} onClick={()=>setActiveId(s.id)}><strong>⌂ {s.name}</strong><span>{getRegionName(getMapRegion(s.regionId),language)} · {s.worldX}:{s.worldY}</span><span>{c.open} →</span></button>)}</div>
     {characterPanel}
-    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} onCommand={async command=>{if(localDisabled||!editable)return false;return Boolean(await run({type:'settlement',settlementId:active.id,command}));}}/>,document.body)}
+    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} payment={{ready:personalReady,canAfford:canAffordPersonal}} onCommand={settlementCommand}/>,document.body)}
   </section>;
 }

@@ -13,3 +13,12 @@
 .campaign-offline-row small{font-size:.75rem;opacity:.85}
 .campaign-offline-hub>.pip-btn{margin-bottom:.5rem}
 @media(max-width:600px){.campaign-offline-actions .pip-btn{flex:1 1 160px}.campaign-offline-status{padding:.55rem}.campaign-offline-status__dates{flex-direction:column}}
+.campaign-personal-payment{max-width:100%;padding:.75rem;box-sizing:border-box;overflow-wrap:anywhere}
+.campaign-personal-payment p{font-size:.85rem;line-height:1.45}
+.campaign-personal-balances{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem}
+.campaign-personal-balances>div{display:flex;flex-direction:column;padding:.4rem;border:1px solid var(--pip-border,rgba(155,223,153,.3))}
+.campaign-personal-balances small{font-size:.7rem}
+.settlement-warehouse-row{display:flex;flex-direction:column;gap:.4rem;padding:.7rem 0;border-bottom:1px solid currentColor}
+.settlement-warehouse-row small{overflow-wrap:anywhere}
+.settlement-personal-notice{font-size:.8rem;line-height:1.5}
+.character-resource-guard{position:relative;margin:.5rem;padding:.6rem;border:1px solid currentColor;font-size:.8rem;line-height:1.4;overflow-wrap:anywhere;z-index:2}

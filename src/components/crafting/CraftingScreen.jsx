@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";
 import { buildBaseArmorRecipes, buildBaseWeaponRecipes } from "../../data/baseCraftingRecipes.js";
@@ -11,6 +11,7 @@ import {
   getInventoryQuantity,
   resolveCraftingAttempt,
 } from "../../utils/craftingEngine.js";
+import { personalConstructionCopy } from "../campaign/personalConstructionCopy.js";
 import "./crafting.css";
 
 const TEXT = {
@@ -157,6 +158,8 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const [search, setSearch] = useState("");
   const [benchAccess, setBenchAccess] = useState({});
   const [lastResult, setLastResult] = useState(null);
+  const saving = useRef(false);
+  const [saveBusy, setSaveBusy] = useState(false);
   const [expandedRecipeId, setExpandedRecipeId] = useState(null);
   const [baseRecipes, setBaseRecipes] = useState([]);
 
@@ -214,7 +217,8 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     });
   };
 
-  const handleCraft = (recipe) => {
+  const handleCraft = async (recipe) => {
+    if (saving.current) return;
     const state = getCraftingRecipeState(character, recipe);
     const needsWorkbench = !(recipe.workbench === "cooking" && recipe.name === "Cooking Station");
     if (needsWorkbench && !benchAccess[recipe.workbench]) {
@@ -241,7 +245,9 @@ export default function CraftingScreen({ character = null, setCharacter = null }
     }
 
     if (setCharacter) {
-      setCharacter((prev) => {
+      saving.current = true; setSaveBusy(true);
+      try {
+      const saved = await setCharacter((prev) => {
         let weapons = prev?.weapons || [];
         if (result.success && recipe?.outputTemplate?.sourceType === "crafted_weapon" && result.output) {
           const {
@@ -277,11 +283,15 @@ export default function CraftingScreen({ character = null, setCharacter = null }
           ].slice(-50),
         };
       });
+      if (saved === null) { setLastResult({ recipeId:recipe.id,error:"save" }); return; }
+      } catch { setLastResult({ recipeId:recipe.id,error:"save" }); return; }
+      finally { saving.current = false; setSaveBusy(false); }
     }
     setLastResult({ recipeId: recipe.id, ...result });
   };
 
-  const handleDismantle = (recipe) => {
+  const handleDismantle = async (recipe) => {
+    if (saving.current) return;
     if (!benchAccess[recipe.workbench]) {
       setLastResult({ recipeId: recipe.id, error: "bench", action: "dismantle" });
       return;
@@ -292,7 +302,9 @@ export default function CraftingScreen({ character = null, setCharacter = null }
       return;
     }
     if (setCharacter) {
-      setCharacter((prev) => ({
+      saving.current = true; setSaveBusy(true);
+      try {
+      const saved = await setCharacter((prev) => ({
         ...prev,
         inventoryItems: result.inventory,
         craftingHistory: [
@@ -307,6 +319,9 @@ export default function CraftingScreen({ character = null, setCharacter = null }
           },
         ].slice(-50),
       }));
+      if (saved === null) { setLastResult({ recipeId:recipe.id,error:"save" }); return; }
+      } catch { setLastResult({ recipeId:recipe.id,error:"save" }); return; }
+      finally { saving.current = false; setSaveBusy(false); }
     }
     setLastResult({ recipeId: recipe.id, ...result });
   };
@@ -314,7 +329,8 @@ export default function CraftingScreen({ character = null, setCharacter = null }
   const renderResult = (recipe) => {
     if (!lastResult || lastResult.recipeId !== recipe.id) return null;
     if (lastResult.error) {
-      const message = lastResult.error === "bench" ? copy.needBench
+      const message = lastResult.error === "save" ? personalConstructionCopy(language).errors.STALE_CHARACTER_UPDATE
+        : lastResult.error === "bench" ? copy.needBench
         : lastResult.error === "materials" ? copy.missingMaterials
           : lastResult.error === "perks" ? copy.missingPerks
             : lastResult.error === "ammosmith_rank" ? copy.needAmmosmith2
@@ -545,7 +561,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                         type="button"
                         className="pip-btn is-primary crafting-recipe-card__craft"
                         onClick={() => handleCraft(recipe)}
-                        disabled={!canCraft}
+                        disabled={!canCraft || saveBusy}
                       >
                         {recipe.ammoCrafting
                           ? `${copy.craft} // R${recipe.ammoRarity}`
@@ -559,7 +575,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                             type="button"
                             className="pip-btn crafting-recipe-card__craft"
                             onClick={() => handleDismantle(recipe)}
-                            disabled={!canDismantle}
+                            disabled={!canDismantle || saveBusy}
                           >
                             {copy.dismantle}
                           </button>

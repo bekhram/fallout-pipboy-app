@@ -1,11 +1,11 @@
-/** Wire format for the first local-first increment. Financial commands deliberately
- * stay outside this protocol until inventory reservations are shared by all screens. */
+/** Protocol v1 remains wire-compatible with stage-one queued commands. Personal
+ * purchases require a linked character source and atomic inventory reservations. */
 export const OFFLINE_PROTOCOL = 1;
 export const SYNC_INTERVAL = 24 * 60 * 60 * 1000;
 export const MAX_BATCH = 32;
 export const MAX_PENDING = 400;
 export const MAX_BATCH_BYTES = 48000;
-export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority']);
+export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority', 'buildPersonal', 'roomPersonal', 'upgradePersonal', 'placeStored']);
 const id = value => typeof value === 'string' && /^[a-zA-Z0-9_:-]{1,160}$/.test(value);
 const uuid = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{8,100}$/.test(value);
 export const fail = code => { throw new Error(code); };
@@ -19,10 +19,24 @@ export function localCommand(input) {
   if (!input || input.type !== 'settlement' || !id(input.settlementId)) fail('ONLINE_ACTION_REQUIRED');
   const c = input.command;
   if (!c || !LOCAL_ACTIONS.includes(c.type)) fail('ONLINE_ACTION_REQUIRED');
-  const required = c.type === 'move' ? ['buildingId'] : c.type === 'priority' ? ['key'] : ['workerId'];
+  if (['buildPersonal','roomPersonal','upgradePersonal'].includes(c.type)) {
+    if (!id(c.sourceId) || !c.quote || Object.keys(c.quote).sort().join(',') !== 'caps,common,rare,uncommon' ||
+        Object.values(c.quote).some(v => !Number.isSafeInteger(v) || v < 0 || v > 1000000)) fail('INVALID_COMMAND');
+    let command = { type: c.type, sourceId: c.sourceId, quote: { caps:c.quote.caps, common:c.quote.common, uncommon:c.quote.uncommon, rare:c.quote.rare } };
+    if (c.type === 'buildPersonal') {
+      if (!id(c.buildingType) || ![c.x,c.y].every(v => Number.isInteger(v) && v>=0 && v<24)) fail('PLACEMENT');
+      Object.assign(command,{buildingType:c.buildingType,x:c.x,y:c.y});
+    } else {
+      if (!id(c.buildingId) || (c.type==='roomPersonal' && !id(c.roomType))) fail('INVALID_COMMAND');
+      command.buildingId=c.buildingId;
+      if(c.type==='roomPersonal')command.roomType=c.roomType;
+    }
+    return { type:'settlement',settlementId:input.settlementId,command };
+  }
+  const required = ['move','placeStored'].includes(c.type) ? ['buildingId'] : c.type === 'priority' ? ['key'] : ['workerId'];
   if (required.some(key => !id(c[key]))) fail('INVALID_COMMAND');
   let command;
-  if (c.type === 'move') {
+  if (['move','placeStored'].includes(c.type)) {
     if (![c.x, c.y].every(v => Number.isInteger(v) && v >= 0 && v < 24)) fail('PLACEMENT');
     command = { type: c.type, buildingId: c.buildingId, x: c.x, y: c.y };
   } else if (c.type === 'priority') {
@@ -50,6 +64,9 @@ export function commandPrecondition(campaign, input) {
   const clean = localCommand(input), c = clean.command;
   const s = campaign?.settlements?.find(s => s.id === clean.settlementId);
   if (!s) fail('NOT_FOUND');
+  if (c.type === 'buildPersonal') return canonical({ type:c.type,sourceId:c.sourceId,quote:c.quote });
+  if (c.type === 'roomPersonal' || c.type === 'upgradePersonal') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
+  if (c.type === 'placeStored') return canonical(buildingToken(s.storedBuildings?.find(b => b.id === c.buildingId)));
   if (c.type === 'move') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
   if (c.type === 'priority') return canonical((s.buildings || []).map(b => ({
     id: b.id, state: b.state, priority: b.queuePriority ?? null,
@@ -99,7 +116,7 @@ export function projectRecord(record, apply) {
   for (const op of record.entries) {
     try {
       if (commandPrecondition(campaign, op.command) !== op.precondition) fail('LOCAL_CONFLICT');
-      campaign = apply(campaign, record.uid, op.command);
+      campaign = apply(campaign, record.uid, op.command, {requestId:op.requestId,deviceId:record.deviceId});
     } catch (error) { conflicts.push({ requestId: op.requestId, error: error.message }); }
   }
   return { campaign, conflicts };
@@ -112,7 +129,7 @@ export function enqueue(record, input, requestId, now, apply) {
   const { campaign, conflicts } = projectRecord(record, apply);
   if (conflicts.length) fail('SYNC_REQUIRED');
   const precondition = commandPrecondition(campaign, command);
-  apply(campaign, record.uid, command); // Validate before the transaction can commit.
+  apply(campaign, record.uid, command, {requestId,deviceId:record.deviceId}); // Validate before the transaction can commit.
   if (!Number.isSafeInteger(record.nextSequence) || record.nextSequence >= Number.MAX_SAFE_INTEGER) fail('OUTBOX_FULL');
   const op = { sequence: record.nextSequence, requestId, command, precondition, createdAt: now };
   if (precondition.length > 20000 || new TextEncoder().encode(JSON.stringify(op)).length > MAX_BATCH_BYTES - 512) fail('OUTBOX_ENTRY_TOO_LARGE');
