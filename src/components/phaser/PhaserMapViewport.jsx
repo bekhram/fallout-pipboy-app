@@ -255,8 +255,11 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           for (const m of d.markers) {
             const x = (m.x + .5) * CELL, y = (m.y + .5) * CELL;
             const radius = Math.max(17, 12 / this.cameras.main.zoom);
-            g.fillStyle(0x08180d, .95).fillCircle(x, y, radius).lineStyle(2 / this.cameras.main.zoom, 0xa9e5a6).strokeCircle(x, y, radius);
-            this.labels.push(this.add.text(x, y, m.icon || '◆', { fontFamily: 'monospace', fontSize: `${Math.max(22, 17 / this.cameras.main.zoom)}px`, color: '#c5eebe' }).setOrigin(.5).setDepth(51));
+            const markerColors = { danger:0xff8f8f, loot:0xffdc73, quest:0x7fdcff, objective:0xffb86c, settlement:0x9dff9d, note:0xa9e5a6 };
+            const markerColor = m.kind === 'member' ? 0x62d9ff : m.visibility === 'gm' ? 0xffd166 : (markerColors[m.category] || 0xa9e5a6);
+            const textColor = m.kind === 'member' ? '#8fe7ff' : m.visibility === 'gm' ? '#fff1a8' : '#c5eebe';
+            g.fillStyle(0x08180d, .95).fillCircle(x, y, radius).lineStyle(2 / this.cameras.main.zoom, markerColor).strokeCircle(x, y, radius);
+            this.labels.push(this.add.text(x, y, m.icon || '◆', { fontFamily: 'monospace', fontSize: `${Math.max(22, 17 / this.cameras.main.zoom)}px`, color: textColor }).setOrigin(.5).setDepth(51));
             if (m.label) {
               const markerLabel = String(m.label).trim().slice(0, 40);
               if (markerLabel) {
@@ -264,7 +267,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
                   this.add.text(x, y + radius + Math.max(8, 7 / this.cameras.main.zoom), markerLabel, {
                     fontFamily: 'monospace',
                     fontSize: `${Math.max(12, 10 / this.cameras.main.zoom)}px`,
-                    color: m.kind === 'gm' ? '#fff1a8' : '#c5eebe',
+                    color: textColor,
                     backgroundColor: '#06120de6',
                     padding: { x: 4, y: 2 },
                   }).setOrigin(.5, 0).setDepth(52)
