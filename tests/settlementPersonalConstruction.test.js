@@ -5,7 +5,7 @@ import { createSettlement } from '../src/utils/settlementState.js';
 import { applySettlementCommand } from '../src/utils/settlementCommands.js';
 import { canAffordPlayerCost, payPlayerCost, playerResources } from '../src/utils/settlementDevelopment.js';
 import { applyOfflineCommand } from '../src/utils/settlementOfflineApply.js';
-import { localCommand, isLocalCommand, commandPrecondition, newRecord, mergeSnapshot, enqueue, projectRecord } from '../src/cloud/settlementOfflineProtocol.js';
+import { localCommand, isLocalCommand, commandPrecondition, newRecord, mergeSnapshot, enqueue, projectRecord, prepareBatch, acknowledge, reservationTotals } from '../src/cloud/settlementOfflineProtocol.js';
 
 const uid = 'player_personal';
 const campaignId = 'campaign_abcdefabcdefabcdefabcdef';
@@ -113,4 +113,48 @@ test('personal build precondition detects competing inventory or map changes bef
   const occupied = structuredClone(base);
   occupied.settlements[0].buildings.push({ id: 'other', type: 'wall_straight', state: 'active', x: 5, y: 5 });
   assert.notEqual(commandPrecondition(occupied, command, uid), token);
+});
+
+
+test('accepted personal builds move from pending reservation into durable sheet spend without changing total availability', () => {
+  const record = mergeSnapshot(newRecord(uid, campaignId, 'device_personal_accepted'), snapshot(6), 1000);
+  const command = { type: 'settlement', settlementId: 'settlement_personal', command: {
+    type: 'build', buildingType: 'wall_straight', x: 5, y: 5, paymentSource: 'personal',
+  } };
+  enqueue(record, command, 'request_personal_accept', 1100, applyOfflineCommand);
+  assert.equal(reservationTotals(record).common, 3);
+  prepareBatch(record, 'batch_personal_accept');
+  const serverCampaign = applyOfflineCommand(snapshot(6), uid, command, 'request_personal_accept');
+  serverCampaign.revision = 2;
+  acknowledge(record, {
+    protocol: 1,
+    requestId: 'batch_personal_accept',
+    deviceId: 'device_personal_accepted',
+    through: 1,
+    campaign: serverCampaign,
+    results: [{ sequence: 1, requestId: 'request_personal_accept', state: 'accepted' }],
+  }, 2000);
+  assert.equal(record.entries.length, 0);
+  assert.equal(record.sheetSpent.common, 3);
+  assert.equal(reservationTotals(record).common, 3);
+  assert.equal(record.history[0].command.command.paymentSource, 'personal');
+});
+
+test('rejected personal builds release pending reservation and do not enter durable spend', () => {
+  const record = mergeSnapshot(newRecord(uid, campaignId, 'device_personal_reject'), snapshot(6), 1000);
+  const command = { type: 'settlement', settlementId: 'settlement_personal', command: {
+    type: 'build', buildingType: 'wall_straight', x: 5, y: 5, paymentSource: 'personal',
+  } };
+  enqueue(record, command, 'request_personal_reject', 1100, applyOfflineCommand);
+  prepareBatch(record, 'batch_personal_reject');
+  acknowledge(record, {
+    protocol: 1,
+    requestId: 'batch_personal_reject',
+    deviceId: 'device_personal_reject',
+    through: 1,
+    campaign: snapshot(6),
+    results: [{ sequence: 1, requestId: 'request_personal_reject', state: 'rejected', error: 'COMMAND_CONFLICT' }],
+  }, 2000);
+  assert.equal(reservationTotals(record).common, 0);
+  assert.equal(record.sheetSpent.common, 0);
 });
