@@ -19,13 +19,13 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
-      - name: Apply hash-verified source delta only to this draft branch
+      - name: Apply hash-verified application source only to this draft branch
         env:
           BRANCH: feat/settlement-personal-ledger
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           set -eu
-          test "$(git rev-parse HEAD^)" = 8ec91817395dc5efa924afc0bad1a979e6d17503
+          test "$(git rev-parse HEAD^)" = a180c083525a7853ead4c3d7ebee1e98bdfac7f4
           test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$EXPECTED_HEAD"
           python - <<'PY'
           import base64, hashlib, json, lzma, pathlib
@@ -54,12 +54,14 @@ jobs:
               planned.append((path,new))
           assert len(planned) == 30
           for path,new in planned:
+              if path.parts[0] == '.github':
+                  continue
               path.parent.mkdir(parents=True,exist_ok=True)
               path.write_bytes(new)
-          print(f'Verified and materialized {len(planned)} source files.')
+          print('Verified all 30 deltas; materialized 29 application/test/docs files. Workflow files are unchanged.')
           PY
-          git rm .github/personal-ledger-1.b64 .github/personal-ledger-2.b64 .github/workflows/materialize-personal-ledger.yml
-          git add -- src server api tests docs .github/workflows/settlement-personal-checks.yml
+          git add -- src server api tests docs
+          test -z "$(git diff --cached --name-only -- .github)"
           git diff --cached --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
