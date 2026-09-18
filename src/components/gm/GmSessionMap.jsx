@@ -23,7 +23,6 @@ import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
 import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
-import GmGlobalMenuButton from "./GmGlobalMenuButton.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
@@ -32,9 +31,11 @@ import "./tokenVisualFootprintFix.css";
 import "./gmNpcCardEditor.css";
 import "./gmTacticalTabs.css";
 import "./gmDesktopLayoutV2.css";
+import GmWorkspaceNavigation, { WORKSPACE_GROUPS, workspaceGroup, workspaceCopy } from "./GmWorkspaceNavigation.jsx";
+import "./gmOrganicWorkspace.css";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens"];
+const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens", "roster", "participants"];
 const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
   en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu" },
@@ -53,7 +54,7 @@ function normalizeTab(tab) {
 }
 function initialTab() {
   if (typeof window === "undefined") return "battle";
-  return normalizeTab(window.localStorage.getItem(TAB_STORAGE_KEY));
+  try { return normalizeTab(window.localStorage.getItem(TAB_STORAGE_KEY)); } catch { return "battle"; }
 }
 
 export default function GmSessionMap(props) {
@@ -61,6 +62,10 @@ export default function GmSessionMap(props) {
   const bridgedSession = useLiveSessionBridge();
   const session = props.session || bridgedSession;
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const ui = workspaceCopy(i18n.resolvedLanguage || i18n.language);
+  const group = workspaceGroup(activeTab);
+  const selectTab = (tab) => { setActiveTab(normalizeTab(tab)); setMoreOpen(false); };
   const rulerClearTimerRef = useRef(null);
   const labels = COPY[languageCode(i18n.resolvedLanguage || i18n.language)] || COPY.en;
 
@@ -90,7 +95,7 @@ export default function GmSessionMap(props) {
   }, [session]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") window.localStorage.setItem(TAB_STORAGE_KEY, activeTab);
+    try { window.localStorage.setItem(TAB_STORAGE_KEY, activeTab); } catch { /* Private browsing can disable storage. */ }
   }, [activeTab]);
 
   useEffect(() => () => {
@@ -102,16 +107,15 @@ export default function GmSessionMap(props) {
   }
 
   return (
-    <section className="gm-tactical-tabs-shell">
-      <GmGlobalMenuButton />
-      <nav className="gm-tactical-tabs" aria-label={labels.menu}>
-        <div className="gm-tactical-tabs__scroll">
-          {TABS.map((tab) => <button key={tab} type="button" className={`gm-tactical-tab${activeTab === tab ? " is-active" : ""}`} aria-pressed={activeTab === tab} onClick={() => setActiveTab(tab)}>{labels[tab]}</button>)}
-        </div>
-      </nav>
-
+    <section className={`gm-tactical-tabs-shell gm-organic-workspace gm-organic-group--${group}`}>
+      <GmWorkspaceNavigation activeTab={activeTab} onSelect={selectTab} labels={ui} moreOpen={moreOpen} onMore={setMoreOpen} />
+      <div className="gm-organic-content">
+        <header className="gm-organic-pagehead"><div><span>{ui.subtitle}</span><h1>{ui[group]}</h1></div><span className="gm-organic-scene-name">{session.tacticalScene.name || session.tacticalScene.title || ""}</span></header>
+        {group !== "battle" && <nav className="gm-organic-subtabs" aria-label={ui[group]}>
+          {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{ui[tab]}</button>)}
+        </nav>}
       <div className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
-        <div className="gm-tactical-battle-effects"><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></div>
+        <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
@@ -120,6 +124,7 @@ export default function GmSessionMap(props) {
           <GmScenePresetPanelV2 session={session} />
           <GmProceduralExplorationPanel session={session} />
         </div>
+        <div className="gm-organic-initiative" hidden={activeTab !== "battle"} />
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />
         <SettlementAssetPortal session={session} />
@@ -139,6 +144,8 @@ export default function GmSessionMap(props) {
         <GmTokenPointerGuard />
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV10 session={session} /></div>
       </div>
+      </div>
+      <div className="gm-organic-chat-dock" ref={props.onChatDockReady} />
     </section>
   );
 }

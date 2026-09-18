@@ -7,9 +7,11 @@ import {
 import { buildSessionShareUrl, getSessionCodeFromUrl } from "../../utils/sessionShare.js";
 import GmWorkspace from "../gm/GmWorkspace.jsx";
 import SessionChatDrawer from "./SessionChatDrawer.jsx";
+import SessionActionsMenu from "./SessionActionsMenu.jsx";
 import SessionLobby from "./SessionLobby.jsx";
 import "./session.css";
 import "./sessionGmWorkspace.css";
+import "../gm/gmOrganicWorkspace.css";
 
 const SAVE_KEY = "fallout_pipboy_v4_last_character";
 
@@ -217,6 +219,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
   const [localError, setLocalError] = useState("");
   const [errorTarget, setErrorTarget] = useState("player");
   const [copyState, setCopyState] = useState(false);
+  const [chatDockTarget, setChatDockTarget] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [syncState, setSyncState] = useState(false);
   const [restoreState, setRestoreState] = useState("idle");
@@ -353,36 +356,36 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
 
   if (mode === "host") {
     return (
-      <section className="session-gm-host session-gm-host--single-workspace">
+      <section className="session-gm-host session-gm-host--single-workspace session-gm-host--organic">
         <header className="pip-panel session-gm-hostbar">
           <div className="session-gm-hostbar__brand">
-            <div className="pip-bootline">{copy.liveSession}</div>
+            <div className="pip-bootline">PIP 2D20</div>
             <strong>{copy.workspace}</strong>
           </div>
           <div className="session-gm-hostbar__session">
-            <span className={`session-status-dot is-${status}`} />
-            <span>{copy.status}: <strong>{copy[status] || status}</strong></span>
+            <span className={`session-status-dot is-${status}`} role="img" aria-label={copy[status] || status} title={copy[status] || status} />
+            <span className="gm-organic-connection"><strong>{copy[status] || status}</strong></span>
             <button
               type="button"
               className="session-gm-code"
               onClick={handleCopy}
+              disabled={!sessionCode}
+              aria-label={copyState ? copy.copied : copy.copy}
               title={copyState ? copy.copied : copy.copy}
             >
-              {sessionCode}
+              {copyState ? "✓" : (sessionCode || "—")}
             </button>
-            <span>{copy.players}: <strong>{players.length}</strong></span>
+            <span className="gm-organic-player-count" title={copy.players}>♙ <strong>{players.length}</strong></span>
           </div>
-          <div className="session-gm-hostbar__actions">
-            <button type="button" className="pip-btn" onClick={onShowLobby}>{lobbyLabel}</button>
-            <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
-            <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.end}</button>
-          </div>
+          <SessionActionsMenu mode={mode} session={session} onBack={onShowLobby || onBack} onOpenSheet={onOpenSheet} labels={{...copy, back: lobbyLabel}} />
         </header>
 
         {error ? <div className="session-error session-gm-host-error">{error}</div> : null}
 
         <div className="session-gm-workspace-wrap session-gm-workspace-wrap--single">
           <GmWorkspace
+            session={session}
+            onChatDockReady={setChatDockTarget}
             character={form}
             setCharacter={setCharacter}
             onOpenMap={onOpenSheet}
@@ -390,13 +393,14 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
           <div className="stat-sub session-gm-live-hint">{copy.liveHint}</div>
         </div>
 
-        <SessionChatDrawer session={session} form={form} />
+        <SessionChatDrawer session={session} form={form} workspace dockTarget={chatDockTarget} />
       </section>
     );
   }
 
   return (
     <section className="session-screen pip-screen-grid session-player-live session-player-live--simple">
+      <SessionActionsMenu mode={mode} session={session} onBack={onBack} onOpenSheet={onOpenSheet} labels={copy} />
       <section className="pip-panel pip-block session-hero">
         <div className="session-topline">
           <div>

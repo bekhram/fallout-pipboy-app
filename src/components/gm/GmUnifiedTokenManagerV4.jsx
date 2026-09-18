@@ -700,7 +700,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
           </span>
         </header>
 
-        <section className="gm-token-section">
+        <section className="gm-token-section" data-workspace-section="participants">
           <h3>{text.players}</h3>
           <div className="gm-player-token-grid">
             {players.length ? (
@@ -803,7 +803,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
           </div>
         </section>
 
-        <section className="gm-token-section gm-bestiary-picker">
+        <section className="gm-token-section gm-bestiary-picker" data-workspace-section="bestiary">
           <div className="gm-token-section__head">
             <h3>{text.addToken}</h3>
             <span>
@@ -1002,7 +1002,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
           ) : null}
         </section>
 
-        <section className="gm-token-section gm-custom-npc-card gm-npc-v4-editor">
+        <section className="gm-token-section gm-custom-npc-card gm-npc-v4-editor" data-workspace-section="editor">
           <div className="gm-token-section__head">
             <h3>{text.creationCard}</h3>
             <span>{text.npcOrCreature}</span>
@@ -1680,7 +1680,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
           ) : null}
         </section>
 
-        <section className="gm-token-section">
+        <section className="gm-token-section" data-workspace-section="roster">
           <div className="gm-token-section__head">
             <h3>{text.sceneCreatures}</h3>
             <span>{text.cardHint}</span>
