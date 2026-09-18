@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { canonical, commandPrecondition, validateBatch, fail, OFFLINE_PROTOCOL } from '../src/cloud/settlementOfflineProtocol.js';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
-const REJECTIONS = new Set(['COMMAND_CONFLICT', 'FORBIDDEN', 'NOT_FOUND', 'PLACEMENT', 'LOCKED', 'TASK_FINISHED', 'INVALID_ACTION', 'INVALID_COMMAND', 'REQUIREMENTS', 'WORKPLACE_FULL', 'WORKPLACE_UNAVAILABLE', 'unavailable', 'capacity', 'insufficient', 'invalid']);
+const REJECTIONS = new Set(['COMMAND_CONFLICT', 'FORBIDDEN', 'NOT_FOUND', 'PLACEMENT', 'LOCKED', 'TASK_FINISHED', 'INVALID_ACTION', 'INVALID_COMMAND', 'REQUIREMENTS', 'WORKPLACE_FULL', 'WORKPLACE_UNAVAILABLE', 'ROOM_FULL', 'PERSONAL_DEVICE_REQUIRED', 'PERSONAL_RESOURCES_INSUFFICIENT', 'CONSTRUCTION_COST_CHANGED', 'DUPLICATE_BUILDING', 'CHARACTER_NOT_APPROVED', 'INVALID_RESOURCE_AMOUNT', 'unavailable', 'capacity', 'insufficient', 'invalid']);
 /** Persisted stream cursor + one immutable last-batch receipt. A client has exactly
  * one in-flight batch. After a lost response it MUST resend that batch unchanged.
  * Earlier sequence numbers can never execute again, even under another batch ID.

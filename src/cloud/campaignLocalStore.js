@@ -1,3 +1,5 @@
+import { newLocalCharacter, updateLocalCharacter, reconcilePersonalHolds, totalHolds } from './characterReservationState.js';
+import { checkedPlayerResources } from '../utils/personalResources.js';
 import { newRecord, mergeSnapshot, fail } from './settlementOfflineProtocol.js';
 
 const DB_NAME = 'pip2d20-campaign-offline-v1';
@@ -20,12 +22,13 @@ function database() {
   if (opening) return opening;
   opening = new Promise((resolve, reject) => {
     if (!globalThis.indexedDB) { reject(new Error('LOCAL_STORAGE_UNAVAILABLE')); return; }
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open(DB_NAME, 2);
     let settled = false;
     request.onupgradeneeded = () => {
       const db = request.result;
-      db.createObjectStore('worlds', { keyPath: ['uid', 'campaignId'] });
-      db.createObjectStore('lists', { keyPath: 'uid' });
+      if (!db.objectStoreNames.contains('worlds')) db.createObjectStore('worlds', { keyPath: ['uid', 'campaignId'] });
+      if (!db.objectStoreNames.contains('lists')) db.createObjectStore('lists', { keyPath: 'uid' });
+      if (!db.objectStoreNames.contains('characters')) db.createObjectStore('characters', { keyPath: 'id' });
     };
     request.onblocked = () => { settled = true; reject(new Error('LOCAL_STORAGE_BLOCKED')); };
     request.onerror = () => { settled = true; reject(new Error('LOCAL_STORAGE_UNAVAILABLE')); };
@@ -70,18 +73,101 @@ async function transaction(storeName, key, update) {
     tx.onerror = () => { /* onabort rejects; no success signal on a failed write. */ };
   });
 }
+/** World and linked source inventory always share one transaction. No awaits
+ * between the IDB success callbacks; a abort rolls back BOTH stores. */
+async function worldTransaction(uid, campaignId, update, sourceOverride = null) {
+  const db = await database();
+  return new Promise((resolve, reject) => {
+    let tx, result, ownError;
+    try { tx = db.transaction(['worlds', 'characters'], 'readwrite', { durability: 'strict' }); }
+    catch { tx = db.transaction(['worlds', 'characters'], 'readwrite'); }
+    const worlds = tx.objectStore('worlds'), chars = tx.objectStore('characters');
+    const read = worlds.get([uid, campaignId]);
+    read.onsuccess = () => {
+      const original = read.result || newRecord(uid, campaignId, crypto.randomUUID());
+      if (original.schema !== 1) { ownError = new Error('LOCAL_SCHEMA_UNSUPPORTED'); tx.abort(); return; }
+      const sourceId = original.sourceCharacterId || sourceOverride;
+      const finish = character => {
+        try {
+          const before = structuredClone(original);
+          result = update(original, character);
+          if (result?.then) fail('ASYNC_LOCAL_TRANSACTION');
+          if (result.sourceCharacterId) {
+            if (!character) fail('LOCAL_CHARACTER_REQUIRED');
+            character = reconcilePersonalHolds(before, result, character);
+            result.sourceAvailable = checkedPlayerResources(character.form);
+            result.sourceReserved = totalHolds(character);
+            result.sourceRevision = character.revision;
+            chars.put(character);
+          }
+          worlds.put(result);
+        } catch (error) { ownError = error; tx.abort(); }
+      };
+      if (sourceId) { const r = chars.get(sourceId); r.onsuccess = () => finish(r.result); }
+      else finish(null);
+    };
+    tx.oncomplete = () => resolve(structuredClone(result));
+    tx.onabort = () => reject(ownError || new Error(tx.error?.name === 'QuotaExceededError' ? 'LOCAL_STORAGE_FULL' : 'LOCAL_STORAGE_UNAVAILABLE'));
+    tx.onerror = () => {};
+  });
+}
+export const localCharacterStore = {
+  async load(form) {
+    if (!form?._localCharacterId) fail('LOCAL_CHARACTER_REQUIRED');
+    return transaction('characters', form._localCharacterId, saved => saved || newLocalCharacter(form));
+  },
+  async get(id) { return id ? transaction('characters', id) : null; },
+  async update(id, update, { expectedRevision = null } = {}) {
+    // Serialize against reservations and acknowledgements on the same stores.
+    const db = await database();
+    const result = await new Promise((resolve, reject) => {
+      let tx, result, ownError;
+      try { tx = db.transaction(['worlds','characters'], 'readwrite', { durability: 'strict' }); }
+      catch { tx = db.transaction(['worlds','characters'], 'readwrite'); }
+      const chars = tx.objectStore('characters'), request = chars.get(id);
+      request.onsuccess = () => {
+        try {
+          if (!request.result) fail('LOCAL_CHARACTER_REQUIRED');
+          result = updateLocalCharacter(request.result, update, expectedRevision);
+          chars.put(result);
+          if (result.boundUid && result.boundCampaignId) {
+            const worlds = tx.objectStore('worlds'), getWorld = worlds.get([result.boundUid,result.boundCampaignId]);
+            getWorld.onsuccess = () => {
+              try {
+                if (getWorld.result) worlds.put({ ...getWorld.result, sourceAvailable: checkedPlayerResources(result.form), sourceReserved: totalHolds(result), sourceRevision: result.revision });
+              } catch (error) { ownError=error; tx.abort(); }
+            };
+          }
+        } catch (error) { ownError = error; tx.abort(); }
+      };
+      tx.oncomplete = () => resolve(result);
+      tx.onabort = () => reject(ownError || new Error(tx.error?.name === 'QuotaExceededError' ? 'LOCAL_STORAGE_FULL' : 'LOCAL_STORAGE_UNAVAILABLE'));
+      tx.onerror = () => {};
+    });
+    announce(result.boundUid || '', result.boundCampaignId || '');
+    return result;
+  },
+};
 export const campaignLocalStore = {
+  async linkSource(uid, campaignId, sourceId) {
+    scope(uid, campaignId);
+    const result = await worldTransaction(uid, campaignId, (r, c) => {
+      if (!c || c.id !== sourceId) fail('LOCAL_CHARACTER_REQUIRED');
+      if (r.sourceCharacterId && r.sourceCharacterId !== sourceId) fail('PERSONAL_SOURCE_MISMATCH');
+      if (c.boundUid && (c.boundUid !== uid || c.boundCampaignId !== campaignId)) fail('PERSONAL_SOURCE_ALREADY_LINKED');
+      checkedPlayerResources(c.form);
+      c.boundUid = uid; c.boundCampaignId = campaignId; r.sourceCharacterId = sourceId;
+      return r;
+    }, sourceId);
+    announce(uid,campaignId); return result;
+  },
   async get(uid, campaignId) {
     scope(uid, campaignId);
     return transaction('worlds', [uid, campaignId]);
   },
   async change(uid, campaignId, update) {
     scope(uid, campaignId);
-    const result = await transaction('worlds', [uid, campaignId], current => {
-      const record = current || newRecord(uid, campaignId, crypto.randomUUID());
-      if (record.schema !== 1 || record.uid !== uid || record.campaignId !== campaignId) fail('LOCAL_SCHEMA_UNSUPPORTED');
-      return update(record);
-    });
+    const result = await worldTransaction(uid, campaignId, update);
     announce(uid, campaignId); return result;
   },
   async remember(uid, campaign, now = Date.now()) {
@@ -126,7 +212,8 @@ export const campaignLocalStore = {
     if (!record || record.blocked) fail('NO_OFFLINE_SNAPSHOT');
     const { lease, ...data } = record;
     // No auth session, tokens, invitation secrets or other users' cached worlds.
-    return JSON.stringify({ format: 'pip2d20-campaign-offline', version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
+    const character = record.sourceCharacterId ? await localCharacterStore.get(record.sourceCharacterId) : null;
+    return JSON.stringify({ format: 'pip2d20-campaign-offline', version: 2, exportedAt: new Date().toISOString(), data, character }, null, 2);
   },
 };
 export function subscribeLocal(listener) {

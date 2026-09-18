@@ -1,3 +1,5 @@
+import { isPersonalAction, applyPersonalConstruction, placeStoredBuilding, cancelPersonalConstruction } from '../src/utils/personalConstruction.js';
+import { checkedResources, creditPersonalResources } from '../src/utils/personalResources.js';
 import { MAP_REGIONS } from '../src/data/map/mapRegions.js';
 import { SETTLEMENT_BUILDINGS } from '../src/data/settlement/buildings.js';
 import { ROOMS } from '../src/data/settlement/rulebook.js';
@@ -48,6 +50,14 @@ export function campaignCommand(original, uid, cmd, now) {
       c.liveSession = { code: cmd.code, updatedAt: now }; break;
     case 'tick':
       c.settlements = c.settlements.map(s => runSimulation(s, now)); break;
+    case 'linkPersonalSource': {
+      const account=c.accounts[uid];
+      if(!account)throw new Error('CHARACTER_NOT_APPROVED');
+      if(!/^[a-zA-Z0-9_-]{8,100}$/.test(cmd.sourceId || '') || !/^[a-zA-Z0-9_-]{8,100}$/.test(cmd.deviceId || ''))throw new Error('INVALID_REQUEST');
+      if(account.constructionSource && (account.constructionSource.characterId!==cmd.sourceId || account.constructionSource.deviceId!==cmd.deviceId))throw new Error('PERSONAL_DEVICE_REQUIRED');
+      account.constructionSource ||= {characterId:cmd.sourceId,deviceId:cmd.deviceId,credits:{caps:0,common:0,uncommon:0,rare:0}};
+      break;
+    }
     case 'submitCharacter':
       if (c.accounts[uid]) throw new Error('ALREADY_IMPORTED');
       c.proposals[uid] = characterImport(cmd.character, uid); break;
@@ -89,11 +99,32 @@ export function campaignCommand(original, uid, cmd, now) {
     case 'settlement': {
       const index = c.settlements.findIndex(s => s.id === cmd.settlementId);
       if (index < 0) throw new Error('NOT_FOUND');
-      const actor = { id: uid, name: c.members[uid].name, isGM: gm, campaignId: c.id };
+      const actor = { id: uid, name: c.members[uid].name, isGM: gm, campaignId: c.id, deviceId: cmd.deviceId };
       const action = { ...cmd.command, requestId: cmd.requestId };
       if (action.type === 'spender') requireMember(c, action.memberId);
       if (['build','room','upgrade','deposit'].includes(action.type) && !c.accounts[uid]) throw new Error('CHARACTER_NOT_APPROVED');
-      const result = applySettlementCommand(runSimulation(c.settlements[index], now), c.accounts[uid], actor, action, now);
+      let result;
+      const settlement=runSimulation(c.settlements[index],now);
+      if (isPersonalAction(action)) {
+        result=applyPersonalConstruction(settlement,c.accounts[uid],actor,action,now);
+      } else if (action.type==='placeStored') {
+        result={settlement:placeStoredBuilding(settlement,actor,action,now)};
+      } else if (['cancel','cancelStored'].includes(action.type)) {
+        result=cancelPersonalConstruction(settlement,actor,action,now);
+        if(result?.refund) {
+          const {payerUid,sourceId,amounts}=result.refund;
+          const payer=c.accounts[payerUid];
+          if(!payer || payer.constructionSource?.characterId!==sourceId)throw new Error('REFUND_TARGET_UNAVAILABLE');
+          const credited=creditPersonalResources(payer,amounts);
+          const credits=checkedResources(Object.fromEntries(['caps','common','uncommon','rare'].map(k=>[k,(payer.constructionSource.credits?.[k]||0)+(amounts[k]||0)])));
+          c.accounts[payerUid]={...credited,constructionSource:{...payer.constructionSource,credits}};
+        }
+      }
+      if(!result) {
+        if(c.accounts[uid]?.constructionSource && ['build','room','upgrade'].includes(action.type))throw new Error('PERSONAL_PAYMENT_REQUIRED');
+        if(action.type==='deposit' && c.accounts[uid]?.constructionSource && c.accounts[uid].constructionSource.deviceId!==cmd.deviceId)throw new Error('PERSONAL_DEVICE_REQUIRED');
+        result = applySettlementCommand(settlement, c.accounts[uid], actor, action, now);
+      }
       c.settlements[index] = result.settlement;
       if (result.character) c.accounts[uid] = result.character;
       break;

@@ -167,8 +167,8 @@ export function confirmSpecialist(s, actor, id, name, now = Date.now()) {
   return event({ ...s, settlers, attributes: { ...s.attributes, people: settlers.length }, resources: { ...s.resources, population: settlers.length }, orders: s.orders.map(o => o.id === id ? { ...o, state: 'completed', completedAt: now } : o) }, 'specialist_arrived', { settlerName: label }, now);
 }
 const materialNames = { common: ['Common Materials','Обычные материалы','Звичайні матеріали','Materiały pospolite'], uncommon: ['Uncommon Materials','Необычные материалы','Незвичайні матеріали','Materiały niepospolite'], rare: ['Rare Materials','Редкие материалы','Рідкісні матеріали','Materiały rzadkie'] };
-function tier(item) { if (item.sourceType === 'crafting_material' && TIERS.includes(item.materialTier)) return item.materialTier; return TIERS.find(k => materialNames[k].some(n => [item.name,item.canonicalName,item.sourceName].some(v => String(v || '').trim().toLowerCase() === n.toLowerCase()))); }
-export function playerResources(c) { const available = { caps: number(c?.caps), common: 0, uncommon: 0, rare: 0 }; for (const item of c?.inventoryItems || []) { const k = tier(item); if (k) available[k] += number(item.quantity ?? item.qty); } return available; }
+export function materialTier(item) { if (item.sourceType === 'crafting_material' && TIERS.includes(item.materialTier)) return item.materialTier; return TIERS.find(k => materialNames[k].some(n => [item.name,item.canonicalName,item.sourceName].some(v => String(v || '').trim().toLowerCase() === n.toLowerCase()))); }
+export function playerResources(c) { const available = { caps: number(c?.caps), common: 0, uncommon: 0, rare: 0 }; for (const item of c?.inventoryItems || []) { const k = materialTier(item); if (k) available[k] += number(item.quantity ?? item.qty); } return available; }
 export function depositCheck(s, c, input) {
   if (!c) return 'unavailable';
   const values = Object.fromEntries(RESOURCE_KEYS.map(k => [k, Number(input[k] ?? 0)]));
@@ -184,7 +184,7 @@ export function depositCheck(s, c, input) {
 export function deposit(s, c, input, now = Date.now()) {
   const error = depositCheck(s,c,input); if (error) return { error };
   const amounts = Object.fromEntries(RESOURCE_KEYS.map(k => [k, Number(input[k] || 0)])), left = { ...amounts };
-  const inventoryItems = (c.inventoryItems || []).flatMap(item => { const k = tier(item); if (!k || !left[k]) return [item]; const have = number(item.quantity ?? item.qty), spent = Math.min(have,left[k]); left[k] -= spent; return have > spent ? [{ ...item, quantity: String(have-spent), ...(Object.hasOwn(item,'qty') ? {qty:have-spent} : {}) }] : []; });
+  const inventoryItems = (c.inventoryItems || []).flatMap(item => { const k = materialTier(item); if (!k || !left[k]) return [item]; const have = number(item.quantity ?? item.qty), spent = Math.min(have,left[k]); left[k] -= spent; return have > spent ? [{ ...item, quantity: String(have-spent), ...(Object.hasOwn(item,'qty') ? {qty:have-spent} : {}) }] : []; });
   const next = changeBalance(s,amounts);
   return { character: { ...c, caps: String(number(c.caps)-amounts.caps), inventoryItems }, settlement: event({ ...next, orders: creditOrders(s.orders,amounts,now), members: { ...s.members, [actorFor(c).id]: { name: c.name || 'Player' } } }, 'stockpile_deposit', { contributor: c.name || 'Player', amounts }, now) };
 }

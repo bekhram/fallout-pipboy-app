@@ -115,6 +115,16 @@ export function createCampaignOfflineController({ uid, campaignId, store, reques
   }
   return {
     get, sync,
+    async linkSource(sourceId) {
+      ensureCurrent();
+      if(!online())fail('ONLINE_ACTION_REQUIRED');
+      let r=await get();
+      if(r?.entries.length || r?.immediate || r?.inflight) { await sync({manual:true}); r=await get(); }
+      if(!r?.snapshot || r.blocked || r.entries.length || r.immediate || r.inflight)fail('SYNC_REQUIRED');
+      if(!store.linkSource)fail('LOCAL_CHARACTER_REQUIRED');
+      await store.linkSource(uid,campaignId,sourceId);
+      return this.run({type:'linkPersonalSource',sourceId,deviceId:r.deviceId});
+    },
     async initialize(legacy = null) {
       ensureCurrent();
       return change(r => {
@@ -137,8 +147,8 @@ export function createCampaignOfflineController({ uid, campaignId, store, reques
         });
         return projectRecord(r, apply).campaign;
       }
-      // This increment does not claim to reserve personal inventory: paid/admin
-      // commands are online-only, journaled before HTTP, using the existing API.
+      // Administrative actions and refunds still require the existing online API.
+      // Linked deposits share the local inventory hold transaction before HTTP.
       if (!online()) fail('ONLINE_ACTION_REQUIRED');
       let r = await get();
       if (!r?.snapshot || r.blocked) fail('NO_OFFLINE_SNAPSHOT');
@@ -154,7 +164,7 @@ export function createCampaignOfflineController({ uid, campaignId, store, reques
         await change(record => {
           if (record.blocked || record.authRequired) fail('SIGN_IN_REQUIRED');
           if (record.entries.length || record.inflight || record.immediate) fail('PENDING_CONFIRMATION');
-          record.immediate = { command: { ...structuredClone(input), campaignId, requestId: uuid() }, createdAt: now() };
+          record.immediate = { command: { ...structuredClone(input), campaignId, ...(record.sourceCharacterId ? {deviceId:record.deviceId} : {}), requestId: uuid() }, createdAt: now() };
           return record;
         });
         await sendImmediate(owner);

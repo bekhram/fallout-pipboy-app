@@ -1,3 +1,4 @@
+import { useDurableCharacterState } from './useDurableCharacterState.js';
 import { useEffect, useMemo, useState } from "react";
 import { ORIGINS, TRAITS_DICTIONARY } from "../components/data/origins.js";
 import { STATUS_LIST } from "../constants.js";
@@ -128,7 +129,7 @@ function clearStatusGroup(statuses, group) {
 }
 
 export function useCharacterStorage(initialForm) {
-  const [form, setForm] = useState(() => {
+  const [form, setForm, durableSave, replaceCharacter] = useDurableCharacterState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
 
@@ -254,6 +255,7 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
+    setForm,
   ]);
 
   useEffect(() => {
@@ -303,6 +305,7 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
+    setForm,
   ]);
 
   useEffect(() => {
@@ -400,6 +403,7 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
+    setForm,
   ]);
 
   useEffect(() => {
@@ -485,7 +489,7 @@ export function useCharacterStorage(initialForm) {
         inventoryItems,
       };
     });
-  }, [form.weapons]);
+  }, [form.weapons, setForm]);
 
   useEffect(() => {
     if (!armorInventoryDatabase.length) return;
@@ -548,7 +552,7 @@ export function useCharacterStorage(initialForm) {
 
       return changed ? { ...prev, inventoryItems } : prev;
     });
-  }, [form.armor?._equipment?.slots, armorInventoryDatabase]);
+  }, [form.armor?._equipment?.slots, armorInventoryDatabase, setForm]);
 
   useEffect(() => {
     const desiredPowerArmorItems = buildPowerArmorInventoryItems(
@@ -584,7 +588,7 @@ export function useCharacterStorage(initialForm) {
 
       return { ...prev, inventoryItems };
     });
-  }, [form.armor?._power?.loadout]);
+  }, [form.armor?._power?.loadout, setForm]);
 
   useEffect(() => {
     const handleUseItem = (event) => {
@@ -821,7 +825,7 @@ export function useCharacterStorage(initialForm) {
       window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
       window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
     };
-  }, []);
+  }, [setForm]);
 
   useEffect(() => {
     try {
@@ -917,7 +921,7 @@ export function useCharacterStorage(initialForm) {
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const parsed = JSON.parse(e.target?.result || "{}");
         const loaded = parsed?.data;
@@ -931,7 +935,7 @@ export function useCharacterStorage(initialForm) {
           ...fallbackFactory(),
           ...loaded,
         };
-        setForm(next);
+        if (!await replaceCharacter(next)) throw new Error("Character storage failed");
         setLastSavedSnapshot(JSON.stringify(next));
         setLoadStatus("Character loaded from JSON file");
       } catch (error) {
@@ -955,7 +959,7 @@ export function useCharacterStorage(initialForm) {
     }
   };
 
-  const resetToNewCharacter = (factory) => {
+  const resetToNewCharacter = async (factory) => {
     const fresh = {
       activeConsumableEffects: [],
       originEquipmentPack: "",
@@ -963,7 +967,7 @@ export function useCharacterStorage(initialForm) {
       startingEquipmentChoices: {},
       ...factory(),
     };
-    setForm(fresh);
+    if (!await replaceCharacter(fresh)) return;
     setLastSavedSnapshot(JSON.stringify(fresh));
     setSaveStatus("");
     setLoadStatus("");
@@ -983,8 +987,9 @@ export function useCharacterStorage(initialForm) {
         ...factory(),
         ...(parsed?.data || {}),
       };
-      setForm(next);
-      setLastSavedSnapshot(JSON.stringify(next));
+      // The durable character was already restored on mount. Do not overwrite it
+      // with a potentially older localStorage mirror (including reserved money).
+      setLastSavedSnapshot(JSON.stringify(form));
       setLoadStatus("Last character loaded");
     } catch {
       setLoadStatus("Could not load last character");
@@ -1046,8 +1051,9 @@ export function useCharacterStorage(initialForm) {
   return {
     form,
     setForm,
-    saveStatus,
-    localSaveState: localSave.form === form ? localSave.state : "saving",
+    saveStatus: durableSave.error ? `⚠ ${durableSave.error}` : saveStatus,
+    localSaveState: durableSave.state !== "saved" ? durableSave.state : localSave.form === form ? localSave.state : "saving",
+    characterStorageError: durableSave.error,
     loadStatus,
     exportJson,
     importJson,
