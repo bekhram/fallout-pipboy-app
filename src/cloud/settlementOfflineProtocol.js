@@ -5,7 +5,7 @@ export const SYNC_INTERVAL = 24 * 60 * 60 * 1000;
 export const MAX_BATCH = 32;
 export const MAX_PENDING = 400;
 export const MAX_BATCH_BYTES = 48000;
-export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority']);
+export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority', 'build']);
 const id = value => typeof value === 'string' && /^[a-zA-Z0-9_:-]{1,160}$/.test(value);
 const uuid = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{8,100}$/.test(value);
 export const fail = code => { throw new Error(code); };
@@ -19,10 +19,13 @@ export function localCommand(input) {
   if (!input || input.type !== 'settlement' || !id(input.settlementId)) fail('ONLINE_ACTION_REQUIRED');
   const c = input.command;
   if (!c || !LOCAL_ACTIONS.includes(c.type)) fail('ONLINE_ACTION_REQUIRED');
-  const required = c.type === 'move' ? ['buildingId'] : c.type === 'priority' ? ['key'] : ['workerId'];
+  const required = c.type === 'move' ? ['buildingId'] : c.type === 'priority' ? ['key'] : c.type === 'build' ? ['buildingType'] : ['workerId'];
   if (required.some(key => !id(c[key]))) fail('INVALID_COMMAND');
   let command;
-  if (c.type === 'move') {
+  if (c.type === 'build') {
+    if (c.paymentSource !== 'personal' || ![c.x, c.y].every(v => Number.isInteger(v) && v >= 0 && v < 24)) fail('ONLINE_ACTION_REQUIRED');
+    command = { type: c.type, buildingType: c.buildingType, x: c.x, y: c.y, paymentSource: 'personal' };
+  } else if (c.type === 'move') {
     if (![c.x, c.y].every(v => Number.isInteger(v) && v >= 0 && v < 24)) fail('PLACEMENT');
     command = { type: c.type, buildingId: c.buildingId, x: c.x, y: c.y };
   } else if (c.type === 'priority') {
@@ -46,10 +49,24 @@ const buildingToken = b => b ? {
 } : null;
 /** Compare the specific affected entity, not the whole campaign revision. Changes
  * to a different resident may merge; competing orders for one resident may not. */
-export function commandPrecondition(campaign, input) {
+export function commandPrecondition(campaign, input, uid = null) {
   const clean = localCommand(input), c = clean.command;
   const s = campaign?.settlements?.find(s => s.id === clean.settlementId);
   if (!s) fail('NOT_FOUND');
+  if (c.type === 'build') {
+    const character = campaign?.character || campaign?.accounts?.[uid] || null;
+    const resources = character ? {
+      caps: Number(character.caps || 0),
+      inventoryItems: (character.inventoryItems || []).filter(item => item?.sourceType === 'crafting_material').map(item => ({
+        materialTier: item.materialTier || null,
+        quantity: String(item.quantity ?? item.qty ?? 0),
+      })),
+    } : null;
+    return canonical({
+      buildings: (s.buildings || []).map(b => ({ id: b.id, type: b.type, state: b.state, x: b.x, y: b.y })),
+      resources,
+    });
+  }
   if (c.type === 'move') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
   if (c.type === 'priority') return canonical((s.buildings || []).map(b => ({
     id: b.id, state: b.state, priority: b.queuePriority ?? null,
@@ -98,7 +115,7 @@ export function projectRecord(record, apply) {
   if (!campaign) return { campaign, conflicts };
   for (const op of record.entries) {
     try {
-      if (commandPrecondition(campaign, op.command) !== op.precondition) fail('LOCAL_CONFLICT');
+      if (commandPrecondition(campaign, op.command, record.uid) !== op.precondition) fail('LOCAL_CONFLICT');
       campaign = apply(campaign, record.uid, op.command);
     } catch (error) { conflicts.push({ requestId: op.requestId, error: error.message }); }
   }
@@ -111,7 +128,7 @@ export function enqueue(record, input, requestId, now, apply) {
   const command = localCommand(input);
   const { campaign, conflicts } = projectRecord(record, apply);
   if (conflicts.length) fail('SYNC_REQUIRED');
-  const precondition = commandPrecondition(campaign, command);
+  const precondition = commandPrecondition(campaign, command, record.uid);
   apply(campaign, record.uid, command); // Validate before the transaction can commit.
   if (!Number.isSafeInteger(record.nextSequence) || record.nextSequence >= Number.MAX_SAFE_INTEGER) fail('OUTBOX_FULL');
   const op = { sequence: record.nextSequence, requestId, command, precondition, createdAt: now };
