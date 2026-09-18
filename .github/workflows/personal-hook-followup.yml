@@ -1,0 +1,55 @@
+name: Apply verified character subscription follow-up
+on:
+  pull_request:
+    branches: [main]
+    paths: ['.github/workflows/personal-hook-followup.yml']
+permissions:
+  contents: read
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/settlement-personal-ledger'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 2
+      - name: Apply exact ordinary-source dependency corrections
+        env:
+          BRANCH: feat/settlement-personal-ledger
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          test "$(git rev-parse HEAD^)" = 2fda896bdc5e4d9af405afd913ad2d0403e1a138
+          test "$(git ls-remote origin refs/heads/$BRANCH | cut -f1)" = "$EXPECTED_HEAD"
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+          p=Path('src/hooks/useCharacterStorage.js')
+          def blob(s):
+              d=s.encode();return hashlib.sha1(b'blob '+str(len(d)).encode()+b'\0'+d).hexdigest()
+          text=p.read_text()
+          assert blob(text)=='0fb008da57be7e4b23789bef656ee808ed0c07aa'
+          needle='    ammoInventoryDatabase,\n  ]);'
+          assert text.count(needle)==3
+          text=text.replace(needle,'    ammoInventoryDatabase,\n    setForm,\n  ]);')
+          for a,b in [('}, [form.weapons]);','}, [form.weapons, setForm]);'),('}, [form.armor?._equipment?.slots, armorInventoryDatabase]);','}, [form.armor?._equipment?.slots, armorInventoryDatabase, setForm]);'),('}, [form.armor?._power?.loadout]);','}, [form.armor?._power?.loadout, setForm]);')]:
+              assert text.count(a)==1
+              text=text.replace(a,b)
+          a='      window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);\n    };\n  }, []);'
+          b='      window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);\n    };\n  }, [setForm]);'
+          assert text.count(a)==1
+          text=text.replace(a,b)
+          assert blob(text)=='b9d66bf11365d963f36d69def57155efa85eaa75'
+          p.write_text(text)
+          PY
+          git add src/hooks/useCharacterStorage.js
+          test -z "$(git diff --cached --name-only -- .github)"
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: refresh character inventory event handlers with durable revision changes'
+          git push origin HEAD:refs/heads/$BRANCH

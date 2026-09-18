@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { campaignLocalStore as store, localCharacterStore as characters } from '../../src/cloud/campaignLocalStore.js';
-import { useDurableCharacterState } from '../../src/hooks/useDurableCharacterState.js';
+import { useCharacterStorage } from '../../src/hooks/useCharacterStorage.js';
+import { PIPBOY_USE_ITEM_EVENT } from '../../src/utils/consumableEffects.js';
 import * as protocol from '../../src/cloud/settlementOfflineProtocol.js';
 import { applyOfflineCommand as apply } from '../../src/utils/settlementOfflineApply.js';
 import { playerResources } from '../../src/utils/settlementDevelopment.js';
@@ -25,8 +26,10 @@ async function acknowledgeAll(state) {
   return store.change(uid,cid,latest=>protocol.acknowledge(latest,response,Date.now()));
 }
 function App() {
-  const [form,setForm,status]=useDurableCharacterState(()=>seed.form);
-  useEffect(()=>{window.testPersonal={store,characters,protocol,apply,uid,cid,sourceId,deviceId,form,setForm,status,queue,acknowledgeAll,playerResources,debitPersonalResources,seed};},[form,setForm,status]);
+  const storage=useCharacterStorage(seed.form);
+  const {form,setForm}=storage;
+  const status={state:storage.localSaveState,error:storage.characterStorageError};
+  useEffect(()=>{window.testPersonal={store,characters,protocol,apply,uid,cid,sourceId,deviceId,form,setForm,status,queue,acknowledgeAll,playerResources,debitPersonalResources,seed,PIPBOY_USE_ITEM_EVENT};},[form,setForm,status]);
   return <main><h1>Personal construction test</h1><output id="balance">{playerResources(form).common}</output><output id="revision">{form._localRevision}</output><output id="save-status">{status.state}</output><output id="save-error">{status.error}</output></main>;
 }
 createRoot(document.getElementById('fixture-root')).render(<React.StrictMode><App/></React.StrictMode>);

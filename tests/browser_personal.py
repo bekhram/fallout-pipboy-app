@@ -88,11 +88,20 @@ with tempfile.TemporaryDirectory() as profile, tempfile.TemporaryFile(mode='w+')
             assert backup['character']['holds'] and backup['data']['inflight']['requestId']=='batch_browser_saved'
             assert 'idToken' not in json.dumps(backup)
             checks.append('backup includes available inventory, holds and immutable batch without credentials')
+            # Exercise the real root hook's persistent event subscription AFTER
+            # several reservation revisions; an initial-render setter is stale.
+            page.evaluate('()=>testPersonal.setForm(prev=>({...prev,inventoryItems:[...prev.inventoryItems,{name:"Fixture food",category:"food",quantity:"2",sourceType:"other"}]}))')
+            page.wait_for_function('testPersonal.form.inventoryItems.some(i=>i.name==="Fixture food") && testPersonal.status.state==="saved"')
+            page.evaluate('()=>window.dispatchEvent(new CustomEvent(testPersonal.PIPBOY_USE_ITEM_EVENT,{detail:{index:testPersonal.form.inventoryItems.findIndex(i=>i.name==="Fixture food")}}))')
+            page.wait_for_function('testPersonal.form.inventoryItems.find(i=>i.name==="Fixture food")?.quantity==="1"')
+            balance(10)
+            assert page.evaluate('async()=> (await testPersonal.store.get(testPersonal.uid,testPersonal.cid)).sourceReserved.common')==40
+            checks.append('real character hook item-use listener stays current after reservation revisions')
             context.close()
     finally:
         server.terminate()
         try:server.wait(timeout=10)
         except subprocess.TimeoutExpired:server.kill()
         output.seek(0)
-        if len(checks)<12:print(output.read())
+        if len(checks)<13:print(output.read())
 print(json.dumps({'passed':len(checks),'checks':checks},ensure_ascii=False,indent=2))
