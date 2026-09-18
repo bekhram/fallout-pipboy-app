@@ -890,14 +890,13 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           ) : null}
 
           <div className="pip-panel pip-map-panel">
-          <nav className="phaser-sector-nav" aria-label={tx("direction")}>
-          <button type="button" className="pip-map-edge-button pip-map-edge-button--north" onClick={() => shiftMap("north")} disabled={!atTopEdge}>{t("mapPanel.north")}</button>
-          <button type="button" className="pip-map-edge-button pip-map-edge-button--west" onClick={() => shiftMap("west")} disabled={!atLeftEdge}>{t("mapPanel.west")}</button>
-          <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} disabled={!atRightEdge}>{t("mapPanel.east")}</button>
-          <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} disabled={!atBottomEdge}>{t("mapPanel.south")}</button>
-          </nav>
-
           <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: `url(${REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage})`, backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
+            <nav className="pip-map-sector-nav" aria-label={tx("direction")}>
+              <button type="button" className="pip-map-edge-button pip-map-edge-button--north" onClick={() => shiftMap("north")} aria-label={t("mapPanel.north")} title={t("mapPanel.north")}>↑</button>
+              <button type="button" className="pip-map-edge-button pip-map-edge-button--west" onClick={() => shiftMap("west")} aria-label={t("mapPanel.west")} title={t("mapPanel.west")}>←</button>
+              <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} aria-label={t("mapPanel.east")} title={t("mapPanel.east")}>→</button>
+              <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} aria-label={t("mapPanel.south")} title={t("mapPanel.south")}>↓</button>
+            </nav>
             <div className="pip-map-grid-layer">
               <MapGrid
                 key={activeRegion.id}
