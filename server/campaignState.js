@@ -19,7 +19,11 @@ export function newCampaign(id, uid, name, now) {
 export function publicCampaign(c, uid) {
   requireMember(c, uid);
   const { accounts, proposals, inviteHash, ...visible } = c;
-  if (visible.worldMap) visible.worldMap = { ...visible.worldMap, positions: Object.fromEntries(Object.entries(visible.worldMap.positions || {}).filter(([id]) => c.memberIds.includes(id))) };
+  if (visible.worldMap) visible.worldMap = {
+    ...visible.worldMap,
+    positions: Object.fromEntries(Object.entries(visible.worldMap.positions || {}).filter(([id]) => c.memberIds.includes(id))),
+    markers: (visible.worldMap.markers || []).filter(marker => marker.visibility !== 'gm' || uid === c.ownerUid),
+  };
   return { ...visible, character: accounts[uid] || null, proposals: uid === c.ownerUid ? proposals : (proposals[uid] ? { [uid]: proposals[uid] } : {}), approvedMembers: Object.keys(accounts), hasInvite: Boolean(inviteHash) };
 }
 export function campaignCommand(original, uid, cmd, now) {
@@ -49,13 +53,20 @@ export function campaignCommand(original, uid, cmd, now) {
       const markers = Array.isArray(world.markers) ? world.markers : [];
       const existing = markers.find(marker => marker.id === markerId);
       if (existing && existing.createdBy !== uid && !gm) throw new Error('FORBIDDEN');
+      const allowedCategories = new Set(['objective','danger','loot','quest','note','settlement']);
+      const category = allowedCategories.has(cmd.category) ? cmd.category : (existing?.category || 'note');
+      const visibility = gm && cmd.visibility === 'gm' ? 'gm' : 'public';
+      const description = String(cmd.description || '').trim().slice(0, 240);
       const marker = {
         id: markerId,
         regionId: cmd.regionId,
         x: cmd.x,
         y: cmd.y,
         label: markerLabel,
-        kind: gm ? 'gm' : 'player',
+        description,
+        category,
+        visibility,
+        kind: existing?.kind || (gm ? 'gm' : 'player'),
         createdBy: existing?.createdBy || uid,
         createdByName: existing?.createdByName || c.members[uid]?.name || 'Player',
         createdAt: existing?.createdAt || now,
