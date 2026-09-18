@@ -1,5 +1,8 @@
 import { SettlementResidents } from './SettlementResidents.js';
 import { SettlementBuildingBadges } from './SettlementBuildingBadges.js';
+import { SettlementBuildingVisuals } from './SettlementBuildingVisuals.js';
+import { settlementConstructionView } from '../../utils/settlementConstructionView.js';
+import ConstructionNotices from './ConstructionNotices.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlement/buildings.js';
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
@@ -36,6 +39,7 @@ export default function SettlementPhaserMap(props) {
           this.grid.lineStyle(1,0xc0dda4,0.12);
           for(let i=0;i<=24;i++){this.grid.lineBetween(i*CELL,0,i*CELL,WORLD);this.grid.lineBetween(0,i*CELL,WORLD,i*CELL);}
           this.buildingLayer=this.add.container(0,0);
+          this.visuals=new SettlementBuildingVisuals(this,this.buildingLayer);
           this.residents=new SettlementResidents(this);
           this.badges=new SettlementBuildingBadges(this,id=>{this.down=null;if(!latest.current.placementDef)latest.current.onSelect(id);});
           this.highlight=this.add.graphics();
@@ -64,7 +68,13 @@ export default function SettlementPhaserMap(props) {
           this.sync();this.resize();setReady(true);
           this.scale.on('resize',this.resize,this);
         }
-        update(time,delta) { this.residents?.update(time,delta); }
+        update(time,delta) {
+          this.residents?.update(time,delta);
+          if (!document.hidden && time >= (this.nextConstructionFrame || 0)) {
+            this.nextConstructionFrame=time+1000;
+            this.syncConstruction();
+          }
+        }
         cellAt(pointer) {
           const pt=this.cameras.main.getWorldPoint(pointer.x,pointer.y);
           const x=Math.floor(pt.x/CELL),y=Math.floor(pt.y/CELL);
@@ -80,26 +90,23 @@ export default function SettlementPhaserMap(props) {
           camera.centerOn(WORLD/2,WORLD/2);
           this.badges?.resize();
         }
+        syncConstruction() {
+          if(!this.visuals || !this.badges)return;
+          const p=latest.current, now=Date.now();
+          if(this.constructionSettlement===p.settlement && now-this.constructionSample<1000)return;
+          this.constructionSettlement=p.settlement;this.constructionSample=now;
+          const view=settlementConstructionView(p.settlement,now);
+          this.buildingBounds=this.visuals.sync(p.settlement,view);
+          this.badges.sync(p.settlement,p.language,this.buildingBounds);
+          this.badges.updateConstruction(view,p.language);
+        }
         sync() {
           if(!this.buildingLayer)return;
           const p=latest.current;
           this.residents.sync(p.settlement,p.language);
-          if(this.previousBuildings !== p.settlement.buildings || this.previousLanguage !== p.language){
-            this.buildingLayer.removeAll(true);
-            this.buildingBounds=new Map();
-            for(const b of p.settlement.buildings || []){
-              const d=SETTLEMENT_BUILDINGS[b.type];if(!d)continue;
-              const key=b.state==='construction'?`construction-${d.constructionSize || 'medium'}`:d.asset;
-              const w=d.footprint.width*CELL,h=d.footprint.height*CELL;
-              if(this.textures.exists(key)){
-                const sprite=this.add.image((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height)*CELL,key).setOrigin(.5,1);
-                const scale=Math.min(w*1.3/sprite.width,h*1.3/sprite.height);sprite.setScale(scale);this.buildingLayer.add(sprite);
-                this.buildingBounds.set(b.id,{top:sprite.y-sprite.displayHeight});
-              }else this.buildingLayer.add(this.add.rectangle((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height/2)*CELL,w,h,0x477959));
-            }
-            this.previousBuildings=p.settlement.buildings;this.previousLanguage=p.language;
-          }
-          this.badges.sync(p.settlement,p.language,this.buildingBounds);
+          // Language changes invalidate labels without resetting actor paths.
+          if(this.constructionLanguage!==p.language){this.constructionLanguage=p.language;this.constructionSample=0;}
+          this.syncConstruction();
           this.highlight.clear();
           const b=(p.settlement.buildings || []).find(b=>b.id===p.selectedBuildingId);
           if(b){const d=SETTLEMENT_BUILDINGS[b.type];if(d){this.highlight.lineStyle(3,0xa9ffad,1).strokeRect(b.x*CELL,b.y*CELL,d.footprint.width*CELL,d.footprint.height*CELL);}}
@@ -114,11 +121,13 @@ export default function SettlementPhaserMap(props) {
     return()=>{cancelled=true;observer?.disconnect();sceneRef.current=null;game?.destroy(true);};
   },[]);
   const onKeyDown=event=>{
+    if(event.target!==event.currentTarget)return;
     const delta={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];
     if(delta){event.preventDefault();cursor.current={x:Math.max(0,Math.min(23,cursor.current.x+delta[0])),y:Math.max(0,Math.min(23,cursor.current.y+delta[1]))};props.onHover(cursor.current);}
     if(event.key==='Enter' && props.placementDef){event.preventDefault();props.onCell(cursor.current.x,cursor.current.y);}
   };
   return <div className="settlement-phaser-map" ref={container} tabIndex={0} role="group" aria-label={props.label} onKeyDown={onKeyDown}>
+    <ConstructionNotices settlement={props.settlement} language={props.language} onSelect={props.onSelect}/>
     {(!ready || failed) && <span className="settlement-map-loading" role="status">{failed?'⚠':'…'} {props.label}</span>}
   </div>;
 }

@@ -3,16 +3,18 @@ import { resolveSettlementWorkplaces, assignSettlementWorkplace, settlementWorkp
 import { tasks, assignedKey, assignWorker, advanceConstruction } from '../../utils/settlementDevelopment.js';
 import { buildingIndicators, JOB_SYMBOLS } from './workplaceIndicators.js';
 import { workplaceCopy } from './workplaceCopy.js';
+import ConstructionProgress from './ConstructionProgress.jsx';
+import { constructionCopy } from './constructionCopy.js';
 import './settlementWorkplaces.css';
 
 export default function SettlementBuildingWorkers({ settlement, building, language, canEdit, onCommand, onUpdate, roomLabel }) {
-  const text = workplaceCopy(language);
+  const text = workplaceCopy(language), constructionText = constructionCopy(language);
   const [workerId, setWorkerId] = useState('');
   const [taskKey, setTaskKey] = useState('');
   const [mode, setMode] = useState(building.state === 'construction' ? 'build' : 'workplace');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const busyRef = useRef(false);
+  const busyRef = useRef(false), workerSelectRef = useRef(null);
   const plan = useMemo(() => resolveSettlementWorkplaces(settlement), [settlement]);
   const site = plan.byBuilding[building.id];
   const queue = tasks(settlement), buildingTasks = queue.filter(t => t.buildingId === building.id);
@@ -21,13 +23,15 @@ export default function SettlementBuildingWorkers({ settlement, building, langua
   const action = construction ? 'build' : site?.action;
   const residents = settlement.settlers || [];
   const assigned = residents.filter(w => construction
-    ? w.settlementAction?.type === 'build' && (assignedKey(w) || queue[0]?.key) === selectedTask?.key
+    ? w.settlementAction?.type === 'build' && (queue.find(t => t.key === assignedKey(w)) || queue[0])?.key === selectedTask?.key
     : site?.workerIds.includes(w.id) || (w.settlementAction?.type === action && w.settlementAction?.targetBuildingId === building.id));
   const candidates = residents.filter(w => !assigned.some(a => a.id === w.id));
   const selectedWorker = candidates.find(w => w.id === workerId);
   const assignmentError = !construction && selectedWorker ? settlementWorkplaceError(settlement, selectedWorker.id, building.id) : '';
   const canAssign = Boolean(selectedWorker && action && (construction ? selectedTask : site?.state === 'active') && !assignmentError);
   const indicators = buildingIndicators(building, site);
+  const needsWorker = Boolean(site?.action && !site.workerIds.length);
+  function focusAssignment() { workerSelectRef.current?.scrollIntoView({ block:'nearest' }); workerSelectRef.current?.focus(); }
 
   async function submit(command) {
     if (!canEdit || busyRef.current) return;
@@ -60,6 +64,11 @@ export default function SettlementBuildingWorkers({ settlement, building, langua
   }
 
   return <section className="settlement-workplace" aria-label={text.workers} aria-busy={busy}>
+    {construction && selectedTask && <ConstructionProgress settlement={settlement} taskKey={selectedTask.key} language={language} canEdit={canEdit && !busy} onAssign={focusAssignment}/>}
+    {!construction && site?.state === 'active' && <div className="settlement-workplace-ready">
+      <strong>{needsWorker ? constructionText.needsWorker : site.effects?.water || site.effects?.power ? constructionText.automatic : constructionText.ready}</strong>
+      {needsWorker && <button type="button" className="pip-action-button" disabled={!canEdit || busy} onClick={focusAssignment}>{constructionText.startWork}</button>}
+    </div>}
     <h3>{text.production}</h3>
     <div className="settlement-workplace-output">{indicators.map(i => <div key={i.kind} className="settlement-workplace-output__item">
       <span className="settlement-workplace-icon" aria-hidden="true">{i.symbol}</span>
@@ -83,7 +92,7 @@ export default function SettlementBuildingWorkers({ settlement, building, langua
         <button type="button" className="pip-action-button" disabled={!canEdit || busy} aria-label={`${text.remove}: ${w.name || w.id}`} onClick={() => submit({ type:'action', workerId:w.id, action:'' })}>{text.remove}</button>
       </div>)}</div>
       <form className="settlement-workplace-form" onSubmit={e => { e.preventDefault(); if (canAssign) void submit(construction ? { type:'worker', workerId, key:selectedTask.key } : { type:'workplace', workerId, buildingId:building.id }); }}>
-        <label>{text.choose}<select className="pip-input" disabled={!canEdit || busy || !candidates.length} value={selectedWorker?.id || ''} onChange={e => setWorkerId(e.target.value)}>
+        <label>{text.choose}<select ref={workerSelectRef} className="pip-input" disabled={!canEdit || busy || !candidates.length} value={selectedWorker?.id || ''} onChange={e => setWorkerId(e.target.value)}>
           <option value="">{candidates.length ? text.choose : text.noWorkers}</option>
           {candidates.map(w => <option key={w.id} value={w.id}>{w.name || w.id} · {text[w.settlementAction?.type] || text.free}</option>)}
         </select></label>
