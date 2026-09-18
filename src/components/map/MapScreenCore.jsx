@@ -389,10 +389,6 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   const canTravel = Boolean(selectedRoute?.cells?.length);
   const selectedTravelCost = selectedRoute?.cost ?? null;
 
-  const atLeftEdge = playerPosition.x === 0;
-  const atRightEdge = playerPosition.x === mapData.cols - 1;
-  const atTopEdge = playerPosition.y === 0;
-  const atBottomEdge = playerPosition.y === mapData.rows - 1;
   const viewStartX = Math.max(0, Math.min(playerPosition.x - Math.floor(VIEW_COLS / 2), mapData.cols - VIEW_COLS));
   const viewStartY = Math.max(0, Math.min(playerPosition.y - Math.floor(VIEW_ROWS / 2), mapData.rows - VIEW_ROWS));
   const playerWorldX = worldOffset.x * mapData.cols + playerPosition.x;
