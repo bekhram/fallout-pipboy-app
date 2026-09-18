@@ -34,8 +34,11 @@ import "./gmDesktopLayoutV2.css";
 import GmWorkspaceNavigation, { WORKSPACE_GROUPS, workspaceGroup, workspaceCopy } from "./GmWorkspaceNavigation.jsx";
 import "./gmOrganicWorkspace.css";
 
+import CampaignWorldMap from "../campaign/CampaignWorldMap.jsx";
+import { worldCopy } from "../campaign/worldCopy.js";
+
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["battle", "autogm", "loot", "merchants", "custom", "scene", "tokens", "roster", "participants"];
+const TABS = ["world", "battle", "autogm", "loot", "merchants", "custom", "scene", "tokens", "roster", "participants"];
 const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
   en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu" },
@@ -65,6 +68,7 @@ export default function GmSessionMap(props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const ui = workspaceCopy(i18n.resolvedLanguage || i18n.language);
   const group = workspaceGroup(activeTab);
+  const worldLabels = worldCopy(i18n.resolvedLanguage || i18n.language);
   const selectTab = (tab) => { setActiveTab(normalizeTab(tab)); setMoreOpen(false); };
   const rulerClearTimerRef = useRef(null);
   const labels = COPY[languageCode(i18n.resolvedLanguage || i18n.language)] || COPY.en;
@@ -111,10 +115,11 @@ export default function GmSessionMap(props) {
       <GmWorkspaceNavigation activeTab={activeTab} onSelect={selectTab} labels={ui} moreOpen={moreOpen} onMore={setMoreOpen} />
       <div className="gm-organic-content">
         <header className="gm-organic-pagehead"><div><span>{ui.subtitle}</span><h1>{ui[group]}</h1></div><span className="gm-organic-scene-name">{session.tacticalScene.name || session.tacticalScene.title || ""}</span></header>
-        {group !== "battle" && <nav className="gm-organic-subtabs" aria-label={ui[group]}>
-          {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{ui[tab]}</button>)}
-        </nav>}
-      <div className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
+        <nav className="gm-organic-subtabs" aria-label={ui[group]}>
+          {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
+        </nav>
+      {activeTab === "world" && <CampaignWorldMap campaignId={session.campaignId} form={props.character} onOpenCampaigns={props.onOpenCampaigns} />}
+      <div hidden={activeTab === "world"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>

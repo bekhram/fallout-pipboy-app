@@ -386,6 +386,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
           <GmWorkspace
             session={session}
             onChatDockReady={setChatDockTarget}
+            onOpenCampaigns={onShowLobby || onBack}
             character={form}
             setCharacter={setCharacter}
             onOpenMap={onOpenSheet}

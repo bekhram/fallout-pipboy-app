@@ -3,6 +3,7 @@ import {getCloudAuthSession, signInWithGoogle} from '../../cloud/googleAuth.js';
 import {campaignRequest} from '../../cloud/persistentCampaigns.js';
 import {campaignCopy} from './campaignCopy.js';
 import './campaign.css';
+import CampaignWorldMap from './CampaignWorldMap.jsx';
 
 export default function CampaignPanel({language, session, form, onEnterSession}) {
   const c=campaignCopy(language);
@@ -67,6 +68,7 @@ export default function CampaignPanel({language, session, form, onEnterSession})
         <button className="pip-btn" disabled={busy} onClick={()=>{setCampaign(null);setInvite('');setError('');}}>← {c.back}</button><h3>{campaign.name}</h3><p>{c.saved}</p>
         <button className="pip-btn is-primary" disabled={busy||!!retry||(!gm&&(!campaign.liveSession?.code||Date.now()-campaign.liveSession.updatedAt>90000))} onClick={()=>sessionAction()}>{gm?c.start:c.connect}</button>
         {!gm&&(!campaign.liveSession?.code||Date.now()-campaign.liveSession.updatedAt>90000)&&<p>{c.offline}</p>}
+        <CampaignWorldMap key={campaign.id} campaignId={campaign.id} form={form} />
         <h4>{c.members} · {campaign.memberIds?.length||1}</h4><ul>{Object.entries(campaign.members||{}).filter(([,m])=>!m.revoked).map(([id,m])=><li key={id}>{m.name} <small>· {id===campaign.ownerUid?c.gm:c.player}</small></li>)}</ul>
         {gm&&<div className="campaign-invite"><div className="campaign-actions"><button className="pip-btn" disabled={busy||!!retry} onClick={()=>run({type:'invite',campaignId:campaign.id})}>{c.invite}</button>{campaign.hasInvite&&<button className="pip-btn" disabled={busy||!!retry} onClick={()=>run({type:'revokeInvite',campaignId:campaign.id})}>{c.revoke}</button>}</div><p>{c.inviteHint}</p>{invite&&<><label className="session-field"><span>{c.inviteCode}</span><input className="pip-input" readOnly value={invite} onFocus={e=>e.target.select()}/></label><button className="pip-btn" onClick={async()=>{try{await navigator.clipboard.writeText(invite);setCopied(true);}catch{setError(c.copyFailed);}}}>{copied?c.copied:c.copy}</button></>}</div>}
       </section>}

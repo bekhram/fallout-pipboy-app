@@ -190,3 +190,5 @@ body:has(.session-gm-host--organic)::after { display: none; }
   .gm-organic-content :is(button,input,select,textarea) { scroll-margin-block: 80px 110px; }
   .gm-organic-content { padding-bottom: 120px; }
 }
+
+.gm-organic-workspace .gm-tactical-shell[hidden] { display: none; }
