@@ -5,7 +5,7 @@ import { createSettlement } from '../src/utils/settlementState.js';
 import { applySettlementCommand } from '../src/utils/settlementCommands.js';
 import { canAffordPlayerCost, payPlayerCost, playerResources } from '../src/utils/settlementDevelopment.js';
 import { applyOfflineCommand } from '../src/utils/settlementOfflineApply.js';
-import { localCommand, isLocalCommand, newRecord, mergeSnapshot, enqueue, projectRecord } from '../src/cloud/settlementOfflineProtocol.js';
+import { localCommand, isLocalCommand, commandPrecondition, newRecord, mergeSnapshot, enqueue, projectRecord } from '../src/cloud/settlementOfflineProtocol.js';
 
 const uid = 'player_personal';
 const campaignId = 'campaign_abcdefabcdefabcdefabcdef';
@@ -98,4 +98,19 @@ test('queued personal construction reserves projected inventory and prevents dou
   assert.equal(playerResources(projected.character).common, 2);
   assert.throws(() => enqueue(record, { ...first, command: { ...first.command, x: 9 } }, 'request_personal_0002', 1200, applyOfflineCommand), /insufficient/);
   assert.equal(record.entries.length, 1);
+});
+
+
+test('personal build precondition detects competing inventory or map changes before server payment', () => {
+  const command = { type: 'settlement', settlementId: 'settlement_personal', command: {
+    type: 'build', buildingType: 'wall_straight', x: 5, y: 5, paymentSource: 'personal',
+  } };
+  const base = snapshot(6);
+  const token = commandPrecondition(base, command, uid);
+  const spentElsewhere = structuredClone(base);
+  spentElsewhere.character.inventoryItems[0].quantity = '5';
+  assert.notEqual(commandPrecondition(spentElsewhere, command, uid), token);
+  const occupied = structuredClone(base);
+  occupied.settlements[0].buildings.push({ id: 'other', type: 'wall_straight', state: 'active', x: 5, y: 5 });
+  assert.notEqual(commandPrecondition(occupied, command, uid), token);
 });
