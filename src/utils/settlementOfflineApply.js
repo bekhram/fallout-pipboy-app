@@ -16,6 +16,11 @@ export function applyOfflineCommand(campaign, uid, input) {
   if (command.type === 'worker' && command.key && !tasks(settlement).some(t => t.key === command.key)) fail('TASK_FINISHED');
   if (command.type === 'priority' && !tasks(settlement).some(t => t.key === command.key)) fail('TASK_FINISHED');
   const frozenAt = Number(settlement.constructionUpdatedAt ?? settlement.lastDayAt ?? settlement.createdAt ?? 0);
-  const result = applySettlementCommand(structuredClone(settlement), campaign.character || null, actor, command, frozenAt);
-  return { ...campaign, settlements: campaign.settlements.map((s, i) => i === index ? result.settlement : s) };
+  const result = applySettlementCommand(structuredClone(settlement), campaign.character || campaign.accounts?.[uid] || null, actor, command, frozenAt);
+  const next = { ...campaign, settlements: campaign.settlements.map((s, i) => i === index ? result.settlement : s) };
+  if (result.character) {
+    if (campaign.character) next.character = result.character;
+    if (campaign.accounts?.[uid]) next.accounts = { ...campaign.accounts, [uid]: result.character };
+  }
+  return next;
 }
