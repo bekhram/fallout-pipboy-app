@@ -1,4 +1,5 @@
 import { SettlementResidents } from './SettlementResidents.js';
+import { SettlementBuildingBadges } from './SettlementBuildingBadges.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlement/buildings.js';
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
@@ -36,6 +37,7 @@ export default function SettlementPhaserMap(props) {
           for(let i=0;i<=24;i++){this.grid.lineBetween(i*CELL,0,i*CELL,WORLD);this.grid.lineBetween(0,i*CELL,WORLD,i*CELL);}
           this.buildingLayer=this.add.container(0,0);
           this.residents=new SettlementResidents(this);
+          this.badges=new SettlementBuildingBadges(this,id=>{this.down=null;if(!latest.current.placementDef)latest.current.onSelect(id);});
           this.highlight=this.add.graphics();
           this.preview=this.add.graphics();
           this.cameras.main.setBounds(0,0,WORLD,WORLD);
@@ -44,7 +46,7 @@ export default function SettlementPhaserMap(props) {
             if(pointer.isDown && this.down){
               const dx=pointer.x-this.down.x,dy=pointer.y-this.down.y;
               if(Math.hypot(dx,dy)>8) this.dragged=true;
-              if(this.dragged){this.cameras.main.setScroll(this.down.scrollX-dx/this.cameras.main.zoom,this.down.scrollY-dy/this.cameras.main.zoom);return;}
+              if(this.dragged){this.cameras.main.setScroll(this.down.scrollX-dx/this.cameras.main.zoom,this.down.scrollY-dy/this.cameras.main.zoom);this.badges.resize();return;}
             }
             const cell=this.cellAt(pointer);if(cell)latest.current.onHover(cell);
           });
@@ -76,6 +78,7 @@ export default function SettlementPhaserMap(props) {
           const extraX=Math.max(0,this.scale.width/camera.zoom-WORLD),extraY=Math.max(0,this.scale.height/camera.zoom-WORLD);
           camera.setBounds(-extraX/2,-extraY/2,WORLD+extraX,WORLD+extraY);
           camera.centerOn(WORLD/2,WORLD/2);
+          this.badges?.resize();
         }
         sync() {
           if(!this.buildingLayer)return;
@@ -83,6 +86,7 @@ export default function SettlementPhaserMap(props) {
           this.residents.sync(p.settlement,p.language);
           if(this.previousBuildings !== p.settlement.buildings || this.previousLanguage !== p.language){
             this.buildingLayer.removeAll(true);
+            this.buildingBounds=new Map();
             for(const b of p.settlement.buildings || []){
               const d=SETTLEMENT_BUILDINGS[b.type];if(!d)continue;
               const key=b.state==='construction'?`construction-${d.constructionSize || 'medium'}`:d.asset;
@@ -90,10 +94,12 @@ export default function SettlementPhaserMap(props) {
               if(this.textures.exists(key)){
                 const sprite=this.add.image((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height)*CELL,key).setOrigin(.5,1);
                 const scale=Math.min(w*1.3/sprite.width,h*1.3/sprite.height);sprite.setScale(scale);this.buildingLayer.add(sprite);
+                this.buildingBounds.set(b.id,{top:sprite.y-sprite.displayHeight});
               }else this.buildingLayer.add(this.add.rectangle((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height/2)*CELL,w,h,0x477959));
             }
             this.previousBuildings=p.settlement.buildings;this.previousLanguage=p.language;
           }
+          this.badges.sync(p.settlement,p.language,this.buildingBounds);
           this.highlight.clear();
           const b=(p.settlement.buildings || []).find(b=>b.id===p.selectedBuildingId);
           if(b){const d=SETTLEMENT_BUILDINGS[b.type];if(d){this.highlight.lineStyle(3,0xa9ffad,1).strokeRect(b.x*CELL,b.y*CELL,d.footprint.width*CELL,d.footprint.height*CELL);}}
