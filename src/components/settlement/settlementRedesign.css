@@ -64,3 +64,4 @@
 }
 .settlement-v2 .settlement-left-nav button span {min-width:0;overflow-wrap:anywhere;}
 .settlement-v2 .settlement-resource-tile small {line-height:1.3;}
+.settlement-daily-summary{padding:12px;border:1px solid #42614a;border-radius:12px;background:#10251a;margin-bottom:12px}.settlement-daily-summary h3{margin:0 0 10px;font-size:15px}.settlement-daily-summary p{font-size:12px;line-height:1.5;opacity:.8}.settlement-daily-summary>div>small{display:block;margin:6px 0 12px}.settlement-daily-summary button{white-space:normal;min-height:44px;width:100%}
