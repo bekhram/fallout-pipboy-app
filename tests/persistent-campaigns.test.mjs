@@ -148,3 +148,38 @@ test('shared named world markers are visible to all members and owner-scoped for
  assert.equal(finalView.worldMap.markers.some(marker=>marker.id===playerMarkerId),false);
  assert.equal(finalView.worldMap.markers.some(marker=>marker.id===gmMarkerId),true);
 });
+
+
+test('rich markers preserve metadata and GM-only visibility', async () => {
+ const {request}=fixture();
+ const id=(await request('gm',{type:'create',name:'Rich markers'})).campaign.id;
+ const invite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('player',{type:'join',invite});
+ const publicId='marker_public_rich_0001';
+ await request('player',{type:'worldMarkerUpsert',campaignId:id,markerId:publicId,regionId:'commonwealth',x:4,y:7,label:'Ammo cache',description:'Behind the ruined diner',category:'loot',visibility:'gm'});
+ const playerView=(await request('player',{type:'worldRead',campaignId:id})).campaign;
+ const publicMarker=playerView.worldMap.markers.find(marker=>marker.id===publicId);
+ assert.equal(publicMarker.category,'loot');
+ assert.equal(publicMarker.description,'Behind the ruined diner');
+ assert.equal(publicMarker.visibility,'public');
+ const gmOnlyId='marker_gm_private_0001';
+ await request('gm',{type:'worldMarkerUpsert',campaignId:id,markerId:gmOnlyId,regionId:'commonwealth',x:10,y:12,label:'Ambush',description:'Do not reveal yet',category:'danger',visibility:'gm'});
+ const hiddenFromPlayer=(await request('player',{type:'worldRead',campaignId:id})).campaign;
+ assert.equal(hiddenFromPlayer.worldMap.markers.some(marker=>marker.id===gmOnlyId),false);
+ const gmView=(await request('gm',{type:'worldRead',campaignId:id})).campaign;
+ const gmMarker=gmView.worldMap.markers.find(marker=>marker.id===gmOnlyId);
+ assert.equal(gmMarker.visibility,'gm');
+ assert.equal(gmMarker.category,'danger');
+ assert.equal(gmMarker.description,'Do not reveal yet');
+});
+
+test('member world positions remain shared after movement', async () => {
+ const {request}=fixture();
+ const id=(await request('gm',{type:'create',name:'Presence'})).campaign.id;
+ const invite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('player',{type:'join',invite});
+ await request('player',{type:'worldMove',campaignId:id,regionId:'commonwealth',x:22,y:17});
+ const gmView=(await request('gm',{type:'worldRead',campaignId:id})).campaign;
+ assert.deepEqual({x:gmView.worldMap.positions.player.x,y:gmView.worldMap.positions.player.y},{x:22,y:17});
+ assert.ok(Number.isFinite(gmView.worldMap.positions.player.updatedAt));
+});
