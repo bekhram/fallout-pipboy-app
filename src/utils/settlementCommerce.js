@@ -67,7 +67,7 @@ function resolveBusinessIncome(settlement, day) {
     id: randomId("event", day), type: "store_income", day, workers,
     stores: storeBreakdown, people, populationMultiplier, income, createdAt: Date.now(),
   };
-  return { ...settlement, attributes, resources, events: [event, ...(settlement.events || [])].slice(0, 100) };
+  return { ...settlement, trade: { ...settlement.trade, income: Number(settlement.trade?.income || 0) + income }, attributes, resources, events: [event, ...(settlement.events || [])].slice(0, 100) };
 }
 
 function getRecruitmentState(settlement) {

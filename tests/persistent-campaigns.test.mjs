@@ -124,3 +124,23 @@ test('only the owner can delete a campaign; deletion removes its save and invita
  }
  assert.equal(rows.has(`persistentCampaigns/${id}`),false);
 });
+
+test('garden donation persists once on retry and players cannot award reputation',async()=>{
+ const {request,rows}=fixture();
+ const id=(await request('gm',{type:'create',name:'Garden'})).campaign.id;
+ const invite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('player',{type:'join',invite});
+ const found=await request('gm',{type:'found',campaignId:id,name:'Farm',regionId:'commonwealth',worldX:3,worldY:3});
+ const sid=found.campaign.settlements[0].id;
+ const saved=rows.get(`persistentCampaigns/${id}`);
+ saved.accounts.player={name:'Gardener',inventoryItems:[{id:'corn',name:'Corn',quantity:'2',weight:1}]};
+ const requestId=randomUUID(),command={type:'gardenDonate',itemId:'corn',quantity:1};
+ const first=await request('player',{type:'settlement',campaignId:id,settlementId:sid,command,requestId});
+ assert.equal(first.status,200);
+ assert.equal((await request('player',{type:'settlement',campaignId:id,settlementId:sid,command,requestId})).duplicate,true);
+ assert.equal(rows.get(`persistentCampaigns/${id}`).accounts.player.inventoryItems[0].quantity,'1');
+ const denied=await request('player',{type:'settlement',campaignId:id,settlementId:sid,command:{type:'reputation',memberId:'player',rank:5,reason:'self'}});
+ assert.equal(denied.status,403);
+ const update=await request('gm',{type:'settlement',campaignId:id,settlementId:sid,command:{type:'reputation',memberId:'player',rank:3,reason:'Helped the farm'}});
+ assert.equal(update.status,200);assert.equal(update.campaign.settlements[0].reputation.player.rank,3);
+});

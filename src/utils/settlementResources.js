@@ -1,3 +1,4 @@
+import { plantedCrops } from './settlementGarden.js';
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 
@@ -10,6 +11,7 @@ export function resolveSettlementResources(settlement) {
   let water = 0;
   let cropSlots = 0;
   let cropStructures = 0;
+  const crops = [];
   let brahminCapacity = 0;
 
   const resourceBuildings = {};
@@ -43,17 +45,18 @@ export function resolveSettlementResources(settlement) {
     water += Math.max(0, Number(effects.water || 0));
     cropSlots += Math.max(0, Number(effects.cropSlots || 0));
     brahminCapacity += Math.max(0, Number(effects.brahminCapacity || 0));
-    if (effects.cropSlots) cropStructures += 1;
+    if (effects.cropSlots) { cropStructures += 1; crops.push(...plantedCrops(building)); }
   }
 
   const brahmin = Math.max(0, Math.floor(Number(settlement.livestock?.brahmin || 0)));
 
   return {
-    water: Math.max(0, water - Math.ceil(cropSlots / 3)),
+    water: Math.max(0, water - Math.ceil(crops.length / 3)),
     waterProduced: water,
-    cropWater: Math.ceil(cropSlots / 3),
+    cropWater: Math.ceil(crops.length / 3),
     cropSlots,
     cropStructures,
+    crops,
     brahmin,
     brahminCapacity,
     resourceBuildings,
@@ -63,11 +66,11 @@ export function resolveSettlementResources(settlement) {
 export function getTendedCropResult(settlement, workers) {
   const resources = resolveSettlementResources(settlement);
   const workerCount = Math.max(0, Math.floor(Number(workers || 0)));
-  const tendedCrops = Math.min(resources.cropSlots, workerCount * 6);
+  const tendedCrops = Math.min(resources.crops.length, workerCount * 6);
   return {
     workers: workerCount,
     cropSlots: resources.cropSlots,
     tendedCrops,
-    food: Math.floor(tendedCrops / 2),
+    food: Math.floor(resources.crops.slice(0,tendedCrops).reduce((sum,c)=>sum+(c.fertilized?2:1),0) / 2),
   };
 }
