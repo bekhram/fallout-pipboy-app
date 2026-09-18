@@ -57,3 +57,27 @@ test('paid command cannot use the phase-one batch API', async () => {
   const f = fakeDatabase(), b = batch(); b.entries[0].command.command = { type:'build',buildingType:'small_house',x:0,y:0 };
   await assert.rejects(request(f,b), /ONLINE_ACTION_REQUIRED/); assert.equal(f.stats.reads,0); assert.equal(f.stats.writes,0);
 });
+
+for (const code of ['WORKPLACE_FULL', 'WORKPLACE_UNAVAILABLE']) {
+  test(`known ${code} conflict is acknowledged once without trapping later orders`, async () => {
+    const f = fakeDatabase(), r = record();
+    enqueue(r, action('worker_1'), 'action_conflict_001', 1, apply);
+    enqueue(r, action('worker_2'), 'action_valid_002', 2, apply);
+    prepareBatch(r, `batch_${code}`);
+    const custom = { apply(c, u, input) {
+      if (input.command.workerId === 'worker_1') throw new Error(code);
+      const next = apply(c, u, input); next.revision++; return next;
+    } };
+    const first = await request(f, r.inflight, uid, custom);
+    assert.equal(first.results[0].state, 'rejected');
+    assert.equal(first.results[0].error, 'COMMAND_CONFLICT');
+    assert.equal(first.results[0].reason, code);
+    assert.equal(first.results[1].state, 'accepted');
+    assert.equal(first.through, 2);
+    assert.equal(f.stats.writes, 2);
+    const replay = await request(f, r.inflight, uid, custom);
+    assert.equal(replay.duplicate, true);
+    assert.deepEqual(replay.results, first.results);
+    assert.equal(f.stats.writes, 2);
+  });
+}

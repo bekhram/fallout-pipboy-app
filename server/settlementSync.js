@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { canonical, commandPrecondition, validateBatch, fail, OFFLINE_PROTOCOL } from '../src/cloud/settlementOfflineProtocol.js';
 
 const hash = value => createHash('sha256').update(value).digest('hex');
-const REJECTIONS = new Set(['COMMAND_CONFLICT', 'FORBIDDEN', 'NOT_FOUND', 'PLACEMENT', 'LOCKED', 'TASK_FINISHED', 'INVALID_ACTION', 'INVALID_COMMAND', 'REQUIREMENTS', 'unavailable', 'capacity', 'insufficient', 'invalid']);
+const REJECTIONS = new Set(['COMMAND_CONFLICT', 'FORBIDDEN', 'NOT_FOUND', 'PLACEMENT', 'LOCKED', 'TASK_FINISHED', 'INVALID_ACTION', 'INVALID_COMMAND', 'REQUIREMENTS', 'WORKPLACE_FULL', 'WORKPLACE_UNAVAILABLE', 'unavailable', 'capacity', 'insufficient', 'invalid']);
 /** Persisted stream cursor + one immutable last-batch receipt. A client has exactly
  * one in-flight batch. After a lost response it MUST resend that batch unchanged.
  * Earlier sequence numbers can never execute again, even under another batch ID.
@@ -32,7 +32,9 @@ export async function syncSettlementBatch({ db, transaction, uid, body, now, aut
         results.push({ sequence: op.sequence, requestId: op.requestId, state: 'accepted' });
       } catch (error) {
         if (!REJECTIONS.has(error.message)) throw error; // abort unexpected errors, never turn bugs into receipts
-        results.push({ sequence: op.sequence, requestId: op.requestId, state: 'rejected', error: error.message });
+        const conflict = ['WORKPLACE_FULL', 'WORKPLACE_UNAVAILABLE'].includes(error.message);
+        results.push({ sequence: op.sequence, requestId: op.requestId, state: 'rejected',
+          error: conflict ? 'COMMAND_CONFLICT' : error.message, ...(conflict ? { reason: error.message } : {}) });
       }
     }
     const through = body.entries.at(-1).sequence;
