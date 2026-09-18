@@ -1,0 +1,31 @@
+name: Settlement preview checks
+on:
+  pull_request:
+    paths:
+      - 'src/components/settlement/**'
+      - 'src/components/campaign/**'
+      - 'src/components/map/MapScreen.jsx'
+      - 'src/utils/legacySettlementArchive.js'
+      - 'src/utils/settlementWorkerRuntime.js'
+      - 'src/assets/settlement/workers/**'
+      - 'tests/settlement*.test.js'
+      - '.github/workflows/settlement-preview-checks.yml'
+permissions:
+  contents: read
+concurrency:
+  group: settlement-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Settlement presentation and shared-entry regression tests
+        run: node --test tests/settlementWorkerActor.test.js tests/settlementWorkerRuntime.test.js tests/settlementSpriteFrames.test.js tests/settlementLegacyArchive.test.js tests/settlementSharedEntry.test.js
+      - run: npm run build

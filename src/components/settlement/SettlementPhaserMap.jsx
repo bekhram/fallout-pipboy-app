@@ -7,6 +7,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlement/buildings.js';
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
 import background from '../../assets/wasteland/backgrounds/settlement-bg-1.png';
+import pawnBlue from '../../assets/settlement/workers/pawn-blue.png';
+import { WORKER_TEXTURE, WORKER_FRAME_SIZE } from './workerSpriteFrames.js';
 
 const CELL = 40;
 const WORLD = SETTLEMENT_GRID_SIZE * CELL;
@@ -32,8 +34,13 @@ export default function SettlementPhaserMap(props) {
           this.load.image('terrain',background);
           Object.entries(SETTLEMENT_ASSETS).forEach(([key,url])=>this.load.image(key,url));
           Object.entries(CONSTRUCTION_ASSETS).forEach(([key,url])=>this.load.image(`construction-${key}`,url));
+          this.load.spritesheet(WORKER_TEXTURE,pawnBlue,{frameWidth:WORKER_FRAME_SIZE,frameHeight:WORKER_FRAME_SIZE,endFrame:35});
         }
         create() {
+          if(cancelled)return;
+          // Do not silently substitute primitive workers when a sprite fails to load.
+          if(!this.textures.exists(WORKER_TEXTURE)){setFailed(true);return;}
+          this.textures.get(WORKER_TEXTURE).setFilter(Phaser.Textures.FilterMode.NEAREST);
           this.add.image(0,0,'terrain').setOrigin(0).setDisplaySize(WORLD,WORLD);
           this.grid=this.add.graphics();
           this.grid.lineStyle(1,0xc0dda4,0.12);
@@ -104,7 +111,6 @@ export default function SettlementPhaserMap(props) {
           if(!this.buildingLayer)return;
           const p=latest.current;
           this.residents.sync(p.settlement,p.language);
-          // Language changes invalidate labels without resetting actor paths.
           if(this.constructionLanguage!==p.language){this.constructionLanguage=p.language;this.constructionSample=0;}
           this.syncConstruction();
           this.highlight.clear();
