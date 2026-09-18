@@ -257,7 +257,7 @@ export default function App() {
   useEffect(() => {
     const shouldResume = startupUiState.view === "battlemap" || startupUiState.screen === "session";
     const lastCode = sharedSession.lastSession?.code;
-    if (!shouldResume || sharedSession.isActive || !lastCode) return undefined;
+    if (!shouldResume || sharedSession.isActive || sharedSession.lastSession?.autoResume === false || !lastCode) return undefined;
 
     let cancelled = false;
     let inFlight = false;
@@ -265,7 +265,7 @@ export default function App() {
       if (cancelled || inFlight) return;
       inFlight = true;
       try {
-        await sharedSession.resumeLastSession?.();
+        await sharedSession.resumeLastSession?.({ automatic: true });
       } catch (error) {
         console.warn("Could not restore the last Pip-2D20 session:", error);
       } finally {
@@ -281,7 +281,7 @@ export default function App() {
       window.clearInterval(interval);
       window.removeEventListener("online", resume);
     };
-  }, [sharedSession.isActive, sharedSession.lastSession?.code, startupUiState]);
+  }, [sharedSession.isActive, sharedSession.lastSession?.code, sharedSession.lastSession?.autoResume, startupUiState]);
 
   useEffect(() => {
     if (
