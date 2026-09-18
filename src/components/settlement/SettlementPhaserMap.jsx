@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlement/buildings.js';
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
 import background from '../../assets/wasteland/backgrounds/settlement-bg-1.png';
+import { preloadSettlementWorker, SettlementWorker } from './SettlementWorker.js';
 
 const CELL = 40;
 const WORLD = SETTLEMENT_GRID_SIZE * CELL;
@@ -24,6 +25,7 @@ export default function SettlementPhaserMap(props) {
       if(cancelled) return;
       class SettlementScene extends Phaser.Scene {
         preload() {
+          preloadSettlementWorker(this);
           this.load.image('terrain',background);
           Object.entries(SETTLEMENT_ASSETS).forEach(([key,url])=>this.load.image(key,url));
           Object.entries(CONSTRUCTION_ASSETS).forEach(([key,url])=>this.load.image(`construction-${key}`,url));
@@ -33,9 +35,11 @@ export default function SettlementPhaserMap(props) {
           this.grid=this.add.graphics();
           this.grid.lineStyle(1,0xc0dda4,0.12);
           for(let i=0;i<=24;i++){this.grid.lineBetween(i*CELL,0,i*CELL,WORLD);this.grid.lineBetween(0,i*CELL,WORLD,i*CELL);}
-          this.buildingLayer=this.add.container(0,0);
-          this.highlight=this.add.graphics();
-          this.preview=this.add.graphics();
+          this.buildingLayer=this.add.group();
+          this.worker=new SettlementWorker(this,CELL);
+          this.events.once('shutdown',()=>this.worker.destroy());
+          this.highlight=this.add.graphics().setDepth(WORLD+100);
+          this.preview=this.add.graphics().setDepth(WORLD+101);
           this.cameras.main.setBounds(0,0,WORLD,WORLD);
           this.input.on('pointerdown',pointer=>{this.down={x:pointer.x,y:pointer.y,scrollX:this.cameras.main.scrollX,scrollY:this.cameras.main.scrollY};this.dragged=false;});
           this.input.on('pointermove',pointer=>{
@@ -65,6 +69,7 @@ export default function SettlementPhaserMap(props) {
           const x=Math.floor(pt.x/CELL),y=Math.floor(pt.y/CELL);
           return x>=0 && y>=0 && x<24 && y<24 ? {x,y} : null;
         }
+        update(_time,delta) { this.worker?.update(delta); }
         resize() {
           const camera=this.cameras.main;
           // Fill the viewport; users pan to reach areas outside the camera.
@@ -78,18 +83,19 @@ export default function SettlementPhaserMap(props) {
           if(!this.buildingLayer)return;
           const p=latest.current;
           if(this.previousBuildings !== p.settlement.buildings || this.previousLanguage !== p.language){
-            this.buildingLayer.removeAll(true);
+            this.buildingLayer.clear(true,true);
             for(const b of p.settlement.buildings || []){
               const d=SETTLEMENT_BUILDINGS[b.type];if(!d)continue;
               const key=b.state==='construction'?`construction-${d.constructionSize || 'medium'}`:d.asset;
               const w=d.footprint.width*CELL,h=d.footprint.height*CELL;
               if(this.textures.exists(key)){
-                const sprite=this.add.image((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height)*CELL,key).setOrigin(.5,1);
+                const sprite=this.add.image((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height)*CELL,key).setOrigin(.5,1).setDepth((b.y+d.footprint.height)*CELL);
                 const scale=Math.min(w*1.3/sprite.width,h*1.3/sprite.height);sprite.setScale(scale);this.buildingLayer.add(sprite);
-              }else this.buildingLayer.add(this.add.rectangle((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height/2)*CELL,w,h,0x477959));
+              }else this.buildingLayer.add(this.add.rectangle((b.x+d.footprint.width/2)*CELL,(b.y+d.footprint.height/2)*CELL,w,h,0x477959).setDepth((b.y+d.footprint.height)*CELL));
             }
             this.previousBuildings=p.settlement.buildings;this.previousLanguage=p.language;
           }
+          if(this.previousSettlement!==p.settlement){this.worker.sync(p.settlement);this.previousSettlement=p.settlement;}
           this.highlight.clear();
           const b=(p.settlement.buildings || []).find(b=>b.id===p.selectedBuildingId);
           if(b){const d=SETTLEMENT_BUILDINGS[b.type];if(d){this.highlight.lineStyle(3,0xa9ffad,1).strokeRect(b.x*CELL,b.y*CELL,d.footprint.width*CELL,d.footprint.height*CELL);}}
