@@ -72,6 +72,7 @@ return async function handler(req, res) {
       const prior = await tx.get(receipt);
       if (prior.exists) {
         if (prior.data().digest !== digest) throw new Error('REQUEST_ID_REUSED');
+        if (prior.data().deleted) return { deleted: true, campaignId: prior.data().campaignId, duplicate: true };
         const saved = await tx.get(campaigns.doc(prior.data().campaignId));
         return { campaign: publicCampaign(saved.data(), uid), duplicate: true };
       }
@@ -96,7 +97,14 @@ return async function handler(req, res) {
         if (!validId(body.campaignId)) throw new Error('INVALID_REQUEST');
         ref = campaigns.doc(body.campaignId);
         const doc = await tx.get(ref); c = doc.data(); requireMember(c, uid);
-        if (body.type === 'invite') {
+        if (body.type === 'delete') {
+          if (c.ownerUid !== uid) throw new Error('FORBIDDEN');
+          tx.delete(ref);
+          tx.delete(db.collection('campaignGmSaves').doc(c.id));
+          if (c.inviteHash) tx.delete(db.collection('campaignInvites').doc(c.inviteHash));
+          tx.set(receipt, { digest, campaignId: c.id, deleted: true, createdAt: now });
+          return { deleted: true, campaignId: c.id };
+        } else if (body.type === 'invite') {
           if (c.ownerUid !== uid) throw new Error('FORBIDDEN');
           invite = randomBytes(24).toString('hex');
           c.inviteHash = hash(invite);

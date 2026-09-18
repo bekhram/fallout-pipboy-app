@@ -144,3 +144,22 @@ export async function buildCacheSummary(campaignId) {
     resources: Object.entries(hashes).map(([id, hash]) => ({ id, hash })),
   };
 }
+
+export async function deleteCampaignCache(campaignId) {
+  if (!campaignId) return;
+  const db = await openDb();
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction([CAMPAIGN_STORE, RESOURCE_STORE], "readwrite");
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+      tx.objectStore(CAMPAIGN_STORE).delete(campaignId);
+      const cursor = tx.objectStore(RESOURCE_STORE).index("campaignId").openCursor(campaignId);
+      cursor.onsuccess = () => {
+        const item = cursor.result;
+        if (item) { item.delete(); item.continue(); }
+      };
+    });
+  } finally { db.close(); }
+}

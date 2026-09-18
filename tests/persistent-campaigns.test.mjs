@@ -93,3 +93,34 @@ test('shared world founding, construction and permissions survive member refresh
  assert.equal((await request('gm',{type:'worldRead',campaignId:id})).campaign.settlements[0].buildings.find(b=>b.id===buildingId).x,4);
  assert.equal((await request('stranger',{type:'worldRead',campaignId:id})).status,403);
 });
+
+test('only the owner can delete a campaign; deletion removes its save and invitation', async () => {
+ const {request,rows}=fixture();
+ const id=(await request('gm',{type:'create',name:'Delete me'})).campaign.id;
+ const other=(await request('gm',{type:'create',name:'Keep me'})).campaign.id;
+ const invite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('player',{type:'join',invite});
+ const remainingInvite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('gm',{type:'saveGmSession',campaignId:id,snapshot:{state:{campaignId:id,revision:1}}});
+ for(const uid of ['player','stranger']) {
+  assert.equal((await request(uid,{type:'delete',campaignId:id})).status,403);
+  assert.equal(rows.has(`persistentCampaigns/${id}`),true);
+ }
+ const command={type:'delete',campaignId:id,requestId:randomUUID()};
+ const deleted=await request('gm',command);
+ assert.equal(deleted.status,200);assert.equal(deleted.deleted,true);assert.equal(deleted.campaignId,id);
+ assert.equal(rows.has(`persistentCampaigns/${id}`),false);
+ assert.equal(rows.has(`campaignGmSaves/${id}`),false);
+ assert.equal([...rows].some(([key,value])=>key.startsWith('campaignInvites/')&&value.campaignId===id),false);
+ assert.equal(rows.has(`persistentCampaigns/${other}`),true);
+ assert.equal((await request('gm',command)).duplicate,true);
+ assert.equal((await request('player',{...command})).status,403);
+ assert.equal((await request('gm',{...command,campaignId:other})).error,'REQUEST_ID_REUSED');
+ assert.equal((await request('player',{type:'list'})).campaigns.length,0);
+ assert.equal((await request('gm',{type:'list'})).campaigns[0].id,other);
+ assert.equal((await request('new-player',{type:'join',invite:remainingInvite})).error,'INVITE_INVALID');
+ for(const type of ['tick','worldRead','sessionPresence','saveGmSession']) {
+  assert.equal((await request('gm',{type,campaignId:id,code:'ABC123',snapshot:{state:{campaignId:id,revision:2}}})).status,403);
+ }
+ assert.equal(rows.has(`persistentCampaigns/${id}`),false);
+});
