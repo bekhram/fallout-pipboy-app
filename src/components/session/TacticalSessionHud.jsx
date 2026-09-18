@@ -74,6 +74,7 @@ function tokenAvatarForPlayer(player, tokens) {
 }
 
 export default function TacticalSessionHud({ session }) {
+  const [initiativeTarget, setInitiativeTarget] = useState(null);
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [roundTarget, setRoundTarget] = useState(null);
   const [playerDockTarget, setPlayerDockTarget] = useState(null);
@@ -110,6 +111,8 @@ export default function TacticalSessionHud({ session }) {
     if (typeof document === "undefined" || !scene) return undefined;
     const selector = session?.mode === "host" ? ".gm-session-map__meta" : ".session-tactical-player__actions";
     const sync = () => {
+      const initiative = session?.mode === "host" ? document.querySelector(".gm-organic-initiative") : null;
+      setInitiativeTarget((current) => current === initiative ? current : initiative);
       const next = document.querySelector(selector);
       setRoundTarget((current) => current === next ? current : next);
       const nextDockTarget = session?.mode === "player"
@@ -161,10 +164,7 @@ export default function TacticalSessionHud({ session }) {
     </div>
   );
 
-  return (
-    <>
-      {roundBadge}
-      {scene ? <aside className={`tactical-initiative-rail${collapsed ? " is-collapsed" : ""}`} aria-label="Initiative order">
+  const initiativeRail = scene ? <aside className={`tactical-initiative-rail${collapsed ? " is-collapsed" : ""}`} aria-label="Initiative order">
         <button
           type="button"
           className="tactical-initiative-rail__toggle"
@@ -199,11 +199,16 @@ export default function TacticalSessionHud({ session }) {
             </div>;
           })}
         </div>
-      </aside> : null}
+      </aside> : null;
+
+  return (
+    <>
+      {roundBadge}
+      {initiativeTarget ? createPortal(initiativeRail, initiativeTarget) : initiativeRail}
 
       {session?.mode === "player" && playerDockTarget
         ? createPortal(playerDock, playerDockTarget)
-        : playerDock}
+        : (initiativeTarget ? null : playerDock)}
     </>
   );
 }

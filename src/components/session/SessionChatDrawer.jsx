@@ -1,3 +1,4 @@
+import { GM_UTILITY_EVENT, workspaceCopy } from "../gm/GmWorkspaceNavigation.jsx";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -154,19 +155,37 @@ function MerchantDirectory({session,form,copy,language,selectedMerchantId,setSel
   </section>;
 }
 
-export default function SessionChatDrawer({session,form=null,setForm=null}){
+export default function SessionChatDrawer({session,form=null,setForm=null,workspace=false,dockTarget=null}){
   const {i18n}=useTranslation();
   const language=languageFor(i18n.resolvedLanguage||i18n.language),copy=copyFor(language);
+  const workspaceLabels = workspaceCopy(language);
   const [open,setOpen]=useState(false),[draft,setDraft]=useState(""),[diceOpen,setDiceOpen]=useState(false),[pendingAutoD6,setPendingAutoD6]=useState(null),[battlemapRequest,setBattlemapRequest]=useState(0),[lootDraft,setLootDraft]=useState(null),[lootQuantity,setLootQuantity]=useState("1"),[lootStatus,setLootStatus]=useState("");
   const [view,setView]=useState("chat"),[selectedMerchantId,setSelectedMerchantId]=useState(""),[tradeTab,setTradeTab]=useState("buy"),[tradeStatus,setTradeStatus]=useState(""),[pendingTradeId,setPendingTradeId]=useState("");
   const listRef=useRef(null);
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches);
+  const docked = Boolean(workspace && wide && dockTarget);
+  useEffect(() => {
+    if (!workspace) return;
+    const media = window.matchMedia("(min-width: 1280px)");
+    const resize = () => setWide(media.matches);
+    resize(); media.addEventListener("change", resize);
+    const openUtility = (event) => {
+      if (event.detail?.view === "dice") { setOpen(false); setDiceOpen(true); }
+      else { setView("chat"); setOpen(true); }
+    };
+    const escape = (event) => { if (event.key === "Escape") setOpen(false); };
+    window.addEventListener(GM_UTILITY_EVENT, openUtility);
+    window.addEventListener("keydown", escape);
+    return () => { media.removeEventListener("change", resize); window.removeEventListener(GM_UTILITY_EVENT, openUtility); window.removeEventListener("keydown", escape); };
+  }, [workspace]);
   const items=useMemo(()=>(session?.feed||[]).filter(Boolean).slice(-160),[session?.feed]);
+  const journalItems = items.filter((item) => ["system", "combat", "scene", "roll"].includes(item.type));
   const state=connection(session?.status),diceForm=form||readLocalForm(),characterForm=form||diceForm||{};
   const merchants=Array.isArray(session?.merchants)?session.merchants:[];
   const hasBattlemap=Boolean(session?.mode==="player"&&(session?.tacticalScene?.active||session?.liveSceneId));
   const canTrade=session?.mode==="player";
 
-  useEffect(()=>{if(open&&view==="chat"&&listRef.current)listRef.current.scrollTop=listRef.current.scrollHeight;},[open,view,items.length]);
+  useEffect(()=>{if((open||docked)&&view==="chat"&&listRef.current)listRef.current.scrollTop=listRef.current.scrollHeight;},[open,docked,view,items.length]);
   useEffect(()=>{
     if(!selectedMerchantId)return;
     if(!merchants.some((entry)=>entry.id===selectedMerchantId))setSelectedMerchantId("");
@@ -232,13 +251,14 @@ export default function SessionChatDrawer({session,form=null,setForm=null}){
   };
 
   return <>
-    {typeof document!=="undefined"?createPortal(<div className={`session-chat-drawer-shell session-utility-drawer-shell${open?" is-open":""}`}>
+    {typeof document!=="undefined"?createPortal(<div className={`session-chat-drawer-shell session-utility-drawer-shell${workspace?" gm-organic-utility":""}${docked?" is-docked":""}${open||docked?" is-open":""}`}>
       <button type="button" className="session-chat-drawer-toggle session-utility-drawer-toggle" onClick={()=>setOpen((v)=>!v)} aria-expanded={open} aria-label={open?copy.close:copy.title} title={open?copy.close:copy.title}><span className="session-chat-toggle-label">{open?"×":"💬"}</span></button>
-      <aside className="session-chat-drawer session-utility-drawer" aria-hidden={!open}>
+      <aside className="session-chat-drawer session-utility-drawer" aria-hidden={!(open||docked)} inert={!(open||docked) ? "" : undefined}>
         <header className="session-chat-drawer-head"><div><div className="pip-bootline">PIP 2D20 NETWORK</div><h2>[ {view==="merchants"?copy.merchants:copy.title} ]</h2></div><button type="button" className="pip-btn" onClick={()=>setOpen(false)}>{copy.close}</button></header>
         <div className="session-chat-connection-strip"><div><span className={`session-status-dot is-${session.status}`}/><strong>{copy[state]}</strong></div><span>{session.sessionCode}</span></div>
         <nav className="session-utility-tabs">
-          <button type="button" className={`pip-btn${view==="chat"?" is-primary":""}`} onClick={()=>setView("chat")}>{copy.chat}</button>
+          <button type="button" className={`pip-btn${view==="chat"?" is-primary":""}`} onClick={()=>setView("chat")}>{workspace ? workspaceLabels.chat : copy.chat}</button>
+          {workspace ? <button type="button" className={`pip-btn${view === "journal" ? " is-primary" : ""}`} onClick={() => setView("journal")}>{workspaceLabels.journal}</button> : null}
           <button type="button" className={`pip-btn${view==="merchants"?" is-primary":""}`} onClick={()=>setView("merchants")}>{copy.merchants}{merchants.length?` (${merchants.length})`:""}</button>
           {session.mode==="player"?<button type="button" className="pip-btn" disabled={!hasBattlemap} onClick={openBattlemap}>{copy.battlemap}</button>:null}
           <button type="button" className="pip-btn" onClick={()=>{setOpen(false);setDiceOpen(true);}}>{copy.dice}</button>
@@ -252,9 +272,10 @@ export default function SessionChatDrawer({session,form=null,setForm=null}){
           <form className="session-chat-drawer-form" onSubmit={submit}><input className="pip-input" value={draft} maxLength={500} placeholder={copy.placeholder} onChange={(event)=>setDraft(event.target.value)}/><button type="submit" className="pip-btn is-primary" disabled={state!=="online"||!String(draft).trim()}>{copy.send}</button></form>
         </>:null}
 
+        {view === "journal" ? <div className="session-utility-body"><div className="session-chat-drawer-list session-utility-list">{journalItems.length ? journalItems.map((item) => <FeedItem key={item.id} item={item} copy={copy} language={language} />) : <div className="pip-logbox">{copy.empty}</div>}</div></div> : null}
         {view==="merchants"?<div className="session-utility-body session-merchant-body"><MerchantDirectory session={session} form={characterForm} copy={copy} language={language} selectedMerchantId={selectedMerchantId} setSelectedMerchantId={setSelectedMerchantId} tradeTab={tradeTab} setTradeTab={setTradeTab} onBuy={buyFromMerchant} onSell={sellToMerchant} pending={pendingTradeId}/>{tradeStatus?<div className="session-merchant-trade-status">{tradeStatus}</div>:null}</div>:null}
       </aside>
-    </div>,document.body):null}
+    </div>,docked?dockTarget:document.body):null}
     {session.mode==="player"?<SessionTacticalMap session={session} openRequest={battlemapRequest}/>:null}
     {session.mode==="host"?<TacticalSessionHud session={session}/>:null}
     <DiceRollModal isOpen={diceOpen} onClose={()=>setDiceOpen(false)} rollConfig={null} form={diceForm} pendingAutoD6={pendingAutoD6} setPendingAutoD6={setPendingAutoD6} combatState={session?.combat||null} currentLuckPoints={undefined} onSpendCombatLuck={undefined} onMarkCombatUse={undefined} onDiceResult={session?.sendDiceResult}/>

@@ -468,6 +468,9 @@ export default function GmUnifiedTokenManagerV5({ session }) {
       {filterHost ? createPortal(
         <div className="gm-token-group-filter-wrap">
           <span>{copy.filter}</span>
+          <select className="gm-organic-group-select" aria-label={copy.filter} value={group} onChange={(event) => setGroup(event.target.value)}>
+            {GROUPS.map((value) => <option key={value} value={value}>{copy[value]} ({groupCounts[value] || 0})</option>)}
+          </select>
           <div className="gm-token-group-chips">
             {GROUPS.map((value) => (
               <button

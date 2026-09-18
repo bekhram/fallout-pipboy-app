@@ -4,7 +4,7 @@ import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./gmWorkspace.css";
 import "./gmSessionMapLayout.css";
 
-export default function GmWorkspace({ character = null, session = null }) {
+export default function GmWorkspace({ character = null, session = null, onChatDockReady }) {
   const tacticalMapRef = useRef(null);
   const bridgedSession = useLiveSessionBridge();
   const effectiveSession = session || bridgedSession;
@@ -12,7 +12,7 @@ export default function GmWorkspace({ character = null, session = null }) {
   return (
     <div className="gm-workspace gm-workspace--tactical-only">
       <div ref={tacticalMapRef} className="gm-workspace__tactical-anchor">
-        <GmSessionMap character={character} session={effectiveSession} />
+        <GmSessionMap character={character} session={effectiveSession} onChatDockReady={onChatDockReady} />
       </div>
     </div>
   );
