@@ -169,6 +169,25 @@ export function confirmSpecialist(s, actor, id, name, now = Date.now()) {
 const materialNames = { common: ['Common Materials','Обычные материалы','Звичайні матеріали','Materiały pospolite'], uncommon: ['Uncommon Materials','Необычные материалы','Незвичайні матеріали','Materiały niepospolite'], rare: ['Rare Materials','Редкие материалы','Рідкісні матеріали','Materiały rzadkie'] };
 function tier(item) { if (item.sourceType === 'crafting_material' && TIERS.includes(item.materialTier)) return item.materialTier; return TIERS.find(k => materialNames[k].some(n => [item.name,item.canonicalName,item.sourceName].some(v => String(v || '').trim().toLowerCase() === n.toLowerCase()))); }
 export function playerResources(c) { const available = { caps: number(c?.caps), common: 0, uncommon: 0, rare: 0 }; for (const item of c?.inventoryItems || []) { const k = tier(item); if (k) available[k] += number(item.quantity ?? item.qty); } return available; }
+export function canAffordPlayerCost(c, rule) {
+  if (!c || !rule) return false;
+  const available = playerResources(c), required = cost(rule);
+  return RESOURCE_KEYS.every(key => available[key] >= required[key]);
+}
+export function payPlayerCost(c, rule) {
+  if (!canAffordPlayerCost(c, rule)) return null;
+  const required = cost(rule), left = { common: required.common, uncommon: required.uncommon, rare: required.rare };
+  const inventoryItems = (c.inventoryItems || []).flatMap(item => {
+    const key = tier(item);
+    if (!key || !left[key]) return [item];
+    const have = number(item.quantity ?? item.qty), spent = Math.min(have, left[key]);
+    left[key] -= spent;
+    if (have <= spent) return [];
+    const quantity = have - spent;
+    return [{ ...item, quantity: String(quantity), ...(Object.hasOwn(item, 'qty') ? { qty: quantity } : {}) }];
+  });
+  return { ...c, caps: String(Math.max(0, number(c.caps) - required.caps)), inventoryItems };
+}
 export function depositCheck(s, c, input) {
   if (!c) return 'unavailable';
   const values = Object.fromEntries(RESOURCE_KEYS.map(k => [k, Number(input[k] ?? 0)]));
