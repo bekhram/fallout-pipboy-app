@@ -8,6 +8,7 @@ import { buildSessionShareUrl, getSessionCodeFromUrl } from "../../utils/session
 import GmWorkspace from "../gm/GmWorkspace.jsx";
 import SessionChatDrawer from "./SessionChatDrawer.jsx";
 import SessionActionsMenu from "./SessionActionsMenu.jsx";
+import PlayerCampaignWorkspace from "./PlayerCampaignWorkspace.jsx";
 import SessionLobby from "./SessionLobby.jsx";
 import "./session.css";
 import "./sessionGmWorkspace.css";
@@ -399,47 +400,6 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
     );
   }
 
-  return (
-    <section className="session-screen pip-screen-grid session-player-live session-player-live--simple">
-      <SessionActionsMenu mode={mode} session={session} onBack={onBack} onOpenSheet={onOpenSheet} labels={copy} />
-      <section className="pip-panel pip-block session-hero">
-        <div className="session-topline">
-          <div>
-            <div className="pip-bootline">PLAYER LINK // {sessionCode}</div>
-            <h1 className="pip-title">{copy.player}</h1>
-          </div>
-          <div className="session-top-actions">
-            <button type="button" className="pip-btn" onClick={onOpenSheet}>{copy.openSheet}</button>
-            <button type="button" className="pip-btn" onClick={() => session?.exitSession?.()}>{copy.leave}</button>
-          </div>
-        </div>
-        <button type="button" className="pip-btn session-lobby-return" onClick={onShowLobby}>← {lobbyLabel}</button>
-        <div className="session-status-strip">
-          <div>
-            <span className={`session-status-dot is-${status}`} />
-            <span>{copy.status}: <strong>{copy[status] || status}</strong></span>
-          </div>
-          <div className="session-code-display">{sessionCode}</div>
-        </div>
-        {error ? <div className="session-error">{error}</div> : null}
-      </section>
-
-      <section className="pip-panel pip-block">
-        <div className="pip-head"><h2>[ {copy.currentMessage} ]</h2></div>
-        <div className="pip-logbox session-current-message session-current-message-large">
-          {sceneMessage || copy.noMessage}
-        </div>
-        <button
-          type="button"
-          className="pip-btn"
-          disabled={status !== "online"}
-          onClick={handleSync}
-        >
-          {syncState ? copy.synced : copy.sync}
-        </button>
-      </section>
-
-      <SessionChatDrawer session={session} form={form} />
-    </section>
-  );
+  return <PlayerCampaignWorkspace session={session} form={form} copy={copy} error={error}
+    onBack={onShowLobby || onBack} onOpenSheet={onOpenSheet} />;
 }

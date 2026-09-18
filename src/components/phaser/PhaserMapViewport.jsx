@@ -111,7 +111,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           const wheel = (e) => { if (toolActive()) { e.preventDefault(); return; } if (e.target.closest('.phaser-map__controls')) return; e.preventDefault(); e.stopPropagation(); const p = point(e); this.zoomAt(this.cameras.main.zoom * Math.exp(-e.deltaY * .0015), p.x, p.y); };
           const key = (e) => {
             if (e.key === 'Escape') { setExpanded(false); return; }
-            if (e.target !== root) return;
+            if (e.target !== root || toolActive()) return;
             const cam = this.cameras.main, step = 80 / cam.zoom;
             if (e.key === 'ArrowLeft') cam.scrollX -= step;
             else if (e.key === 'ArrowRight') cam.scrollX += step;
@@ -147,6 +147,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           this.sync();
         }
         focus(x, y) {
+          if (host.current?.querySelector(".is-map-tool-active")) return;
           this.framing = null;
           const cam = this.cameras.main;
           cam.setScroll((x + .5) * CELL - cam.width / cam.zoom / 2, (y + .5) * CELL - cam.height / cam.zoom / 2); this.sync();
