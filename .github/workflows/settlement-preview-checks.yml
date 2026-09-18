@@ -5,6 +5,7 @@ on:
       - 'src/components/settlement/**'
       - 'src/components/campaign/**'
       - 'src/components/map/MapScreen.jsx'
+      - 'src/components/map/MapGrid.jsx'
       - 'src/utils/legacySettlementArchive.js'
       - 'src/utils/settlementWorkerRuntime.js'
       - 'src/assets/settlement/workers/**'

@@ -10,6 +10,10 @@ test('personal map opens the existing campaign flow, not a second settlement sto
   assert.match(map,/<CampaignPanel\b[^>]*\bworldOnly\b/);
   assert.doesNotMatch(map,/useSettlementStorage|createSettlement|onUpdate=|<SettlementScreen\b/);
   assert.equal(existsSync(new URL('src/hooks/useSettlementStorage.js',root)),false);
+  const grid=read('src/components/map/MapGrid.jsx');
+  assert.doesNotMatch(grid,/useSettlementStorage|settlementStore|handleSettlementAction|<SettlementScreen\b|pip-map-settlement-button/);
+  assert.match(grid,/<PhaserMapViewport\b/);
+  assert.match(grid,/<CombatAwareLocalGmChat\b/);
 });
 test('no runtime module still imports the retired local store',()=>{
   function visit(url){for(const item of readdirSync(url,{withFileTypes:true})){
