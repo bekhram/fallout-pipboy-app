@@ -35,3 +35,14 @@
 
 .campaign-world-layout > div { min-width: 0; }
 .campaign-world-heading > * { min-width: 0; max-width: 100%; }
+
+.campaign-world-markers{display:grid;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(120,255,140,.18)}
+.campaign-world-markers h3{margin:0;font-size:12px;letter-spacing:.06em}
+.campaign-world-markers p{margin:0;font-size:10px;line-height:1.35;opacity:.7}
+.campaign-world-markers form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.campaign-world-marker-list{display:grid;gap:6px}
+.campaign-world-marker-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:stretch}
+.campaign-world-marker-row>.pip-btn:first-child{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-width:0}
+.campaign-world-marker-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.campaign-world-marker-row small{opacity:.65}
+@media(max-width:700px){.campaign-world-markers form,.campaign-world-marker-row{grid-template-columns:1fr}.campaign-world-marker-row>.pip-btn:last-child{justify-self:start}}
