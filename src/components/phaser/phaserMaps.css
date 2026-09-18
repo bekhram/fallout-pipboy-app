@@ -43,7 +43,8 @@ body:has(.phaser-map.is-expanded) { overflow: hidden; }
 .pip-map-screen:has(.phaser-map) .pip-map-mode-switch { border: 1px solid #304f40; border-radius: 10px; overflow: hidden; margin: 0 0 10px; width: 100%; max-width: 100%; display: flex; }
 .pip-map-screen:has(.phaser-map) .pip-map-mode-switch button { flex: 1; min-width: 0; min-height: 44px; font: 600 12px system-ui; letter-spacing: .03em; }
 .pip-map-screen:has(.phaser-map) .pip-map-sidebar .pip-panel { border-radius: 12px; background: #0b1b13; border-color: #29493b; }
-.pip-world-overview:has(.phaser-map) { display: flex; flex-direction: column; gap: 10px; }
+.pip-world-overview:has(.phaser-map) { position: relative; inset: auto; display: flex; flex-direction: column; gap: 10px; }
+.pip-world-overview > .phaser-map { flex: none; }
 .gm-session-map:has(.phaser-map) > .phaser-map { grid-area: map; }
 .gm-session-map:has(.phaser-map) { display: flex !important; flex-direction: column; }
 .gm-session-map:has(.phaser-map) > .phaser-map { flex: none; }
