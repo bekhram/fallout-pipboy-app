@@ -9,6 +9,8 @@ import { canSpend } from '../../utils/settlementDevelopment.js';
 import { characterImport } from '../../utils/campaignCharacter.js';
 import SettlementScreen from '../settlement/SettlementScreen.jsx';
 import { worldCopy, worldError } from './worldCopy.js';
+import CampaignSyncStatus from './CampaignSyncStatus.jsx';
+import { offlineCopy } from './offlineCopy.js';
 import './campaignWorld.css';
 
 export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, settlementsOnly = false }) {
@@ -27,7 +29,8 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   const point = selected || region.start;
   const validPoint = Number.isInteger(point.x) && Number.isInteger(point.y) && point.x >= 0 && point.y >= 0 && point.x <= 63 && point.y <= 63;
   const gm = Boolean(campaign && campaign.ownerUid === uid);
-  const disabled = busy || !connected || !!retry;
+  const disabled = busy || !connected || !!retry || world.blocked;
+  const localDisabled = busy || !world.localReady;
   const members = Object.entries(campaign?.members || {}).filter(([, member]) => !member.revoked);
   const settlements = campaign?.settlements || [];
   const active = settlements.find(s => s.id === activeId);
@@ -37,12 +40,7 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   async function submitCharacter() {
     try { setAuthError(''); await run({type: 'submitCharacter', character: characterImport(form, uid)}); } catch { setAuthError(c.error); }
   }
-  const status = <div className="campaign-world-status" role="status">
-    <span>{busy ? c.busy : connected ? c.synced : c.offline}</span>
-    {authError && <span role="alert">{authError}</span>}
-    {error && <span role="alert">{worldError(error, c)}</span>}
-    {retry && <button className="pip-btn" disabled={busy} onClick={world.retryLast}>{c.retry}</button>}
-  </div>;
+  const status = <CampaignSyncStatus world={world} language={language} authError={authError} />;
   const characterPanel = <details className="campaign-world-character"><summary>{campaign?.character ? `${c.approved}: ${campaign.character.name}` : c.character}</summary>
     {!campaign?.character && <><p>{c.character}</p><button className="pip-btn" disabled={disabled || !form || !!campaign?.proposals?.[uid]} onClick={submitCharacter}>{campaign?.proposals?.[uid] ? c.pending : c.submit}</button></>}
     {gm && Object.entries(campaign?.proposals || {}).map(([id, character]) => <p key={id}>{character.name} <button className="pip-btn" disabled={disabled} onClick={() => run({ type: 'approveCharacter', memberId: id })}>{c.approve}</button></p>)}
@@ -50,7 +48,7 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
 
   if (!persistent) return <section className="pip-panel campaign-world"><h2>{c.title}</h2><p>{c.quick}</p>{onOpenCampaigns && <button className="pip-btn is-primary" onClick={onOpenCampaigns}>{c.campaigns}</button>}</section>;
   if (!uid) return <section className="pip-panel campaign-world"><h2>{c.title}</h2><p>{c.auth}</p>{authError && <p role="alert">{authError}</p>}<button className="pip-btn" onClick={async () => { try { await signInWithGoogle(); } catch { setAuthError(c.error); } }}>{c.signIn}</button></section>;
-  if (!campaign) return <section className="pip-panel campaign-world"><h2>{c.title}</h2><p>{error ? worldError(error, c) : c.loading}</p></section>;
+  if (!campaign) return <section className="pip-panel campaign-world"><h2>{c.title}</h2>{status}<p>{world.blocked ? c.readOnly : offlineCopy(language).first}</p></section>;
 
   const settlementControls = <div className="campaign-world-controls">
     {status}{characterPanel}
@@ -87,6 +85,6 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
     </aside></div>
     <div className="campaign-world-settlements"><h3>{c.settlements} · {settlements.length}/5</h3>{!settlements.length && <p>{c.empty}</p>}{settlements.map(s=><button className="pip-btn" key={s.id} onClick={()=>setActiveId(s.id)}><strong>⌂ {s.name}</strong><span>{getRegionName(getMapRegion(s.regionId),language)} · {s.worldX}:{s.worldY}</span><span>{c.open} →</span></button>)}</div>
     {characterPanel}
-    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!disabled} onCommand={async command=>{if(disabled||!editable)return false;return Boolean(await run({type:'settlement',settlementId:active.id,command}));}}/>,document.body)}
+    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} onCommand={async command=>{if(localDisabled||!editable)return false;return Boolean(await run({type:'settlement',settlementId:active.id,command}));}}/>,document.body)}
   </section>;
 }

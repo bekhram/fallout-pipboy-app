@@ -1,85 +1,114 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { campaignRequest } from '../cloud/persistentCampaigns.js';
 import { getCloudAuthSession } from '../cloud/googleAuth.js';
-
-const pendingKey = (id, uid) => `pip2d20:world-pending:${id}:${uid}`;
-function readPending(id, uid) {
-  try { return JSON.parse(sessionStorage.getItem(pendingKey(id, uid)) || 'null'); } catch { return null; }
-}
-function writePending(id, uid, command) {
-  try { if (command) sessionStorage.setItem(pendingKey(id, uid), JSON.stringify(command)); else sessionStorage.removeItem(pendingKey(id, uid)); } catch { /* Storage may be disabled. In-memory retries remain available. */ }
-}
+import { campaignLocalStore, subscribeLocal } from '../cloud/campaignLocalStore.js';
+import { createCampaignOfflineController } from '../cloud/campaignOfflineController.js';
+import { projectRecord, SYNC_INTERVAL } from '../cloud/settlementOfflineProtocol.js';
+import { applyOfflineCommand } from '../utils/settlementOfflineApply.js';
 
 export default function useCampaignWorld(campaignId) {
-  const [uid, setUid] = useState(() => getCloudAuthSession()?.firebase?.localId || '');
-  const [campaign, setCampaign] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [retry, setRetry] = useState(null);
-  const [connected, setConnected] = useState(false);
-  const generation = useRef(0), lock = useRef(false), pending = useRef(null);
-
+  const [identity, setIdentity] = useState(() => ({ uid: getCloudAuthSession()?.firebase?.localId || '', epoch: 0 }));
+  const { uid } = identity;
+  const scope = `${uid}:${campaignId || ''}:${identity.epoch}`;
+  const scopeRef = useRef(scope); scopeRef.current = scope;
+  const [record, setRecord] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const [online, setOnline] = useState(() => navigator.onLine !== false);
+  const ticket = useRef(0), mounted = useRef(false), running = useRef(false), storageFailure = useRef(false);
+  const valid = record?.uid === uid && record?.campaignId === campaignId ? record : null;
   useEffect(() => {
-    const change = () => setUid(getCloudAuthSession()?.firebase?.localId || '');
+    const change = () => { scopeRef.current = ''; setIdentity(old => ({ uid: getCloudAuthSession()?.firebase?.localId || '', epoch: old.epoch + 1 })); };
     window.addEventListener('pip2d20:cloud-auth-changed', change);
     return () => window.removeEventListener('pip2d20:cloud-auth-changed', change);
   }, []);
-  const accept = useCallback(next => {
-    setCampaign(old => !old || old.id !== next.id || next.revision >= old.revision ? next : old);
-    setConnected(true);
-  }, []);
-
-  useEffect(() => {
-    const gen = ++generation.current;
-    lock.current = false; pending.current = null;
-    setCampaign(null); setError(''); setRetry(null); setConnected(false); setBusy(false);
-    if (!campaignId || !uid) return;
-    pending.current = readPending(campaignId, uid);
-    setRetry(pending.current);
-    let reading = false, nextReadAt = 0, unchanged = 0, revision;
-    const read = async (event) => {
-      if (reading || lock.current || document.hidden || navigator.onLine === false || (!event && Date.now() < nextReadAt)) return;
-      reading = true;
-      try {
-        const data = await campaignRequest({ type: 'tick', campaignId });
-        unchanged = revision === data.campaign.revision ? unchanged + 1 : 0;
-        revision = data.campaign.revision;
-        nextReadAt = Date.now() + (unchanged >= 3 ? 60000 : 15000);
-        if (gen === generation.current) { accept(data.campaign); if (!pending.current) setError(''); }
-      } catch (e) {
-        nextReadAt = Date.now() + Math.max(30000, (e.retryAfter || 0) * 1000);
-        if (gen === generation.current) { setConnected(false); setError(e.message); if (e.message === 'FORBIDDEN' || e.message === 'SIGN_IN_REQUIRED') setCampaign(null); }
-      } finally { reading = false; }
-    };
-    void read();
-    const timer = setInterval(read, 15000);
-    window.addEventListener('online', read);
-    document.addEventListener('visibilitychange', read);
-    const offline = () => setConnected(false);
-    window.addEventListener('offline', offline);
-    return () => { generation.current++; clearInterval(timer); window.removeEventListener('online', read); window.removeEventListener('offline', offline); document.removeEventListener('visibilitychange', read); };
-  }, [campaignId, uid, accept]);
-
-  const run = useCallback(async input => {
-    if (lock.current || !campaignId || !uid || (pending.current && input !== pending.current)) return null;
-    const command = { requestId: crypto.randomUUID(), ...input, campaignId };
-    const gen = generation.current;
-    lock.current = true; setBusy(true); setError('');
-    writePending(campaignId, uid, command);
+  const controller = useMemo(() => uid && campaignId ? createCampaignOfflineController({
+    uid, campaignId, store: campaignLocalStore, request: campaignRequest, apply: applyOfflineCommand,
+    current: () => mounted.current && scopeRef.current === scope && getCloudAuthSession()?.firebase?.localId === uid,
+  }) : null, [uid, campaignId, scope]);
+  const refresh = useCallback(async () => {
+    if (!controller) return null;
+    const readTicket = ++ticket.current;
+    const next = await controller.get();
+    if (mounted.current && scopeRef.current === scope && ticket.current === readTicket) setRecord(next);
+    return next;
+  }, [controller, scope]);
+  const attempt = useCallback(async (manual = false) => {
+    if (!controller || running.current || (!manual && (document.hidden || navigator.onLine === false || storageFailure.current))) return false;
+    const runToken = Symbol(scope); running.current = runToken;
+    if (mounted.current && scopeRef.current === scope) { setBusy(true); setError(''); }
     try {
-      const data = await campaignRequest(command);
-      writePending(campaignId, uid, null);
-      if (gen !== generation.current) return null;
-      accept(data.campaign); pending.current = null; setRetry(null);
-      return data.campaign;
+      const result = await controller.sync({ manual });
+      if (manual) storageFailure.current = false;
+      return result;
     } catch (e) {
-      if (gen === generation.current) {
-        setError(e.message);
-        if (!e.status || e.status >= 500) { pending.current = command; setRetry(command); setConnected(false); }
-        else { pending.current = null; setRetry(null); writePending(campaignId, uid, null); }
+      if (mounted.current && scopeRef.current === scope) { setError(e.message); if (e.message.startsWith('LOCAL_')) storageFailure.current = true; }
+      return false;
+    } finally {
+      if (running.current === runToken) running.current = false;
+      if (mounted.current && scopeRef.current === scope) {
+        try { await refresh(); } catch (e) { setError(e.message); storageFailure.current = true; }
+        setBusy(false);
       }
-      return null;
-    } finally { if (gen === generation.current) { lock.current = false; setBusy(false); } }
-  }, [campaignId, uid, accept]);
-  return { campaign, uid, busy, error, connected, retry, run, retryLast: () => run(pending.current) };
+    }
+  }, [controller, refresh, scope]);
+  useEffect(() => {
+    mounted.current = true; scopeRef.current = scope; running.current = false; setRecord(null); setError(''); setBusy(false); storageFailure.current = false;
+    let cancelled = false;
+    const update = event => {
+      if (!cancelled && (!event?.detail?.uid || event.detail.uid === uid) && (!event?.detail?.campaignId || event.detail.campaignId === campaignId)) {
+        void refresh().catch(e => { if (!cancelled) { setError(e.message); storageFailure.current = true; } });
+      }
+    };
+    const network = () => { if (!cancelled) { setOnline(navigator.onLine !== false); update(); void attempt(); } };
+    const unsubscribe = subscribeLocal(update);
+    window.addEventListener('online', network); window.addEventListener('offline', network);
+    document.addEventListener('visibilitychange', network);
+    const timer = setInterval(() => { void attempt(); }, 60000); // local eligibility check, not a DB poll
+    if (controller) void (async () => {
+      try {
+        const key = `pip2d20:world-pending:${campaignId}:${uid}`;
+        let raw = null, legacy = null;
+        try { raw = sessionStorage.getItem(key); if (raw) legacy = JSON.parse(raw); } catch { /* leave unreadable old data untouched */ }
+        await controller.initialize(legacy);
+        if (legacy && raw) { try { if (sessionStorage.getItem(key) === raw) sessionStorage.removeItem(key); } catch { /* durable copy already exists */ } }
+        if (identity.epoch > 0) await campaignLocalStore.change(uid, campaignId, r => { r.authRequired = false; return r; });
+        if (!cancelled) { await refresh(); await attempt(); }
+      } catch (e) { if (!cancelled) { setError(e.message); storageFailure.current = true; } }
+    })();
+    return () => { cancelled = true; mounted.current = false; ticket.current++; unsubscribe(); clearInterval(timer);
+      window.removeEventListener('online', network); window.removeEventListener('offline', network); document.removeEventListener('visibilitychange', network); };
+  }, [controller, scope, uid, campaignId, identity.epoch, refresh, attempt]);
+  const projected = useMemo(() => {
+    try {
+      const view = projectRecord(valid, applyOfflineCommand);
+      if (view.campaign && valid?.entries.length) {
+        const dirty = new Set(valid.entries.map(op => op.command.settlementId));
+        view.campaign.settlements = view.campaign.settlements.map(s => dirty.has(s.id) ? { ...s, offlineDraft: true } : s);
+      }
+      return view;
+    } catch { return { campaign: valid?.snapshot || null, conflicts: [{ error: 'LOCAL_CONFLICT' }] }; }
+  }, [valid]);
+  const run = useCallback(async input => {
+    if (!controller || running.current || storageFailure.current) return null;
+    const runToken = Symbol(scope); running.current = runToken; setBusy(true); setError('');
+    try { return await controller.run(input); }
+    catch (e) { if (mounted.current && scopeRef.current === scope) { setError(e.message); if (e.message.startsWith('LOCAL_') && e.message !== 'LOCAL_BUSY') storageFailure.current = true; } return null; }
+    finally { if (running.current === runToken) running.current = false; if (mounted.current && scopeRef.current === scope) {
+      try { await refresh(); } catch (e) { setError(e.message); storageFailure.current = true; } setBusy(false);
+    } }
+  }, [controller, refresh, scope]);
+  const exportSave = useCallback(async () => {
+    try {
+      const json = await campaignLocalStore.export(uid, campaignId);
+      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+      const link = document.createElement('a'); link.href = url; link.download = `pip2d20-${campaignId}-offline.json`;
+      document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) { setError(e.message); }
+  }, [uid, campaignId]);
+  const canQueue = Boolean(valid?.snapshot && !valid.blocked && !valid.authRequired && !valid.immediate && !valid.halted && !storageFailure.current);
+  return { campaign: projected.campaign, uid, busy, error: error || valid?.lastError || (valid?.blocked ? 'FORBIDDEN' : ''), run, connected: online && !valid?.failures && !valid?.authRequired,
+    retry: valid?.immediate?.command || null, retryLast: () => attempt(true), syncNow: () => attempt(true),
+    localReady: canQueue, pendingCount: (valid?.entries.length || 0) + (valid?.immediate ? 1 : 0),
+    lastSyncAt: valid?.lastSyncAt || 0, nextSyncAt: valid?.nextAttemptAt || (valid?.lastSyncAt ? valid.lastSyncAt + SYNC_INTERVAL : 0),
+    conflicts: projected.conflicts, history: valid?.history || [], blocked: Boolean(valid?.blocked), exportSave,
+  };
 }

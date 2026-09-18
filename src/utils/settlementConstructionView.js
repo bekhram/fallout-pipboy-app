@@ -7,7 +7,9 @@ import { tasks, progress, workerCounts, advanceConstruction } from './settlement
 export function settlementConstructionView(settlement, now = Date.now()) {
   const queue = tasks(settlement);
   const anchor = settlement.constructionUpdatedAt == null ? NaN : Number(settlement.constructionUpdatedAt);
-  const time = Number.isFinite(Number(now)) ? Number(now) : anchor;
+  // Stage-1 offline orders are drafts, not a backdated work ledger. Do not pretend
+  // new crew assignments worked throughout the time since the last cloud snapshot.
+  const time = settlement.offlineDraft ? anchor : Number.isFinite(Number(now)) ? Number(now) : anchor;
   const projected = queue.length && Number.isFinite(anchor) && time > anchor
     ? advanceConstruction(settlement, time) : settlement;
   const live = new Map(tasks(projected).map(task => [task.key, task]));
@@ -63,7 +65,6 @@ export class ConstructionNoticeTracker {
     if (changed) this.seen.clear();
     this.settlementId = settlement.id; this.initialized = true;
     events.forEach(event => this.seen.add(key(event)));
-    // Event history itself is capped by the engine; bound this UI-only cache too.
     if (this.seen.size > 500) this.seen = new Set([...this.seen].slice(-250));
     return fresh.filter(event => {
       const [, buildingId] = String(event.target || '').split(':');

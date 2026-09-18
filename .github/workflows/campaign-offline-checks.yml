@@ -1,0 +1,39 @@
+name: Campaign offline checks
+on:
+  pull_request:
+    paths:
+      - 'src/cloud/**'
+      - 'src/hooks/useCampaignWorld.js'
+      - 'src/components/campaign/**'
+      - 'src/utils/settlementOfflineApply.js'
+      - 'src/utils/settlementConstructionView.js'
+      - 'server/settlementSync.js'
+      - 'api/settlement-sync.js'
+      - 'tests/**'
+      - '.github/workflows/campaign-offline-checks.yml'
+permissions:
+  contents: read
+concurrency:
+  group: campaign-offline-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Campaign and settlement regression suites
+        run: node --test tests/campaign*.test.js tests/settlement*.test.js
+      - run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install playwright==1.57.0
+      - run: python -m playwright install --with-deps chromium
+      - name: Native IndexedDB reload, concurrency and browser-restart tests
+        run: python tests/browser_offline.py

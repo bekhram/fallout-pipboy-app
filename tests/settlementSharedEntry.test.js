@@ -23,15 +23,21 @@ test('no runtime module still imports the retired local store',()=>{
   }}
   for(const dir of ['src/','server/','api/'])if(existsSync(new URL(dir,root)))visit(new URL(dir,root));
 });
-test('shared entry retains command permissions and disables duplicate lobby polling',()=>{
-  const panel=read('src/components/campaign/CampaignPanel.jsx');
-  assert.match(panel,/worldOnly\s*=\s*false/);
-  assert.match(panel,/if\(worldOnly\|\|!uid\|\|!campaign\?\.id\)return/);
-  assert.match(panel,/!worldOnly&&gm&&<div className="campaign-delete"/);
+test('offline shared entry does not mount the lobby poller; both paths keep permission guards',()=>{
+  const wrapper=read('src/components/campaign/CampaignPanel.jsx');
+  assert.match(wrapper,/worldOnly\s*=\s*false/);
+  assert.match(wrapper,/worldOnly \|\| offline \? <CampaignOfflineHub/);
+  assert.doesNotMatch(wrapper,/setInterval|campaignRequest/);
+  const lobby=read('src/components/campaign/CampaignPanelOnline.jsx');
+  assert.match(lobby,/if\(worldOnly\|\|!uid\|\|!campaign\?\.id\)return/);
+  assert.match(lobby,/!worldOnly&&gm&&<div className="campaign-delete"/);
   const world=read('src/components/campaign/CampaignWorldMap.jsx');
-  assert.match(world,/canEdit=\{Boolean\(editable\)&&!disabled\}/);
-  assert.match(world,/if\(disabled\|\|!editable\)return false/);
-  assert.match(world,/onCommand=/);
+  assert.match(world,/canEdit=\{Boolean\(editable\)&&!localDisabled\}/);
+  assert.match(world,/if\(localDisabled\|\|!editable\)return false/);
+  assert.match(world,/canSpend\(active, actor\)/);
+  const controller=read('src/cloud/campaignOfflineController.js');
+  assert.match(controller,/isLocalCommand\(input\)/);
+  assert.match(controller,/ONLINE_ACTION_REQUIRED/);
 });
 test('bundled sprite is the pinned transparent legacy sheet and loads before actors',()=>{
   const png=readFileSync(new URL('src/assets/settlement/workers/pawn-blue.png',root));
