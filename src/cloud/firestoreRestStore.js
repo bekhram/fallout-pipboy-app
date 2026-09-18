@@ -1,3 +1,4 @@
+import { campaignRequest } from './persistentCampaigns.js';
 import { CLOUD_CONFIG, isFirebaseCloudConfigured } from "./cloudConfig.js";
 import { refreshFirebaseSession } from "./googleAuth.js";
 
@@ -150,6 +151,7 @@ export async function loadCloudCharacter(userId, characterId) {
 export async function saveCloudCampaign(campaignId, ownerUid, campaignState, title = "") {
   const safeCampaignId = String(campaignId || "").trim();
   if (!safeCampaignId || !ownerUid) throw new Error("Missing campaign id or owner uid.");
+  if (/^campaign_[a-f0-9]{24}$/.test(safeCampaignId)) return campaignRequest({ type: 'saveGmSession', campaignId: safeCampaignId, snapshot: campaignState });
   return setCloudDocument(`campaigns/${safeCampaignId}`, {
     ownerUid,
     kind: "campaign",
@@ -159,6 +161,10 @@ export async function saveCloudCampaign(campaignId, ownerUid, campaignState, tit
 }
 
 export async function loadCloudCampaign(campaignId) {
+  if (/^campaign_[a-f0-9]{24}$/.test(campaignId)) {
+    const { snapshot } = await campaignRequest({ type: 'loadGmSession', campaignId });
+    return snapshot ? { id: campaignId, payload: snapshot, updatedAt: snapshot.savedAt } : null;
+  }
   return getCloudDocument(`campaigns/${campaignId}`);
 }
 
@@ -184,6 +190,7 @@ export async function listCloudCampaignsByOwner(ownerUid) {
 
 export async function saveCampaignPlayerSnapshot(campaignId, userId, character) {
   if (!campaignId || !userId) throw new Error("Missing campaign or user id.");
+  if (/^campaign_[a-f0-9]{24}$/.test(campaignId)) return; // Persistent membership and character approval use the campaign API.
   return setCloudDocument(`campaigns/${campaignId}/players/${userId}`, {
     ownerUid: userId,
     kind: "campaign-player-snapshot",

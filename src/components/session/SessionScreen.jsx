@@ -340,7 +340,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
   };
 
   if (showLobby || mode === "lobby") {
-    return <SessionLobby language={i18n.resolvedLanguage || i18n.language} copy={copy}
+    return <SessionLobby session={session} form={form} onEnterSession={onEnterSession} language={i18n.resolvedLanguage || i18n.language} copy={copy}
       onBack={onBack} onNavigate={onNavigateMenu || onBack}
       onHost={()=>{setErrorTarget("host");setLocalError("");onEnterSession?.();session?.startHost?.();}}
       onRestore={handleRestoreCloud} onJoin={handleJoin}

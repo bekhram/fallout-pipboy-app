@@ -1,3 +1,5 @@
+import { campaignRequest } from '../cloud/persistentCampaigns.js';
+import { getCloudAuthSession } from '../cloud/googleAuth.js';
 import { useEffect, useMemo } from "react";
 import useGmAuthoritativeSessionV15, {
   GAME_SERVER_URL,
@@ -6,6 +8,7 @@ import useGmAuthoritativeSessionV15, {
 } from "./useGmAuthoritativeSessionV15.js";
 import useCloudCampaignSync, {
   getStoredGmCampaignId,
+  setStoredGmCampaignId,
   restoreCloudCampaignToLocalCache,
   restoreLatestCloudCampaignToLocalCache,
 } from "./useCloudCampaignSync.js";
@@ -29,10 +32,36 @@ export default function useSharedSession(form) {
     status: waitingForGm ? "waiting" : session.status,
     error: waitingForGm ? null : session.error,
     waitingForGm,
+    startCampaignHost: async (id) => {
+      const { campaign } = await campaignRequest({ type: 'tick', campaignId: id });
+      const auth = getCloudAuthSession();
+      if (campaign.ownerUid !== (auth?.firebase?.localId || auth?.user?.id)) throw new Error('FORBIDDEN');
+      if (session.mode !== 'lobby') {
+        if (session.mode === 'host' && session.campaignId === id) return true;
+        throw new Error('SESSION_ALREADY_OPEN');
+      }
+      await restoreCloudCampaignToLocalCache(id, { force: true });
+      setStoredGmCampaignId(id);
+      const started = await session.startHost();
+      if (!started) session.exitSession();
+      return started;
+    },
+    joinCampaignSession: async (id, name) => {
+      const { campaign } = await campaignRequest({ type: 'tick', campaignId: id });
+      if (session.mode !== 'lobby') {
+        if (session.mode === 'player' && session.campaignId === id) return true;
+        throw new Error('SESSION_ALREADY_OPEN');
+      }
+      if (!campaign.liveSession?.code || Date.now() - campaign.liveSession.updatedAt > 90000) throw new Error('GM_OFFLINE');
+      const joined = await session.joinSession({ code: campaign.liveSession.code, name });
+      if (!joined) session.exitSession();
+      return joined;
+    },
     startHost: async (...args) => {
       try {
         const campaignId = getStoredGmCampaignId();
-        if (campaignId) await restoreCloudCampaignToLocalCache(campaignId);
+        if (/^campaign_[a-f0-9]{24}$/.test(campaignId)) setStoredGmCampaignId("");
+        else if (campaignId) await restoreCloudCampaignToLocalCache(campaignId);
       } catch (error) {
         console.warn("Cloud campaign restore before host start failed:", error);
       }
@@ -45,6 +74,21 @@ export default function useSharedSession(form) {
       return { ok: true, restored, started };
     },
   }), [session, cloud, waitingForGm]);
+
+  useEffect(() => {
+    if (session.mode !== 'host' || session.status !== 'online' || !/^campaign_[a-f0-9]{24}$/.test(session.campaignId || '') || !session.sessionCode) return;
+    let pending = false;
+    const publish = async () => {
+      if (pending) return;
+      pending = true;
+      try { await campaignRequest({ type: 'sessionPresence', campaignId: session.campaignId, code: session.sessionCode }); }
+      catch (error) { console.warn('Campaign session registration failed:', error.message); }
+      finally { pending = false; }
+    };
+    void publish();
+    const timer = setInterval(publish, 30000);
+    return () => clearInterval(timer);
+  }, [session.mode, session.status, session.campaignId, session.sessionCode]);
 
   useEffect(() => {
     if (!waitingForGm) return undefined;
