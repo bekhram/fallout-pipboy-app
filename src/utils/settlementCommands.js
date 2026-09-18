@@ -24,8 +24,17 @@ export function applySettlementCommand(settlement, character, actor, command, no
     case 'supplies': s = reserveProvisions(s, c.resource); break;
     case 'build': {
       if (!Number.isInteger(c.x) || !Number.isInteger(c.y) || !dev.canFit(s, c.buildingType, c.x, c.y) || c.buildingType === 'settlement_hq') fail('PLACEMENT');
-      checkedRule(getRulebookBuilding(c.buildingType));
-      s = payRulebookBuildingCost(s, c.buildingType);
+      const rule = getRulebookBuilding(c.buildingType);
+      if (c.paymentSource === 'personal') {
+        const blockers = dev.buildBlockers(s, character, rule, actor).filter(blocker => blocker.kind !== 'resource');
+        if (blockers.length) fail('REQUIREMENTS');
+        const paidCharacter = dev.payPlayerCost(character, rule);
+        if (!paidCharacter) fail('insufficient');
+        character = paidCharacter;
+      } else {
+        checkedRule(rule);
+        s = payRulebookBuildingCost(s, c.buildingType);
+      }
       s = { ...s, buildings: [...s.buildings, createConstructionBuilding({ id: `building_${c.requestId || now}`, type: c.buildingType, x: c.x, y: c.y, now })] };
       break;
     }
