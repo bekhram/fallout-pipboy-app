@@ -8,6 +8,7 @@ import { SETTLEMENT_BUILDINGS, SETTLEMENT_BUILDING_LIST, SETTLEMENT_GRID_SIZE, s
 import { ROOMS, SETTLEMENT_ACTIONS, settlementRuleName } from "../../data/settlement/rulebook.js";
 import { formatRulebookCost, getRulebookBuilding } from "../../data/settlement/rulebookCatalog.js";
 import { calculateSettlementStats, formatBuildTime } from "../../utils/settlementEconomy.js";
+import { canAffordPlayerCost, playerResources } from "../../utils/settlementDevelopment.js";
 import { calculateAttackRisk, resolveSettlementAttack } from "../../utils/settlementAttackEngine.js";
 import { canAffordRoom, canAffordRulebookBuilding, createConstructionBuilding, createRoomConstruction, getConstructionProgress, getRoomConstructionProgress, getSettlementRulebookSnapshot, getStructureRoomCapacity, normalizeStockpile, payRoomCost, payRulebookBuildingCost } from "../../utils/settlementDayEngine.js";
 import { getSettlementAsset } from "./settlementAssets.js";
@@ -21,10 +22,10 @@ const BUILD_CATEGORIES = ["housing", "food", "water", "power", "production", "co
 const ROOM_ORDER = ["private_room", "dormitory", "quarters", "lounge", "storage", "office"];
 const PANEL_ICONS = { build: "⚒", people: "👥", resources: "▣", defense: "⬟", events: "!" };
 const ROOM_NAMES = {
-  en: { private_room: "Private Room", dormitory: "Dormitory", quarters: "Quarters", lounge: "Lounge", storage: "Storage", office: "Office" },
-  ru: { private_room: "Личная комната", dormitory: "Общежитие", quarters: "Жилые помещения", lounge: "Гостиная", storage: "Склад", office: "Офис" },
-  uk: { private_room: "Приватна кімната", dormitory: "Гуртожиток", quarters: "Житлові приміщення", lounge: "Вітальня", storage: "Сховище", office: "Офіс" },
-  pl: { private_room: "Pokój prywatny", dormitory: "Dormitorium", quarters: "Kwatery", lounge: "Salon", storage: "Magazyn", office: "Biuro" },
+  en: { private_room: "Private Room", dormitory: "Dormitory", quarters: "Quarters", lounge: "Lounge", storage: "Storage", office: "Office", stockpilePay: "SETTLEMENT STOCKPILE", personalPay: "MY INVENTORY", personalAvailable: "Personal available" },
+  ru: { private_room: "Личная комната", dormitory: "Общежитие", quarters: "Жилые помещения", lounge: "Гостиная", storage: "Склад", office: "Офис", stockpilePay: "ЗАПАСЫ ПОСЕЛЕНИЯ", personalPay: "МОЙ ИНВЕНТАРЬ", personalAvailable: "Доступно у персонажа" },
+  uk: { private_room: "Приватна кімната", dormitory: "Гуртожиток", quarters: "Житлові приміщення", lounge: "Вітальня", storage: "Сховище", office: "Офіс", stockpilePay: "ЗАПАСИ ПОСЕЛЕННЯ", personalPay: "МІЙ ІНВЕНТАР", personalAvailable: "Доступно у персонажа" },
+  pl: { private_room: "Pokój prywatny", dormitory: "Dormitorium", quarters: "Kwatery", lounge: "Salon", storage: "Magazyn", office: "Biuro", stockpilePay: "ZAPASY OSADY", personalPay: "MÓJ EKWIPUNEK", personalAvailable: "Dostępne u postaci" },
 };
 const CATEGORY_LABELS = {
   en: { housing: "HOUSING", food: "FOOD", water: "WATER", power: "POWER", production: "PRODUCTION", commerce: "TRADE", services: "SERVICES", defense: "DEFENSE" },
@@ -47,7 +48,7 @@ function canPlace(settlement,def,x,y,ignoreBuildingId=null) {
   for(let yy=y;yy<y+def.footprint.height;yy+=1)for(let xx=x;xx<x+def.footprint.width;xx+=1)if((settlement.buildings || []).some(building=>building.id!==ignoreBuildingId && occupies(building,xx,yy)))return false;
   return true;
 }
-export default function SettlementScreen({ settlement, onUpdate, onBack, onCommand, canEdit=true, sharedControls }) {
+export default function SettlementScreen({ settlement, character=null, onUpdate, onBack, onCommand, canEdit=true, sharedControls }) {
   const { i18n }=useTranslation();
   const language=String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
   const text=COPY[language] || COPY.en;
@@ -65,6 +66,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   const [movingBuildingId,setMovingBuildingId]=useState(null);
   const [hoverCell,setHoverCell]=useState(null);
   const [notice,setNotice]=useState("");
+  const [paymentSource,setPaymentSource]=useState("stockpile");
   const stats=useMemo(()=>calculateSettlementStats(settlement),[settlement]);
   const snapshot=useMemo(()=>getSettlementRulebookSnapshot(settlement),[settlement]);
   const attributes={...stats.attributes,power:snapshot.power,defense:snapshot.defense,beds:snapshot.beds};
@@ -85,7 +87,10 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   const movingDef=movingBuilding ? SETTLEMENT_BUILDINGS[movingBuilding.type] : null;
   const placementDef=movingDef || selectedDef;
   const placementValid=hoverCell && placementDef ? canPlace(settlement,placementDef,hoverCell.x,hoverCell.y,movingBuildingId) : false;
-  const enoughResources=selectedType ? canAffordRulebookBuilding(settlement,selectedType) : true;
+  const stockpileCanAfford=selectedType ? canAffordRulebookBuilding(settlement,selectedType) : true;
+  const personalCanAfford=selectedRule ? canAffordPlayerCost(character,selectedRule) : true;
+  const personalResources=useMemo(()=>playerResources(character),[character]);
+  const enoughResources=paymentSource==="personal" ? personalCanAfford : stockpileCanAfford;
   const visibleBuildings=SETTLEMENT_BUILDING_LIST.filter(definition=>definition.category===selectedCategory && getRulebookBuilding(definition.id));
   const constructionBuildings=(settlement.buildings || []).filter(building=>building.state==="construction");
   const constructionRooms=(settlement.buildings || []).flatMap(building=>(building.rooms || []).filter(room=>room.state==="construction").map(room=>({building,room})));
@@ -97,7 +102,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     if(!canEdit || !selectedDef || !selectedRule)return;
     if(!canPlace(settlement,selectedDef,x,y)){setNotice(text.cannotPlace);return;}
     if(!enoughResources){setNotice(text.insufficient);return;}
-    if(onCommand){if(await onCommand({type:"build",buildingType:selectedDef.id,x,y})){setSelectedType(null);setHoverCell(null);setNotice("");}return;}
+    if(onCommand){if(await onCommand({type:"build",buildingType:selectedDef.id,x,y,...(paymentSource==="personal" ? {paymentSource:"personal"} : {})})){setSelectedType(null);setHoverCell(null);setNotice("");}return;}
     const now=Date.now();onUpdate(current=>{const paid=payRulebookBuildingCost(current,selectedDef.id);return {...paid,buildings:[...(paid.buildings || []),createConstructionBuilding({id:`building_${now}_${Math.random().toString(36).slice(2,7)}`,type:selectedDef.id,x,y,now})]};});
     setSelectedType(null);setHoverCell(null);setNotice("");
   }
@@ -165,7 +170,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
           <div className="pip-panel-title">{selectedBuilding ? settlementBuildingName(selectedBuildingDef,language) : text.build}</div>
           {selectedBuilding ? <div className="settlement-building-hero">{selectedBuildingAsset ? <img src={selectedBuildingAsset} alt=""/> : <span>{BUILDING_ICONS[selectedBuilding.type] || "⌂"}</span>}</div> : null}
           <div className={`settlement-stockpile ${selectedBuilding ? "is-hidden" : ""}`}><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div></div>
-          {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef,language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><button type="button" className="pip-action-button" onClick={()=>{setSelectedType(null);setHoverCell(null);}}>{text.cancel}</button></div> : null}
+          {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef,language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><div className="settlement-payment-source"><button type="button" className={paymentSource==="stockpile" ? "pip-action-button is-active" : "pip-action-button"} onClick={()=>setPaymentSource("stockpile")}>{text.stockpilePay}</button><button type="button" className={paymentSource==="personal" ? "pip-action-button is-active" : "pip-action-button"} disabled={!character} onClick={()=>setPaymentSource("personal")}>{text.personalPay}</button></div>{paymentSource==="personal" ? <small>{text.personalAvailable}: {Math.floor(personalResources.common)} / {Math.floor(personalResources.uncommon)} / {Math.floor(personalResources.rare)} · {Math.floor(personalResources.caps)} {text.caps}</small> : null}<button type="button" className="pip-action-button" onClick={()=>{setSelectedType(null);setHoverCell(null);}}>{text.cancel}</button></div> : null}
           {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedBuildingDef,language)}</strong><div className="settlement-balance"><span>{text.condition}</span><b>{Math.round(Number(selectedBuilding.condition ?? 100))}%</b></div>{selectedBuilding.state==="construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}
             <SettlementBuildingWorkers key={`${settlement.id}:${selectedBuilding.id}`} settlement={settlement} building={selectedBuilding} language={language} canEdit={canEdit} onCommand={onCommand} onUpdate={onUpdate} roomLabel={type=>roomName(type,language)}/>
             {selectedBuildingRule?.effects?.requiresPower ? <div className="settlement-balance"><span>{text.consumption}</span><b>{selectedBuildingRule.effects.requiresPower} ⚡</b></div> : null}
