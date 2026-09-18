@@ -2,7 +2,7 @@ import React from "react";
 
 export const GM_UTILITY_EVENT = "pip2d20:gm-utility";
 export const WORKSPACE_GROUPS = {
-  battle: ["battle"],
+  battle: ["battle", "world"],
   screens: ["scene", "autogm"],
   creatures: ["tokens", "custom", "roster", "participants"],
   supplies: ["loot", "merchants"],

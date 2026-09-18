@@ -59,3 +59,37 @@ test('authentication, owner privileges, invitation expiry/revocation and private
  assert.equal((await request('player',{type:'list'})).campaigns.length,0);
  assert.equal((await request('player',{type:'tick',campaignId:id})).status,403);
 });
+
+test('shared world founding, construction and permissions survive member refresh and retries', async () => {
+ const {request}=fixture();
+ const id=(await request('gm',{type:'create',name:'Shared world'})).campaign.id;
+ const invite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('player',{type:'join',invite});
+ assert.equal((await request('player',{type:'worldRegion',campaignId:id,regionId:'mojave'})).status,403);
+ await request('gm',{type:'worldRegion',campaignId:id,regionId:'mojave'});
+ await request('player',{type:'worldMove',campaignId:id,regionId:'mojave',x:12,y:20});
+ assert.equal((await request('gm',{type:'worldRead',campaignId:id})).campaign.worldMap.positions.player.x,12);
+ const requestId=randomUUID();
+ const found={type:'found',campaignId:id,name:'New outpost',regionId:'mojave',worldX:12,worldY:20,requestId};
+ const settlementId=(await request('gm',found)).campaign.settlements[0].id;
+ assert.equal((await request('gm',found)).campaign.settlements.length,1);
+ assert.equal((await request('player',{type:'worldRead',campaignId:id})).campaign.settlements[0].id,settlementId);
+ const command={type:'build',buildingType:'small_house',x:0,y:0};
+ assert.equal((await request('gm',{type:'settlement',campaignId:id,settlementId,command})).error,'CHARACTER_NOT_APPROVED');
+ await request('gm',{type:'submitCharacter',campaignId:id,character:{name:'Builder',skills:{Repair:{rank:2}}}});
+ await request('gm',{type:'approveCharacter',campaignId:id,memberId:'gm'});
+ const build={type:'settlement',campaignId:id,settlementId,command,requestId:randomUUID()};
+ const built=await request('gm',build);assert.equal(built.status,200,JSON.stringify(built));
+ const resources=built.campaign.settlements[0].resources;
+ const repeated=await request('gm',build);assert.equal(repeated.duplicate,true);
+ assert.deepEqual(repeated.campaign.settlements[0].resources,resources);
+ const refreshed=(await request('player',{type:'worldRead',campaignId:id})).campaign.settlements[0];
+ assert.equal(refreshed.buildings.filter(b=>b.type==='small_house').length,1);
+ const buildingId=refreshed.buildings.find(b=>b.type==='small_house').id;
+ const move={type:'settlement',campaignId:id,settlementId,command:{type:'move',buildingId,x:4,y:0}};
+ assert.equal((await request('player',move)).status,403);
+ await request('gm',{type:'settlement',campaignId:id,settlementId,command:{type:'spender',memberId:'player',allowed:true}});
+ assert.equal((await request('player',move)).status,200);
+ assert.equal((await request('gm',{type:'worldRead',campaignId:id})).campaign.settlements[0].buildings.find(b=>b.id===buildingId).x,4);
+ assert.equal((await request('stranger',{type:'worldRead',campaignId:id})).status,403);
+});
