@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlement/buildings.js';
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
 import background from '../../assets/wasteland/backgrounds/settlement-bg-1.png';
-import { preloadSettlementWorker, SettlementWorker } from './SettlementWorker.js';
+import { preloadSettlementWorker } from './SettlementWorker.js';
+import { SettlementWorkers } from './SettlementWorkers.js';
 import pawnUrl from '../../assets/settlement/workers/pawn-blue.png';
 
 const CELL = 40;
@@ -37,7 +38,7 @@ export default function SettlementPhaserMap(props) {
           this.grid.lineStyle(1,0xc0dda4,0.12);
           for(let i=0;i<=24;i++){this.grid.lineBetween(i*CELL,0,i*CELL,WORLD);this.grid.lineBetween(0,i*CELL,WORLD,i*CELL);}
           this.buildingLayer=this.add.group();
-          this.worker=new SettlementWorker(this,CELL);
+          this.worker=new SettlementWorkers(this,CELL);
           this.events.once('shutdown',()=>this.worker.destroy());
           this.highlight=this.add.graphics().setDepth(WORLD+100);
           this.preview=this.add.graphics().setDepth(WORLD+101);

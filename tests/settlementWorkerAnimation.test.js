@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SettlementWorker } from '../src/components/settlement/SettlementWorker.js';
+import { SettlementWorkers } from '../src/components/settlement/SettlementWorkers.js';
+import { getSettlementPopulation } from '../src/utils/settlementPopulation.js';
 import { workerCellFree } from '../src/utils/settlementWorkerPath.js';
 
 function fixture(action = null, construction = true) {
@@ -25,7 +27,7 @@ function fixture(action = null, construction = true) {
   ] };
   const worker = new SettlementWorker(scene,40);
   worker.sync(settlement);
-  return {worker,settlement,objects,animations};
+  return {worker,settlement,objects,animations,scene};
 }
 function run(worker, ticks=900) {
   const states=new Set();
@@ -72,4 +74,81 @@ test('unreachable sites leave the worker idle without passing through obstacles'
   for(let x=7;x<=12;x++)for(let y=7;y<=12;y++)if(x===7||x===12||y===7||y===12)
     settlement.buildings.push({id:`wall-${x}-${y}`,type:'lights',x,y,state:'active'});
   worker.sync(settlement);assert.equal(worker.sprite.visible,false);assert.equal(worker.route.length,0);
+});
+
+function crowdFixture(count = 4) {
+  const f = fixture();
+  f.worker.destroy();
+  f.settlement.settlers = Array.from({length:count}, (_,i) => ({
+    id:`resident-${i}`,health:100,settlementAction:{type:i%2 ? 'scavenging' : 'build'},
+  }));
+  const crowd = new SettlementWorkers(f.scene,40);
+  crowd.sync(f.settlement);
+  return {...f,crowd};
+}
+
+test('each counted resident has a visible actor with its own assignment and starting position',()=>{
+  const {crowd,settlement} = crowdFixture(20);
+  assert.equal(crowd.actors.size,getSettlementPopulation(settlement));
+  const positions = new Set();
+  for (const [id,actor] of crowd.actors) {
+    assert.ok(actor.sprite.visible);
+    assert.equal(actor.job,Number(id.split('-')[1])%2 ? 'gather' : 'build');
+    positions.add(`${actor.sprite.x},${actor.sprite.y}`);
+    run(actor,600);
+  }
+  assert.equal(positions.size,20);
+});
+
+test('arrival and departure reconcile actors while preserving other residents animation progress',()=>{
+  const {crowd,settlement} = crowdFixture();
+  for(let i=0;i<40;i++)crowd.update(100);
+  const retained=crowd.actors.get('resident-1');
+  const removed=crowd.actors.get('resident-0');
+  const before=[retained.sprite.x,retained.sprite.y,retained.wait,retained.phase];
+  settlement.settlers=settlement.settlers.slice(1).reverse();
+  settlement.settlers.push({id:'new',health:100});
+  crowd.sync(settlement);
+  assert.equal(crowd.actors.size,4);
+  assert.equal(crowd.actors.get('resident-1'),retained);
+  assert.deepEqual([retained.sprite.x,retained.sprite.y,retained.wait,retained.phase],before);
+  assert.ok(removed.sprite.destroyed && removed.cargo.destroyed && removed.materials.destroyed);
+  assert.ok(crowd.actors.get('new').sprite.visible);
+});
+
+test('only the resident whose assignment changes restarts its work cycle',()=>{
+  const {crowd,settlement}=crowdFixture();
+  crowd.update(100);
+  const untouched=crowd.actors.get('resident-0');
+  const wait=untouched.wait;
+  settlement.settlers[1].settlementAction={type:'guard'};
+  crowd.sync(settlement);
+  assert.equal(crowd.actors.get('resident-1').job,'patrol');
+  assert.equal(untouched.wait,wait);
+});
+
+test('legacy population, zero population and switching settlements match the counter without save mutations',()=>{
+  const {crowd,settlement}=crowdFixture();
+  delete settlement.settlers;
+  settlement.attributes={people:7};
+  const before=JSON.stringify(settlement);
+  crowd.sync(settlement);
+  assert.equal(crowd.actors.size,7);
+  assert.equal(JSON.stringify(settlement),before);
+  const old=[...crowd.actors.values()];
+  crowd.sync({...settlement,id:'another'});
+  assert.ok(old.every(a=>a.sprite.destroyed));
+  crowd.sync({...settlement,attributes:{people:0}});
+  assert.equal(crowd.actors.size,0);
+  crowd.destroy();
+});
+
+test('a resident with zero health stays visible and idle while still included in the counter',()=>{
+  const {crowd,settlement}=crowdFixture();
+  settlement.settlers[0].health=0;
+  crowd.sync(settlement);
+  const resting=crowd.actors.get('resident-0');
+  assert.ok(resting.sprite.visible);
+  assert.equal(resting.job,'idle');
+  assert.equal(crowd.actors.size,getSettlementPopulation(settlement));
 });

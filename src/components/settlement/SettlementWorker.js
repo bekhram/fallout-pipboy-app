@@ -9,11 +9,13 @@ export function preloadSettlementWorker(scene, pawnUrl) {
   scene.load.spritesheet(TEXTURE, pawnUrl, { frameWidth: 192, frameHeight: 192 });
 }
 
-// One cosmetic actor. Animation never awards resources or advances construction.
+// One cosmetic actor per resident. Animation never modifies saved game state.
 export class SettlementWorker {
-  constructor(scene, cellSize) {
+  constructor(scene, cellSize, slot = 0) {
     this.scene = scene;
     this.cellSize = cellSize;
+    this.slot = slot;
+    this.offset = { x: ((slot % 3) - 1) * .1, y: ((Math.floor(slot / 3) % 3) - 1) * .08 };
     this.route = [];
     this.signature = null;
     this.clock = 0;
@@ -43,16 +45,16 @@ export class SettlementWorker {
     const moving = ['outbound', 'inbound', 'returning'].includes(phase);
     this.play(moving ? (this.carrying ? 'carryWalk' : 'walk')
       : this.carrying ? 'carryIdle' : phase === 'work' ? this.workAnimation : 'idle');
-    this.wait = phase === 'work' ? 3600 : phase === 'rest' ? 1800 : 650;
+    this.wait = (phase === 'work' ? 3600 : phase === 'rest' ? 1800 : 650) + (this.slot % 7) * 170;
     this.updateCargo();
   }
 
-  sync(settlement) {
-    const person = (settlement.settlers || []).find(p => Number(p.health ?? 100) > 0);
+  sync(settlement, person = settlement.settlers?.[0]) {
     const buildings = (settlement.buildings || []).filter(b => SETTLEMENT_BUILDINGS[b.type]);
     const action = person?.settlementAction;
     const targetId = action?.targetBuildingId || action?.parentBuildingId || action?.targetUpgradeId || person?.assignedBuildingId;
-    const signature = JSON.stringify([settlement.id, person?.id, action, targetId,
+    const canWork = Number(person?.health ?? 100) > 0;
+    const signature = JSON.stringify([settlement.id, person?.id, canWork, action, targetId,
       buildings.map(b => [b.id, b.type, b.x, b.y, b.state, b.upgrade?.targetType,
         (b.rooms || []).filter(r => r.state === 'construction').map(r => r.id)])]);
     if (signature === this.signature) return;
@@ -61,7 +63,8 @@ export class SettlementWorker {
     this.signature = signature;
     this.grid = workerGrid(buildings, SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE);
     const headquarters = buildings.find(b => b.type === 'settlement_hq') || buildings[0];
-    this.homePoints = workerWorkPoints(headquarters, SETTLEMENT_BUILDINGS[headquarters?.type], this.grid);
+    const homePoints = workerWorkPoints(headquarters, SETTLEMENT_BUILDINGS[headquarters?.type], this.grid);
+    this.homePoints = homePoints.length ? [homePoints[this.slot % homePoints.length]] : [];
     this.route = [];
     this.job = 'idle';
     this.workAnimation = 'idle';
@@ -72,6 +75,7 @@ export class SettlementWorker {
     if (changedSettlement || !this.cell || !workerCellFree(this.grid, this.cell)) this.cell = this.homePoints[0];
     this.place(this.cell);
     this.sprite.setVisible(true);
+    if (!canWork) return;
     const assigned = buildings.find(b => b.id === targetId);
     const type = action?.type;
     const construction = b => b.state === 'construction' || b.upgrade || (b.rooms || []).some(r => r.state === 'construction');
@@ -79,13 +83,13 @@ export class SettlementWorker {
       : type === 'tend_crops' ? buildings.filter(b => ['crop_field', 'greenhouse'].includes(b.type) && b.state === 'active')
       : !type || type === 'build' ? [...buildings.filter(construction), ...buildings.filter(b => b.type === 'workshop' && b.state === 'active')]
       : [];
-    for (const target of candidates) {
+    for (const target of this.distribute(candidates)) {
       // Separate stops ensure adjacent buildings cannot cause loading in place forever.
-      const homeKeys = new Set(this.homePoints.map(p => `${p.x},${p.y}`));
+      const homeKeys = new Set(homePoints.map(p => `${p.x},${p.y}`));
       const points = workerWorkPoints(target, SETTLEMENT_BUILDINGS[target.type], this.grid)
         .filter(p => !homeKeys.has(`${p.x},${p.y}`));
       if (!points.length || workerPath(this.grid, this.cell, points) === null) continue;
-      this.workPoints = points;
+      this.workPoints = this.distribute(points).filter(p => workerPath(this.grid, this.cell, [p]) !== null).slice(0, 1);
       this.job = construction(target) || target.type === 'workshop' || type === 'build' ? 'build'
         : ['crop_field', 'greenhouse'].includes(target.type) ? 'gather' : 'idle';
       this.workAnimation = this.job === 'build' ? 'build' : 'idle';
@@ -110,6 +114,12 @@ export class SettlementWorker {
     }
   }
 
+  distribute(points) {
+    if (!points.length) return [];
+    const start = this.slot % points.length;
+    return [...points.slice(start), ...points.slice(0, start)];
+  }
+
   freeDestination() {
     // Pick a reachable outdoor stop; no route crosses a building footprint.
     const origin = this.homePoints[0], candidates = [];
@@ -118,7 +128,7 @@ export class SettlementWorker {
       if (distance >= 4 && distance <= 7 && workerCellFree(this.grid, { x, y })) candidates.push({ x, y });
     }
     candidates.sort((a, b) => b.y - a.y || a.x - b.x);
-    for (const p of candidates) if (workerPath(this.grid, this.cell, [p]) !== null) return [p];
+    for (const p of this.distribute(candidates)) if (workerPath(this.grid, this.cell, [p]) !== null) return [p];
     return [];
   }
 
@@ -129,7 +139,7 @@ export class SettlementWorker {
   }
 
   place(cell) {
-    this.sprite.setPosition((cell.x + .5) * this.cellSize, (cell.y + .5) * this.cellSize);
+    this.sprite.setPosition((cell.x + .5 + this.offset.x) * this.cellSize, (cell.y + .5 + this.offset.y) * this.cellSize);
     this.sprite.setDepth(this.sprite.y + 1);
     this.updateCargo();
   }
@@ -147,7 +157,7 @@ export class SettlementWorker {
     this.clock += dt;
     if (this.route.length) {
       const next = this.route[0];
-      const x = (next.x + .5) * this.cellSize, y = (next.y + .5) * this.cellSize;
+      const x = (next.x + .5 + this.offset.x) * this.cellSize, y = (next.y + .5 + this.offset.y) * this.cellSize;
       const dx = x - this.sprite.x, dy = y - this.sprite.y;
       const distance = Math.hypot(dx, dy), step = this.cellSize * (this.carrying ? 1.1 : 1.4) * dt / 1000;
       if (dx) this.sprite.setFlipX(dx < 0);
