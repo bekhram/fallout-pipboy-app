@@ -11,7 +11,7 @@ function findMapModeSwitch() {
   return document.querySelector(".pip-map-mode-switch--external");
 }
 
-export default function SessionTacticalMap({ session, openRequest = 0 }) {
+export default function SessionTacticalMap({ session, openRequest = 0, embedded = false, form = null }) {
   const [mapModeSwitch, setMapModeSwitch] = useState(null);
   const isPlayerSession = Boolean(session?.isActive && session?.mode === "player");
   const hasLiveScene = Boolean(session?.tacticalScene || session?.liveSceneId);
@@ -44,7 +44,7 @@ export default function SessionTacticalMap({ session, openRequest = 0 }) {
   ) : null;
 
   return <>
-    <SessionTacticalMapV3 session={tacticalSession} openRequest={openRequest} />
+    <SessionTacticalMapV3 session={tacticalSession} openRequest={openRequest} embedded={embedded} form={form} />
     {isPlayerSession && tacticalSession?.tacticalScene ? (
       <BattlemapSharedLayer scene={tacticalSession.tacticalScene} role="player" />
     ) : null}

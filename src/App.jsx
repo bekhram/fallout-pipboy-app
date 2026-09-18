@@ -283,16 +283,6 @@ export default function App() {
     };
   }, [sharedSession.isActive, sharedSession.lastSession?.code, sharedSession.lastSession?.autoResume, startupUiState]);
 
-  useEffect(() => {
-    if (
-      screen === "session"
-      && sharedSession.mode === "player"
-      && sharedSession.status === "online"
-    ) {
-      setScreen("sheet");
-      setActiveTab("status");
-    }
-  }, [screen, sharedSession.mode, sharedSession.status]);
 
   useEffect(() => {
     setForm((prev) => {

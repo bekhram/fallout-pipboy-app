@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import BattlemapViewportControls from "../gm/BattlemapViewportControls.jsx";
 import "./playerBattlemapControls.css";
+import { openWorkspaceUtility } from "../gm/GmWorkspaceNavigation.jsx";
 
 const COLLAPSED_KEY = "pip2d20_player_zoom_collapsed_v1";
 
@@ -22,6 +23,7 @@ function clickFirst(selector) {
 }
 
 function openSessionChat() {
+  if (document.querySelector(".player-campaign")) { openWorkspaceUtility("chat"); return true; }
   const target = typeof document !== "undefined"
     ? document.querySelector(".session-utility-drawer-toggle")
     : null;
@@ -31,6 +33,7 @@ function openSessionChat() {
 }
 
 function openDice() {
+  if (document.querySelector(".player-campaign")) { openWorkspaceUtility("dice"); return true; }
   if (clickFirst(".floating-dice-button")) return true;
   if (clickFirst(".floating-dice-toggle")) {
     requestAnimationFrame(() => clickFirst(".floating-dice-button"));
@@ -68,7 +71,7 @@ export default function PlayerBattlemapControls({ session }) {
         ".session-tactical-overlay .battlemap-view-controls, .battlemap-view-controls"
       );
 
-      const isOpen = Boolean(playerMap);
+      const isOpen = Boolean(playerMap && !playerMap.closest(".player-workspace--embedded"));
       document.body.classList.toggle("pip-player-battlemap-open", isOpen);
       document.documentElement.classList.toggle("pip-player-battlemap-open", isOpen);
       setBattlemapTarget((current) => (current === controlsSlot ? current : controlsSlot));

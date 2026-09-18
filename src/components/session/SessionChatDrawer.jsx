@@ -155,7 +155,7 @@ function MerchantDirectory({session,form,copy,language,selectedMerchantId,setSel
   </section>;
 }
 
-export default function SessionChatDrawer({session,form=null,setForm=null,workspace=false,dockTarget=null}){
+export default function SessionChatDrawer({session,form=null,setForm=null,workspace=false,dockTarget=null,renderBattlemap=true}){
   const {i18n}=useTranslation();
   const language=languageFor(i18n.resolvedLanguage||i18n.language),copy=copyFor(language);
   const workspaceLabels = workspaceCopy(language);
@@ -221,7 +221,7 @@ export default function SessionChatDrawer({session,form=null,setForm=null,worksp
 
   if(!session?.isActive)return null;
   const submit=(event)=>{event.preventDefault();const text=String(draft||"").trim();if(text&&session.sendChat?.(text)){setDraft("");}};
-  const openBattlemap=()=>{if(!hasBattlemap)return;setOpen(false);setBattlemapRequest((value)=>value+1);};
+  const openBattlemap=()=>{if(!hasBattlemap)return;setOpen(false);setBattlemapRequest((value)=>value+1);document.dispatchEvent(new CustomEvent("pip2d20:open-battlemap"));};
   const openLoot=(item)=>{setLootDraft(item);setLootQuantity(String(Math.max(1,Number(item?.quantity||1))));setLootStatus("");};
   const addLoot=()=>{if(!lootDraft)return;persistLootItem(form||diceForm,setForm,{...lootDraft,quantity:String(Math.max(1,Number(lootQuantity)||1))});setLootStatus(copy.added);setLootDraft(null);};
   const openMerchant=(merchantId)=>{setSelectedMerchantId(String(merchantId||""));setTradeTab("buy");setView("merchants");setTradeStatus("");};
@@ -276,7 +276,7 @@ export default function SessionChatDrawer({session,form=null,setForm=null,worksp
         {view==="merchants"?<div className="session-utility-body session-merchant-body"><MerchantDirectory session={session} form={characterForm} copy={copy} language={language} selectedMerchantId={selectedMerchantId} setSelectedMerchantId={setSelectedMerchantId} tradeTab={tradeTab} setTradeTab={setTradeTab} onBuy={buyFromMerchant} onSell={sellToMerchant} pending={pendingTradeId}/>{tradeStatus?<div className="session-merchant-trade-status">{tradeStatus}</div>:null}</div>:null}
       </aside>
     </div>,docked?dockTarget:document.body):null}
-    {session.mode==="player"?<SessionTacticalMap session={session} openRequest={battlemapRequest}/>:null}
+    {session.mode==="player"&&renderBattlemap?<SessionTacticalMap session={session} form={form} openRequest={battlemapRequest}/>:null}
     {session.mode==="host"?<TacticalSessionHud session={session}/>:null}
     <DiceRollModal isOpen={diceOpen} onClose={()=>setDiceOpen(false)} rollConfig={null} form={diceForm} pendingAutoD6={pendingAutoD6} setPendingAutoD6={setPendingAutoD6} combatState={session?.combat||null} currentLuckPoints={undefined} onSpendCombatLuck={undefined} onMarkCombatUse={undefined} onDiceResult={session?.sendDiceResult}/>
   </>;
