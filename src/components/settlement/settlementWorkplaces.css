@@ -1,0 +1,19 @@
+.settlement-workplace { border-top:1px solid #769b6844; margin-top:14px; padding-top:12px; min-width:0; width:100%; }
+.settlement-workplace h3 { margin:4px 0 10px; font-size:13px; letter-spacing:.04em; }
+.settlement-workplace p { margin:8px 0; font-size:12px; }
+.settlement-workplace small { display:block; font-size:11px; line-height:1.5; opacity:.78; white-space:normal; overflow-wrap:anywhere; }
+.settlement-workplace-output { display:grid; grid-template-columns:1fr; gap:8px; }
+.settlement-workplace-output__item { display:flex; gap:9px; align-items:center; padding:8px; border:1px solid #8bb97833; background:#0a1a1399; }
+.settlement-workplace-output__item strong { font-size:13px; }
+.settlement-workplace-icon { display:inline-flex; justify-content:center; align-items:center; width:30px; height:30px; flex-shrink:0; border:1px solid #b1d88788; border-radius:50%; background:#172518; color:#dcf6b1; font:22px Arial,"Apple Color Emoji","Segoe UI Emoji",sans-serif; }
+.settlement-workplace-people { display:flex; flex-direction:column; gap:8px; margin:10px 0; }
+.settlement-workplace-person { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 0; border-bottom:1px solid #769b6833; min-width:0; }
+.settlement-workplace-person > span { min-width:0; overflow-wrap:anywhere; }
+.settlement-workplace-person strong { font-size:12px; }
+.settlement-workplace-person button { flex-shrink:0; min-height:40px; padding:8px; }
+.settlement-workplace-form { display:flex; flex-direction:column; gap:8px; margin:10px 0; }
+.settlement-workplace label { display:block; font-size:12px; line-height:1.5; min-width:0; }
+.settlement-workplace select { display:block; width:100%; max-width:100%; min-width:0; min-height:44px; margin-top:5px; }
+.settlement-workplace button { min-height:44px; white-space:normal; }
+.settlement-workplace .settlement-workplace-warning { color:#ffd19a; opacity:1; }
+@media (max-width:600px) { .settlement-workplace { padding-bottom:8px; } .settlement-workplace-person { align-items:flex-start; } }

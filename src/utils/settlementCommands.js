@@ -1,5 +1,6 @@
 import { reserveProvisions } from "./settlementProvisions.js";
 import { availableSettlementActions } from "./settlementResidents.js";
+import { assignSettlementWorkplace } from './settlementWorkplaces.js';
 import * as dev from './settlementDevelopment.js';
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { ROOMS, SETTLEMENT_ACTIONS } from '../data/settlement/rulebook.js';
@@ -44,6 +45,7 @@ export function applySettlementCommand(settlement, character, actor, command, no
     case 'cancel': s = dev.cancelConstruction(s, actor, c.key, now); break;
     case 'priority': s = dev.movePriority(s, actor, c.key, c.direction); break;
     case 'worker': s = dev.assignWorker(s, actor, c.workerId, c.key); break;
+    case 'workplace': s = assignSettlementWorkplace(s, c.workerId, c.buildingId); break;
     case 'order': s = dev.createOrder(s, actor, c.kind, c.target, now); break;
     case 'cancelOrder': s = dev.cancelOrder(s, actor, c.orderId); break;
     case 'specialist':

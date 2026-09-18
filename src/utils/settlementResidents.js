@@ -1,5 +1,6 @@
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { SETTLEMENT_ACTIONS } from '../data/settlement/rulebook.js';
+import { effectiveSettlementResidents } from './settlementWorkplaces.js';
 
 export const residentNeeds = resident => !(resident?.isRobot || resident?.kind === 'robot');
 export const populationNeeds = s => (s.settlers || []).filter(residentNeeds).length;
@@ -12,6 +13,6 @@ export function availableSettlementActions(s) {
     (a.id === 'trade_caravan' && effects.some(e => e.tradeOutpost)));
 }
 export function guardDefense(s, posts) {
-  const guards = (s.settlers || []).filter(w => w.settlementAction?.type === 'guard').length;
+  const guards = effectiveSettlementResidents(s).filter(w => w.settlementAction?.type === 'guard').length;
   return guards + Math.min(posts, guards * 3);
 }

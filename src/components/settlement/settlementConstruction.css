@@ -1,0 +1,11 @@
+.settlement-construction-card { display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid #a1b776; background:#17251ded; border-radius:6px; margin:8px 0 14px; min-width:0; }
+.settlement-construction-heading { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+.settlement-construction-card progress { display:block; width:100%; height:9px; accent-color:#bdd783; }
+.settlement-construction-card small { opacity:.8; line-height:1.4; overflow-wrap:anywhere; }
+.settlement-construction-card.is-waiting, .settlement-construction-card.is-confirming { border-color:#d4ab6c; }
+.settlement-workplace-ready { display:flex; flex-direction:column; gap:8px; border-left:3px solid #bdd783; padding:10px; margin:8px 0; background:#17251d; }
+.settlement-construction-notices { position:absolute; top:12px; left:12px; right:12px; z-index:8; display:flex; flex-direction:column; align-items:center; gap:6px; pointer-events:none; }
+.settlement-construction-notice { pointer-events:auto; display:flex; align-items:center; gap:8px; width:min(100%, 560px); box-sizing:border-box; padding:10px; color:#e2f3bb; background:#102319f5; border:1px solid #bdd783; border-radius:6px; box-shadow:0 3px 12px #0005; }
+.settlement-construction-notice > div { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; overflow-wrap:anywhere; }
+.settlement-construction-notice button { min-height:44px; flex-shrink:0; }
+@media (max-width:600px) { .settlement-construction-notice { flex-wrap:wrap; font-size:12px; } .settlement-construction-notice > div { flex-basis:calc(100% - 48px); } .settlement-construction-notice button { max-width:100%; white-space:normal; } }

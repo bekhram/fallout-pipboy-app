@@ -5,7 +5,9 @@ import {campaignCopy} from './campaignCopy.js';
 import './campaign.css';
 import CampaignWorldMap from './CampaignWorldMap.jsx';
 
-export default function CampaignPanel({language, session, form, onEnterSession}) {
+// worldOnly reuses the same persistent campaign/settlement flow from the personal map.
+// It does not require a live GM session and never creates a separate local world.
+export default function CampaignPanel({language, session = {}, form, onEnterSession, worldOnly = false}) {
   const c=campaignCopy(language);
   const [auth,setAuth]=useState(getCloudAuthSession), [campaigns,setCampaigns]=useState([]), [campaign,setCampaign]=useState(null);
   const [name,setName]=useState(''),[code,setCode]=useState(''),[invite,setInvite]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[retry,setRetry]=useState(null),[copied,setCopied]=useState(false);
@@ -41,21 +43,23 @@ export default function CampaignPanel({language, session, form, onEnterSession})
     return()=>{cancelled=true;};
   },[uid]);
   useEffect(()=>{
-    if(!uid||!campaign?.id)return;
+    // The world view already polls through useCampaignWorld. No second poller in
+    // the map entry; live-session presence is relevant only in the session lobby.
+    if(worldOnly||!uid||!campaign?.id)return;
     let cancelled=false;
     const poll=async()=>{if(lock.current||document.hidden)return;try{const data=await campaignRequest({type:'worldRead',campaignId:campaign.id});if(!cancelled)setCampaign(old=>old?.id===data.campaign.id&&data.campaign.revision>=old.revision?data.campaign:old);}catch{/* Explicit refresh reports errors without clearing a pending action. */}};
     const timer=setInterval(poll,30000);return()=>{cancelled=true;clearInterval(timer);};
-  },[uid,campaign?.id]);
+  },[uid,campaign?.id,worldOnly]);
   const gm=campaign?.ownerUid===uid;
   async function sessionAction(leave=false){
-    if(lock.current)return;lock.current=true;setBusy(true);setError('');
+    if(worldOnly||lock.current)return;lock.current=true;setBusy(true);setError('');
     try{
       if(leave){if(session.mode==='host'){const saved=await session.saveCloudCampaignNow();if(!saved?.ok){setError(c.saveFailed);return;}}session.exitSession();return;}
       const ok=gm?await session.startCampaignHost(campaign.id):await session.joinCampaignSession(campaign.id,form?.name||'Player');
       if(ok)onEnterSession?.();else setError(c.sessionFailed);
     }catch(e){setError(explain(e));}finally{lock.current=false;setBusy(false);}
   }
-  const active=session?.mode && session.mode!=='lobby';
+  const active=!worldOnly && session?.mode && session.mode!=='lobby';
   const deletingActive=active && session.campaignId===campaign?.id;
   return <section className="campaign-panel" aria-label={c.title}>
     <header className="campaign-heading"><div><h2>{c.title}</h2><p>{c.intro}</p></div>{uid&&<button className="pip-btn" disabled={busy||!!retry} onClick={()=>run(campaign?{type:'worldRead',campaignId:campaign.id}:{type:'list'})}>{c.refresh}</button>}</header>
@@ -66,17 +70,19 @@ export default function CampaignPanel({language, session, form, onEnterSession})
       {!campaign?<>
         <div className="campaign-grid">
           <form className="pip-panel" onSubmit={e=>{e.preventDefault();if(name.trim())run({type:'create',name:name.trim()});}}><h3>{c.gm}</h3><label className="session-field"><span>{c.name}</span><input className="pip-input" required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={busy||!!retry||!name.trim()}>{busy?c.busy:c.create}</button></form>
-          <form className="pip-panel" onSubmit={e=>{e.preventDefault();run({type:'join',invite:code.trim().toLowerCase()});}}><h3>{c.player}</h3><label className="session-field"><span>{c.inviteCode}</span><input className="pip-input" required pattern="[a-fA-F0-9]{48}" maxLength={48} value={code} autoCapitalize="none" autoComplete="off" spellCheck={false} onChange={e=>setCode(e.target.value.trim())}/></label><p>{c.hint}</p><button className="pip-btn is-primary" disabled={busy||!!retry||! /^[a-f0-9]{48}$/i.test(code)}>{c.join}</button></form>
+          <form className="pip-panel" onSubmit={e=>{e.preventDefault();run({type:'join',invite:code.trim().toLowerCase()});}}><h3>{c.player}</h3><label className="session-field"><span>{c.inviteCode}</span><input className="pip-input" required pattern="[a-fA-F0-9]{48}" maxLength={48} value={code} autoCapitalize="none" autoComplete="off" spellCheck={false} onChange={e=>setCode(e.target.value.trim())}/></label><p>{c.hint}</p><button className="pip-btn" disabled={busy||!!retry||! /^[a-f0-9]{48}$/i.test(code)}>{c.join}</button></form>
         </div>
         <section className="pip-panel campaign-list"><h3>{c.list}</h3>{busy&&!campaigns.length?<p role="status">{c.loading}</p>:!campaigns.length?<p>{c.empty}</p>:campaigns.map(item=><button className="pip-btn campaign-row" key={item.id} disabled={busy||!!retry} onClick={()=>{setInvite('');run({type:'worldRead',campaignId:item.id});}}><span><strong>{item.name}</strong><small>{item.ownerUid===uid?c.gm:c.player}</small></span><span>{c.open} →</span></button>)}</section>
       </>:<section className="pip-panel campaign-detail">
         <button className="pip-btn" disabled={busy} onClick={()=>{setCampaign(null);setInvite('');setError('');}}>← {c.back}</button><h3>{campaign.name}</h3><p>{c.saved}</p>
-        <button className="pip-btn is-primary" disabled={busy||!!retry||(!gm&&(!campaign.liveSession?.code||Date.now()-campaign.liveSession.updatedAt>90000))} onClick={()=>sessionAction()}>{gm?c.start:c.connect}</button>
-        {!gm&&(!campaign.liveSession?.code||Date.now()-campaign.liveSession.updatedAt>90000)&&<p>{c.offline}</p>}
+        {!worldOnly && <>
+          <button className="pip-btn is-primary" disabled={busy||!!retry||(!gm&&(!campaign.liveSession?.code||Date.now()-campaign.liveSession.updatedAt>90000))} onClick={()=>sessionAction()}>{gm?c.start:c.connect}</button>
+          {!gm&&(!campaign.liveSession?.code||Date.now()-campaign.liveSession.updatedAt>90000)&&<p>{c.offline}</p>}
+        </>}
         <CampaignWorldMap key={campaign.id} campaignId={campaign.id} form={form} />
         <h4>{c.members} · {campaign.memberIds?.length||1}</h4><ul>{Object.entries(campaign.members||{}).filter(([,m])=>!m.revoked).map(([id,m])=><li key={id}>{m.name} <small>· {id===campaign.ownerUid?c.gm:c.player}</small></li>)}</ul>
         {gm&&<div className="campaign-invite"><div className="campaign-actions"><button className="pip-btn" disabled={busy||!!retry} onClick={()=>run({type:'invite',campaignId:campaign.id})}>{c.invite}</button>{campaign.hasInvite&&<button className="pip-btn" disabled={busy||!!retry} onClick={()=>run({type:'revokeInvite',campaignId:campaign.id})}>{c.revoke}</button>}</div><p>{c.inviteHint}</p>{invite&&<><label className="session-field"><span>{c.inviteCode}</span><input className="pip-input" readOnly value={invite} onFocus={e=>e.target.select()}/></label><button className="pip-btn" onClick={async()=>{try{await navigator.clipboard.writeText(invite);setCopied(true);}catch{setError(c.copyFailed);}}}>{copied?c.copied:c.copy}</button></>}</div>}
-        {gm&&<div className="campaign-delete"><button type="button" className="pip-btn" disabled={busy||!!retry||deletingActive} onClick={()=>{if(window.confirm(c.deleteConfirm.replace('{name}',campaign.name)))run({type:'delete',campaignId:campaign.id});}}>{c.deleteCampaign}</button>{deletingActive&&<p>{c.deleteLeaveFirst}</p>}</div>}
+        {!worldOnly&&gm&&<div className="campaign-delete"><button type="button" className="pip-btn" disabled={busy||!!retry||deletingActive} onClick={()=>{if(window.confirm(c.deleteConfirm.replace('{name}',campaign.name)))run({type:'delete',campaignId:campaign.id});}}>{c.deleteCampaign}</button>{deletingActive&&<p>{c.deleteLeaveFirst}</p>}</div>}
       </section>}
     </>}
   </section>;
