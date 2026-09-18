@@ -28,3 +28,15 @@ test('quota pauses all requests before auth and preserves mutation ID on manual 
   assert.deepEqual(await request(command),{ok:true});
   assert.equal(sent[0].requestId,sent[1].requestId);
 });
+test('concurrent reads share a request, cache is user scoped and writes invalidate it', async () => {
+  let uid='alice', count=0;
+  const request=createCampaignTransport(async()=>({firebase:{localId:uid,idToken:'token'}}),async()=>{
+    count++; await new Promise(r=>setTimeout(r,1));
+    return new Response(JSON.stringify({campaigns:[{id:'c'}]}));
+  });
+  const [a,b]=await Promise.all([request({type:'list'}),request({type:'list'})]);
+  assert.equal(count,1); a.campaigns.length=0; assert.equal(b.campaigns.length,1);
+  await request({type:'list'}); assert.equal(count,1);
+  uid='bob'; await request({type:'list'}); assert.equal(count,2);
+  await request({type:'join',invite:'x'}); await request({type:'list'}); assert.equal(count,4);
+});

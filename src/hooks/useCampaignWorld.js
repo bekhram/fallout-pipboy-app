@@ -36,14 +36,18 @@ export default function useCampaignWorld(campaignId) {
     if (!campaignId || !uid) return;
     pending.current = readPending(campaignId, uid);
     setRetry(pending.current);
-    let reading = false;
-    const read = async () => {
-      if (reading || lock.current || document.hidden) return;
+    let reading = false, nextReadAt = 0, unchanged = 0, revision;
+    const read = async (event) => {
+      if (reading || lock.current || document.hidden || navigator.onLine === false || (!event && Date.now() < nextReadAt)) return;
       reading = true;
       try {
         const data = await campaignRequest({ type: 'tick', campaignId });
+        unchanged = revision === data.campaign.revision ? unchanged + 1 : 0;
+        revision = data.campaign.revision;
+        nextReadAt = Date.now() + (unchanged >= 3 ? 60000 : 15000);
         if (gen === generation.current) { accept(data.campaign); if (!pending.current) setError(''); }
       } catch (e) {
+        nextReadAt = Date.now() + Math.max(30000, (e.retryAfter || 0) * 1000);
         if (gen === generation.current) { setConnected(false); setError(e.message); if (e.message === 'FORBIDDEN' || e.message === 'SIGN_IN_REQUIRED') setCampaign(null); }
       } finally { reading = false; }
     };
