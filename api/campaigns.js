@@ -1,3 +1,4 @@
+import { campaignDiagnostic } from '../server/campaignDiagnostics.js';
 import { createHash, randomBytes } from 'node:crypto';
 import { initializeApp, getApps, cert, applicationDefault } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
@@ -18,15 +19,19 @@ export function createCampaignHandler(getServices = services) {
 return async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
+  let operation = 'unknown', stage = 'authentication';
   try {
     const token = /^Bearer (.+)$/.exec(req.headers.authorization || '')?.[1];
     if (!token) return res.status(401).json({ error: 'SIGN_IN_REQUIRED' });
+    stage = 'services';
     const { db, auth } = getServices();
+    stage = 'authentication';
     let identity;
     try { identity = await auth.verifyIdToken(token, true); } catch { return res.status(401).json({ error: 'SIGN_IN_REQUIRED' }); }
     const uid = identity.uid;
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
     if (!body) throw new Error('INVALID_REQUEST');
+    operation = body.type; stage = 'database-or-command';
     if (Buffer.byteLength(JSON.stringify(body), 'utf8') > (body.type === 'saveGmSession' ? 850000 : 60000)) throw new Error('PAYLOAD_TOO_LARGE');
     const campaigns = db.collection('persistentCampaigns');
     if (['loadGmSession', 'saveGmSession'].includes(body.type)) {
@@ -125,6 +130,11 @@ return async function handler(req, res) {
   } catch (error) {
     const code = String(error?.message || 'SERVER_ERROR');
     const safe = /^[A-Z_]+$/.test(code) || ['invalid','insufficient','capacity','unavailable'].includes(code);
+    if (!safe || code === 'SERVER_NOT_CONFIGURED') {
+      const diagnostic = campaignDiagnostic(error, operation, stage);
+      console.error('campaign_api_failure', diagnostic);
+      res.setHeader('X-Campaign-Trace', diagnostic.traceId);
+    }
     return res.status(code === 'FORBIDDEN' ? 403 : code === 'SERVER_NOT_CONFIGURED' ? 503 : safe ? 400 : 500).json({ error: safe ? code : 'SERVER_ERROR' });
   }
 }
