@@ -9,7 +9,7 @@ import {
 import { getCampaign, putCampaign } from "../utils/sessionLocalCache.js";
 
 const GM_CAMPAIGN_ID_KEY = "pip2d20_gm_campaign_id_v1";
-const AUTOSAVE_MS = 2500;
+const AUTOSAVE_MS = 15000;
 const PLAYER_SNAPSHOT_MS = 5000;
 const MAX_INLINE_DATA_URL_LENGTH = 12000;
 
@@ -161,6 +161,9 @@ function snapshotFingerprint(snapshot) {
 }
 
 export default function useCloudCampaignSync(session, form) {
+  const latest = useRef({ session, form });
+  latest.current = { session, form };
+  const hostSaving = useRef(false), playerSaving = useRef(false);
   const [cloudStatus, setCloudStatus] = useState("idle");
   const [cloudError, setCloudError] = useState("");
   const [lastCloudSavedAt, setLastCloudSavedAt] = useState("");
@@ -245,10 +248,11 @@ export default function useCloudCampaignSync(session, form) {
 
     let cancelled = false;
     const flush = async () => {
-      if (cancelled) return;
-      const snapshot = makeCampaignSnapshot(session);
+      if (cancelled || hostSaving.current) return;
+      const snapshot = makeCampaignSnapshot(latest.current.session);
       const fingerprint = snapshotFingerprint({ ...snapshot, savedAt: "" });
       if (fingerprint === lastHostFingerprintRef.current) return;
+      hostSaving.current = true;
       try {
         setCloudStatus("saving");
         setCloudError("");
@@ -259,16 +263,15 @@ export default function useCloudCampaignSync(session, form) {
       } catch (error) {
         setCloudError(error?.message || String(error));
         setCloudStatus("error");
-      }
+      } finally { hostSaving.current = false; }
     };
 
     const timer = window.setInterval(flush, AUTOSAVE_MS);
-    flush();
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [campaignId, session?.mode, session?.status, session?.sessionCode, session?.roomState, session?.players, session?.tacticalScenes, session?.merchants, session?.sceneMessage, session?.selectedSceneId, session?.liveSceneId]);
+  }, [campaignId, session?.mode, session?.status, session?.sessionCode]);
 
   useEffect(() => {
     if (session?.mode !== "player" || session?.status !== "online" || !campaignId || !form) return;
@@ -278,25 +281,26 @@ export default function useCloudCampaignSync(session, form) {
 
     let cancelled = false;
     const flush = async () => {
-      if (cancelled) return;
+      if (cancelled || playerSaving.current || !latest.current.form) return;
+      const form = latest.current.form;
       let fingerprint = "";
       try { fingerprint = JSON.stringify(form); } catch { fingerprint = String(Date.now()); }
       if (fingerprint === lastPlayerFingerprintRef.current) return;
+      playerSaving.current = true;
       try {
         await saveCampaignPlayerSnapshot(campaignId, userId, cloneCompact(form));
         lastPlayerFingerprintRef.current = fingerprint;
       } catch (error) {
         setCloudError(error?.message || String(error));
-      }
+      } finally { playerSaving.current = false; }
     };
 
     const timer = window.setInterval(flush, PLAYER_SNAPSHOT_MS);
-    flush();
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [campaignId, session?.mode, session?.status, form]);
+  }, [campaignId, session?.mode, session?.status, Boolean(form)]);
 
   return {
     cloudCampaignId: campaignId,
