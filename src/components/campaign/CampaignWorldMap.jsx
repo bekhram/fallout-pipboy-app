@@ -16,19 +16,28 @@ import CampaignSyncStatus from './CampaignSyncStatus.jsx';
 import { offlineCopy } from './offlineCopy.js';
 import './campaignWorld.css';
 
+const MARKER_COPY = {
+  en: { title: 'SHARED MARKERS', name: 'Marker name', add: 'ADD MARKER', gm: 'GM', player: 'PLAYER', delete: 'DELETE', empty: 'No shared markers in this region.', hint: 'Select a point on the map, name it, and add a marker. Everyone in the campaign can see it.' },
+  ru: { title: 'ОБЩИЕ МЕТКИ', name: 'Название метки', add: 'ДОБАВИТЬ МЕТКУ', gm: 'ГМ', player: 'ИГРОК', delete: 'УДАЛИТЬ', empty: 'В этом регионе пока нет общих меток.', hint: 'Выберите точку на карте, назовите её и добавьте метку. Её увидят все участники кампании.' },
+  uk: { title: 'СПІЛЬНІ МІТКИ', name: 'Назва мітки', add: 'ДОДАТИ МІТКУ', gm: 'ГМ', player: 'ГРАВЕЦЬ', delete: 'ВИДАЛИТИ', empty: 'У цьому регіоні ще немає спільних міток.', hint: 'Оберіть точку на мапі, назвіть її та додайте мітку. Її бачитимуть усі учасники кампанії.' },
+  pl: { title: 'WSPÓLNE ZNACZNIKI', name: 'Nazwa znacznika', add: 'DODAJ ZNACZNIK', gm: 'MG', player: 'GRACZ', delete: 'USUŃ', empty: 'Brak wspólnych znaczników w tym regionie.', hint: 'Wybierz punkt na mapie, nazwij go i dodaj znacznik. Zobaczą go wszyscy uczestnicy kampanii.' },
+};
+
 export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, settlementsOnly = false }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language;
   const c = worldCopy(language);
+  const markerCopy = MARKER_COPY[String(language).split('-')[0]] || MARKER_COPY.en;
   const persistent = /^campaign_[a-f0-9]{24}$/.test(campaignId || '');
   const world = useCampaignWorld(persistent ? campaignId : null);
   const { campaign, uid, busy, connected, error, retry, run } = world;
   const [selected, setSelected] = useState(null), [name, setName] = useState('');
+  const [markerName, setMarkerName] = useState(''), [selectedMarkerId, setSelectedMarkerId] = useState(null);
   const [activeId, setActiveId] = useState(null), [authError, setAuthError] = useState('');
   const [amounts, setAmounts] = useState({ caps: '', common: '', uncommon: '', rare: '' });
   const region = getMapRegion(campaign?.worldMap?.regionId);
-  useEffect(() => { setSelected(null); setActiveId(null); setName(''); }, [campaignId, uid]);
-  useEffect(() => setSelected(null), [region.id]);
+  useEffect(() => { setSelected(null); setActiveId(null); setName(''); setMarkerName(''); setSelectedMarkerId(null); }, [campaignId, uid]);
+  useEffect(() => { setSelected(null); setSelectedMarkerId(null); }, [region.id]);
   const point = selected || region.start;
   const validPoint = Number.isInteger(point.x) && Number.isInteger(point.y) && point.x >= 0 && point.y >= 0 && point.x <= 63 && point.y <= 63;
   const gm = Boolean(campaign && campaign.ownerUid === uid);
@@ -36,6 +45,7 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   const localDisabled = busy || !world.localReady;
   const members = Object.entries(campaign?.members || {}).filter(([, member]) => !member.revoked);
   const settlements = campaign?.settlements || [];
+  const sharedMarkers = (campaign?.worldMap?.markers || []).filter(marker => marker.regionId === region.id);
   const active = settlements.find(s => s.id === activeId);
   const actor = { id: uid, isGM: gm, campaignId };
   const editable = active && canSpend(active, actor);
@@ -95,13 +105,45 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
           ...region.locations.map(l => ({ id: l.id, x: l.worldX, y: l.worldY, icon: l.icon || '◆' })),
           ...members.map(([id, m], index) => ({ id: `member-${id}`, ...(campaign.worldMap?.positions?.[id] || region.start), icon: String(index + 1) })),
           ...settlements.filter(s => s.regionId === region.id).map(s => ({ id: s.id, x: s.worldX, y: s.worldY, icon: '⌂', settlement: true })),
+          ...sharedMarkers.map(marker => ({ ...marker, x: marker.x, y: marker.y, icon: marker.kind === 'gm' ? '★' : '●', label: marker.label, sharedMarker: true })),
         ]}
-        onMarker={marker => marker.settlement ? setActiveId(marker.id) : setSelected({ x: marker.x, y: marker.y })}
+        onMarker={marker => {
+          if (marker.settlement) { setActiveId(marker.id); return; }
+          setSelected({ x: marker.x, y: marker.y });
+          setSelectedMarkerId(marker.sharedMarker ? marker.id : null);
+        }}
       />
     </div><aside className="campaign-world-sidebar">
       <label>{c.choose}<select aria-label={c.choose} value="" onChange={e => {const l=region.locations.find(l=>l.id===e.target.value);if(l)setSelected({x:l.worldX,y:l.worldY});}}><option value="">{c.choose}…</option>{region.locations.map(l=><option key={l.id} value={l.id}>{locationName(l)}</option>)}</select></label>
       <div className="campaign-world-coordinates">{['x','y'].map(axis => <label key={axis}>{axis.toUpperCase()}<input type="number" min="0" max="63" step="1" value={point[axis]} onChange={e=>setSelected({...point,[axis]:e.target.value===''?'':Number(e.target.value)})}/></label>)}</div>
       <button className="pip-btn" disabled={disabled || !validPoint} onClick={()=>run({type:'worldMove',regionId:region.id,x:point.x,y:point.y})}>{c.move}</button>
+      <section className="campaign-world-markers">
+        <h3>{markerCopy.title}</h3>
+        <p>{markerCopy.hint}</p>
+        <form onSubmit={async e => {
+          e.preventDefault();
+          if (!validPoint || !markerName.trim()) return;
+          const markerId = selectedMarkerId || `marker_${crypto.randomUUID()}`;
+          const result = await run({ type:'worldMarkerUpsert', markerId, regionId:region.id, x:point.x, y:point.y, label:markerName.trim() });
+          if (result) { setMarkerName(''); setSelectedMarkerId(null); }
+        }}>
+          <input className="pip-input" maxLength={80} placeholder={markerCopy.name} value={markerName} onChange={e=>setMarkerName(e.target.value)} />
+          <button className="pip-btn is-primary" disabled={disabled || !validPoint || !markerName.trim()}>{markerCopy.add}</button>
+        </form>
+        <div className="campaign-world-marker-list">
+          {!sharedMarkers.length && <small>{markerCopy.empty}</small>}
+          {sharedMarkers.map(marker => {
+            const canDelete = gm || marker.createdBy === uid;
+            return <div className="campaign-world-marker-row" key={marker.id}>
+              <button type="button" className="pip-btn" onClick={()=>{setSelected({x:marker.x,y:marker.y});setSelectedMarkerId(marker.id);setMarkerName(marker.label);}}>
+                <strong>{marker.kind === 'gm' ? '★' : '●'} {marker.label}</strong>
+                <small>{marker.kind === 'gm' ? markerCopy.gm : markerCopy.player} · {marker.x}:{marker.y}</small>
+              </button>
+              {canDelete && <button type="button" className="pip-btn" disabled={disabled} onClick={()=>run({type:'worldMarkerDelete',markerId:marker.id})}>{markerCopy.delete}</button>}
+            </div>;
+          })}
+        </div>
+      </section>
       {gm && <form className="campaign-world-found" onSubmit={async e=>{e.preventDefault();const result=await run({type:'found',name:name.trim(),regionId:region.id,worldX:point.x,worldY:point.y});if(result){const created=result.settlements.find(s=>s.regionId===region.id&&s.worldX===point.x&&s.worldY===point.y);setActiveId(created?.id);setName('');}}}><label>{c.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={disabled||!validPoint||!name.trim()||settlements.length>=5||settlements.some(s=>s.regionId===region.id&&s.worldX===point.x&&s.worldY===point.y)}>{c.found}</button></form>}
       <h3>{c.members}</h3>{members.map(([id,m],index)=>{const p=campaign.worldMap?.positions?.[id]||region.start;return <button className="pip-btn" key={id} onClick={()=>setSelected({x:p.x,y:p.y})}>{index+1}. {m.name} · {p.x}:{p.y}</button>;})}
     </aside></div>
