@@ -2,3 +2,5 @@
 @media(max-width:700px){.campaign-grid{grid-template-columns:1fr}.campaign-panel .pip-panel{padding:16px}.campaign-heading{align-items:flex-start}.campaign-heading h2{font-size:21px}.campaign-heading>.pip-btn{font-size:12px;padding:8px}.campaign-actions>.pip-btn{flex:1}.session-mode-tabs{margin:14px 0}.campaign-panel .pip-input{font-size:16px}.campaign-invite .pip-input{font-size:12px}}
 
 .session-lobby .campaign-panel .pip-btn{width:auto}.session-lobby .campaign-panel .campaign-row,.session-lobby .campaign-detail>button.is-primary,.session-lobby .campaign-grid form>.pip-btn{width:100%}.campaign-heading>div{flex:1;min-width:0}.campaign-heading>.pip-btn{flex:0 0 auto}.campaign-detail h4{margin:24px 0 10px}.campaign-panel ul{padding-left:20px}.campaign-invite>.pip-btn{margin-top:12px}
+
+.campaign-delete{margin-top:28px;padding-top:20px;border-top:1px solid #735044}.campaign-delete>.pip-btn{color:#ffb4a5;border-color:#a65e50}.campaign-delete>.pip-btn:disabled{opacity:.5}

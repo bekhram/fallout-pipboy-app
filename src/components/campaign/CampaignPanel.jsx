@@ -20,6 +20,10 @@ export default function CampaignPanel({language, session, form, onEnterSession})
     try {
       const data=await campaignRequest(command);
       if(gen!==generation.current)return;
+      if(data.deleted){
+        setCampaign(null);setCampaigns(list=>list.filter(item=>item.id!==data.campaignId));setInvite('');
+        await session.forgetCampaign?.(data.campaignId);
+      }
       if(data.campaigns)setCampaigns(data.campaigns);
       if(data.campaign){setCampaign(data.campaign);setCampaigns(list=>[...list.filter(x=>x.id!==data.campaign.id),data.campaign]);}
       if(data.invite){setInvite(data.invite);setCopied(false);}
@@ -52,6 +56,7 @@ export default function CampaignPanel({language, session, form, onEnterSession})
     }catch(e){setError(explain(e));}finally{lock.current=false;setBusy(false);}
   }
   const active=session?.mode && session.mode!=='lobby';
+  const deletingActive=active && session.campaignId===campaign?.id;
   return <section className="campaign-panel" aria-label={c.title}>
     <header className="campaign-heading"><div><h2>{c.title}</h2><p>{c.intro}</p></div>{uid&&<button className="pip-btn" disabled={busy||!!retry} onClick={()=>run(campaign?{type:'worldRead',campaignId:campaign.id}:{type:'list'})}>{c.refresh}</button>}</header>
     {error&&<div role="alert" className="session-error">{error}</div>}
@@ -71,6 +76,7 @@ export default function CampaignPanel({language, session, form, onEnterSession})
         <CampaignWorldMap key={campaign.id} campaignId={campaign.id} form={form} />
         <h4>{c.members} · {campaign.memberIds?.length||1}</h4><ul>{Object.entries(campaign.members||{}).filter(([,m])=>!m.revoked).map(([id,m])=><li key={id}>{m.name} <small>· {id===campaign.ownerUid?c.gm:c.player}</small></li>)}</ul>
         {gm&&<div className="campaign-invite"><div className="campaign-actions"><button className="pip-btn" disabled={busy||!!retry} onClick={()=>run({type:'invite',campaignId:campaign.id})}>{c.invite}</button>{campaign.hasInvite&&<button className="pip-btn" disabled={busy||!!retry} onClick={()=>run({type:'revokeInvite',campaignId:campaign.id})}>{c.revoke}</button>}</div><p>{c.inviteHint}</p>{invite&&<><label className="session-field"><span>{c.inviteCode}</span><input className="pip-input" readOnly value={invite} onFocus={e=>e.target.select()}/></label><button className="pip-btn" onClick={async()=>{try{await navigator.clipboard.writeText(invite);setCopied(true);}catch{setError(c.copyFailed);}}}>{copied?c.copied:c.copy}</button></>}</div>}
+        {gm&&<div className="campaign-delete"><button type="button" className="pip-btn" disabled={busy||!!retry||deletingActive} onClick={()=>{if(window.confirm(c.deleteConfirm.replace('{name}',campaign.name)))run({type:'delete',campaignId:campaign.id});}}>{c.deleteCampaign}</button>{deletingActive&&<p>{c.deleteLeaveFirst}</p>}</div>}
       </section>}
     </>}
   </section>;

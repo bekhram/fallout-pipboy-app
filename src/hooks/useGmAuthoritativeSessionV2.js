@@ -3,6 +3,7 @@ import { io } from "socket.io-client";
 import { getDerivedStats } from "../utils/characterMath.js";
 import {
   getCampaign,
+  deleteCampaignCache,
   getResource,
   getResourceHashes,
   putCampaign,
@@ -1118,6 +1119,19 @@ export default function useGmAuthoritativeSessionV2(form) {
     return true;
   };
 
+  const forgetCampaign = async (id) => {
+    if (campaignIdRef.current === id && modeRef.current !== "lobby") exitSession();
+    const saved = readLastSession() || lastSession;
+    if (saved?.campaignId === id) {
+      try { localStorage.removeItem(LAST_SESSION_RESUME_KEY); } catch { /* best effort */ }
+      setLastSession(null);
+    }
+    try {
+      if (localStorage.getItem(GM_CAMPAIGN_ID_KEY) === id) localStorage.removeItem(GM_CAMPAIGN_ID_KEY);
+    } catch { /* best effort */ }
+    await deleteCampaignCache(id).catch(() => null);
+  };
+
   const reconnectNow = async () => {
     setError(null);
     setStatus("connecting");
@@ -1458,6 +1472,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     resumeLastSession,
     exitSession,
     reconnectNow,
+    forgetCampaign,
     broadcastScene,
     sendChat,
     syncCharacter,
