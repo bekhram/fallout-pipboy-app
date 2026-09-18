@@ -3,6 +3,7 @@ import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../../data/settlemen
 import { SETTLEMENT_ASSETS, CONSTRUCTION_ASSETS } from './settlementAssets.js';
 import background from '../../assets/wasteland/backgrounds/settlement-bg-1.png';
 import { preloadSettlementWorker, SettlementWorker } from './SettlementWorker.js';
+import pawnUrl from '../../assets/settlement/workers/pawn-blue.png';
 
 const CELL = 40;
 const WORLD = SETTLEMENT_GRID_SIZE * CELL;
@@ -25,7 +26,7 @@ export default function SettlementPhaserMap(props) {
       if(cancelled) return;
       class SettlementScene extends Phaser.Scene {
         preload() {
-          preloadSettlementWorker(this);
+          preloadSettlementWorker(this, pawnUrl);
           this.load.image('terrain',background);
           Object.entries(SETTLEMENT_ASSETS).forEach(([key,url])=>this.load.image(key,url));
           Object.entries(CONSTRUCTION_ASSETS).forEach(([key,url])=>this.load.image(`construction-${key}`,url));

@@ -13,4 +13,8 @@ CC0: https://creativecommons.org/publicdomain/zero/1.0/
 The PNG is a transparent 6 × 6 sheet with 192 × 192 frames. Rows are idle,
 run, build, chop, carry idle, carry run. The matching Aseprite animation tags
 confirm six frames per row; its initial Original frame is omitted in the PNG.
-The initial integration uses idle, run and build at 10 fps, without recoloring.
+All six rows play at 10 fps, without recoloring. Carry poses use a small
+Phaser-drawn crate. Building includes loading/delivery pauses; scavenging and
+hunting/gathering use an outdoor materials stop and return carrying a crate.
+Guards patrol; unassigned workers walk when no construction is available.
+These are cosmetic loops and never change resources, orders or saved progress.
