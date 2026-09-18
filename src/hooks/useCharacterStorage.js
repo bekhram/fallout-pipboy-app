@@ -255,6 +255,7 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
+    setForm,
   ]);
 
   useEffect(() => {
@@ -304,6 +305,7 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
+    setForm,
   ]);
 
   useEffect(() => {
@@ -401,6 +403,7 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase,
     weaponInventoryDatabase,
     ammoInventoryDatabase,
+    setForm,
   ]);
 
   useEffect(() => {
@@ -486,7 +489,7 @@ export function useCharacterStorage(initialForm) {
         inventoryItems,
       };
     });
-  }, [form.weapons]);
+  }, [form.weapons, setForm]);
 
   useEffect(() => {
     if (!armorInventoryDatabase.length) return;
@@ -549,7 +552,7 @@ export function useCharacterStorage(initialForm) {
 
       return changed ? { ...prev, inventoryItems } : prev;
     });
-  }, [form.armor?._equipment?.slots, armorInventoryDatabase]);
+  }, [form.armor?._equipment?.slots, armorInventoryDatabase, setForm]);
 
   useEffect(() => {
     const desiredPowerArmorItems = buildPowerArmorInventoryItems(
@@ -585,7 +588,7 @@ export function useCharacterStorage(initialForm) {
 
       return { ...prev, inventoryItems };
     });
-  }, [form.armor?._power?.loadout]);
+  }, [form.armor?._power?.loadout, setForm]);
 
   useEffect(() => {
     const handleUseItem = (event) => {
@@ -822,7 +825,7 @@ export function useCharacterStorage(initialForm) {
       window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
       window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
     };
-  }, []);
+  }, [setForm]);
 
   useEffect(() => {
     try {
