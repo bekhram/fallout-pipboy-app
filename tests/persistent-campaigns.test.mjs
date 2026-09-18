@@ -124,3 +124,27 @@ test('only the owner can delete a campaign; deletion removes its save and invita
  }
  assert.equal(rows.has(`persistentCampaigns/${id}`),false);
 });
+
+
+test('shared named world markers are visible to all members and owner-scoped for editing', async () => {
+ const {request}=fixture();
+ const id=(await request('gm',{type:'create',name:'Marker world'})).campaign.id;
+ const invite=(await request('gm',{type:'invite',campaignId:id})).invite;
+ await request('player',{type:'join',invite});
+ const playerMarkerId='marker_player_shared_0001';
+ const playerAdded=await request('player',{type:'worldMarkerUpsert',campaignId:id,markerId:playerMarkerId,regionId:'commonwealth',x:9,y:11,label:'Hidden cache'});
+ assert.equal(playerAdded.status,200);
+ assert.equal(playerAdded.campaign.worldMap.markers[0].label,'Hidden cache');
+ assert.equal(playerAdded.campaign.worldMap.markers[0].kind,'player');
+ const gmView=(await request('gm',{type:'worldRead',campaignId:id})).campaign;
+ assert.equal(gmView.worldMap.markers.find(marker=>marker.id===playerMarkerId).createdBy,'player');
+ const gmMarkerId='marker_gm_shared_0000001';
+ await request('gm',{type:'worldMarkerUpsert',campaignId:id,markerId:gmMarkerId,regionId:'commonwealth',x:12,y:13,label:'GM objective'});
+ const playerView=(await request('player',{type:'worldRead',campaignId:id})).campaign;
+ assert.equal(playerView.worldMap.markers.find(marker=>marker.id===gmMarkerId).kind,'gm');
+ assert.equal((await request('player',{type:'worldMarkerDelete',campaignId:id,markerId:gmMarkerId})).status,403);
+ assert.equal((await request('gm',{type:'worldMarkerDelete',campaignId:id,markerId:playerMarkerId})).status,200);
+ const finalView=(await request('player',{type:'worldRead',campaignId:id})).campaign;
+ assert.equal(finalView.worldMap.markers.some(marker=>marker.id===playerMarkerId),false);
+ assert.equal(finalView.worldMap.markers.some(marker=>marker.id===gmMarkerId),true);
+});

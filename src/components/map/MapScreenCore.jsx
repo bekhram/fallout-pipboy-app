@@ -12,6 +12,7 @@ import {
   processEnvironmentalExposure,
 } from "../../utils/environmentSystem.js";
 import MapGrid from "./MapGrid.jsx";
+import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
 import "./map.css";
@@ -299,6 +300,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   const tx = (key, vars) => mapUiText(language, key, vars);
   const resumeCopy = RESUME_ROUTE_TEXT[String(language).split("-")[0]] || RESUME_ROUTE_TEXT.en;
   const [selectedCell, setSelectedCell] = useState(null);
+  const [selectedWorldTarget, setSelectedWorldTarget] = useState(null);
   const [mapMode, setMapMode] = useState("world");
 
   const safeMapState = useMemo(
@@ -393,6 +395,24 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
   const viewStartY = Math.max(0, Math.min(playerPosition.y - Math.floor(VIEW_ROWS / 2), mapData.rows - VIEW_ROWS));
   const playerWorldX = worldOffset.x * mapData.cols + playerPosition.x;
   const playerWorldY = worldOffset.y * mapData.rows + playerPosition.y;
+  const worldSelectionRoute = useMemo(() => {
+    if (!selectedWorldTarget || (selectedWorldTarget.worldX === playerWorldX && selectedWorldTarget.worldY === playerWorldY)) return null;
+    const workingCache = { ...sectorCache, [sectorKey]: mapData };
+    return findWorldTravelRoute(
+      { x: playerWorldX, y: playerWorldY },
+      { x: selectedWorldTarget.worldX, y: selectedWorldTarget.worldY },
+      workingCache,
+      mapData.cols,
+      mapData.rows
+    );
+  }, [selectedWorldTarget, playerWorldX, playerWorldY, sectorCache, sectorKey, mapData]);
+  const worldSelectionCost = worldSelectionRoute?.cost ?? null;
+  const worldSelectionRoutePoints = useMemo(
+    () => selectedWorldTarget && worldSelectionRoute
+      ? [{ x: playerWorldX, y: playerWorldY }, ...worldSelectionRoute.steps.map(step => ({ x: step.worldX, y: step.worldY }))]
+      : [],
+    [selectedWorldTarget, worldSelectionRoute, playerWorldX, playerWorldY]
+  );
   const worldDateTime = useMemo(() => getWorldDateTime(worldTotalHours, t), [worldTotalHours, t]);
   const trackedLocation = useMemo(() => getLocationById(trackedLocationId, regionLocations), [trackedLocationId, regionLocations]);
   const trackedDistanceBlocks = trackedLocation
@@ -710,6 +730,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     dispatchEnvironmentEffects(environmentExposure.effects);
     if (stoppedEncounter) setMapMode("local");
     setSelectedCell(null);
+    setSelectedWorldTarget(null);
   }
 
   function handleRegenerateMap() {
@@ -743,34 +764,6 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     setSelectedCell(null);
   }
 
-  function shiftMap(direction) {
-    const nextOffset = { ...worldOffset };
-    let nextPlayer = { ...playerPosition };
-    if (direction === "east") { nextOffset.x += 1; nextPlayer = { x: 1, y: playerPosition.y }; }
-    if (direction === "west") { nextOffset.x -= 1; nextPlayer = { x: mapData.cols - 2, y: playerPosition.y }; }
-    if (direction === "north") { nextOffset.y -= 1; nextPlayer = { x: playerPosition.x, y: mapData.rows - 2 }; }
-    if (direction === "south") { nextOffset.y += 1; nextPlayer = { x: playerPosition.x, y: 1 }; }
-
-    const nextSectorKey = getSectorKey(nextOffset);
-    const nextMap = sectorCache[nextSectorKey] || createRandomMap(mapData.rows, mapData.cols, nextOffset);
-    onMapChange((prevMap) => {
-      const base = { ...buildDefaultMapState(), ...(prevMap || {}) };
-      return {
-        ...base,
-        worldOffset: nextOffset,
-        playerPosition: nextPlayer,
-        discoveredKeys: revealAround(nextMap, nextPlayer, 1, []),
-        travelLog: mergeTravelLog(base, [t("mapPanel.shiftedMap", { direction: t(`mapPanel.${direction}`) })]),
-        sectorCache: {
-          ...(base.sectorCache || {}),
-          [sectorKey]: mapData,
-          [nextSectorKey]: base.sectorCache?.[nextSectorKey] || nextMap,
-        },
-      };
-    });
-    setSelectedCell(null);
-  }
-
   function handleRegionChange(regionId) {
     const nextRegion = getMapRegion(regionId);
     const worldX = nextRegion.start.x;
@@ -788,6 +781,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       sectorCache: { [getSectorKey(nextOffset)]: nextMap },
     });
     setSelectedCell(null);
+    setSelectedWorldTarget(null);
     setMapMode("world");
   }
 
@@ -886,34 +880,83 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           ) : null}
 
           <div className="pip-panel pip-map-panel">
-          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id} style={{ backgroundImage: `url(${REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage})`, backgroundPosition: "center", backgroundSize: "cover", backgroundRepeat: "no-repeat" }}>
-            <nav className="pip-map-sector-nav" aria-label={tx("direction")}>
-              <button type="button" className="pip-map-edge-button pip-map-edge-button--north" onClick={() => shiftMap("north")} aria-label={t("mapPanel.north")} title={t("mapPanel.north")}>↑</button>
-              <button type="button" className="pip-map-edge-button pip-map-edge-button--west" onClick={() => shiftMap("west")} aria-label={t("mapPanel.west")} title={t("mapPanel.west")}>←</button>
-              <button type="button" className="pip-map-edge-button pip-map-edge-button--east" onClick={() => shiftMap("east")} aria-label={t("mapPanel.east")} title={t("mapPanel.east")}>→</button>
-              <button type="button" className="pip-map-edge-button pip-map-edge-button--south" onClick={() => shiftMap("south")} aria-label={t("mapPanel.south")} title={t("mapPanel.south")}>↓</button>
-            </nav>
+          <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id}>
             <div className="pip-map-grid-layer">
-              <MapGrid
-                key={activeRegion.id}
-                background={REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage}
-                markers={[...visibleWorldLocations.map(location => ({ ...location, x: location.localX, y: location.localY })), ...visibleRandomPoiCells.map(cell => ({ id: `poi-${cell.x}-${cell.y}`, x: cell.x, y: cell.y, icon: getPoiIcon(cell.poi), cell }))]}
-                onMarker={marker => marker.cell ? setSelectedCell(marker.cell) : selectStaticLocation(marker)}
-                mapData={mapData}
-                playerPosition={playerPosition}
-                selectedCell={selectedCell}
-                discoveredKeys={discoveredKeys}
-                onSelectCell={setSelectedCell}
-                onTravel={handleTravel}
-                character={character}
-                weaponDatabase={weaponDatabase}
-                mapMode={mapMode}
-                setMapMode={setMapMode}
-                locations={regionLocations}
-                region={{ id: activeRegion.id, game: activeRegion.game, name: getRegionName(activeRegion, language) }}
-                travelEncounter={safeMapState.pendingTravelEncounter || null}
-                onTravelEncounterHandled={handleTravelEncounterHandled}
-              />
+              {mapMode === "world" ? (
+                <div className="pip-seamless-world-map">
+                  <PhaserMapViewport
+                    cols={64}
+                    rows={64}
+                    sceneKey={`personal-world:${activeRegion.id}`}
+                    background={REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage}
+                    cells={mapData.cells.map(cell => ({
+                      ...cell,
+                      x: worldOffset.x * mapData.cols + cell.x,
+                      y: worldOffset.y * mapData.rows + cell.y,
+                      discovered: discoveredKeys.includes(`${cell.x},${cell.y}`),
+                    }))}
+                    markers={[
+                      ...regionLocations.map(location => ({
+                        ...location,
+                        x: location.worldX,
+                        y: location.worldY,
+                        icon: getPoiIcon(location),
+                        staticLocation: true,
+                      })),
+                      ...randomPoiCells.map(cell => ({
+                        id: `poi-${sectorKey}-${cell.x}-${cell.y}`,
+                        x: worldOffset.x * mapData.cols + cell.x,
+                        y: worldOffset.y * mapData.rows + cell.y,
+                        icon: getPoiIcon(cell.poi),
+                        poiCell: cell,
+                      })),
+                    ]}
+                    onMarker={marker => {
+                      if (marker.staticLocation) onMapChange({ trackedLocationId: marker.id });
+                      setSelectedWorldTarget({
+                        id: marker.id || null,
+                        name: marker.staticLocation ? getWorldLocationDisplayName(marker, t) : getPoiDisplayName(marker.poiCell?.poi, t),
+                        worldX: marker.x,
+                        worldY: marker.y,
+                      });
+                    }}
+                    onCell={(x, y) => setSelectedWorldTarget({ id: null, name: `${x},${y}`, worldX: x, worldY: y })}
+                    player={{ x: playerWorldX, y: playerWorldY }}
+                    selected={selectedWorldTarget ? { x: selectedWorldTarget.worldX, y: selectedWorldTarget.worldY } : null}
+                    route={worldSelectionRoutePoints}
+                    label={tx("world")}
+                  />
+                  {selectedWorldTarget ? (
+                    <div className="pip-seamless-world-route">
+                      <span>{tx("destination")} {selectedWorldTarget.name || `${selectedWorldTarget.worldX},${selectedWorldTarget.worldY}`}</span>
+                      <span>{worldSelectionRoute ? `${worldSelectionRoute.steps.length} ${tx("steps")} · ${worldSelectionCost?.toFixed?.(1) ?? worldSelectionCost}H` : tx("noRoute")}</span>
+                      <button type="button" className="pip-action-button" disabled={!worldSelectionRoute?.steps?.length} onClick={() => handleWorldTravel(selectedWorldTarget)}>{tx("travelToTarget")}</button>
+                      <button type="button" className="pip-action-button" onClick={() => setSelectedWorldTarget(null)}>×</button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <MapGrid
+                  key={activeRegion.id}
+                  background={REGION_MAP_ASSETS[activeRegion.id] || bostonMapImage}
+                  markers={[...visibleWorldLocations.map(location => ({ ...location, x: location.localX, y: location.localY })), ...visibleRandomPoiCells.map(cell => ({ id: `poi-${cell.x}-${cell.y}`, x: cell.x, y: cell.y, icon: getPoiIcon(cell.poi), cell }))]}
+                  onMarker={marker => marker.cell ? setSelectedCell(marker.cell) : selectStaticLocation(marker)}
+                  mapData={mapData}
+                  playerPosition={playerPosition}
+                  selectedCell={selectedCell}
+                  discoveredKeys={discoveredKeys}
+                  onSelectCell={setSelectedCell}
+                  onTravel={handleTravel}
+                  character={character}
+                  weaponDatabase={weaponDatabase}
+                  mapMode={mapMode}
+                  setMapMode={setMapMode}
+                  locations={regionLocations}
+                  region={{ id: activeRegion.id, game: activeRegion.game, name: getRegionName(activeRegion, language) }}
+                  travelEncounter={safeMapState.pendingTravelEncounter || null}
+                  onTravelEncounterHandled={handleTravelEncounterHandled}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -970,7 +1013,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
             <div className="pip-map-inline-stats">
               <div><strong>{t("mapPanel.terrain")}:</strong> {currentCell ? t(getTerrainLabelKey(currentCell.terrain)) : "-"}</div>
               <div><strong>{t("mapPanel.time")}:</strong> {worldDateTime.timeText}</div>
-              <div><strong>{t("mapPanel.travel")}:</strong> {selectedTravelCost ?? "-"}</div>
+              <div><strong>{t("mapPanel.travel")}:</strong> {mapMode === "world" ? (worldSelectionCost ?? "-") : (selectedTravelCost ?? "-")}</div>
               {trackedLocation ? (
                 <>
                   <div><strong>{t("mapPanel.targetLabel")}:</strong> {trackedLocation.nameKey ? t(trackedLocation.nameKey) : trackedLocation.name}</div>
@@ -980,7 +1023,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
                 <div><strong>{t("mapPanel.targetLabel")}:</strong> {t("mapPanel.none")}</div>
               )}
 
-              <button type="button" className="pip-action-button" onClick={handleTravel} disabled={!canTravel}>
+              <button type="button" className="pip-action-button" onClick={() => mapMode === "world" ? handleWorldTravel(selectedWorldTarget) : handleTravel()} disabled={mapMode === "world" ? !worldSelectionRoute?.steps?.length : !canTravel}>
                 {t("mapPanel.travelButton")}
               </button>
               <button type="button" className="pip-action-button" onClick={handleRegenerateMap}>

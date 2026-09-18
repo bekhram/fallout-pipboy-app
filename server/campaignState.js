@@ -36,7 +36,42 @@ export function campaignCommand(original, uid, cmd, now) {
     case 'worldRegion': {
       admin(); const region = MAP_REGIONS.find(r => r.id === cmd.regionId);
       if (!region) throw new Error('INVALID_LOCATION');
-      c.worldMap = { regionId: region.id, positions: Object.fromEntries(c.memberIds.map(id => [id, { ...region.start, updatedAt: now }])) }; break;
+      const previousWorld = c.worldMap || {};
+      c.worldMap = { regionId: region.id, positions: Object.fromEntries(c.memberIds.map(id => [id, { ...region.start, updatedAt: now }])), markers: Array.isArray(previousWorld.markers) ? previousWorld.markers : [] }; break;
+    }
+    case 'worldMarkerUpsert': {
+      const world = c.worldMap || { regionId: 'commonwealth', positions: {}, markers: [] };
+      const markerId = String(cmd.markerId || `marker_${cmd.requestId || ''}`);
+      const markerLabel = label(cmd.label);
+      if (!/^[a-zA-Z0-9_:-]{8,180}$/.test(markerId) || !markerLabel || markerLabel.length > 80 ||
+          !MAP_REGIONS.some(r => r.id === cmd.regionId) || !Number.isInteger(cmd.x) || !Number.isInteger(cmd.y) ||
+          cmd.x < 0 || cmd.y < 0 || cmd.x > 63 || cmd.y > 63) throw new Error('INVALID_MARKER');
+      const markers = Array.isArray(world.markers) ? world.markers : [];
+      const existing = markers.find(marker => marker.id === markerId);
+      if (existing && existing.createdBy !== uid && !gm) throw new Error('FORBIDDEN');
+      const marker = {
+        id: markerId,
+        regionId: cmd.regionId,
+        x: cmd.x,
+        y: cmd.y,
+        label: markerLabel,
+        kind: gm ? 'gm' : 'player',
+        createdBy: existing?.createdBy || uid,
+        createdByName: existing?.createdByName || c.members[uid]?.name || 'Player',
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+      };
+      c.worldMap = { ...world, markers: [...markers.filter(item => item.id !== markerId), marker].slice(-200) };
+      break;
+    }
+    case 'worldMarkerDelete': {
+      const world = c.worldMap || { regionId: 'commonwealth', positions: {}, markers: [] };
+      const markers = Array.isArray(world.markers) ? world.markers : [];
+      const marker = markers.find(item => item.id === cmd.markerId);
+      if (!marker) throw new Error('NOT_FOUND');
+      if (marker.createdBy !== uid && !gm) throw new Error('FORBIDDEN');
+      c.worldMap = { ...world, markers: markers.filter(item => item.id !== marker.id) };
+      break;
     }
     case 'teamFound': {
       admin();
