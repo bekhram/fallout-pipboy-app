@@ -1736,7 +1736,7 @@ const SkillsEditorModal = () => {
         onSpendCombatLuck={spendCombatLuck}
         onMarkCombatUse={markCombatUse}
         onDiceResult={sharedSession.sendDiceResult}
-        campaignId={sharedSession.mode === "host" ? (sharedSession.campaignId || "") : ""}
+        campaignId={sharedSession.campaignId || sharedSession.roomState?.campaignId || sharedSession.lastSession?.campaignId || ""}
       />
 
       <input
