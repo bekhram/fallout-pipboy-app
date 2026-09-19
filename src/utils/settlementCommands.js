@@ -5,7 +5,7 @@ import * as dev from './settlementDevelopment.js';
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { ROOMS, SETTLEMENT_ACTIONS } from '../data/settlement/rulebook.js';
 import { createConstructionBuilding, createRoomConstruction, payRulebookBuildingCost, payRoomCost, getStructureRoomCapacity } from './settlementDayEngine.js';
-import { resolveSettlementAttack } from './settlementAttackEngine.js';
+import { resolveSettlementAttack, setSettlementDefensePlan } from './settlementAttackEngine.js';
 
 export function applySettlementCommand(settlement, character, actor, command, now = Date.now()) {
   let s = dev.advanceConstruction(settlement, now);
@@ -72,7 +72,8 @@ export function applySettlementCommand(settlement, character, actor, command, no
       if (!(s.settlers || []).some(w => w.id === c.workerId)) fail('NOT_FOUND');
       if (c.action && !availableSettlementActions(s).some(a => a.id === c.action)) fail('INVALID_ACTION');
       s = { ...s, settlers: s.settlers.map(w => w.id === c.workerId ? { ...w, settlementAction: c.action ? { type: c.action } : null, assignedBuildingId: null, status: c.action ? 'working' : 'idle' } : w) }; break;
-    case 'attack': s = resolveSettlementAttack(s, c.attackId); break;
+    case 'attackPlan': s = setSettlementDefensePlan(s, c.attackId, c.defenderIds, now); break;
+    case 'attack': s = resolveSettlementAttack(s, c.attackId, now); break;
     default: fail('INVALID_COMMAND');
   }
   return { settlement: s, character };
