@@ -79,7 +79,8 @@ function resolveResidentActions(input,now){
     if(type)acc[type]=(acc[type] || 0)+1;
     return acc;
   },{});
-  let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=0,dailyDefenseBonus=0;
+  let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=Math.max(0,Number(settlement.nextDayBrahminFoodBonus||0)),dailyDefenseBonus=0;
+  if(settlement.nextDayBrahminFoodBonus)settlement={...settlement,nextDayBrahminFoodBonus:0};
   const events=[];
   const communityOrganizerRank=Math.max(0,Math.floor(Number(settlement.leaderRuleProfile?.communityOrganizerRank ?? settlement.leader?.communityOrganizerRank ?? 0)));
   const hunters=Number(actionCounts.hunting_gathering || 0);
