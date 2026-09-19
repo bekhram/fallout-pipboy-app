@@ -472,36 +472,43 @@ function processUnitCombat(state, unit, events) {
   events.push({type:unit.archetype==='bruiser'?'melee':'shot',from:unit.id,to:target.id,damage:dealt,covered:Boolean(cover),killed:!target.alive});
 }
 
-function enemyAttack(state, enemy, target, events) {
-  if (enemy.cooldown > 0) return;
-  enemy.cooldown = enemy.attackMs;
-  if (target.type === 'unit') {
-    target.entity.hp = clamp(target.entity.hp - enemy.damage, 0, target.entity.maxHp);
-    if (target.entity.hp <= 0) {
-      target.entity.alive = false; target.entity.selected = false; target.entity.path = []; target.entity.focusTargetId = null;
-      events.push({ type:'unit_down', unitId:target.entity.id, enemyId:enemy.id });
-    } else events.push({ type:'enemy_hit', enemyId:enemy.id, unitId:target.entity.id, ranged:enemy.role === 'ranged' });
-  } else {
-    state.hq.hp = clamp(state.hq.hp - enemy.damage, 0, state.hq.maxHp);
-    events.push({ type:'hq_hit', enemyId:enemy.id, ranged:enemy.role === 'ranged' });
+function enemyAttack(state,enemy,target,events){
+  if(enemy.cooldown>0)return;
+  enemy.cooldown=enemy.attackMs;
+  if(target.type==='unit'){
+    const cover=enemy.role==='ranged'?rtsCoverForTarget(state,enemy,target.entity):0;
+    const dealt=Math.max(1,Math.round(enemy.damage*(1-cover)));
+    target.entity.hp=clamp(target.entity.hp-dealt,0,target.entity.maxHp);
+    if(target.entity.hp<=0){
+      target.entity.alive=false;target.entity.selected=false;target.entity.path=[];target.entity.focusTargetId=null;
+      events.push({type:'unit_down',unitId:target.entity.id,enemyId:enemy.id});
+    }else events.push({type:'enemy_hit',enemyId:enemy.id,unitId:target.entity.id,ranged:enemy.role==='ranged',covered:Boolean(cover),damage:dealt});
+  }else if(target.type==='structure'){
+    const structure=target.entity;
+    structure.hp=clamp(structure.hp-enemy.damage,0,structure.maxHp);
+    events.push({type:'structure_hit',enemyId:enemy.id,structureId:structure.id,damage:enemy.damage});
+    if(structure.hp<=0&&structure.alive){
+      structure.alive=false;structure.cooldown=0;rebuildNavigation(state);
+      events.push({type:'structure_down',enemyId:enemy.id,structureId:structure.id,kind:structure.kind});
+    }
+  }else{
+    state.hq.hp=clamp(state.hq.hp-enemy.damage,0,state.hq.maxHp);
+    events.push({type:'hq_hit',enemyId:enemy.id,ranged:enemy.role==='ranged'});
   }
 }
 
-function processRangedEnemy(state, enemy, target, deltaMs, events) {
-  const point = targetPoint(state, target), d = distance(enemy, point);
-  if (d >= enemy.minRange && d <= enemy.range) {
-    enemy.path = [];
-    enemyAttack(state, enemy, target, events);
-    return;
+function processRangedEnemy(state,enemy,target,deltaMs,events){
+  const point=targetPoint(state,target),d=distance(enemy,point),ignore=target.type==='structure'?[target.entity.buildingId]:[];
+  if(d>=enemy.minRange&&d<=enemy.range&&hasRtsLineOfSight(state,enemy,point,{ignoreIds:ignore})){
+    enemy.path=[];enemyAttack(state,enemy,target,events);return;
   }
-  enemy.tacticCooldown -= deltaMs;
-  if (enemy.tacticCooldown <= 0 || !enemy.path.length) {
-    enemy.tacticCooldown = 550;
-    const goal = rangedPosition(state, enemy, point, enemy.preferredRange);
-    if (goal) assignPath(enemy, state.world, goal);
-    else refreshEnemyPath(state, enemy, target, true);
+  enemy.tacticCooldown-=deltaMs;
+  if(enemy.tacticCooldown<=0||!enemy.path.length){
+    enemy.tacticCooldown=550;
+    const goal=rangedPosition(state,enemy,target,enemy.preferredRange);
+    if(goal)assignPath(enemy,state.world,goal);else refreshEnemyPath(state,enemy,target,true);
   }
-  moveEntity(enemy, state.world, deltaMs, enemy.speed);
+  moveEntity(enemy,state.world,deltaMs,enemy.speed);
 }
 
 function processEnemy(state, enemy, deltaMs, events) {
@@ -512,10 +519,11 @@ function processEnemy(state, enemy, deltaMs, events) {
     processRangedEnemy(state, enemy, target, deltaMs, events);
     return;
   }
-  if (distance(enemy, point) <= enemy.range) {
-    enemy.path = [];
-    enemyAttack(state, enemy, target, events);
-    return;
+  const meleeDistance=target.type==='structure'
+    ? Math.max(.65,distance(enemy,point)-Math.max(target.entity.footprint.width,target.entity.footprint.height)*.35)
+    : distance(enemy,point);
+  if(meleeDistance<=enemy.range){
+    enemy.path=[];enemyAttack(state,enemy,target,events);return;
   }
   enemy.tacticCooldown -= deltaMs;
   if (enemy.tacticCooldown <= 0 || !enemy.path.length) {
@@ -523,6 +531,29 @@ function processEnemy(state, enemy, deltaMs, events) {
     refreshEnemyPath(state, enemy, target, true);
   }
   moveEntity(enemy, state.world, deltaMs, enemy.speed);
+}
+
+function clearKilledEnemyReferences(state,target){
+  if(state.inspectedEnemyId===target.id)state.inspectedEnemyId=null;
+  for(const defender of state.units)if(defender.focusTargetId===target.id){
+    defender.focusTargetId=null;if(defender.command==='attack')defender.command='hold';
+  }
+}
+
+function processTurrets(state,dt,events){
+  for(const turret of state.structures.filter(item=>item.alive&&item.kind==='turret')){
+    turret.cooldown=Math.max(0,turret.cooldown-dt);
+    if(turret.cooldown>0)continue;
+    const target=state.enemies.filter(aliveEnemy)
+      .filter(enemy=>distance(turret.position,enemy)<=turret.range)
+      .filter(enemy=>hasRtsLineOfSight(state,turret.position,enemy,{ignoreIds:[turret.buildingId]}))
+      .sort((a,b)=>distance(turret.position,a)-distance(turret.position,b))[0];
+    if(!target)continue;
+    const cover=rtsCoverForTarget(state,turret.position,target),dealt=Math.max(1,Math.round(turret.damage*(1-cover)));
+    target.hp-=dealt;turret.cooldown=turret.attackMs;
+    if(target.hp<=0){target.hp=0;target.alive=false;target.path=[];clearKilledEnemyReferences(state,target);}
+    events.push({type:'turret_shot',from:turret.id,to:target.id,damage:dealt,covered:Boolean(cover),killed:!target.alive});
+  }
 }
 
 export function stepRtsCombat(state, deltaMs) {
@@ -536,20 +567,21 @@ export function stepRtsCombat(state, deltaMs) {
     processRetreat(state, unit, events);
     if (!unit.alive || unit.retreated) continue;
     if (unit.command === 'retreat') {
-      if (unit.path.length) moveEntity(unit, state.world, dt, unit.speed * 1.2);
+      if(unit.path.length)moveEntity(unit,state.defenderWorld||state.world,dt,unit.speed*1.2);
       if (!unit.path.length) { unit.retreated = true; events.push({ type:'retreated', unitId:unit.id }); }
       continue;
     }
     if (unit.command === 'attack') processAttackMovement(state, unit, dt);
-    else if (unit.path.length) moveEntity(unit, state.world, dt, unit.speed);
+    else if(unit.path.length)moveEntity(unit,state.defenderWorld||state.world,dt,unit.speed);
     else if (unit.command === 'move') unit.command = 'hold';
     processPatrol(state, unit);
     processMedicSupport(state, unit, events);
     processUnitCombat(state, unit, events);
   }
-  for (const enemy of state.enemies) {
-    enemy.cooldown = Math.max(0, enemy.cooldown - dt);
-    processEnemy(state, enemy, dt, events);
+  processTurrets(state,dt,events);
+  for(const enemy of state.enemies){
+    enemy.cooldown=Math.max(0,enemy.cooldown-dt);
+    processEnemy(state,enemy,dt,events);
   }
 
   const enemiesAlive = state.enemies.filter(aliveEnemy).length;
@@ -575,7 +607,11 @@ export function rtsCombatSummary(state) {
     enemiesAlive: state.enemies.filter(aliveEnemy).length,
     enemiesTotal: state.enemies.length,
     hqHp: state.hq.hp, hqMaxHp: state.hq.maxHp,
-    message: state.message,
+    message:state.message,
+    turretsAlive:state.structures.filter(item=>item.kind==='turret'&&item.alive).length,
+    turretsTotal:state.structures.filter(item=>item.kind==='turret').length,
+    fortificationsAlive:state.structures.filter(item=>item.kind!=='turret'&&item.alive).length,
+    fortificationsTotal:state.structures.filter(item=>item.kind!=='turret').length,
     inspectedEnemy: inspected ? {
       id:inspected.id, type:inspected.type, label:inspected.label, role:inspected.role, threat:inspected.threat,
       hp:inspected.hp, maxHp:inspected.maxHp,
@@ -587,10 +623,14 @@ export function rtsCombatSummary(state) {
       selected:unit.selected, command:unit.command, focusTargetId:unit.focusTargetId,
       range:unit.range, damage:unit.damage,
     })),
-    enemies: state.enemies.map(enemy => ({
-      id:enemy.id, type:enemy.type, label:enemy.label, role:enemy.role, threat:enemy.threat,
-      hp:enemy.hp, maxHp:enemy.maxHp, alive:enemy.alive, x:enemy.x, y:enemy.y,
-      focusedBy:state.units.filter(unit => unit.focusTargetId === enemy.id && activeUnit(unit)).length,
+    enemies:state.enemies.map(enemy=>({
+      id:enemy.id,type:enemy.type,label:enemy.label,role:enemy.role,threat:enemy.threat,
+      hp:enemy.hp,maxHp:enemy.maxHp,alive:enemy.alive,x:enemy.x,y:enemy.y,
+      focusedBy:state.units.filter(unit=>unit.focusTargetId===enemy.id&&activeUnit(unit)).length,
+    })),
+    structures:state.structures.map(structure=>({
+      id:structure.id,buildingId:structure.buildingId,type:structure.type,kind:structure.kind,
+      hp:structure.hp,maxHp:structure.maxHp,alive:structure.alive,position:structure.position,
     })),
   };
 }
