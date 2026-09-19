@@ -359,7 +359,7 @@ export default function GmMerchantGenerator({ session = null }) {
     if (!tradeMerchantId) return;
     const sent = Boolean(session?.publishMerchantOffer?.(tradeMerchantId));
     if (sent && liveMerchant) {
-      await sendTelegramEvent({ type: "merchant", merchant: liveMerchant, language });
+      await sendTelegramEvent({ type: "merchant", campaignId: session?.campaignId || "", merchant: liveMerchant, language });
     }
     setStatus(sent ? copy.offerSent : copy.offerFailed);
   };
