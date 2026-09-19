@@ -26,6 +26,7 @@ export default function StatusScreen(props) {
     onTopLevelChange,
     onInjuryToggle,
     onArmorChange,
+    onArmorStatusCycle,
     onOpenDerived,
     stimpaks = [],
     treatableInjuries = [],
@@ -94,7 +95,7 @@ export default function StatusScreen(props) {
         {[["shield",t("main.defense"),derived.defense],["bolt",t("main.initiative"),derived.initiative],["melee",t("main.melee"),derived.md],["luck",t("derived.luckPoints"),currentLuckPoints]].map(([icon,label,value])=><div className="sheet-combat-stat" key={icon}><SheetIcon name={icon}/><div><small>{label}</small><strong>{value}</strong></div></div>)}
       </div>
     </section>
-    <div className="sheet-body"><InjuryPanel injuries={form.injuries} statuses={form.statuses} armor={armor} derived={derived} onToggle={onInjuryToggle} onArmorChange={onArmorChange} survivalConditions={survivalConditions} bodyOnly /></div>
+    <div className="sheet-body"><InjuryPanel injuries={form.injuries} statuses={form.statuses} armor={armor} derived={derived} onToggle={onInjuryToggle} onArmorChange={onArmorChange} onArmorStatusCycle={onArmorStatusCycle} survivalConditions={survivalConditions} bodyOnly /></div>
     <SheetDisclosure title={c.survival} icon="food" className="sheet-survival"><VitalsPanel form={form} onTopLevelChange={onTopLevelChange} compact /></SheetDisclosure>
     <SheetEffects {...props} survivalConditions={survivalConditions}/>
     <section className="pip-panel sheet-quick">
