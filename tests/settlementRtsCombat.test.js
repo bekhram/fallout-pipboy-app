@@ -35,9 +35,9 @@ test('move command gives selected defenders formation paths and hold cancels the
 test('patrol command remains active and reverses between endpoints during combat', () => {
   const s=state();spawnRtsWave(s);toggleRtsSelection(s,'a');
   assert.equal(issueRtsCommand(s,'patrol',{x:10,y:10}),true);
-  const unit=s.units[0], first=unit.patrol.next;
-  for(let i=0;i<220;i++)stepRtsCombat(s,100);
-  assert.equal(unit.command,'patrol');assert.notEqual(unit.patrol.next, first);
+  const unit=s.units[0], first=unit.patrol.next;let reversed=false;
+  for(let i=0;i<220;i++){stepRtsCombat(s,100);reversed ||= unit.patrol?.next !== first;}
+  assert.equal(unit.command,'patrol');assert.equal(reversed,true);
 });
 
 test('wave spawns enemies and defenders automatically fire in range', () => {
