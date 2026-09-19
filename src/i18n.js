@@ -31,7 +31,7 @@ i18n.use(initReactI18next).init({
   },
   lng: normalizeLanguage(savedLanguage),
   fallbackLng: "en",
-  debug: true,
+  debug: false,
   returnNull: false,
   returnEmptyString: false,
   interpolation: {
