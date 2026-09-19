@@ -88,7 +88,10 @@ async function request(payload) {
 export default function TelegramCampaignPanel({ session }) {
   const { i18n } = useTranslation();
   const copy = COPY[languageOf(i18n)];
-  const campaignId = String(session?.campaignId || "");
+  const hostCampaignId = session?.lastSession?.role === "host"
+    ? session?.lastSession?.campaignId
+    : "";
+  const campaignId = String(session?.campaignId || hostCampaignId || "");
   const [state, setState] = useState({ connected: false, chatTitle: "" });
   const [code, setCode] = useState("");
   const [expiresAt, setExpiresAt] = useState(0);
@@ -178,7 +181,8 @@ export default function TelegramCampaignPanel({ session }) {
     }
   };
 
-  if (session?.mode !== "host" || !campaignId) return null;
+  const canManage = session?.mode === "host" || session?.lastSession?.role === "host";
+  if (!canManage || !campaignId) return null;
 
   return (
     <section className="pip-panel telegram-campaign-panel">
