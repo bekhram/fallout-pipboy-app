@@ -18,6 +18,7 @@ export default function DiceRollModal({
   onSpendCombatLuck,
   onMarkCombatUse,
   onDiceResult,
+  campaignId = "",
 }) {
   const [activeTab, setActiveTab] = useState("d20");
 
@@ -32,6 +33,7 @@ export default function DiceRollModal({
     onDiceResult?.(result);
     void sendTelegramEvent({
       type: "dice_roll",
+      campaignId,
       character: String(
         form?.characterName
         || form?.name
