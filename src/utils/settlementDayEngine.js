@@ -33,14 +33,16 @@ function payCost(settlement,rule){
   for(const key of ["common","uncommon","rare"])materials[key]=Math.max(0,Number(materials[key] || 0)-Number(rule.materials?.[key] || 0));
   return {...settlement,stockpile:{...stockpile,materials},resources:{...(settlement.resources || {}),caps:Math.max(0,Number(settlement.resources?.caps || 0)-Number(rule.caps || 0)),materials:materials.common}};
 }
+export function canAffordSettlementRule(settlement,rule){return canAffordMaterials(settlement,rule);}
+export function paySettlementRuleCost(settlement,rule){return payCost(settlement,rule);}
 export function canAffordRulebookBuilding(settlement,buildingType){return canAffordMaterials(settlement,getRulebookBuilding(buildingType));}
 export function payRulebookBuildingCost(settlement,buildingType){return payCost(settlement,getRulebookBuilding(buildingType));}
 export function getRoomRule(roomType){return ROOMS?.[roomType] || null;}
 export function canAffordRoom(settlement,roomType){return canAffordMaterials(settlement,getRoomRule(roomType));}
 export function payRoomCost(settlement,roomType){return payCost(settlement,getRoomRule(roomType));}
-export function createRoomConstruction(roomType,now=Date.now()){
-  const rule=getRoomRule(roomType);if(!rule)return null;
-  return {id:randomId("room",now),type:roomType,state:"construction",constructionDaysRequired:Math.max(1,Number(rule.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),createdAt:now};
+export function createRoomConstruction(roomType,now=Date.now(),ruleOverride=null){
+  const rule=ruleOverride || getRoomRule(roomType);if(!rule)return null;
+  return {id:randomId("room",now),type:roomType,state:"construction",constructionDaysRequired:Math.max(1,Number(rule.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule.contractorMode || "normal",createdAt:now};
 }
 export function getRoomConstructionProgress(room){const rule=getRoomRule(room?.type);const required=Math.max(1,Number(room?.constructionDaysRequired || rule?.constructionDays || 1));const progress=Math.max(0,Number(room?.constructionProgressDays || 0));return {progress,required,remaining:Math.max(0,required-progress)};}
 export function getStructureRoomCapacity(building){return Math.max(0,Number(getRulebookBuilding(building?.type)?.effects?.roomCapacity || 0));}
@@ -184,8 +186,8 @@ export function processAutomaticSettlementDays(input,now=Date.now()){
   let safety=0;while(now>=Number(settlement.nextDayAt || Infinity) && safety<90){safety+=1;settlement=advanceSettlementDay(settlement,Number(settlement.nextDayAt));}
   return advanceConstruction(settlement,now);
 }
-export function createConstructionBuilding({id,type,x,y,now=Date.now()}){
-  const rule=getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule)};
+export function createConstructionBuilding({id,type,x,y,now=Date.now(),ruleOverride=null}){
+  const rule=ruleOverride || getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule?.contractorMode || "normal"};
 }
 export function getConstructionProgress(building){const rule=getRulebookBuilding(building?.type),required=Math.max(1,Number(building?.constructionDaysRequired || rule?.constructionDays || 1)),progress=Math.max(0,Number(building?.constructionProgressDays || 0));return {progress,required,remaining:Math.max(0,required-progress)};}
 export function getSettlementRulebookSnapshot(settlement){return calculateStaticAttributes(settlement,null,settlement.attributes?.food);}
