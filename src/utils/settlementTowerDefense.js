@@ -132,6 +132,7 @@ export function simulateSettlementTowerDefense(settlement,attack,{random=Math.ra
   const spawns=spawnPoints(count);
   const hp=enemyHp(attack?.faction,attack?.strength);
   const enemies=spawns.map((pos,i)=>({id:`enemy-${i}`,x:pos.x,y:pos.y,hp,maxHp:hp,alive:true,reached:false}));
+  const enemyStarts=enemies.map(({id,x,y,hp:maxEnemyHp,maxHp})=>({id,x,y,hp:maxEnemyHp,maxHp}));
   let working={...settlement,buildings:(settlement.buildings||[]).map(b=>({...b}))};
   const destroyedWalls=[], rounds=[];
   let breached=0;
@@ -188,7 +189,14 @@ export function simulateSettlementTowerDefense(settlement,attack,{random=Math.ra
     report:{
       mode:"tower_defense",rounds:rounds.length,enemyCount:count,enemiesDefeated:defeated,enemiesBreached:breached,
       turretCount:turrets.length,turretShots:turrets.reduce((s,t)=>s+t.shots,0),turretKills:turrets.reduce((s,t)=>s+t.kills,0),
-      turretDamage:turrets.reduce((s,t)=>s+t.damageDone,0),destroyedWalls,stolen,roundLog:rounds.slice(-10),
+      turretDamage:turrets.reduce((s,t)=>s+t.damageDone,0),destroyedWalls,stolen,
+      visualReplay:{
+        enemyStarts,
+        turrets:turrets.map(({id,type,pos,range,damage})=>({id,type,x:pos.x,y:pos.y,range,damage})),
+        rounds,
+        goals,
+      },
+      roundLog:rounds.slice(-10),
     },
   };
 }
