@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createRtsCombatState, toggleRtsSelection, selectAllRtsUnits,
   inspectRtsEnemy, issueRtsFocusFire, issueRtsCommand, spawnRtsWave, stepRtsCombat, rtsCombatSummary,
+  hasRtsLineOfSight, rtsCoverForTarget,
 } from '../src/utils/settlementRtsCombat.js';
 
 const building = (id, type, x, y, width = 2, height = 2) => ({ id, type, x, y, footprint:{width,height}, state:'active', condition:100 });
@@ -128,4 +129,81 @@ test('medic automatically restores a nearby injured defender', () => {
   const events=stepRtsCombat(s,100);
   assert.ok(patient.hp>before);
   assert.ok(events.some(event=>event.type==='heal'&&event.to==='r'));
+});
+
+
+test('solid walls block line of sight while diagonal cover remains shootable',()=>{
+  const s=createRtsCombatState({
+    size:10,
+    buildings:[building('hq2','settlement_hq',7,7,2,2),building('wall','wall_straight',4,4,1,1)],
+    workers:[{id:'r',name:'R',archetype:'rifleman',position:{x:2,y:4}}],
+  });
+  assert.equal(hasRtsLineOfSight(s,{x:2,y:4},{x:6,y:4}),false);
+  const cstate=createRtsCombatState({
+    size:10,
+    buildings:[building('hq3','settlement_hq',7,7,2,2),building('cover','wall_straight',4,4,1,1)],
+    workers:[{id:'r',name:'R',archetype:'rifleman',position:{x:1,y:5}}],
+  });
+  assert.equal(hasRtsLineOfSight(cstate,{x:1,y:5},{x:5,y:5}),true);
+  assert.equal(rtsCoverForTarget(cstate,{x:1,y:5},{x:5,y:5}),.35);
+});
+
+test('an active turret automatically engages a visible enemy',()=>{
+  const s=createRtsCombatState({
+    size:12,
+    buildings:[building('hq4','settlement_hq',8,8,2,2),building('turret','turret',4,4,1,1)],
+    workers:[{id:'r',name:'R',archetype:'rifleman',position:{x:9,y:6}}],
+  });
+  spawnRtsWave(s);
+  s.enemies.forEach((enemy,index)=>{if(index){enemy.alive=false;enemy.hp=0;}});
+  const enemy=s.enemies[0];enemy.x=6;enemy.y=4;enemy.path=[];
+  const before=enemy.hp,events=stepRtsCombat(s,100);
+  assert.ok(enemy.hp<before);
+  assert.ok(events.some(event=>event.type==='turret_shot'&&event.from==='turret'));
+  assert.equal(rtsCombatSummary(s).turretsAlive,1);
+});
+
+function fortifiedState(){
+  const fort=[
+    building('hqf','settlement_hq',4,4,2,2),
+    building('gatef','gate',4,2,2,1),
+    building('tl0','wall_straight',2,2,1,1),building('tl1','wall_straight',3,2,1,1),
+    building('tr0','wall_straight',6,2,1,1),building('tr1','wall_straight',7,2,1,1),
+    ...Array.from({length:6},(_,i)=>building('bottom'+i,'wall_straight',2+i,7,1,1)),
+    ...Array.from({length:4},(_,i)=>building('left'+i,'wall_straight',2,3+i,1,1)),
+    ...Array.from({length:4},(_,i)=>building('right'+i,'wall_straight',7,3+i,1,1)),
+    building('tf','turret',3,3,1,1),
+  ];
+  return createRtsCombatState({
+    size:10,buildings:fort,
+    workers:[{id:'r',name:'R',archetype:'rifleman',position:{x:4,y:6}}],
+  });
+}
+
+test('siege AI attacks the gate when the HQ is sealed and gains a route after breaching it',()=>{
+  const s=fortifiedState();spawnRtsWave(s);
+  s.units.forEach(unit=>{unit.damage=0;});
+  const heavy=s.enemies.find(enemy=>enemy.role==='siege');
+  s.enemies.forEach(enemy=>{if(enemy!==heavy){enemy.alive=false;enemy.hp=0;}});
+  heavy.x=4;heavy.y=1;heavy.path=[];heavy.targetId=null;heavy.damage=100;
+  const gate=s.structures.find(structure=>structure.id==='gatef');gate.hp=1;
+  const first=stepRtsCombat(s,100);
+  assert.equal(gate.alive,false);
+  assert.ok(first.some(event=>event.type==='structure_down'&&event.structureId==='gatef'));
+  stepRtsCombat(s,100);
+  assert.equal(heavy.targetId,'hq');
+  assert.ok(heavy.path.length>0);
+});
+
+test('destroyed defenses stay destroyed between waves until the demo is reset',()=>{
+  const s=fortifiedState();
+  const gate=s.structures.find(structure=>structure.id==='gatef');
+  gate.hp=0;gate.alive=false;
+  spawnRtsWave(s);
+  s.enemies.forEach(enemy=>{enemy.alive=false;enemy.hp=0;});
+  stepRtsCombat(s,100);
+  assert.equal(s.phase,'victory');
+  spawnRtsWave(s);
+  assert.equal(gate.alive,false);
+  assert.ok(rtsCombatSummary(s).fortificationsAlive<rtsCombatSummary(s).fortificationsTotal);
 });
