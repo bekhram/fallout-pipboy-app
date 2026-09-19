@@ -7,6 +7,7 @@ import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
+import { dailyActionTypes } from './settlementOffices.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -68,7 +69,13 @@ function resolveConstruction(settlement,now){return advanceConstruction(settleme
 function resolveResidentActions(input,now){
   let settlement=resolveConstruction(input,now);
   const settlers=effectiveSettlementResidents(settlement);
-  const actionCounts=settlers.reduce((acc,settler)=>{const type=settler.settlementAction?.type;if(type)acc[type]=(acc[type] || 0)+1;return acc;},{});
+  const activeIds=new Set(settlers.map(settler=>settler.id));
+  const actionCounts=dailyActionTypes(settlement).reduce((acc,entry)=>{
+    if(!activeIds.has(entry.workerId))return acc;
+    const type=entry.action?.type;
+    if(type)acc[type]=(acc[type] || 0)+1;
+    return acc;
+  },{});
   let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=0,dailyDefenseBonus=0;
   const events=[];
   const hunters=Number(actionCounts.hunting_gathering || 0);
