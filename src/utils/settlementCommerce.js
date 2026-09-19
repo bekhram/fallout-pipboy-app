@@ -1,5 +1,6 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
+import { accrueSettlementProfit, splitSettlementProfit } from "./settlementProfit.js";
 
 function randomId(prefix, seed = Date.now()) {
   return `${prefix}_${seed}_${Math.random().toString(36).slice(2, 8)}`;
@@ -61,13 +62,17 @@ function resolveBusinessIncome(settlement, day) {
   });
 
   const income = populationMultiplier * incomePerFive;
+  const split = splitSettlementProfit(income);
   const attributes = { ...(settlement.attributes || {}), income };
-  const resources = { ...(settlement.resources || {}), income };
+  const resources = { ...(settlement.resources || {}), income, caps: Math.max(0, Number(settlement.resources?.caps || 0)) + split.reserve };
   const event = {
     id: randomId("event", day), type: "store_income", day, workers,
-    stores: storeBreakdown, people, populationMultiplier, income, createdAt: Date.now(),
+    stores: storeBreakdown, people, populationMultiplier, income,
+    reserveCaps: split.reserve, claimableCaps: split.claimable, createdAt: Date.now(),
   };
-  return { ...settlement, attributes, resources, events: [event, ...(settlement.events || [])].slice(0, 100) };
+  return accrueSettlementProfit({
+    ...settlement, attributes, resources, events: [event, ...(settlement.events || [])].slice(0, 100),
+  }, { caps: split.claimable });
 }
 
 function getRecruitmentState(settlement) {
