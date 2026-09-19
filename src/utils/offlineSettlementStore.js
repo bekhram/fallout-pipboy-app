@@ -170,6 +170,35 @@ export const offlineSettlementStore={
     announce(sourceId);announce(targetId);
     return {source:structuredClone(sourceResult),target:structuredClone(targetResult)};
   },
+  async unlinkSupplyLine(settlementId,otherSettlementId,now=Date.now()){
+    if(!settlementId||!otherSettlementId||settlementId===otherSettlementId)throw new Error('INVALID_SUPPLY_LINE');
+    const db=await database();
+    let firstResult,secondResult,ownError;
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE),a=store.get(settlementId),b=store.get(otherSettlementId);
+      let first,second,ready=0;
+      const finish=()=>{
+        if(++ready<2)return;
+        try{
+          first=offlineSettlementData(first,now);second=offlineSettlementData(second,now);
+          if(!first||!second)throw new Error('NOT_FOUND');
+          const line=(first.supplyLines||[]).find(item=>item.otherSettlementId===second.id);
+          if(!line)throw new Error('SUPPLY_LINE_REQUIRED');
+          const sourceId=line.sourceSettlementId,workerId=line.provisionerId;
+          first={...first,supplyLines:(first.supplyLines||[]).filter(item=>item.otherSettlementId!==second.id),offlineUpdatedAt:now};
+          second={...second,supplyLines:(second.supplyLines||[]).filter(item=>item.otherSettlementId!==first.id),offlineUpdatedAt:now};
+          if(first.id===sourceId)first={...first,settlers:(first.settlers||[]).map(worker=>worker.id===workerId&&worker.settlementAction?.type==='supply_line'?{...worker,settlementAction:null,status:'idle'}:worker)};
+          if(second.id===sourceId)second={...second,settlers:(second.settlers||[]).map(worker=>worker.id===workerId&&worker.settlementAction?.type==='supply_line'?{...worker,settlementAction:null,status:'idle'}:worker)};
+          store.put(first);store.put(second);firstResult=first;secondResult=second;
+        }catch(error){ownError=error;tx.abort();}
+      };
+      a.onsuccess=()=>{first=a.result;finish();};b.onsuccess=()=>{second=b.result;finish();};
+      a.onerror=b.onerror=()=>tx.abort();
+      tx.oncomplete=resolve;tx.onabort=()=>reject(ownError||new Error('LOCAL_STORAGE_UNAVAILABLE'));tx.onerror=()=>{};
+    });
+    announce(settlementId);announce(otherSettlementId);
+    return {first:structuredClone(firstResult),second:structuredClone(secondResult)};
+  },
   async transferSupply(sourceId,targetId,amounts={},now=Date.now()){
     if(!sourceId||!targetId||sourceId===targetId)throw new Error('INVALID_SUPPLY_LINE');
     const keys=['caps','common','uncommon','rare','food','water'];
