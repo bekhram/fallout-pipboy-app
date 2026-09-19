@@ -1,6 +1,7 @@
 name: Core preview checks
 # audit: full-project verification
 # audit: pass 2
+# audit: final pass
 on:
   pull_request:
     paths:
