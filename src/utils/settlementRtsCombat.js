@@ -18,12 +18,131 @@ export const ENEMY_ARCHETYPES = Object.freeze({
   raider_heavy: { label:'Raider heavy', role:'siege', threat:'Pushes the HQ', hp:105, speed:1.05, range:1.1, damage:20, attackMs:1050 },
 });
 
+const WALL_TYPES = new Set(['wall_straight','wall_corner']);
+const GATE_TYPES = new Set(['gate']);
+const TURRET_TYPES = new Set(['turret','machine_gun_turret','heavy_machine_gun_turret','laser_turret','heavy_laser_turret','shotgun_turret']);
+const destructibleDefense = type => WALL_TYPES.has(type) || GATE_TYPES.has(type) || TURRET_TYPES.has(type);
+const structureKind = type => TURRET_TYPES.has(type) ? 'turret' : GATE_TYPES.has(type) ? 'gate' : 'wall';
+const STRUCTURE_STATS = Object.freeze({
+  wall:{hp:115},
+  gate:{hp:85},
+  turret:{hp:90,range:5.8,damage:10,attackMs:620},
+});
+
 function nearestAllowed(world, point) {
   return workerAnchor(world, point);
 }
 
 function edgeCells(world) {
   return world.cells.filter(cell => cell.x === 0 || cell.y === 0 || cell.x === world.size - 1 || cell.y === world.size - 1);
+}
+
+function buildingCells(building){
+  const footprint=building.footprint||{width:1,height:1},cells=[];
+  for(let y=building.y;y<building.y+footprint.height;y++)for(let x=building.x;x<building.x+footprint.width;x++)cells.push({x,y});
+  return cells;
+}
+
+function structureFromBuilding(building){
+  if(!destructibleDefense(building.type))return null;
+  const kind=structureKind(building.type),stats=STRUCTURE_STATS[kind],footprint=building.footprint||{width:1,height:1};
+  return {
+    id:building.id,buildingId:building.id,type:building.type,kind,x:building.x,y:building.y,footprint,
+    position:{x:building.x+(footprint.width-1)/2,y:building.y+(footprint.height-1)/2},
+    hp:stats.hp,maxHp:stats.hp,alive:true,range:stats.range||0,damage:stats.damage||0,attackMs:stats.attackMs||0,cooldown:0,
+  };
+}
+
+function navigationBuildings(baseBuildings,structures,defenders=false){
+  const aliveIds=new Set(structures.filter(item=>item.alive).map(item=>item.buildingId));
+  return baseBuildings.filter(building=>{
+    if(!destructibleDefense(building.type))return true;
+    if(!aliveIds.has(building.id))return false;
+    return !(defenders&&GATE_TYPES.has(building.type));
+  });
+}
+
+function buildWorlds(baseBuildings,structures,size){
+  return {
+    world:createWorkerWorld(navigationBuildings(baseBuildings,structures,false),size),
+    defenderWorld:createWorkerWorld(navigationBuildings(baseBuildings,structures,true),size),
+  };
+}
+
+function rebuildNavigation(state){
+  const worlds=buildWorlds(state.baseBuildings,state.structures,state.size);
+  state.world=worlds.world;state.defenderWorld=worlds.defenderWorld;
+  for(const enemy of state.enemies)enemy.path=[];
+}
+
+function opaqueCells(state,ignoreIds=[]){
+  const ignore=new Set(ignoreIds),cells=new Set();
+  for(const building of state.baseBuildings){
+    if(ignore.has(building.id))continue;
+    if(destructibleDefense(building.type)){
+      const structure=state.structures.find(item=>item.buildingId===building.id);
+      if(!structure?.alive)continue;
+    }
+    for(const cell of buildingCells(building))cells.add(`${cell.x},${cell.y}`);
+  }
+  return cells;
+}
+
+function gridLine(a,b){
+  let x0=Math.round(a.x),y0=Math.round(a.y),x1=Math.round(b.x),y1=Math.round(b.y);
+  const points=[],dx=Math.abs(x1-x0),sx=x0<x1?1:-1,dy=-Math.abs(y1-y0),sy=y0<y1?1:-1;let err=dx+dy;
+  while(true){points.push({x:x0,y:y0});if(x0===x1&&y0===y1)break;const e2=2*err;if(e2>=dy){err+=dy;x0+=sx;}if(e2<=dx){err+=dx;y0+=sy;}}
+  return points;
+}
+
+export function hasRtsLineOfSight(state,from,to,{ignoreIds=[]}={}){
+  if(!from||!to)return false;
+  const blocked=opaqueCells(state,ignoreIds),line=gridLine(from,to);
+  for(let i=1;i<line.length-1;i++)if(blocked.has(`${line[i].x},${line[i].y}`))return false;
+  return true;
+}
+
+export function rtsCoverForTarget(state,attacker,target){
+  if(!attacker||!target)return 0;
+  const blocked=opaqueCells(state),tx=Math.round(target.x),ty=Math.round(target.y);
+  const ax=attacker.x-target.x,ay=attacker.y-target.y,alen=Math.hypot(ax,ay)||1;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+    if(!dx&&!dy)continue;
+    if(!blocked.has(`${tx+dx},${ty+dy}`))continue;
+    const dot=(dx*ax+dy*ay)/(Math.hypot(dx,dy)*alen);
+    if(dot>.28)return .35;
+  }
+  return 0;
+}
+
+function structurePorts(state,structure){
+  const {x,y,footprint}=structure,points=[];
+  for(let px=x;px<x+footprint.width;px++)points.push({x:px,y:y-1},{x:px,y:y+footprint.height});
+  for(let py=y;py<y+footprint.height;py++)points.push({x:x-1,y:py},{x:x+footprint.width,y:py});
+  const seen=new Set();
+  return points.filter(point=>{const id=`${point.x},${point.y}`;if(seen.has(id)||!state.world.allowed.has(id))return false;seen.add(id);return true;});
+}
+
+function structureApproach(state,enemy,structure){
+  const start=workerAnchor(state.world,enemy);if(!start)return null;
+  return structurePorts(state,structure).map(point=>({point,path:workerPath(state.world,start,point)}))
+    .filter(item=>item.path.length).sort((a,b)=>a.path.length-b.path.length)[0]||null;
+}
+
+function chooseBreachTarget(state,enemy){
+  let best=null;
+  for(const structure of state.structures.filter(item=>item.alive&&item.kind!=='turret')){
+    const approach=structureApproach(state,enemy);if(!approach)continue;
+    const score=approach.path.length+(structure.kind==='gate'?-8:0);
+    if(!best||score<best.score)best={structure,approach,score};
+  }
+  if(best)return {type:'structure',entity:best.structure,approach:best.approach.point};
+  return null;
+}
+
+function pathToPoint(state,enemy,point){
+  const start=workerAnchor(state.world,enemy),goal=workerAnchor(state.world,point);
+  return start&&goal?workerPath(state.world,start,goal):[];
 }
 
 function hqPosition(buildings, world) {
@@ -133,10 +252,11 @@ function rangedPosition(state, enemy, point, preferredRange) {
 }
 
 export function createRtsCombatState({ buildings = [], workers = [], size = 24 } = {}) {
-  const world = createWorkerWorld(buildings, size);
-  const free = [...world.cells].sort((a, b) => distance(a, { x: size / 2, y: size / 2 }) - distance(b, { x: size / 2, y: size / 2 }));
+  const structures=buildings.map(structureFromBuilding).filter(Boolean);
+  const worlds=buildWorlds(buildings,structures,size),world=worlds.world,defenderWorld=worlds.defenderWorld;
+  const free = [...defenderWorld.cells].sort((a, b) => distance(a, { x: size / 2, y: size / 2 }) - distance(b, { x: size / 2, y: size / 2 }));
   const units = workers.map((worker, index) => {
-    const spawn = nearestAllowed(world, worker.position) || free[index % Math.max(1, free.length)] || { x: 0, y: 0 };
+    const spawn = nearestAllowed(defenderWorld, worker.position) || free[index % Math.max(1, free.length)] || { x: 0, y: 0 };
     const profile = defenderProfile(worker, index);
     return {
       id: worker.id || `worker-${index}`, name: worker.name || `Worker ${index + 1}`,
@@ -150,9 +270,9 @@ export function createRtsCombatState({ buildings = [], workers = [], size = 24 }
   });
   const position = hqPosition(buildings, world) || { x: Math.floor(size / 2), y: Math.floor(size / 2) };
   return {
-    world, buildings, units, enemies: [], wave: 0, phase: 'ready', elapsed: 0,
-    hq: { hp: 300, maxHp: 300, position },
-    inspectedEnemyId: null, message: 'ready', lastEvents: [],
+    world,defenderWorld,baseBuildings:buildings,buildings,structures,size,units,enemies:[],wave:0,phase:'ready',elapsed:0,
+    hq:{hp:300,maxHp:300,position},
+    inspectedEnemyId:null,message:'ready',lastEvents:[],
   };
 }
 
