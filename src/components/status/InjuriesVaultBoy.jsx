@@ -354,20 +354,33 @@ export default function InjuriesVaultBoy({
           </div>
         )}
 
-        {(viewMode !== "armor" ? PART_ORDER : []).map((part) => {
+        {PART_ORDER.map((part) => {
           const box = HITBOXES[part];
           const armorCondition = powerConditions[part];
+          const isArmorMode = viewMode === "armor" || viewMode === "powerArmor";
           const state = isPowerArmorVisible
             ? armorCondition?.state || "empty"
-            : injuries[part] || "normal";
+            : viewMode === "armor"
+              ? normalCondition(part)
+              : injuries[part] || "normal";
           const partLabel = t(PART_LABEL_KEYS[part]);
-          const stateLabel = isPowerArmorVisible
-            ? armorStateLabels[state]
+          const stateLabel = isArmorMode
+            ? armorStateLabels[state] || c.armorStates?.[state] || state
             : t(`injuries.state.${state}`);
+
+          const handleClick = () => {
+            if (viewMode === "injuries") {
+              onPartClick?.(part);
+              return;
+            }
+            // Keep image interaction consistent with the armor status button/table:
+            // normal armor and power armor both cycle their own condition here.
+            cycleCondition(part);
+          };
 
           return (
             <button
-              key={part}
+              key={`${viewMode}-${part}`}
               type="button"
               className={`pip-injury-hitbox is-${part} is-${state}`}
               style={{
@@ -376,9 +389,8 @@ export default function InjuriesVaultBoy({
                 width: box.width,
                 height: box.height,
               }}
-              onClick={() =>
-                isPowerArmorVisible ? onArmorPartClick?.(part) : onPartClick?.(part)
-              }
+              onClick={handleClick}
+              disabled={isArmorMode && state === "empty"}
               aria-label={`${partLabel} ${stateLabel}`}
               title={`${partLabel}: ${stateLabel}`}
             />

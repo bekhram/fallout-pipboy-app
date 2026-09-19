@@ -742,3 +742,18 @@
 .pip-injury-mod-row.is-negative strong {
   color: var(--pip-danger);
 }
+
+/* Vault Boy body regions must remain the top interactive layer in every mode. */
+.pip-injuries-vaultboy .pip-injury-hitbox {
+  z-index: 20;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(180, 255, 160, 0.12);
+}
+.pip-injuries-vaultboy .pip-injury-hitbox:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+.pip-injuries-vaultboy .pip-armor-badge,
+.pip-injuries-vaultboy .sheet-part-label {
+  pointer-events: none;
+}

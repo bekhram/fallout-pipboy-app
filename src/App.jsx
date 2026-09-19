@@ -892,15 +892,18 @@ const updateSkill = (skillName, field, value) =>
       statuses: { ...prev.statuses, [status]: checked },
     }));
 
-  const updateInjury = (partKey) =>
+  const updateInjury = (partKey, requestedState) =>
     setForm((prev) => {
       const current = prev.injuries?.[partKey] || "normal";
-      const nextState =
+      const cycledState =
         current === "normal"
           ? "crippled"
           : current === "crippled"
           ? "treated"
           : "normal";
+      const nextState = ["normal", "crippled", "treated"].includes(requestedState)
+        ? requestedState
+        : cycledState;
 
       return {
         ...prev,
