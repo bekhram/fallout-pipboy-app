@@ -33,11 +33,37 @@ export function resolveSettlementResources(settlement) {
   return { water: Math.max(0, water - Math.ceil(cropSlots / 3)), waterProduced: water,
     cropWater: Math.ceil(cropSlots / 3), cropSlots, cropStructures, brahmin, brahminCapacity, resourceBuildings };
 }
+export function reserveCropFertilizer(settlement, units = 1) {
+  const count = Math.max(1, Math.floor(Number(units) || 1));
+  const available = Math.max(0, Math.floor(Number(settlement.stockpile?.fertilizer || 0)));
+  if (available < count) throw new Error('INSUFFICIENT_FERTILIZER');
+  return {
+    ...settlement,
+    nextDayFertilizer: Math.max(0, Math.floor(Number(settlement.nextDayFertilizer || 0))) + count,
+    stockpile: { ...(settlement.stockpile || {}), fertilizer: available - count },
+  };
+}
+
 export function getTendedCropResult(settlement, workers) {
   const resources = resolveSettlementResources(settlement);
   const workerCount = Math.max(0, Math.floor(Number(workers || 0)));
+  const actionCapacity = workerCount * 6;
   const hasAssignments = (settlement.settlers || []).some(w => w.settlementAction?.type === 'tend_crops');
-  // Keep the numeric helper for legacy callers / estimates without a resident roster.
-  const tendedCrops = hasAssignments ? resolveSettlementWorkplaces(settlement).tendedCrops : Math.min(resources.cropSlots, workerCount * 6);
-  return { workers: workerCount, cropSlots: resources.cropSlots, tendedCrops, food: Math.floor(tendedCrops / 2) };
+  const tendedCrops = hasAssignments ? Math.min(resources.cropSlots, resolveSettlementWorkplaces(settlement).tendedCrops) : Math.min(resources.cropSlots, actionCapacity);
+  const remainingCapacity = Math.max(0, actionCapacity - tendedCrops);
+  const tendedBrahmin = Math.min(resources.brahmin, remainingCapacity);
+  const tendedUnits = tendedCrops + tendedBrahmin;
+  const fertilizerUnits = Math.max(0, Math.floor(Number(settlement.nextDayFertilizer || 0)));
+  const fertilizedCrops = Math.min(tendedCrops, fertilizerUnits * 6);
+  const baseFood = Math.floor(tendedUnits / 2);
+  const fertilizerBonusFood = Math.floor(fertilizedCrops / 2);
+  return {
+    workers: workerCount,
+    cropSlots: resources.cropSlots,
+    tendedCrops,
+    tendedBrahmin,
+    fertilizedCrops,
+    fertilizerUnits,
+    food: baseFood + fertilizerBonusFood,
+  };
 }
