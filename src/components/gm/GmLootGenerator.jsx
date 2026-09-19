@@ -8,7 +8,7 @@ import {
 } from "../../data/legendaryProperties.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
-import { formatLootChatMessage, getLootTypeLabel } from "../../utils/lootChat.js";
+import { formatLootChatMessage, getLootTypeLabel } from "../../utils/lootChat.js";\nimport { sendTelegramEvent } from "../../utils/telegramBridge.js";
 import "./gmLootGenerator.css";
 
 const TYPE_IDS = ["weapon", "armor", "ammo", "aid", "junk", "mod", "special", "caps"];
