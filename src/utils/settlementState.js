@@ -5,6 +5,7 @@ import {
 } from "../data/settlement/buildings.js";
 import { processSettlementAttacks } from "./settlementAttackEngine.js";
 import { processSettlementCommerce } from "./settlementCommerce.js";
+import { createSettlerProfile } from "./settlementSettlerProfile.js";
 import {
   normalizeStockpile,
   processAutomaticSettlementDays,
@@ -45,6 +46,7 @@ function createInitialSettlers(createdAt, count = 4) {
     settlementAction: null,
     health: 100,
     status: "idle",
+    ...createSettlerProfile(),
   }));
 }
 
