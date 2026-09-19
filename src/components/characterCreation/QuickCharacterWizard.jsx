@@ -19,7 +19,7 @@ import {
   getTagSkillEquipmentGrant,
 } from "../../data/startingEquipment.js";
 import { getDerivedStats } from "../../utils/characterMath.js";
-import { skillBaseRankCap, skillEffectiveRank, skillWithinLevelCap } from "../../utils/characterCreationRules.js";
+import { skillBaseRankCap, skillEffectiveRank, skillFinalRankCap, skillWithinLevelCap } from "../../utils/characterCreationRules.js";
 import "./characterCreation.css";
 
 export const CREATION_COPY = {
@@ -47,7 +47,7 @@ export const CREATION_COPY = {
     specialHelp: "Distribute the available S.P.E.C.I.A.L. points shown below. Every attribute starts at 5. Adjust them while respecting your Origin limits.",
     total: "Total",
     remaining: "Remaining",
-    specialReady: "All 40 points are assigned.",
+    specialReady: "All available S.P.E.C.I.A.L. points are assigned.",
     skillTitle: "Distribute Skills and choose Tag Skills",
     skillHelp: "Assign starting Skill ranks equal to INT + 9. At level 1, base rank + Tag (+2) may not exceed 3. Then choose all Tag Skills allowed by your Origin; each Tag grants its starting items.",
     skillPoints: "Skill points",
@@ -63,7 +63,7 @@ export const CREATION_COPY = {
     summary: "Everything is ready. Origin and Tag Skill items will be added to Inventory automatically when the character is created.",
     needOrigin: "Choose an Origin and its starting equipment first.",
     needTraits: "Choose all required Origin traits.",
-    needSpecial: "Assign exactly 40 S.P.E.C.I.A.L. points.",
+    needSpecial: "Assign exactly all available S.P.E.C.I.A.L. points.",
     needSkills: "Assign exactly INT + 9 Skill ranks and all required Tag Skills.",
     needPerk: "Choose one available Perk.",
     available: "Available",
@@ -96,7 +96,7 @@ export const CREATION_COPY = {
     specialHelp: "Распредели доступные очки S.P.E.C.I.A.L., указанное ниже количество учитывает Origin. Каждая характеристика начинает с 5.",
     total: "Всего",
     remaining: "Осталось",
-    specialReady: "Все 40 очков распределены.",
+    specialReady: "Все доступные очки S.P.E.C.I.A.L. распределены.",
     skillTitle: "Распредели навыки и выбери Tag Skills",
     skillHelp: "Распредели стартовые ранги навыков, равные INT + 9. На 1 уровне итоговый ранг с Tag (+2) не может быть выше 3. Затем выбери все доступные Tag Skills.",
     skillPoints: "Очки навыков",
@@ -112,7 +112,7 @@ export const CREATION_COPY = {
     summary: "Всё готово. Предметы Origin и Tag Skills автоматически появятся в инвентаре после создания персонажа.",
     needOrigin: "Сначала выбери Origin и стартовый набор снаряжения.",
     needTraits: "Выбери все обязательные трейты Origin.",
-    needSpecial: "Нужно распределить ровно 40 очков S.P.E.C.I.A.L.",
+    needSpecial: "Нужно распределить все доступные очки S.P.E.C.I.A.L.",
     needSkills: "Нужно распределить ровно INT + 9 рангов навыков и выбрать все обязательные Tag Skills.",
     needPerk: "Выбери один доступный Perk.",
     available: "Доступно",
@@ -145,7 +145,7 @@ export const CREATION_COPY = {
     specialHelp: "Розподіли доступні очки S.P.E.C.I.A.L.; кількість нижче вже враховує Origin. Кожна характеристика починається з 5.",
     total: "Усього",
     remaining: "Залишилось",
-    specialReady: "Усі 40 очок розподілено.",
+    specialReady: "Усі доступні очки S.P.E.C.I.A.L. розподілено.",
     skillTitle: "Розподіли навички та обери Tag Skills",
     skillHelp: "Розподіли стартові ранги навичок, що дорівнюють INT + 9. На 1 рівні підсумковий ранг із Tag (+2) не може бути вищим за 3. Потім обери всі доступні Tag Skills.",
     skillPoints: "Очки навичок",
@@ -161,7 +161,7 @@ export const CREATION_COPY = {
     summary: "Усе готово. Предмети Origin і Tag Skills автоматично з'являться в інвентарі після створення персонажа.",
     needOrigin: "Спочатку обери Origin і стартовий набір спорядження.",
     needTraits: "Обери всі обов'язкові трейти Origin.",
-    needSpecial: "Потрібно розподілити рівно 40 очок S.P.E.C.I.A.L.",
+    needSpecial: "Потрібно розподілити всі доступні очки S.P.E.C.I.A.L.",
     needSkills: "Потрібно розподілити рівно INT + 9 рангів навичок і обрати всі обов'язкові Tag Skills.",
     needPerk: "Обери один доступний Perk.",
     available: "Доступно",
@@ -194,7 +194,7 @@ export const CREATION_COPY = {
     specialHelp: "Rozdziel dostępne punkty S.P.E.C.I.A.L.; liczba poniżej uwzględnia Origin. Każda cecha zaczyna od 5.",
     total: "Razem",
     remaining: "Pozostało",
-    specialReady: "Wszystkie 40 punktów zostało przydzielonych.",
+    specialReady: "Wszystkie dostępne punkty S.P.E.C.I.A.L. zostały przydzielone.",
     skillTitle: "Rozdziel umiejętności i wybierz Tag Skills",
     skillHelp: "Rozdziel początkowe rangi umiejętności równe INT + 9. Na 1. poziomie końcowa ranga z Tag (+2) nie może przekroczyć 3. Następnie wybierz wszystkie dostępne Tag Skills.",
     skillPoints: "Punkty umiejętności",
@@ -210,7 +210,7 @@ export const CREATION_COPY = {
     summary: "Gotowe. Przedmioty z Origin i Tag Skills zostaną automatycznie dodane do ekwipunku po utworzeniu postaci.",
     needOrigin: "Najpierw wybierz Origin i zestaw wyposażenia startowego.",
     needTraits: "Wybierz wszystkie wymagane cechy Origin.",
-    needSpecial: "Przydziel dokładnie 40 punktów S.P.E.C.I.A.L.",
+    needSpecial: "Przydziel wszystkie dostępne punkty S.P.E.C.I.A.L.",
     needSkills: "Przydziel dokładnie INT + 9 rang umiejętności i wybierz wszystkie wymagane Tag Skills.",
     needPerk: "Wybierz jeden dostępny Perk.",
     available: "Dostępne",
@@ -487,6 +487,10 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   const toggleTag = (skillName) => {
     const isTagged = Boolean(skills?.[skillName]?.tagged);
     if (!isTagged && (taggedSkills.length >= tagLimit || forbiddenTags.includes(skillName))) return;
+    const currentRank = Number(skills?.[skillName]?.rank || 0);
+    if (!isTagged && currentRank + 2 > skillFinalRankCap(1, origin?.skillRankLimit)) {
+      // The state update below clamps the base rank first, keeping final rank <= 3 at level 1.
+    }
 
     setSkills((prev) => {
       const becomingTagged = !isTagged;
@@ -535,7 +539,11 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   };
 
   const finish = () => {
-    if (!perkReady || !origin) return;
+    const validLevelOneSkills = SKILL_KEYS.every((key) => skillWithinLevelCap(skills?.[key], {
+      level: 1,
+      originSkillRankLimit: origin?.skillRankLimit,
+    }));
+    if (!perkReady || !origin || !skillsReady || !specialReady || !validLevelOneSkills) return;
     const selectedPerks = perkIds.map((id) => PERKS_LIST.find((entry) => entry.id === id)).filter(Boolean);
     if (selectedPerks.length !== requiredPerkCount) return;
     const originTraitCards = makeOriginTraitCards(originId, selectedTraits, t);
