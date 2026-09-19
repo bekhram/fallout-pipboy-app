@@ -15,6 +15,7 @@ export default function LocalSettlementPanel({character,language='en'}){
   const [activeId,setActiveId]=useState(null);
   const [name,setName]=useState('');
   const [message,setMessage]=useState('');
+  const [importTargetId,setImportTargetId]=useState(null);
   const inputRef=useRef(null);
   useEffect(()=>{const refresh=()=>setSettlements(loadLocalSettlements());window.addEventListener('pip2d20:local-settlements-changed',refresh);return()=>window.removeEventListener('pip2d20:local-settlements-changed',refresh);},[]);
   const active=settlements.find(item=>item.id===activeId)||null;
@@ -34,11 +35,12 @@ export default function LocalSettlementPanel({character,language='en'}){
   }
   async function importNpc(event){
     const file=event.target.files?.[0];event.target.value='';
-    if(!file||!active)return;
+    const targetId=importTargetId;setImportTargetId(null);
+    if(!file||!targetId)return;
     try{
       const parsed=JSON.parse(await file.text());
       const characterData=parsed?.character||parsed?.data||parsed;
-      const next=updateLocalSettlement(settlements,active.id,current=>addNpcToLocalSettlement(current,characterData));
+      const next=updateLocalSettlement(settlements,targetId,current=>addNpcToLocalSettlement(current,characterData));
       setSettlements(next);setMessage(text.imported);
     }catch{setMessage(text.badFile);}
   }
@@ -47,11 +49,12 @@ export default function LocalSettlementPanel({character,language='en'}){
     <h2>{text.title}</h2><p>{text.offline}</p>
     <form className="campaign-world-found" onSubmit={found}><label>{text.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={!name.trim()}>{text.found}</button></form>
     {!settlements.length&&<p>{text.empty}</p>}
+    <input ref={inputRef} type="file" accept=".json,application/json" hidden onChange={importNpc}/>
     <div className="campaign-world-settlements">{settlements.map(s=><div key={s.id} className="pip-panel">
       <strong>⌂ {s.name}</strong><small>{s.settlers?.length||0} NPC · {text.guest}: {(s.settlers||[]).filter(x=>x.guestNpc).length}</small>
-      <div><button type="button" className="pip-btn" onClick={()=>setActiveId(s.id)}>{text.open}</button><button type="button" className="pip-btn" onClick={()=>remove(s.id)}>{text.remove}</button></div>
+      <div><button type="button" className="pip-btn" onClick={()=>setActiveId(s.id)}>{text.open}</button><button type="button" className="pip-btn" onClick={()=>{setImportTargetId(s.id);requestAnimationFrame(()=>inputRef.current?.click());}}>{text.importNpc}</button><button type="button" className="pip-btn" onClick={()=>remove(s.id)}>{text.remove}</button></div>
     </div>)}</div>
-    {!!settlements.length&&<><input ref={inputRef} type="file" accept=".json,application/json" hidden onChange={importNpc}/><button type="button" className="pip-btn" onClick={()=>{setActiveId(settlements[0].id);requestAnimationFrame(()=>inputRef.current?.click());}}>{text.importNpc}</button><p>{text.importHint}</p></>}
+    {!!settlements.length&&<p>{text.importHint}</p>}
     {message&&<p role="status">{message}</p>}
   </section>;
 }
