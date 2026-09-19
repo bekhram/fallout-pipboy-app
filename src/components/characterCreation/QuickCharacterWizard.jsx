@@ -19,6 +19,7 @@ import {
   getTagSkillEquipmentGrant,
 } from "../../data/startingEquipment.js";
 import { getDerivedStats } from "../../utils/characterMath.js";
+import { skillBaseRankCap, skillEffectiveRank, skillWithinLevelCap } from "../../utils/characterCreationRules.js";
 import "./characterCreation.css";
 
 export const CREATION_COPY = {
@@ -43,12 +44,12 @@ export const CREATION_COPY = {
     selectPack: "-- Select equipment pack --",
     equipmentChoices: "Equipment choices",
     specialTitle: "Distribute S.P.E.C.I.A.L.",
-    specialHelp: "You have 40 total S.P.E.C.I.A.L. points. Every attribute starts at 5. Adjust them while respecting your Origin limits.",
+    specialHelp: "Distribute the available S.P.E.C.I.A.L. points shown below. Every attribute starts at 5. Adjust them while respecting your Origin limits.",
     total: "Total",
     remaining: "Remaining",
     specialReady: "All 40 points are assigned.",
     skillTitle: "Distribute Skills and choose Tag Skills",
-    skillHelp: "Assign starting Skill ranks equal to INT + 9. A starting Skill can have up to rank 3. Then choose all Tag Skills allowed by your Origin; each Tag gives +2 in the app and grants its starting items.",
+    skillHelp: "Assign starting Skill ranks equal to INT + 9. At level 1, base rank + Tag (+2) may not exceed 3. Then choose all Tag Skills allowed by your Origin; each Tag grants its starting items.",
     skillPoints: "Skill points",
     tags: "Tag Skills",
     requiredTags: "Required marked Tags",
@@ -67,6 +68,9 @@ export const CREATION_COPY = {
     needPerk: "Choose one available Perk.",
     available: "Available",
     selected: "Selected",
+    flexibleTraitOne: "1 trait selected — choose 1 additional Perk on the final step.",
+    flexibleTraitTwo: "Choose 2 traits, or choose 1 trait and gain 1 additional Perk.",
+    flexiblePerkBonus: "Origin bonus: choose 1 additional Perk because only 1 trait was selected.",
   },
   ru: {
     chooseMode: "СОЗДАТЬ НОВОГО ПЕРСОНАЖА",
@@ -89,12 +93,12 @@ export const CREATION_COPY = {
     selectPack: "-- Выбери набор снаряжения --",
     equipmentChoices: "Выбор предметов",
     specialTitle: "Распредели S.P.E.C.I.A.L.",
-    specialHelp: "Всего доступно 40 очков S.P.E.C.I.A.L. Каждая характеристика начинает с 5. Распредели их с учётом ограничений Origin.",
+    specialHelp: "Распредели доступные очки S.P.E.C.I.A.L., указанное ниже количество учитывает Origin. Каждая характеристика начинает с 5.",
     total: "Всего",
     remaining: "Осталось",
     specialReady: "Все 40 очков распределены.",
     skillTitle: "Распредели навыки и выбери Tag Skills",
-    skillHelp: "Распредели количество стартовых рангов навыков, равное INT + 9. На старте навык может иметь максимум 3 ранга. Затем выбери все Tag Skills, доступные Origin: приложение учитывает +2 и автоматически выдаёт стартовые предметы.",
+    skillHelp: "Распредели стартовые ранги навыков, равные INT + 9. На 1 уровне итоговый ранг с Tag (+2) не может быть выше 3. Затем выбери все доступные Tag Skills.",
     skillPoints: "Очки навыков",
     tags: "Tag Skills",
     requiredTags: "Обязательные отмеченные теги",
@@ -113,6 +117,9 @@ export const CREATION_COPY = {
     needPerk: "Выбери один доступный Perk.",
     available: "Доступно",
     selected: "Выбрано",
+    flexibleTraitOne: "Выбран 1 трейт — на последнем шаге выбери 1 дополнительный перк.",
+    flexibleTraitTwo: "Выбери 2 трейта или 1 трейт и получи 1 дополнительный перк.",
+    flexiblePerkBonus: "Бонус Origin: выбери 1 дополнительный перк, потому что выбран только 1 трейт.",
   },
   uk: {
     chooseMode: "СТВОРИТИ НОВОГО ПЕРСОНАЖА",
@@ -135,12 +142,12 @@ export const CREATION_COPY = {
     selectPack: "-- Обери набір спорядження --",
     equipmentChoices: "Вибір предметів",
     specialTitle: "Розподіли S.P.E.C.I.A.L.",
-    specialHelp: "Усього доступно 40 очок S.P.E.C.I.A.L. Кожна характеристика починається з 5. Розподіли їх з урахуванням обмежень Origin.",
+    specialHelp: "Розподіли доступні очки S.P.E.C.I.A.L.; кількість нижче вже враховує Origin. Кожна характеристика починається з 5.",
     total: "Усього",
     remaining: "Залишилось",
     specialReady: "Усі 40 очок розподілено.",
     skillTitle: "Розподіли навички та обери Tag Skills",
-    skillHelp: "Розподіли кількість стартових рангів навичок, що дорівнює INT + 9. На старті навичка може мати максимум 3 ранги. Потім обери всі Tag Skills, доступні Origin: застосунок врахує +2 та автоматично видасть стартові предмети.",
+    skillHelp: "Розподіли стартові ранги навичок, що дорівнюють INT + 9. На 1 рівні підсумковий ранг із Tag (+2) не може бути вищим за 3. Потім обери всі доступні Tag Skills.",
     skillPoints: "Очки навичок",
     tags: "Tag Skills",
     requiredTags: "Обов'язкові позначені теги",
@@ -159,6 +166,9 @@ export const CREATION_COPY = {
     needPerk: "Обери один доступний Perk.",
     available: "Доступно",
     selected: "Обрано",
+    flexibleTraitOne: "Обрано 1 трейт — на останньому кроці обери 1 додатковий перк.",
+    flexibleTraitTwo: "Обери 2 трейти або 1 трейт і отримай 1 додатковий перк.",
+    flexiblePerkBonus: "Бонус Origin: обери 1 додатковий перк, бо обрано лише 1 трейт.",
   },
   pl: {
     chooseMode: "UTWÓRZ NOWĄ POSTAĆ",
@@ -181,12 +191,12 @@ export const CREATION_COPY = {
     selectPack: "-- Wybierz zestaw wyposażenia --",
     equipmentChoices: "Wybór przedmiotów",
     specialTitle: "Rozdziel S.P.E.C.I.A.L.",
-    specialHelp: "Masz łącznie 40 punktów S.P.E.C.I.A.L. Każda cecha zaczyna od 5. Rozdziel punkty zgodnie z ograniczeniami Origin.",
+    specialHelp: "Rozdziel dostępne punkty S.P.E.C.I.A.L.; liczba poniżej uwzględnia Origin. Każda cecha zaczyna od 5.",
     total: "Razem",
     remaining: "Pozostało",
     specialReady: "Wszystkie 40 punktów zostało przydzielonych.",
     skillTitle: "Rozdziel umiejętności i wybierz Tag Skills",
-    skillHelp: "Rozdziel liczbę początkowych rang umiejętności równą INT + 9. Na starcie umiejętność może mieć maksymalnie 3 rangi. Następnie wybierz wszystkie Tag Skills dostępne dla Origin; aplikacja doliczy +2 i automatycznie doda przedmioty startowe.",
+    skillHelp: "Rozdziel początkowe rangi umiejętności równe INT + 9. Na 1. poziomie końcowa ranga z Tag (+2) nie może przekroczyć 3. Następnie wybierz wszystkie dostępne Tag Skills.",
     skillPoints: "Punkty umiejętności",
     tags: "Tag Skills",
     requiredTags: "Wymagane oznaczone tagi",
@@ -205,6 +215,9 @@ export const CREATION_COPY = {
     needPerk: "Wybierz jeden dostępny Perk.",
     available: "Dostępne",
     selected: "Wybrane",
+    flexibleTraitOne: "Wybrano 1 cechę — na ostatnim kroku wybierz 1 dodatkowy perk.",
+    flexibleTraitTwo: "Wybierz 2 cechy albo 1 cechę i zyskaj 1 dodatkowy perk.",
+    flexiblePerkBonus: "Premia Origin: wybierz 1 dodatkowy perk, ponieważ wybrano tylko 1 cechę.",
   },
 };
 
@@ -386,7 +399,11 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   const skillsReady =
     usedSkillPoints === (Math.max(9, Number(special?.I || 0) + 9)) &&
     taggedSkills.length === tagLimit &&
-    restrictedTaggedCount >= restrictedRequired;
+    restrictedTaggedCount >= restrictedRequired &&
+    SKILL_KEYS.every((key) => skillWithinLevelCap(skills?.[key], {
+      level: 1,
+      originSkillRankLimit: origin?.skillRankLimit,
+    }));
   const requiredPerkCount = 1 + Number(origin?.bonusPerkCount || 0) + flexibleBonusPerkCount;
   const perkReady = perkIds.length === requiredPerkCount;
 
@@ -451,8 +468,11 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   const changeSkillRank = (skillName, delta) => {
     const current = Number(skills?.[skillName]?.rank || 0);
     const isTagged = Boolean(skills?.[skillName]?.tagged);
-    const effectiveLimit = Number(origin?.skillRankLimit || 6);
-    const maxBaseRank = Math.max(0, Math.min(3, effectiveLimit - (isTagged ? 2 : 0)));
+    const maxBaseRank = skillBaseRankCap({
+      level: 1,
+      originSkillRankLimit: origin?.skillRankLimit,
+      tagged: isTagged,
+    });
     const nextRank = Math.max(0, Math.min(maxBaseRank, current + delta));
     if (delta > 0 && usedSkillPoints >= (Math.max(9, Number(special?.I || 0) + 9))) return;
     setSkills((prev) => ({
@@ -470,9 +490,11 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
 
     setSkills((prev) => {
       const becomingTagged = !isTagged;
-      const maxBase = becomingTagged
-        ? Math.max(0, Math.min(3, Number(origin?.skillRankLimit || 6) - 2))
-        : 3;
+      const maxBase = skillBaseRankCap({
+        level: 1,
+        originSkillRankLimit: origin?.skillRankLimit,
+        tagged: becomingTagged,
+      });
       return {
         ...prev,
         [skillName]: {
@@ -620,9 +642,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                       <strong>{copy.traits} ({selectedTraits.length}/{originTraitRequired})</strong>
                       {hasFlexibleTraitPerkChoice && (
                         <div className="pip-logbox" style={{ margin: "8px 0 10px" }}>
-                          {selectedTraits.length === 1
-                            ? "NCR: 1 trait selected — you will choose 1 additional Perk on the final step."
-                            : "NCR: choose 2 traits, or choose 1 trait and gain 1 additional Perk."}
+                          {selectedTraits.length === 1 ? copy.flexibleTraitOne : copy.flexibleTraitTwo}
                         </div>
                       )}
                       <div className="quick-trait-list">
@@ -708,7 +728,8 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
               <div className="quick-special-grid">
                 {SPECIAL_KEYS.map((key) => {
                   const limits = origin?.specialLimits || { min: 1, max: 10 };
-                  const min = Number(limits.min ?? 1);
+                  const originMin = Number(limits.min ?? 1);
+                  const min = key === "L" ? Math.max(4, originMin) : originMin;
                   const max = Number(limits[key] ?? limits.max ?? 10);
                   const value = Number(special[key] || 0);
                   return (
@@ -758,7 +779,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                         <div className="quick-counter compact">
                           <button type="button" className="pip-btn" disabled={Number(skill.rank || 0) <= 0} onClick={() => changeSkillRank(skillName, -1)}>−</button>
                           <strong>{skill.rank || "0"}</strong>
-                          <button type="button" className="pip-btn" disabled={Number(skill.rank || 0) >= Math.max(0, Math.min(3, Number(origin?.skillRankLimit || 6) - (isTagged ? 2 : 0))) || usedSkillPoints >= (Math.max(9, Number(special?.I || 0) + 9))} onClick={() => changeSkillRank(skillName, 1)}>+</button>
+                          <button type="button" className="pip-btn" disabled={Number(skill.rank || 0) >= skillBaseRankCap({ level: 1, originSkillRankLimit: origin?.skillRankLimit, tagged: isTagged }) || usedSkillPoints >= (Math.max(9, Number(special?.I || 0) + 9))} onClick={() => changeSkillRank(skillName, 1)}>+</button>
                         </div>
                         <button
                           type="button"
@@ -766,7 +787,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                           disabled={!isTagged && (taggedSkills.length >= tagLimit || forbiddenTags.includes(skillName))}
                           onClick={() => toggleTag(skillName)}
                         >
-                          TAG +2
+                          TAG +2 · {skillEffectiveRank(skill)}/3
                         </button>
                       </div>
 
@@ -798,7 +819,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 <p>{copy.perkHelp}</p>
                 {flexibleBonusPerkCount > 0 && (
                   <div className="pip-logbox" style={{ marginTop: 8 }}>
-                    NCR origin bonus: because you selected only 1 trait, choose 1 additional Perk.
+                    {copy.flexiblePerkBonus}
                   </div>
                 )}
               </div>
