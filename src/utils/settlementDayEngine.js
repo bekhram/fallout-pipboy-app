@@ -6,6 +6,7 @@ import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
+import { advanceBuildingRepairs } from './settlementRepair.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -105,7 +106,7 @@ export function advanceSettlementDay(input,now=Date.now()){
   const actionResult=resolveResidentActions(input,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
   let settlement=applyNeedsAndDeparture(actionResult.settlement,actionResult.dailyDefenseBonus,now);
-  settlement=collectDailySurplus(settlement,production);settlement=scheduleAttackAtEndOfDay(settlement,now);
+  settlement=collectDailySurplus(settlement,production);settlement=advanceBuildingRepairs(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
   const derived=calculateStaticAttributes(settlement,null,settlement.attributes?.food);
   const stockpile={...normalizeStockpile(settlement.stockpile,settlement.resources?.materials),capacityLbs:derived.stockpileCapacityLbs};
   return {...settlement,livestock:{...(settlement.livestock || {}),brahmin:Math.min(Math.max(0,Number(settlement.livestock?.brahmin || 0)),derived.brahminCapacity)},settlementDay:Math.max(1,Number(settlement.settlementDay || 1)+1),lastDayAt:now,nextDayAt:now+SETTLEMENT_DAY_MS,stockpile,
