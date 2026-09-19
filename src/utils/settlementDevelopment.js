@@ -1,6 +1,7 @@
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { ROOMS } from '../data/settlement/rulebook.js';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../data/settlement/buildings.js';
+import { settlerActionBonus } from './settlementSettlerProfile.js';
 
 export const RESOURCE_KEYS = ['caps', 'common', 'uncommon', 'rare'];
 const TIERS = RESOURCE_KEYS.slice(1);
@@ -66,7 +67,10 @@ export function workerCounts(s, queue = tasks(s)) {
   for (const worker of s.settlers || []) {
     if (worker.settlementAction?.type !== 'build') continue;
     const task = queue.find(t => t.key === assignedKey(worker)) || queue[0];
-    if (task) counts[task.key] += 1;
+    if (task) {
+      const bonus=settlerActionBonus(worker,'build');
+      counts[task.key] += 1 + bonus.skillBonus * 0.25 + (bonus.hasPerk ? 0.25 : 0);
+    }
   }
   return counts;
 }
