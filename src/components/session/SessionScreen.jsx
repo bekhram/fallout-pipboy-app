@@ -223,7 +223,6 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
   const [chatDockTarget, setChatDockTarget] = useState(null);
   const [linkCopied, setLinkCopied] = useState(false);
   const [syncState, setSyncState] = useState(false);
-  const [restoreState, setRestoreState] = useState("idle");
   const [, forceCharacterRefresh] = useState(0);
 
   const mode = session?.mode || "lobby";
@@ -278,29 +277,6 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
     session?.joinSession?.({ code, name });
   };
 
-  const handleRestoreCloud = async () => {
-    if (restoreState === "loading") return;
-    setErrorTarget("host");
-    setRestoreState("loading");
-    setLocalError("");
-    try {
-      const result = await session?.restoreLatestCloudCampaignAndStart?.();
-      if (result?.ok) {
-        onEnterSession?.();
-        setRestoreState("done");
-        return;
-      }
-      const reason = result?.reason || "RESTORE_FAILED";
-      if (reason === "NOT_SIGNED_IN") setLocalError(copy.signInForCloud);
-      else if (reason === "NO_CLOUD_CAMPAIGN") setLocalError(copy.noCloudCampaign);
-      else setLocalError(copy.cloudRestoreFailed);
-      setRestoreState("error");
-    } catch (restoreError) {
-      setLocalError(restoreError?.message || copy.cloudRestoreFailed);
-      setRestoreState("error");
-    }
-  };
-
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(sessionCode);
@@ -347,10 +323,10 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
     return <SessionLobby session={session} form={form} onEnterSession={onEnterSession} language={i18n.resolvedLanguage || i18n.language} copy={copy}
       onBack={onBack} onNavigate={onNavigateMenu || onBack}
       onHost={()=>{setErrorTarget("host");setLocalError("");onEnterSession?.();session?.startHost?.();}}
-      onRestore={handleRestoreCloud} onJoin={handleJoin}
+      onJoin={handleJoin}
       joinCode={joinCode} onCode={value=>{setJoinCode(normalizeSessionCode(value));setLocalError("");}}
       playerName={playerName} onName={value=>{setPlayerName(value);setLocalError("");}}
-      busy={restoreState === "loading"} error={error} errorTarget={errorTarget}
+      busy={false} error={error} errorTarget={errorTarget}
       shareCode={shareCode.length === SESSION_CODE_LENGTH ? shareCode : ""}
       onShare={handleShareLink} onCopy={handleCopyLink} linkCopied={linkCopied}/>;
   }
