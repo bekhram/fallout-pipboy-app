@@ -1,46 +1,41 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-const root = new URL('../',import.meta.url);
-const read = path => readFileSync(new URL(path,root),'utf8');
+const root=new URL('../',import.meta.url);
+const read=path=>readFileSync(new URL(path,root),'utf8');
 
-test('personal map opens the existing campaign flow, not a second settlement store',()=>{
+test('personal map opens standalone offline settlements instead of campaign settlement flow',()=>{
   const map=read('src/components/map/MapScreen.jsx');
-  assert.match(map,/<CampaignPanel\b[^>]*\bworldOnly\b/);
-  assert.doesNotMatch(map,/useSettlementStorage|createSettlement|onUpdate=|<SettlementScreen\b/);
-  assert.equal(existsSync(new URL('src/hooks/useSettlementStorage.js',root)),false);
-  const grid=read('src/components/map/MapGrid.jsx');
-  assert.doesNotMatch(grid,/useSettlementStorage|settlementStore|handleSettlementAction|<SettlementScreen\b|pip-map-settlement-button/);
-  assert.match(grid,/<PhaserMapViewport\b/);
-  assert.match(grid,/<CombatAwareLocalGmChat\b/);
+  assert.match(map,/<OfflineSettlementHub\b/);
+  assert.doesNotMatch(map,/<CampaignPanel\b|worldOnly|signInWithGoogle|campaignRequest|Firestore/i);
+  const hub=read('src/components/settlement/OfflineSettlementHub.jsx');
+  assert.match(hub,/offlineSettlementStore/);
+  assert.match(hub,/<SettlementScreen\b/);
+  assert.doesNotMatch(hub,/CampaignPanel|useCampaignWorld|campaignRequest|signInWithGoogle|firebase|firestore/i);
+  const store=read('src/utils/offlineSettlementStore.js');
+  assert.match(store,/indexedDB\.open\(DB_NAME,1\)/);
+  assert.doesNotMatch(store,/fetch\(|campaignRequest|firebase|firestore/i);
 });
-test('no runtime module still imports the retired local store',()=>{
-  function visit(url){for(const item of readdirSync(url,{withFileTypes:true})){
-    const next=new URL(item.name+(item.isDirectory()?'/':''),url);
-    if(item.isDirectory())visit(next);
-    else if(/\.(js|jsx|ts|tsx)$/.test(item.name))assert.doesNotMatch(readFileSync(next,'utf8'),/(?:from\s*|import\s*\()["'][^"']*useSettlementStorage/);
-  }}
-  for(const dir of ['src/','server/','api/'])if(existsSync(new URL(dir,root)))visit(new URL(dir,root));
-});
-test('offline shared entry does not mount the lobby poller; both paths keep permission guards',()=>{
-  const wrapper=read('src/components/campaign/CampaignPanel.jsx');
-  assert.match(wrapper,/worldOnly\s*=\s*false/);
-  assert.match(wrapper,/worldOnly \|\| offline \? <CampaignOfflineHub/);
-  assert.doesNotMatch(wrapper,/setInterval|campaignRequest/);
-  const lobby=read('src/components/campaign/CampaignPanelOnline.jsx');
-  assert.match(lobby,/if\(worldOnly\|\|!uid\|\|!campaign\?\.id\)return/);
-  assert.match(lobby,/!worldOnly&&gm&&<div className="campaign-delete"/);
+
+test('persistent campaign world no longer creates or opens gameplay settlements',()=>{
   const world=read('src/components/campaign/CampaignWorldMap.jsx');
-  assert.match(world,/canEdit=\{Boolean\(editable\)&&!localDisabled\}/);
-  assert.match(world,/if\(localDisabled\|\|!editable\)return false/);
-  assert.match(world,/onCommand=\{settlementCommand\}/);
-  assert.match(world,/if\(!personalReady\)return false/);
-  assert.match(world,/canSpend\(active, actor\)/);
-  const controller=read('src/cloud/campaignOfflineController.js');
-  assert.match(controller,/isLocalCommand\(input\)/);
-  assert.match(controller,/ONLINE_ACTION_REQUIRED/);
+  assert.doesNotMatch(world,/type:'found'|type:"found"|type:'settlement'|type:"settlement"|<SettlementScreen\b|settlementCommand|PersonalConstructionPanel/);
+  assert.doesNotMatch(world,/campaign-world-settlements|campaign-world-found/);
+  assert.match(world,/<PhaserMapViewport\b/);
 });
+
+test('standalone settlement rendering cannot send cloud writes',()=>{
+  for(const path of [
+    'src/components/settlement/OfflineSettlementHub.jsx',
+    'src/utils/offlineSettlementStore.js',
+    'src/components/settlement/SettlementWorkerActor.js',
+    'src/components/settlement/workerSpriteFrames.js',
+  ]){
+    assert.doesNotMatch(read(path),/campaignRequest|persistentCampaigns|firebase|firestore|\/api\/settlement-sync|fetch\(/i);
+  }
+});
+
 test('bundled sprite is the pinned transparent legacy sheet and loads before actors',()=>{
   const png=readFileSync(new URL('src/assets/settlement/workers/pawn-blue.png',root));
   const hash=createHash('sha1').update(`blob ${png.length}\0`).update(png).digest('hex');
@@ -50,8 +45,18 @@ test('bundled sprite is the pinned transparent legacy sheet and loads before act
   assert.match(map,/load\.spritesheet\(WORKER_TEXTURE,pawnBlue/);
   assert.ok(map.indexOf('load.spritesheet')<map.indexOf('new SettlementResidents'));
 });
-test('sprite rendering cannot send campaign writes or alter storage',()=>{
-  for(const path of ['src/components/settlement/SettlementWorkerActor.js','src/components/settlement/workerSpriteFrames.js']){
-    assert.doesNotMatch(read(path),/campaignRequest|onCommand|localStorage|setInterval|fetch\(/);
+
+test('retired campaign settlement sync remains isolated from the standalone local store',()=>{
+  assert.equal(existsSync(new URL('src/utils/offlineSettlementStore.js',root)),true);
+  function visit(url){
+    for(const item of readdirSync(url,{withFileTypes:true})){
+      const next=new URL(item.name+(item.isDirectory()?'/':''),url);
+      if(item.isDirectory())visit(next);
+      else if(/\.(js|jsx)$/.test(item.name)&&!next.pathname.endsWith('/offlineSettlementStore.js')){
+        const source=readFileSync(next,'utf8');
+        if(/persistentCampaigns|campaignOfflineController/.test(source)) assert.doesNotMatch(source,/from ['"][^'"]*offlineSettlementStore/);
+      }
+    }
   }
+  visit(new URL('src/',root));
 });
