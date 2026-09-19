@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { getDerivedStats } from "../utils/characterMath.js";
-import { sendTelegramEvent } from "../utils/telegramBridge.js";
 import {
   getCampaign,
   deleteCampaignCache,
@@ -157,7 +156,7 @@ function readLastSession() {
       role,
       name: String(parsed?.name || (role === "host" ? "GM" : "Player")).trim().slice(0, 40),
       gmSecret: role === "host" ? String(parsed?.gmSecret || "") : "",
-      campaignId: role === "host" ? String(parsed?.campaignId || "") : "",
+      campaignId: String(parsed?.campaignId || ""),
       autoResume: parsed?.autoResume !== false,
       updatedAt: String(parsed?.updatedAt || ""),
     };
@@ -175,7 +174,7 @@ function writeLastSession(value) {
     role,
     name: String(value?.name || (role === "host" ? "GM" : "Player")).trim().slice(0, 40),
     gmSecret: role === "host" ? String(value?.gmSecret || "") : "",
-    campaignId: role === "host" ? String(value?.campaignId || "") : "",
+    campaignId: String(value?.campaignId || ""),
     autoResume: value?.autoResume !== false,
     updatedAt: new Date().toISOString(),
   };
@@ -822,20 +821,6 @@ export default function useGmAuthoritativeSessionV2(form) {
     try { result = await applyPlayerAction(packet.fromClientId, packet.fromName, action, payload); }
     catch (actionError) { result = { ok: false, error: actionError?.message || "ACTION_FAILED" }; }
 
-    if (
-      action === "dice:result"
-      && result?.ok !== false
-      && payload?.roll
-      && campaignIdRef.current
-    ) {
-      void sendTelegramEvent({
-        type: "dice_roll",
-        campaignId: campaignIdRef.current,
-        character: String(packet.fromName || "Player"),
-        result: payload.roll,
-      });
-    }
-
     await relayToPlayer(packet.fromClientId, "action:result", { requestId, ...result });
   };
 
@@ -862,6 +847,18 @@ export default function useGmAuthoritativeSessionV2(form) {
     if (!state || typeof state !== "object") return;
     setPresenceState(state);
     setSessionCode(normalizeSessionCode(state.code || codeRef.current));
+    const roomCampaignId = String(state.campaignId || "").trim();
+    if (modeRef.current === "player" && roomCampaignId) {
+      campaignIdRef.current = roomCampaignId;
+      setCampaignId(roomCampaignId);
+      rememberSession({
+        role: "player",
+        code: normalizeSessionCode(state.code || codeRef.current),
+        name: nameRef.current || getCharacterName(formRef.current) || "Player",
+        campaignId: roomCampaignId,
+        autoResume: true,
+      });
+    }
     if (modeRef.current === "host") {
       const onlineIds = new Set((state.players || []).filter((player) => player.online !== false).map((player) => player.clientId));
       for (const id of onlineIds) if (!knownPresenceRef.current.has(id)) sendManifestToPlayer(id);
@@ -914,6 +911,21 @@ export default function useGmAuthoritativeSessionV2(form) {
     if (currentMode === "host") {
       rememberSession({ role: "host", code: codeRef.current, name: nameRef.current || "GM",
         gmSecret: gmSecretRef.current, campaignId: campaignIdRef.current });
+    } else {
+      const resumedCampaignId = String(
+        response?.campaignId || response?.state?.campaignId || campaignIdRef.current || ""
+      ).trim();
+      if (resumedCampaignId) {
+        campaignIdRef.current = resumedCampaignId;
+        setCampaignId(resumedCampaignId);
+        rememberSession({
+          role: "player",
+          code: codeRef.current,
+          name: nameRef.current || getCharacterName(formRef.current) || "Player",
+          campaignId: resumedCampaignId,
+          autoResume: true,
+        });
+      }
     }
     if (response.state) applyPresence(response.state);
     setStatus("online");
@@ -1089,9 +1101,14 @@ export default function useGmAuthoritativeSessionV2(form) {
       setError(socketError(response?.error));
       return false;
     }
+    const joinedCampaignId = String(response?.campaignId || response?.state?.campaignId || "").trim();
+    if (joinedCampaignId) {
+      campaignIdRef.current = joinedCampaignId;
+      setCampaignId(joinedCampaignId);
+    }
     if (response.state) applyPresence(response.state);
     setStatus("online");
-    rememberSession({ role: "player", code: safeCode, name: safeName });
+    rememberSession({ role: "player", code: safeCode, name: safeName, campaignId: joinedCampaignId });
     const profile = await loadPlayerTokenProfile(clientIdRef.current, safeName).catch(() => playerProfileRef.current);
     if (epoch !== sessionEpochRef.current) return false;
     playerProfileRef.current = profile;
