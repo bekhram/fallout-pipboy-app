@@ -17,7 +17,7 @@ export function workplaceState(building) {
   if (building.powered === false) return 'unpowered';
   return 'active';
 }
-const cropCount = building => Array.isArray(building?.crops) ? building.crops.length : 0;
+const cropCount = building => Array.isArray(building?.crops) ? building.crops.length : nonnegative(building?.effects?.cropSlots);
 export function workplaceCapacity(building) {
   const action = workplaceAction(building);
   if (action === 'tend_crops') return Math.ceil(cropCount(building) / 6);
