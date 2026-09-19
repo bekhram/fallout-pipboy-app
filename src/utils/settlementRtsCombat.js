@@ -132,7 +132,7 @@ function structureApproach(state,enemy,structure){
 function chooseBreachTarget(state,enemy){
   let best=null;
   for(const structure of state.structures.filter(item=>item.alive&&item.kind!=='turret')){
-    const approach=structureApproach(state,enemy);if(!approach)continue;
+    const approach=structureApproach(state,enemy,structure);if(!approach)continue;
     const score=approach.path.length+(structure.kind==='gate'?-8:0);
     if(!best||score<best.score)best={structure,approach,score};
   }
