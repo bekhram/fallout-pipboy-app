@@ -46,6 +46,7 @@ export default function InjuryPanel({
   derived,
   onToggle,
   onArmorChange,
+  onArmorStatusCycle,
   survivalConditions = [],
 }) {
   const { t, i18n } = useTranslation();
@@ -92,42 +93,11 @@ export default function InjuryPanel({
   const activeVaultBoyMode = vaultBoyMode === "powerArmor" && !hasPowerArmor ? "armor" : vaultBoyMode;
 
   const handlePartClick = (part) => {
-    const current = injuries?.[part] || "normal";
-    onToggle(part, cycle[current]);
+    onToggle?.(part);
   };
 
-  const handleArmorPartClick = (part) => {
-    const armorPartMap = {
-      head: "Head",
-      torso: "Torso",
-      leftArm: "Left Arm",
-      rightArm: "Right Arm",
-      leftLeg: "Left Leg",
-      rightLeg: "Right Leg",
-    };
-    const slotId = armorPartMap[part];
-    const loadout = armor?._power?.loadout;
-    const condition = getPowerArmorPartCondition(loadout, slotId);
-    if (!condition) return;
-
-    const currentHp =
-      condition.state === "intact"
-        ? Math.max(1, condition.maximum - 1)
-        : condition.state === "damaged"
-        ? 0
-        : condition.maximum;
-    const existing = loadout.slots?.[slotId] || {};
-    const legacySetId = loadout.setId && !["none", "frame", "mixed"].includes(loadout.setId)
-      ? loadout.setId
-      : "";
-    onArmorChange?.("_power", "loadout", {
-      ...loadout,
-      setId: "mixed",
-      slots: {
-        ...(loadout.slots || {}),
-        [slotId]: { ...existing, setId: existing.setId || legacySetId, currentHp },
-      },
-    });
+  const handleArmorPartClick = (part, mode = activeVaultBoyMode) => {
+    onArmorStatusCycle?.(part, mode === "powerArmor" ? "powerArmor" : "armor");
   };
 
   const handleStatusClick = (statusKey) => {

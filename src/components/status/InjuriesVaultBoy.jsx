@@ -285,23 +285,7 @@ export default function InjuriesVaultBoy({
     }});
   };
   const cycleCondition = part => {
-    if (isPowerArmorVisible) {
-      const condition = powerConditions[part];
-      if (!condition) return;
-      changeHp(part, condition.state === "intact" ? Math.max(0, condition.maximum - 1) : condition.state === "damaged" ? 0 : condition.maximum);
-      return;
-    }
-    const key = ARMOR_KEY_MAP[part];
-    const state = normalCondition(part);
-    if (state === "empty") return;
-    const next = {intact: "damaged", damaged: "broken", broken: "intact"}[state];
-    const parts = armor?._condition?.parts || {};
-    const previous = parts[key] || {};
-    const maximum = normalMaximums[key];
-    const current = next === "broken"
-      ? {...maximum, physical: 0, energy: 0, radiation: 0, poison: 0}
-      : next === "intact" ? {...maximum} : {...maximum, ...previous.current};
-    onArmorChange?.("_condition", "parts", {...parts, [key]: {...previous, status: next, current}});
+    onArmorPartClick?.(part, isPowerArmorVisible ? "powerArmor" : "armor");
   };
   const statusIcon = state => <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
     {state === "broken" ? <><path d="M11 3 3 6v6c0 4 3 7 7 9l-2-6 3-4-3-3Z" fill="currentColor"/><path d="m14 3 7 3v6c0 4-3 7-7 9l2-6-3-4 3-3Z" fill="currentColor"/></> : <><path d="m12 2 9 4v6c0 5-5 8-9 10C8 20 3 17 3 12V6Z" fill="none" stroke="currentColor" strokeWidth="2"/>{state === "damaged" && <path d="m13 4-3 7 5 1-4 8" fill="none" stroke="currentColor" strokeWidth="2"/>}</>}

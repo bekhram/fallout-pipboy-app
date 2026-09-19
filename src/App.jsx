@@ -22,7 +22,7 @@ import GamesScreen from "./components/minigames/GamesScreen.jsx";
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 import { parseCSV } from "./utils/csvParser.js"; 
-import { calculatePowerArmorLocations } from "./data/powerArmor.js";
+import { calculatePowerArmorLocations, getPowerArmorPartCondition } from "./data/powerArmor.js";
 import { readCompanionState, writeCompanionState } from "./utils/companionStorage.js";
 import { getConsumableUsePlan, PIPBOY_USE_ITEM_EVENT } from "./utils/consumableEffects.js";
 import { readLastUiState, writeLastUiState } from "./utils/uiViewState.js";
@@ -920,6 +920,102 @@ const updateSkill = (skillName, field, value) =>
       },
     }));
 
+  const cycleBodyArmorState = (partKey, mode) => {
+    const slotMap = {
+      head: "Head",
+      torso: "Torso",
+      leftArm: "Left Arm",
+      rightArm: "Right Arm",
+      leftLeg: "Left Leg",
+      rightLeg: "Right Leg",
+    };
+    const slotId = slotMap[partKey];
+    if (!slotId) return;
+
+    setForm((prev) => {
+      const armorState = prev.armor || {};
+
+      if (mode === "powerArmor") {
+        const loadout = armorState?._power?.loadout;
+        const condition = getPowerArmorPartCondition(loadout, slotId);
+        if (!loadout || !condition) return prev;
+
+        const currentHp =
+          condition.state === "intact"
+            ? Math.max(0, condition.maximum - 1)
+            : condition.state === "damaged"
+              ? 0
+              : condition.maximum;
+        const existing = loadout.slots?.[slotId] || {};
+        const legacySetId =
+          loadout.setId && !["none", "frame", "mixed"].includes(loadout.setId)
+            ? loadout.setId
+            : "";
+
+        return {
+          ...prev,
+          armor: {
+            ...armorState,
+            _power: {
+              ...(armorState._power || {}),
+              loadout: {
+                ...loadout,
+                setId: "mixed",
+                slots: {
+                  ...(loadout.slots || {}),
+                  [slotId]: {
+                    ...existing,
+                    setId: existing.setId || legacySetId,
+                    currentHp,
+                  },
+                },
+              },
+            },
+          },
+        };
+      }
+
+      const parts = armorState?._condition?.parts || {};
+      const previous = parts[slotId] || {};
+      const currentStatus = ["intact", "damaged", "broken"].includes(previous.status)
+        ? previous.status
+        : "intact";
+      const nextStatus = {
+        intact: "damaged",
+        damaged: "broken",
+        broken: "intact",
+      }[currentStatus];
+
+      const current = previous.current && typeof previous.current === "object"
+        ? { ...previous.current }
+        : {};
+      if (nextStatus === "broken") {
+        current.physical = 0;
+        current.energy = 0;
+        current.radiation = 0;
+        current.poison = 0;
+      }
+
+      return {
+        ...prev,
+        armor: {
+          ...armorState,
+          _condition: {
+            ...(armorState._condition || {}),
+            parts: {
+              ...parts,
+              [slotId]: {
+                ...previous,
+                status: nextStatus,
+                current,
+              },
+            },
+          },
+        },
+      };
+    });
+  };
+
   const addWeapon = () => {
     setForm((prev) => ({
       ...prev,
@@ -1172,6 +1268,7 @@ const updateSkill = (skillName, field, value) =>
             onStealthBoyEnd={endStealthBoy}
             onInjuryToggle={updateInjury}
             onArmorChange={updateArmor}
+            onArmorStatusCycle={cycleBodyArmorState}
             hpMax={baseMaxHp}
             hpCurrent={currentHpValue}
             radiationHp={radiationHp}
