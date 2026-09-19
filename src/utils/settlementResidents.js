@@ -6,9 +6,10 @@ export const residentNeeds = resident => !(resident?.isRobot || resident?.kind =
 export const populationNeeds = s => (s.settlers || []).filter(residentNeeds).length;
 export const activeSettlementBuildings = s => (s.buildings || []).filter(b => b.state === 'active' && Number(b.condition ?? 100) > 0 && !b.autoDisabled);
 export function availableSettlementActions(s) {
-  const effects = activeSettlementBuildings(s).map(b => getRulebookBuilding(b.type)?.effects || {});
+  const buildings=activeSettlementBuildings(s);
+  const effects = buildings.map(b => getRulebookBuilding(b.type)?.effects || {});
   return Object.values(SETTLEMENT_ACTIONS).filter(a => a.alwaysAvailable ||
-    (a.id === 'tend_crops' && effects.some(e => e.cropSlots)) ||
+    (a.id === 'tend_crops' && buildings.some(b => getRulebookBuilding(b.type)?.effects?.cropSlots && Array.isArray(b.crops) && b.crops.length>0)) ||
     (a.id === 'business' && effects.some(e => e.store)) ||
     (a.id === 'trade_caravan' && effects.some(e => e.tradeOutpost)));
 }
