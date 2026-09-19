@@ -147,16 +147,19 @@
 
 .quick-special-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(82px, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .quick-special-card {
   display: grid;
   justify-items: center;
   gap: 8px;
+  min-width: 0;
   border: 1px solid rgba(128, 255, 128, 0.28);
-  padding: 10px 6px;
+  padding: 10px 4px;
 }
 
 .quick-special-letter {
@@ -166,7 +169,8 @@
 
 .quick-counter {
   justify-content: center;
-  gap: 8px;
+  gap: 5px;
+  min-width: 0;
 }
 
 .quick-counter strong {
@@ -176,9 +180,10 @@
 }
 
 .quick-counter .pip-btn {
-  min-width: 34px;
-  padding-left: 8px;
-  padding-right: 8px;
+  min-width: 30px;
+  width: 30px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .quick-counter.compact .pip-btn {
@@ -303,7 +308,7 @@
 
 @media (max-width: 800px) {
   .quick-special-grid {
-    grid-template-columns: repeat(4, minmax(72px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -345,4 +350,15 @@
   .quick-create-validation {
     display: none;
   }
+}
+
+@media (min-width: 621px) and (max-width: 1000px) {
+  .quick-create-modal { width: min(900px, calc(100vw - 32px)); }
+}
+@media (max-width: 480px) {
+  .quick-special-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .quick-special-card { padding: 8px 4px; gap: 6px; }
+  .quick-special-letter { font-size: 1.2rem; }
+  .quick-counter strong { min-width: 20px; font-size: .95rem; }
+  .quick-counter .pip-btn { min-width: 32px; width: 32px; min-height: 36px; padding: 4px; }
 }
