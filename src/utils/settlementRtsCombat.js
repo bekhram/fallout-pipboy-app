@@ -174,7 +174,7 @@ function processPatrol(state, unit) {
 }
 
 function processRetreat(state, unit, events) {
-  if (!unit.alive || unit.retreated || unit.hp > 25) return;
+  if (!unit.alive || unit.retreated || unit.command === 'retreat' || unit.hp > 25) return;
   unit.command = 'retreat'; unit.patrol = null; unit.selected = false;
   if (!assignPath(unit, state.world, state.hq.position)) {
     unit.retreated = true; unit.path = [];
