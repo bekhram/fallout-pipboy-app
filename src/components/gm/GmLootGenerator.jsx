@@ -375,7 +375,7 @@ export default function GmLootGenerator({ session = null }) {
     }
     try {
       for (const item of results) await session.sendChat(formatLootChatMessage(item, language));
-      await sendTelegramEvent({ type: "loot", items: results, language });
+      await sendTelegramEvent({ type: "loot", campaignId: session?.campaignId || "", items: results, language });
       setStatus(copy.sent);
     } catch {
       setStatus(copy.localOnly);
