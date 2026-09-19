@@ -55,18 +55,22 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
           this.enrichedBuildings = buildings.map(building => ({
             ...building, footprint: SETTLEMENT_BUILDINGS[building.type]?.footprint || { width: 1, height: 1 },
           }));
+          this.buildingViews = new Map();
           for (const building of this.enrichedBuildings) {
             const def = SETTLEMENT_BUILDINGS[building.type], footprint = building.footprint;
             const key = def?.asset && `rts-building-${def.asset}`;
             if (!key || !this.textures.exists(key)) continue;
-            this.add.image((building.x + footprint.width / 2) * CELL, (building.y + footprint.height / 2) * CELL, key)
+            const image=this.add.image((building.x + footprint.width / 2) * CELL, (building.y + footprint.height / 2) * CELL, key)
               .setDisplaySize(footprint.width * CELL, footprint.height * CELL).setDepth(5);
+            this.buildingViews.set(building.id,image);
           }
 
           this.combat = createRtsCombatState({ buildings: this.enrichedBuildings, workers, size: SIZE });
           this.unitViews = new Map();
           this.enemyViews = new Map();
+          this.structureViews = new Map();
           this.createUnitViews();
+          this.createStructureViews();
           this.hqMarker = this.add.text(this.combat.hq.position.x * CELL, this.combat.hq.position.y * CELL - 22, 'HQ', {
             fontFamily: 'monospace', fontSize: '13px', color: '#d9ffbd', backgroundColor: '#07140ddd', padding: { x: 5, y: 3 },
           }).setOrigin(.5).setDepth(30);
@@ -119,6 +123,16 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
             });
             this.unitViews.set(unit.id, { container, selection, sprite, bar, name, status, index });
           });
+        }
+
+        createStructureViews() {
+          for(const structure of this.combat.structures){
+            const bar=this.add.graphics().setDepth(26);
+            const label=this.add.text(0,0,structure.kind==='turret'?'TURRET':structure.kind==='gate'?'GATE':'', {
+              fontFamily:'monospace',fontSize:'8px',color:'#d9ffbd',backgroundColor:'#07140dcc',padding:{x:2,y:1},
+            }).setOrigin(.5).setDepth(27).setVisible(structure.kind!=='wall');
+            this.structureViews.set(structure.id,{bar,label});
+          }
         }
 
         enemyView(enemy) {
@@ -180,6 +194,25 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
             view.tag.setText(`${enemy.label || 'RAIDER'}${focused ? ` · FOCUS ${focused}` : ''}`);
             this.hpBar(view.bar, enemy.hp, enemy.maxHp, true);
           }
+          for(const structure of this.combat.structures){
+            const image=this.buildingViews.get(structure.buildingId),view=this.structureViews.get(structure.id);
+            const ratio=Math.max(0,Math.min(1,structure.hp/Math.max(1,structure.maxHp)));
+            if(image){
+              image.setAlpha(structure.alive?1:.22);
+              if(!structure.alive)image.setTint(0x5c5042);
+              else if(ratio<.45)image.setTint(0xd99163);
+              else image.clearTint?.();
+            }
+            if(view){
+              const x=(structure.position.x+.5)*CELL,y=(structure.position.y+.5)*CELL;
+              view.bar.setPosition(x,y);view.bar.clear();
+              if(structure.alive){
+                view.bar.fillStyle(0x07140d,.9).fillRect(-18,-31,36,5);
+                view.bar.fillStyle(ratio<.4?0xffa469:0x9fff80,1).fillRect(-17,-30,34*ratio,3);
+              }
+              view.label.setPosition(x,y-39).setVisible(structure.alive&&structure.kind!=='wall');
+            }
+          }
           this.hqMarker?.setText(`HQ ${Math.ceil(this.combat.hq.hp)}/${this.combat.hq.maxHp}`);
         }
 
@@ -197,6 +230,18 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
               const tracer = this.add.graphics().setDepth(40);
               tracer.lineStyle(2, 0xff8b78, .9).lineBetween(from.x, from.y - 15, to.x, to.y - 15);
               this.time.delayedCall(100, () => tracer.destroy());
+            } else if (event.type === 'turret_shot') {
+              const structure=this.combat.structures.find(item=>item.id===event.from);
+              const to=this.enemyViews.get(event.to)?.container;
+              if(!structure||!to)continue;
+              const tracer=this.add.graphics().setDepth(40);
+              tracer.lineStyle(2,0xb7ff9a,.95).lineBetween((structure.position.x+.5)*CELL,(structure.position.y+.5)*CELL-10,to.x,to.y-15);
+              this.time.delayedCall(90,()=>tracer.destroy());
+            } else if (event.type === 'structure_hit' || event.type === 'structure_down') {
+              const structure=this.combat.structures.find(item=>item.id===event.structureId);
+              if(!structure)continue;
+              const flash=this.add.circle((structure.position.x+.5)*CELL,(structure.position.y+.5)*CELL, event.type==='structure_down'?18:10, 0xffa06b, .28).setDepth(41);
+              this.tweens.add({targets:flash,alpha:0,scale:event.type==='structure_down'?2.2:1.5,duration:180,onComplete:()=>flash.destroy()});
             } else if (event.type === 'heal') {
               const from = this.unitViews.get(event.from)?.container, to = this.unitViews.get(event.to)?.container;
               if (!from || !to) continue;
