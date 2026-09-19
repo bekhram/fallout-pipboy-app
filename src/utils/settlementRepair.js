@@ -53,17 +53,24 @@ export function assignRepairWorker(settlement, buildingId, workerId, assigned = 
   const building = (settlement.buildings || []).find((item) => item.id === buildingId);
   const worker = (settlement.settlers || []).find((item) => item.id === workerId);
   if (!building?.repair || !worker) return settlement;
-  const current = new Set(building.repair.workerIds || []);
-  if (assigned) current.add(workerId); else current.delete(workerId);
+  const buildings = (settlement.buildings || []).map((item) => {
+    if (!item.repair) return item;
+    const current = new Set(item.repair.workerIds || []);
+    if (assigned) current.delete(workerId);
+    if (item.id === buildingId) {
+      if (assigned) current.add(workerId); else current.delete(workerId);
+    }
+    return { ...item, repair: { ...item.repair, workerIds: [...current].slice(0, 12) } };
+  });
+  const stillRepairing = buildings.some((item) => item.repair?.workerIds?.includes(workerId));
   return {
     ...settlement,
-    buildings: (settlement.buildings || []).map((item) => item.id === buildingId ? {
-      ...item,
-      repair: { ...item.repair, workerIds: [...current].slice(0, 12) },
-    } : item),
+    buildings,
     settlers: (settlement.settlers || []).map((item) => item.id === workerId ? {
       ...item,
-      status: assigned ? "repairing" : (item.status === "repairing" ? "idle" : item.status),
+      settlementAction: assigned ? null : item.settlementAction,
+      assignedBuildingId: assigned ? null : item.assignedBuildingId,
+      status: stillRepairing ? "repairing" : (item.status === "repairing" ? "idle" : item.status),
     } : item),
   };
 }
