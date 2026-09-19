@@ -77,14 +77,14 @@ export const POWER_OBJECTS = {
   medium_generator: { materials: { common: 11, uncommon: 9 }, constructionDays: 8, effects: { power: 5, noisy: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
   large_generator: { materials: { common: 4, uncommon: 33, rare: 3 }, constructionDays: 12, effects: { power: 10, noisy: true }, perk: { name: "Science!", rank: 1 }, skill: { name: "Science", rank: 3 }, rarity: "uncommon" },
   fusion_reactor: { materials: { common: 2, uncommon: 67, rare: 20 }, constructionDays: 30, effects: { power: 100 }, perk: { name: "Science!", rank: 4 }, skill: { name: "Science", rank: 4 }, rarity: "uncommon" },
-  power_pylon: { materials: { common: 12, uncommon: 4 }, constructionDays: 1, effects: { transmitsPower: true }, skill: { name: "Science", rank: 1 }, rarity: "common" },
-  lights: { materials: { common: 2, uncommon: 2 }, constructionDays: 1, effects: { happiness: 1, requiresPower: 1 }, skill: { name: "Science", rank: 2 }, rarity: "common" },
+  power_pylon: { materials: { common: 12, uncommon: 4 }, constructionDays: 1, effects: { transmitsPower: true }, skill: { name: "Science", rank: 2 }, rarity: "common" },
+  lights: { materials: { common: 2, uncommon: 2 }, constructionDays: 1, effects: { happiness: 1, needsPowerConnection: true }, skill: { name: "Science", rank: 2 }, rarity: "common" },
   radio_beacon: { materials: { common: 14, uncommon: 6, rare: 4 }, constructionDays: 3, effects: { requiresPower: 1, attractsPeople: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
 };
 
 export const DEFENSE_OBJECTS = {
   guard_post: { materials: { common: 14 }, constructionDays: 2, effects: { guardActionDefenseBonus: 1 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
-  siren: { materials: { common: 10, uncommon: 6 }, constructionDays: 2, effects: { requiresPower: 1, defensePerGuardPost: 1 }, skill: { name: "Science", rank: 3 }, rarity: "common" },
+  siren: { materials: { common: 10, uncommon: 6 }, constructionDays: 2, effects: { requiresPower: 1, defensePerGuardPost: 1, transmitsPower: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
   machine_gun_turret: { materials: { common: 8, uncommon: 4, rare: 1 }, constructionDays: 2, effects: { defense: 3 }, skill: { name: "Repair", rank: 3 }, rarity: "common" },
   heavy_machine_gun_turret: { materials: { common: 10, uncommon: 6, rare: 2 }, constructionDays: 3, effects: { defense: 4 }, perk: { name: "Gun Nut", rank: 1 }, skill: { name: "Repair", rank: 4 }, rarity: "uncommon" },
   laser_turret: { materials: { common: 5, uncommon: 13, rare: 9 }, constructionDays: 4, effects: { requiresPower: 1, defense: 4 }, perk: { name: "Science!", rank: 1 }, skill: { name: "Science", rank: 3 }, rarity: "uncommon" },
