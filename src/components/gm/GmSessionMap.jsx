@@ -102,6 +102,12 @@ export default function GmSessionMap(props) {
     try { window.localStorage.setItem(TAB_STORAGE_KEY, activeTab); } catch { /* Private browsing can disable storage. */ }
   }, [activeTab]);
 
+  useEffect(() => {
+    const openBattle = () => selectTab("battle");
+    window.addEventListener("pip2d20:gm-open-battlemap", openBattle);
+    return () => window.removeEventListener("pip2d20:gm-open-battlemap", openBattle);
+  }, []);
+
   useEffect(() => () => {
     if (rulerClearTimerRef.current) window.clearTimeout(rulerClearTimerRef.current);
   }, []);
