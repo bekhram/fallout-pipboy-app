@@ -14,6 +14,7 @@ import { calculateAttackRisk, resolveSettlementAttack, setSettlementDefensePlan 
 import { startSettlementRaidBattle } from "../../utils/settlementRaidBattle.js";
 import { damagedSettlementBuildings, repairCostForBuilding } from "../../utils/settlementRepair.js";
 import { settlementProfit } from "../../utils/settlementProfit.js";
+import { editorHistoryCommand, editorMoveEntry, editorStoreEntry } from "../../utils/settlementEditorHistory.js";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { canAffordRoom, canAffordRulebookBuilding, createConstructionBuilding, createRoomConstruction, getConstructionProgress, getRoomConstructionProgress, getSettlementRulebookSnapshot, getStructureRoomCapacity, normalizeStockpile, payRoomCost, payRulebookBuildingCost } from "../../utils/settlementDayEngine.js";
 import { getSettlementAsset } from "./settlementAssets.js";
@@ -68,7 +69,17 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   const [heroDraft,setHeroDraft]=useState([]);
   const [battleBusy,setBattleBusy]=useState(false);
   const [battleError,setBattleError]=useState("");
+  const [editorMode,setEditorMode]=useState(false);
+  const [editorBusy,setEditorBusy]=useState(false);
+  const [editorUndo,setEditorUndo]=useState([]);
+  const [editorRedo,setEditorRedo]=useState([]);
   const ui=({en:{overview:'Overview',title:'Settlement',more:'More',chat:'Chat',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'},ru:{overview:'Обзор',title:'Поселение',more:'Ещё',chat:'Чат',close:'Закрыть панель',choose:'Выберите здание на карте',zoomIn:'Приблизить',zoomOut:'Отдалить'},uk:{overview:'Огляд',title:'Поселення',more:'Ще',chat:'Чат',close:'Закрити панель',choose:'Оберіть будівлю на мапі',zoomIn:'Збільшити',zoomOut:'Зменшити'},pl:{overview:'Przegląd',title:'Osada',more:'Więcej',chat:'Czat',close:'Zamknij panel',choose:'Wybierz budynek na mapie',zoomIn:'Przybliż',zoomOut:'Oddal'}})[language] || {overview:'Overview',title:'Settlement',more:'More',chat:'Chat',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'};
+  const editor=({
+    en:{edit:'EDIT',done:'DONE',undo:'UNDO',redo:'REDO',store:'STORE',selected:'Selected',hint:'Select a building to edit the layout',moveHint:'Tap a free grid position',stored:'Stored from editor',confirmDemolish:'Disassemble this building? This cannot be undone.'},
+    ru:{edit:'РЕДАКТОР',done:'ГОТОВО',undo:'ОТМЕНИТЬ',redo:'ПОВТОРИТЬ',store:'НА СКЛАД',selected:'Выбрано',hint:'Выберите здание для редактирования',moveHint:'Тапните по свободному месту на сетке',stored:'Убрано в склад из редактора',confirmDemolish:'Разобрать это здание? Отменить это действие нельзя.'},
+    uk:{edit:'РЕДАКТОР',done:'ГОТОВО',undo:'СКАСУВАТИ',redo:'ПОВТОРИТИ',store:'НА СКЛАД',selected:'Обрано',hint:'Оберіть споруду для редагування',moveHint:'Торкніться вільного місця на сітці',stored:'Прибрано до складу з редактора',confirmDemolish:'Розібрати цю споруду? Скасувати дію не можна.'},
+    pl:{edit:'EDYTUJ',done:'GOTOWE',undo:'COFNIJ',redo:'PONÓW',store:'DO MAGAZYNU',selected:'Wybrano',hint:'Wybierz budynek do edycji układu',moveHint:'Dotknij wolnego miejsca na siatce',stored:'Przeniesiono do magazynu z edytora',confirmDemolish:'Rozebrać ten budynek? Tej operacji nie można cofnąć.'}
+  })[language] || {edit:'EDIT',done:'DONE',undo:'UNDO',redo:'REDO',store:'STORE',selected:'Selected',hint:'Select a building to edit the layout',moveHint:'Tap a free grid position',stored:'Stored from editor',confirmDemolish:'Disassemble this building? This cannot be undone.'};
   useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=previous;};},[]);
   useEffect(()=>{if(!onCommand)return;const root=document.getElementById("root"),focused=document.activeElement;const previous=root?.inert;if(root)root.inert=true;return()=>{if(root)root.inert=previous;if(focused?.isConnected)focused.focus?.();};},[Boolean(onCommand)]);
   useEffect(()=>{const close=event=>{if(event.key==='Escape')setPanelOpen(false);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[]);
