@@ -243,3 +243,28 @@
 .sheet-armor-hp input::-webkit-inner-spin-button,.sheet-armor-hp input::-webkit-outer-spin-button { -webkit-appearance:none; margin:0; }
 .sheet-armor-status { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border:0; border-radius:4px; background:transparent; }
 .sheet-armor-status.is-intact { color:#99ef91; }.sheet-armor-status.is-damaged { color:#f0d65b; }.sheet-armor-status.is-broken { color:#ff7466; }.sheet-armor-status.is-empty { color:var(--sheet-text); }
+
+/* Compact status quick actions: Luck + Stimpak only. */
+.sheet-quick-grid--compact { grid-template-columns: minmax(180px,.65fr) minmax(320px,1.35fr); align-items: stretch; }
+.sheet-quick-grid--compact .sheet-luck-action { grid-column: auto; justify-content: center; min-height: 100%; }
+.sheet-stim-action { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 8px; align-items: center; border: 1px solid var(--sheet-line); border-radius: 6px; padding: 10px; background: rgba(13,48,22,.5); color: var(--sheet-bright); }
+.sheet-stim-action__title { display:flex; align-items:center; gap:7px; white-space:nowrap; }
+.sheet-stim-action__title svg { width:20px; }
+.sheet-stim-mode { display:flex; min-width:0; }
+.sheet-stim-mode button,.sheet-stim-use { min-height:36px; border:1px solid var(--sheet-line); background:#061b0c; color:var(--sheet-text); padding:6px 9px; font:inherit; font-size:11px; }
+.sheet-stim-mode button:first-child { border-radius:4px 0 0 4px; }
+.sheet-stim-mode button:last-child { border-radius:0 4px 4px 0; border-left:0; }
+.sheet-stim-mode button.is-active { background:var(--sheet-bright); color:#03200d; }
+.sheet-stim-select { min-width:0; height:36px; border:1px solid var(--sheet-line); border-radius:4px; background:#03160b; color:var(--sheet-bright); font:inherit; padding:0 8px; }
+.sheet-stim-use { border-radius:4px; color:var(--sheet-bright); }
+.sheet-stim-use:disabled { opacity:.45; }
+.sheet-stim-empty { min-height:36px; display:flex; align-items:center; padding:0 8px; color:var(--sheet-text); border:1px dashed var(--sheet-line); border-radius:4px; font-size:11px; }
+@media(max-width:899px) {
+  .sheet-quick-grid--compact { grid-template-columns:1fr; }
+  .sheet-quick-grid--compact .sheet-luck-action { grid-column:1; min-height:48px; }
+  .sheet-stim-action { grid-template-columns:1fr; }
+  .sheet-stim-action__title { justify-content:center; }
+  .sheet-stim-mode { display:grid; grid-template-columns:1fr 1fr; }
+  .sheet-stim-mode button { border-radius:4px !important; border:1px solid var(--sheet-line) !important; }
+  .sheet-stim-select,.sheet-stim-use { width:100%; }
+}
