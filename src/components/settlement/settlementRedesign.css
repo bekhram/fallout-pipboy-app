@@ -48,7 +48,7 @@
  .settlement-v2.is-panel-open .settlement-right-panel {display:block;}
  .settlement-v2 .settlement-panel-close {display:flex;position:sticky;top:0;margin-left:auto;float:right;width:38px;min-height:38px;z-index:2;font-size:23px;background:#061c10;}
  .settlement-v2 .settlement-building-hero {height:85px;width:100px;float:left;margin-right:12px;}.settlement-v2 .settlement-selected-card {clear:both;}
- .settlement-mobile-nav {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:absolute;bottom:0;left:0;right:0;padding:5px 4px calc(5px + env(safe-area-inset-bottom));background:#03150d;border-top:1px solid #42694e;z-index:15;}
+ .settlement-mobile-nav {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:absolute;bottom:0;left:0;right:0;padding:5px 4px calc(5px + env(safe-area-inset-bottom));background:#03150d;border-top:1px solid #42694e;z-index:15;}
  .settlement-mobile-nav button {display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-height:52px;min-width:0;padding:4px 0;border:0;border-radius:5px;background:none;color:inherit;font:inherit;font-size:9px;}.settlement-mobile-nav button.is-active {background:#173b29;color:#adf7b9;}
  .settlement-v2 .settlement-build-menu {grid-template-columns:repeat(3,minmax(0,1fr));}.settlement-v2 .settlement-build-menu small {font-size:10px;}
 }
@@ -90,4 +90,10 @@
  .settlement-v2.is-shared-settlement .settlement-build-menu button{grid-template-rows:48px auto auto;padding:5px}
  .settlement-v2.is-shared-settlement .settlement-build-menu__preview,
  .settlement-v2.is-shared-settlement .settlement-build-menu__preview img{height:48px}
+}
+
+.settlement-brand .settlement-chat-button{margin-left:0}
+@media(max-width:560px){
+ .settlement-mobile-nav button{font-size:8px}
+ .settlement-brand .settlement-chat-button{width:38px;min-height:38px}
 }
