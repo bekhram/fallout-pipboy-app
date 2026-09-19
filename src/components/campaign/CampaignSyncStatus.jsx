@@ -4,7 +4,7 @@ import { offlineCopy, offlineError } from './offlineCopy.js';
 import { worldCopy, worldError } from './worldCopy.js';
 import './campaignOffline.css';
 
-export default function CampaignSyncStatus({ world, language, authError = '', compact = false }) {
+export default function CampaignSyncStatus({ world, language, authError = '', compact = false, extra = null }) {
   const c = offlineCopy(language), [persistence, setPersistence] = useState('');
   const stamp = value => value ? new Date(value).toLocaleString(language === 'uk' ? 'uk-UA' : language) : c.never;
   const error = world.error || authError;
@@ -28,6 +28,7 @@ export default function CampaignSyncStatus({ world, language, authError = '', co
           {['SIGN_IN_REQUIRED', 'AUTH_CHANGED'].includes(error) && <button type="button" className="pip-btn" onClick={() => signInWithGoogle().catch(() => {})}>{c.signIn}</button>}
           {!!world.conflicts.length && <p role="alert">{c.conflict}</p>}
           <p className="campaign-offline-scope">{c.shortScope}</p>
+          {extra ? <div className="campaign-offline-extra">{extra}</div> : null}
           {!!rejected.length && <details className="campaign-offline-review"><summary>{c.review} · {rejected.length} {c.rejected.toLowerCase()}</summary>{rejected.slice(0, 10).map(entry => <p key={entry.requestId}>{c.rejected} #{entry.sequence || entry.requestId.slice(0, 8)}: {offlineError(entry.error, language, worldError(entry.error, worldCopy(language)))}</p>)}</details>}
         </div>
       </details>

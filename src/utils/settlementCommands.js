@@ -7,6 +7,7 @@ import { ROOMS, SETTLEMENT_ACTIONS } from '../data/settlement/rulebook.js';
 import { createConstructionBuilding, createRoomConstruction, payRulebookBuildingCost, payRoomCost, getStructureRoomCapacity } from './settlementDayEngine.js';
 import { linkSettlementAttackBattle, resolveSettlementAttack, setSettlementDefensePlan } from './settlementAttackEngine.js';
 import { assignRepairWorker, startBuildingRepair } from './settlementRepair.js';
+import { claimSettlementProfit } from './settlementProfit.js';
 
 export function applySettlementCommand(settlement, character, actor, command, now = Date.now()) {
   let s = dev.advanceConstruction(settlement, now);
@@ -16,6 +17,10 @@ export function applySettlementCommand(settlement, character, actor, command, no
     const result = dev.deposit(s, character, c.amounts || {}, now);
     if (result.error) fail(result.error);
     return result;
+  }
+  if (c.type === 'claimProfit') {
+    if (!dev.canSpend(s, actor)) fail('FORBIDDEN');
+    return claimSettlementProfit(s, character, actor, now);
   }
   if (!dev.canSpend(s, actor)) fail('FORBIDDEN');
   const b = s.buildings?.find(item => item.id === c.buildingId);

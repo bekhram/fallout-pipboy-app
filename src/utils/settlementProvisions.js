@@ -1,3 +1,4 @@
+import { accrueSettlementProfit, splitSettlementProfit } from "./settlementProfit.js";
 // Surplus is recorded as generic food/water units until individual items are selected.
 const amount = n => Math.max(0, Math.floor(Number(n) || 0));
 export function provisions(stockpile) {
@@ -17,8 +18,16 @@ export function collectDailySurplus(settlement, stats) {
   // Supplied stock is not new production and cannot generate further surplus.
   const food = Math.max(0, amount(stats.food) - amount(settlement.nextDaySupplies?.food) - stats.needsPeople);
   const water = Math.floor(Math.max(0, amount(stats.water) - amount(settlement.nextDaySupplies?.water) - stats.needsPeople) / 2);
-  return { ...settlement, nextDaySupplies: {},
-    stockpile: { ...settlement.stockpile, provisions: { food: stored.food + food, water: stored.water + water } },
-    lastDaySurplus: { food, water },
+  const foodSplit = splitSettlementProfit(food);
+  const waterSplit = splitSettlementProfit(water);
+  let next = { ...settlement, nextDaySupplies: {},
+    stockpile: { ...settlement.stockpile, provisions: { food: stored.food + foodSplit.reserve, water: stored.water + waterSplit.reserve } },
+    lastDaySurplus: {
+      food, water,
+      reserve: { food: foodSplit.reserve, water: waterSplit.reserve },
+      claimable: { food: foodSplit.claimable, water: waterSplit.claimable },
+    },
   };
+  next = accrueSettlementProfit(next, { food: foodSplit.claimable, water: waterSplit.claimable });
+  return next;
 }

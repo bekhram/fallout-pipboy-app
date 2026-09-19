@@ -148,7 +148,7 @@ export function campaignCommand(original, uid, cmd, now) {
       const actor = { id: uid, name: c.members[uid].name, isGM: gm, campaignId: c.id, deviceId: cmd.deviceId };
       const action = { ...cmd.command, requestId: cmd.requestId };
       if (action.type === 'spender') requireMember(c, action.memberId);
-      if (['build','room','upgrade','deposit'].includes(action.type) && !c.accounts[uid]) throw new Error('CHARACTER_NOT_APPROVED');
+      if (['build','room','upgrade','deposit','claimProfit'].includes(action.type) && !c.accounts[uid]) throw new Error('CHARACTER_NOT_APPROVED');
       let result;
       const settlement=runSimulation(c.settlements[index],now);
       if (isPersonalAction(action)) {

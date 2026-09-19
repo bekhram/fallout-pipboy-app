@@ -92,6 +92,7 @@ export function stealSettlementResources(settlement, percent){
   const p=Math.max(10,Math.min(50,Math.floor(Number(percent)||10)));
   const ratio=p/100;
   const source=settlement.stockpile||{}, mats=source.materials||{}, provisions=source.provisions||{};
+  const claimable=settlement.profit?.claimable||{};
   const stolen={
     percent:p,
     caps:Math.floor(Number(settlement.resources?.caps||0)*ratio),
@@ -101,6 +102,9 @@ export function stealSettlementResources(settlement, percent){
     food:Math.floor(Number(provisions.food||0)*ratio),
     water:Math.floor(Number(provisions.water||0)*ratio),
     foragingItems:Math.floor(Number(source.foragingItems||0)*ratio),
+    claimableCaps:Math.floor(Number(claimable.caps||0)*ratio),
+    claimableFood:Math.floor(Number(claimable.food||0)*ratio),
+    claimableWater:Math.floor(Number(claimable.water||0)*ratio),
   };
   const items=(source.items||[]).map(item=>{
     const quantity=Math.max(0,Number(item.quantity??item.qty??1));
@@ -119,6 +123,11 @@ export function stealSettlementResources(settlement, percent){
         food:Math.max(0,Number(provisions.food||0)-stolen.food),
         water:Math.max(0,Number(provisions.water||0)-stolen.water),
       },foragingItems:Math.max(0,Number(source.foragingItems||0)-stolen.foragingItems),items},
+      profit:{...(settlement.profit||{}),claimable:{
+        caps:Math.max(0,Number(claimable.caps||0)-stolen.claimableCaps),
+        food:Math.max(0,Number(claimable.food||0)-stolen.claimableFood),
+        water:Math.max(0,Number(claimable.water||0)-stolen.claimableWater),
+      }},
     },
     stolen,
   };
@@ -132,6 +141,7 @@ export function simulateSettlementTowerDefense(settlement,attack,{random=Math.ra
   const spawns=spawnPoints(count);
   const hp=enemyHp(attack?.faction,attack?.strength);
   const enemies=spawns.map((pos,i)=>({id:`enemy-${i}`,x:pos.x,y:pos.y,hp,maxHp:hp,alive:true,reached:false}));
+  const enemyStarts=enemies.map(({id,x,y,hp:maxEnemyHp,maxHp})=>({id,x,y,hp:maxEnemyHp,maxHp}));
   let working={...settlement,buildings:(settlement.buildings||[]).map(b=>({...b}))};
   const destroyedWalls=[], rounds=[];
   let breached=0;
@@ -188,7 +198,14 @@ export function simulateSettlementTowerDefense(settlement,attack,{random=Math.ra
     report:{
       mode:"tower_defense",rounds:rounds.length,enemyCount:count,enemiesDefeated:defeated,enemiesBreached:breached,
       turretCount:turrets.length,turretShots:turrets.reduce((s,t)=>s+t.shots,0),turretKills:turrets.reduce((s,t)=>s+t.kills,0),
-      turretDamage:turrets.reduce((s,t)=>s+t.damageDone,0),destroyedWalls,stolen,roundLog:rounds.slice(-10),
+      turretDamage:turrets.reduce((s,t)=>s+t.damageDone,0),destroyedWalls,stolen,
+      visualReplay:{
+        enemyStarts,
+        turrets:turrets.map(({id,type,pos,range,damage})=>({id,type,x:pos.x,y:pos.y,range,damage})),
+        rounds,
+        goals,
+      },
+      roundLog:rounds.slice(-10),
     },
   };
 }
