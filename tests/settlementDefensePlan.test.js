@@ -34,7 +34,7 @@ test("defense plan ignores missing or resolved attacks", () => {
   assert.equal(unchanged, resolved);
 });
 
-test("selected militia contributes to auto defense", () => {
+test("selected militia is cosmetic and does not add tower-defense power", () => {
   const originalRandom = Math.random;
   Math.random = () => 0;
   try {
@@ -42,36 +42,27 @@ test("selected militia contributes to auto defense", () => {
     settlement = setSettlementDefensePlan(settlement, "raid_1", ["a", "b"], 100);
     const resolved = resolveSettlementAttack(settlement, "raid_1", 200);
     const attack = resolved.attacks[0];
-    assert.equal(attack.result, "victory");
-    assert.equal(attack.militiaBonus, 2);
-    assert.equal(attack.defenseScore, 2);
-    assert.equal(attack.enemyScore, 1);
-    assert.equal(attack.battleReport.rounds >= 1, true);
-    assert.equal(attack.battleReport.attackerCount, 2);
-    assert.equal(attack.battleReport.attackersDefeated, 2);
-    assert.equal(attack.battleReport.defendersCommitted, 2);
-    assert.equal(attack.battleReport.defendersInjured.length, 0);
-    assert.equal(attack.battleReport.turretDefense, 0);
+    assert.equal(attack.battleReport.mode, "tower_defense");
+    assert.equal(attack.battleReport.turretCount, 0);
+    assert.equal(attack.battleReport.enemiesBreached > 0, true);
+    assert.equal(attack.battleReport.settlersCosmetic.length, 3);
   } finally {
     Math.random = originalRandom;
   }
 });
 
-
-test("selected heroes contribute to auto defense and appear in report", () => {
+test("selected heroes are retained only as cosmetic participants", () => {
   const originalRandom = Math.random;
   Math.random = () => 0;
   try {
     let settlement = fixture();
-    settlement = setSettlementDefensePlan(settlement, "raid_1", ["a"], [
+    settlement = setSettlementDefensePlan(settlement, "raid_1", [], [
       { clientId: "p1", name: "Hero", level: 10, defense: 2, currentHp: 12, maxHp: 12 },
     ], 100);
     const resolved = resolveSettlementAttack(settlement, "raid_1", 200);
     const attack = resolved.attacks[0];
-    assert.equal(attack.battleReport.heroesCommitted, 1);
-    assert.equal(attack.battleReport.heroBonus, 5);
-    assert.equal(attack.battleReport.heroContributions[0].name, "Hero");
-    assert.equal(attack.defenseScore, 6);
+    assert.deepEqual(attack.battleReport.heroesCosmetic, [{ clientId: "p1", name: "Hero" }]);
+    assert.equal(attack.battleReport.turretCount, 0);
   } finally {
     Math.random = originalRandom;
   }
