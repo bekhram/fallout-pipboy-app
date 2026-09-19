@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import FalloutD20Roller from "./FalloutD20Roller";
-import FalloutD6Roller from "./FalloutD6Roller";
+import FalloutD6Roller from "./FalloutD6Roller";\nimport { sendTelegramEvent } from "../../utils/telegramBridge.js";
 
 let openDiceModalCount = 0;
 
@@ -25,6 +25,21 @@ export default function DiceRollModal({
 
   const [d20LastRoll, setD20LastRoll] = useState(null);
   const [d6LastRoll, setD6LastRoll] = useState(null);
+
+  const reportDiceResult = (result) => {
+    if (!result) return;
+    onDiceResult?.(result);
+    void sendTelegramEvent({
+      type: "dice_roll",
+      character: String(
+        form?.characterName
+        || form?.name
+        || form?.playerName
+        || "Unknown character"
+      ),
+      result,
+    });
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -110,7 +125,7 @@ export default function DiceRollModal({
                     id: Date.now(),
                   });
                 }}
-                onResult={onDiceResult}
+                onResult={reportDiceResult}
               />
             ) : (
               <FalloutD6Roller
@@ -126,7 +141,7 @@ export default function DiceRollModal({
                 currentLuckPoints={currentLuckPoints}
                 onSpendCombatLuck={onSpendCombatLuck}
                 onMarkCombatUse={onMarkCombatUse}
-                onResult={onDiceResult}
+                onResult={reportDiceResult}
                 weaponEffects={[
                   ...(Array.isArray(rollConfig?.weapon?.effects)
                     ? rollConfig.weapon.effects
