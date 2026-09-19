@@ -64,6 +64,19 @@ export function applySettlementCommand(settlement, character, actor, command, no
       unlocked();
       if (b.upgrade || !Number.isInteger(c.x) || !Number.isInteger(c.y) || !dev.canFit(s, b.type, c.x, c.y, b.id)) fail('PLACEMENT');
       s = { ...s, buildings: s.buildings.map(item => item.id === b.id ? { ...item, x: c.x, y: c.y } : item) }; break;
+    case 'store': {
+      unlocked();
+      if (b.state === 'construction' || b.upgrade) fail('USE_CANCEL');
+      const stored = { ...b, x: null, y: null, storedAt: now, storedReason: 'MANUAL_EDITOR' };
+      s = {
+        ...s,
+        buildings: s.buildings.filter(item => item.id !== b.id),
+        storedBuildings: [...(s.storedBuildings || []).filter(item => item.id !== b.id), stored],
+        settlers: s.settlers.map(w => w.assignedBuildingId === b.id || w.settlementAction?.targetBuildingId === b.id || w.settlementAction?.parentBuildingId === b.id
+          ? { ...w, settlementAction: null, assignedBuildingId: null, status: 'idle' } : w),
+      };
+      break;
+    }
     case 'demolish':
       unlocked();
       if (b.state === 'construction' || b.upgrade) fail('USE_CANCEL');
