@@ -1,6 +1,7 @@
 import React,{useCallback,useEffect,useRef,useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import SettlementScreen from './SettlementScreen.jsx';
+import OfflineSupplyLines from './OfflineSupplyLines.jsx';
 import { offlineSettlementStore,subscribeOfflineSettlements } from '../../utils/offlineSettlementStore.js';
 import { applySettlementLeaderProfile } from '../../utils/settlementLeaderRules.js';
 import './offlineSettlement.css';
@@ -94,7 +95,10 @@ export default function OfflineSettlementHub({onBack,character}){
     finally{setBusy(false);}
   }
 
-  if(active)return <SettlementScreen settlement={active} character={character} onUpdate={updateActive} onBack={()=>{setActive(null);void refresh();}} canEdit />;
+  if(active){
+    const supplyControls=<OfflineSupplyLines active={active} settlements={items} language={language} onActiveChange={setActive} onRefresh={refresh}/>;
+    return <SettlementScreen settlement={active} character={character} sharedControls={supplyControls} onUpdate={updateActive} onBack={()=>{setActive(null);void refresh();}} canEdit />;
+  }
 
   return <section className="offline-settlement-hub">
     <header><div><small>{text.offline}</small><h2>⌂ {text.title}</h2><p>{text.desc}</p></div><button type="button" className="pip-action-button" onClick={onBack}>← {text.back}</button></header>
