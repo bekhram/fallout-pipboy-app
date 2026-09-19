@@ -64,9 +64,14 @@ export function assignedKey(worker) {
 export function workerCounts(s, queue = tasks(s)) {
   const counts = Object.fromEntries(queue.map(t => [t.key, 0]));
   for (const worker of s.settlers || []) {
-    if (worker.settlementAction?.type !== 'build') continue;
-    const task = queue.find(t => t.key === assignedKey(worker)) || queue[0];
-    if (task) counts[task.key] += 1;
+    const actions=[worker.settlementAction,worker.bonusSettlementAction].filter(action=>action?.type==='build');
+    for(const action of actions){
+      const key = action.targetRoomId ? `room:${action.parentBuildingId}:${action.targetRoomId}`
+        : action.targetUpgradeId ? `upgrade:${action.targetUpgradeId}`
+        : action.targetBuildingId ? `building:${action.targetBuildingId}` : null;
+      const task = queue.find(t => t.key === key) || queue[0];
+      if (task) counts[task.key] += 1;
+    }
   }
   return counts;
 }
