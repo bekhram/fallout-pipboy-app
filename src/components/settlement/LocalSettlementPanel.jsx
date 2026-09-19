@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import SettlementScreen from './SettlementScreen.jsx';
-import { addNpcToLocalSettlement, createLocalSettlement, loadLocalSettlements, removeLocalSettlement, saveLocalSettlements, updateLocalSettlement } from '../../utils/localSettlements.js';
+import { addNpcToLocalSettlement, createLocalSettlement, loadLocalSettlements, removeGuestNpcFromLocalSettlement, removeLocalSettlement, saveLocalSettlements, updateLocalSettlement } from '../../utils/localSettlements.js';
 
 const COPY={
   en:{title:'LOCAL SETTLEMENTS',offline:'Stored only on this device. No campaign or server connection is used.',name:'Settlement name',found:'FOUND SETTLEMENT',empty:'No local settlement yet.',open:'OPEN',remove:'DELETE',importNpc:'ADD PLAYER CHARACTER AS NPC',importHint:'Import another player character JSON. A local NPC copy will be created; it will not stay linked to that player.',imported:'NPC added',badFile:'Could not import character file.',guest:'Guest NPCs'},
@@ -44,7 +44,7 @@ export default function LocalSettlementPanel({character,language='en'}){
       setSettlements(next);setMessage(text.imported);
     }catch{setMessage(text.badFile);}
   }
-  if(active)return <SettlementScreen settlement={active} onUpdate={updateActive} onBack={()=>setActiveId(null)} canEdit/>;
+  if(active)return <SettlementScreen settlement={active} onUpdate={updateActive} onBack={()=>setActiveId(null)} canEdit onRemoveGuestNpc={workerId=>updateActive(current=>removeGuestNpcFromLocalSettlement(current,workerId))}/>;
   return <section className="pip-panel local-settlement-panel">
     <h2>{text.title}</h2><p>{text.offline}</p>
     <form className="campaign-world-found" onSubmit={found}><label>{text.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={!name.trim()}>{text.found}</button></form>
