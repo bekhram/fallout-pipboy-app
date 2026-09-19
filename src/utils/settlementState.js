@@ -5,6 +5,7 @@ import {
 } from "../data/settlement/buildings.js";
 import { processSettlementAttacks } from "./settlementAttackEngine.js";
 import { processSettlementCommerce } from "./settlementCommerce.js";
+import { populationNeeds } from "./settlementResidents.js";
 import {
   normalizeStockpile,
   processAutomaticSettlementDays,
@@ -57,7 +58,7 @@ function ensureRulebookState(input) {
   const legacy = { ...(settlement.resources || {}) };
   const existingAttributes = settlement.attributes || {};
   const people = Array.isArray(settlement.settlers)
-    ? settlement.settlers.length
+    ? populationNeeds(settlement)
     : Math.max(0, Math.floor(Number(existingAttributes.people ?? legacy.population ?? 4)));
   const migratedHappiness = existingAttributes.happiness ?? legacy.happiness;
   const now = Date.now();
