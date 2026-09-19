@@ -26,16 +26,34 @@ function eligibleDefenderIds(settlement) {
     .map((settler) => settler.id));
 }
 
-export function setSettlementDefensePlan(settlement, attackId, defenderIds = [], now = Date.now()) {
+function normalizeHeroParticipants(heroes = []) {
+  const seen = new Set();
+  return (Array.isArray(heroes) ? heroes : []).map((hero) => {
+    const clientId = String(hero?.clientId || "").trim().slice(0, 120);
+    if (!clientId || seen.has(clientId)) return null;
+    seen.add(clientId);
+    return {
+      clientId,
+      name: String(hero?.name || "Hero").trim().slice(0, 80) || "Hero",
+      level: Math.max(1, Math.min(50, Number(hero?.level || 1))),
+      defense: Math.max(0, Math.min(10, Number(hero?.defense || 0))),
+      currentHp: Math.max(0, Math.min(999, Number(hero?.currentHp || 0))),
+      maxHp: Math.max(0, Math.min(999, Number(hero?.maxHp || 0))),
+    };
+  }).filter(Boolean).slice(0, 12);
+}
+
+export function setSettlementDefensePlan(settlement, attackId, defenderIds = [], heroes = [], now = Date.now()) {
   const eligible = eligibleDefenderIds(settlement);
   const selected = [...new Set(Array.isArray(defenderIds) ? defenderIds : [])]
     .filter((id) => eligible.has(id))
     .slice(0, 50);
+  const heroParticipants = normalizeHeroParticipants(heroes);
   let changed = false;
   const attacks = (settlement.attacks || []).map((attack) => {
     if (attack.id !== attackId || !["warning", "active"].includes(attack.state)) return attack;
     changed = true;
-    return { ...attack, defenderIds: selected, defensePlannedAt: now };
+    return { ...attack, defenderIds: selected, heroParticipants, defensePlannedAt: now };
   });
   return changed ? { ...settlement, attacks } : settlement;
 }
@@ -55,6 +73,15 @@ export function linkSettlementAttackBattle(settlement, attackId, tacticalSceneId
 function militiaDefenseBonus(settlement, attack) {
   const eligible = eligibleDefenderIds(settlement);
   return (attack?.defenderIds || []).filter((id) => eligible.has(id)).length;
+}
+
+function heroDefenseContribution(attack) {
+  const heroes = normalizeHeroParticipants(attack?.heroParticipants || []).filter((hero) => hero.currentHp > 0 || hero.maxHp <= 0);
+  const details = heroes.map((hero) => {
+    const contribution = Math.max(2, Math.min(6, 2 + Math.floor(hero.level / 5) + Math.max(0, hero.defense - 1)));
+    return { ...hero, contribution };
+  });
+  return { total: details.reduce((sum, hero) => sum + hero.contribution, 0), heroes: details };
 }
 
 function damageBuildings(buildings, count, minDamage, maxDamage) {
@@ -93,7 +120,8 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
   if (!attack || attack.state === "resolved") return settlement;
   const stats = calculateSettlementStats(settlement);
   const militiaBonus = militiaDefenseBonus(settlement, attack);
-  const defenseScore = Number(stats.defense || 0) + militiaBonus + Math.floor(Math.random() * 11);
+  const heroDefense = heroDefenseContribution(attack);
+  const defenseScore = Number(stats.defense || 0) + militiaBonus + heroDefense.total + Math.floor(Math.random() * 11);
   const enemyScore = Number(attack.strength || 0) + Math.floor(Math.random() * 11);
   const victory = defenseScore >= enemyScore;
   const resources = { ...(settlement.resources || {}) };
@@ -120,11 +148,19 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
 
   const result = victory ? "victory" : "defeat";
   const turret = turretDefenseContribution(settlement);
+  const heroCasualties = [];
+  if (!victory && heroDefense.heroes.length) {
+    const affected = heroDefense.heroes[Math.floor(Math.random() * heroDefense.heroes.length)];
+    if (affected) {
+      const hpLoss = Math.max(1, Math.min(10, 2 + Math.floor(Math.random() * 9)));
+      heroCasualties.push({ clientId: affected.clientId, name: affected.name, hpLoss, currentHp: affected.currentHp });
+    }
+  }
   const defendersCommitted = (attack.defenderIds || []).filter((id) => eligibleDefenderIds(settlement).has(id)).length;
   const injuredDefenders = settlers.filter((settler) => Number(settler.health ?? 100) < Number((settlement.settlers || []).find((item) => item.id === settler.id)?.health ?? 100)).map((settler) => ({ id: settler.id, name: settler.name, health: settler.health }));
   const attackerCount = Math.max(2, Math.min(8, Math.ceil(Math.max(1, Number(attack.strength || 1)) / 3)));
   const attackersDefeated = victory ? attackerCount : Math.max(0, Math.min(attackerCount - 1, Math.floor(attackerCount * defenseScore / Math.max(1, defenseScore + enemyScore))));
-  const rounds = Math.max(1, Math.min(8, 1 + Math.ceil(Number(attack.strength || 1) / Math.max(1, Number(stats.defense || 0) + militiaBonus + 2))));
+  const rounds = Math.max(1, Math.min(8, 1 + Math.ceil(Number(attack.strength || 1) / Math.max(1, Number(stats.defense || 0) + militiaBonus + heroDefense.total + 2))));
   const battleReport = {
     rounds,
     attackerCount,
@@ -135,6 +171,10 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
     turretDefense: turret.defense,
     baseDefense: Number(stats.defense || 0),
     militiaBonus,
+    heroBonus: heroDefense.total,
+    heroesCommitted: heroDefense.heroes.length,
+    heroContributions: heroDefense.heroes.map(({ clientId, name, contribution, level, defense }) => ({ clientId, name, contribution, level, defense })),
+    heroCasualties,
     defenseScore,
     enemyScore,
     wallDeterrence: Number(attack.wallDeterrence || 0),
