@@ -56,10 +56,8 @@ function formatDice(payload = {}) {
 
   if (result.diceType === "d20") {
     if (result.targetNumber != null) lines.push(`Target: ${number(result.targetNumber)}`);
-    if (result.difficulty != null) lines.push(`Difficulty: ${number(result.difficulty)}`);
     if (result.successes != null) lines.push(`Successes: ${number(result.successes)}`);
     if (result.complications != null) lines.push(`Complications: ${number(result.complications)}`);
-    if (text(result.outcome)) lines.push(`Result: ${text(result.outcome).toUpperCase()}`);
     if (result.hitLocation?.label) lines.push(`Hit: ${text(result.hitLocation.label)}`);
   } else {
     lines.push(`Damage: ${number(result.totalDamage)}`);
