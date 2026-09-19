@@ -7,15 +7,17 @@ export const RULEBOOK_BUILDINGS = {
   brahmin_pen: { materials: { common: 10 }, constructionDays: 2, effects: { brahminCapacity: 2 }, skill: { name: "Survival", rank: 2 }, rarity: "common" },
   water_pump: { materials: { common: 5, uncommon: 1 }, constructionDays: 2, effects: { water: 3 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
   water_purifier: { materials: { common: 19, uncommon: 4 }, constructionDays: 4, effects: { water: 10, requiresPower: 2 }, skill: { name: "Repair", rank: 4 }, rarity: "common" },
-  water_tower: { materials: { common: 25, uncommon: 12 }, constructionDays: 3, effects: { water: 10, requiresPower: 4 }, skill: { name: "Repair", rank: 4 }, rarity: "common" },
+  powered_water_pump: { materials: { common: 25, uncommon: 12 }, constructionDays: 3, effects: { water: 10, requiresPower: 4, looseDirt: true }, skill: { name: "Repair", rank: 4 }, rarity: "common" },
+  industrial_water_purifier: { materials: { common: 36, uncommon: 14 }, constructionDays: 6, effects: { water: 40, requiresPower: 5, requiresWaterPlacement: true }, perk: { name: "Science!", rank: 1 }, skill: { name: "Science", rank: 3 }, rarity: "uncommon" },
+  water_tower: { materials: { common: 25, uncommon: 12 }, constructionDays: 3, effects: { water: 10, requiresPower: 4, looseDirt: true }, skill: { name: "Repair", rank: 4 }, rarity: "common", legacyAlias: true },
 
   windmill: { materials: { common: 15, uncommon: 16 }, constructionDays: 4, effects: { power: 3 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
   generator: { materials: { common: 7, uncommon: 4 }, constructionDays: 5, effects: { power: 3 }, skill: { name: "Science", rank: 2 }, rarity: "common" },
   generator_medium: { materials: { common: 11, uncommon: 9 }, constructionDays: 8, effects: { power: 5, noisy: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
   generator_large: { materials: { common: 4, uncommon: 33, rare: 3 }, constructionDays: 12, effects: { power: 10, noisy: true }, perk: { name: "Science!", rank: 1 }, skill: { name: "Science", rank: 3 }, rarity: "uncommon" },
   fusion_reactor: { materials: { common: 2, uncommon: 67, rare: 20 }, constructionDays: 30, effects: { power: 100 }, perk: { name: "Science!", rank: 4 }, skill: { name: "Science", rank: 4 }, rarity: "uncommon" },
-  power_pylon: { materials: { common: 12, uncommon: 4 }, constructionDays: 1, effects: { transmitsPower: true }, skill: { name: "Science", rank: 1 }, rarity: "common" },
-  lights: { materials: { common: 2, uncommon: 2 }, constructionDays: 1, effects: { happiness: 1, requiresPower: 1 }, skill: { name: "Science", rank: 2 }, rarity: "common" },
+  power_pylon: { materials: { common: 12, uncommon: 4 }, constructionDays: 1, effects: { transmitsPower: true }, skill: { name: "Science", rank: 2 }, rarity: "common" },
+  lights: { materials: { common: 2, uncommon: 2 }, constructionDays: 1, effects: { happiness: 1, needsPowerConnection: true }, skill: { name: "Science", rank: 2 }, rarity: "common" },
   radio_beacon: { materials: { common: 14, uncommon: 6, rare: 4 }, constructionDays: 3, effects: { requiresPower: 1, attractsPeople: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
 
   workshop: { materials: { common: 10, uncommon: 14 }, constructionDays: 2, effects: { crafting: true, craftingType: "weapons" }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Repair", rank: 3 }, rarity: "uncommon", legacyAlias: true },
@@ -56,7 +58,7 @@ export const RULEBOOK_BUILDINGS = {
     perks: [{ name: "Local Leader", rank: 2 }, { name: "Robotics Expert", rank: 2 }],
     skills: [{ name: "Repair", rank: 2 }, { name: "Science", rank: 2 }], rarity: "uncommon",
   },
-  scrap_yard: { materials: { common: 8 }, constructionDays: 1, effects: { improvedScavenging: true }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
+  scrap_yard: { materials: { common: 8 }, constructionDays: 1, effects: { improvedScavenging: true, scavengingRerolls: 3 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
   warehouse: { materials: { common: 24 }, constructionDays: 6, effects: { storageLbs: 300 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
 
   trading_post: {
@@ -92,10 +94,10 @@ export const RULEBOOK_BUILDINGS = {
     perks: [{ name: "Local Leader", rank: 2 }, { name: "Medic", rank: 1 }, { name: "Cap Collector", rank: 1 }],
     skills: [{ name: "Barter", rank: 3 }, { name: "Medicine", rank: 4 }], rarity: "uncommon",
   },
-  caravan_post: { materials: { common: 5 }, constructionDays: 1, effects: { tradeOutpost: true }, rarity: "rare" },
+  caravan_post: { materials: { common: 5 }, constructionDays: 1, effects: { tradeOutpost: true, traderIntervalDays: 7 }, skill: { name: "Speech", rank: 2 }, rarity: "rare" },
 
   guard_post: { materials: { common: 14 }, constructionDays: 2, effects: { guardActionDefenseBonus: 1 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
-  siren: { materials: { common: 10, uncommon: 6 }, constructionDays: 2, effects: { requiresPower: 1, defensePerGuardPost: 1 }, skill: { name: "Science", rank: 3 }, rarity: "common" },
+  siren: { materials: { common: 10, uncommon: 6 }, constructionDays: 2, effects: { requiresPower: 1, defensePerGuardPost: 1, transmitsPower: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
   turret: { materials: { common: 8, uncommon: 4, rare: 1 }, constructionDays: 2, effects: { defense: 3 }, skill: { name: "Repair", rank: 3 }, rarity: "common" },
   machine_gun_turret: { materials: { common: 8, uncommon: 4, rare: 1 }, constructionDays: 2, effects: { defense: 3 }, skill: { name: "Repair", rank: 3 }, rarity: "common" },
   heavy_machine_gun_turret: { materials: { common: 10, uncommon: 6, rare: 2 }, constructionDays: 3, effects: { defense: 4 }, perk: { name: "Gun Nut", rank: 1 }, skill: { name: "Repair", rank: 4 }, rarity: "uncommon" },
