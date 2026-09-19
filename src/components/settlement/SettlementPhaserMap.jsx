@@ -47,7 +47,7 @@ export default function SettlementPhaserMap(props) {
           for(let i=0;i<=24;i++){this.grid.lineBetween(i*CELL,0,i*CELL,WORLD);this.grid.lineBetween(0,i*CELL,WORLD,i*CELL);}
           this.buildingLayer=this.add.container(0,0);
           this.visuals=new SettlementBuildingVisuals(this,this.buildingLayer);
-          this.residents=new SettlementResidents(this);
+          this.residents=new SettlementResidents(this,id=>latest.current.onWorkerSelect?.(id));
           this.badges=new SettlementBuildingBadges(this,id=>{this.down=null;if(!latest.current.placementDef)latest.current.onSelect(id);});
           this.highlight=this.add.graphics();
           this.preview=this.add.graphics();
@@ -67,7 +67,10 @@ export default function SettlementPhaserMap(props) {
             const p=latest.current;
             if(p.placementDef){p.onCell(cell.x,cell.y);return;}
             const building=[...(p.settlement.buildings || [])].reverse().find(b=>{const d=SETTLEMENT_BUILDINGS[b.type];return d && cell.x>=b.x && cell.y>=b.y && cell.x<b.x+d.footprint.width && cell.y<b.y+d.footprint.height;});
-            if(building)p.onSelect(building.id);
+            if(building){p.onSelect(building.id);return;}
+            if(p.selectedWorkerId && !p.paused && this.residents?.moveSelectedTo(cell)){
+              p.onWorkerCommand?.(p.selectedWorkerId,cell);
+            }
           });
           this.input.on('gameout',()=>{this.down=null;latest.current.onHover(null);});
           this.input.on('wheel',(_pointer,_objects,_dx,dy)=>latest.current.onZoom(Math.max(100,Math.min(200,latest.current.zoom+(dy>0?-25:25)))));
@@ -76,7 +79,7 @@ export default function SettlementPhaserMap(props) {
           this.scale.on('resize',this.resize,this);
         }
         update(time,delta) {
-          this.residents?.update(time,delta);
+          if(!latest.current.paused)this.residents?.update(time,delta);
           if (!document.hidden && time >= (this.nextConstructionFrame || 0)) {
             this.nextConstructionFrame=time+1000;
             this.syncConstruction();
@@ -110,7 +113,7 @@ export default function SettlementPhaserMap(props) {
         sync() {
           if(!this.buildingLayer)return;
           const p=latest.current;
-          this.residents.sync(p.settlement,p.language);
+          this.residents.sync(p.settlement,p.language,p.selectedWorkerId);
           if(this.constructionLanguage!==p.language){this.constructionLanguage=p.language;this.constructionSample=0;}
           this.syncConstruction();
           this.highlight.clear();
