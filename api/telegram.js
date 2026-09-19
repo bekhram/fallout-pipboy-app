@@ -154,20 +154,16 @@ export default async function handler(req, res) {
   const campaignId = text(payload.campaignId);
   let chatId = "";
 
-  if (validCampaignId(campaignId)) {
-    const link = await getTelegramLink(campaignId);
-    chatId = text(link?.chatId);
-    if (!chatId) {
-      console.info("telegram_event_skipped", { reason: "campaign_not_connected" });
-      return res.status(200).json({ ok: true, skipped: true, reason: "campaign_not_connected" });
-    }
-  } else {
-    // Backward-compatible fallback while older clients are still cached.
-    chatId = text(process.env.TELEGRAM_CHAT_ID);
-    if (!chatId) {
-      console.info("telegram_event_skipped", { reason: "missing_campaign_id" });
-      return res.status(200).json({ ok: true, skipped: true, reason: "missing_campaign_id" });
-    }
+  if (!validCampaignId(campaignId)) {
+    console.info("telegram_event_skipped", { reason: "missing_campaign_id" });
+    return res.status(200).json({ ok: true, skipped: true, reason: "missing_campaign_id" });
+  }
+
+  const link = await getTelegramLink(campaignId);
+  chatId = text(link?.chatId);
+  if (!chatId) {
+    console.info("telegram_event_skipped", { reason: "campaign_not_connected" });
+    return res.status(200).json({ ok: true, skipped: true, reason: "campaign_not_connected" });
   }
 
   const message = formatTelegramEvent(payload);
