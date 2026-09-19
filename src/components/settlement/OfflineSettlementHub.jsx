@@ -11,7 +11,7 @@ const COPY={
   pl:{title:'OSADY OFFLINE',offline:'TYLKO URZĄDZENIE · BEZ CHMURY',desc:'Rozwój osady jest zapisywany wyłącznie na tym urządzeniu. Kampania, Google, Firestore i synchronizacja nie są potrzebne.',new:'NOWA OSADA',name:'Nazwa osady',create:'UTWÓRZ',open:'OTWÓRZ',day:'Dzień',people:'Mieszkańcy',delete:'USUŃ',empty:'Brak lokalnych osad.',back:'WRÓĆ DO MAPY',error:'Lokalny zapis osad jest niedostępny.',confirm:'Usunąć tę lokalną osadę z urządzenia?'},
 };
 
-export default function OfflineSettlementHub({onBack}){
+export default function OfflineSettlementHub({onBack,character}){
   const {i18n}=useTranslation();
   const language=String(i18n.resolvedLanguage||i18n.language||'en').split('-')[0];
   const text=COPY[language]||COPY.en;
@@ -64,7 +64,8 @@ export default function OfflineSettlementHub({onBack}){
     if(busy||!name.trim())return;
     setBusy(true);setError('');
     try{
-      const created=await offlineSettlementStore.create({name:name.trim()});
+      const leaderCharisma=Math.max(0,Math.min(10,Number(character?.special?.charisma || character?.special?.CHA || 0)));
+      const created=await offlineSettlementStore.create({name:name.trim(),leaderCharisma});
       setName('');setActive(created);
     }catch{setError(text.error);}
     finally{setBusy(false);}
@@ -85,7 +86,7 @@ export default function OfflineSettlementHub({onBack}){
     finally{setBusy(false);}
   }
 
-  if(active)return <SettlementScreen settlement={active} onUpdate={updateActive} onBack={()=>{setActive(null);void refresh();}} canEdit />;
+  if(active)return <SettlementScreen settlement={active} character={character} onUpdate={updateActive} onBack={()=>{setActive(null);void refresh();}} canEdit />;
 
   return <section className="offline-settlement-hub">
     <header><div><small>{text.offline}</small><h2>⌂ {text.title}</h2><p>{text.desc}</p></div><button type="button" className="pip-action-button" onClick={onBack}>← {text.back}</button></header>
