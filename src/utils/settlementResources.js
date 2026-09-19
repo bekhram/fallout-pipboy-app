@@ -49,7 +49,8 @@ export function getTendedCropResult(settlement, workers) {
   const workerCount = Math.max(0, Math.floor(Number(workers || 0)));
   const actionCapacity = workerCount * 6;
   const hasAssignments = (settlement.settlers || []).some(w => w.settlementAction?.type === 'tend_crops');
-  const tendedCrops = hasAssignments ? Math.min(resources.cropSlots, resolveSettlementWorkplaces(settlement).tendedCrops) : Math.min(resources.cropSlots, actionCapacity);
+  const planned = hasAssignments ? resolveSettlementWorkplaces(settlement).tendedCrops : 0;
+  const tendedCrops = Math.min(resources.cropSlots, Math.max(planned, actionCapacity));
   const remainingCapacity = Math.max(0, actionCapacity - tendedCrops);
   const tendedBrahmin = Math.min(resources.brahmin, remainingCapacity);
   const tendedUnits = tendedCrops + tendedBrahmin;
