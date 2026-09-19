@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import CampaignWorldMap from "../campaign/CampaignWorldMap.jsx";
+import LiveSessionWorldMap from "./LiveSessionWorldMap.jsx";
 import "./playerWorkspace.css";
 import { PhaserToken } from "../phaser/PhaserAsset.jsx";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
@@ -25,7 +25,7 @@ function positiveGridSize(value,fallback){const n=Math.floor(Number(value));retu
 
 export default function SessionTacticalMapV3({session,openRequest=0,embedded=false,form=null}){
   const { i18n } = useTranslation();
-  const copy = ({ru:{battle:'Бой',world:'Мир',settlement:'Поселение',back:'Персонаж',effects:'Эффекты',map:'Тактическая карта'},uk:{battle:'Бій',world:'Світ',settlement:'Поселення',back:'Персонаж',effects:'Ефекти',map:'Тактична мапа'},pl:{battle:'Walka',world:'Świat',settlement:'Osada',back:'Postać',effects:'Efekty',map:'Mapa taktyczna'},en:{battle:'Battle',world:'World',settlement:'Settlement',back:'Character',effects:'Effects',map:'Tactical map'}})[String(i18n.resolvedLanguage||i18n.language).slice(0,2)] || {battle:'Battle',world:'World',settlement:'Settlement',back:'Character',effects:'Effects',map:'Tactical map'};
+  const copy = ({ru:{battle:'Бой',world:'Мир',back:'Персонаж',effects:'Эффекты',map:'Тактическая карта'},uk:{battle:'Бій',world:'Світ',back:'Персонаж',effects:'Ефекти',map:'Тактична мапа'},pl:{battle:'Walka',world:'Świat',back:'Postać',effects:'Efekty',map:'Mapa taktyczna'},en:{battle:'Battle',world:'World',back:'Character',effects:'Effects',map:'Tactical map'}})[String(i18n.resolvedLanguage||i18n.language).slice(0,2)] || {battle:'Battle',world:'World',back:'Character',effects:'Effects',map:'Tactical map'};
   const [workspaceTab,setWorkspaceTab]=useState('battle');
   const scene=session?.tacticalScene||null;
   const [open,setOpen]=useState(false);
@@ -171,8 +171,8 @@ export default function SessionTacticalMapV3({session,openRequest=0,embedded=fal
       <div className="session-tactical-player__tools-slot" />
       <div className="session-tactical-player__controls-slot" />
     </footer></div>
-    {workspaceTab!=='battle'&&<div className={`player-workspace__campaign is-${workspaceTab}`}><CampaignWorldMap campaignId={session.campaignId} form={form} settlementsOnly={workspaceTab==='settlement'}/></div>}
-    <nav hidden={embedded} className="player-workspace__nav" aria-label="Campaign"><button type="button" aria-pressed={workspaceTab==='battle'} onClick={()=>setWorkspaceTab('battle')}>◎ {copy.battle}</button><button type="button" aria-pressed={workspaceTab==='world'} onClick={()=>setWorkspaceTab('world')}>◇ {copy.world}</button><button type="button" aria-pressed={workspaceTab==='settlement'} onClick={()=>setWorkspaceTab('settlement')}>⌂ {copy.settlement}</button></nav>
+    {workspaceTab==='world'&&<div className="player-workspace__campaign is-world"><LiveSessionWorldMap session={session}/></div>}
+    <nav hidden={embedded} className="player-workspace__nav" aria-label="Session"><button type="button" aria-pressed={workspaceTab==='battle'} onClick={()=>setWorkspaceTab('battle')}>◎ {copy.battle}</button><button type="button" aria-pressed={workspaceTab==='world'} onClick={()=>setWorkspaceTab('world')}>◇ {copy.world}</button></nav>
   </section><GmBattlemapTools session={session} role="player"/><TacticalSessionHud session={session}/>{dragState?.moved?<div className={`tactical-drag-ghost is-size-${dragState.size}`} style={{left:dragState.x,top:dragState.y}}>{dragState.avatar?<img src={dragState.avatar} alt=""/>:<b>{String(dragState.name||"T").slice(0,1)}</b>}</div>:null}</div>:null;
 
   return overlay&&!embedded&&typeof document!=="undefined"?createPortal(overlay,document.body):overlay;
