@@ -5,7 +5,7 @@ export const SYNC_INTERVAL = 24 * 60 * 60 * 1000;
 export const MAX_BATCH = 32;
 export const MAX_PENDING = 400;
 export const MAX_BATCH_BYTES = 48000;
-export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'priority', 'buildPersonal', 'roomPersonal', 'upgradePersonal', 'placeStored']);
+export const LOCAL_ACTIONS = Object.freeze(['action', 'worker', 'workplace', 'move', 'store', 'priority', 'buildPersonal', 'roomPersonal', 'upgradePersonal', 'placeStored']);
 const id = value => typeof value === 'string' && /^[a-zA-Z0-9_:-]{1,160}$/.test(value);
 const uuid = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{8,100}$/.test(value);
 export const fail = code => { throw new Error(code); };
@@ -33,12 +33,14 @@ export function localCommand(input) {
     }
     return { type:'settlement',settlementId:input.settlementId,command };
   }
-  const required = ['move','placeStored'].includes(c.type) ? ['buildingId'] : c.type === 'priority' ? ['key'] : ['workerId'];
+  const required = ['move','store','placeStored'].includes(c.type) ? ['buildingId'] : c.type === 'priority' ? ['key'] : ['workerId'];
   if (required.some(key => !id(c[key]))) fail('INVALID_COMMAND');
   let command;
   if (['move','placeStored'].includes(c.type)) {
     if (![c.x, c.y].every(v => Number.isInteger(v) && v >= 0 && v < 24)) fail('PLACEMENT');
     command = { type: c.type, buildingId: c.buildingId, x: c.x, y: c.y };
+  } else if (c.type === 'store') {
+    command = { type: c.type, buildingId: c.buildingId };
   } else if (c.type === 'priority') {
     if (![-1, 1].includes(c.direction)) fail('INVALID_COMMAND');
     command = { type: c.type, key: c.key, direction: c.direction };
@@ -67,7 +69,7 @@ export function commandPrecondition(campaign, input) {
   if (c.type === 'buildPersonal') return canonical({ type:c.type,sourceId:c.sourceId,quote:c.quote });
   if (c.type === 'roomPersonal' || c.type === 'upgradePersonal') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
   if (c.type === 'placeStored') return canonical(buildingToken(s.storedBuildings?.find(b => b.id === c.buildingId)));
-  if (c.type === 'move') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
+  if (c.type === 'move' || c.type === 'store') return canonical(buildingToken(s.buildings?.find(b => b.id === c.buildingId)));
   if (c.type === 'priority') return canonical((s.buildings || []).map(b => ({
     id: b.id, state: b.state, priority: b.queuePriority ?? null,
     upgrade: b.upgrade ? { state: b.upgrade.state, priority: b.upgrade.queuePriority ?? null } : null,
