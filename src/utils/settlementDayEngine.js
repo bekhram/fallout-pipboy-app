@@ -5,8 +5,11 @@ import { ROOMS, SETTLEMENT_RULEBOOK } from "../data/settlement/rulebook.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
+import { advanceSettlementCrops } from "./settlementCrops.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
+import { dailyActionTypes } from './settlementOffices.js';
+import { resolveTradeCaravanReturn, startTradeCaravan } from './settlementTrade.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -14,29 +17,41 @@ function randomId(prefix,now=Date.now()){return `${prefix}_${now}_${Math.random(
 function rollCombatDice(count){let total=0,effects=0;const rolls=[];for(let index=0;index<count;index+=1){const die=1+Math.floor(Math.random()*6);rolls.push(die);if(die===1)total+=1;else if(die===2)total+=2;else if(die>=5){total+=1;effects+=1;}}return {total,effects,rolls};}
 export function normalizeStockpile(stockpile={},legacyMaterials=0){
   const legacyCommon=Number(stockpile.common ?? legacyMaterials ?? 0) || 0;
-  return {provisions:provisions(stockpile),capacityLbs:Number(stockpile.capacityLbs || SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs),materials:{common:Number(stockpile.materials?.common ?? legacyCommon) || 0,uncommon:Number(stockpile.materials?.uncommon ?? stockpile.uncommon ?? 0) || 0,rare:Number(stockpile.materials?.rare ?? stockpile.rare ?? 0) || 0},items:Array.isArray(stockpile.items) ? stockpile.items : [],foragingItems:Number(stockpile.foragingItems || 0)};
+  return {
+    provisions:provisions(stockpile),
+    capacityLbs:Number(stockpile.capacityLbs || SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs),
+    materials:{common:Number(stockpile.materials?.common ?? legacyCommon) || 0,uncommon:Number(stockpile.materials?.uncommon ?? stockpile.uncommon ?? 0) || 0,rare:Number(stockpile.materials?.rare ?? stockpile.rare ?? 0) || 0},
+    items:Array.isArray(stockpile.items) ? stockpile.items : [],
+    foragingItems:Number(stockpile.foragingItems || 0),
+    brahminMilk:Number(stockpile.brahminMilk || 0),
+    brahminMeat:Number(stockpile.brahminMeat || 0),
+    fertilizer:Number(stockpile.fertilizer || 0),
+  };
 }
-function canAffordMaterials(settlement,rule){if(!rule)return false;const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);const caps=Number(settlement.resources?.caps || 0);return ["common","uncommon","rare"].every(key=>Number(stockpile.materials[key] || 0)>=Number(rule.materials?.[key] || 0)) && caps>=Number(rule.caps || 0);}
+function canAffordMaterials(settlement,rule){if(!rule)return false;const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);const caps=Number(settlement.resources?.caps || 0);return ["common","uncommon","rare"].every(key=>Number(stockpile.materials[key] || 0)>=Number(rule.materials?.[key] || 0)) && Number(stockpile.fertilizer||0)>=Number(rule.specificMaterials?.fertilizer||0) && caps>=Number(rule.caps || 0);}
 function payCost(settlement,rule){
   if(!rule || !canAffordMaterials(settlement,rule))return settlement;
   const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);const materials={...stockpile.materials};
   for(const key of ["common","uncommon","rare"])materials[key]=Math.max(0,Number(materials[key] || 0)-Number(rule.materials?.[key] || 0));
-  return {...settlement,stockpile:{...stockpile,materials},resources:{...(settlement.resources || {}),caps:Math.max(0,Number(settlement.resources?.caps || 0)-Number(rule.caps || 0)),materials:materials.common}};
+  const fertilizer=Math.max(0,Number(stockpile.fertilizer||0)-Number(rule.specificMaterials?.fertilizer||0));
+  return {...settlement,stockpile:{...stockpile,materials,fertilizer},resources:{...(settlement.resources || {}),caps:Math.max(0,Number(settlement.resources?.caps || 0)-Number(rule.caps || 0)),materials:materials.common}};
 }
+export function canAffordSettlementRule(settlement,rule){return canAffordMaterials(settlement,rule);}
+export function paySettlementRuleCost(settlement,rule){return payCost(settlement,rule);}
 export function canAffordRulebookBuilding(settlement,buildingType){return canAffordMaterials(settlement,getRulebookBuilding(buildingType));}
 export function payRulebookBuildingCost(settlement,buildingType){return payCost(settlement,getRulebookBuilding(buildingType));}
 export function getRoomRule(roomType){return ROOMS?.[roomType] || null;}
 export function canAffordRoom(settlement,roomType){return canAffordMaterials(settlement,getRoomRule(roomType));}
 export function payRoomCost(settlement,roomType){return payCost(settlement,getRoomRule(roomType));}
-export function createRoomConstruction(roomType,now=Date.now()){
-  const rule=getRoomRule(roomType);if(!rule)return null;
-  return {id:randomId("room",now),type:roomType,state:"construction",constructionDaysRequired:Math.max(1,Number(rule.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),createdAt:now};
+export function createRoomConstruction(roomType,now=Date.now(),ruleOverride=null){
+  const rule=ruleOverride || getRoomRule(roomType);if(!rule)return null;
+  return {id:randomId("room",now),type:roomType,state:"construction",constructionDaysRequired:Math.max(1,Number(rule.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule.contractorMode || "normal",createdAt:now};
 }
 export function getRoomConstructionProgress(room){const rule=getRoomRule(room?.type);const required=Math.max(1,Number(room?.constructionDaysRequired || rule?.constructionDays || 1));const progress=Math.max(0,Number(room?.constructionProgressDays || 0));return {progress,required,remaining:Math.max(0,required-progress)};}
 export function getStructureRoomCapacity(building){return Math.max(0,Number(getRulebookBuilding(building?.type)?.effects?.roomCapacity || 0));}
 function isActive(building){return building?.state==="active" && Number(building.condition ?? 100)>0 && !building.autoDisabled;}
 function calculateStaticAttributes(settlement,dailyDefenseBonus=null,foodOverride=null){
-  const people=Array.isArray(settlement.settlers) ? settlement.settlers.length : Math.max(0,Math.floor(Number(settlement.attributes?.people ?? settlement.resources?.population ?? 0)));
+  const people=Array.isArray(settlement.settlers) ? populationNeeds(settlement) : Math.max(0,Math.floor(Number(settlement.attributes?.people ?? settlement.resources?.population ?? 0)));
   const powerGrid=resolveSettlementPower(settlement),resourceGrid=resolveSettlementResources(settlement);
   const base={people,needsPeople:populationNeeds(settlement),food:Math.max(0,Number(foodOverride ?? settlement.attributes?.food ?? settlement.resources?.food ?? 0)),water:Math.max(0,Number(resourceGrid.water || 0)+Number(settlement.activeDaySupplies?.water || 0)),power:Math.max(0,Number(powerGrid.produced || 0)),defense:Math.max(0,Number(dailyDefenseBonus || 0)),beds:0,happiness:clamp(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10,1,20),income:Math.max(0,Number(settlement.attributes?.income ?? settlement.resources?.income ?? 0))};
   let storageBonus=0,noisyCount=0,guardStructures=0,officeCount=0,sirenCount=0,fortificationPoints=0;
@@ -60,36 +75,90 @@ function resolveConstruction(settlement,now){return advanceConstruction(settleme
 function resolveResidentActions(input,now){
   let settlement=resolveConstruction(input,now);
   const settlers=effectiveSettlementResidents(settlement);
-  const actionCounts=settlers.reduce((acc,settler)=>{const type=settler.settlementAction?.type;if(type)acc[type]=(acc[type] || 0)+1;return acc;},{});
-  let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=0,dailyDefenseBonus=0;
+  const activeIds=new Set(settlers.map(settler=>settler.id));
+  const actionCounts=dailyActionTypes(settlement).reduce((acc,entry)=>{
+    if(!activeIds.has(entry.workerId))return acc;
+    const type=entry.action?.type;
+    if(type)acc[type]=(acc[type] || 0)+1;
+    return acc;
+  },{});
+  let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=Math.max(0,Number(settlement.nextDayBrahminFoodBonus||0)),dailyDefenseBonus=0;
+  if(settlement.nextDayBrahminFoodBonus)settlement={...settlement,nextDayBrahminFoodBonus:0};
   const events=[];
+  const communityOrganizerRank=Math.max(0,Math.floor(Number(settlement.leaderRuleProfile?.communityOrganizerRank ?? settlement.leader?.communityOrganizerRank ?? 0)));
   const hunters=Number(actionCounts.hunting_gathering || 0);
-  if(hunters>0){const roll=rollCombatDice(3+Math.max(0,hunters-1));dailyFood+=roll.total;stockpile={...stockpile,foragingItems:Number(stockpile.foragingItems || 0)+roll.effects};events.push({type:"hunting_gathering",workers:hunters,total:roll.total,effects:roll.effects});}
+  if(hunters>0){const roll=rollCombatDice(3+Math.max(0,hunters-1)+communityOrganizerRank);dailyFood+=roll.total;stockpile={...stockpile,foragingItems:Number(stockpile.foragingItems || 0)+roll.effects};events.push({type:"hunting_gathering",workers:hunters,total:roll.total,effects:roll.effects,communityOrganizerDice:communityOrganizerRank});}
   const scavengers=Number(actionCounts.scavenging || 0);
-  if(scavengers>0){const roll=rollCombatDice(3+Math.max(0,scavengers-1));stockpile={...stockpile,materials:{...stockpile.materials,common:Number(stockpile.materials.common || 0)+roll.total,uncommon:Number(stockpile.materials.uncommon || 0)+roll.effects}};events.push({type:"scavenging",workers:scavengers,common:roll.total,uncommon:roll.effects});}
+  if(scavengers>0){
+    let roll=rollCombatDice(3+Math.max(0,scavengers-1)+communityOrganizerRank);
+    const stationCount=(settlement.buildings || []).filter(building=>isActive(building)&&Number(getRulebookBuilding(building.type)?.effects?.scavengingRerolls || 0)>0).length;
+    let rerolls=stationCount*3;
+    if(rerolls>0){
+      const next=[...roll.rolls];
+      for(let index=0;index<next.length&&rerolls>0;index+=1){
+        if(next[index]===3||next[index]===4){next[index]=1+Math.floor(Math.random()*6);rerolls-=1;}
+      }
+      let total=0,effects=0;
+      for(const die of next){if(die===1)total+=1;else if(die===2)total+=2;else if(die>=5){total+=1;effects+=1;}}
+      roll={rolls:next,total,effects};
+    }
+    stockpile={...stockpile,materials:{...stockpile.materials,common:Number(stockpile.materials.common || 0)+roll.total,uncommon:Number(stockpile.materials.uncommon || 0)+roll.effects}};
+    events.push({type:"scavenging",workers:scavengers,common:roll.total,uncommon:roll.effects,stations:stationCount,rolls:roll.rolls});
+  }
   const guards=Number(actionCounts.guard || 0);
-  if(guards>0){const staticStats=calculateStaticAttributes(settlement,0,dailyFood);dailyDefenseBonus=guards+Math.min(staticStats.guardStructures,guards*3);events.push({type:"guard",workers:guards,defense:dailyDefenseBonus});}
+  if(guards>0){const staticStats=calculateStaticAttributes(settlement,0,dailyFood);dailyDefenseBonus=guards+Math.min(staticStats.guardStructures,guards*3)+communityOrganizerRank;events.push({type:"guard",workers:guards,defense:dailyDefenseBonus,communityOrganizerDefense:communityOrganizerRank});}
   const cropWorkers=Number(actionCounts.tend_crops || 0);
   if(cropWorkers>0){const cropResult=getTendedCropResult(settlement,cropWorkers);dailyFood+=cropResult.food;events.push({type:"tend_crops",...cropResult});}
+  if(communityOrganizerRank>0 && (hunters>0 || cropWorkers>0)){
+    dailyFood+=communityOrganizerRank;
+    events.push({type:"community_organizer",food:communityOrganizerRank,defense:guards>0?communityOrganizerRank:0});
+  }
+  const brahmin=Math.max(0,Math.floor(Number(settlement.livestock?.brahmin || 0)));
+  if(brahmin>0){
+    const fertilizerRoll=rollCombatDice(brahmin*2);
+    stockpile={...stockpile,brahminMilk:Number(stockpile.brahminMilk || 0)+brahmin,fertilizer:Number(stockpile.fertilizer || 0)+fertilizerRoll.total};
+    events.push({type:"brahmin_production",brahmin,milk:brahmin,fertilizer:fertilizerRoll.total,rolls:fertilizerRoll.rolls});
+  }
   const businessWorkers=Number(actionCounts.business || 0);
   const workplacePlan=resolveSettlementWorkplaces(settlement);
   const dailyIncome=workplacePlan.income;
   if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome});
   const caravanWorkers=Number(actionCounts.trade_caravan || 0);
-  if(caravanWorkers>0)events.push({type:"trade_caravan",workers:caravanWorkers});
+  if(caravanWorkers>0){
+    const beforeTrip=settlement.trade?.caravanTrip;
+    settlement=startTradeCaravan(settlement,caravanWorkers,Number(settlement.settlementDay || 1));
+    if(!beforeTrip && settlement.trade?.caravanTrip)events.push({type:"trade_caravan",workers:caravanWorkers,returnDay:settlement.trade.caravanTrip.returnDay});
+  }
   const resourceGrid=resolveSettlementResources(settlement);
   const attributes={...(settlement.attributes || {}),food:dailyFood+Number(settlement.nextDaySupplies?.food || 0),water:resourceGrid.water,income:dailyIncome};
-  return {settlement:{...settlement,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile},dailyDefenseBonus,actionEvents:events};
+  return {settlement:{...settlement,activeDaySupplies:settlement.nextDaySupplies || {},activeDayFertilizer:Number(settlement.nextDayFertilizer || 0),nextDayFertilizer:0,attributes,stockpile},dailyDefenseBonus,actionEvents:events};
 }
-function applyNeedsAndDeparture(input,dailyDefenseBonus,now){
-  const stats=calculateStaticAttributes(input,dailyDefenseBonus,input.attributes?.food);let happiness=clamp(stats.happiness,1,20);const failedNeeds=[];
-  for(const key of ["beds","food","water","defense"])if(Number(stats[key] || 0)<Number(stats.needsPeople || 0)){happiness=Math.max(1,happiness-1);failedNeeds.push(key);}
-  let settlers=[...(input.settlers || [])],departed=null;
-  if(populationNeeds(input) && happiness<populationNeeds(input)){departed=[...settlers].reverse().find(residentNeeds);settlers=settlers.filter(w=>w.id!==departed.id);}
-  const attributes={...(input.attributes || {}),people:settlers.length,happiness},events=[];
-  if(failedNeeds.length)events.push({id:randomId("event",now),type:"needs_failed",failedNeeds,createdAt:now});
-  if(departed)events.push({id:randomId("event",now+1),type:"settler_left",settlerId:departed.id,settlerName:departed.name,createdAt:now});
-  return {...input,settlers,attributes,events:[...events,...(input.events || [])].slice(0,100)};
+function applyStartOfDayNeeds(input,now){
+  const stats=calculateStaticAttributes(input,null,input.attributes?.food);
+  let happiness=clamp(stats.happiness,1,20);
+  const failedNeeds=[];
+  for(const key of ["beds","food","water","defense"]){
+    if(Number(stats[key] || 0)<Number(stats.needsPeople || 0)){happiness=Math.max(1,happiness-1);failedNeeds.push(key);}
+  }
+  if(!failedNeeds.length)return input;
+  return {...input,
+    attributes:{...(input.attributes || {}),happiness},
+    resources:{...(input.resources || {}),happiness},
+    events:[{id:randomId("event",now),type:"needs_failed",failedNeeds,createdAt:now},...(input.events || [])].slice(0,100),
+  };
+}
+function applyEndOfDayDeparture(input,now){
+  const people=populationNeeds(input),happiness=clamp(input.attributes?.happiness,1,20);
+  if(!people || happiness>=people)return input;
+  const settlers=[...(input.settlers || [])],departed=[...settlers].reverse().find(residentNeeds);
+  if(!departed)return input;
+  const nextSettlers=settlers.filter(worker=>worker.id!==departed.id);
+  const nextPeople=nextSettlers.filter(residentNeeds).length;
+  return {...input,settlers:nextSettlers,
+    attributes:{...(input.attributes || {}),people:nextPeople},
+    resources:{...(input.resources || {}),population:nextPeople},
+    events:[{id:randomId("event",now+1),type:"settler_left",settlerId:departed.id,settlerName:departed.name,createdAt:now},...(input.events || [])].slice(0,100),
+  };
 }
 function scheduleAttackAtEndOfDay(input,now){
   const unresolved=(input.attacks || []).some(attack=>attack.state==="warning" || attack.state==="active");if(unresolved || now<Number(input.attackRiskBlockedUntil || 0))return input;
@@ -103,9 +172,12 @@ function scheduleAttackAtEndOfDay(input,now){
   return {...input,attackRiskBlockedUntil:startsAt+5*SETTLEMENT_DAY_MS,attacks:[attack,...(input.attacks || [])].slice(0,50),events:[{id:randomId("event",now+1),type:"attack_warning",attackId:attack.id,faction,startsAt,createdAt:now},...(input.events || [])].slice(0,100)};
 }
 export function advanceSettlementDay(input,now=Date.now()){
-  const actionResult=resolveResidentActions(input,now);
+  const cropsAdvanced=advanceSettlementCrops(input,now);
+  const returned=resolveTradeCaravanReturn(cropsAdvanced,Number(cropsAdvanced.settlementDay || 1));
+  const started=applyStartOfDayNeeds(returned,now);
+  const actionResult=resolveResidentActions(started,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
-  let settlement=applyNeedsAndDeparture(actionResult.settlement,actionResult.dailyDefenseBonus,now);
+  let settlement=applyEndOfDayDeparture(actionResult.settlement,now);
   settlement=collectDailySurplus(settlement,production);settlement=advanceBuildingRepairs(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
   const derived=calculateStaticAttributes(settlement,null,settlement.attributes?.food);
   const stockpile={...normalizeStockpile(settlement.stockpile,settlement.resources?.materials),capacityLbs:derived.stockpileCapacityLbs};
@@ -117,10 +189,10 @@ export function advanceSettlementDay(input,now=Date.now()){
 export function processAutomaticSettlementDays(input,now=Date.now()){
   let settlement={...input};if(!Number(settlement.nextDayAt || 0)){const anchor=Number(settlement.lastDayAt || now);settlement.lastDayAt=anchor;settlement.nextDayAt=anchor+SETTLEMENT_DAY_MS;}
   let safety=0;while(now>=Number(settlement.nextDayAt || Infinity) && safety<90){safety+=1;settlement=advanceSettlementDay(settlement,Number(settlement.nextDayAt));}
-  return advanceConstruction(settlement,now);
+  return advanceSettlementCrops(advanceConstruction(settlement,now),now);
 }
-export function createConstructionBuilding({id,type,x,y,now=Date.now()}){
-  const rule=getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule)};
+export function createConstructionBuilding({id,type,x,y,now=Date.now(),ruleOverride=null}){
+  const rule=ruleOverride || getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],...(rule?.effects?.cropSlots?{crops:[]}:{}),startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule?.contractorMode || "normal"};
 }
 export function getConstructionProgress(building){const rule=getRulebookBuilding(building?.type),required=Math.max(1,Number(building?.constructionDaysRequired || rule?.constructionDays || 1)),progress=Math.max(0,Number(building?.constructionProgressDays || 0));return {progress,required,remaining:Math.max(0,required-progress)};}
 export function getSettlementRulebookSnapshot(settlement){return calculateStaticAttributes(settlement,null,settlement.attributes?.food);}

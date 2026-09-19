@@ -1,16 +1,10 @@
-import PersonalConstructionPanel from './PersonalConstructionPanel.jsx';
-import { personalQuote, personalBlockers } from '../../utils/personalConstruction.js';
-import { playerResources, RESOURCE_KEYS } from '../../utils/settlementDevelopment.js';
 import PhaserMapViewport from '../phaser/PhaserMapViewport.jsx';
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import useCampaignWorld from '../../hooks/useCampaignWorld.js';
 import { signInWithGoogle } from '../../cloud/googleAuth.js';
 import { MAP_REGIONS, getMapRegion, getRegionName } from '../../data/map/mapRegions.js';
-import { canSpend } from '../../utils/settlementDevelopment.js';
 import { characterImport } from '../../utils/campaignCharacter.js';
-import SettlementScreen from '../settlement/SettlementScreen.jsx';
 import { worldCopy, worldError } from './worldCopy.js';
 import CampaignSyncStatus from './CampaignSyncStatus.jsx';
 import { offlineCopy } from './offlineCopy.js';
@@ -41,7 +35,7 @@ function routeLine(start, end) {
   return points;
 }
 
-export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, settlementsOnly = false }) {
+export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language;
   const c = worldCopy(language);
@@ -49,14 +43,13 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   const persistent = /^campaign_[a-f0-9]{24}$/.test(campaignId || '');
   const world = useCampaignWorld(persistent ? campaignId : null);
   const { campaign, uid, busy, connected, error, retry, run } = world;
-  const [selected, setSelected] = useState(null), [name, setName] = useState('');
+  const [selected, setSelected] = useState(null);
   const [markerName, setMarkerName] = useState(''), [markerDescription, setMarkerDescription] = useState('');
   const [markerCategory, setMarkerCategory] = useState('note'), [markerVisibility, setMarkerVisibility] = useState('public');
   const [selectedMarkerId, setSelectedMarkerId] = useState(null);
-  const [activeId, setActiveId] = useState(null), [authError, setAuthError] = useState('');
-  const [amounts, setAmounts] = useState({ caps: '', common: '', uncommon: '', rare: '' });
+  const [authError, setAuthError] = useState('');
   const region = getMapRegion(campaign?.worldMap?.regionId);
-  useEffect(() => { setSelected(null); setActiveId(null); setName(''); setMarkerName(''); setMarkerDescription(''); setMarkerCategory('note'); setMarkerVisibility('public'); setSelectedMarkerId(null); }, [campaignId, uid]);
+  useEffect(() => { setSelected(null); setMarkerName(''); setMarkerDescription(''); setMarkerCategory('note'); setMarkerVisibility('public'); setSelectedMarkerId(null); }, [campaignId, uid]);
   useEffect(() => { setSelected(null); setSelectedMarkerId(null); }, [region.id]);
   useEffect(() => {
     if (!campaignId || !uid || !world.refreshWorld) return undefined;
@@ -73,32 +66,8 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   const selectedRoute = validPoint && (point.x !== myPosition.x || point.y !== myPosition.y) ? routeLine(myPosition, point) : [];
   const gm = Boolean(campaign && campaign.ownerUid === uid);
   const disabled = busy || !connected || !!retry || world.blocked;
-  const localDisabled = busy || !world.localReady;
   const members = Object.entries(campaign?.members || {}).filter(([, member]) => !member.revoked);
-  const settlements = campaign?.settlements || [];
   const sharedMarkers = (campaign?.worldMap?.markers || []).filter(marker => marker.regionId === region.id);
-  const active = settlements.find(s => s.id === activeId);
-  const actor = { id: uid, isGM: gm, campaignId };
-  const editable = active && canSpend(active, actor);
-  const personalReady = world.personalReady && world.sourceCharacterId === form?._localCharacterId;
-  const approvedBalance=playerResources(campaign?.character);
-  const available=Object.fromEntries(RESOURCE_KEYS.map(k=>[k,Math.min(approvedBalance[k]||0,world.sourceAvailable?.[k]||0)]));
-  const payer=campaign?.character ? {...campaign.character,caps:available.caps,inventoryItems:['common','uncommon','rare'].map(materialTier=>({sourceType:'crafting_material',materialTier,quantity:available[materialTier]}))} : null;
-  function canAffordPersonal(command) {
-    if(!personalReady || !active)return false;
-    try{return personalBlockers(active,payer,personalQuote(active,command).rule,actor).length===0;}catch{return false;}
-  }
-  async function settlementCommand(command) {
-    if(localDisabled||!editable)return false;
-    const kinds={build:'buildPersonal',room:'roomPersonal',upgrade:'upgradePersonal'};
-    if(kinds[command.type]) {
-      if(!personalReady)return false;
-      const cmd={...command,type:kinds[command.type],sourceId:world.sourceCharacterId};
-      cmd.quote=personalQuote(active,cmd).amounts;
-      return Boolean(await run({type:'settlement',settlementId:active.id,command:cmd}));
-    }
-    return Boolean(await run({type:'settlement',settlementId:active.id,command}));
-  }
   const locationName = location => location.nameKey ? t(location.nameKey, { defaultValue: location.name }) : location.name;
   async function submitCharacter() {
     try { setAuthError(''); await run({type: 'submitCharacter', character: characterImport(form, uid)}); } catch { setAuthError(c.error); }
@@ -113,20 +82,10 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   if (!uid) return <section className="pip-panel campaign-world"><h2>{c.title}</h2><p>{c.auth}</p>{authError && <p role="alert">{authError}</p>}<button className="pip-btn" onClick={async () => { try { await signInWithGoogle(); } catch { setAuthError(c.error); } }}>{c.signIn}</button></section>;
   if (!campaign) return <section className="pip-panel campaign-world"><h2>{c.title}</h2>{status}<p>{world.blocked ? c.readOnly : offlineCopy(language).first}</p></section>;
 
-  const settlementControls = <div className="campaign-world-controls campaign-world-controls--settlement">
-    <CampaignSyncStatus world={world} language={language} authError={authError} compact extra={<div className="campaign-world-controls__secondary">{characterPanel}<PersonalConstructionPanel world={world} form={form} language={language}/>
-    {!editable && <p>{c.readOnly}</p>}
-    {gm && <details><summary>{c.manage}</summary>{members.filter(([id]) => id !== uid).map(([id, m]) => <label className="campaign-world-spender" key={id}><input type="checkbox" disabled={disabled} checked={Boolean(active?.access?.spenders?.includes(id))} onChange={e => run({ type: 'settlement', settlementId: active.id, command: { type: 'spender', memberId: id, allowed: e.target.checked } })}/>{m.name} · {c.spend}</label>)}</details>}
-    {campaign.character && <details><summary>{c.deposit}</summary><p>{c.stock}</p><form className="campaign-world-deposit" onSubmit={async e => { e.preventDefault(); const result = await run({ type: 'settlement', settlementId: active.id, command: { type: 'deposit', amounts: Object.fromEntries(Object.entries(amounts).map(([k,v]) => [k, Number(v) || 0])) } }); if (result) setAmounts({ caps:'', common:'', uncommon:'', rare:'' }); }}>
-      {Object.keys(amounts).map(key => <label key={key}>{c[key]}<input type="number" min="0" step="1" value={amounts[key]} onChange={e => setAmounts(old => ({ ...old, [key]: e.target.value }))}/></label>)}
-      <button className="pip-btn" disabled={disabled || (world.sourceCharacterId && !personalReady) || !Object.values(amounts).some(v => Number(v) > 0)}>{c.deposit}</button>
-    </form></details>}</div>}/>
-  </div>;
-
   return <section className="campaign-world" aria-label={c.title}>
     <header className="campaign-world-heading"><div><h2>{c.title}</h2><p>{campaign.name} · {c.shared}</p></div><label>{c.region}<select aria-label={c.region} value={region.id} disabled={!gm || disabled} onChange={e => run({ type: 'worldRegion', regionId: e.target.value })}>{MAP_REGIONS.map(r => <option key={r.id} value={r.id}>{getRegionName(r, language)} · {r.game}</option>)}</select></label></header>
     {status}
-    <div className="campaign-world-layout" hidden={settlementsOnly}><div>
+    <div className="campaign-world-layout"><div>
       <p>{c.select}</p>
       <PhaserMapViewport cols={64} rows={64} sceneKey={`${campaignId}:${region.id}`} label={c.title}
         selected={validPoint ? point : null}
@@ -136,11 +95,9 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
         markers={[
           ...region.locations.map(l => ({ id: l.id, x: l.worldX, y: l.worldY, icon: l.icon || '◆' })),
           ...members.map(([id, m], index) => ({ id: `member-${id}`, ...(campaign.worldMap?.positions?.[id] || region.start), icon: String(index + 1), label: m.name, kind: 'member', memberMarker: true, memberId: id })),
-          ...settlements.filter(s => s.regionId === region.id).map(s => ({ id: s.id, x: s.worldX, y: s.worldY, icon: '⌂', label: s.name, settlement: true })),
           ...sharedMarkers.map(marker => ({ ...marker, x: marker.x, y: marker.y, icon: MARKER_ICONS[marker.category] || (marker.kind === 'gm' ? '★' : '●'), label: marker.label, sharedMarker: true })),
         ]}
         onMarker={marker => {
-          if (marker.settlement) { setActiveId(marker.id); return; }
           setSelected({ x: marker.x, y: marker.y });
           if (marker.sharedMarker) {
             setSelectedMarkerId(marker.id);
@@ -188,11 +145,8 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
           })}
         </div>
       </section>
-      {gm && <form className="campaign-world-found" onSubmit={async e=>{e.preventDefault();const result=await run({type:'found',name:name.trim(),regionId:region.id,worldX:point.x,worldY:point.y});if(result){const created=result.settlements.find(s=>s.regionId===region.id&&s.worldX===point.x&&s.worldY===point.y);setActiveId(created?.id);setName('');}}}><label>{c.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={disabled||!validPoint||!name.trim()||settlements.length>=5||settlements.some(s=>s.regionId===region.id&&s.worldX===point.x&&s.worldY===point.y)}>{c.found}</button></form>}
       <h3>{markerCopy.live}</h3>{members.map(([id,m],index)=>{const p=campaign.worldMap?.positions?.[id]||region.start;return <button className="pip-btn campaign-world-member-row" key={id} onClick={()=>setSelected({x:p.x,y:p.y})}><span>{index+1}. {m.name}{id===uid?' · YOU':''}</span><small>{p.x}:{p.y}</small></button>;})}
     </aside></div>
-    <div className="campaign-world-settlements"><h3>{c.settlements} · {settlements.length}/5</h3>{!settlements.length && <p>{c.empty}</p>}{settlements.map(s=><button className="pip-btn" key={s.id} onClick={()=>setActiveId(s.id)}><strong>⌂ {s.name}</strong><span>{getRegionName(getMapRegion(s.regionId),language)} · {s.worldX}:{s.worldY}</span><span>{c.open} →</span></button>)}</div>
     {characterPanel}
-    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} canClaimProfit={Boolean(editable)&&Boolean(campaign.character)&&world.connected&&!world.blocked&&!busy} payment={{ready:personalReady,canAfford:canAffordPersonal}} onCommand={settlementCommand}/>,document.body)}
   </section>;
 }

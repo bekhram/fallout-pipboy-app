@@ -1,6 +1,7 @@
 import { SETTLEMENT_BUILDINGS } from "../data/settlement/buildings.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
+import { populationNeeds } from "./settlementResidents.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -40,7 +41,7 @@ export function completeFinishedConstruction(settlement, now = Date.now()) {
 export function calculateSettlementStats(settlement) {
   const stored = settlement.attributes || {};
   const people = Array.isArray(settlement.settlers) && settlement.settlers.length
-    ? settlement.settlers.length
+    ? populationNeeds(settlement)
     : Math.max(0, Math.floor(Number(stored.people ?? settlement.resources?.population ?? 0)));
   const leaderCharisma = Math.max(0, Math.floor(Number(settlement.leader?.charisma || 0)));
   const peopleMax = 10 + leaderCharisma;

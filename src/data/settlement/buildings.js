@@ -35,7 +35,7 @@ export const SETTLEMENT_BUILDINGS = {
   },
   crop_field: {
     id: "crop_field", category: "food",
-    name: { en: "Crop field", ru: "Поле", uk: "Поле", pl: "Pole uprawne" },
+    name: { en: "Garden plot", ru: "Грядка", uk: "Грядка", pl: "Grządka" },
     footprint: { width: 4, height: 3 }, asset: "crop_field.png", constructionSize: "medium", workersRequired: 1,
   },
   greenhouse: {
@@ -45,7 +45,7 @@ export const SETTLEMENT_BUILDINGS = {
   },
   brahmin_pen: {
     id: "brahmin_pen", category: "food",
-    name: { en: "Brahmin pen", ru: "Загон браминов", uk: "Загін брамінів", pl: "Zagroda braminów" },
+    name: { en: "Brahmin feed trough", ru: "Кормушка для браминов", uk: "Годівниця для брамінів", pl: "Koryto dla braminów" },
     footprint: { width: 4, height: 4 }, asset: "brahmin_pen.png", constructionSize: "large", workersRequired: 1,
   },
   water_pump: {
@@ -58,10 +58,20 @@ export const SETTLEMENT_BUILDINGS = {
     name: { en: "Water purifier", ru: "Очиститель воды", uk: "Очищувач води", pl: "Oczyszczalnia wody" },
     footprint: { width: 3, height: 3 }, asset: "water_purifier.png", constructionSize: "medium",
   },
+  powered_water_pump: {
+    id: "powered_water_pump", category: "water",
+    name: { en: "Powered water pump", ru: "Электрическая водяная помпа", uk: "Електрична водяна помпа", pl: "Elektryczna pompa wodna" },
+    footprint: { width: 3, height: 3 }, asset: "water_tower.png", constructionSize: "medium",
+  },
+  industrial_water_purifier: {
+    id: "industrial_water_purifier", category: "water",
+    name: { en: "Industrial water purifier", ru: "Промышленный очиститель воды", uk: "Промисловий очищувач води", pl: "Przemysłowa oczyszczalnia wody" },
+    footprint: { width: 4, height: 4 }, asset: "water_purifier.png", constructionSize: "large",
+  },
   water_tower: {
     id: "water_tower", category: "water",
-    name: { en: "Water tower", ru: "Водонапорная башня", uk: "Водонапірна вежа", pl: "Wieża ciśnień" },
-    footprint: { width: 3, height: 3 }, asset: "water_tower.png", constructionSize: "medium",
+    name: { en: "Powered water pump (legacy)", ru: "Электрическая помпа (старая)", uk: "Електрична помпа (стара)", pl: "Pompa elektryczna (stara)" },
+    footprint: { width: 3, height: 3 }, asset: "water_tower.png", constructionSize: "medium", buildable: false,
   },
 
   windmill: {
@@ -142,7 +152,7 @@ export const SETTLEMENT_BUILDINGS = {
   },
   scrap_yard: {
     id: "scrap_yard", category: "production",
-    name: { en: "Scrap yard", ru: "Свалка", uk: "Звалище", pl: "Złomowisko" },
+    name: { en: "Scavenging station", ru: "Станция сбора хлама", uk: "Станція збору брухту", pl: "Stacja zbieractwa" },
     footprint: { width: 4, height: 3 }, asset: "scrap_yard.png", constructionSize: "large", workersRequired: 1,
   },
   warehouse: {

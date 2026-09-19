@@ -1,4 +1,5 @@
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
+import { knowsSettlementRecipe } from './settlementRecipes.js';
 import { ROOMS } from '../data/settlement/rulebook.js';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../data/settlement/buildings.js';
 
@@ -28,16 +29,34 @@ function changeBalance(s, amounts, sign = 1) {
   const after = Object.fromEntries(RESOURCE_KEYS.map(k => [k, before[k] + sign * number(amounts[k])]));
   return { ...s, resources: { ...s.resources, caps: after.caps, materials: after.common }, stockpile: { ...s.stockpile, materials: Object.fromEntries(TIERS.map(k => [k, after[k]])) } };
 }
+function perkRank(character,name){
+  const target=normalized(name);
+  return Math.max(0,...(character?.perksAndTraits || []).filter(owned=>!owned.isOriginTrait && [owned.id,owned.name].some(value=>normalized(value)===target)).map(owned=>number(owned.rank || 1)));
+}
+function skillRank(character,name){
+  const target=normalized(name);
+  for(const [key,value] of Object.entries(character?.skills || {})){
+    if(normalized(key)===target || normalized(value?.name)===target)return number(value?.rank);
+  }
+  return 0;
+}
+export function constructionRequirementBlockers(character,rule,recipeId=null){
+  if(!rule)return [{kind:'unavailable'}];
+  const result=[];
+  const hasPerk=p=>perkRank(character,p.name)>=number(p.rank || 1);
+  if(String(rule.rarity||'').toLowerCase()==='rare' && recipeId && !knowsSettlementRecipe(character,recipeId)) result.push({kind:'recipe',label:'Rare recipe'});
+  for(const p of [...(rule.perks || []),...(rule.perk?[rule.perk]:[])])if(!hasPerk(p))result.push({kind:'perk',label:`${p.name} ${p.rank}`});
+  if(rule.perkAnyOf?.length&&!rule.perkAnyOf.some(hasPerk))result.push({kind:'perk',label:rule.perkAnyOf.map(p=>`${p.name} ${p.rank}`).join(' / ')});
+  for(const skill of [...(rule.skills || []),...(rule.skill?[rule.skill]:[])])if(skillRank(character,skill.name)<number(skill.rank))result.push({kind:'skill',label:`${skill.name} ${skill.rank}`});
+  return result;
+}
 export function buildBlockers(s, character, rule, actor = actorFor(character)) {
   if (!rule) return [{ kind: 'unavailable' }];
   const result = [];
   if (!canSpend(s, actor)) result.push({ kind: 'permission' });
   const have = balance(s), need = cost(rule);
   for (const key of RESOURCE_KEYS) if (have[key] < need[key]) result.push({ kind: 'resource', key, have: have[key], need: need[key] });
-  const hasPerk = p => (character?.perksAndTraits || []).some(owned => !owned.isOriginTrait && [owned.id, owned.name].some(name => normalized(name) === normalized(p.name)) && number(owned.rank || 1) >= p.rank);
-  for (const p of [...(rule.perks || []), ...(rule.perk ? [rule.perk] : [])]) if (!hasPerk(p)) result.push({ kind: 'perk', label: `${p.name} ${p.rank}` });
-  if (rule.perkAnyOf?.length && !rule.perkAnyOf.some(hasPerk)) result.push({ kind: 'perk', label: rule.perkAnyOf.map(p => `${p.name} ${p.rank}`).join(' / ') });
-  for (const skill of [...(rule.skills || []), ...(rule.skill ? [rule.skill] : [])]) if (number(character?.skills?.[skill.name]?.rank) < skill.rank) result.push({ kind: 'skill', label: `${skill.name} ${skill.rank}` });
+  result.push(...constructionRequirementBlockers(character,rule));
   return result;
 }
 export function tasks(s) {
@@ -64,18 +83,49 @@ export function assignedKey(worker) {
 export function workerCounts(s, queue = tasks(s)) {
   const counts = Object.fromEntries(queue.map(t => [t.key, 0]));
   for (const worker of s.settlers || []) {
-    if (worker.settlementAction?.type !== 'build') continue;
-    const task = queue.find(t => t.key === assignedKey(worker)) || queue[0];
-    if (task) counts[task.key] += 1;
+    const actions=[worker.settlementAction,worker.bonusSettlementAction].filter(action=>action?.type==='build');
+    for(const action of actions){
+      const key = action.targetRoomId ? `room:${action.parentBuildingId}:${action.targetRoomId}`
+        : action.targetUpgradeId ? `upgrade:${action.targetUpgradeId}`
+        : action.targetBuildingId ? `building:${action.targetBuildingId}` : null;
+      const task = queue.find(t => t.key === key) || queue[0];
+      if (task) counts[task.key] += 1;
+    }
   }
   return counts;
 }
 function editJob(s, task, fn) { return { ...s, buildings: s.buildings.map(b => b.id !== task.buildingId ? b : task.kind === 'building' ? fn(b) : task.kind === 'upgrade' ? { ...b, upgrade: fn(b.upgrade) } : { ...b, rooms: b.rooms.map(r => r.id === task.roomId ? fn(r) : r) }) }; }
 function event(s, type, data, now) { return { ...s, events: [{ id: `${type}_${now}_${Math.random().toString(36).slice(2)}`, type, ...data, createdAt: now }, ...(s.events || [])].slice(0, 100) }; }
 function complete(s, task, now) {
-  let next = editJob(s, task, job => ({ ...job, state: 'active', completedAt: now, constructionProgressDays: progress(task).required / 1440, ...(task.kind === 'room' ? { happinessApplied: true } : {}) }));
-  if (task.kind === 'upgrade') next.buildings = next.buildings.map(b => b.id === task.buildingId ? { ...b, type: task.type, level: number(b.level || 1) + 1, upgrade: null } : b);
-  if (task.kind === 'room') next.attributes = { ...next.attributes, happiness: Math.max(1, Math.min(20, Number(next.attributes?.happiness || 10) + Number(ROOMS[task.type]?.effects?.happiness || 0))) };
+  const beforeBuilding = (s.buildings || []).find(b => b.id === task.buildingId);
+  const previousBuildingHappiness = task.kind === 'upgrade'
+    ? Number(getRulebookBuilding(beforeBuilding?.type)?.effects?.happiness || 0)
+    : 0;
+  const completedBuildingHappiness = task.kind === 'building'
+    ? Number(getRulebookBuilding(task.type)?.effects?.happiness || 0)
+    : task.kind === 'upgrade'
+      ? Number(getRulebookBuilding(task.type)?.effects?.happiness || 0)
+      : 0;
+  let next = editJob(s, task, job => ({
+    ...job,
+    state: 'active',
+    completedAt: now,
+    constructionProgressDays: progress(task).required / 1440,
+    ...(task.kind === 'room' || task.kind === 'building' ? { happinessApplied: true } : {}),
+  }));
+  if (task.kind === 'upgrade') {
+    next.buildings = next.buildings.map(b => b.id === task.buildingId
+      ? { ...b, type: task.type, level: number(b.level || 1) + 1, upgrade: null, happinessApplied: true }
+      : b);
+  }
+  const happinessDelta = task.kind === 'room'
+    ? Number(ROOMS[task.type]?.effects?.happiness || 0)
+    : completedBuildingHappiness - previousBuildingHappiness;
+  if (happinessDelta) {
+    const happiness = Math.max(1, Math.min(20, Number(next.attributes?.happiness || 10) + happinessDelta));
+    next.attributes = { ...next.attributes, happiness };
+    next.resources = { ...next.resources, happiness };
+  }
   next.settlers = (next.settlers || []).map(w => assignedKey(w) === task.key ? { ...w, settlementAction: { type: 'build' }, assignedBuildingId: null } : w);
   return event(next, 'construction_completed', { target: task.key, buildingType: task.type }, now);
 }

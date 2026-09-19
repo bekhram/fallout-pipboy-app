@@ -64,10 +64,36 @@ export function applySettlementCommand(settlement, character, actor, command, no
       unlocked();
       if (b.upgrade || !Number.isInteger(c.x) || !Number.isInteger(c.y) || !dev.canFit(s, b.type, c.x, c.y, b.id)) fail('PLACEMENT');
       s = { ...s, buildings: s.buildings.map(item => item.id === b.id ? { ...item, x: c.x, y: c.y } : item) }; break;
-    case 'demolish':
+    case 'store': {
       unlocked();
       if (b.state === 'construction' || b.upgrade) fail('USE_CANCEL');
-      s = { ...s, buildings: s.buildings.filter(item => item.id !== b.id), settlers: s.settlers.map(w => w.assignedBuildingId === b.id || w.settlementAction?.targetBuildingId === b.id || w.settlementAction?.parentBuildingId === b.id ? { ...w, settlementAction: null, assignedBuildingId: null, status: 'idle' } : w) }; break;
+      const happinessDelta = b.happinessApplied ? -Number(getRulebookBuilding(b.type)?.effects?.happiness || 0) : 0;
+      const stored = { ...b, x: null, y: null, storedAt: now, storedReason: 'MANUAL_EDITOR', happinessApplied: false };
+      const happiness = Math.max(1, Math.min(20, Number(s.attributes?.happiness || 10) + happinessDelta));
+      s = {
+        ...s,
+        buildings: s.buildings.filter(item => item.id !== b.id),
+        storedBuildings: [...(s.storedBuildings || []).filter(item => item.id !== b.id), stored],
+        attributes: { ...(s.attributes || {}), happiness },
+        resources: { ...(s.resources || {}), happiness },
+        settlers: s.settlers.map(w => w.assignedBuildingId === b.id || w.settlementAction?.targetBuildingId === b.id || w.settlementAction?.parentBuildingId === b.id
+          ? { ...w, settlementAction: null, assignedBuildingId: null, status: 'idle' } : w),
+      };
+      break;
+    }
+    case 'demolish': {
+      unlocked();
+      if (b.state === 'construction' || b.upgrade) fail('USE_CANCEL');
+      const happinessDelta = b.happinessApplied ? -Number(getRulebookBuilding(b.type)?.effects?.happiness || 0) : 0;
+      const happiness = Math.max(1, Math.min(20, Number(s.attributes?.happiness || 10) + happinessDelta));
+      s = { ...s,
+        buildings: s.buildings.filter(item => item.id !== b.id),
+        attributes: { ...(s.attributes || {}), happiness },
+        resources: { ...(s.resources || {}), happiness },
+        settlers: s.settlers.map(w => w.assignedBuildingId === b.id || w.settlementAction?.targetBuildingId === b.id || w.settlementAction?.parentBuildingId === b.id ? { ...w, settlementAction: null, assignedBuildingId: null, status: 'idle' } : w)
+      };
+      break;
+    }
     case 'removeRoom': {
       if (!b) fail('NOT_FOUND');
       const room = b.rooms?.find(r => r.id === c.roomId);

@@ -17,9 +17,10 @@ export function workplaceState(building) {
   if (building.powered === false) return 'unpowered';
   return 'active';
 }
+const cropCount = building => Array.isArray(building?.crops) ? building.crops.length : nonnegative(building?.effects?.cropSlots);
 export function workplaceCapacity(building) {
   const action = workplaceAction(building);
-  if (action === 'tend_crops') return Math.ceil(nonnegative(building.effects?.cropSlots) / 6);
+  if (action === 'tend_crops') return Math.ceil(cropCount(building) / 6);
   if (action === 'business' || action === 'guard') return 1;
   return action ? null : 0; // null means the catalog sets no per-building worker limit.
 }
@@ -29,7 +30,7 @@ const requiredSite = new Set(['business', 'tend_crops', 'trade_caravan']);
 export function createWorkplacePlan(settlers = [], buildings = []) {
   const byBuilding = Object.create(null), byWorker = Object.create(null);
   for (const b of buildings) byBuilding[b.id] = {
-    id: b.id, type: b.type, effects: b.effects || {}, action: workplaceAction(b),
+    id: b.id, type: b.type, effects: b.effects || {}, crops: b.crops || [], action: workplaceAction(b),
     state: workplaceState(b), capacity: workplaceCapacity(b),
     workerIds: [], manualWorkerIds: [], tendedCrops: 0, food: 0, income: 0,
   };
@@ -55,7 +56,7 @@ export function createWorkplacePlan(settlers = [], buildings = []) {
     if (site.state !== 'active') { record.reason = site.state; continue; }
     if (site.capacity !== null && site.manualWorkerIds.length >= site.capacity) { record.reason = 'full'; continue; }
     site.manualWorkerIds.push(worker.id);
-    const crops = action === 'tend_crops' ? Math.min(6, nonnegative(site.effects.cropSlots) - site.tendedCrops) : 0;
+    const crops = action === 'tend_crops' ? Math.min(6, site.crops.length - site.tendedCrops) : 0;
     attach(worker, site, crops);
   }
   // Legacy action-only residents stay automatic. A farmer can cover six crops
@@ -68,7 +69,7 @@ export function createWorkplacePlan(settlers = [], buildings = []) {
     if (action === 'tend_crops') {
       let budget = 6;
       for (const site of sites) {
-        const crops = Math.min(budget, nonnegative(site.effects.cropSlots) - site.tendedCrops);
+        const crops = Math.min(budget, site.crops.length - site.tendedCrops);
         if (crops > 0) { attach(worker, site, crops); budget -= crops; }
         if (!budget) break;
       }
