@@ -96,3 +96,20 @@ export function addNpcToLocalSettlement(settlement,character){
     events:[{id:`guest_joined_${Date.now()}`,type:'guest_npc_joined',settlerId:npc.id,settlerName:npc.name,createdAt:Date.now()},...(settlement.events||[])].slice(0,100),
   });
 }
+
+export function removeGuestNpcFromLocalSettlement(settlement,workerId){
+  const worker=(settlement.settlers||[]).find(item=>item.id===workerId);
+  if(!worker?.guestNpc)return settlement;
+  const settlers=(settlement.settlers||[]).filter(item=>item.id!==workerId);
+  const buildings=(settlement.buildings||[]).map(building=>building.repair?.workerIds?.includes(workerId)
+    ? {...building,repair:{...building.repair,workerIds:building.repair.workerIds.filter(id=>id!==workerId)}}
+    : building);
+  return runSimulation({
+    ...settlement,
+    settlers,
+    buildings,
+    attributes:{...(settlement.attributes||{}),people:settlers.length},
+    resources:{...(settlement.resources||{}),population:settlers.length},
+    events:[{id:`guest_left_${Date.now()}`,type:'guest_npc_removed',settlerId:worker.id,settlerName:worker.name,createdAt:Date.now()},...(settlement.events||[])].slice(0,100),
+  });
+}
