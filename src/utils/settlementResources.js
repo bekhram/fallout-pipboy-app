@@ -71,3 +71,20 @@ export function getTendedCropResult(settlement, workers) {
     food: baseFood + fertilizerBonusFood,
   };
 }
+
+
+export function butcherSettlementBrahmin(settlement,mode='food',now=Date.now()){
+  const brahmin=Math.max(0,Math.floor(Number(settlement.livestock?.brahmin||0)));
+  if(!brahmin)throw new Error('NO_BRAHMIN');
+  if(!(settlement.settlers||[]).some(worker=>worker.settlementAction?.type==='tend_crops'||worker.bonusSettlementAction?.type==='tend_crops'))throw new Error('TEND_CROPS_REQUIRED');
+  if(!['food','meat'].includes(mode))throw new Error('INVALID_RESOURCE');
+  const stock={...(settlement.stockpile||{})};
+  let next={...settlement,livestock:{...(settlement.livestock||{}),brahmin:brahmin-1}};
+  if(mode==='food'){
+    next={...next,nextDayBrahminFoodBonus:Math.max(0,Number(settlement.nextDayBrahminFoodBonus||0))+2};
+  }else{
+    const p=provisions(stock);
+    next={...next,stockpile:{...stock,provisions:{...p,food:p.food+2},brahminMeat:Math.max(0,Number(stock.brahminMeat||0))+2}};
+  }
+  return {...next,events:[{id:`brahmin_butchered_${now}_${Math.random().toString(36).slice(2,7)}`,type:'brahmin_butchered',mode,createdAt:now},...(settlement.events||[])].slice(0,100)};
+}
