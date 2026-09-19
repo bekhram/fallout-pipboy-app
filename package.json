@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "test:regression": "node --test tests/characterCreationRules.test.js tests/settlementWorkerActor.test.js tests/settlementWorkerRuntime.test.js tests/settlementSpriteFrames.test.js tests/settlementDefensePlan.test.js tests/settlementFortificationRisk.test.js tests/settlementRepair.test.js tests/settlementRaidBattle.test.js tests/settlementTowerDefense.test.js tests/settlementProfit.test.js",
+    "prebuild": "npm run check:i18n && npm run test:regression",
     "build": "vite build",
     "preview": "vite preview"
   },
