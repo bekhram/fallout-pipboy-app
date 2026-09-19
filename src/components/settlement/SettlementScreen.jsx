@@ -141,12 +141,17 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     if(command.type==="store"){
       const building=(settlement.buildings || []).find(item=>item.id===command.buildingId);
       if(!building || building.locked || building.type==="settlement_hq" || building.state==="construction" || building.upgrade)return false;
-      const now=Date.now();
-      onUpdate(current=>({...current,
-        buildings:(current.buildings || []).filter(item=>item.id!==building.id),
-        storedBuildings:[...(current.storedBuildings || []).filter(item=>item.id!==building.id),{...building,x:null,y:null,storedAt:now,storedReason:"MANUAL_EDITOR"}],
-        settlers:(current.settlers || []).map(worker=>worker.assignedBuildingId===building.id || worker.settlementAction?.targetBuildingId===building.id || worker.settlementAction?.parentBuildingId===building.id ? {...worker,settlementAction:null,assignedBuildingId:null,status:"idle"} : worker)
-      }));
+      const now=Date.now(), happinessBonus=building.happinessApplied ? Number(getRulebookBuilding(building.type)?.effects?.happiness || 0) : 0;
+      onUpdate(current=>{
+        const happiness=Math.max(1,Math.min(20,Number(current.attributes?.happiness || 10)-happinessBonus));
+        return {...current,
+          buildings:(current.buildings || []).filter(item=>item.id!==building.id),
+          storedBuildings:[...(current.storedBuildings || []).filter(item=>item.id!==building.id),{...building,x:null,y:null,storedAt:now,storedReason:"MANUAL_EDITOR",happinessApplied:false}],
+          attributes:{...(current.attributes || {}),happiness},
+          resources:{...(current.resources || {}),happiness},
+          settlers:(current.settlers || []).map(worker=>worker.assignedBuildingId===building.id || worker.settlementAction?.targetBuildingId===building.id || worker.settlementAction?.parentBuildingId===building.id ? {...worker,settlementAction:null,assignedBuildingId:null,status:"idle"} : worker)
+        };
+      });
       return true;
     }
     if(command.type==="placeStored"){
@@ -157,7 +162,14 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
         const stored=(current.storedBuildings || []).find(item=>item.id===command.buildingId);
         if(!stored)return current;
         const {storedAt,storedReason,...placed}=stored;
-        return {...current,storedBuildings:(current.storedBuildings || []).filter(item=>item.id!==stored.id),buildings:[...(current.buildings || []),{...placed,x:command.x,y:command.y,placedAt:Date.now()}]};
+        const happinessBonus=Number(getRulebookBuilding(stored.type)?.effects?.happiness || 0);
+        const happiness=Math.max(1,Math.min(20,Number(current.attributes?.happiness || 10)+happinessBonus));
+        return {...current,
+          storedBuildings:(current.storedBuildings || []).filter(item=>item.id!==stored.id),
+          buildings:[...(current.buildings || []),{...placed,x:command.x,y:command.y,placedAt:Date.now(),happinessApplied:true}],
+          attributes:{...(current.attributes || {}),happiness},
+          resources:{...(current.resources || {}),happiness},
+        };
       });
       return true;
     }
@@ -250,7 +262,16 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     if(!canEdit || !selectedBuilding || selectedBuildingLocked)return;
     if(typeof window!=="undefined" && !window.confirm(editor.confirmDemolish))return;
     if(onCommand){if(await onCommand({type:"demolish",buildingId:selectedBuilding.id}))setSelectedBuildingId(null);return;}
-    onUpdate(current=>({...current,buildings:(current.buildings || []).filter(building=>building.id!==selectedBuilding.id),settlers:(current.settlers || []).map(settler=>settler.settlementAction?.targetBuildingId===selectedBuilding.id || settler.settlementAction?.parentBuildingId===selectedBuilding.id ? {...settler,settlementAction:null,assignedBuildingId:null,status:"idle"} : settler)}));setSelectedBuildingId(null);
+    onUpdate(current=>{
+      const happinessBonus=selectedBuilding.happinessApplied ? Number(getRulebookBuilding(selectedBuilding.type)?.effects?.happiness || 0) : 0;
+      const happiness=Math.max(1,Math.min(20,Number(current.attributes?.happiness || 10)-happinessBonus));
+      return {...current,
+        buildings:(current.buildings || []).filter(building=>building.id!==selectedBuilding.id),
+        attributes:{...(current.attributes || {}),happiness},
+        resources:{...(current.resources || {}),happiness},
+        settlers:(current.settlers || []).map(settler=>settler.settlementAction?.targetBuildingId===selectedBuilding.id || settler.settlementAction?.parentBuildingId===selectedBuilding.id ? {...settler,settlementAction:null,assignedBuildingId:null,status:"idle"} : settler)
+      };
+    });setSelectedBuildingId(null);
   }
   function assignAction(settlerId,type){
     if(!canEdit)return;if(type && !availableSettlementActions(settlement).some(a=>a.id===type))return;
