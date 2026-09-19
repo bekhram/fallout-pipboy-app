@@ -62,6 +62,16 @@ function resolveBusinessIncome(settlement, day) {
   });
 
   const income = populationMultiplier * incomePerFive;
+  if (settlement.offlineStandalone) {
+    const attributes = { ...(settlement.attributes || {}), income };
+    const resources = { ...(settlement.resources || {}), income, caps: Math.max(0, Number(settlement.resources?.caps || 0)) + income };
+    const event = {
+      id: randomId("event", day), type: "store_income", day, workers,
+      stores: storeBreakdown, people, populationMultiplier, income,
+      reserveCaps: income, claimableCaps: 0, createdAt: Date.now(),
+    };
+    return { ...settlement, attributes, resources, events: [event, ...(settlement.events || [])].slice(0, 100) };
+  }
   const split = splitSettlementProfit(income);
   const attributes = { ...(settlement.attributes || {}), income };
   const resources = { ...(settlement.resources || {}), income, caps: Math.max(0, Number(settlement.resources?.caps || 0)) + split.reserve };
