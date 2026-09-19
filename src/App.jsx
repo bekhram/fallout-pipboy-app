@@ -74,6 +74,28 @@ function consumeInventoryItemAt(inventory = [], index) {
     .filter((item) => Number(item?.quantity ?? item?.qty ?? 0) > 0);
 }
 
+
+const STIMPAK_HEALING = {
+  "stimpak (diluted)": 2,
+  "stimpak": 4,
+  "super stimpak": 8,
+};
+
+function getStimpakInfo(item, index = -1) {
+  if (!item) return null;
+  const canonicalName = normalizeUtilityName(item.canonicalName || item.sourceName || item.name);
+  const healingHp = STIMPAK_HEALING[canonicalName];
+  const quantity = Math.max(0, Number(item.quantity ?? item.qty ?? 0));
+  if (!healingHp || quantity <= 0) return null;
+  return {
+    index,
+    name: String(item.displayName || item.name || item.canonicalName || canonicalName),
+    canonicalName,
+    healingHp,
+    quantity,
+  };
+}
+
 function stripPowerArmorCurrentOverrides(loadout) {
   return {
     ...(loadout || {}),
@@ -573,6 +595,59 @@ export default function App() {
 
   const onSpendLuck = () => {
     setCurrentLuckPoints((prev) => Math.max(0, prev - 1));
+  };
+
+  const availableStimpaks = useMemo(
+    () => (form.inventoryItems || [])
+      .map((item, index) => getStimpakInfo(item, index))
+      .filter(Boolean),
+    [form.inventoryItems]
+  );
+
+  const treatableInjuries = useMemo(() => {
+    const labelKeys = {
+      head: "injuries.head",
+      leftArm: "injuries.leftArm",
+      rightArm: "injuries.rightArm",
+      torso: "injuries.torso",
+      leftLeg: "injuries.leftLeg",
+      rightLeg: "injuries.rightLeg",
+    };
+    return Object.entries(form.injuries || {})
+      .filter(([, state]) => state === "crippled")
+      .map(([key]) => ({ key, label: t(labelKeys[key] || key) }));
+  }, [form.injuries, t]);
+
+  const useQuickStimpak = ({ index, mode, injuryKey }) => {
+    setForm((prev) => {
+      const items = Array.isArray(prev.inventoryItems) ? prev.inventoryItems : [];
+      const stim = getStimpakInfo(items[index], index);
+      if (!stim) return prev;
+
+      if (mode === "injury") {
+        if (!injuryKey || prev.injuries?.[injuryKey] !== "crippled") return prev;
+        return {
+          ...prev,
+          inventoryItems: consumeInventoryItemAt(items, index),
+          injuries: {
+            ...(prev.injuries || {}),
+            [injuryKey]: "treated",
+          },
+        };
+      }
+
+      const nextBase = {
+        ...prev,
+        inventoryItems: consumeInventoryItemAt(items, index),
+      };
+      const nextDerived = getDerivedStats(nextBase);
+      const maxHp = Math.max(0, Number(nextDerived.effectiveMaxHp || nextDerived.maxHp || 0));
+      const currentHp = Math.max(0, Number(prev.currentHp || 0));
+      return {
+        ...nextBase,
+        currentHp: String(Math.min(maxHp, currentHp + stim.healingHp)),
+      };
+    });
   };
 
   const combatApMax = Math.max(0, Number(derived.groupApMax || 6));
@@ -1102,8 +1177,9 @@ const updateSkill = (skillName, field, value) =>
             onHpIncrease={handleHpIncrease}
             onOpenConditions={() => setShowConditions(true)}
             onOpenDerived={() => setShowDerived(true)}
-            onOpenDice={openFreeDiceRoll}
-            onOpenSkills={() => setActiveTab("skills")}
+            stimpaks={availableStimpaks}
+            treatableInjuries={treatableInjuries}
+            onUseStimpak={useQuickStimpak}
             onRoll={openContextDiceRoll}
           />
         );
