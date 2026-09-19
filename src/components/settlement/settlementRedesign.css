@@ -129,3 +129,5 @@
  .settlement-map-actions .settlement-editor-toggle{min-width:0}
  .settlement-v2.is-editor-mode .settlement-map-controls{bottom:142px}
 }
+
+@media(max-width:899px), (max-aspect-ratio:3/4){.settlement-v2.is-offline-settlement .settlement-mobile-nav{grid-template-columns:repeat(5,minmax(0,1fr))}}
