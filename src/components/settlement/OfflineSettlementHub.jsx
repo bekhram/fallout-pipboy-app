@@ -13,7 +13,7 @@ const COPY={
   pl:{title:'OSADY OFFLINE',offline:'TYLKO URZĄDZENIE · BEZ CHMURY',desc:'Rozwój osady jest zapisywany wyłącznie na tym urządzeniu. Kampania, Google, Firestore i synchronizacja nie są potrzebne.',new:'NOWA OSADA',name:'Nazwa osady',create:'UTWÓRZ',open:'OTWÓRZ',day:'Dzień',people:'Mieszkańcy',delete:'USUŃ',empty:'Brak lokalnych osad.',back:'WRÓĆ DO MAPY',error:'Lokalny zapis osad jest niedostępny.',confirm:'Usunąć tę lokalną osadę z urządzenia?'},
 };
 
-export default function OfflineSettlementHub({onBack,character}){
+export default function OfflineSettlementHub({onBack,character,onCharacterChange}){
   const {i18n}=useTranslation();
   const language=String(i18n.resolvedLanguage||i18n.language||'en').split('-')[0];
   const text=COPY[language]||COPY.en;
@@ -97,7 +97,7 @@ export default function OfflineSettlementHub({onBack,character}){
 
   if(active){
     const supplyControls=<OfflineSupplyLines active={active} settlements={items} language={language} onActiveChange={setActive} onRefresh={refresh}/>;
-    return <SettlementScreen settlement={active} character={character} sharedControls={supplyControls} onUpdate={updateActive} onBack={()=>{setActive(null);void refresh();}} canEdit />;
+    return <SettlementScreen settlement={active} character={character} onCharacterChange={onCharacterChange} sharedControls={supplyControls} onUpdate={updateActive} onBack={()=>{setActive(null);void refresh();}} canEdit />;
   }
 
   return <section className="offline-settlement-hub">
