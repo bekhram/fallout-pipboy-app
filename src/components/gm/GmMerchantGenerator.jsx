@@ -14,7 +14,7 @@ import {
   merchantBuyPrice,
   merchantItemRarity,
 } from "../../utils/merchantSystem.js";
-import "./gmMerchantGenerator.css";
+import { sendTelegramEvent } from "../../utils/telegramBridge.js";\nimport "./gmMerchantGenerator.css";
 
 const FILTER_KEY = "pip2d20_gm_merchant_filters_v1";
 const RARITY_WEIGHTS = [100, 100, 60, 35, 20, 10, 5, 2];
@@ -354,9 +354,12 @@ export default function GmMerchantGenerator({ session = null }) {
     setStatus(created ? copy.created : copy.createFailed);
   };
 
-  const trade = () => {
+  const trade = async () => {
     if (!tradeMerchantId) return;
     const sent = Boolean(session?.publishMerchantOffer?.(tradeMerchantId));
+    if (sent && liveMerchant) {
+      await sendTelegramEvent({ type: "merchant", merchant: liveMerchant, language });
+    }
     setStatus(sent ? copy.offerSent : copy.offerFailed);
   };
 
