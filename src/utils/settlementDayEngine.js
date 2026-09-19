@@ -5,6 +5,7 @@ import { ROOMS, SETTLEMENT_RULEBOOK } from "../data/settlement/rulebook.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
+import { advanceSettlementCrops } from "./settlementCrops.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
 import { dailyActionTypes } from './settlementOffices.js';
@@ -171,7 +172,8 @@ function scheduleAttackAtEndOfDay(input,now){
   return {...input,attackRiskBlockedUntil:startsAt+5*SETTLEMENT_DAY_MS,attacks:[attack,...(input.attacks || [])].slice(0,50),events:[{id:randomId("event",now+1),type:"attack_warning",attackId:attack.id,faction,startsAt,createdAt:now},...(input.events || [])].slice(0,100)};
 }
 export function advanceSettlementDay(input,now=Date.now()){
-  const returned=resolveTradeCaravanReturn(input,Number(input.settlementDay || 1));
+  const cropsAdvanced=advanceSettlementCrops(input,now);
+  const returned=resolveTradeCaravanReturn(cropsAdvanced,Number(cropsAdvanced.settlementDay || 1));
   const started=applyStartOfDayNeeds(returned,now);
   const actionResult=resolveResidentActions(started,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
@@ -187,7 +189,7 @@ export function advanceSettlementDay(input,now=Date.now()){
 export function processAutomaticSettlementDays(input,now=Date.now()){
   let settlement={...input};if(!Number(settlement.nextDayAt || 0)){const anchor=Number(settlement.lastDayAt || now);settlement.lastDayAt=anchor;settlement.nextDayAt=anchor+SETTLEMENT_DAY_MS;}
   let safety=0;while(now>=Number(settlement.nextDayAt || Infinity) && safety<90){safety+=1;settlement=advanceSettlementDay(settlement,Number(settlement.nextDayAt));}
-  return advanceConstruction(settlement,now);
+  return advanceSettlementCrops(advanceConstruction(settlement,now),now);
 }
 export function createConstructionBuilding({id,type,x,y,now=Date.now(),ruleOverride=null}){
   const rule=ruleOverride || getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],...(rule?.effects?.cropSlots?{crops:[]}:{}),startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule?.contractorMode || "normal"};
