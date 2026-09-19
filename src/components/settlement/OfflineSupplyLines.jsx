@@ -85,8 +85,8 @@ export default function OfflineSupplyLines({active,settlements,language,onActive
       <select className="pip-input" value={lineTarget} onChange={e=>setLineTarget(e.target.value)}>{linked.map(item=><option key={item.id} value={item.id}>{item.name}</option>)}</select>
       <select className="pip-input" value={resource} onChange={e=>setResource(e.target.value)}>{KEYS.map(key=><option value={key} key={key}>{t[key]}</option>)}</select>
       <input className="pip-input" type="number" min="1" step="1" value={amount} onChange={e=>setAmount(e.target.value)}/>
-      <button type="button" className="pip-action-button" disabled={busy||!happy(active)||!happy(selectedOther)} onClick={()=>void transfer('send')}>{t.send}</button>
-      <button type="button" className="pip-action-button" disabled={busy||!happy(active)||!happy(selectedOther)} onClick={()=>void transfer('pull')}>{t.pull}</button>
+      <button type="button" className="pip-action-button" disabled={busy||!happy(selectedOther)} onClick={()=>void transfer('send')}>{t.send}</button>
+      <button type="button" className="pip-action-button" disabled={busy||!happy(active)} onClick={()=>void transfer('pull')}>{t.pull}</button>
     </div>}
   </section>;
 }
