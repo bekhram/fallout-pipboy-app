@@ -10,7 +10,7 @@ export function resolveSettlementPower(settlement) {
   const activeBuildings = (settlement.buildings || []).filter(isActive);
   const effectsFor = building => getRulebookBuilding(building.type)?.effects || {};
   const transmitters = activeBuildings.filter(building => effectsFor(building).transmitsPower);
-  const hasDistribution = transmitters.length > 0;
+  const hasDistribution = settlement.offlineStandalone ? transmitters.length > 0 : true;
 
   let produced = 0;
   let required = 0;
