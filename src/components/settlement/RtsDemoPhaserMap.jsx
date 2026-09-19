@@ -6,7 +6,7 @@ import pawnBlue from '../../assets/settlement/workers/pawn-blue.png';
 import { WORKER_TEXTURE, WORKER_FRAME_SIZE } from './workerSpriteFrames.js';
 import {
   createRtsCombatState, toggleRtsSelection, selectAllRtsUnits, clearRtsSelection,
-  issueRtsCommand, spawnRtsWave, stepRtsCombat, rtsCombatSummary,
+  inspectRtsEnemy, issueRtsFocusFire, issueRtsCommand, spawnRtsWave, stepRtsCombat, rtsCombatSummary,
 } from '../../utils/settlementRtsCombat.js';
 
 const CELL = 40;
@@ -125,11 +125,24 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
           let view = this.enemyViews.get(enemy.id);
           if (view) return view;
           const container = this.add.container(0, 0).setDepth(21);
-          const sprite = this.add.sprite(0, 0, WORKER_TEXTURE, 0).setOrigin(.5, .7).setScale(.44).setTint(0xff745c);
+          const targetRing = this.add.circle(0, 10, 23, 0xffbf74, .05).setStrokeStyle(2, 0xffc87c, .95).setScale(1, .42).setVisible(false);
+          const tint = enemy.role === 'ranged' ? 0xffb25e : enemy.role === 'siege' ? 0xd68cff : 0xff745c;
+          const scale = enemy.role === 'siege' ? .54 : enemy.role === 'ranged' ? .43 : .46;
+          const sprite = this.add.sprite(0, 0, WORKER_TEXTURE, 0).setOrigin(.5, .7).setScale(scale).setTint(tint).setInteractive({ useHandCursor:true });
           const bar = this.add.graphics();
-          const tag = this.add.text(0, 15, 'RAIDER', { fontFamily:'monospace', fontSize:'9px', color:'#ffb5a5', backgroundColor:'#190b08dd', padding:{x:3,y:2} }).setOrigin(.5,0);
-          container.add([sprite, bar, tag]);
-          view = { container, sprite, bar, tag, index: this.enemyViews.size };
+          const tag = this.add.text(0, 15, enemy.label || 'RAIDER', { fontFamily:'monospace', fontSize:'9px', color:'#ffcfaa', backgroundColor:'#190b08dd', padding:{x:3,y:2} }).setOrigin(.5,0);
+          container.add([targetRing, sprite, bar, tag]);
+          sprite.on('pointerdown', (_pointer, _x, _y, event) => {
+            event?.stopPropagation();
+            this.down = null;
+            inspectRtsEnemy(this.combat, enemy.id);
+            if (latest.current.commandMode === 'attack' && issueRtsFocusFire(this.combat, enemy.id)) {
+              latest.current.onCommandComplete?.('attack');
+            }
+            this.renderCombat(this.time.now);
+            this.emitState(true);
+          });
+          view = { container, targetRing, sprite, bar, tag, index: this.enemyViews.size };
           this.enemyViews.set(enemy.id, view);
           return view;
         }
@@ -160,8 +173,11 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
             view.container.setVisible(enemy.alive).setPosition((enemy.x + .5) * CELL, (enemy.y + .5) * CELL);
             if (!enemy.alive) continue;
             const moving = Boolean(enemy.path?.length);
+            const focused = this.combat.units.filter(unit => unit.alive && !unit.retreated && unit.focusTargetId === enemy.id).length;
             view.sprite.setFrame((moving ? 6 : 0) + frame);
             view.sprite.setFlipX(moving && enemy.path[0]?.x < enemy.x);
+            view.targetRing.setVisible(this.combat.inspectedEnemyId === enemy.id || focused > 0);
+            view.tag.setText(`${enemy.label || 'RAIDER'}${focused ? ` · FOCUS ${focused}` : ''}`);
             this.hpBar(view.bar, enemy.hp, enemy.maxHp, true);
           }
           this.hqMarker?.setText(`HQ ${Math.ceil(this.combat.hq.hp)}/${this.combat.hq.maxHp}`);
@@ -169,12 +185,30 @@ export default function RtsDemoPhaserMap({ buildings, workers, paused, commandMo
 
         flashEvents(events) {
           for (const event of events) {
-            if (event.type !== 'shot') continue;
-            const from = this.unitViews.get(event.from)?.container, to = this.enemyViews.get(event.to)?.container;
-            if (!from || !to) continue;
-            const tracer = this.add.graphics().setDepth(40);
-            tracer.lineStyle(2, 0xffe69b, .95).lineBetween(from.x, from.y - 15, to.x, to.y - 15);
-            this.time.delayedCall(90, () => tracer.destroy());
+            if (event.type === 'shot') {
+              const from = this.unitViews.get(event.from)?.container, to = this.enemyViews.get(event.to)?.container;
+              if (!from || !to) continue;
+              const tracer = this.add.graphics().setDepth(40);
+              tracer.lineStyle(2, 0xffe69b, .95).lineBetween(from.x, from.y - 15, to.x, to.y - 15);
+              this.time.delayedCall(90, () => tracer.destroy());
+            } else if (event.type === 'enemy_hit' && event.ranged) {
+              const from = this.enemyViews.get(event.enemyId)?.container, to = this.unitViews.get(event.unitId)?.container;
+              if (!from || !to) continue;
+              const tracer = this.add.graphics().setDepth(40);
+              tracer.lineStyle(2, 0xff8b78, .9).lineBetween(from.x, from.y - 15, to.x, to.y - 15);
+              this.time.delayedCall(100, () => tracer.destroy());
+            } else if (event.type === 'heal') {
+              const from = this.unitViews.get(event.from)?.container, to = this.unitViews.get(event.to)?.container;
+              if (!from || !to) continue;
+              const tracer = this.add.graphics().setDepth(40);
+              tracer.lineStyle(2, 0xaaff9a, .9).lineBetween(from.x, from.y - 10, to.x, to.y - 10);
+              this.time.delayedCall(140, () => tracer.destroy());
+            } else if (event.type === 'melee') {
+              const to = this.enemyViews.get(event.to)?.container;
+              if (!to) continue;
+              const flash = this.add.circle(to.x, to.y - 10, 13, 0xffd68a, .3).setDepth(40);
+              this.tweens.add({ targets:flash, alpha:0, scale:1.8, duration:120, onComplete:()=>flash.destroy() });
+            }
           }
         }
 
