@@ -130,7 +130,9 @@ export default function TelegramCampaignPanel({ session }) {
     setBusy(true);
     setMessage("");
     try {
-      const result = await request({ type: "create", campaignId });
+      let currentToken = "";
+      try { currentToken = localStorage.getItem(tokenKey(campaignId)) || ""; } catch { /* best effort */ }
+      const result = await request({ type: "create", campaignId, manageToken: currentToken });
       setCode(result.code || "");
       setExpiresAt(Number(result.expiresAt || 0));
       setBotUsername(result.botUsername || "");
