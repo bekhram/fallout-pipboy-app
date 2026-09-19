@@ -431,7 +431,11 @@ export function rtsCombatSummary(state) {
     enemiesTotal: state.enemies.length,
     hqHp: state.hq.hp, hqMaxHp: state.hq.maxHp,
     message: state.message,
-    inspectedEnemy: inspected ? { id:inspected.id, type:inspected.type, label:inspected.label, role:inspected.role, threat:inspected.threat, hp:inspected.hp, maxHp:inspected.maxHp } : null,
+    inspectedEnemy: inspected ? {
+      id:inspected.id, type:inspected.type, label:inspected.label, role:inspected.role, threat:inspected.threat,
+      hp:inspected.hp, maxHp:inspected.maxHp,
+      focusedBy:state.units.filter(unit => unit.focusTargetId === inspected.id && activeUnit(unit)).length,
+    } : null,
     units: state.units.map(unit => ({
       id:unit.id, name:unit.name, archetype:unit.archetype, roleLabel:unit.roleLabel,
       hp:unit.hp, maxHp:unit.maxHp, alive:unit.alive, retreated:unit.retreated,
