@@ -29,6 +29,8 @@ const paths = {
   edit: "m4 16 12-12 4 4L8 20H4v-4Zm10-10 4 4",
   chevron: "m5 9 7 7 7-7",
   plus: "M12 4v16M4 12h16",
+  help: "M9.5 9a2.7 2.7 0 1 1 4.9 1.6c-.7 1-2.4 1.5-2.4 3.4M12 18h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z",
+  image: "M3 5h18v14H3V5Zm3 10 4-4 3 3 2-2 4 4M8 9h.01",
 };
 export default function SheetIcon({ name, ...props }) {
   return <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}><path d={paths[name] || paths.more} /></svg>;
