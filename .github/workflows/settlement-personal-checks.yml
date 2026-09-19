@@ -36,5 +36,5 @@ jobs:
       - run: python -m playwright install --with-deps chromium
       - name: Native IndexedDB regression checks
         run: python tests/browser_offline.py
-      - name: React inventory and atomic personal payment checks
+      - name: Native root character hook and personal construction checks
         run: python tests/browser_personal.py
