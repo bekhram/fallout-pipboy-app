@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { resolveSettlementPower } from '../src/utils/settlementPower.js';
 import { resolveSettlementResources, getTendedCropResult, reserveCropFertilizer } from '../src/utils/settlementResources.js';
 import { populationNeeds } from '../src/utils/settlementResidents.js';
+import { constructionRequirementBlockers } from '../src/utils/settlementDevelopment.js';
+import { butcherSettlementBrahmin } from '../src/utils/settlementResources.js';
 import { advanceSettlementDay } from '../src/utils/settlementDayEngine.js';
 import { contractorConstructionRule, settlementLeaderProfile } from '../src/utils/settlementLeaderRules.js';
 import { setOfficeRole, setMayorBonusAction, dailyActionTypes } from '../src/utils/settlementOffices.js';
@@ -189,4 +191,50 @@ test('catalog includes book-correct pylon, powered pump and industrial purifier'
   assert.equal(getRulebookBuilding('powered_water_pump').effects.requiresPower,4);
   assert.equal(getRulebookBuilding('industrial_water_purifier').effects.water,40);
   assert.equal(getRulebookBuilding('industrial_water_purifier').effects.requiresPower,5);
+});
+
+
+test('Rare settlement objects require a learned specific recipe',()=>{
+  const character={skills:{Speech:{rank:2}},perksAndTraits:[]};
+  const rule=getRulebookBuilding('caravan_post');
+  assert.ok(constructionRequirementBlockers(character,rule,'caravan_post').some(blocker=>blocker.kind==='recipe'));
+  const learned={...character,settlementRecipes:['caravan_post']};
+  assert.equal(constructionRequirementBlockers(learned,rule,'caravan_post').some(blocker=>blocker.kind==='recipe'),false);
+});
+
+test('scavenging stations grant three rerolls per station',()=>{
+  const s=base();
+  s.buildings=[building('station','scrap_yard')];
+  s.settlers=[person('scav','scavenging')];
+  s.attributes={...s.attributes,food:5,water:5,beds:1,defense:1};
+  const values=[.4,.4,.4,0,0,0];let index=0; // three initial 3s become three 1s.
+  const oldRandom=Math.random;
+  Math.random=()=>values[index++]??0;
+  try{
+    const next=advanceSettlementDay(s,86400000);
+    const event=next.events.find(item=>item.type==='scavenging');
+    assert.equal(event.stations,1);
+    assert.deepEqual(event.rolls.slice(0,3),[1,1,1]);
+  }finally{Math.random=oldRandom;}
+});
+
+test('brahmin can be butchered only as part of Tend Crops and is removed afterwards',()=>{
+  const s=base();s.livestock={brahmin:1};
+  assert.throws(()=>butcherSettlementBrahmin(s,'food'),/TEND_CROPS_REQUIRED/);
+  s.settlers=[person('farmer','tend_crops')];
+  const next=butcherSettlementBrahmin(s,'food',100);
+  assert.equal(next.livestock.brahmin,0);
+  assert.equal(next.nextDayBrahminFoodBonus,2);
+});
+
+test('start-of-day shortages reduce Happiness before end-of-day departure',()=>{
+  const s=base();
+  s.settlers=Array.from({length:5},(_,i)=>person('p'+i));
+  s.attributes={people:5,food:0,water:0,power:0,defense:0,beds:0,happiness:5,income:0};
+  s.resources={...s.resources,population:5,food:0,water:0,defense:0,beds:0,happiness:5};
+  const next=advanceSettlementDay(s,86400000);
+  assert.equal(next.attributes.happiness,1);
+  assert.equal(next.settlers.length,4);
+  assert.ok(next.events.some(event=>event.type==='needs_failed'));
+  assert.ok(next.events.some(event=>event.type==='settler_left'));
 });
