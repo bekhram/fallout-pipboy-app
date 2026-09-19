@@ -103,3 +103,44 @@ export function settlerProfileLabel(settler,language='en'){
   const perks=(settler?.perks||[]).map(id=>SETTLER_PERKS[id]?.name?.[key]||SETTLER_PERKS[id]?.name?.en||id);
   return [settler?.specialty,...top,...perks].filter(Boolean).join(' · ');
 }
+
+
+export function settlerXpForNextLevel(settler){
+  return Math.max(100,Math.max(1,Number(settler?.level||1))*100);
+}
+
+export function addSettlerExperience(settler,amount){
+  let experience=Math.max(0,Number(settler?.experience||0))+Math.max(0,Number(amount||0));
+  let level=Math.max(1,Number(settler?.level||1));
+  let advancementPoints=Math.max(0,Number(settler?.advancementPoints||0));
+  let gained=0;
+  while(experience>=level*100 && level<20){
+    experience-=level*100;
+    level+=1;
+    advancementPoints+=1;
+    gained+=1;
+  }
+  return {...settler,experience,level,advancementPoints,lastXpGain:Math.max(0,Number(amount||0)),lastLevelGain:gained};
+}
+
+export function availableSettlerPerks(settler){
+  const owned=new Set(settler?.perks||[]);
+  return Object.values(SETTLER_PERKS).filter(perk=>!owned.has(perk.id));
+}
+
+export function advanceSettlerProfile(settler,rewardType,rewardId){
+  if(!settler || Math.max(0,Number(settler.advancementPoints||0))<1)return settler;
+  if(rewardType==='skill'){
+    if(!SKILL_NAMES.includes(rewardId))return settler;
+    const current=Math.max(0,Number(settler.skills?.[rewardId]?.rank||0));
+    if(current>=4)return settler;
+    return {...settler,skills:{...(settler.skills||{}),[rewardId]:{...(settler.skills?.[rewardId]||{}),rank:current+1}},advancementPoints:Number(settler.advancementPoints)-1};
+  }
+  if(rewardType==='perk'){
+    if(!Object.hasOwn(SETTLER_PERKS,rewardId) || (settler.perks||[]).includes(rewardId))return settler;
+    return {...settler,perks:[...(settler.perks||[]),rewardId],advancementPoints:Number(settler.advancementPoints)-1};
+  }
+  return settler;
+}
+
+export const SETTLER_SKILLS = SKILL_NAMES;
