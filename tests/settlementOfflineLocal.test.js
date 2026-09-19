@@ -42,18 +42,19 @@ test('offline food and water surplus stays entirely in the settlement',()=>{
   assert.deepEqual(settlementProfit(next).claimable,{caps:0,food:0,water:0});
 });
 
-test('offline store income is credited entirely to settlement caps',()=>{
+test('offline store income is kept as abstract settlement Income',()=>{
   const settlers=[
     {id:'a',settlementAction:{type:'business'}},{id:'b'},{id:'c'},{id:'d'},{id:'e'},
   ];
   const next=processSettlementCommerce({
     offlineStandalone:true,
     settlementDay:2,commerceLastProcessedDay:0,
-    resources:{caps:100},attributes:{},settlers,
+    resources:{caps:100,income:0},attributes:{income:0},settlers,
     buildings:[{id:'shop',type:'trading_emporium',state:'active',condition:100,rooms:[]}],
     events:[],
   });
   assert.equal(next.attributes.income,3);
-  assert.equal(next.resources.caps,103);
+  assert.equal(next.resources.income,3);
+  assert.equal(next.resources.caps,100);
   assert.equal(settlementProfit(next).claimable.caps,0);
 });
