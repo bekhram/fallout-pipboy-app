@@ -18,6 +18,16 @@ export function collectDailySurplus(settlement, stats) {
   // Supplied stock is not new production and cannot generate further surplus.
   const food = Math.max(0, amount(stats.food) - amount(settlement.nextDaySupplies?.food) - stats.needsPeople);
   const water = Math.floor(Math.max(0, amount(stats.water) - amount(settlement.nextDaySupplies?.water) - stats.needsPeople) / 2);
+  if (settlement.offlineStandalone) {
+    return { ...settlement, nextDaySupplies: {},
+      stockpile: { ...settlement.stockpile, provisions: { food: stored.food + food, water: stored.water + water } },
+      lastDaySurplus: {
+        food, water,
+        reserve: { food, water },
+        claimable: { food: 0, water: 0 },
+      },
+    };
+  }
   const foodSplit = splitSettlementProfit(food);
   const waterSplit = splitSettlementProfit(water);
   let next = { ...settlement, nextDaySupplies: {},
