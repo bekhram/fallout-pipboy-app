@@ -7,7 +7,7 @@ import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
-import { createSettlerProfile, settlerActionBonus } from './settlementSettlerProfile.js';
+import { addSettlerExperience, createSettlerProfile, settlerActionBonus } from './settlementSettlerProfile.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -87,7 +87,14 @@ function resolveResidentActions(input,now){
   if(caravanWorkers>0)events.push({type:"trade_caravan",workers:caravanWorkers});
   const resourceGrid=resolveSettlementResources(settlement);
   const attributes={...(settlement.attributes || {}),food:dailyFood+Number(settlement.nextDaySupplies?.food || 0),water:resourceGrid.water,income:dailyIncome};
-  return {settlement:{...settlement,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile},dailyDefenseBonus,actionEvents:events};
+  const activeIds=new Set(settlers.map(worker=>worker.id));
+  const xpByAction={build:12,hunting_gathering:12,scavenging:12,guard:10,tend_crops:10,business:10,trade_caravan:12};
+  const experienced=(settlement.settlers || []).map(worker=>{
+    if(!activeIds.has(worker.id))return worker;
+    const xp=Number(xpByAction[worker.settlementAction?.type] || 0);
+    return xp ? addSettlerExperience(worker,xp) : worker;
+  });
+  return {settlement:{...settlement,settlers:experienced,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile},dailyDefenseBonus,actionEvents:events};
 }
 function applyNeedsAndDeparture(input,dailyDefenseBonus,now){
   const stats=calculateStaticAttributes(input,dailyDefenseBonus,input.attributes?.food);let happiness=clamp(stats.happiness,1,20);const failedNeeds=[];
