@@ -44,6 +44,7 @@ function normalizeHeroParticipants(heroes = []) {
 }
 
 export function setSettlementDefensePlan(settlement, attackId, defenderIds = [], heroes = [], now = Date.now()) {
+  if (typeof heroes === "number") { now = heroes; heroes = []; }
   const eligible = eligibleDefenderIds(settlement);
   const selected = [...new Set(Array.isArray(defenderIds) ? defenderIds : [])]
     .filter((id) => eligible.has(id))
