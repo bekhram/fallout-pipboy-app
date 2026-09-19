@@ -3,7 +3,8 @@ export const RESOURCE_SYMBOLS = { food:'🌾', water:'💧', power:'ϟ', income:
 export const JOB_SYMBOLS = { build:'⚒', repair:'🛠', tend_crops:'🌾', guard:'⬟', business:'¤', scavenging:'⚙', hunting_gathering:'♧', trade_caravan:'⇄', idle:'•' };
 export function workerIndicator(action, phase, cargo = false) {
   return { symbol: JOB_SYMBOLS[action] || JOB_SYMBOLS.idle,
-    status: phase === 'waiting' ? '!' : cargo ? '▣' : '', warning: phase === 'waiting' };
+    status: phase === 'waiting' ? '!' : phase === 'manual_move' ? '→' : phase === 'manual_hold' ? '•' : cargo ? '▣' : '',
+    warning: phase === 'waiting' };
 }
 export function buildingIndicators(building, site) {
   const e = site?.effects || {}, active = site?.state === 'active';
