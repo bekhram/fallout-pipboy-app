@@ -218,36 +218,53 @@ function nearestActiveUnit(state, enemy, maxDistance = Infinity) {
 
 function chooseEnemyTarget(state, enemy) {
   if (enemy.role === 'siege') {
-    const blocker = nearestActiveUnit(state, enemy, 1.7);
-    return blocker ? { type:'unit', entity:blocker } : { type:'hq', entity:state.hq };
+    const blocker=nearestActiveUnit(state,enemy,1.7);
+    if(blocker)return {type:'unit',entity:blocker};
+    if(pathToPoint(state,enemy,state.hq.position).length)return {type:'hq',entity:state.hq};
+    return chooseBreachTarget(state,enemy)||{type:'hq',entity:state.hq};
   }
-  const radius = enemy.role === 'ranged' ? 8 : 7;
-  const nearby = nearestActiveUnit(state, enemy, radius);
-  return nearby ? { type:'unit', entity:nearby } : { type:'hq', entity:state.hq };
+  const radius=enemy.role==='ranged'?8:7;
+  const nearby=nearestActiveUnit(state,enemy,radius);
+  if(nearby&&(enemy.role!=='ranged'||hasRtsLineOfSight(state,enemy,nearby)))return {type:'unit',entity:nearby};
+  const turret=state.structures.filter(item=>item.alive&&item.kind==='turret'&&distance(enemy,item.position)<=7)
+    .filter(item=>hasRtsLineOfSight(state,enemy,item.position,{ignoreIds:[item.buildingId]}))
+    .sort((a,b)=>distance(enemy,a.position)-distance(enemy,b.position))[0];
+  if(enemy.role==='ranged'&&turret)return {type:'structure',entity:turret};
+  if(pathToPoint(state,enemy,state.hq.position).length)return {type:'hq',entity:state.hq};
+  return chooseBreachTarget(state,enemy)||{type:'hq',entity:state.hq};
 }
 
-function targetPoint(state, target) {
-  return target.type === 'unit' ? target.entity : state.hq.position;
+function targetPoint(state,target){
+  return target.type==='unit'?target.entity:target.type==='structure'?target.entity.position:state.hq.position;
 }
 
-function refreshEnemyPath(state, enemy, target, force = false) {
-  const id = target.type === 'unit' ? target.entity.id : 'hq';
-  if (!force && enemy.targetId === id && enemy.path?.length) return;
-  enemy.targetId = id;
-  assignPath(enemy, state.world, targetPoint(state, target));
+function targetId(target){return target.type==='unit'?target.entity.id:target.type==='structure'?target.entity.id:'hq';}
+
+function refreshEnemyPath(state,enemy,target,force=false){
+  const id=targetId(target);
+  if(!force&&enemy.targetId===id&&enemy.path?.length)return;
+  enemy.targetId=id;
+  if(target.type==='structure'){
+    const approach=target.approach||structureApproach(state,enemy,target.entity)?.point;
+    if(approach)assignPath(enemy,state.world,approach);else enemy.path=[];
+    return;
+  }
+  assignPath(enemy,state.world,targetPoint(state,target));
 }
 
-function rangedPosition(state, enemy, point, preferredRange) {
-  const start = workerAnchor(state.world, enemy);
-  if (!start) return null;
-  const candidates = state.world.cells
-    .filter(cell => distance(cell, enemy) <= 6.5)
-    .sort((a, b) => {
-      const aScore = Math.abs(distance(a, point) - preferredRange) + distance(a, enemy) * .08;
-      const bScore = Math.abs(distance(b, point) - preferredRange) + distance(b, enemy) * .08;
-      return aScore - bScore;
+function rangedPosition(state,enemy,target,preferredRange){
+  const start=workerAnchor(state.world,enemy),point=targetPoint(state,target);
+  if(!start)return null;
+  const ignore=target.type==='structure'?[target.entity.buildingId]:[];
+  const candidates=state.world.cells
+    .filter(cell=>distance(cell,enemy)<=6.5)
+    .filter(cell=>hasRtsLineOfSight(state,cell,point,{ignoreIds:ignore}))
+    .sort((a,b)=>{
+      const aScore=Math.abs(distance(a,point)-preferredRange)+distance(a,enemy)*.08;
+      const bScore=Math.abs(distance(b,point)-preferredRange)+distance(b,enemy)*.08;
+      return aScore-bScore;
     });
-  for (const cell of candidates.slice(0, 24)) if (workerPath(state.world, start, cell).length) return cell;
+  for(const cell of candidates.slice(0,24))if(workerPath(state.world,start,cell).length)return cell;
   return null;
 }
 
@@ -330,20 +347,21 @@ export function issueRtsCommand(state, command, target = null) {
     return true;
   }
   if (!target || !['move', 'patrol'].includes(command)) return false;
-  const goals = formationGoals(state.world, target, units.length);
-  let changed = false;
-  units.forEach((unit, index) => {
-    const goal = goals[index % Math.max(1, goals.length)] || target;
-    unit.focusTargetId = null;
-    if (command === 'move') {
-      changed = assignPath(unit, state.world, goal) || changed;
-      unit.command = 'move'; unit.patrol = null;
-    } else {
-      const start = nearestAllowed(state.world, unit);
-      if (!start) return;
-      unit.patrol = { a: { x: start.x, y: start.y }, b: { x: goal.x, y: goal.y }, next: 'b' };
-      changed = assignPath(unit, state.world, unit.patrol.b) || changed;
-      unit.command = 'patrol';
+  const moveWorld=state.defenderWorld||state.world;
+  const goals=formationGoals(moveWorld,target,units.length);
+  let changed=false;
+  units.forEach((unit,index)=>{
+    const goal=goals[index%Math.max(1,goals.length)]||target;
+    unit.focusTargetId=null;
+    if(command==='move'){
+      changed=assignPath(unit,moveWorld,goal)||changed;
+      unit.command='move';unit.patrol=null;
+    }else{
+      const start=nearestAllowed(moveWorld,unit);
+      if(!start)return;
+      unit.patrol={a:{x:start.x,y:start.y},b:{x:goal.x,y:goal.y},next:'b'};
+      changed=assignPath(unit,moveWorld,unit.patrol.b)||changed;
+      unit.command='patrol';
     }
   });
   state.message = command;
@@ -377,17 +395,17 @@ export function spawnRtsWave(state) {
   return true;
 }
 
-function processPatrol(state, unit) {
-  if (unit.command !== 'patrol' || unit.path.length || !unit.patrol) return;
-  const goal = unit.patrol.next === 'b' ? unit.patrol.a : unit.patrol.b;
-  unit.patrol.next = unit.patrol.next === 'b' ? 'a' : 'b';
-  assignPath(unit, state.world, goal);
+function processPatrol(state,unit){
+  if(unit.command!=='patrol'||unit.path.length||!unit.patrol)return;
+  const goal=unit.patrol.next==='b'?unit.patrol.a:unit.patrol.b;
+  unit.patrol.next=unit.patrol.next==='b'?'a':'b';
+  assignPath(unit,state.defenderWorld||state.world,goal);
 }
 
 function processRetreat(state, unit, events) {
   if (!unit.alive || unit.retreated || unit.command === 'retreat' || unit.hp > unit.maxHp * unit.retreatRatio) return;
   unit.command = 'retreat'; unit.patrol = null; unit.selected = false; unit.focusTargetId = null;
-  if (!assignPath(unit, state.world, state.hq.position)) {
+  if (!assignPath(unit, state.defenderWorld||state.world, state.hq.position)) {
     unit.retreated = true; unit.path = [];
   }
   events.push({ type: 'retreat', unitId: unit.id });
@@ -409,20 +427,25 @@ function focusedEnemy(state, unit) {
   return unit.focusTargetId ? state.enemies.find(enemy => enemy.id === unit.focusTargetId && aliveEnemy(enemy)) || null : null;
 }
 
-function processAttackMovement(state, unit, deltaMs) {
-  if (unit.command !== 'attack') return;
-  const target = focusedEnemy(state, unit);
-  if (!target) {
-    unit.command = 'hold'; unit.focusTargetId = null; unit.path = [];
-    return;
-  }
-  const d = distance(unit, target);
-  if (d <= unit.range * .92) {
-    unit.path = [];
-    return;
-  }
-  if (!unit.path.length || !unit.goal || distance(unit.goal, target) > 1.2) assignPath(unit, state.world, target);
-  moveEntity(unit, state.world, deltaMs, unit.speed);
+function firingPosition(state,unit,target){
+  const world=state.defenderWorld||state.world,start=workerAnchor(world,unit);
+  if(!start)return null;
+  const candidates=world.cells.filter(cell=>distance(cell,target)<=unit.range*.92)
+    .filter(cell=>hasRtsLineOfSight(state,cell,target))
+    .sort((a,b)=>distance(a,unit)-distance(b,unit));
+  for(const cell of candidates.slice(0,30))if(workerPath(world,start,cell).length)return cell;
+  return null;
+}
+
+function processAttackMovement(state,unit,deltaMs){
+  if(unit.command!=='attack')return;
+  const target=focusedEnemy(state,unit);
+  if(!target){unit.command='hold';unit.focusTargetId=null;unit.path=[];return;}
+  const d=distance(unit,target),los=hasRtsLineOfSight(state,unit,target),world=state.defenderWorld||state.world;
+  if(d<=unit.range*.92&&los){unit.path=[];return;}
+  const goal=firingPosition(state,unit,target);
+  if(goal&&(!unit.path.length||!unit.goal||distance(unit.goal,goal)>.5))assignPath(unit,world,goal);
+  if(unit.path.length)moveEntity(unit,world,deltaMs,unit.speed);
 }
 
 function processUnitCombat(state, unit, events) {
@@ -433,9 +456,11 @@ function processUnitCombat(state, unit, events) {
       .filter(enemy => distance(unit, enemy) <= unit.range)
       .sort((a, b) => distance(unit, a) - distance(unit, b))[0];
   }
-  if (!target || distance(unit, target) > unit.range || unit.cooldown > 0) return;
-  target.hp -= unit.damage;
-  unit.cooldown = unit.attackMs;
+  if(!target||distance(unit,target)>unit.range||unit.cooldown>0||!hasRtsLineOfSight(state,unit,target))return;
+  const cover=unit.archetype==='bruiser'?0:rtsCoverForTarget(state,unit,target);
+  const dealt=Math.max(1,Math.round(unit.damage*(1-cover)));
+  target.hp-=dealt;
+  unit.cooldown=unit.attackMs;
   if (target.hp <= 0) {
     target.hp = 0; target.alive = false; target.path = [];
     if (state.inspectedEnemyId === target.id) state.inspectedEnemyId = null;
@@ -444,7 +469,7 @@ function processUnitCombat(state, unit, events) {
       if (defender.command === 'attack') defender.command = 'hold';
     }
   }
-  events.push({ type: unit.archetype === 'bruiser' ? 'melee' : 'shot', from: unit.id, to: target.id, killed: !target.alive });
+  events.push({type:unit.archetype==='bruiser'?'melee':'shot',from:unit.id,to:target.id,damage:dealt,covered:Boolean(cover),killed:!target.alive});
 }
 
 function enemyAttack(state, enemy, target, events) {
