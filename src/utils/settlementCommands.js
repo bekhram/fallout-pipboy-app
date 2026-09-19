@@ -8,6 +8,7 @@ import { createConstructionBuilding, createRoomConstruction, payRulebookBuilding
 import { linkSettlementAttackBattle, resolveSettlementAttack, setSettlementDefensePlan } from './settlementAttackEngine.js';
 import { assignRepairWorker, startBuildingRepair } from './settlementRepair.js';
 import { claimSettlementProfit } from './settlementProfit.js';
+import { advanceSettlerProfile } from './settlementSettlerProfile.js';
 
 export function applySettlementCommand(settlement, character, actor, command, now = Date.now()) {
   let s = dev.advanceConstruction(settlement, now);
@@ -52,6 +53,11 @@ export function applySettlementCommand(settlement, character, actor, command, no
     case 'priority': s = dev.movePriority(s, actor, c.key, c.direction); break;
     case 'worker': s = dev.assignWorker(s, actor, c.workerId, c.key); break;
     case 'workplace': s = assignSettlementWorkplace(s, c.workerId, c.buildingId); break;
+    case 'settlerAdvance': {
+      if (!(s.settlers || []).some(w => w.id === c.workerId)) fail('NOT_FOUND');
+      s = { ...s, settlers: s.settlers.map(w => w.id === c.workerId ? advanceSettlerProfile(w,c.rewardType,c.rewardId) : w) };
+      break;
+    }
     case 'order': s = dev.createOrder(s, actor, c.kind, c.target, now); break;
     case 'cancelOrder': s = dev.cancelOrder(s, actor, c.orderId); break;
     case 'specialist':
