@@ -94,6 +94,7 @@ export default function TelegramCampaignPanel({ session }) {
   const [expiresAt, setExpiresAt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [botUsername, setBotUsername] = useState("");
 
   const manageToken = useMemo(() => {
     if (!campaignId) return "";
@@ -132,6 +133,7 @@ export default function TelegramCampaignPanel({ session }) {
       const result = await request({ type: "create", campaignId });
       setCode(result.code || "");
       setExpiresAt(Number(result.expiresAt || 0));
+      setBotUsername(result.botUsername || "");
       if (result.manageToken) {
         try { localStorage.setItem(tokenKey(campaignId), result.manageToken); } catch { /* best effort */ }
       }
@@ -191,7 +193,7 @@ export default function TelegramCampaignPanel({ session }) {
 
       {code ? (
         <div className="telegram-campaign-panel__connect">
-          <p>{copy.instruction}</p>
+          <p>{copy.instruction}{botUsername ? ` ${botUsername}` : ""}</p>
           <button type="button" className="telegram-campaign-panel__code" onClick={() => navigator.clipboard?.writeText(`/connect ${code}`)}>
             /connect {code}
           </button>
