@@ -72,7 +72,7 @@ export function applySettlementCommand(settlement, character, actor, command, no
       if (!(s.settlers || []).some(w => w.id === c.workerId)) fail('NOT_FOUND');
       if (c.action && !availableSettlementActions(s).some(a => a.id === c.action)) fail('INVALID_ACTION');
       s = { ...s, settlers: s.settlers.map(w => w.id === c.workerId ? { ...w, settlementAction: c.action ? { type: c.action } : null, assignedBuildingId: null, status: c.action ? 'working' : 'idle' } : w) }; break;
-    case 'attackPlan': s = setSettlementDefensePlan(s, c.attackId, c.defenderIds, now); break;
+    case 'attackPlan': s = setSettlementDefensePlan(s, c.attackId, c.defenderIds, c.heroes, now); break;
     case 'attackBattle': s = linkSettlementAttackBattle(s, c.attackId, c.tacticalSceneId, now); break;
     case 'attack': s = resolveSettlementAttack(s, c.attackId, now); break;
     default: fail('INVALID_COMMAND');
