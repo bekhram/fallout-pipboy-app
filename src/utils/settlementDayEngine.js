@@ -7,6 +7,7 @@ import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
+import { createSettlerProfile, settlerActionBonus, settlerHasPerk } from './settlementSettlerProfile.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -63,18 +64,25 @@ function resolveResidentActions(input,now){
   const actionCounts=settlers.reduce((acc,settler)=>{const type=settler.settlementAction?.type;if(type)acc[type]=(acc[type] || 0)+1;return acc;},{});
   let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=0,dailyDefenseBonus=0;
   const events=[];
-  const hunters=Number(actionCounts.hunting_gathering || 0);
-  if(hunters>0){const roll=rollCombatDice(3+Math.max(0,hunters-1));dailyFood+=roll.total;stockpile={...stockpile,foragingItems:Number(stockpile.foragingItems || 0)+roll.effects};events.push({type:"hunting_gathering",workers:hunters,total:roll.total,effects:roll.effects});}
-  const scavengers=Number(actionCounts.scavenging || 0);
-  if(scavengers>0){const roll=rollCombatDice(3+Math.max(0,scavengers-1));stockpile={...stockpile,materials:{...stockpile.materials,common:Number(stockpile.materials.common || 0)+roll.total,uncommon:Number(stockpile.materials.uncommon || 0)+roll.effects}};events.push({type:"scavenging",workers:scavengers,common:roll.total,uncommon:roll.effects});}
-  const guards=Number(actionCounts.guard || 0);
-  if(guards>0){const staticStats=calculateStaticAttributes(settlement,0,dailyFood);dailyDefenseBonus=guards+Math.min(staticStats.guardStructures,guards*3);events.push({type:"guard",workers:guards,defense:dailyDefenseBonus});}
-  const cropWorkers=Number(actionCounts.tend_crops || 0);
-  if(cropWorkers>0){const cropResult=getTendedCropResult(settlement,cropWorkers);dailyFood+=cropResult.food;events.push({type:"tend_crops",...cropResult});}
+  const hunterList=settlers.filter(s=>s.settlementAction?.type==="hunting_gathering");
+  const hunters=hunterList.length;
+  if(hunters>0){const skillDice=hunterList.reduce((sum,s)=>sum+settlerActionBonus(s,"hunting_gathering").skillBonus,0);const perkDice=hunterList.filter(s=>settlerHasPerk(s,"hunter")).length;const roll=rollCombatDice(3+Math.max(0,hunters-1)+skillDice+perkDice);dailyFood+=roll.total;stockpile={...stockpile,foragingItems:Number(stockpile.foragingItems || 0)+roll.effects};events.push({type:"hunting_gathering",workers:hunters,total:roll.total,effects:roll.effects,bonusDice:skillDice+perkDice});}
+  const scavengerList=settlers.filter(s=>s.settlementAction?.type==="scavenging");
+  const scavengers=scavengerList.length;
+  if(scavengers>0){const skillDice=scavengerList.reduce((sum,s)=>sum+settlerActionBonus(s,"scavenging").skillBonus,0);const perkCommon=scavengerList.filter(s=>settlerHasPerk(s,"scrapper")).length;const roll=rollCombatDice(3+Math.max(0,scavengers-1)+skillDice);const common=roll.total+perkCommon;stockpile={...stockpile,materials:{...stockpile.materials,common:Number(stockpile.materials.common || 0)+common,uncommon:Number(stockpile.materials.uncommon || 0)+roll.effects}};events.push({type:"scavenging",workers:scavengers,common,uncommon:roll.effects,bonusDice:skillDice,perkCommon});}
+  const guardList=settlers.filter(s=>s.settlementAction?.type==="guard");
+  const guards=guardList.length;
+  if(guards>0){const staticStats=calculateStaticAttributes(settlement,0,dailyFood);const skillDefense=guardList.reduce((sum,s)=>sum+settlerActionBonus(s,"guard").skillBonus,0);const perkDefense=guardList.filter(s=>settlerHasPerk(s,"sentry")).length;dailyDefenseBonus=guards+Math.min(staticStats.guardStructures,guards*3)+skillDefense+perkDefense;events.push({type:"guard",workers:guards,defense:dailyDefenseBonus,skillDefense,perkDefense});}
+  const cropList=settlers.filter(s=>s.settlementAction?.type==="tend_crops");
+  const cropWorkers=cropList.length;
+  if(cropWorkers>0){const cropResult=getTendedCropResult(settlement,cropWorkers);const skillFood=cropList.reduce((sum,s)=>sum+settlerActionBonus(s,"tend_crops").skillBonus,0);const perkFood=cropList.filter(s=>settlerHasPerk(s,"green_thumb")).length;dailyFood+=cropResult.food+skillFood+perkFood;events.push({type:"tend_crops",...cropResult,skillFood,perkFood,food:cropResult.food+skillFood+perkFood});}
   const businessWorkers=Number(actionCounts.business || 0);
   const workplacePlan=resolveSettlementWorkplaces(settlement);
-  const dailyIncome=workplacePlan.income;
-  if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome});
+  const businessList=settlers.filter(s=>s.settlementAction?.type==="business");
+  const businessSkill=businessList.reduce((sum,s)=>sum+settlerActionBonus(s,"business").skillBonus,0);
+  const traderBonus=businessList.filter(s=>settlerHasPerk(s,"trader")).length;
+  const dailyIncome=workplacePlan.income+businessSkill+traderBonus;
+  if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome,businessSkill,traderBonus});
   const caravanWorkers=Number(actionCounts.trade_caravan || 0);
   if(caravanWorkers>0)events.push({type:"trade_caravan",workers:caravanWorkers});
   const resourceGrid=resolveSettlementResources(settlement);
@@ -97,7 +105,8 @@ function recruitmentCapacity(settlement,stats){
 }
 function createRecruit(settlement,now){
   const count=(settlement.settlers || []).length+1;
-  return {id:randomId("settler",now),name:`Settler ${count}`,role:"unassigned",assignedBuildingId:null,settlementAction:null,health:100,status:"idle",joinedAt:now};
+  const profile=createSettlerProfile();
+  return {id:randomId("settler",now),name:`Settler ${count}`,role:"unassigned",assignedBuildingId:null,settlementAction:null,health:100,status:"idle",joinedAt:now,...profile};
 }
 function resolveRecruitment(input,now){
   const stats=calculateStaticAttributes(input,null,input.attributes?.food);
