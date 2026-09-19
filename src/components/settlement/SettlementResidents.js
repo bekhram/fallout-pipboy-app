@@ -9,8 +9,8 @@ import { SettlementWorkerActor } from './SettlementWorkerActor.js';
 
 // One actor per saved settler. No network calls, timers or simulation writes.
 export class SettlementResidents {
-  constructor(scene) {
-    this.scene = scene;
+  constructor(scene, onSelect = null) {
+    this.scene = scene; this.onSelect = onSelect; this.selectedWorkerId = null;
     this.units = new Map();
     this.motion = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-reduced-motion: reduce)') : null;
     this.reduced = Boolean(this.motion?.matches);
@@ -19,9 +19,9 @@ export class SettlementResidents {
     scene.events?.once('shutdown', () => this.destroy());
   }
 
-  sync(settlement, language = 'en') {
+  sync(settlement, language = 'en', selectedWorkerId = null) {
     if (this.destroyed) return;
-    this.settlement = settlement; this.language = language;
+    this.settlement = settlement; this.language = language; this.selectedWorkerId = selectedWorkerId;
     const residents = Array.isArray(settlement.settlers) ? settlement.settlers : [];
     const buildings = Array.isArray(settlement.buildings) ? settlement.buildings : [];
     // Hover/zoom changes call sync too. They must not restart paths or do pathfinding.
@@ -31,7 +31,10 @@ export class SettlementResidents {
     for (const building of buildings) for (const workerId of building.repair?.workerIds || []) repairAssignments.set(workerId, building.id);
     const signature = JSON.stringify([worldSignature, language, this.reduced,
       residents.map(r => [r.id, r.name, r.settlementAction, r.assignedBuildingId, repairAssignments.get(r.id) || null])]);
-    if (this.inputSignature === signature) return;
+    if (this.inputSignature === signature) {
+      for (const [id, unit] of this.units) unit.setSelected(id === this.selectedWorkerId);
+      return;
+    }
     if (this.settlementId !== settlement.id) {
       for (const unit of this.units.values()) unit.destroy();
       this.units.clear(); this.settlementId = settlement.id;
@@ -53,7 +56,7 @@ export class SettlementResidents {
     const ordered = [...residents].sort((a, b) => String(a.id).localeCompare(String(b.id)));
     ordered.forEach((resident, index) => {
       let unit = this.units.get(resident.id);
-      if (!unit) { unit = new SettlementWorkerActor(this.scene, index); this.units.set(resident.id, unit); }
+      if (!unit) { unit = new SettlementWorkerActor(this.scene, index, { onSelect: id => this.onSelect?.(id) }); this.units.set(resident.id, unit); }
       const allocation = workplacePlan.byWorker[resident.id];
       const repairTargetId = repairAssignments.get(resident.id);
       const production = resident.settlementAction?.type && resident.settlementAction.type !== 'build';
@@ -86,8 +89,14 @@ export class SettlementResidents {
           : definition?.name?.[language] || definition?.name?.en || '',
         targetName: targetDefinition ? settlementBuildingName(targetDefinition, language) : '',
       });
+      unit.setSelected(resident.id === this.selectedWorkerId);
     });
     this.inputSignature = signature;
+  }
+
+  moveSelectedTo(point) {
+    if (this.destroyed || !this.selectedWorkerId) return false;
+    return Boolean(this.units.get(this.selectedWorkerId)?.moveTo(point));
   }
 
   update(time, delta) {
