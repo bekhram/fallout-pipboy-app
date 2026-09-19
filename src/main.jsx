@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { registerSW } from "virtual:pwa-register";
 
 import App from "./App.jsx";
 import { initFullscreenEditorUx } from "./utils/fullscreenEditorUx.js";
@@ -33,6 +34,20 @@ window.dataLayer = window.dataLayer || [];
 
 initFullscreenEditorUx();
 initCloudCharacterSync();
+
+if ("serviceWorker" in navigator) {
+  const updateSW = registerSW({
+    immediate: true,
+    onNeedRefresh() {
+      void updateSW(true);
+    },
+    onRegisteredSW(_swUrl, registration) {
+      if (!registration) return;
+      void registration.update();
+      window.setInterval(() => void registration.update(), 60 * 1000);
+    },
+  });
+}
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
