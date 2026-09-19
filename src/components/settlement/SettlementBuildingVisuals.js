@@ -55,8 +55,8 @@ export class SettlementBuildingVisuals {
         this.bounds.set(b.id, { top: Math.min(ready ? ready.y-ready.displayHeight : b.y*CELL, site ? site.y-site.displayHeight : b.y*CELL) });
       }
       const stage = construction?.stage || 'site';
-      unit.damage?.clear();
-      if (damageStage > 0) {
+      if (typeof unit.damage?.clear === 'function') unit.damage.clear();
+      if (damageStage > 0 && typeof unit.damage?.fillStyle === 'function' && typeof unit.damage?.lineStyle === 'function') {
         const defn = SETTLEMENT_BUILDINGS[b.type], w = defn.footprint.width * CELL, h = defn.footprint.height * CELL;
         const x = (b.x + defn.footprint.width / 2) * CELL, y = (b.y + defn.footprint.height) * CELL;
         unit.damage.fillStyle(0x111111, damageStage === 1 ? .18 : damageStage === 2 ? .34 : .52).fillRect(x-w/2, y-h, w, h);
