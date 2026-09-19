@@ -1,5 +1,5 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
-import { settlerActionBonus } from "./settlementSettlerProfile.js";
+import { addSettlerExperience, settlerActionBonus } from "./settlementSettlerProfile.js";
 
 function missingPercent(building) {
   return Math.max(0, 100 - Math.max(0, Math.min(100, Number(building?.condition ?? 100))));
@@ -98,8 +98,10 @@ export function advanceBuildingRepairs(settlement, now = Date.now()) {
   return {
     ...settlement,
     buildings,
-    settlers: (settlement.settlers || []).map((worker) => completedWorkers.has(worker.id)
-      ? { ...worker, status: "idle" }
-      : worker),
+    settlers: (settlement.settlers || []).map((worker) => {
+      const wasAssigned=(settlement.buildings || []).some((item)=>item.repair?.workerIds?.includes(worker.id));
+      const progressed=wasAssigned ? addSettlerExperience(worker,12) : worker;
+      return completedWorkers.has(worker.id) ? { ...progressed, status: "idle" } : progressed;
+    }),
   };
 }
