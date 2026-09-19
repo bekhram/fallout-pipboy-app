@@ -28,16 +28,33 @@ function changeBalance(s, amounts, sign = 1) {
   const after = Object.fromEntries(RESOURCE_KEYS.map(k => [k, before[k] + sign * number(amounts[k])]));
   return { ...s, resources: { ...s.resources, caps: after.caps, materials: after.common }, stockpile: { ...s.stockpile, materials: Object.fromEntries(TIERS.map(k => [k, after[k]])) } };
 }
+function perkRank(character,name){
+  const target=normalized(name);
+  return Math.max(0,...(character?.perksAndTraits || []).filter(owned=>!owned.isOriginTrait && [owned.id,owned.name].some(value=>normalized(value)===target)).map(owned=>number(owned.rank || 1)));
+}
+function skillRank(character,name){
+  const target=normalized(name);
+  for(const [key,value] of Object.entries(character?.skills || {})){
+    if(normalized(key)===target || normalized(value?.name)===target)return number(value?.rank);
+  }
+  return 0;
+}
+export function constructionRequirementBlockers(character,rule){
+  if(!rule)return [{kind:'unavailable'}];
+  const result=[];
+  const hasPerk=p=>perkRank(character,p.name)>=number(p.rank || 1);
+  for(const p of [...(rule.perks || []),...(rule.perk?[rule.perk]:[])])if(!hasPerk(p))result.push({kind:'perk',label:`${p.name} ${p.rank}`});
+  if(rule.perkAnyOf?.length&&!rule.perkAnyOf.some(hasPerk))result.push({kind:'perk',label:rule.perkAnyOf.map(p=>`${p.name} ${p.rank}`).join(' / ')});
+  for(const skill of [...(rule.skills || []),...(rule.skill?[rule.skill]:[])])if(skillRank(character,skill.name)<number(skill.rank))result.push({kind:'skill',label:`${skill.name} ${skill.rank}`});
+  return result;
+}
 export function buildBlockers(s, character, rule, actor = actorFor(character)) {
   if (!rule) return [{ kind: 'unavailable' }];
   const result = [];
   if (!canSpend(s, actor)) result.push({ kind: 'permission' });
   const have = balance(s), need = cost(rule);
   for (const key of RESOURCE_KEYS) if (have[key] < need[key]) result.push({ kind: 'resource', key, have: have[key], need: need[key] });
-  const hasPerk = p => (character?.perksAndTraits || []).some(owned => !owned.isOriginTrait && [owned.id, owned.name].some(name => normalized(name) === normalized(p.name)) && number(owned.rank || 1) >= p.rank);
-  for (const p of [...(rule.perks || []), ...(rule.perk ? [rule.perk] : [])]) if (!hasPerk(p)) result.push({ kind: 'perk', label: `${p.name} ${p.rank}` });
-  if (rule.perkAnyOf?.length && !rule.perkAnyOf.some(hasPerk)) result.push({ kind: 'perk', label: rule.perkAnyOf.map(p => `${p.name} ${p.rank}`).join(' / ') });
-  for (const skill of [...(rule.skills || []), ...(rule.skill ? [rule.skill] : [])]) if (number(character?.skills?.[skill.name]?.rank) < skill.rank) result.push({ kind: 'skill', label: `${skill.name} ${skill.rank}` });
+  result.push(...constructionRequirementBlockers(character,rule));
   return result;
 }
 export function tasks(s) {
