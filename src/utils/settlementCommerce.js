@@ -1,6 +1,7 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { populationNeeds } from "./settlementResidents.js";
+import { accrueSettlementProfit, splitSettlementProfit } from "./settlementProfit.js";
 
 function randomId(prefix, seed = Date.now()) {
   return `${prefix}_${seed}_${Math.random().toString(36).slice(2, 8)}`;
@@ -62,6 +63,13 @@ function resolveBusinessIncome(settlement, day) {
   });
 
   const earned = populationMultiplier * incomePerFive;
+  if (!settlement.offlineStandalone) {
+    const split=splitSettlementProfit(earned);
+    const attributes={...(settlement.attributes||{}),income:earned};
+    const resources={...(settlement.resources||{}),income:earned,caps:Math.max(0,Number(settlement.resources?.caps||0))+split.reserve};
+    const event={id:randomId("event",day),type:"store_income",day,workers,stores:storeBreakdown,people,populationMultiplier,income:earned,reserveCaps:split.reserve,claimableCaps:split.claimable,createdAt:Date.now()};
+    return accrueSettlementProfit({...settlement,attributes,resources,events:[event,...(settlement.events||[])].slice(0,100)},{caps:split.claimable});
+  }
   const balance = Math.max(0, Number(settlement.attributes?.income ?? settlement.resources?.income ?? 0)) + earned;
   const attributes = { ...(settlement.attributes || {}), income: balance };
   const resources = { ...(settlement.resources || {}), income: balance };
