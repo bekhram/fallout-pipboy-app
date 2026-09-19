@@ -1,4 +1,5 @@
 import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
+import { knowsSettlementRecipe } from './settlementRecipes.js';
 import { ROOMS } from '../data/settlement/rulebook.js';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../data/settlement/buildings.js';
 
@@ -39,10 +40,11 @@ function skillRank(character,name){
   }
   return 0;
 }
-export function constructionRequirementBlockers(character,rule){
+export function constructionRequirementBlockers(character,rule,recipeId=null){
   if(!rule)return [{kind:'unavailable'}];
   const result=[];
   const hasPerk=p=>perkRank(character,p.name)>=number(p.rank || 1);
+  if(String(rule.rarity||'').toLowerCase()==='rare' && recipeId && !knowsSettlementRecipe(character,recipeId)) result.push({kind:'recipe',label:'Rare recipe'});
   for(const p of [...(rule.perks || []),...(rule.perk?[rule.perk]:[])])if(!hasPerk(p))result.push({kind:'perk',label:`${p.name} ${p.rank}`});
   if(rule.perkAnyOf?.length&&!rule.perkAnyOf.some(hasPerk))result.push({kind:'perk',label:rule.perkAnyOf.map(p=>`${p.name} ${p.rank}`).join(' / ')});
   for(const skill of [...(rule.skills || []),...(rule.skill?[rule.skill]:[])])if(skillRank(character,skill.name)<number(skill.rank))result.push({kind:'skill',label:`${skill.name} ${skill.rank}`});
