@@ -188,6 +188,10 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
     resources,
     buildings,
     settlers,
+    attributes: {
+      ...(settlement.attributes || {}),
+      happiness: victory ? Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) : Math.max(1, Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) - 1),
+    },
     attacks: (settlement.attacks || []).map((item) => item.id === attackId ? { ...item, state: "resolved", result, resolvedAt: now, defenseScore, enemyScore, militiaBonus, battleReport } : item),
     events: [{ id: randomId("event"), type: "attack_result", attackId, result, battleReport, createdAt: now }, ...(settlement.events || [])].slice(0, 100),
   };
