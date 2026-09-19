@@ -27,12 +27,13 @@ export function normalizeStockpile(stockpile={},legacyMaterials=0){
     fertilizer:Number(stockpile.fertilizer || 0),
   };
 }
-function canAffordMaterials(settlement,rule){if(!rule)return false;const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);const caps=Number(settlement.resources?.caps || 0);return ["common","uncommon","rare"].every(key=>Number(stockpile.materials[key] || 0)>=Number(rule.materials?.[key] || 0)) && caps>=Number(rule.caps || 0);}
+function canAffordMaterials(settlement,rule){if(!rule)return false;const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);const caps=Number(settlement.resources?.caps || 0);return ["common","uncommon","rare"].every(key=>Number(stockpile.materials[key] || 0)>=Number(rule.materials?.[key] || 0)) && Number(stockpile.fertilizer||0)>=Number(rule.specificMaterials?.fertilizer||0) && caps>=Number(rule.caps || 0);}
 function payCost(settlement,rule){
   if(!rule || !canAffordMaterials(settlement,rule))return settlement;
   const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);const materials={...stockpile.materials};
   for(const key of ["common","uncommon","rare"])materials[key]=Math.max(0,Number(materials[key] || 0)-Number(rule.materials?.[key] || 0));
-  return {...settlement,stockpile:{...stockpile,materials},resources:{...(settlement.resources || {}),caps:Math.max(0,Number(settlement.resources?.caps || 0)-Number(rule.caps || 0)),materials:materials.common}};
+  const fertilizer=Math.max(0,Number(stockpile.fertilizer||0)-Number(rule.specificMaterials?.fertilizer||0));
+  return {...settlement,stockpile:{...stockpile,materials,fertilizer},resources:{...(settlement.resources || {}),caps:Math.max(0,Number(settlement.resources?.caps || 0)-Number(rule.caps || 0)),materials:materials.common}};
 }
 export function canAffordSettlementRule(settlement,rule){return canAffordMaterials(settlement,rule);}
 export function paySettlementRuleCost(settlement,rule){return payCost(settlement,rule);}
