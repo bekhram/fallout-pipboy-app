@@ -207,7 +207,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   }
   const navigation=mode=><button type="button" key={mode} className={panelMode===mode ? "is-active" : ""} aria-current={panelMode===mode ? "page" : undefined} onClick={()=>selectPanel(mode)}><SheetIcon name={{overview:'home',build:'plus',people:'people',resources:'bag',defense:'shield',events:'notes',more:'more'}[mode]}/><span>{ui[mode] || text[mode]}</span></button>;
   return <div className={`pip-screen settlement-screen settlement-dashboard settlement-v2 ${onCommand ? 'is-shared-settlement' : ''} ${panelOpen ? 'is-panel-open' : ''}`}>
-    <header className="settlement-brand"><strong>PIP 2D20 <span>/ {ui.title}</span></strong><span className="settlement-brand-name">{settlement.name}</span><button type="button" className="pip-action-button settlement-chat-button" aria-label={ui.chat} onClick={openCampaignChat}><SheetIcon name="chat"/></button><button type="button" className="pip-action-button" aria-label={ui.more} onClick={()=>selectPanel('more')}><SheetIcon name="settings"/></button></header>
+    <header className="settlement-brand"><strong>PIP 2D20 <span>/ {ui.title}</span></strong><span className="settlement-brand-name">{settlement.name}</span>{onCommand ? <button type="button" className="pip-action-button settlement-chat-button" aria-label={ui.chat} onClick={openCampaignChat}><SheetIcon name="chat"/></button> : null}<button type="button" className="pip-action-button" aria-label={ui.more} onClick={()=>selectPanel('more')}><SheetIcon name="settings"/></button></header>
     {sharedControls}
     <div className="settlement-layout settlement-dashboard-grid">
       <aside className="settlement-left-rail pip-panel"><nav className="settlement-left-nav">{['overview','build','people','resources','defense','events'].map(navigation)}</nav><button type="button" className="pip-action-button settlement-exit" onClick={onBack}>← {text.back}</button></aside>
@@ -250,6 +250,6 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
         {panelMode==="events" ? <div className="settlement-events-panel"><div className="pip-panel-title">{text.events}</div>{(settlement.events || []).length ? (settlement.events || []).slice(0,12).map((event,index)=><div key={event.id || `${event.type}-${index}`} className="settlement-event-row"><strong>{String(event.type || "event").replaceAll("_"," ")}</strong><small>{event.createdAt ? new Date(event.createdAt).toLocaleString() : ""}</small></div>) : <span>{text.noEvents}</span>}</div> : null}
       </aside>
     </div>
-    <nav className="settlement-mobile-nav">{['overview','build','people','resources'].map(navigation)}<button type="button" onClick={openCampaignChat}><SheetIcon name="chat"/><span>{ui.chat}</span></button>{navigation('more')}</nav>
+    <nav className="settlement-mobile-nav">{['overview','build','people','resources'].map(navigation)}{onCommand ? <button type="button" onClick={openCampaignChat}><SheetIcon name="chat"/><span>{ui.chat}</span></button> : null}{navigation('more')}</nav>
   </div>;
 }
