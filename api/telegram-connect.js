@@ -38,6 +38,7 @@ async function ensureWebhook() {
     allowed_updates: ["message"],
     drop_pending_updates: false,
   });
+  return telegramCall("getMe", {});
 }
 
 export default async function handler(req, res) {
@@ -61,7 +62,7 @@ export default async function handler(req, res) {
     }
 
     if (body.type === "create") {
-      await ensureWebhook();
+      const bot = await ensureWebhook();
       const code = makeConnectCode();
       const manageToken = makeManageToken();
       const expiresAt = Date.now() + 10 * 60 * 1000;
@@ -74,6 +75,7 @@ export default async function handler(req, res) {
         expiresAt,
         connected: Boolean(current?.chatId),
         chatTitle: current?.chatTitle || "",
+        botUsername: bot?.username ? `@${bot.username}` : "",
       });
     }
 
