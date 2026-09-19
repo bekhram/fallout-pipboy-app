@@ -47,6 +47,7 @@ import {
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
 import { ORIGINS } from "./components/data/origins.js";
+import { skillBaseRankCap } from "./utils/characterCreationRules.js";
 import {
   hydrateWeaponMetadata,
   needsWeaponMetadataHydration,
@@ -714,23 +715,15 @@ export default function App() {
     return String(Math.max(min, Math.min(max, parsed)));
   };
 
-  const getSkillRankCapForLevel = (level) => {
-    const normalizedLevel = Math.max(1, Math.floor(Number(level) || 1));
-    return Math.min(6, normalizedLevel + 2);
-  };
-
   const getSkillBaseRankCap = (character, skill) => {
     const currentOrigin = character?.origin && ORIGINS[character.origin]
       ? ORIGINS[character.origin]
       : null;
-    const configuredOriginCap = Number(currentOrigin?.skillRankLimit);
-    const originCap = Number.isFinite(configuredOriginCap) ? configuredOriginCap : 6;
-    const finalRankCap = Math.min(
-      6,
-      getSkillRankCapForLevel(character?.level),
-      originCap
-    );
-    return Math.max(0, finalRankCap - (skill?.tagged ? 2 : 0));
+    return skillBaseRankCap({
+      level: character?.level,
+      originSkillRankLimit: currentOrigin?.skillRankLimit,
+      tagged: Boolean(skill?.tagged),
+    });
   };
 
   const updateTopLevel = (key, value) =>
