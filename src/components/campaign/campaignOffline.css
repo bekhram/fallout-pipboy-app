@@ -22,3 +22,22 @@
 .settlement-warehouse-row small{overflow-wrap:anywhere}
 .settlement-personal-notice{font-size:.8rem;line-height:1.5}
 .character-resource-guard{position:relative;margin:.5rem;padding:.6rem;border:1px solid currentColor;font-size:.8rem;line-height:1.4;overflow-wrap:anywhere;z-index:2}
+
+
+/* Compact settlement overlay status: keep sync available without consuming the map viewport. */
+.campaign-offline-status--compact{margin:0;padding:.45rem .6rem;border-radius:0;border-left:0;border-right:0}
+.campaign-offline-status--compact .campaign-offline-status__line{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:.45rem;align-items:center;min-height:44px}
+.campaign-offline-status--compact .campaign-offline-status__line>strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.campaign-offline-status--compact .campaign-offline-status__line>span{white-space:nowrap;font-size:.76rem}
+.campaign-offline-status--compact .campaign-offline-sync-now{min-height:36px;padding:6px 10px;font-size:.76rem}
+.campaign-offline-more{position:relative}
+.campaign-offline-more>summary{display:grid;place-items:center;list-style:none;width:38px;height:36px;border:1px solid #356449;border-radius:7px;background:#132c24;cursor:pointer;font-size:1.25rem;line-height:1}
+.campaign-offline-more>summary::-webkit-details-marker{display:none}
+.campaign-offline-more__body{position:absolute;right:0;top:calc(100% + 7px);z-index:80;width:min(330px,calc(100vw - 24px));padding:.65rem;border:1px solid #456b54;border-radius:10px;background:#071a11;box-shadow:0 12px 28px #000b}
+.campaign-offline-more__body .campaign-offline-actions{display:grid;grid-template-columns:1fr;gap:.4rem;margin:.45rem 0}
+@media(max-width:600px){
+ .campaign-offline-status--compact{padding:.3rem .45rem}
+ .campaign-offline-status--compact .campaign-offline-status__line{grid-template-columns:minmax(0,1fr) auto auto;min-height:42px}
+ .campaign-offline-status--compact .campaign-offline-status__line>span{display:none}
+ .campaign-offline-status--compact .campaign-offline-sync-now{max-width:132px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
