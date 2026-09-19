@@ -229,14 +229,26 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   async function moveBuildingTo(x,y) {
     if(!canEdit || !movingBuilding || !movingDef || movingBuilding.locked || movingBuilding.type==="settlement_hq")return;
     if(!canPlace(settlement,movingDef,x,y,movingBuilding.id)){setNotice(text.cannotPlace);return;}
-    if(onCommand){if(await onCommand({type:"move",buildingId:movingBuilding.id,x,y})){setMovingBuildingId(null);setHoverCell(null);}return;}
-    onUpdate(current=>({...current,buildings:(current.buildings || []).map(building=>building.id===movingBuilding.id ? {...building,x,y} : building)}));setMovingBuildingId(null);setSelectedBuildingId(movingBuilding.id);setHoverCell(null);setNotice("");
+    const entry=editorMoveEntry(movingBuilding,{x,y});
+    setEditorBusy(true);
+    try{
+      if(await runLayoutCommand({type:"move",buildingId:movingBuilding.id,x,y})){
+        rememberEditor(entry);setMovingBuildingId(null);setSelectedBuildingId(movingBuilding.id);setHoverCell(null);setNotice("");
+      }
+    }finally{setEditorBusy(false);}
   }
-  async function handleCellClick(x,y){setHoverCell({x,y});if(storedBuildingId){if(canEdit && storedBuilding && await onCommand?.({type:'placeStored',buildingId:storedBuildingId,x,y})){setStoredBuildingId(null);setHoverCell(null);}return;}if(movingBuildingId)moveBuildingTo(x,y);else if(selectedType)createBuildingAt(x,y);}
+  async function handleCellClick(x,y){
+    setHoverCell({x,y});
+    if(storedBuildingId){
+      if(canEdit && storedBuilding && await runLayoutCommand({type:'placeStored',buildingId:storedBuildingId,x,y})){setStoredBuildingId(null);setHoverCell(null);setNotice("");}
+      return;
+    }
+    if(movingBuildingId)await moveBuildingTo(x,y);else if(selectedType)await createBuildingAt(x,y);
+  }
   async function demolishSelected(){
-    if(!canEdit)return;
-    if(onCommand){if(selectedBuilding && await onCommand({type:"demolish",buildingId:selectedBuilding.id}))setSelectedBuildingId(null);return;}
-    if(!selectedBuilding || selectedBuildingLocked)return;
+    if(!canEdit || !selectedBuilding || selectedBuildingLocked)return;
+    if(typeof window!=="undefined" && !window.confirm(editor.confirmDemolish))return;
+    if(onCommand){if(await onCommand({type:"demolish",buildingId:selectedBuilding.id}))setSelectedBuildingId(null);return;}
     onUpdate(current=>({...current,buildings:(current.buildings || []).filter(building=>building.id!==selectedBuilding.id),settlers:(current.settlers || []).map(settler=>settler.settlementAction?.targetBuildingId===selectedBuilding.id || settler.settlementAction?.parentBuildingId===selectedBuilding.id ? {...settler,settlementAction:null,assignedBuildingId:null,status:"idle"} : settler)}));setSelectedBuildingId(null);
   }
   function assignAction(settlerId,type){
@@ -283,6 +295,28 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     }finally{setBattleBusy(false);}
   }
   function selectPanel(mode){setPanelMode(mode);setPanelOpen(mode!=="overview");if(mode==="build")setSelectedBuildingId(null);if(mode!=="build"){setSelectedType(null);setHoverCell(null);setMovingBuildingId(null);}}
+  function toggleEditor(){
+    setEditorMode(value=>{
+      const next=!value;
+      setPanelOpen(false);setSelectedType(null);setStoredBuildingId(null);setMovingBuildingId(null);setHoverCell(null);setNotice(next ? editor.hint : "");
+      if(!next)setSelectedBuildingId(null);
+      return next;
+    });
+  }
+  useEffect(()=>{
+    if(!editorMode)return;
+    const keydown=event=>{
+      const mod=event.ctrlKey||event.metaKey;
+      if(mod && event.key.toLowerCase()==='z'){
+        event.preventDefault();
+        if(event.shiftKey)void redoLayout();else void undoLayout();
+      }else if(mod && event.key.toLowerCase()==='y'){
+        event.preventDefault();void redoLayout();
+      }
+    };
+    window.addEventListener('keydown',keydown);
+    return()=>window.removeEventListener('keydown',keydown);
+  },[editorMode,editorBusy,editorUndo.length,editorRedo.length]);
   function openCampaignChat(){
     const toggle=document.querySelector(".session-utility-drawer-toggle");
     if(toggle?.getAttribute("aria-expanded")!=="true")toggle?.click();
