@@ -327,10 +327,10 @@ export default function FalloutD20Roller({
     });
   };
 
-  const doRoll = () => {
+  const doRoll = ({ reroll = false } = {}) => {
     if (isRolling || isHitRolling) return;
 
-    damageRolledForAttackRef.current = false;
+    if (!reroll) damageRolledForAttackRef.current = false;
     playSound("diceRoll");
     setIsRolling(true);
 
@@ -346,7 +346,7 @@ export default function FalloutD20Roller({
         setLastRoll(result);
         setHistory((prev) => [result, ...prev].slice(0, MAX_HISTORY));
         setIsRolling(false);
-        autoRollWeaponDamage(result);
+        if (!reroll) autoRollWeaponDamage(result);
 
         setIsHitRolling(true);
         animateHitDie(500, () => {
@@ -360,7 +360,10 @@ export default function FalloutD20Roller({
             next[0] = nextResult;
             return next.slice(0, MAX_HISTORY);
           });
-          reportResult(nextResult);
+          reportResult(
+            nextResult,
+            reroll ? { reroll: true, source: "full-reroll" } : {}
+          );
 
           setIsHitRolling(false);
         });
@@ -370,8 +373,11 @@ export default function FalloutD20Roller({
 
       setLastRoll(result);
       setHistory((prev) => [result, ...prev].slice(0, MAX_HISTORY));
-      reportResult(result);
-      autoRollWeaponDamage(result);
+      reportResult(
+        result,
+        reroll ? { reroll: true, source: "full-reroll" } : {}
+      );
+      if (!reroll) autoRollWeaponDamage(result);
       setIsRolling(false);
     });
   };
@@ -403,7 +409,6 @@ export default function FalloutD20Roller({
           return next.slice(0, MAX_HISTORY);
         });
         setRerollingDieIndex(null);
-        autoRollWeaponDamage(resultWithLocation);
 
         if (previousHitLocation) {
           reportResult(resultWithLocation, { reroll: true, source: "single-reroll" });
@@ -444,7 +449,6 @@ export default function FalloutD20Roller({
       });
 
       reportResult(updatedResult, { reroll: true, source: "single-reroll" });
-      autoRollWeaponDamage(updatedResult);
       setRerollingDieIndex(null);
     });
   };
@@ -530,7 +534,7 @@ export default function FalloutD20Roller({
             <button
               type="button"
               className={`dice-roll-button ${isRolling ? "is-rolling" : ""}`}
-              onClick={doRoll}
+              onClick={() => doRoll()}
               disabled={isRolling || isHitRolling}
             >
               {isRolling ? "Rolling..." : "Roll"}
@@ -539,7 +543,7 @@ export default function FalloutD20Roller({
             <button
               type="button"
               className="dice-roll-button dice-roll-button-secondary"
-              onClick={doRoll}
+              onClick={() => doRoll({ reroll: true })}
               disabled={isRolling || isHitRolling}
             >
               Reroll
