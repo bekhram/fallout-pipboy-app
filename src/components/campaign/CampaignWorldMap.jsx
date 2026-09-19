@@ -136,11 +136,9 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
         markers={[
           ...region.locations.map(l => ({ id: l.id, x: l.worldX, y: l.worldY, icon: l.icon || '◆' })),
           ...members.map(([id, m], index) => ({ id: `member-${id}`, ...(campaign.worldMap?.positions?.[id] || region.start), icon: String(index + 1), label: m.name, kind: 'member', memberMarker: true, memberId: id })),
-          ...settlements.filter(s => s.regionId === region.id).map(s => ({ id: s.id, x: s.worldX, y: s.worldY, icon: '⌂', label: s.name, settlement: true })),
           ...sharedMarkers.map(marker => ({ ...marker, x: marker.x, y: marker.y, icon: MARKER_ICONS[marker.category] || (marker.kind === 'gm' ? '★' : '●'), label: marker.label, sharedMarker: true })),
         ]}
         onMarker={marker => {
-          if (marker.settlement) { setActiveId(marker.id); return; }
           setSelected({ x: marker.x, y: marker.y });
           if (marker.sharedMarker) {
             setSelectedMarkerId(marker.id);
@@ -188,11 +186,8 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
           })}
         </div>
       </section>
-      {gm && <form className="campaign-world-found" onSubmit={async e=>{e.preventDefault();const result=await run({type:'found',name:name.trim(),regionId:region.id,worldX:point.x,worldY:point.y});if(result){const created=result.settlements.find(s=>s.regionId===region.id&&s.worldX===point.x&&s.worldY===point.y);setActiveId(created?.id);setName('');}}}><label>{c.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={disabled||!validPoint||!name.trim()||settlements.length>=5||settlements.some(s=>s.regionId===region.id&&s.worldX===point.x&&s.worldY===point.y)}>{c.found}</button></form>}
       <h3>{markerCopy.live}</h3>{members.map(([id,m],index)=>{const p=campaign.worldMap?.positions?.[id]||region.start;return <button className="pip-btn campaign-world-member-row" key={id} onClick={()=>setSelected({x:p.x,y:p.y})}><span>{index+1}. {m.name}{id===uid?' · YOU':''}</span><small>{p.x}:{p.y}</small></button>;})}
     </aside></div>
-    <div className="campaign-world-settlements"><h3>{c.settlements} · {settlements.length}/5</h3>{!settlements.length && <p>{c.empty}</p>}{settlements.map(s=><button className="pip-btn" key={s.id} onClick={()=>setActiveId(s.id)}><strong>⌂ {s.name}</strong><span>{getRegionName(getMapRegion(s.regionId),language)} · {s.worldX}:{s.worldY}</span><span>{c.open} →</span></button>)}</div>
     {characterPanel}
-    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} canClaimProfit={Boolean(editable)&&Boolean(campaign.character)&&world.connected&&!world.blocked&&!busy} payment={{ready:personalReady,canAfford:canAffordPersonal}} onCommand={settlementCommand}/>,document.body)}
   </section>;
 }
