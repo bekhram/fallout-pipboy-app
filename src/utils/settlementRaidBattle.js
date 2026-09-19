@@ -9,9 +9,8 @@ export function settlementRaidEnemyCount(strength) {
 }
 
 export function buildSettlementRaidRoster(settlement, attack, defenderIds = [], players = []) {
-  const selected = new Set(Array.isArray(defenderIds) ? defenderIds : []);
   const defenders = (settlement?.settlers || [])
-    .filter((settler) => selected.has(settler.id) && Number(settler.health ?? 100) > 1)
+    .filter((settler) => Number(settler.health ?? 100) > 1)
     .map((settler) => ({
       id: settler.id,
       name: settler.name || "Settler",
