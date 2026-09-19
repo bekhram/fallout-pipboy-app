@@ -1,4 +1,5 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
+import { settlerActionBonus } from "./settlementSettlerProfile.js";
 
 function missingPercent(building) {
   return Math.max(0, 100 - Math.max(0, Math.min(100, Number(building?.condition ?? 100))));
@@ -84,7 +85,8 @@ export function advanceBuildingRepairs(settlement, now = Date.now()) {
     const workers = (building.repair.workerIds || []).filter((id) => validSettlers.has(id));
     if (!workers.length) return { ...building, repair: { ...building.repair, workerIds: workers } };
     const before = Math.max(0, Math.min(100, Number(building.condition ?? 100)));
-    const condition = Math.min(100, before + workers.length * 25);
+    const repairPower=workers.reduce((sum,id)=>{const worker=(settlement.settlers || []).find(item=>item.id===id);const bonus=settlerActionBonus(worker,'repair');return sum+25+bonus.skillBonus*5+(bonus.hasPerk?10:0);},0);
+    const condition = Math.min(100, before + repairPower);
     if (condition !== before) changed = true;
     if (condition >= 100) {
       workers.forEach((id) => completedWorkers.add(id));
