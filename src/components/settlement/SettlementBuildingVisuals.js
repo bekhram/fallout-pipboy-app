@@ -55,9 +55,6 @@ export class SettlementBuildingVisuals {
         this.bounds.set(b.id, { top: Math.min(ready ? ready.y-ready.displayHeight : b.y*CELL, site ? site.y-site.displayHeight : b.y*CELL) });
       }
       const stage = construction?.stage || 'site';
-      const condition = Math.max(0, Math.min(100, Number(b.condition ?? 100)));
-      const damageStage = condition <= 0 || b.state === 'destroyed' ? 3 : condition < 40 ? 2 : condition < 80 ? 1 : 0;
-      const repairing = Boolean(b.repair);
       unit.damage?.clear();
       if (damageStage > 0) {
         const defn = SETTLEMENT_BUILDINGS[b.type], w = defn.footprint.width * CELL, h = defn.footprint.height * CELL;
