@@ -1,6 +1,6 @@
 // Shared semantic icons. Amounts are forecasts, never a source of inventory writes.
 export const RESOURCE_SYMBOLS = { food:'🌾', water:'💧', power:'ϟ', income:'¤', materials:'⚙', defense:'⬟', crafting:'⚒', caravan:'⇄', housing:'⌂', storage:'▣', happiness:'☺', livestock:'♉', construction:'⚒', unknown:'◇' };
-export const JOB_SYMBOLS = { build:'⚒', tend_crops:'🌾', guard:'⬟', business:'¤', scavenging:'⚙', hunting_gathering:'♧', trade_caravan:'⇄', idle:'•' };
+export const JOB_SYMBOLS = { build:'⚒', repair:'🛠', tend_crops:'🌾', guard:'⬟', business:'¤', scavenging:'⚙', hunting_gathering:'♧', trade_caravan:'⇄', idle:'•' };
 export function workerIndicator(action, phase, cargo = false) {
   return { symbol: JOB_SYMBOLS[action] || JOB_SYMBOLS.idle,
     status: phase === 'waiting' ? '!' : cargo ? '▣' : '', warning: phase === 'waiting' };
