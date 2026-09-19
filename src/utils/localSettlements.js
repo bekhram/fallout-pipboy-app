@@ -10,7 +10,9 @@ export function loadLocalSettlements(){
   if(typeof window==='undefined')return [];
   const raw=safeParse(window.localStorage.getItem(LOCAL_SETTLEMENTS_KEY)||'[]',[]);
   if(!Array.isArray(raw))return [];
-  return raw.map(item=>runSimulation(item));
+  const simulated=raw.map(item=>runSimulation(item));
+  if(JSON.stringify(simulated)!==JSON.stringify(raw))window.localStorage.setItem(LOCAL_SETTLEMENTS_KEY,JSON.stringify(simulated));
+  return simulated;
 }
 export function saveLocalSettlements(settlements){
   if(typeof window==='undefined')return settlements;
