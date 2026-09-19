@@ -3,6 +3,15 @@ import { useTranslation } from 'react-i18next';
 import RtsDemoPhaserMap from './RtsDemoPhaserMap.jsx';
 import './rtsDemo.css';
 
+const FORTIFICATIONS = [
+  ...Array.from({length:4},(_,i)=>({id:`wall_top_l_${i}`,type:'wall_straight',x:7+i,y:7})),
+  {id:'demo_gate',type:'gate',x:11,y:7},
+  ...Array.from({length:4},(_,i)=>({id:`wall_top_r_${i}`,type:'wall_straight',x:13+i,y:7})),
+  ...Array.from({length:10},(_,i)=>({id:`wall_bottom_${i}`,type:'wall_straight',x:7+i,y:16})),
+  ...Array.from({length:8},(_,i)=>({id:`wall_left_${i}`,type:'wall_straight',x:7,y:8+i})),
+  ...Array.from({length:8},(_,i)=>({id:`wall_right_${i}`,type:'wall_straight',x:16,y:8+i})),
+];
+
 const BUILDINGS = [
   { id:'demo_hq', type:'settlement_hq', x:10, y:10 },
   { id:'demo_farm', type:'crop_field', x:3, y:3 },
@@ -10,8 +19,9 @@ const BUILDINGS = [
   { id:'demo_generator', type:'generator', x:17, y:3 },
   { id:'demo_guard', type:'guard_post', x:3, y:18 },
   { id:'demo_workshop', type:'workshop', x:17, y:18 },
-  { id:'demo_turret_a', type:'turret', x:8, y:16 },
-  { id:'demo_turret_b', type:'turret', x:15, y:8 },
+  { id:'demo_turret_a', type:'turret', x:8, y:8 },
+  { id:'demo_turret_b', type:'turret', x:15, y:15 },
+  ...FORTIFICATIONS,
 ];
 const WORKERS = [
   { id:'mara', name:'Mara', archetype:'rifleman', position:{x:8,y:12} },
@@ -21,10 +31,10 @@ const WORKERS = [
 ];
 
 const COPY = {
-  en:{title:'RTS COMBAT DEMO',back:'BACK',selectAll:'SELECT ALL',clear:'CLEAR',move:'MOVE',hold:'HOLD',patrol:'PATROL',attack:'ATTACK',wave:'START WAVE',next:'NEXT WAVE',pause:'PAUSE',resume:'RESUME',reset:'RESET',selected:'Selected',defenders:'Defenders',enemies:'Enemies',hq:'HQ',ready:'Select defenders, place them, then start the wave.',active:'Raiders are attacking the settlement.',victory:'Wave repelled. Reposition your squad or start the next wave.',defeat:'HQ lost. Reset the demo and try another defense.',defenders_down:'No active defenders. Raiders are pushing toward HQ.',moveHint:'Tap a free cell to move the selected squad.',patrolHint:'Tap a cell to create a patrol route.',attackHint:'Tap an enemy to focus the selected squad on that target.',auto:'Defenders engage automatically; ATTACK forces focus fire.',retreated:'retreated',down:'down',target:'TARGET',focus:'Focus',damage:'DMG',range:'RNG'},
-  ru:{title:'RTS БОЕВОЕ ДЕМО',back:'НАЗАД',selectAll:'ВЫБРАТЬ ВСЕХ',clear:'СНЯТЬ',move:'ИДТИ',hold:'ДЕРЖАТЬ',patrol:'ПАТРУЛЬ',attack:'АТАКА',wave:'НАЧАТЬ ВОЛНУ',next:'СЛЕД. ВОЛНА',pause:'ПАУЗА',resume:'ПРОДОЛЖИТЬ',reset:'СБРОС',selected:'Выбрано',defenders:'Защитники',enemies:'Враги',hq:'Штаб',ready:'Выбери защитников, расставь их и запусти волну.',active:'Рейдеры атакуют поселение.',victory:'Волна отбита. Перегруппируй отряд или запускай следующую.',defeat:'Штаб потерян. Сбрось демо и попробуй другую оборону.',defenders_down:'Активных защитников нет. Враги двигаются к штабу.',moveHint:'Тапни по свободной клетке, чтобы переместить выбранный отряд.',patrolHint:'Тапни по клетке, чтобы задать маршрут патруля.',attackHint:'Тапни по врагу, чтобы выбранный отряд сосредоточил огонь на нём.',auto:'Защитники атакуют автоматически; АТАКА задаёт приоритетную цель.',retreated:'отступил',down:'выведен из боя',target:'ЦЕЛЬ',focus:'Фокус',damage:'УРОН',range:'ДАЛЬН.'},
-  uk:{title:'RTS БОЙОВЕ ДЕМО',back:'НАЗАД',selectAll:'ОБРАТИ ВСІХ',clear:'СКИНУТИ',move:'РУХ',hold:'ТРИМАТИ',patrol:'ПАТРУЛЬ',attack:'АТАКА',wave:'ПОЧАТИ ХВИЛЮ',next:'НАСТ. ХВИЛЯ',pause:'ПАУЗА',resume:'ПРОДОВЖИТИ',reset:'СКИНУТИ',selected:'Обрано',defenders:'Захисники',enemies:'Вороги',hq:'Штаб',ready:'Оберіть захисників, розставте їх і запустіть хвилю.',active:'Рейдери атакують поселення.',victory:'Хвилю відбито. Перегрупуйте загін або запускайте наступну.',defeat:'Штаб втрачено. Скиньте демо та спробуйте іншу оборону.',defenders_down:'Активних захисників немає. Вороги рухаються до штабу.',moveHint:'Торкніться вільної клітинки, щоб перемістити обраний загін.',patrolHint:'Торкніться клітинки, щоб задати маршрут патруля.',attackHint:'Торкніться ворога, щоб обраний загін зосередив вогонь на цілі.',auto:'Захисники атакують автоматично; АТАКА задає пріоритетну ціль.',retreated:'відступив',down:'поза боєм',target:'ЦІЛЬ',focus:'Фокус',damage:'ШКОДА',range:'ДАЛЬН.'},
-  pl:{title:'DEMO WALKI RTS',back:'WRÓĆ',selectAll:'ZAZNACZ WSZYSTKICH',clear:'WYCZYŚĆ',move:'RUCH',hold:'TRZYMAJ',patrol:'PATROL',attack:'ATAK',wave:'URUCHOM FALĘ',next:'NASTĘPNA FALA',pause:'PAUZA',resume:'WZNÓW',reset:'RESET',selected:'Wybrano',defenders:'Obrońcy',enemies:'Wrogowie',hq:'HQ',ready:'Wybierz obrońców, ustaw ich i uruchom falę.',active:'Najeźdźcy atakują osadę.',victory:'Fala odparta. Przegrupuj oddział lub uruchom następną.',defeat:'HQ utracone. Zresetuj demo i spróbuj innej obrony.',defenders_down:'Brak aktywnych obrońców. Wrogowie idą na HQ.',moveHint:'Dotknij wolnego pola, aby przesunąć zaznaczony oddział.',patrolHint:'Dotknij pola, aby ustawić trasę patrolu.',attackHint:'Dotknij wroga, aby zaznaczony oddział skupił na nim ogień.',auto:'Obrońcy atakują automatycznie; ATAK ustawia priorytetowy cel.',retreated:'wycofany',down:'poza walką',target:'CEL',focus:'Skupienie',damage:'OBR.',range:'ZASIĘG'},
+  en:{title:'RTS COMBAT DEMO',back:'BACK',selectAll:'SELECT ALL',clear:'CLEAR',move:'MOVE',hold:'HOLD',patrol:'PATROL',attack:'ATTACK',wave:'START WAVE',next:'NEXT WAVE',pause:'PAUSE',resume:'RESUME',reset:'RESET',selected:'Selected',defenders:'Defenders',enemies:'Enemies',hq:'HQ',ready:'Select defenders, place them, then start the wave.',active:'Raiders are attacking the settlement.',victory:'Wave repelled. Reposition your squad or start the next wave.',defeat:'HQ lost. Reset the demo and try another defense.',defenders_down:'No active defenders. Raiders are pushing toward HQ.',moveHint:'Tap a free cell to move the selected squad.',patrolHint:'Tap a cell to create a patrol route.',attackHint:'Tap an enemy to focus the selected squad on that target.',auto:'Defenders engage automatically; ATTACK forces focus fire.',retreated:'retreated',down:'down',target:'TARGET',focus:'Focus',damage:'DMG',range:'RNG',turrets:'Turrets',walls:'Fortifications'},
+  ru:{title:'RTS БОЕВОЕ ДЕМО',back:'НАЗАД',selectAll:'ВЫБРАТЬ ВСЕХ',clear:'СНЯТЬ',move:'ИДТИ',hold:'ДЕРЖАТЬ',patrol:'ПАТРУЛЬ',attack:'АТАКА',wave:'НАЧАТЬ ВОЛНУ',next:'СЛЕД. ВОЛНА',pause:'ПАУЗА',resume:'ПРОДОЛЖИТЬ',reset:'СБРОС',selected:'Выбрано',defenders:'Защитники',enemies:'Враги',hq:'Штаб',ready:'Выбери защитников, расставь их и запусти волну.',active:'Рейдеры атакуют поселение.',victory:'Волна отбита. Перегруппируй отряд или запускай следующую.',defeat:'Штаб потерян. Сбрось демо и попробуй другую оборону.',defenders_down:'Активных защитников нет. Враги двигаются к штабу.',moveHint:'Тапни по свободной клетке, чтобы переместить выбранный отряд.',patrolHint:'Тапни по клетке, чтобы задать маршрут патруля.',attackHint:'Тапни по врагу, чтобы выбранный отряд сосредоточил огонь на нём.',auto:'Защитники атакуют автоматически; АТАКА задаёт приоритетную цель.',retreated:'отступил',down:'выведен из боя',target:'ЦЕЛЬ',focus:'Фокус',damage:'УРОН',range:'ДАЛЬН.',turrets:'Турели',walls:'Укрепления'},
+  uk:{title:'RTS БОЙОВЕ ДЕМО',back:'НАЗАД',selectAll:'ОБРАТИ ВСІХ',clear:'СКИНУТИ',move:'РУХ',hold:'ТРИМАТИ',patrol:'ПАТРУЛЬ',attack:'АТАКА',wave:'ПОЧАТИ ХВИЛЮ',next:'НАСТ. ХВИЛЯ',pause:'ПАУЗА',resume:'ПРОДОВЖИТИ',reset:'СКИНУТИ',selected:'Обрано',defenders:'Захисники',enemies:'Вороги',hq:'Штаб',ready:'Оберіть захисників, розставте їх і запустіть хвилю.',active:'Рейдери атакують поселення.',victory:'Хвилю відбито. Перегрупуйте загін або запускайте наступну.',defeat:'Штаб втрачено. Скиньте демо та спробуйте іншу оборону.',defenders_down:'Активних захисників немає. Вороги рухаються до штабу.',moveHint:'Торкніться вільної клітинки, щоб перемістити обраний загін.',patrolHint:'Торкніться клітинки, щоб задати маршрут патруля.',attackHint:'Торкніться ворога, щоб обраний загін зосередив вогонь на цілі.',auto:'Захисники атакують автоматично; АТАКА задає пріоритетну ціль.',retreated:'відступив',down:'поза боєм',target:'ЦІЛЬ',focus:'Фокус',damage:'ШКОДА',range:'ДАЛЬН.',turrets:'Турелі',walls:'Укріплення'},
+  pl:{title:'DEMO WALKI RTS',back:'WRÓĆ',selectAll:'ZAZNACZ WSZYSTKICH',clear:'WYCZYŚĆ',move:'RUCH',hold:'TRZYMAJ',patrol:'PATROL',attack:'ATAK',wave:'URUCHOM FALĘ',next:'NASTĘPNA FALA',pause:'PAUZA',resume:'WZNÓW',reset:'RESET',selected:'Wybrano',defenders:'Obrońcy',enemies:'Wrogowie',hq:'HQ',ready:'Wybierz obrońców, ustaw ich i uruchom falę.',active:'Najeźdźcy atakują osadę.',victory:'Fala odparta. Przegrupuj oddział lub uruchom następną.',defeat:'HQ utracone. Zresetuj demo i spróbuj innej obrony.',defenders_down:'Brak aktywnych obrońców. Wrogowie idą na HQ.',moveHint:'Dotknij wolnego pola, aby przesunąć zaznaczony oddział.',patrolHint:'Dotknij pola, aby ustawić trasę patrolu.',attackHint:'Dotknij wroga, aby zaznaczony oddział skupił na nim ogień.',auto:'Obrońcy atakują automatycznie; ATAK ustawia priorytetowy cel.',retreated:'wycofany',down:'poza walką',target:'CEL',focus:'Skupienie',damage:'OBR.',range:'ZASIĘG',turrets:'Wieżyczki',walls:'Umocnienia'},
 };
 
 export default function RtsDemoGame({ onExit }) {
@@ -35,7 +45,7 @@ export default function RtsDemoGame({ onExit }) {
   const [action, setAction] = useState(null);
   const [paused, setPaused] = useState(false);
   const [mode, setMode] = useState(null);
-  const [status, setStatus] = useState({ phase:'ready', wave:0, selected:0, defendersAlive:4, defendersRetreated:0, enemiesAlive:0, enemiesTotal:0, hqHp:300, hqMaxHp:300, units:[] });
+  const [status, setStatus] = useState({ phase:'ready', wave:0, selected:0, defendersAlive:4, defendersRetreated:0, enemiesAlive:0, enemiesTotal:0, hqHp:300, hqMaxHp:300, turretsAlive:2, turretsTotal:2, fortificationsAlive:FORTIFICATIONS.length, fortificationsTotal:FORTIFICATIONS.length, units:[] });
 
   const send = type => setAction({ type, seq: ++seq.current });
   const message = mode === 'move' ? text.moveHint : mode === 'patrol' ? text.patrolHint : mode === 'attack' ? text.attackHint :
@@ -54,6 +64,8 @@ export default function RtsDemoGame({ onExit }) {
       <span>{text.defenders} <b>{status.defendersAlive}/4</b></span>
       <span>{text.enemies} <b>{status.enemiesAlive}/{status.enemiesTotal}</b></span>
       <span>{text.hq} <b>{Math.ceil(status.hqHp)}/{status.hqMaxHp}</b></span>
+      <span>{text.turrets} <b>{status.turretsAlive}/{status.turretsTotal}</b></span>
+      <span>{text.walls} <b>{status.fortificationsAlive}/{status.fortificationsTotal}</b></span>
     </div>
 
     <main className="rts-demo-stage">
