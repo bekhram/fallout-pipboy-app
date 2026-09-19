@@ -91,6 +91,36 @@ function applyNeedsAndDeparture(input,dailyDefenseBonus,now){
   if(departed)events.push({id:randomId("event",now+1),type:"settler_left",settlerId:departed.id,settlerName:departed.name,createdAt:now});
   return {...input,settlers,attributes,events:[...events,...(input.events || [])].slice(0,100)};
 }
+function recruitmentCapacity(settlement,stats){
+  const charisma=Math.max(0,Math.floor(Number(settlement.leader?.charisma || 0)));
+  return Math.max(0,Math.min(Number(stats.beds || 0),10+charisma));
+}
+function createRecruit(settlement,now){
+  const count=(settlement.settlers || []).length+1;
+  return {id:randomId("settler",now),name:`Settler ${count}`,role:"unassigned",assignedBuildingId:null,settlementAction:null,health:100,status:"idle",joinedAt:now};
+}
+function resolveRecruitment(input,now){
+  const stats=calculateStaticAttributes(input,null,input.attributes?.food);
+  const people=Number(stats.people || 0),capacity=recruitmentCapacity(input,stats);
+  const power=resolveSettlementPower(input);
+  const beacon=(input.buildings || []).find(building=>{
+    if(!isActive(building))return false;
+    const effects=getRulebookBuilding(building.type)?.effects || {};
+    return Boolean(effects.attractsPeople) && (!Number(effects.requiresPower || 0) || power.poweredBuildingIds.has(building.id));
+  });
+  if(!beacon || people>=capacity)return input;
+  const supplied=Number(stats.food || 0)>=people+1 && Number(stats.water || 0)>=people+1 && Number(stats.beds || 0)>=people+1;
+  if(!supplied)return input;
+  const roll=1+Math.floor(Math.random()*20),target=clamp(stats.happiness,1,20),success=roll<=target;
+  const check={id:randomId("event",now+3),type:"recruitment_check",roll,target,result:success?"success":"none",createdAt:now};
+  if(!success)return {...input,events:[check,...(input.events || [])].slice(0,100)};
+  const recruit=createRecruit(input,now);
+  const settlers=[...(input.settlers || []),recruit];
+  return {...input,settlers,attributes:{...(input.attributes || {}),people:settlers.length},resources:{...(input.resources || {}),population:settlers.length},events:[
+    {id:randomId("event",now+4),type:"settler_joined",settlerId:recruit.id,settlerName:recruit.name,createdAt:now},
+    check,...(input.events || [])
+  ].slice(0,100)};
+}
 function scheduleAttackAtEndOfDay(input,now){
   const unresolved=(input.attacks || []).some(attack=>attack.state==="warning" || attack.state==="active");if(unresolved || now<Number(input.attackRiskBlockedUntil || 0))return input;
   const stats=calculateStaticAttributes(input,null,input.attributes?.food),foodSurplus=Number(stats.food || 0)>Number(stats.people || 0),waterSurplus=Number(stats.water || 0)>Number(stats.people || 0);if(!foodSurplus && !waterSurplus)return input;
@@ -106,7 +136,7 @@ export function advanceSettlementDay(input,now=Date.now()){
   const actionResult=resolveResidentActions(input,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
   let settlement=applyNeedsAndDeparture(actionResult.settlement,actionResult.dailyDefenseBonus,now);
-  settlement=collectDailySurplus(settlement,production);settlement=advanceBuildingRepairs(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
+  settlement=collectDailySurplus(settlement,production);settlement=advanceBuildingRepairs(settlement,now);settlement=resolveRecruitment(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
   const derived=calculateStaticAttributes(settlement,null,settlement.attributes?.food);
   const stockpile={...normalizeStockpile(settlement.stockpile,settlement.resources?.materials),capacityLbs:derived.stockpileCapacityLbs};
   return {...settlement,livestock:{...(settlement.livestock || {}),brahmin:Math.min(Math.max(0,Number(settlement.livestock?.brahmin || 0)),derived.brahminCapacity)},settlementDay:Math.max(1,Number(settlement.settlementDay || 1)+1),lastDayAt:now,nextDayAt:now+SETTLEMENT_DAY_MS,stockpile,
