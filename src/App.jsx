@@ -1118,6 +1118,7 @@ const updateSkill = (skillName, field, value) =>
           });
         }}
         lastSession={sharedSession.lastSession}
+        session={sharedSession}
         onResumeSession={() => {
           setSessionLobbyOpen(false);
           setScreen("session");

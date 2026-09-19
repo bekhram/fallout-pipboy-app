@@ -7,6 +7,7 @@ import QuickCharacterWizard, {
 import AppDownloadPanel from "./AppDownloadPanel.jsx";
 import CharacterProfilesPanel from "./CharacterProfilesPanel.jsx";
 import CloudAccountPanel from "./CloudAccountPanel.jsx";
+import TelegramCampaignPanel from "../session/TelegramCampaignPanel.jsx";
 import SheetIcon from "../layout/SheetIcon.jsx";
 import PwaInstallButton from "../shared/PwaInstallButton.jsx";
 import { menuCopy } from "./menuCopy.js";
@@ -23,7 +24,8 @@ export default function MenuScreen({
   onOpenSession,
   onResumeSession,
   lastSession,
-  saveMeta
+  saveMeta,
+  session = null,
 }) {
   const { t, i18n } = useTranslation();
   const c = menuCopy(i18n.resolvedLanguage || i18n.language);
@@ -95,7 +97,7 @@ export default function MenuScreen({
               <div className="home-session-actions"><TrackedButton className="pip-btn" id="btn_gm_session" onClick={()=>onOpenSession('host')}><SheetIcon name="person"/>{c.host}</TrackedButton><button type="button" className="pip-btn" onClick={()=>onOpenSession('join')}><SheetIcon name="plus"/>{c.join}</button></div>
             </section>
           </div>
-          {section==='settings' && <section id="home-settings" className="home-settings pip-panel"><h2>{c.settings}</h2><div className="home-languages">{['en','ru','uk','pl'].map(language=><button type="button" className="pip-btn" aria-pressed={i18n.resolvedLanguage?.startsWith(language)} key={language} onClick={()=>i18n.changeLanguage(language)}>{language.toUpperCase()}</button>)}</div><CloudAccountPanel language={i18n.resolvedLanguage || i18n.language}/></section>}
+          {section==='settings' && <section id="home-settings" className="home-settings pip-panel"><h2>{c.settings}</h2><div className="home-languages">{['en','ru','uk','pl'].map(language=><button type="button" className="pip-btn" aria-pressed={i18n.resolvedLanguage?.startsWith(language)} key={language} onClick={()=>i18n.changeLanguage(language)}>{language.toUpperCase()}</button>)}</div><CloudAccountPanel language={i18n.resolvedLanguage || i18n.language}/><TelegramCampaignPanel session={session}/></section>}
           {section==='install' && <section id="home-install"><AppDownloadPanel/><PwaInstallButton/></section>}
           <footer className="home-footer">ROBCO INDUSTRIES (TM) · PIP 2D20</footer>
         </div>
