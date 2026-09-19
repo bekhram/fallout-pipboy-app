@@ -123,6 +123,86 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   const materialTotal=Math.floor(Number(stockpile.materials.common || 0)+Number(stockpile.materials.uncommon || 0)+Number(stockpile.materials.rare || 0));
   const nextEvent=activeAttack ? text.warning : (settlement.events || [])[0]?.type?.replaceAll("_"," ") || text.none;
   const statusText=activeAttack ? text.warning : text.stable;
+  function rememberEditor(entry){
+    if(!entry)return;
+    setEditorUndo(current=>[...current,entry].slice(-30));
+    setEditorRedo([]);
+  }
+  function localLayoutCommand(command){
+    if(!onUpdate || !command)return false;
+    if(command.type==="move"){
+      const building=(settlement.buildings || []).find(item=>item.id===command.buildingId);
+      const def=building && SETTLEMENT_BUILDINGS[building.type];
+      if(!building || !def || building.locked || building.type==="settlement_hq" || !canPlace(settlement,def,command.x,command.y,building.id))return false;
+      onUpdate(current=>({...current,buildings:(current.buildings || []).map(item=>item.id===building.id ? {...item,x:command.x,y:command.y} : item)}));
+      return true;
+    }
+    if(command.type==="store"){
+      const building=(settlement.buildings || []).find(item=>item.id===command.buildingId);
+      if(!building || building.locked || building.type==="settlement_hq" || building.state==="construction" || building.upgrade)return false;
+      const now=Date.now();
+      onUpdate(current=>({...current,
+        buildings:(current.buildings || []).filter(item=>item.id!==building.id),
+        storedBuildings:[...(current.storedBuildings || []).filter(item=>item.id!==building.id),{...building,x:null,y:null,storedAt:now,storedReason:"MANUAL_EDITOR"}],
+        settlers:(current.settlers || []).map(worker=>worker.assignedBuildingId===building.id || worker.settlementAction?.targetBuildingId===building.id || worker.settlementAction?.parentBuildingId===building.id ? {...worker,settlementAction:null,assignedBuildingId:null,status:"idle"} : worker)
+      }));
+      return true;
+    }
+    if(command.type==="placeStored"){
+      const building=(settlement.storedBuildings || []).find(item=>item.id===command.buildingId);
+      const def=building && SETTLEMENT_BUILDINGS[building.type];
+      if(!building || !def || !canPlace(settlement,def,command.x,command.y))return false;
+      onUpdate(current=>{
+        const stored=(current.storedBuildings || []).find(item=>item.id===command.buildingId);
+        if(!stored)return current;
+        const {storedAt,storedReason,...placed}=stored;
+        return {...current,storedBuildings:(current.storedBuildings || []).filter(item=>item.id!==stored.id),buildings:[...(current.buildings || []),{...placed,x:command.x,y:command.y,placedAt:Date.now()}]};
+      });
+      return true;
+    }
+    return false;
+  }
+  async function runLayoutCommand(command){
+    if(!canEdit || !command)return false;
+    if(onCommand)return Boolean(await onCommand(command));
+    return localLayoutCommand(command);
+  }
+  async function undoLayout(){
+    const entry=editorUndo[editorUndo.length-1];if(!entry || editorBusy)return;
+    const command=editorHistoryCommand(entry,"undo");if(!command)return;
+    setEditorBusy(true);
+    try{
+      if(await runLayoutCommand(command)){
+        setEditorUndo(current=>current.slice(0,-1));
+        setEditorRedo(current=>[...current,entry].slice(-30));
+        setSelectedBuildingId(entry.buildingId);
+        setNotice(editor.undo);
+      }
+    }finally{setEditorBusy(false);}
+  }
+  async function redoLayout(){
+    const entry=editorRedo[editorRedo.length-1];if(!entry || editorBusy)return;
+    const command=editorHistoryCommand(entry,"forward");if(!command)return;
+    setEditorBusy(true);
+    try{
+      if(await runLayoutCommand(command)){
+        setEditorRedo(current=>current.slice(0,-1));
+        setEditorUndo(current=>[...current,entry].slice(-30));
+        setSelectedBuildingId(entry.kind==="store" ? null : entry.buildingId);
+        setNotice(editor.redo);
+      }
+    }finally{setEditorBusy(false);}
+  }
+  async function storeSelected(){
+    if(!selectedBuilding || selectedBuildingLocked || editorBusy)return;
+    const entry=editorStoreEntry(selectedBuilding);if(!entry)return;
+    setEditorBusy(true);
+    try{
+      if(await runLayoutCommand({type:"store",buildingId:selectedBuilding.id})){
+        rememberEditor(entry);setSelectedBuildingId(null);setMovingBuildingId(null);setHoverCell(null);setNotice(editor.store);
+      }
+    }finally{setEditorBusy(false);}
+  }
   async function createBuildingAt(x,y) {
     if(!canEdit || !selectedDef || !selectedRule)return;
     if(!canPlace(settlement,selectedDef,x,y)){setNotice(text.cannotPlace);return;}
