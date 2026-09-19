@@ -1,6 +1,7 @@
 import { calculateSettlementStats } from "./settlementEconomy.js";
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
+import { simulateSettlementTowerDefense } from "./settlementTowerDefense.js";
 
 function randomId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -119,87 +120,38 @@ function turretDefenseContribution(settlement) {
 export function resolveSettlementAttack(settlement, attackId, now = Date.now()) {
   const attack = (settlement.attacks || []).find((item) => item.id === attackId);
   if (!attack || attack.state === "resolved") return settlement;
-  const stats = calculateSettlementStats(settlement);
-  const militiaBonus = militiaDefenseBonus(settlement, attack);
-  const heroDefense = heroDefenseContribution(attack);
-  const defenseScore = Number(stats.defense || 0) + militiaBonus + heroDefense.total + Math.floor(Math.random() * 11);
-  const enemyScore = Number(attack.strength || 0) + Math.floor(Math.random() * 11);
-  const victory = defenseScore >= enemyScore;
-  const resources = { ...(settlement.resources || {}) };
-  let buildings = settlement.buildings || [];
-  let settlers = settlement.settlers || [];
-  let buildingDamage = [];
 
-  if (victory) {
-    const damaged = damageBuildings(buildings, 1, 5, 15);
-    buildings = damaged.buildings;
-    buildingDamage = damaged.damaged;
-  } else {
-    const damaged = damageBuildings(buildings, 2 + Math.floor(Math.random() * 3), 10, 35);
-    buildings = damaged.buildings;
-    buildingDamage = damaged.damaged;
-    if (settlers.length) {
-      const defenderSet = new Set(attack.defenderIds || []);
-      const exposed = settlers.map((settler, index) => ({ settler, index })).filter(({ settler }) => defenderSet.has(settler.id));
-      const pool = exposed.length ? exposed : settlers.map((settler, index) => ({ settler, index }));
-      const injuredIndex = pool[Math.floor(Math.random() * pool.length)]?.index;
-      settlers = settlers.map((settler, index) => index === injuredIndex ? { ...settler, health: Math.max(1, Number(settler.health ?? 100) - 20), status: "injured" } : settler);
-    }
-  }
-
-  const result = victory ? "victory" : "defeat";
-  const turret = turretDefenseContribution(settlement);
-  const heroCasualties = [];
-  if (!victory && heroDefense.heroes.length) {
-    const affected = heroDefense.heroes[Math.floor(Math.random() * heroDefense.heroes.length)];
-    if (affected) {
-      const hpLoss = Math.max(1, Math.min(10, 2 + Math.floor(Math.random() * 9)));
-      heroCasualties.push({ clientId: affected.clientId, name: affected.name, hpLoss, currentHp: affected.currentHp });
-    }
-  }
-  const defendersCommitted = (attack.defenderIds || []).filter((id) => eligibleDefenderIds(settlement).has(id)).length;
-  const injuredDefenders = settlers.filter((settler) => Number(settler.health ?? 100) < Number((settlement.settlers || []).find((item) => item.id === settler.id)?.health ?? 100)).map((settler) => ({ id: settler.id, name: settler.name, health: settler.health }));
-  const attackerCount = Math.max(2, Math.min(8, Math.ceil(Math.max(1, Number(attack.strength || 1)) / 3)));
-  const attackersDefeated = victory ? attackerCount : Math.max(0, Math.min(attackerCount - 1, Math.floor(attackerCount * defenseScore / Math.max(1, defenseScore + enemyScore))));
-  const rounds = Math.max(1, Math.min(8, 1 + Math.ceil(Number(attack.strength || 1) / Math.max(1, Number(stats.defense || 0) + militiaBonus + heroDefense.total + 2))));
-  const battleReport = {
-    rounds,
-    attackerCount,
-    attackersDefeated,
-    defendersCommitted,
-    defendersInjured: injuredDefenders,
-    turretCount: turret.count,
-    turretDefense: turret.defense,
-    baseDefense: Number(stats.defense || 0),
-    militiaBonus,
-    heroBonus: heroDefense.total,
-    heroesCommitted: heroDefense.heroes.length,
-    heroContributions: heroDefense.heroes.map(({ clientId, name, contribution, level, defense }) => ({ clientId, name, contribution, level, defense })),
-    heroCasualties,
-    defenseScore,
-    enemyScore,
-    wallDeterrence: Number(attack.wallDeterrence || 0),
-    buildingDamage,
-    buildingsDamaged: buildingDamage.length,
-    buildingsDestroyed: buildingDamage.filter((item) => item.destroyed).length,
+  const simulation = simulateSettlementTowerDefense(settlement, attack);
+  const victory = simulation.result === "victory";
+  const happinessBefore = Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10);
+  const happiness = victory ? happinessBefore : Math.max(1, happinessBefore - 1);
+  const report = {
+    ...simulation.report,
+    heroesCosmetic: (attack.heroParticipants || []).map((hero) => ({ clientId: hero.clientId, name: hero.name })),
+    settlersCosmetic: (settlement.settlers || []).map((settler) => ({ id: settler.id, name: settler.name })).slice(0, 50),
   };
+
   return {
-    ...settlement,
-    resources: {
-      ...resources,
-      happiness: victory ? Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) : Math.max(1, Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) - 1),
-    },
-    buildings,
-    settlers,
-    attributes: {
-      ...(settlement.attributes || {}),
-      happiness: victory ? Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) : Math.max(1, Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) - 1),
-    },
-    attacks: (settlement.attacks || []).map((item) => item.id === attackId ? { ...item, state: "resolved", result, resolvedAt: now, defenseScore, enemyScore, militiaBonus, battleReport } : item),
-    events: [{ id: randomId("event"), type: "attack_result", attackId, result, battleReport, createdAt: now }, ...(settlement.events || [])].slice(0, 100),
+    ...simulation.settlement,
+    attributes: { ...(simulation.settlement.attributes || {}), happiness },
+    resources: { ...(simulation.settlement.resources || {}), happiness },
+    attacks: (simulation.settlement.attacks || []).map((item) => item.id === attackId ? {
+      ...item,
+      state: "resolved",
+      result: simulation.result,
+      resolvedAt: now,
+      battleReport: report,
+    } : item),
+    events: [{
+      id: randomId("event"),
+      type: "attack_result",
+      attackId,
+      result: simulation.result,
+      battleReport: report,
+      createdAt: now,
+    }, ...(simulation.settlement.events || [])].slice(0, 100),
   };
 }
-
 export function processSettlementAttacks(input, now = Date.now()) {
   let settlement = { ...input };
   const warning = (settlement.attacks || []).find((attack) => attack.state === "warning");
