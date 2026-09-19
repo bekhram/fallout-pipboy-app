@@ -97,3 +97,8 @@
  .settlement-mobile-nav button{font-size:8px}
  .settlement-brand .settlement-chat-button{width:38px;min-height:38px}
 }
+
+.settlement-profit-card{display:flex;flex-direction:column;gap:7px;margin-top:14px;padding:10px;border:1px solid #4f765d;border-radius:8px;background:#0b2518}
+.settlement-profit-card>.pip-panel-title{margin:0}
+.settlement-profit-card>small{opacity:.75;font-size:11px;line-height:1.35}
+.settlement-profit-card .settlement-primary{margin-top:4px}
