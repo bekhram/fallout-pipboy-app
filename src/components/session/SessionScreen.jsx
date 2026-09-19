@@ -10,7 +10,6 @@ import SessionChatDrawer from "./SessionChatDrawer.jsx";
 import SessionActionsMenu from "./SessionActionsMenu.jsx";
 import PlayerCampaignWorkspace from "./PlayerCampaignWorkspace.jsx";
 import SessionLobby from "./SessionLobby.jsx";
-import TelegramCampaignPanel from "./TelegramCampaignPanel.jsx";
 import "./session.css";
 import "./sessionGmWorkspace.css";
 import "../gm/gmOrganicWorkspace.css";
@@ -359,8 +358,6 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
         </header>
 
         {error ? <div className="session-error session-gm-host-error">{error}</div> : null}
-
-        <TelegramCampaignPanel session={session} />
 
         <div className="session-gm-workspace-wrap session-gm-workspace-wrap--single">
           <GmWorkspace
