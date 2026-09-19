@@ -16,9 +16,44 @@ import { setLiveSessionBridge } from "../utils/liveSessionBridge.js";
 
 export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
 
+const LIVE_WORLD_PREFIX = "[[PIP2D20_LIVE_WORLD]]";
+function isLiveWorldText(value) { return String(value || "").startsWith(LIVE_WORLD_PREFIX); }
+function parseLiveWorld(chat = []) {
+  let latest = null;
+  for (const message of chat) {
+    const value = String(message?.text || "");
+    if (!isLiveWorldText(value)) continue;
+    try {
+      const parsed = JSON.parse(value.slice(LIVE_WORLD_PREFIX.length));
+      if (!parsed || typeof parsed !== "object") continue;
+      const at = Number(message?.at || parsed.at || 0);
+      if (!latest || at >= latest.at) latest = {
+        at,
+        regionId: String(parsed.regionId || "commonwealth"),
+        markers: Array.isArray(parsed.markers) ? parsed.markers.slice(0, 200) : [],
+      };
+    } catch {}
+  }
+  return latest || { at: 0, regionId: "commonwealth", markers: [] };
+}
+
 export default function useSharedSession(form) {
   const session = useGmAuthoritativeSessionV15(form);
   const cloud = useCloudCampaignSync(session, form);
+
+  const rawChat = Array.isArray(session?.roomState?.chat) ? session.roomState.chat : [];
+  const liveWorld = useMemo(() => parseLiveWorld(rawChat), [rawChat]);
+  const visibleChat = useMemo(() => rawChat.filter(message => !isLiveWorldText(message?.text)), [rawChat]);
+  const visibleFeed = useMemo(() => (Array.isArray(session?.feed) ? session.feed : []).filter(item => !isLiveWorldText(item?.text)), [session?.feed]);
+  const updateLiveWorld = (next = {}) => {
+    if (session?.mode !== "host" || session?.status !== "online") return false;
+    const state = {
+      regionId: String(next.regionId || liveWorld.regionId || "commonwealth"),
+      markers: Array.isArray(next.markers) ? next.markers.slice(0, 200) : liveWorld.markers,
+      at: Date.now(),
+    };
+    return Boolean(session.sendChat?.(`${LIVE_WORLD_PREFIX}${JSON.stringify(state)}`));
+  };
 
   const waitingForGm = Boolean(
     session?.mode === "player"
@@ -29,6 +64,10 @@ export default function useSharedSession(form) {
   const mergedSession = useMemo(() => ({
     ...session,
     ...cloud,
+    roomState: session.roomState ? { ...session.roomState, chat: visibleChat } : session.roomState,
+    feed: visibleFeed,
+    liveWorld,
+    updateLiveWorld,
     status: waitingForGm ? "waiting" : session.status,
     error: waitingForGm ? null : session.error,
     waitingForGm,
@@ -75,7 +114,7 @@ export default function useSharedSession(form) {
       const started = await session.startHost?.(...args);
       return { ok: true, restored, started };
     },
-  }), [session, cloud, waitingForGm]);
+  }), [session, cloud, waitingForGm, visibleChat, visibleFeed, liveWorld]);
 
   useEffect(() => {
     if (session.mode !== 'host' || session.status !== 'online' || !/^campaign_[a-f0-9]{24}$/.test(session.campaignId || '') || !session.sessionCode) return;
