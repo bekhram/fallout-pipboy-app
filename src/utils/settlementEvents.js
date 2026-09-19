@@ -1,4 +1,5 @@
 import { settlerSkillRank, settlerHasPerk } from './settlementSettlerProfile.js';
+import { applySettlerCondition } from './settlementHealth.js';
 
 function id(prefix,now){return `${prefix}_${now}_${Math.random().toString(36).slice(2,8)}`;}
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value)||0));}
@@ -47,8 +48,8 @@ export function resolveSettlementDailyEvent(input,now=Date.now()){
     const worker=randomWorker(settlement);
     if(worker){
       const loss=Math.max(0,20-medicine*5-(medic?5:0));
-      settlement={...settlement,settlers:settlement.settlers.map(item=>item.id===worker.id?{...item,health:clamp(Number(item.health??100)-loss,1,100),status:loss?'recovering':item.status}:item)};
-      data={...data,settlerId:worker.id,settlerName:worker.name,healthLoss:loss,skill:'Medicine',skillRank:medicine,mitigated:loss===0};
+      settlement=loss?applySettlerCondition(settlement,worker.id,'sick',loss,now):settlement;
+      data={...data,settlerId:worker.id,settlerName:worker.name,healthLoss:loss,condition:loss?'sick':'none',skill:'Medicine',skillRank:medicine,mitigated:loss===0};
     }
   } else if(type==='equipment_failure'){
     const repair=bestSkill(settlement,'Repair');
