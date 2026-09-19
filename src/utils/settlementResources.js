@@ -1,13 +1,14 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { resolveSettlementWorkplaces } from './settlementWorkplaces.js';
+import { plantedCrops } from './settlementCrops.js';
 
 function isActive(building) {
   return building?.state === "active" && Number(building.condition ?? 100) > 0 && !building.autoDisabled;
 }
 export function resolveSettlementResources(settlement) {
   const powerGrid = resolveSettlementPower(settlement);
-  let water = 0, cropSlots = 0, cropStructures = 0, brahminCapacity = 0;
+  let water = 0, cropSlots = 0, cropCount = 0, cropStructures = 0, brahminCapacity = 0;
   const resourceBuildings = {};
   for (const building of settlement.buildings || []) {
     if (!isActive(building)) continue;
@@ -21,17 +22,19 @@ export function resolveSettlementResources(settlement) {
       type: building.type, powered, requiresPower,
       water: powered ? Math.max(0, Number(effects.water || 0)) : 0,
       cropSlots: powered ? Math.max(0, Number(effects.cropSlots || 0)) : 0,
+      cropCount: powered ? plantedCrops(building).length : 0,
       brahminCapacity: powered ? Math.max(0, Number(effects.brahminCapacity || 0)) : 0,
     };
     if (!powered) continue;
     water += Math.max(0, Number(effects.water || 0));
     cropSlots += Math.max(0, Number(effects.cropSlots || 0));
+    cropCount += effects.cropSlots ? plantedCrops(building).length : 0;
     brahminCapacity += Math.max(0, Number(effects.brahminCapacity || 0));
     if (effects.cropSlots) cropStructures += 1;
   }
   const brahmin = Math.max(0, Math.floor(Number(settlement.livestock?.brahmin || 0)));
-  return { water: Math.max(0, water - Math.ceil(cropSlots / 3)), waterProduced: water,
-    cropWater: Math.ceil(cropSlots / 3), cropSlots, cropStructures, brahmin, brahminCapacity, resourceBuildings };
+  return { water: Math.max(0, water - Math.ceil(cropCount / 3)), waterProduced: water,
+    cropWater: Math.ceil(cropCount / 3), cropSlots, cropCount, cropStructures, brahmin, brahminCapacity, resourceBuildings };
 }
 export function reserveCropFertilizer(settlement, units = 1) {
   const count = Math.max(1, Math.floor(Number(units) || 1));
@@ -50,7 +53,7 @@ export function getTendedCropResult(settlement, workers) {
   const actionCapacity = workerCount * 6;
   const hasAssignments = (settlement.settlers || []).some(w => w.settlementAction?.type === 'tend_crops');
   const planned = hasAssignments ? resolveSettlementWorkplaces(settlement).tendedCrops : 0;
-  const tendedCrops = Math.min(resources.cropSlots, Math.max(planned, actionCapacity));
+  const tendedCrops = Math.min(resources.cropCount, Math.max(planned, actionCapacity));
   const remainingCapacity = Math.max(0, actionCapacity - tendedCrops);
   const tendedBrahmin = Math.min(resources.brahmin, remainingCapacity);
   const tendedUnits = tendedCrops + tendedBrahmin;
