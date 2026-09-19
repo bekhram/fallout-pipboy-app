@@ -1,5 +1,4 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
-import { normalizeStockpile } from "./settlementDayEngine.js";
 
 function missingPercent(building) {
   return Math.max(0, 100 - Math.max(0, Math.min(100, Number(building?.condition ?? 100))));
@@ -24,7 +23,15 @@ export function startBuildingRepair(settlement, buildingId, now = Date.now()) {
   if (!building || building.type === "settlement_hq" || building.state === "construction") return settlement;
   const cost = repairCostForBuilding(building);
   if (!cost) return settlement;
-  const stockpile = normalizeStockpile(settlement.stockpile, settlement.resources?.materials);
+  const source = settlement.stockpile || {};
+  const stockpile = {
+    ...source,
+    materials: {
+      common: Number(source.materials?.common ?? source.common ?? settlement.resources?.materials ?? 0) || 0,
+      uncommon: Number(source.materials?.uncommon ?? source.uncommon ?? 0) || 0,
+      rare: Number(source.materials?.rare ?? source.rare ?? 0) || 0,
+    },
+  };
   if (Number(stockpile.materials.common || 0) < cost) throw new Error("INSUFFICIENT_REPAIR_MATERIALS");
   const materials = { ...stockpile.materials, common: Number(stockpile.materials.common || 0) - cost };
   return {
