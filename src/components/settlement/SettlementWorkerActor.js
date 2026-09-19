@@ -37,7 +37,7 @@ export class SettlementWorkerActor {
 
   configure(world, job, { resident, actionName = '', targetName = '', language = 'en', reduced = false, reset = false }) {
     if (this.destroyed) return;
-    this.world = world; this.job = job; this.residentName = resident.name || resident.id || '—';
+    this.world = world; this.job = job; this.residentName = resident.name || resident.id || '—'; this.healthStatus = resident.status || 'idle'; this.health = Math.max(0,Math.min(100,Number(resident.health ?? 100)));
     this.actionName = actionName; this.targetName = targetName;
     this.copy = { ...workplaceCopy(language), ...(COPY[String(language).split('-')[0]] || COPY.en) };
     const changedMotion = this.reduced !== reduced;
@@ -81,8 +81,10 @@ export class SettlementWorkerActor {
     if (caption !== this.caption) {
       this.caption = caption;
       const indicator = workerIndicator(action, state.phase, state.cargo);
-      this.symbol.setText(indicator.symbol); this.activity.setText(indicator.status);
-      this.label.setText([this.residentName, this.actionName, this.targetName,
+      const unavailable = ['sick','injured','recovering'].includes(this.healthStatus);
+      this.symbol.setText(unavailable ? (this.healthStatus === 'injured' ? '!' : '✚') : indicator.symbol);
+      this.activity.setText(unavailable ? `${this.health}%` : indicator.status);
+      this.label.setText([this.residentName, unavailable ? `${this.healthStatus} · ${this.health}%` : '', this.actionName, this.targetName,
         this.copy[state.reason || state.phase] || this.copy.waiting, this.copy.visual].filter(Boolean).join('\n'));
     }
   }
