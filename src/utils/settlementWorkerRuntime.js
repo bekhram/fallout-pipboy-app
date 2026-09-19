@@ -1,7 +1,7 @@
 // Local presentation state only. Never award resources or persist animation frames.
 const key = p => `${p.x},${p.y}`;
 const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-const ACTIONS = new Set(['build', 'tend_crops', 'business', 'scavenging', 'hunting_gathering', 'trade_caravan', 'guard']);
+const ACTIONS = new Set(['build', 'repair', 'tend_crops', 'business', 'scavenging', 'hunting_gathering', 'trade_caravan', 'guard']);
 const CARRY_ACTIONS = new Set(['tend_crops', 'scavenging', 'hunting_gathering', 'trade_caravan']);
 const active = b => b.state === 'active' && Number(b.condition ?? 100) > 0 && !b.autoDisabled && b.powered !== false;
 
@@ -90,14 +90,16 @@ export function resolveWorkerJob(world, resident, index = 0, position) {
   if (!ACTIONS.has(action.type)) return wait('unavailable');
 
   let target;
-  if (action.type === 'build') {
+  if (action.type === 'build' || action.type === 'repair') {
     const id = action.targetRoomId ? action.parentBuildingId : action.targetBuildingId;
     if (!id) return wait('choose_target');
     target = world.buildings.find(b => b.id === id);
     base.targetId = id;
     base.roomId = action.targetRoomId || null;
     if (!target) return wait('missing_target');
-    if (action.targetRoomId) {
+    if (action.type === 'repair') {
+      if (!target.repair || Number(target.condition ?? 100) >= 100) return wait('completed');
+    } else if (action.targetRoomId) {
       const room = (target.rooms || []).find(r => r.id === action.targetRoomId);
       if (!room) return wait('missing_target');
       if (room.state !== 'construction') return wait('completed');
