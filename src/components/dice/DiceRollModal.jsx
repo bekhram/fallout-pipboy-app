@@ -31,17 +31,19 @@ export default function DiceRollModal({
   const reportDiceResult = (result) => {
     if (!result) return;
     onDiceResult?.(result);
-    void sendTelegramEvent({
-      type: "dice_roll",
-      campaignId,
-      character: String(
-        form?.characterName
-        || form?.name
-        || form?.playerName
-        || "Unknown character"
-      ),
-      result,
-    });
+    if (campaignId) {
+      void sendTelegramEvent({
+        type: "dice_roll",
+        campaignId,
+        character: String(
+          form?.characterName
+          || form?.name
+          || form?.playerName
+          || "Unknown character"
+        ),
+        result,
+      });
+    }
   };
 
   useEffect(() => {
