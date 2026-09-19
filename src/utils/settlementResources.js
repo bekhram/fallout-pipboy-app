@@ -1,7 +1,7 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { resolveSettlementWorkplaces } from './settlementWorkplaces.js';
-import { plantedCrops } from './settlementCrops.js';
+import { effectiveCropCount } from './settlementCrops.js';
 
 function isActive(building) {
   return building?.state === "active" && Number(building.condition ?? 100) > 0 && !building.autoDisabled;
@@ -22,13 +22,13 @@ export function resolveSettlementResources(settlement) {
       type: building.type, powered, requiresPower,
       water: powered ? Math.max(0, Number(effects.water || 0)) : 0,
       cropSlots: powered ? Math.max(0, Number(effects.cropSlots || 0)) : 0,
-      cropCount: powered ? plantedCrops(building).length : 0,
+      cropCount: powered ? effectiveCropCount(building) : 0,
       brahminCapacity: powered ? Math.max(0, Number(effects.brahminCapacity || 0)) : 0,
     };
     if (!powered) continue;
     water += Math.max(0, Number(effects.water || 0));
     cropSlots += Math.max(0, Number(effects.cropSlots || 0));
-    cropCount += effects.cropSlots ? plantedCrops(building).length : 0;
+    cropCount += effects.cropSlots ? effectiveCropCount(building) : 0;
     brahminCapacity += Math.max(0, Number(effects.brahminCapacity || 0));
     if (effects.cropSlots) cropStructures += 1;
   }
