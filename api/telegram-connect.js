@@ -1,6 +1,7 @@
 import {
   disconnectTelegramLink,
   getTelegramLink,
+  hashToken,
   makeConnectCode,
   makeManageToken,
   saveConnectCode,
@@ -62,12 +63,15 @@ export default async function handler(req, res) {
     }
 
     if (body.type === "create") {
+      const current = await getTelegramLink(campaignId);
+      if (current?.chatId && hashToken(text(body.manageToken)) !== current.manageTokenHash) {
+        return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+      }
       const bot = await ensureWebhook();
       const code = makeConnectCode();
       const manageToken = makeManageToken();
       const expiresAt = Date.now() + 10 * 60 * 1000;
       await saveConnectCode({ campaignId, code, manageToken, expiresAt });
-      const current = await getTelegramLink(campaignId);
       return res.json({
         ok: true,
         code,
@@ -90,7 +94,6 @@ export default async function handler(req, res) {
       if (!link?.chatId) return res.status(404).json({ ok: false, error: "NOT_CONNECTED" });
       if (!body.manageToken) return res.status(403).json({ ok: false, error: "FORBIDDEN" });
       // Validate token without mutating by comparing through disconnect helper semantics is avoided here.
-      const { hashToken } = await import("../server/telegramCampaignStore.js");
       if (hashToken(body.manageToken) !== link.manageTokenHash) return res.status(403).json({ ok: false, error: "FORBIDDEN" });
       await telegramCall("sendMessage", {
         chat_id: link.chatId,
