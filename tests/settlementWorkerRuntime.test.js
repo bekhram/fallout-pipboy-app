@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorkerWorld, workerPath, workerAnchor, resolveWorkerJob, createWorkerState, advanceWorkerState } from '../src/utils/settlementWorkerRuntime.js';
+import { createWorkerWorld, workerPath, workerAnchor, resolveWorkerJob, createWorkerState, advanceWorkerState, commandWorkerMove } from '../src/utils/settlementWorkerRuntime.js';
 
 const building = (id, x, y, extra = {}) => ({ id, type: id, x, y, state: 'active', powered: true, footprint: { width: 2, height: 2 }, effects: {}, ...extra });
 const hq = () => building('home', 1, 1, { type: 'settlement_hq' });
@@ -128,4 +128,33 @@ test('reassignment discards an in-flight delivery and its cargo', () => {
   const old = createWorkerState(map, oldJob, oldJob.home); old.cargo = true; old.phase = 'to_depot';
   const job = resolveWorkerJob(map, worker(null), 0, old), state = createWorkerState(map, job, old);
   assert.equal(state.phase, 'idle'); assert.equal(state.cargo, false); assert.deepEqual(state.path, []);
+});
+
+
+test('manual RTS move order temporarily overrides movement then resumes the saved job', () => {
+  const map = world(), job = resolveWorkerJob(map, worker('tend_crops'));
+  const state = createWorkerState(map, job, job.home);
+  const goal = map.cells.find(cell => cell.x === 11 && cell.y === 11);
+  assert.ok(goal);
+  assert.equal(commandWorkerMove(state, map, goal), true);
+  assert.equal(state.phase, 'manual_move');
+  assert.equal(state.cargo, false);
+  let sawHold = false;
+  for (let i = 0; i < 2200; i++) {
+    advanceWorkerState(state, map, 80);
+    sawHold ||= state.phase === 'manual_hold';
+    if (sawHold && state.phase !== 'manual_hold' && state.phase !== 'manual_move') break;
+  }
+  assert.equal(sawHold, true);
+  assert.notEqual(state.phase, 'manual_move');
+  assert.notEqual(state.phase, 'manual_hold');
+  assert.equal(state.job, job);
+});
+
+test('manual RTS move rejects missing destinations without changing the worker', () => {
+  const map = world(), job = resolveWorkerJob(map, worker('guard'));
+  const state = createWorkerState(map, job, job.home);
+  const before = JSON.stringify(state);
+  assert.equal(commandWorkerMove(state, map, null), false);
+  assert.equal(JSON.stringify(state), before);
 });
