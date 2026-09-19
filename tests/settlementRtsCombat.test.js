@@ -32,12 +32,12 @@ test('move command gives selected defenders formation paths and hold cancels the
   assert.ok(s.units.every(unit=>unit.command==='hold' && unit.path.length===0));
 });
 
-test('patrol command alternates between endpoints', () => {
-  const s=state();toggleRtsSelection(s,'a');
+test('patrol command remains active and reverses between endpoints during combat', () => {
+  const s=state();spawnRtsWave(s);toggleRtsSelection(s,'a');
   assert.equal(issueRtsCommand(s,'patrol',{x:10,y:10}),true);
-  const unit=s.units[0];assert.equal(unit.command,'patrol');assert.ok(unit.patrol);
-  for(let i=0;i<600;i++)stepRtsCombat(s,100);
-  assert.equal(unit.command,'patrol');
+  const unit=s.units[0], first=unit.patrol.next;
+  for(let i=0;i<220;i++)stepRtsCombat(s,100);
+  assert.equal(unit.command,'patrol');assert.notEqual(unit.patrol.next, first);
 });
 
 test('wave spawns enemies and defenders automatically fire in range', () => {
