@@ -1,20 +1,24 @@
-name: Settlement preview checks
+name: Core preview checks
 on:
   pull_request:
     paths:
       - 'src/components/settlement/**'
-      - 'src/components/campaign/**'
-      - 'src/components/map/MapScreen.jsx'
-      - 'src/components/map/MapGrid.jsx'
-      - 'src/utils/legacySettlementArchive.js'
-      - 'src/utils/settlementWorkerRuntime.js'
-      - 'src/assets/settlement/workers/**'
-      - 'tests/settlement*.test.js'
+      - 'src/components/session/**'
+      - 'src/components/gm/**'
+      - 'src/components/characterCreation/**'
+      - 'src/components/map/**'
+      - 'src/hooks/useSharedSession.js'
+      - 'src/utils/settlement*.js'
+      - 'src/utils/localSettlements.js'
+      - 'src/utils/characterCreationRules.js'
+      - 'src/locales/**'
+      - 'tests/**'
+      - 'package.json'
       - '.github/workflows/settlement-preview-checks.yml'
 permissions:
   contents: read
 concurrency:
-  group: settlement-preview-${{ github.event.pull_request.number }}
+  group: core-preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 jobs:
   test-and-build:
@@ -27,6 +31,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Settlement presentation and shared-entry regression tests
-        run: node --test tests/settlementWorkerActor.test.js tests/settlementWorkerRuntime.test.js tests/settlementSpriteFrames.test.js tests/settlementLegacyArchive.test.js tests/settlementSharedEntry.test.js tests/settlementDefensePlan.test.js tests/settlementFortificationRisk.test.js tests/settlementRepair.test.js tests/settlementRaidBattle.test.js tests/settlementTowerDefense.test.js tests/settlementProfit.test.js
+      - run: npm run check:i18n
+      - run: npm run test:regression
       - run: npm run build
