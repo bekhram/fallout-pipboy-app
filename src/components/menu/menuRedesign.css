@@ -81,3 +81,74 @@
 .home-terminal {grid-template-rows:auto 1fr;}
 .pip-home-v2 .home-import {width:100%;}
 .home-sidebar button {font-size:13px;}
+
+.home-help-report {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--home-line);
+  border-radius: 6px;
+  background: rgba(2, 24, 10, .72);
+}
+.home-help-report__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.home-help-report__head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--home-bright);
+  font-size: 16px;
+}
+.home-help-report__head h3 svg { width: 20px; height: 20px; }
+.home-help-report__head p { margin: 5px 0 0; font-size: 12px; }
+.home-bug-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--home-line);
+}
+.home-bug-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+.home-bug-form input,
+.home-bug-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--home-line);
+  border-radius: 5px;
+  background: #03160b;
+  color: var(--home-bright);
+  padding: 10px;
+  font: inherit;
+}
+.home-bug-form textarea { resize: vertical; min-height: 120px; }
+.home-bug-screenshot { display: flex; flex-wrap: wrap; gap: 8px; }
+.home-bug-preview {
+  display: block;
+  width: min(100%, 420px);
+  max-height: 360px;
+  object-fit: contain;
+  border: 1px solid var(--home-line);
+  border-radius: 5px;
+  background: #020b05;
+}
+.home-bug-message {
+  padding: 9px 10px;
+  border: 1px solid var(--home-line);
+  border-radius: 4px;
+  font-size: 12px;
+}
+.home-bug-submit { justify-self: start; min-width: 180px; }
+@media(max-width:899px) {
+  .home-help-report__head { align-items: stretch; flex-direction: column; }
+  .home-help-report__head .pip-btn,
+  .home-bug-submit { width: 100%; }
+  .home-bug-preview { width: 100%; max-height: 300px; }
+}
