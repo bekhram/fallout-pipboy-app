@@ -46,6 +46,12 @@ test("selected militia contributes to auto defense", () => {
     assert.equal(attack.militiaBonus, 2);
     assert.equal(attack.defenseScore, 2);
     assert.equal(attack.enemyScore, 1);
+    assert.equal(attack.battleReport.rounds >= 1, true);
+    assert.equal(attack.battleReport.attackerCount, 2);
+    assert.equal(attack.battleReport.attackersDefeated, 2);
+    assert.equal(attack.battleReport.defendersCommitted, 2);
+    assert.equal(attack.battleReport.defendersInjured.length, 0);
+    assert.equal(attack.battleReport.turretDefense, 0);
   } finally {
     Math.random = originalRandom;
   }
