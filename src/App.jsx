@@ -1222,6 +1222,7 @@ const updateSkill = (skillName, field, value) =>
             mapState={mapState}
             onMapChange={updateMapData}
             character={form}
+            onCharacterChange={setForm}
             weaponDatabase={globalWeapons}
           />
         );
