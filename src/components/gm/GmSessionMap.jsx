@@ -34,7 +34,7 @@ import "./gmDesktopLayoutV2.css";
 import GmWorkspaceNavigation, { WORKSPACE_GROUPS, workspaceGroup, workspaceCopy } from "./GmWorkspaceNavigation.jsx";
 import "./gmOrganicWorkspace.css";
 
-import CampaignWorldMap from "../campaign/CampaignWorldMap.jsx";
+import LiveSessionWorldMap from "../session/LiveSessionWorldMap.jsx";
 import { worldCopy } from "../campaign/worldCopy.js";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
@@ -124,7 +124,7 @@ export default function GmSessionMap(props) {
         <nav className="gm-organic-subtabs" aria-label={ui[group]}>
           {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
-      {activeTab === "world" && <CampaignWorldMap campaignId={session.campaignId} form={props.character} onOpenCampaigns={props.onOpenCampaigns} />}
+      {activeTab === "world" && <LiveSessionWorldMap session={session} />}
       <div hidden={activeTab === "world"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
