@@ -2,6 +2,7 @@ import React,{useCallback,useEffect,useRef,useState} from 'react';
 import { useTranslation } from 'react-i18next';
 import SettlementScreen from './SettlementScreen.jsx';
 import { offlineSettlementStore,subscribeOfflineSettlements } from '../../utils/offlineSettlementStore.js';
+import { applySettlementLeaderProfile } from '../../utils/settlementLeaderRules.js';
 import './offlineSettlement.css';
 
 const COPY={
@@ -53,7 +54,8 @@ export default function OfflineSettlementHub({onBack,character}){
   function updateActive(update){
     setActive(current=>{
       if(!current)return current;
-      const next=typeof update==='function'?update(current):update;
+      const raw=typeof update==='function'?update(current):update;
+      const next=applySettlementLeaderProfile(raw,character);
       saveChain.current=saveChain.current.then(()=>offlineSettlementStore.save(next)).catch(()=>setError(text.error));
       return next;
     });
@@ -65,7 +67,8 @@ export default function OfflineSettlementHub({onBack,character}){
     setBusy(true);setError('');
     try{
       const leaderCharisma=Math.max(0,Math.min(10,Number(character?.special?.charisma || character?.special?.CHA || 0)));
-      const created=await offlineSettlementStore.create({name:name.trim(),leaderCharisma});
+      const created=applySettlementLeaderProfile(await offlineSettlementStore.create({name:name.trim(),leaderCharisma}),character);
+      await offlineSettlementStore.save(created);
       setName('');setActive(created);
     }catch{setError(text.error);}
     finally{setBusy(false);}
@@ -73,7 +76,12 @@ export default function OfflineSettlementHub({onBack,character}){
 
   async function open(id){
     setBusy(true);setError('');
-    try{setActive(await offlineSettlementStore.get(id));}
+    try{
+      const saved=await offlineSettlementStore.get(id);
+      const next=saved?applySettlementLeaderProfile(saved,character):null;
+      if(next)await offlineSettlementStore.save(next);
+      setActive(next);
+    }
     catch{setError(text.error);}
     finally{setBusy(false);}
   }
