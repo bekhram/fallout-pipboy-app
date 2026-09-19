@@ -9,6 +9,7 @@ import {
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 import { formatLootChatMessage, getLootTypeLabel } from "../../utils/lootChat.js";
+import { sendTelegramEvent } from "../../utils/telegramBridge.js";
 import "./gmLootGenerator.css";
 
 const TYPE_IDS = ["weapon", "armor", "ammo", "aid", "junk", "mod", "special", "caps"];
@@ -374,6 +375,7 @@ export default function GmLootGenerator({ session = null }) {
     }
     try {
       for (const item of results) await session.sendChat(formatLootChatMessage(item, language));
+      await sendTelegramEvent({ type: "loot", items: results, language });
       setStatus(copy.sent);
     } catch {
       setStatus(copy.localOnly);
