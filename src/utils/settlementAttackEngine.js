@@ -18,6 +18,31 @@ export function calculateAttackRisk(settlement) {
   return food > people && water > people ? 2 : 1;
 }
 
+function eligibleDefenderIds(settlement) {
+  return new Set((settlement.settlers || [])
+    .filter((settler) => Number(settler.health ?? 100) > 1)
+    .map((settler) => settler.id));
+}
+
+export function setSettlementDefensePlan(settlement, attackId, defenderIds = [], now = Date.now()) {
+  const eligible = eligibleDefenderIds(settlement);
+  const selected = [...new Set(Array.isArray(defenderIds) ? defenderIds : [])]
+    .filter((id) => eligible.has(id))
+    .slice(0, 50);
+  let changed = false;
+  const attacks = (settlement.attacks || []).map((attack) => {
+    if (attack.id !== attackId || !["warning", "active"].includes(attack.state)) return attack;
+    changed = true;
+    return { ...attack, defenderIds: selected, defensePlannedAt: now };
+  });
+  return changed ? { ...settlement, attacks } : settlement;
+}
+
+function militiaDefenseBonus(settlement, attack) {
+  const eligible = eligibleDefenderIds(settlement);
+  return (attack?.defenderIds || []).filter((id) => eligible.has(id)).length;
+}
+
 function damageBuildings(buildings, count, minDamage, maxDamage) {
   const next = (buildings || []).map((building) => ({ ...building }));
   const candidates = next.filter((building) => building.state === "active" && Number(building.condition ?? 100) > 0 && building.type !== "settlement_hq");
@@ -35,7 +60,8 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
   const attack = (settlement.attacks || []).find((item) => item.id === attackId);
   if (!attack || attack.state === "resolved") return settlement;
   const stats = calculateSettlementStats(settlement);
-  const defenseScore = Number(stats.defense || 0) + Math.floor(Math.random() * 11);
+  const militiaBonus = militiaDefenseBonus(settlement, attack);
+  const defenseScore = Number(stats.defense || 0) + militiaBonus + Math.floor(Math.random() * 11);
   const enemyScore = Number(attack.strength || 0) + Math.floor(Math.random() * 11);
   const victory = defenseScore >= enemyScore;
   const resources = { ...(settlement.resources || {}) };
@@ -47,7 +73,10 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
   } else {
     buildings = damageBuildings(buildings, 2 + Math.floor(Math.random() * 3), 10, 35);
     if (settlers.length) {
-      const injuredIndex = Math.floor(Math.random() * settlers.length);
+      const defenderSet = new Set(attack.defenderIds || []);
+      const exposed = settlers.map((settler, index) => ({ settler, index })).filter(({ settler }) => defenderSet.has(settler.id));
+      const pool = exposed.length ? exposed : settlers.map((settler, index) => ({ settler, index }));
+      const injuredIndex = pool[Math.floor(Math.random() * pool.length)]?.index;
       settlers = settlers.map((settler, index) => index === injuredIndex ? { ...settler, health: Math.max(1, Number(settler.health ?? 100) - 20), status: "injured" } : settler);
     }
   }
@@ -58,7 +87,7 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
     resources,
     buildings,
     settlers,
-    attacks: (settlement.attacks || []).map((item) => item.id === attackId ? { ...item, state: "resolved", result, resolvedAt: now, defenseScore, enemyScore } : item),
+    attacks: (settlement.attacks || []).map((item) => item.id === attackId ? { ...item, state: "resolved", result, resolvedAt: now, defenseScore, enemyScore, militiaBonus } : item),
     events: [{ id: randomId("event"), type: "attack_result", attackId, result, createdAt: now }, ...(settlement.events || [])].slice(0, 100),
   };
 }
