@@ -108,7 +108,7 @@ function resolveResidentActions(input,now){
   if(caravanWorkers>0)events.push({type:"trade_caravan",workers:caravanWorkers});
   const resourceGrid=resolveSettlementResources(settlement);
   const attributes={...(settlement.attributes || {}),food:dailyFood+Number(settlement.nextDaySupplies?.food || 0),water:resourceGrid.water,income:dailyIncome};
-  return {settlement:{...settlement,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile},dailyDefenseBonus,actionEvents:events};
+  return {settlement:{...settlement,activeDaySupplies:settlement.nextDaySupplies || {},activeDayFertilizer:Number(settlement.nextDayFertilizer || 0),nextDayFertilizer:0,attributes,stockpile},dailyDefenseBonus,actionEvents:events};
 }
 function applyStartOfDayNeeds(input,now){
   const stats=calculateStaticAttributes(input,null,input.attributes?.food);
