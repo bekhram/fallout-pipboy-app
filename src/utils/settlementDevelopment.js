@@ -73,9 +73,35 @@ export function workerCounts(s, queue = tasks(s)) {
 function editJob(s, task, fn) { return { ...s, buildings: s.buildings.map(b => b.id !== task.buildingId ? b : task.kind === 'building' ? fn(b) : task.kind === 'upgrade' ? { ...b, upgrade: fn(b.upgrade) } : { ...b, rooms: b.rooms.map(r => r.id === task.roomId ? fn(r) : r) }) }; }
 function event(s, type, data, now) { return { ...s, events: [{ id: `${type}_${now}_${Math.random().toString(36).slice(2)}`, type, ...data, createdAt: now }, ...(s.events || [])].slice(0, 100) }; }
 function complete(s, task, now) {
-  let next = editJob(s, task, job => ({ ...job, state: 'active', completedAt: now, constructionProgressDays: progress(task).required / 1440, ...(task.kind === 'room' ? { happinessApplied: true } : {}) }));
-  if (task.kind === 'upgrade') next.buildings = next.buildings.map(b => b.id === task.buildingId ? { ...b, type: task.type, level: number(b.level || 1) + 1, upgrade: null } : b);
-  if (task.kind === 'room') next.attributes = { ...next.attributes, happiness: Math.max(1, Math.min(20, Number(next.attributes?.happiness || 10) + Number(ROOMS[task.type]?.effects?.happiness || 0))) };
+  const beforeBuilding = (s.buildings || []).find(b => b.id === task.buildingId);
+  const previousBuildingHappiness = task.kind === 'upgrade'
+    ? Number(getRulebookBuilding(beforeBuilding?.type)?.effects?.happiness || 0)
+    : 0;
+  const completedBuildingHappiness = task.kind === 'building'
+    ? Number(getRulebookBuilding(task.type)?.effects?.happiness || 0)
+    : task.kind === 'upgrade'
+      ? Number(getRulebookBuilding(task.type)?.effects?.happiness || 0)
+      : 0;
+  let next = editJob(s, task, job => ({
+    ...job,
+    state: 'active',
+    completedAt: now,
+    constructionProgressDays: progress(task).required / 1440,
+    ...(task.kind === 'room' || task.kind === 'building' ? { happinessApplied: true } : {}),
+  }));
+  if (task.kind === 'upgrade') {
+    next.buildings = next.buildings.map(b => b.id === task.buildingId
+      ? { ...b, type: task.type, level: number(b.level || 1) + 1, upgrade: null, happinessApplied: true }
+      : b);
+  }
+  const happinessDelta = task.kind === 'room'
+    ? Number(ROOMS[task.type]?.effects?.happiness || 0)
+    : completedBuildingHappiness - previousBuildingHappiness;
+  if (happinessDelta) {
+    const happiness = Math.max(1, Math.min(20, Number(next.attributes?.happiness || 10) + happinessDelta));
+    next.attributes = { ...next.attributes, happiness };
+    next.resources = { ...next.resources, happiness };
+  }
   next.settlers = (next.settlers || []).map(w => assignedKey(w) === task.key ? { ...w, settlementAction: { type: 'build' }, assignedBuildingId: null } : w);
   return event(next, 'construction_completed', { target: task.key, buildingType: task.type }, now);
 }
