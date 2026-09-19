@@ -45,7 +45,7 @@ export const SETTLER_PERKS = {
 
 const ARCHETYPES = [
   { specialty:'Repair', skills:{Repair:3,Science:1,Survival:1}, perks:['builder','mechanic'] },
-  { specialty:'Survival', skills:{Survival:3,Small Guns:1,Repair:1}, perks:['hunter','green_thumb'] },
+  { specialty:'Survival', skills:{Survival:3,'Small Guns':1,Repair:1}, perks:['hunter','green_thumb'] },
   { specialty:'Barter', skills:{Barter:3,Survival:1,Medicine:1}, perks:['trader'] },
   { specialty:'Science', skills:{Science:3,Repair:2,Medicine:1}, perks:['mechanic'] },
   { specialty:'Medicine', skills:{Medicine:3,Science:1,Survival:1}, perks:['medic'] },
