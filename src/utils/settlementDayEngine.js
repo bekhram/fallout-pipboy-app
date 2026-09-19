@@ -8,6 +8,7 @@ import { getTendedCropResult, resolveSettlementResources } from "./settlementRes
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
 import { dailyActionTypes } from './settlementOffices.js';
+import { resolveTradeCaravanReturn, startTradeCaravan } from './settlementTrade.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -112,7 +113,11 @@ function resolveResidentActions(input,now){
   const dailyIncome=workplacePlan.income;
   if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome});
   const caravanWorkers=Number(actionCounts.trade_caravan || 0);
-  if(caravanWorkers>0)events.push({type:"trade_caravan",workers:caravanWorkers});
+  if(caravanWorkers>0){
+    const beforeTrip=settlement.trade?.caravanTrip;
+    settlement=startTradeCaravan(settlement,caravanWorkers,Number(settlement.settlementDay || 1));
+    if(!beforeTrip && settlement.trade?.caravanTrip)events.push({type:"trade_caravan",workers:caravanWorkers,returnDay:settlement.trade.caravanTrip.returnDay});
+  }
   const resourceGrid=resolveSettlementResources(settlement);
   const attributes={...(settlement.attributes || {}),food:dailyFood+Number(settlement.nextDaySupplies?.food || 0),water:resourceGrid.water,income:dailyIncome};
   return {settlement:{...settlement,activeDaySupplies:settlement.nextDaySupplies || {},activeDayFertilizer:Number(settlement.nextDayFertilizer || 0),nextDayFertilizer:0,attributes,stockpile},dailyDefenseBonus,actionEvents:events};
@@ -156,7 +161,8 @@ function scheduleAttackAtEndOfDay(input,now){
   return {...input,attackRiskBlockedUntil:startsAt+5*SETTLEMENT_DAY_MS,attacks:[attack,...(input.attacks || [])].slice(0,50),events:[{id:randomId("event",now+1),type:"attack_warning",attackId:attack.id,faction,startsAt,createdAt:now},...(input.events || [])].slice(0,100)};
 }
 export function advanceSettlementDay(input,now=Date.now()){
-  const started=applyStartOfDayNeeds(input,now);
+  const returned=resolveTradeCaravanReturn(input,Number(input.settlementDay || 1));
+  const started=applyStartOfDayNeeds(returned,now);
   const actionResult=resolveResidentActions(started,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
   let settlement=applyEndOfDayDeparture(actionResult.settlement,now);
