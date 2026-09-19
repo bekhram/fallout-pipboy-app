@@ -48,10 +48,20 @@ function roomName(type, language) { return ROOM_NAMES[language]?.[type] || ROOM_
 function roomCost(rule) { return [[rule?.materials?.common,"C"],[rule?.materials?.uncommon,"U"],[rule?.materials?.rare,"R"]].filter(([value])=>value).map(([value,suffix])=>`${value} ${suffix}`).join(" · ") || "—"; }
 function roomEffects(rule) { const effects=rule?.effects || {}; return [effects.beds ? `🛏 +${effects.beds}` : null,effects.happiness ? `☺ ${effects.happiness > 0 ? "+" : ""}${effects.happiness}` : null,effects.storageLbs ? `📦 +${effects.storageLbs} lbs` : null,effects.office ? "OFFICE" : null].filter(Boolean).join(" · "); }
 function occupies(building,x,y) { const def=SETTLEMENT_BUILDINGS[building.type]; return Boolean(def && x>=building.x && y>=building.y && x<building.x+def.footprint.width && y<building.y+def.footprint.height); }
+function rectGap(a,b) {
+  const ax2=a.x+a.width-1, ay2=a.y+a.height-1, bx2=b.x+b.width-1, by2=b.y+b.height-1;
+  return {x:Math.max(0,Math.max(a.x-bx2-1,b.x-ax2-1)),y:Math.max(0,Math.max(a.y-by2-1,b.y-ay2-1))};
+}
+function withinSettlementBuildRadius(settlement,def,x,y,ignoreBuildingId=null) {
+  const placed={x,y,width:def.footprint.width,height:def.footprint.height};
+  const anchors=(settlement.buildings || []).filter(building=>building.id!==ignoreBuildingId && building.state!=="stored" && Number(building.condition ?? 100)>0);
+  if(!anchors.length)return true;
+  return anchors.some(building=>{const anchorDef=SETTLEMENT_BUILDINGS[building.type];if(!anchorDef)return false;const gap=rectGap(placed,{x:building.x,y:building.y,width:anchorDef.footprint.width,height:anchorDef.footprint.height});return Math.max(gap.x,gap.y)<=3;});
+}
 function canPlace(settlement,def,x,y,ignoreBuildingId=null) {
   if (!def || x<0 || y<0 || x+def.footprint.width>SETTLEMENT_GRID_SIZE || y+def.footprint.height>SETTLEMENT_GRID_SIZE) return false;
   for(let yy=y;yy<y+def.footprint.height;yy+=1)for(let xx=x;xx<x+def.footprint.width;xx+=1)if((settlement.buildings || []).some(building=>building.id!==ignoreBuildingId && occupies(building,xx,yy)))return false;
-  return true;
+  return withinSettlementBuildRadius(settlement,def,x,y,ignoreBuildingId);
 }
 export default function SettlementScreen({ settlement, onUpdate, onBack, onCommand, canEdit=true, sharedControls, payment, canClaimProfit=false }) {
   const { i18n }=useTranslation();
