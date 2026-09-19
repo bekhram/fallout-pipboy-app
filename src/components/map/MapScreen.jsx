@@ -23,6 +23,6 @@ export default function MapScreen(props){
         {settlementsOpen?`← ${text.back}`:text.open}
       </button>
     </div>
-    {settlementsOpen?<OfflineSettlementHub onBack={()=>setSettlementsOpen(false)}/>:<MapScreenCore {...props}/>} 
+    {settlementsOpen?<OfflineSettlementHub character={props.character} onBack={()=>setSettlementsOpen(false)}/>:<MapScreenCore {...props}/>} 
   </div>;
 }
