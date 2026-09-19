@@ -171,6 +171,7 @@ export default function SpecialScreen({
         </div>
       </section>
 
+      {section === "skills" && (
       <section className="pip-panel pip-block pip-skills-panel">
         <div className="pip-head">
           <h2>[ {t("skills.title")} ]</h2>
@@ -307,6 +308,7 @@ export default function SpecialScreen({
           })}
         </div>
       </section>
+      )}
     </div>
   );
 }
