@@ -56,3 +56,23 @@ test("selected militia contributes to auto defense", () => {
     Math.random = originalRandom;
   }
 });
+
+
+test("selected heroes contribute to auto defense and appear in report", () => {
+  const originalRandom = Math.random;
+  Math.random = () => 0;
+  try {
+    let settlement = fixture();
+    settlement = setSettlementDefensePlan(settlement, "raid_1", ["a"], [
+      { clientId: "p1", name: "Hero", level: 10, defense: 2, currentHp: 12, maxHp: 12 },
+    ], 100);
+    const resolved = resolveSettlementAttack(settlement, "raid_1", 200);
+    const attack = resolved.attacks[0];
+    assert.equal(attack.battleReport.heroesCommitted, 1);
+    assert.equal(attack.battleReport.heroBonus, 5);
+    assert.equal(attack.battleReport.heroContributions[0].name, "Hero");
+    assert.equal(attack.defenseScore, 6);
+  } finally {
+    Math.random = originalRandom;
+  }
+});
