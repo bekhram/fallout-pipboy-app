@@ -1,27 +1,28 @@
-import { createWorkerState, advanceWorkerState } from '../../utils/settlementWorkerRuntime.js';
+import { createWorkerState, advanceWorkerState, commandWorkerMove } from '../../utils/settlementWorkerRuntime.js';
 import { workerIndicator } from './workplaceIndicators.js';
 import { workplaceCopy } from './workplaceCopy.js';
 import { WORKER_TEXTURE, workerSpritePose, workerFacesLeft } from './workerSpriteFrames.js';
 
 const CELL = 40;
 const COPY = {
-  en: { idle: 'Unassigned', waiting: 'Waiting', to_work: 'Going to work', to_depot: 'Returning to depot', working: 'Working', patrolling: 'Patrolling', loading: 'Loading supplies', unloading: 'Unloading', repair: 'Repairing', choose_target: 'Choose a construction target', missing_target: 'Target no longer available', completed: 'Construction complete — choose a new task', unavailable: 'Workplace unavailable', blocked: 'No accessible route', no_space: 'No free space', visual: 'Visual cycle · resources are calculated daily' },
-  ru: { idle: 'Без назначения', waiting: 'Ожидает', to_work: 'Идёт к месту работы', to_depot: 'Возвращается к складу', working: 'Работает', patrolling: 'Патрулирует', loading: 'Загружает материалы', unloading: 'Разгружает', repair: 'Ремонтирует', choose_target: 'Выберите цель строительства', missing_target: 'Цель больше недоступна', completed: 'Стройка завершена — выберите новую задачу', unavailable: 'Место работы недоступно', blocked: 'Нет доступного пути', no_space: 'Нет свободного места', visual: 'Визуальный цикл · ресурсы рассчитываются за сутки' },
-  uk: { idle: 'Без призначення', waiting: 'Очікує', to_work: 'Іде до місця роботи', to_depot: 'Повертається до складу', working: 'Працює', patrolling: 'Патрулює', loading: 'Завантажує матеріали', unloading: 'Розвантажує', repair: 'Ремонтує', choose_target: 'Оберіть ціль будівництва', missing_target: 'Ціль більше недоступна', completed: 'Будівництво завершено — оберіть нове завдання', unavailable: 'Місце роботи недоступне', blocked: 'Немає доступного шляху', no_space: 'Немає вільного місця', visual: 'Візуальний цикл · ресурси розраховуються за добу' },
-  pl: { idle: 'Bez przydziału', waiting: 'Czeka', to_work: 'Idzie do pracy', to_depot: 'Wraca do magazynu', working: 'Pracuje', patrolling: 'Patroluje', loading: 'Ładuje materiały', unloading: 'Rozładowuje', repair: 'Naprawia', choose_target: 'Wybierz cel budowy', missing_target: 'Cel jest niedostępny', completed: 'Budowa zakończona — wybierz nowe zadanie', unavailable: 'Miejsce pracy niedostępne', blocked: 'Brak dostępnej drogi', no_space: 'Brak wolnego miejsca', visual: 'Cykl wizualny · zasoby są rozliczane codziennie' },
+  en: { idle: 'Unassigned', waiting: 'Waiting', to_work: 'Going to work', to_depot: 'Returning to depot', working: 'Working', patrolling: 'Patrolling', loading: 'Loading supplies', unloading: 'Unloading', repair: 'Repairing', manual_move: 'Following your move order', manual_hold: 'Holding position', choose_target: 'Choose a construction target', missing_target: 'Target no longer available', completed: 'Construction complete — choose a new task', unavailable: 'Workplace unavailable', blocked: 'No accessible route', no_space: 'No free space', visual: 'Visual cycle · resources are calculated daily' },
+  ru: { idle: 'Без назначения', waiting: 'Ожидает', to_work: 'Идёт к месту работы', to_depot: 'Возвращается к складу', working: 'Работает', patrolling: 'Патрулирует', loading: 'Загружает материалы', unloading: 'Разгружает', repair: 'Ремонтирует', manual_move: 'Выполняет команду перемещения', manual_hold: 'Удерживает позицию', choose_target: 'Выберите цель строительства', missing_target: 'Цель больше недоступна', completed: 'Стройка завершена — выберите новую задачу', unavailable: 'Место работы недоступно', blocked: 'Нет доступного пути', no_space: 'Нет свободного места', visual: 'Визуальный цикл · ресурсы рассчитываются за сутки' },
+  uk: { idle: 'Без призначення', waiting: 'Очікує', to_work: 'Іде до місця роботи', to_depot: 'Повертається до складу', working: 'Працює', patrolling: 'Патрулює', loading: 'Завантажує матеріали', unloading: 'Розвантажує', repair: 'Ремонтує', manual_move: 'Виконує команду переміщення', manual_hold: 'Утримує позицію', choose_target: 'Оберіть ціль будівництва', missing_target: 'Ціль більше недоступна', completed: 'Будівництво завершено — оберіть нове завдання', unavailable: 'Місце роботи недоступне', blocked: 'Немає доступного шляху', no_space: 'Немає вільного місця', visual: 'Візуальний цикл · ресурси розраховуються за добу' },
+  pl: { idle: 'Bez przydziału', waiting: 'Czeka', to_work: 'Idzie do pracy', to_depot: 'Wraca do magazynu', working: 'Pracuje', patrolling: 'Patroluje', loading: 'Ładuje materiały', unloading: 'Rozładowuje', repair: 'Naprawia', manual_move: 'Wykonuje rozkaz ruchu', manual_hold: 'Utrzymuje pozycję', choose_target: 'Wybierz cel budowy', missing_target: 'Cel jest niedostępny', completed: 'Budowa zakończona — wybierz nowe zadanie', unavailable: 'Miejsce pracy niedostępne', blocked: 'Brak dostępnej drogi', no_space: 'Brak wolnego miejsca', visual: 'Cykl wizualny · zasoby są rozliczane codziennie' },
 };
 
 // Owns display objects only. The existing runtime still owns paths and work phases.
 export class SettlementWorkerActor {
-  constructor(scene, index = 0) {
-    this.scene = scene; this.index = index;
+  constructor(scene, index = 0, { onSelect } = {}) {
+    this.scene = scene; this.index = index; this.onSelect = onSelect;
     this.container = scene.add.container(0, 0).setDepth(20);
+    this.selection = scene.add.ellipse(0, 8, 42, 18, 0x9fffaa, .08).setStrokeStyle(2, 0xc6ffb1, .95).setVisible(false);
     this.body = scene.add.sprite(0, 0, WORKER_TEXTURE, 0).setOrigin(.5, .70).setScale(.5);
     this.badge = scene.add.circle(0, -43, 11, 0x102319, .97).setStrokeStyle(1, 0xb9d89a);
     this.symbol = scene.add.text(0, -43, '', { fontFamily:'Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif', fontSize:'17px', color:'#ffe1a0' }).setOrigin(.5);
     this.activity = scene.add.text(12, -53, '', {fontSize:'11px',color:'#ffd29b',backgroundColor:'#102319',padding:{x:2,y:1}}).setOrigin(.5);
     this.label = scene.add.text(0, 12, '', {fontSize:'10px',color:'#e1edd4',backgroundColor:'#10251aee',padding:{x:4,y:3},wordWrap:{width:220}}).setOrigin(.5, 0).setVisible(false);
-    this.container.add([this.body, this.badge, this.symbol, this.activity, this.label]);
+    this.container.add([this.selection, this.body, this.badge, this.symbol, this.activity, this.label]);
     // The sheet has large transparent margins; they must not intercept map clicks.
     this.body.setInteractive({ hitArea: { x: 62, y: 54, width: 68, height: 86 },
       hitAreaCallback: (area, x, y) => x >= area.x && y >= area.y && x < area.x + area.width && y < area.y + area.height });
@@ -30,14 +31,14 @@ export class SettlementWorkerActor {
       target.on('pointerover', () => this.label.setVisible(true));
       target.on('pointerout', () => { if (!this.pinned) this.label.setVisible(false); });
       target.on('pointerdown', (_pointer, _x, _y, event) => {
-        event?.stopPropagation(); this.pinned = !this.pinned; this.label.setVisible(this.pinned);
+        event?.stopPropagation(); this.onSelect?.(this.workerId); this.pinned = true; this.label.setVisible(true);
       });
     }
   }
 
   configure(world, job, { resident, actionName = '', targetName = '', language = 'en', reduced = false, reset = false }) {
     if (this.destroyed) return;
-    this.world = world; this.job = job; this.residentName = resident.name || resident.id || '—';
+    this.world = world; this.job = job; this.workerId = resident.id; this.residentName = resident.name || resident.id || '—';
     this.actionName = actionName; this.targetName = targetName;
     this.copy = { ...workplaceCopy(language), ...(COPY[String(language).split('-')[0]] || COPY.en) };
     const changedMotion = this.reduced !== reduced;
@@ -55,6 +56,18 @@ export class SettlementWorkerActor {
     this.container.setVisible(Boolean(world.cells.length));
     this.caption = null;
     this.render(this.lastTime || 0);
+  }
+
+  setSelected(selected) {
+    this.selected = Boolean(selected);
+    this.selection?.setVisible(this.selected);
+    if (!this.selected && this.pinned) { this.pinned = false; this.label.setVisible(false); }
+    if (this.selected) { this.pinned = true; this.label.setVisible(true); }
+  }
+
+  moveTo(destination) {
+    if (this.destroyed || !this.state || !this.world) return false;
+    return commandWorkerMove(this.state, this.world, destination);
   }
 
   update(time, delta) {
