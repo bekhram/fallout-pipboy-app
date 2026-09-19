@@ -47,8 +47,20 @@ function escapeHtml(value) {
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  const origin = text(req.headers?.origin, 300).replace(/\/$/, "");
+  if (allowedOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  }
+  if (req.method === "OPTIONS") {
+    return allowedOrigin(origin)
+      ? res.status(204).end()
+      : res.status(403).end();
+  }
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
-  if (!allowedOrigin(req.headers?.origin)) return res.status(403).json({ ok: false, error: "ORIGIN_NOT_ALLOWED" });
+  if (!allowedOrigin(origin)) return res.status(403).json({ ok: false, error: "ORIGIN_NOT_ALLOWED" });
 
   const apiKey = text(process.env.RESEND_API_KEY, 500);
   const recipient = text(process.env.BUG_REPORT_EMAIL, 500);
