@@ -14,11 +14,14 @@ export default defineConfig({
     pip2d20CharacterProfilesPlugin(),
     VitePWA({
       registerType: "autoUpdate",
-      injectRegister: "auto",
+      injectRegister: false,
       devOptions: {
         enabled: true,
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
