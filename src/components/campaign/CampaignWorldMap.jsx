@@ -194,6 +194,6 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
     </aside></div>
     <div className="campaign-world-settlements"><h3>{c.settlements} · {settlements.length}/5</h3>{!settlements.length && <p>{c.empty}</p>}{settlements.map(s=><button className="pip-btn" key={s.id} onClick={()=>setActiveId(s.id)}><strong>⌂ {s.name}</strong><span>{getRegionName(getMapRegion(s.regionId),language)} · {s.worldX}:{s.worldY}</span><span>{c.open} →</span></button>)}</div>
     {characterPanel}
-    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} payment={{ready:personalReady,canAfford:canAffordPersonal}} onCommand={settlementCommand}/>,document.body)}
+    {active && createPortal(<SettlementScreen key={active.id} settlement={active} onBack={()=>setActiveId(null)} sharedControls={settlementControls} canEdit={Boolean(editable)&&!localDisabled} canClaimProfit={Boolean(editable)&&Boolean(campaign.character)&&world.connected&&!world.blocked&&!busy} payment={{ready:personalReady,canAfford:canAffordPersonal}} onCommand={settlementCommand}/>,document.body)}
   </section>;
 }
