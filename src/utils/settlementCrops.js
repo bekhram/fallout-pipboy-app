@@ -12,7 +12,7 @@ export function plantedCrops(building){
 }
 
 export function effectiveCropCount(building){
-  if(Array.isArray(building?.crops))return building.crops.length;
+  if(Array.isArray(building?.crops))return building.crops.filter(crop=>crop.state!=='construction').length;
   // Pre-rulebook-migration saves had no crop list and treated every plot slot as planted.
   return cropCapacity(building);
 }
@@ -31,7 +31,8 @@ export function plantSettlementCrop(settlement,buildingId,type,now=Date.now()){
   // Food surplus represents chosen/rolled food items from the foraging table.
   // Choosing a plantable crop consumes one such food item.
   if(stock.food<1)throw new Error('CROP_ITEM_REQUIRED');
-  const crop={id:`crop_${now}_${Math.random().toString(36).slice(2,7)}`,type,plantedAt:now};
+  const completesAt=Math.max(now+1,Number(settlement.nextDayAt||now+24*60*60*1000));
+  const crop={id:`crop_${now}_${Math.random().toString(36).slice(2,7)}`,type,state:'construction',plantedAt:now,completesAt};
   return {
     ...settlement,
     stockpile:{...(settlement.stockpile||{}),provisions:{...stock,food:stock.food-1}},
@@ -51,4 +52,21 @@ export function removeSettlementCrop(settlement,buildingId,cropId,now=Date.now()
     buildings:(settlement.buildings||[]).map(item=>item.id===buildingId?{...item,crops:plantedCrops(item).filter(entry=>entry.id!==cropId)}:item),
     events:[{id:`crop_removed_${now}_${Math.random().toString(36).slice(2,7)}`,type:'crop_removed',cropType:crop.type,buildingId,createdAt:now},...(settlement.events||[])].slice(0,100),
   };
+}
+
+
+export function advanceSettlementCrops(settlement,now=Date.now()){
+  let changed=false;
+  const buildings=(settlement.buildings||[]).map(building=>{
+    if(!Array.isArray(building.crops))return building;
+    const crops=building.crops.map(crop=>{
+      if(crop.state==='construction' && Number(crop.completesAt||Infinity)<=now){
+        changed=true;
+        return {...crop,state:'active',completedAt:now};
+      }
+      return crop;
+    });
+    return crops===building.crops?building:{...building,crops};
+  });
+  return changed?{...settlement,buildings}:settlement;
 }
