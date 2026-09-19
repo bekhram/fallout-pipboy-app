@@ -11,8 +11,14 @@ export function plantedCrops(building){
   return Array.isArray(building?.crops)?building.crops:[];
 }
 
+export function effectiveCropCount(building){
+  if(Array.isArray(building?.crops))return building.crops.length;
+  // Pre-rulebook-migration saves had no crop list and treated every plot slot as planted.
+  return cropCapacity(building);
+}
+
 export function totalPlantedCrops(settlement){
-  return (settlement.buildings||[]).reduce((sum,building)=>sum+plantedCrops(building).length,0);
+  return (settlement.buildings||[]).reduce((sum,building)=>sum+effectiveCropCount(building),0);
 }
 
 export function plantSettlementCrop(settlement,buildingId,type,now=Date.now()){
