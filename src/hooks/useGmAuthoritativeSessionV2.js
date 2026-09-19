@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { getDerivedStats } from "../utils/characterMath.js";
+import { sendTelegramEvent } from "../utils/telegramBridge.js";
 import {
   getCampaign,
   deleteCampaignCache,
@@ -552,6 +553,15 @@ export default function useGmAuthoritativeSessionV2(form) {
     manifestRef.current = manifest;
     campaignIdRef.current = manifest.campaignId;
     setCampaignId(manifest.campaignId);
+    if (modeRef.current === "player") {
+      rememberSession({
+        role: "player",
+        code: codeRef.current,
+        name: nameRef.current || getCharacterName(formRef.current) || "Player",
+        campaignId: manifest.campaignId,
+        autoResume: true,
+      });
+    }
     await seedCampaignCacheFromPlayerProfile(manifest);
     const ids = manifest.resources.map((resource) => resource.id);
     await removeMissingResources(manifest.campaignId, ids).catch(() => null);
@@ -811,6 +821,21 @@ export default function useGmAuthoritativeSessionV2(form) {
     let result;
     try { result = await applyPlayerAction(packet.fromClientId, packet.fromName, action, payload); }
     catch (actionError) { result = { ok: false, error: actionError?.message || "ACTION_FAILED" }; }
+
+    if (
+      action === "dice:result"
+      && result?.ok !== false
+      && payload?.roll
+      && campaignIdRef.current
+    ) {
+      void sendTelegramEvent({
+        type: "dice_roll",
+        campaignId: campaignIdRef.current,
+        character: String(packet.fromName || "Player"),
+        result: payload.roll,
+      });
+    }
+
     await relayToPlayer(packet.fromClientId, "action:result", { requestId, ...result });
   };
 
@@ -1115,6 +1140,10 @@ export default function useGmAuthoritativeSessionV2(form) {
       setMirroredState(initial);
       setSyncState({ phase: "gm-authority", cached: 0, requested: 0 });
     } else {
+      if (saved.campaignId) {
+        campaignIdRef.current = saved.campaignId;
+        setCampaignId(saved.campaignId);
+      }
       setSyncState({ phase: "waiting-manifest", cached: 0, requested: 0 });
     }
 
