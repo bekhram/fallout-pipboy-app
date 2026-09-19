@@ -98,7 +98,7 @@ export default function SettlementScreen({ settlement, character=null, onUpdate,
   const [notice,setNotice]=useState("");
   const stats=useMemo(()=>calculateSettlementStats(settlement),[settlement]);
   const snapshot=useMemo(()=>getSettlementRulebookSnapshot(settlement),[settlement]);
-  const attributes={...stats.attributes,power:snapshot.power,defense:snapshot.defense,beds:snapshot.beds};
+  const attributes={...stats.attributes,people:snapshot.people,food:snapshot.food,water:snapshot.water,power:snapshot.power,defense:snapshot.defense,beds:snapshot.beds,happiness:snapshot.happiness,income:Number(settlement.attributes?.income ?? settlement.resources?.income ?? stats.attributes.income ?? 0)};
   const stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials);
   const profit=useMemo(()=>settlementProfit(settlement),[settlement]);
   const hasProfit=Boolean(profit.claimable.caps || profit.claimable.food || profit.claimable.water);
