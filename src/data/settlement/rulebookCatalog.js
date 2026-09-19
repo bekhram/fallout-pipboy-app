@@ -2,7 +2,7 @@ export const RULEBOOK_BUILDINGS = {
   small_house: { materials: { common: 40 }, constructionDays: 4, effects: { roomCapacity: 1 }, skill: { name: "Repair", rank: 1 }, rarity: "common" },
   large_house: { materials: { common: 60 }, constructionDays: 8, effects: { roomCapacity: 3 }, skill: { name: "Repair", rank: 3 }, rarity: "common" },
   barracks: { materials: { common: 50 }, constructionDays: 6, effects: { roomCapacity: 2 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
-  crop_field: { materials: { common: 4 }, constructionDays: 1, effects: { cropSlots: 4 }, skill: { name: "Repair", rank: 1 }, rarity: "common" },
+  crop_field: { materials: { common: 4 }, specificMaterials: { fertilizer: 1 }, constructionDays: 1, effects: { cropSlots: 4 }, skill: { name: "Repair", rank: 1 }, rarity: "common" },
   greenhouse: { materials: { common: 4 }, constructionDays: 1, effects: { cropSlots: 4 }, skill: { name: "Repair", rank: 1 }, rarity: "common" },
   brahmin_pen: { materials: { common: 10 }, constructionDays: 2, effects: { brahminCapacity: 2 }, skill: { name: "Survival", rank: 2 }, rarity: "common" },
   water_pump: { materials: { common: 5, uncommon: 1 }, constructionDays: 2, effects: { water: 3 }, skill: { name: "Repair", rank: 2 }, rarity: "common" },
@@ -122,6 +122,7 @@ export function formatRulebookCost(rule = {}) {
     materials.common ? `${materials.common}C` : null,
     materials.uncommon ? `${materials.uncommon}U` : null,
     materials.rare ? `${materials.rare}R` : null,
+    rule.specificMaterials?.fertilizer ? `${rule.specificMaterials.fertilizer} Fertilizer` : null,
     rule.caps ? `${rule.caps} caps` : null,
   ].filter(Boolean).join(" · ");
 }
