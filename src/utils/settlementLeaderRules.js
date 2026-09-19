@@ -34,9 +34,14 @@ export function contractorConstructionRule(rule,character,mode='normal'){
     const amount=Math.max(0,Math.floor(Number(value)||0));
     return [key,amount?Math.max(1,Math.ceil(amount/2)):0];
   }));
+  const specificMaterials=Object.fromEntries(Object.entries(rule.specificMaterials||{}).map(([key,value])=>{
+    const amount=Math.max(0,Math.floor(Number(value)||0));
+    return [key,amount?Math.max(1,Math.ceil(amount/2)):0];
+  }));
   return {
     ...rule,
     materials,
+    specificMaterials,
     constructionDays:mode==='careful'?Math.max(1,Number(rule.constructionDays||1)*2):Math.max(1,Number(rule.constructionDays||1)),
     contractorMode:mode,
     happinessPenalty:mode==='cheap'?2:0,
