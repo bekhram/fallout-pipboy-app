@@ -189,7 +189,7 @@ export function processAutomaticSettlementDays(input,now=Date.now()){
   return advanceConstruction(settlement,now);
 }
 export function createConstructionBuilding({id,type,x,y,now=Date.now(),ruleOverride=null}){
-  const rule=ruleOverride || getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule?.contractorMode || "normal"};
+  const rule=ruleOverride || getRulebookBuilding(type);return {id,type,x,y,rotation:0,state:"construction",condition:100,rooms:[],...(rule?.effects?.cropSlots?{crops:[]}:{}),startedAt:now,constructionDaysRequired:Math.max(1,Number(rule?.constructionDays || 1)),constructionProgressDays:0,paidCost:cost(rule),contractorMode:rule?.contractorMode || "normal"};
 }
 export function getConstructionProgress(building){const rule=getRulebookBuilding(building?.type),required=Math.max(1,Number(building?.constructionDaysRequired || rule?.constructionDays || 1)),progress=Math.max(0,Number(building?.constructionProgressDays || 0));return {progress,required,remaining:Math.max(0,required-progress)};}
 export function getSettlementRulebookSnapshot(settlement){return calculateStaticAttributes(settlement,null,settlement.attributes?.food);}
