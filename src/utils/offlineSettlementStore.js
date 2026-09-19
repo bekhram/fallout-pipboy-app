@@ -65,8 +65,8 @@ export function offlineSettlementData(input,now=Date.now()){
   return {...settlement,ownerCharacterId:null,ownership:{type:'local_device'},offlineStandalone:true,localOnly:true,offlineUpdatedAt:now};
 }
 
-export function createOfflineSettlementData({name='Local Settlement',regionId='commonwealth',worldX=12,worldY=12}={},now=Date.now()){
-  const created=createSettlement({name,regionId,worldX,worldY,ownerCharacterId:null});
+export function createOfflineSettlementData({name='Local Settlement',regionId='commonwealth',worldX=12,worldY=12,leaderCharisma=0}={},now=Date.now()){
+  const created=createSettlement({name,regionId,worldX,worldY,ownerCharacterId:null,leaderCharisma});
   return offlineSettlementData(created,now);
 }
 
