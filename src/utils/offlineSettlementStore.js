@@ -216,7 +216,7 @@ export const offlineSettlementStore={
           if(!source||!target)throw new Error('NOT_FOUND');
           if(!(source.supplyLines||[]).some(line=>line.otherSettlementId===target.id))throw new Error('SUPPLY_LINE_REQUIRED');
           const happy=s=>Number(s.attributes?.happiness||0)>populationNeeds(s);
-          if(!happy(source)||!happy(target))throw new Error('SUPPLY_LINE_UNHAPPY');
+          if(!happy(target))throw new Error('SUPPLY_LINE_UNHAPPY');
           const sm={common:Number(source.stockpile?.materials?.common||0),uncommon:Number(source.stockpile?.materials?.uncommon||0),rare:Number(source.stockpile?.materials?.rare||0)};
           const tm={common:Number(target.stockpile?.materials?.common||0),uncommon:Number(target.stockpile?.materials?.uncommon||0),rare:Number(target.stockpile?.materials?.rare||0)};
           const sp={food:Number(source.stockpile?.provisions?.food||0),water:Number(source.stockpile?.provisions?.water||0)};
