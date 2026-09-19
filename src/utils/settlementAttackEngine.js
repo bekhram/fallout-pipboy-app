@@ -185,7 +185,10 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
   };
   return {
     ...settlement,
-    resources,
+    resources: {
+      ...resources,
+      happiness: victory ? Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) : Math.max(1, Number(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10) - 1),
+    },
     buildings,
     settlers,
     attributes: {
