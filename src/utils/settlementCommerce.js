@@ -45,7 +45,7 @@ function getActiveStores(settlement) {
 }
 
 function resolveBusinessIncome(settlement, day) {
-  const workers = (settlement.settlers || []).filter((settler) => settler.settlementAction?.type === "business").length;
+  const workers = (settlement.settlers || []).reduce((total,settler)=>total+(settler.settlementAction?.type==="business"?1:0)+(settler.bonusSettlementAction?.type==="business"?1:0),0);
   const stores = getActiveStores(settlement).slice(0, workers);
   const people = populationNeeds(settlement);
   const populationMultiplier = Math.floor(people / 5);
