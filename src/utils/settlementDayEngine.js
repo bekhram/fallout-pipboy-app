@@ -79,11 +79,12 @@ function resolveResidentActions(input,now){
   },{});
   let stockpile=normalizeStockpile(settlement.stockpile,settlement.resources?.materials),dailyFood=0,dailyDefenseBonus=0;
   const events=[];
+  const communityOrganizerRank=Math.max(0,Math.floor(Number(settlement.leaderRuleProfile?.communityOrganizerRank ?? settlement.leader?.communityOrganizerRank ?? 0)));
   const hunters=Number(actionCounts.hunting_gathering || 0);
-  if(hunters>0){const roll=rollCombatDice(3+Math.max(0,hunters-1));dailyFood+=roll.total;stockpile={...stockpile,foragingItems:Number(stockpile.foragingItems || 0)+roll.effects};events.push({type:"hunting_gathering",workers:hunters,total:roll.total,effects:roll.effects});}
+  if(hunters>0){const roll=rollCombatDice(3+Math.max(0,hunters-1)+communityOrganizerRank);dailyFood+=roll.total;stockpile={...stockpile,foragingItems:Number(stockpile.foragingItems || 0)+roll.effects};events.push({type:"hunting_gathering",workers:hunters,total:roll.total,effects:roll.effects,communityOrganizerDice:communityOrganizerRank});}
   const scavengers=Number(actionCounts.scavenging || 0);
   if(scavengers>0){
-    let roll=rollCombatDice(3+Math.max(0,scavengers-1));
+    let roll=rollCombatDice(3+Math.max(0,scavengers-1)+communityOrganizerRank);
     const stationCount=(settlement.buildings || []).filter(building=>isActive(building)&&Number(getRulebookBuilding(building.type)?.effects?.scavengingRerolls || 0)>0).length;
     let rerolls=stationCount*3;
     if(rerolls>0){
@@ -99,9 +100,13 @@ function resolveResidentActions(input,now){
     events.push({type:"scavenging",workers:scavengers,common:roll.total,uncommon:roll.effects,stations:stationCount,rolls:roll.rolls});
   }
   const guards=Number(actionCounts.guard || 0);
-  if(guards>0){const staticStats=calculateStaticAttributes(settlement,0,dailyFood);dailyDefenseBonus=guards+Math.min(staticStats.guardStructures,guards*3);events.push({type:"guard",workers:guards,defense:dailyDefenseBonus});}
+  if(guards>0){const staticStats=calculateStaticAttributes(settlement,0,dailyFood);dailyDefenseBonus=guards+Math.min(staticStats.guardStructures,guards*3)+communityOrganizerRank;events.push({type:"guard",workers:guards,defense:dailyDefenseBonus,communityOrganizerDefense:communityOrganizerRank});}
   const cropWorkers=Number(actionCounts.tend_crops || 0);
   if(cropWorkers>0){const cropResult=getTendedCropResult(settlement,cropWorkers);dailyFood+=cropResult.food;events.push({type:"tend_crops",...cropResult});}
+  if(communityOrganizerRank>0 && (hunters>0 || cropWorkers>0)){
+    dailyFood+=communityOrganizerRank;
+    events.push({type:"community_organizer",food:communityOrganizerRank,defense:guards>0?communityOrganizerRank:0});
+  }
   const brahmin=Math.max(0,Math.floor(Number(settlement.livestock?.brahmin || 0)));
   if(brahmin>0){
     const fertilizerRoll=rollCombatDice(brahmin*2);
