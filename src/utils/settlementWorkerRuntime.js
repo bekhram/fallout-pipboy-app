@@ -152,6 +152,30 @@ export function createWorkerState(world, job, position, index = 0) {
   return state;
 }
 
+// RTS movement orders are intentionally presentation-only. They never write to the
+// settlement or award production; after a short hold the saved assignment resumes.
+export function commandWorkerMove(state, world, destination) {
+  if (!state || !world || !destination) return false;
+  const start = workerAnchor(world, state), goal = workerAnchor(world, destination);
+  if (!start || !goal) return false;
+  const path = workerPath(world, start, goal);
+  if (!path.length) return false;
+  state.x = start.x; state.y = start.y;
+  state.path = path.slice(1);
+  state.phase = 'manual_move';
+  state.reason = '';
+  state.elapsed = 0;
+  state.cargo = false;
+  return true;
+}
+
+export function resumeWorkerJob(state, world) {
+  if (!state?.job || !world) return state;
+  const resumed = createWorkerState(world, state.job, state, state.index);
+  Object.assign(state, resumed);
+  return state;
+}
+
 /** Advance a cosmetic cycle. Long/hidden frames never advance settlement production. */
 export function advanceWorkerState(state, world, deltaMs) {
   const dt = Math.min(80, Math.max(0, Number(deltaMs) || 0));
@@ -161,6 +185,15 @@ export function advanceWorkerState(state, world, deltaMs) {
     const distance = Math.hypot(dx, dy), step = dt * 0.0009;
     if (distance <= step) { state.x = next.x; state.y = next.y; state.path.shift(); }
     else { state.x += dx / distance * step; state.y += dy / distance * step; }
+    return state;
+  }
+  if (state.phase === 'manual_move') {
+    state.phase = 'manual_hold'; state.elapsed = 0; state.cargo = false;
+    return state;
+  }
+  if (state.phase === 'manual_hold') {
+    state.elapsed += dt;
+    if (state.elapsed >= 2500) resumeWorkerJob(state, world);
     return state;
   }
   if (state.phase === 'to_work') {
