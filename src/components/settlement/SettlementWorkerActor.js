@@ -16,7 +16,7 @@ export class SettlementWorkerActor {
   constructor(scene, index = 0, { onSelect } = {}) {
     this.scene = scene; this.index = index; this.onSelect = onSelect;
     this.container = scene.add.container(0, 0).setDepth(20);
-    this.selection = scene.add.ellipse(0, 8, 42, 18, 0x9fffaa, .08).setStrokeStyle(2, 0xc6ffb1, .95).setVisible(false);
+    this.selection = scene.add.circle(0, 8, 21, 0x9fffaa, .08).setStrokeStyle(2, 0xc6ffb1, .95).setScale(1, .43).setVisible(false);
     this.body = scene.add.sprite(0, 0, WORKER_TEXTURE, 0).setOrigin(.5, .70).setScale(.5);
     this.badge = scene.add.circle(0, -43, 11, 0x102319, .97).setStrokeStyle(1, 0xb9d89a);
     this.symbol = scene.add.text(0, -43, '', { fontFamily:'Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif', fontSize:'17px', color:'#ffe1a0' }).setOrigin(.5);
@@ -31,7 +31,7 @@ export class SettlementWorkerActor {
       target.on('pointerover', () => this.label.setVisible(true));
       target.on('pointerout', () => { if (!this.pinned) this.label.setVisible(false); });
       target.on('pointerdown', (_pointer, _x, _y, event) => {
-        event?.stopPropagation(); this.onSelect?.(this.workerId); this.pinned = true; this.label.setVisible(true);
+        event?.stopPropagation(); this.onSelect?.(this.workerId); this.pinned = !this.pinned; this.label.setVisible(this.pinned);
       });
     }
   }
