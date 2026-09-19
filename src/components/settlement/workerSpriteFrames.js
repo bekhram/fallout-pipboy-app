@@ -13,7 +13,7 @@ export function workerSpritePose(state, action, { time = 0, index = 0, reduced =
   let mode = 'idle';
   if (state?.cargo) mode = moving ? 'carry_walk' : 'carry_idle';
   else if (moving) mode = 'walk';
-  else if (working && ['build', 'scavenging'].includes(action)) mode = 'build';
+  else if (working && ['build', 'repair', 'scavenging'].includes(action)) mode = 'build';
   else if (working && action === 'hunting_gathering') mode = 'chop';
   // No farming, shopkeeping or combat tool animation exists in this legacy sheet.
   // Keep those workers idle at the site, with the existing truthful activity badge.

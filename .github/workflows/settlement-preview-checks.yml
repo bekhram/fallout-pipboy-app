@@ -28,5 +28,5 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Settlement presentation and shared-entry regression tests
-        run: node --test tests/settlementWorkerActor.test.js tests/settlementWorkerRuntime.test.js tests/settlementSpriteFrames.test.js tests/settlementLegacyArchive.test.js tests/settlementSharedEntry.test.js
+        run: node --test tests/settlementWorkerActor.test.js tests/settlementWorkerRuntime.test.js tests/settlementSpriteFrames.test.js tests/settlementLegacyArchive.test.js tests/settlementSharedEntry.test.js tests/settlementDefensePlan.test.js tests/settlementFortificationRisk.test.js tests/settlementRepair.test.js tests/settlementRaidBattle.test.js tests/settlementTowerDefense.test.js
       - run: npm run build

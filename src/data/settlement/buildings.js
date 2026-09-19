@@ -67,7 +67,7 @@ export const SETTLEMENT_BUILDINGS = {
   windmill: {
     id: "windmill", category: "power",
     name: { en: "Windmill", ru: "Ветряк", uk: "Вітряк", pl: "Wiatrak" },
-    footprint: { width: 2, height: 2 }, asset: null, constructionSize: "medium",
+    footprint: { width: 2, height: 2 }, asset: "generator_small.png", constructionSize: "medium",
   },
   generator: {
     id: "generator", category: "power",
@@ -87,17 +87,17 @@ export const SETTLEMENT_BUILDINGS = {
   fusion_reactor: {
     id: "fusion_reactor", category: "power",
     name: { en: "Fusion reactor", ru: "Термоядерный реактор", uk: "Термоядерний реактор", pl: "Reaktor fuzyjny" },
-    footprint: { width: 4, height: 4 }, asset: null, constructionSize: "large",
+    footprint: { width: 4, height: 4 }, asset: "generator_large.png", constructionSize: "large",
   },
   power_pylon: {
     id: "power_pylon", category: "power",
     name: { en: "Power pylon", ru: "Электроопора", uk: "Електроопора", pl: "Słup energetyczny" },
-    footprint: { width: 1, height: 1 }, asset: null, constructionSize: "small",
+    footprint: { width: 1, height: 1 }, asset: "radio_beacon.png", constructionSize: "small",
   },
   lights: {
     id: "lights", category: "power",
     name: { en: "Lights", ru: "Освещение", uk: "Освітлення", pl: "Oświetlenie" },
-    footprint: { width: 1, height: 1 }, asset: null, constructionSize: "small",
+    footprint: { width: 1, height: 1 }, asset: "radio_beacon.png", constructionSize: "small",
   },
   radio_beacon: {
     id: "radio_beacon", category: "power",
@@ -196,7 +196,7 @@ export const SETTLEMENT_BUILDINGS = {
   siren: {
     id: "siren", category: "defense",
     name: { en: "Siren", ru: "Сирена", uk: "Сирена", pl: "Syrena" },
-    footprint: { width: 1, height: 1 }, asset: null, constructionSize: "small",
+    footprint: { width: 1, height: 1 }, asset: "guard_post.png", constructionSize: "small",
   },
   turret: {
     id: "turret", category: "defense",

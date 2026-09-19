@@ -6,6 +6,7 @@ import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
+import { advanceBuildingRepairs } from './settlementRepair.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
@@ -38,19 +39,22 @@ function calculateStaticAttributes(settlement,dailyDefenseBonus=null,foodOverrid
   const people=Array.isArray(settlement.settlers) ? settlement.settlers.length : Math.max(0,Math.floor(Number(settlement.attributes?.people ?? settlement.resources?.population ?? 0)));
   const powerGrid=resolveSettlementPower(settlement),resourceGrid=resolveSettlementResources(settlement);
   const base={people,needsPeople:populationNeeds(settlement),food:Math.max(0,Number(foodOverride ?? settlement.attributes?.food ?? settlement.resources?.food ?? 0)),water:Math.max(0,Number(resourceGrid.water || 0)+Number(settlement.activeDaySupplies?.water || 0)),power:Math.max(0,Number(powerGrid.produced || 0)),defense:Math.max(0,Number(dailyDefenseBonus || 0)),beds:0,happiness:clamp(settlement.attributes?.happiness ?? settlement.resources?.happiness ?? 10,1,20),income:Math.max(0,Number(settlement.attributes?.income ?? settlement.resources?.income ?? 0))};
-  let storageBonus=0,noisyCount=0,guardStructures=0,officeCount=0,sirenCount=0;
+  let storageBonus=0,noisyCount=0,guardStructures=0,officeCount=0,sirenCount=0,fortificationPoints=0;
   for(const building of settlement.buildings || []){
     if(!isActive(building))continue;
     const rule=getRulebookBuilding(building.type);if(!rule)continue;
     const effects=rule.effects || {},requiresPower=Math.max(0,Number(effects.requiresPower || 0));
     const powered=!requiresPower || powerGrid.poweredBuildingIds.has(building.id);
     if(powered){base.defense+=Number(effects.defense || 0);base.beds+=Number(effects.beds || 0);storageBonus+=Number(effects.storageLbs || 0);if(effects.guardActionDefenseBonus)guardStructures+=1;if(effects.defensePerGuardPost)sirenCount+=Number(effects.defensePerGuardPost || 0);}
+    if(building.type==="wall_straight" || building.type==="wall_corner")fortificationPoints+=1;
+    if(building.type==="gate")fortificationPoints+=2;
     if(effects.noisy)noisyCount+=1;
     for(const room of building.rooms || []){if(room.state!=="active")continue;const roomEffects=getRoomRule(room.type)?.effects || room.effects || {};base.beds+=Number(roomEffects.beds || 0);storageBonus+=Number(roomEffects.storageLbs || 0);if(roomEffects.office)officeCount+=1;}
   }
   base.defense+=sirenCount*guardStructures;
   if(dailyDefenseBonus===null)base.defense+=guardDefense(settlement,guardStructures);
-  return {...base,noisyCount,cropSlots:resourceGrid.cropSlots,cropStructures:resourceGrid.cropStructures,brahmin:resourceGrid.brahmin,brahminCapacity:resourceGrid.brahminCapacity,guardStructures,storageBonus,stockpileCapacityLbs:SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs+storageBonus,powerRequired:powerGrid.required,powerConsumed:powerGrid.consumed,powerAvailable:powerGrid.available,powerDeficit:powerGrid.deficit,unpoweredBuildings:powerGrid.unpoweredBuildingIds.size,officeCount};
+  const wallDeterrence=Math.min(8,Math.floor(fortificationPoints/2));
+  return {...base,noisyCount,fortificationPoints,wallDeterrence,cropSlots:resourceGrid.cropSlots,cropStructures:resourceGrid.cropStructures,brahmin:resourceGrid.brahmin,brahminCapacity:resourceGrid.brahminCapacity,guardStructures,storageBonus,stockpileCapacityLbs:SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs+storageBonus,powerRequired:powerGrid.required,powerConsumed:powerGrid.consumed,powerAvailable:powerGrid.available,powerDeficit:powerGrid.deficit,unpoweredBuildings:powerGrid.unpoweredBuildingIds.size,officeCount};
 }
 function resolveConstruction(settlement,now){return advanceConstruction(settlement,now);}
 function resolveResidentActions(input,now){
@@ -90,18 +94,19 @@ function applyNeedsAndDeparture(input,dailyDefenseBonus,now){
 function scheduleAttackAtEndOfDay(input,now){
   const unresolved=(input.attacks || []).some(attack=>attack.state==="warning" || attack.state==="active");if(unresolved || now<Number(input.attackRiskBlockedUntil || 0))return input;
   const stats=calculateStaticAttributes(input,null,input.attributes?.food),foodSurplus=Number(stats.food || 0)>Number(stats.people || 0),waterSurplus=Number(stats.water || 0)>Number(stats.people || 0);if(!foodSurplus && !waterSurplus)return input;
-  const diceCount=foodSurplus && waterSurplus ? 2 : 1,rolls=Array.from({length:diceCount},()=>1+Math.floor(Math.random()*20));if(rolls.length && stats.noisyCount>0)rolls[0]+=stats.noisyCount;
+  const diceCount=foodSurplus && waterSurplus ? 2 : 1,rawRolls=Array.from({length:diceCount},()=>1+Math.floor(Math.random()*20));if(rawRolls.length && stats.noisyCount>0)rawRolls[0]+=stats.noisyCount;
+  const wallDeterrence=Number(stats.wallDeterrence || 0),rolls=rawRolls.map(roll=>Math.max(1,roll-wallDeterrence));
   const attacked=rolls.some(roll=>roll>Number(stats.defense || 0));
-  if(!attacked)return {...input,events:[{id:randomId("event",now),type:"attack_check",rolls,defense:stats.defense,result:"safe",createdAt:now},...(input.events || [])].slice(0,100)};
+  if(!attacked)return {...input,events:[{id:randomId("event",now),type:"attack_check",rawRolls,rolls,wallDeterrence,defense:stats.defense,result:"safe",createdAt:now},...(input.events || [])].slice(0,100)};
   const delayRoll=rollCombatDice(3),delayDays=Math.max(1,delayRoll.total),startsAt=now+delayDays*SETTLEMENT_DAY_MS,people=Number(stats.people || 0),strength=Math.max(6,people+Math.floor(Math.random()*Math.max(4,people+4))),factionPool=["raiders","feral_ghouls","super_mutants"],faction=factionPool[Math.floor(Math.random()*factionPool.length)];
-  const attack={id:randomId("attack",now),faction,strength,state:"warning",createdAt:now,startsAt,resolveAt:startsAt+SETTLEMENT_DAY_MS,rulebookRiskRolls:rolls,rulebookDelayRoll:delayRoll.rolls,rulebookDelayDays:delayDays};
+  const attack={id:randomId("attack",now),faction,strength,state:"warning",createdAt:now,startsAt,resolveAt:startsAt+SETTLEMENT_DAY_MS,rulebookRiskRawRolls:rawRolls,rulebookRiskRolls:rolls,wallDeterrence,rulebookDelayRoll:delayRoll.rolls,rulebookDelayDays:delayDays};
   return {...input,attackRiskBlockedUntil:startsAt+5*SETTLEMENT_DAY_MS,attacks:[attack,...(input.attacks || [])].slice(0,50),events:[{id:randomId("event",now+1),type:"attack_warning",attackId:attack.id,faction,startsAt,createdAt:now},...(input.events || [])].slice(0,100)};
 }
 export function advanceSettlementDay(input,now=Date.now()){
   const actionResult=resolveResidentActions(input,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
   let settlement=applyNeedsAndDeparture(actionResult.settlement,actionResult.dailyDefenseBonus,now);
-  settlement=collectDailySurplus(settlement,production);settlement=scheduleAttackAtEndOfDay(settlement,now);
+  settlement=collectDailySurplus(settlement,production);settlement=advanceBuildingRepairs(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
   const derived=calculateStaticAttributes(settlement,null,settlement.attributes?.food);
   const stockpile={...normalizeStockpile(settlement.stockpile,settlement.resources?.materials),capacityLbs:derived.stockpileCapacityLbs};
   return {...settlement,livestock:{...(settlement.livestock || {}),brahmin:Math.min(Math.max(0,Number(settlement.livestock?.brahmin || 0)),derived.brahminCapacity)},settlementDay:Math.max(1,Number(settlement.settlementDay || 1)+1),lastDayAt:now,nextDayAt:now+SETTLEMENT_DAY_MS,stockpile,

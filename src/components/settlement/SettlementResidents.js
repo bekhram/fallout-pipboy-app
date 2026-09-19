@@ -27,8 +27,10 @@ export class SettlementResidents {
     // Hover/zoom changes call sync too. They must not restart paths or do pathfinding.
     const worldSignature = JSON.stringify([settlement.id, buildings.map(b =>
       [b.id, b.type, b.x, b.y, b.state, b.condition, b.autoDisabled, b.upgrade?.state, b.upgrade?.targetType, (b.rooms || []).map(r => [r.id, r.state])])]);
+    const repairAssignments = new Map();
+    for (const building of buildings) for (const workerId of building.repair?.workerIds || []) repairAssignments.set(workerId, building.id);
     const signature = JSON.stringify([worldSignature, language, this.reduced,
-      residents.map(r => [r.id, r.name, r.settlementAction, r.assignedBuildingId])]);
+      residents.map(r => [r.id, r.name, r.settlementAction, r.assignedBuildingId, repairAssignments.get(r.id) || null])]);
     if (this.inputSignature === signature) return;
     if (this.settlementId !== settlement.id) {
       for (const unit of this.units.values()) unit.destroy();
@@ -53,10 +55,13 @@ export class SettlementResidents {
       let unit = this.units.get(resident.id);
       if (!unit) { unit = new SettlementWorkerActor(this.scene, index); this.units.set(resident.id, unit); }
       const allocation = workplacePlan.byWorker[resident.id];
+      const repairTargetId = repairAssignments.get(resident.id);
       const production = resident.settlementAction?.type && resident.settlementAction.type !== 'build';
       // Derived automatic sites are local presentation inputs, never saved to the campaign.
-      let visualResident = production && allocation?.active && allocation.buildingId
-        ? { ...resident, settlementAction: { ...resident.settlementAction, targetBuildingId: allocation.buildingId } } : resident;
+      let visualResident = repairTargetId
+        ? { ...resident, settlementAction: { type:'repair', targetBuildingId:repairTargetId } }
+        : production && allocation?.active && allocation.buildingId
+          ? { ...resident, settlementAction: { ...resident.settlementAction, targetBuildingId: allocation.buildingId } } : resident;
       let jobWorld = this.world;
       if (resident.settlementAction?.type === 'build') {
         // Match the existing construction queue, including its automatic fallback.
@@ -76,7 +81,9 @@ export class SettlementResidents {
       const targetDefinition = target && SETTLEMENT_BUILDINGS[target.type];
       unit.configure(this.world, job, {
         resident, language, reduced: this.reduced, reset: worldChanged,
-        actionName: definition?.name?.[language] || definition?.name?.en || '',
+        actionName: job.action === 'repair'
+          ? ({en:'Repair',ru:'Ремонт',uk:'Ремонт',pl:'Naprawa'}[String(language).split('-')[0]] || 'Repair')
+          : definition?.name?.[language] || definition?.name?.en || '',
         targetName: targetDefinition ? settlementBuildingName(targetDefinition, language) : '',
       });
     });

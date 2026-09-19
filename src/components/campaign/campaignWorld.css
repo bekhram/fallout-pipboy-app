@@ -49,3 +49,12 @@
 
 .campaign-world-member-row{display:flex!important;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left}
 .campaign-world-member-row small{opacity:.65;white-space:nowrap}
+
+
+/* Embedded settlement controls use a compact top strip on small screens. */
+.campaign-world-controls--settlement{max-height:none;overflow:visible;padding:0;position:relative;z-index:35}
+.campaign-world-controls--settlement .campaign-world-controls__secondary{padding:0 16px;max-height:22vh;overflow:auto}
+@media(max-width:899px), (max-aspect-ratio:3/4){
+ .settlement-v2.is-shared-settlement>.campaign-world-controls--settlement{flex-shrink:0;max-height:none}
+ .settlement-v2.is-shared-settlement .campaign-world-controls__secondary{display:none}
+}

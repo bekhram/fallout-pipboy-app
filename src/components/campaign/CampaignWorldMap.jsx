@@ -113,14 +113,15 @@ export default function CampaignWorldMap({ campaignId, form, onOpenCampaigns, se
   if (!uid) return <section className="pip-panel campaign-world"><h2>{c.title}</h2><p>{c.auth}</p>{authError && <p role="alert">{authError}</p>}<button className="pip-btn" onClick={async () => { try { await signInWithGoogle(); } catch { setAuthError(c.error); } }}>{c.signIn}</button></section>;
   if (!campaign) return <section className="pip-panel campaign-world"><h2>{c.title}</h2>{status}<p>{world.blocked ? c.readOnly : offlineCopy(language).first}</p></section>;
 
-  const settlementControls = <div className="campaign-world-controls">
-    {status}{characterPanel}<PersonalConstructionPanel world={world} form={form} language={language}/>
+  const settlementControls = <div className="campaign-world-controls campaign-world-controls--settlement">
+    <CampaignSyncStatus world={world} language={language} authError={authError} compact/>
+    <div className="campaign-world-controls__secondary">{characterPanel}<PersonalConstructionPanel world={world} form={form} language={language}/>
     {!editable && <p>{c.readOnly}</p>}
     {gm && <details><summary>{c.manage}</summary>{members.filter(([id]) => id !== uid).map(([id, m]) => <label className="campaign-world-spender" key={id}><input type="checkbox" disabled={disabled} checked={Boolean(active?.access?.spenders?.includes(id))} onChange={e => run({ type: 'settlement', settlementId: active.id, command: { type: 'spender', memberId: id, allowed: e.target.checked } })}/>{m.name} · {c.spend}</label>)}</details>}
     {campaign.character && <details><summary>{c.deposit}</summary><p>{c.stock}</p><form className="campaign-world-deposit" onSubmit={async e => { e.preventDefault(); const result = await run({ type: 'settlement', settlementId: active.id, command: { type: 'deposit', amounts: Object.fromEntries(Object.entries(amounts).map(([k,v]) => [k, Number(v) || 0])) } }); if (result) setAmounts({ caps:'', common:'', uncommon:'', rare:'' }); }}>
       {Object.keys(amounts).map(key => <label key={key}>{c[key]}<input type="number" min="0" step="1" value={amounts[key]} onChange={e => setAmounts(old => ({ ...old, [key]: e.target.value }))}/></label>)}
       <button className="pip-btn" disabled={disabled || (world.sourceCharacterId && !personalReady) || !Object.values(amounts).some(v => Number(v) > 0)}>{c.deposit}</button>
-    </form></details>}
+    </form></details>}</div>
   </div>;
 
   return <section className="campaign-world" aria-label={c.title}>
