@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import FalloutD20Roller from "./FalloutD20Roller";
-import FalloutD6Roller from "./FalloutD6Roller";\nimport { sendTelegramEvent } from "../../utils/telegramBridge.js";
+import FalloutD6Roller from "./FalloutD6Roller";
+import { sendTelegramEvent } from "../../utils/telegramBridge.js";
 
 let openDiceModalCount = 0;
 
