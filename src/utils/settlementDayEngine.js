@@ -23,6 +23,7 @@ export function normalizeStockpile(stockpile={},legacyMaterials=0){
     items:Array.isArray(stockpile.items) ? stockpile.items : [],
     foragingItems:Number(stockpile.foragingItems || 0),
     brahminMilk:Number(stockpile.brahminMilk || 0),
+    brahminMeat:Number(stockpile.brahminMeat || 0),
     fertilizer:Number(stockpile.fertilizer || 0),
   };
 }
