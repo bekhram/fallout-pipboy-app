@@ -1,4 +1,6 @@
 import { calculateSettlementStats } from "./settlementEconomy.js";
+import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
+import { resolveSettlementPower } from "./settlementPower.js";
 
 function randomId(prefix) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -58,14 +60,32 @@ function militiaDefenseBonus(settlement, attack) {
 function damageBuildings(buildings, count, minDamage, maxDamage) {
   const next = (buildings || []).map((building) => ({ ...building }));
   const candidates = next.filter((building) => building.state === "active" && Number(building.condition ?? 100) > 0 && building.type !== "settlement_hq");
+  const damaged = [];
   for (let index = 0; index < Math.min(count, candidates.length); index += 1) {
     const pick = candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0];
     if (!pick) break;
+    const before = Number(pick.condition ?? 100);
     const damage = minDamage + Math.floor(Math.random() * Math.max(1, maxDamage - minDamage + 1));
-    pick.condition = Math.max(0, Number(pick.condition ?? 100) - damage);
+    pick.condition = Math.max(0, before - damage);
     if (pick.condition <= 0) pick.state = "destroyed";
+    damaged.push({ id: pick.id, type: pick.type, damage: before - pick.condition, condition: pick.condition, destroyed: pick.state === "destroyed" });
   }
-  return next;
+  return { buildings: next, damaged };
+}
+
+function turretDefenseContribution(settlement) {
+  const powerGrid = resolveSettlementPower(settlement);
+  let total = 0, count = 0;
+  for (const building of settlement.buildings || []) {
+    if (building?.state !== "active" || Number(building.condition ?? 100) <= 0 || building.autoDisabled) continue;
+    const effects = getRulebookBuilding(building.type)?.effects || {};
+    if (!/turret/.test(String(building.type || ""))) continue;
+    const required = Math.max(0, Number(effects.requiresPower || 0));
+    if (required && !powerGrid.poweredBuildingIds.has(building.id)) continue;
+    total += Math.max(0, Number(effects.defense || 0));
+    count += 1;
+  }
+  return { count, defense: total };
 }
 
 export function resolveSettlementAttack(settlement, attackId, now = Date.now()) {
@@ -79,11 +99,16 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
   const resources = { ...(settlement.resources || {}) };
   let buildings = settlement.buildings || [];
   let settlers = settlement.settlers || [];
+  let buildingDamage = [];
 
   if (victory) {
-    buildings = damageBuildings(buildings, 1, 5, 15);
+    const damaged = damageBuildings(buildings, 1, 5, 15);
+    buildings = damaged.buildings;
+    buildingDamage = damaged.damaged;
   } else {
-    buildings = damageBuildings(buildings, 2 + Math.floor(Math.random() * 3), 10, 35);
+    const damaged = damageBuildings(buildings, 2 + Math.floor(Math.random() * 3), 10, 35);
+    buildings = damaged.buildings;
+    buildingDamage = damaged.damaged;
     if (settlers.length) {
       const defenderSet = new Set(attack.defenderIds || []);
       const exposed = settlers.map((settler, index) => ({ settler, index })).filter(({ settler }) => defenderSet.has(settler.id));
@@ -94,13 +119,36 @@ export function resolveSettlementAttack(settlement, attackId, now = Date.now()) 
   }
 
   const result = victory ? "victory" : "defeat";
+  const turret = turretDefenseContribution(settlement);
+  const defendersCommitted = (attack.defenderIds || []).filter((id) => eligibleDefenderIds(settlement).has(id)).length;
+  const injuredDefenders = settlers.filter((settler) => Number(settler.health ?? 100) < Number((settlement.settlers || []).find((item) => item.id === settler.id)?.health ?? 100)).map((settler) => ({ id: settler.id, name: settler.name, health: settler.health }));
+  const attackerCount = Math.max(2, Math.min(8, Math.ceil(Math.max(1, Number(attack.strength || 1)) / 3)));
+  const attackersDefeated = victory ? attackerCount : Math.max(0, Math.min(attackerCount - 1, Math.floor(attackerCount * defenseScore / Math.max(1, defenseScore + enemyScore))));
+  const rounds = Math.max(1, Math.min(8, 1 + Math.ceil(Number(attack.strength || 1) / Math.max(1, Number(stats.defense || 0) + militiaBonus + 2))));
+  const battleReport = {
+    rounds,
+    attackerCount,
+    attackersDefeated,
+    defendersCommitted,
+    defendersInjured: injuredDefenders,
+    turretCount: turret.count,
+    turretDefense: turret.defense,
+    baseDefense: Number(stats.defense || 0),
+    militiaBonus,
+    defenseScore,
+    enemyScore,
+    wallDeterrence: Number(attack.wallDeterrence || 0),
+    buildingDamage,
+    buildingsDamaged: buildingDamage.length,
+    buildingsDestroyed: buildingDamage.filter((item) => item.destroyed).length,
+  };
   return {
     ...settlement,
     resources,
     buildings,
     settlers,
-    attacks: (settlement.attacks || []).map((item) => item.id === attackId ? { ...item, state: "resolved", result, resolvedAt: now, defenseScore, enemyScore, militiaBonus } : item),
-    events: [{ id: randomId("event"), type: "attack_result", attackId, result, createdAt: now }, ...(settlement.events || [])].slice(0, 100),
+    attacks: (settlement.attacks || []).map((item) => item.id === attackId ? { ...item, state: "resolved", result, resolvedAt: now, defenseScore, enemyScore, militiaBonus, battleReport } : item),
+    events: [{ id: randomId("event"), type: "attack_result", attackId, result, battleReport, createdAt: now }, ...(settlement.events || [])].slice(0, 100),
   };
 }
 
