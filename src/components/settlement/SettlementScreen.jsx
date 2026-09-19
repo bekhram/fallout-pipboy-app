@@ -67,7 +67,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   const [heroDraft,setHeroDraft]=useState([]);
   const [battleBusy,setBattleBusy]=useState(false);
   const [battleError,setBattleError]=useState("");
-  const ui=({en:{overview:'Overview',title:'Settlement',more:'More',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'},ru:{overview:'Обзор',title:'Поселение',more:'Ещё',close:'Закрыть панель',choose:'Выберите здание на карте',zoomIn:'Приблизить',zoomOut:'Отдалить'},uk:{overview:'Огляд',title:'Поселення',more:'Ще',close:'Закрити панель',choose:'Оберіть будівлю на мапі',zoomIn:'Збільшити',zoomOut:'Зменшити'},pl:{overview:'Przegląd',title:'Osada',more:'Więcej',close:'Zamknij panel',choose:'Wybierz budynek na mapie',zoomIn:'Przybliż',zoomOut:'Oddal'}})[language] || {overview:'Overview',title:'Settlement',more:'More',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'};
+  const ui=({en:{overview:'Overview',title:'Settlement',more:'More',chat:'Chat',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'},ru:{overview:'Обзор',title:'Поселение',more:'Ещё',chat:'Чат',close:'Закрыть панель',choose:'Выберите здание на карте',zoomIn:'Приблизить',zoomOut:'Отдалить'},uk:{overview:'Огляд',title:'Поселення',more:'Ще',chat:'Чат',close:'Закрити панель',choose:'Оберіть будівлю на мапі',zoomIn:'Збільшити',zoomOut:'Зменшити'},pl:{overview:'Przegląd',title:'Osada',more:'Więcej',chat:'Czat',close:'Zamknij panel',choose:'Wybierz budynek na mapie',zoomIn:'Przybliż',zoomOut:'Oddal'}})[language] || {overview:'Overview',title:'Settlement',more:'More',chat:'Chat',close:'Close panel',choose:'Select a building on the map',zoomIn:'Zoom in',zoomOut:'Zoom out'};
   useEffect(()=>{const previous=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.body.style.overflow=previous;};},[]);
   useEffect(()=>{if(!onCommand)return;const root=document.getElementById("root"),focused=document.activeElement;const previous=root?.inert;if(root)root.inert=true;return()=>{if(root)root.inert=previous;if(focused?.isConnected)focused.focus?.();};},[Boolean(onCommand)]);
   useEffect(()=>{const close=event=>{if(event.key==='Escape')setPanelOpen(false);};window.addEventListener('keydown',close);return()=>window.removeEventListener('keydown',close);},[]);
@@ -188,9 +188,13 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     }finally{setBattleBusy(false);}
   }
   function selectPanel(mode){setPanelMode(mode);setPanelOpen(mode!=="overview");if(mode==="build")setSelectedBuildingId(null);if(mode!=="build"){setSelectedType(null);setHoverCell(null);setMovingBuildingId(null);}}
+  function openCampaignChat(){
+    const toggle=document.querySelector(".session-utility-drawer-toggle");
+    if(toggle?.getAttribute("aria-expanded")!=="true")toggle?.click();
+  }
   const navigation=mode=><button type="button" key={mode} className={panelMode===mode ? "is-active" : ""} aria-current={panelMode===mode ? "page" : undefined} onClick={()=>selectPanel(mode)}><SheetIcon name={{overview:'home',build:'plus',people:'people',resources:'bag',defense:'shield',events:'notes',more:'more'}[mode]}/><span>{ui[mode] || text[mode]}</span></button>;
   return <div className={`pip-screen settlement-screen settlement-dashboard settlement-v2 ${onCommand ? 'is-shared-settlement' : ''} ${panelOpen ? 'is-panel-open' : ''}`}>
-    <header className="settlement-brand"><strong>PIP 2D20 <span>/ {ui.title}</span></strong><span className="settlement-brand-name">{settlement.name}</span><button type="button" className="pip-action-button" aria-label={ui.more} onClick={()=>selectPanel('more')}><SheetIcon name="settings"/></button></header>
+    <header className="settlement-brand"><strong>PIP 2D20 <span>/ {ui.title}</span></strong><span className="settlement-brand-name">{settlement.name}</span><button type="button" className="pip-action-button settlement-chat-button" aria-label={ui.chat} onClick={openCampaignChat}><SheetIcon name="chat"/></button><button type="button" className="pip-action-button" aria-label={ui.more} onClick={()=>selectPanel('more')}><SheetIcon name="settings"/></button></header>
     {sharedControls}
     <div className="settlement-layout settlement-dashboard-grid">
       <aside className="settlement-left-rail pip-panel"><nav className="settlement-left-nav">{['overview','build','people','resources','defense','events'].map(navigation)}</nav><button type="button" className="pip-action-button settlement-exit" onClick={onBack}>← {text.back}</button></aside>
@@ -233,6 +237,6 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
         {panelMode==="events" ? <div className="settlement-events-panel"><div className="pip-panel-title">{text.events}</div>{(settlement.events || []).length ? (settlement.events || []).slice(0,12).map((event,index)=><div key={event.id || `${event.type}-${index}`} className="settlement-event-row"><strong>{String(event.type || "event").replaceAll("_"," ")}</strong><small>{event.createdAt ? new Date(event.createdAt).toLocaleString() : ""}</small></div>) : <span>{text.noEvents}</span>}</div> : null}
       </aside>
     </div>
-    <nav className="settlement-mobile-nav">{['overview','build','people','resources','more'].map(navigation)}</nav>
+    <nav className="settlement-mobile-nav">{['overview','build','people','resources'].map(navigation)}<button type="button" onClick={openCampaignChat}><SheetIcon name="chat"/><span>{ui.chat}</span></button>{navigation('more')}</nav>
   </div>;
 }
