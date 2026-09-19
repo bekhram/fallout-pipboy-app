@@ -38,6 +38,18 @@ export function setSettlementDefensePlan(settlement, attackId, defenderIds = [],
   return changed ? { ...settlement, attacks } : settlement;
 }
 
+export function linkSettlementAttackBattle(settlement, attackId, tacticalSceneId, now = Date.now()) {
+  const sceneId = String(tacticalSceneId || "").trim().slice(0, 120);
+  if (!sceneId) return settlement;
+  let changed = false;
+  const attacks = (settlement.attacks || []).map((attack) => {
+    if (attack.id !== attackId || !["warning", "active"].includes(attack.state)) return attack;
+    changed = true;
+    return { ...attack, tacticalSceneId: sceneId, tacticalLinkedAt: now };
+  });
+  return changed ? { ...settlement, attacks } : settlement;
+}
+
 function militiaDefenseBonus(settlement, attack) {
   const eligible = eligibleDefenderIds(settlement);
   return (attack?.defenderIds || []).filter((id) => eligible.has(id)).length;
