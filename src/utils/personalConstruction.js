@@ -80,8 +80,14 @@ export function placeStoredBuilding(settlement, actor, command, now) {
   if (!b || settlement.buildings.some(item => item.id === b.id)) fail('NOT_FOUND');
   if (!insideSettlement(b.type, command.x, command.y) || !dev.canFit(settlement, b.type, command.x, command.y)) fail('PLACEMENT');
   const { storedAt, storedReason, ...building } = b;
-  return { ...settlement, storedBuildings: settlement.storedBuildings.filter(item => item.id !== b.id),
-    buildings: [...settlement.buildings, { ...building, x: command.x, y: command.y, placedAt: now }] };
+  const happinessBonus = Number(getRulebookBuilding(building.type)?.effects?.happiness || 0);
+  const happiness = Math.max(1, Math.min(20, Number(settlement.attributes?.happiness || 10) + happinessBonus));
+  return { ...settlement,
+    storedBuildings: settlement.storedBuildings.filter(item => item.id !== b.id),
+    buildings: [...settlement.buildings, { ...building, x: command.x, y: command.y, placedAt: now, happinessApplied: true }],
+    attributes: { ...(settlement.attributes || {}), happiness },
+    resources: { ...(settlement.resources || {}), happiness },
+  };
 }
 
 /** Remove a personally funded task without ever crediting the communal stockpile.
