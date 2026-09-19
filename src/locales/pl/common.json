@@ -28,7 +28,8 @@
     "save": "✓",
     "cancel": "↶",
     "add": "+",
-    "delete": "X"
+    "delete": "X",
+    "confirm": "Potwierdź"
   },
   "weapons": {
     "unnamedWeapon": "Bez nazwy",
@@ -1011,7 +1012,21 @@
     "protectron": "Protectron",
     "robobrain": "Robobrain",
     "securitron": "Securitron",
-    "generation_3_synth": "Syntezator 3. generacji"
+    "generation_3_synth": "Syntezator 3. generacji",
+    "vault_dweller": "Mieszkaniec Krypty",
+    "survivor": "Ocalały",
+    "brotherhood": "Bractwo Stali",
+    "ghoul": "Ghoul",
+    "super_mutant": "Supermutant",
+    "mister_handy": "Mister Handy",
+    "traits": {
+      "vault_kid": "Dziecko Krypty",
+      "survivor": "Ocalały",
+      "chain_that_binds": "Łańcuch, który wiąże",
+      "necrotic_post_human": "Nekrotyczny postczłowiek",
+      "forced_evolution": "Wymuszona ewolucja",
+      "mister_handy_robot": "Robot Mister Handy"
+    }
   },
   "originDescriptions": {
     "assaultron": "Robot bojowy pierwszej linii stworzony do przetrwania na Pustkowiu. Jest odporny na promieniowanie, trucizny i choroby, ma stały udźwig 150 funtów i odzyskuje sprawność dzięki naprawom.",
@@ -1102,6 +1117,50 @@
     "brahmin_baron": {
       "name": "Brahmin Baron",
       "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
+    },
+    "vault_kid": {
+      "name": "Dziecko Krypty",
+      "desc": "Dzięki opiece wyszkolonych lekarzy zaczynasz życie w lepszym zdrowiu."
+    },
+    "survivor": {
+      "name": "Ocalały",
+      "desc": "Jesteś żywym dziedzictwem ludzi, którzy na własną rękę przygotowali się na Armagedon."
+    },
+    "chain_that_binds": {
+      "name": "Łańcuch, który wiąże",
+      "desc": "Musisz wykonywać rozkazy osób stojących wyżej w hierarchii Bractwa Stali."
+    },
+    "necrotic_post_human": {
+      "name": "Nekrotyczny postczłowiek",
+      "desc": "Jesteś odporny na obrażenia i zagrożenia radiacyjne. Promieniowanie leczy cię zamiast ranić."
+    },
+    "forced_evolution": {
+      "name": "Wymuszona ewolucja",
+      "desc": "Twoje początkowe atrybuty Siły i Wytrzymałości zwiększają się o +2."
+    },
+    "mister_handy_robot": {
+      "name": "Robot Mister Handy",
+      "desc": "Masz pole widzenia 360° oraz ulepszone systemy sensoryczne."
+    },
+    "educated": {
+      "name": "Wykształcony (cecha)",
+      "desc": "Masz jedną dodatkową umiejętność Tag."
+    },
+    "fast_shot": {
+      "name": "Szybki strzał (cecha)",
+      "desc": "Jeśli wykonujesz drugą akcję główną w walce i używasz jej do ataku dystansowego, korzystasz z zasad tej cechy."
+    },
+    "gifted": {
+      "name": "Utalentowany (cecha)",
+      "desc": "Wybierz dwa atrybuty S.P.E.C.I.A.L. i zwiększ każdy z nich o +1."
+    },
+    "heavy_handed": {
+      "name": "Ciężka ręka (cecha)",
+      "desc": "Twój bonus obrażeń w walce wręcz zwiększa się o +1."
+    },
+    "small_frame": {
+      "name": "Drobna budowa (cecha)",
+      "desc": "Możesz przerzucić 1k20 we wszystkich testach AGI opartych na równowadze lub wyginaniu ciała."
     }
   },
   "equipmentPacks": {
@@ -1148,6 +1207,72 @@
     "tribal_naturalist": {
       "name": "Naturalista",
       "items": "Łuk i strzały; maczeta i nóż bojowy; strój i kaptur myśliwego; drewniany pancerz; 3 losowe jedzenia; 3 losowe napoje."
+    },
+    "title": "WYPOSAŻENIE STARTOWE",
+    "select": "-- Wybierz zestaw wyposażenia --",
+    "bos_initiate": {
+      "name": "Inicjat Bractwa Stali",
+      "items": "• Mundur i kaptur Bractwa\n• Nóż bojowy\n• Pistolet laserowy (10+5 strzałów) LUB pistolet 10 mm (10+5 nabojów)\n• Holotagi Bractwa"
+    },
+    "bos_scribe": {
+      "name": "Skryba Bractwa Stali",
+      "items": "• Pancerz i nakrycie głowy skryby polowego\n• Nóż bojowy\n• Pistolet laserowy (6+3 strzały) LUB pistolet 10 mm (6+3 naboje)\n• Holotagi Bractwa"
+    },
+    "miss_nanny": {
+      "name": "Miss Nanny",
+      "items": "• Ramię z pistoletem automatycznym 10 mm, ramię z piłą, emiter laserowy\n• Pancerz Mister Gutsy\n• Mod czujników zwiadowczych\n• 10 kapsli"
+    },
+    "mister_farmhand": {
+      "name": "Mister Farmhand",
+      "items": "• Ramię chwytakowe, ramię z piłą, emiter laserowy\n• Standardowy pancerz\n• Worek nawozu, 2 mutfruity\n• 25 kapsli"
+    },
+    "mister_gutsy": {
+      "name": "Mister Gutsy",
+      "items": "• Ramię chwytakowe, miotacz ognia i jedno wybrane ramię\n• Standardowy pancerz\n• Mod analizy zachowania, mod wykrywania zagrożeń\n• 10 kapsli"
+    },
+    "mister_handy_pack": {
+      "name": "Mister Handy (lokaj)",
+      "items": "• Ramię chwytakowe, miotacz ognia, ramię z piłą\n• Standardowy pancerz\n• Zestaw naprawczy robota, zintegrowany bojler\n• 10 kapsli"
+    },
+    "nurse_handy": {
+      "name": "Nurse Handy",
+      "items": "• Ramię chwytakowe lub ramię z piłą, ramię z piłą i jedno wybrane ramię\n• Standardowy pancerz\n• Stimpak, mod diagnostyczny\n• 10 kapsli"
+    },
+    "brute": {
+      "name": "Brutal",
+      "items": "• Pancerz rajdera na tors + 1 ręka lub noga\n• Karabin rurowy (6+3 naboje .38)\n• Kij baseballowy lub maczeta\n• Osobisty drobiazg, 5 kapsli"
+    },
+    "skirmisher": {
+      "name": "Harcownik",
+      "items": "• Pancerz rajdera na tors + 1 ręka lub noga\n• Ciężki powtarzalny karabin rurowy (8+4 naboje .308)\n• Deska\n• Osobisty drobiazg, 5 kapsli"
+    },
+    "vault_tec_resident": {
+      "name": "Mieszkaniec Vault-Tec",
+      "items": "• Kombinezon Krypty\n• Manierka Vault-Tec (1 oczyszczona woda)\n• Pip-Boy, nóż sprężynowy\n• Pistolet 10 mm (6+3 naboje)\n• 2 stimpaki, 10 kapsli"
+    },
+    "vault_tec_security": {
+      "name": "Ochrona Vault-Tec",
+      "items": "• Kombinezon Krypty, pancerz i hełm ochrony\n• Manierka Vault-Tec (1 oczyszczona woda)\n• Pip-Boy, pałka\n• Pistolet 10 mm (8+4 naboje)\n• 1 stimpak"
+    },
+    "mercenary": {
+      "name": "Najemnik",
+      "items": "• Wytrzymałe ubranie\n• Skórzany pancerz na klatkę + 1 ręka i 1 noga\n• Maczeta, kij baseballowy lub łyżka do opon\n• Broń dystansowa (10 mm, .44, karabin myśliwski lub powtarzalna broń rurowa)\n• Amunicja (10+5 nabojów)\n• Notatka ze zleceniem (50 kapsli), 15 kapsli"
+    },
+    "raider": {
+      "name": "Rajder",
+      "items": "• Uprząż\n• Pancerz rajdera na klatkę + 1 ręka\n• Ołowiana rura, kij bilardowy lub łyżka do opon\n• Broń rurowa (10+5 naboje .38)\n• 1 dawka Jet lub RadAway\n• Koktajl Mołotowa lub Stimpak, 15 kapsli"
+    },
+    "settler": {
+      "name": "Osadnik",
+      "items": "• Wytrzymałe ubranie\n• Nóż sprężynowy, klucz rurowy, wałek lub kastet\n• Broń rurowa (6+3 naboje .38)\n• 2 rzuty na losowej tabeli żywności\n• Osobisty drobiazg, 45 kapsli"
+    },
+    "trader": {
+      "name": "Handlarz",
+      "items": "• Wytrzymałe ubranie\n• Skórzany pancerz na klatkę + 1 ręka i 1 noga\n• Broń rurowa (8+4 naboje .38)\n• Osobisty drobiazg, brahmin juczny\n• Losowe towary (tabele amunicji, chemów i osobliwości)\n• 50 kapsli"
+    },
+    "wanderer": {
+      "name": "Wędrowiec",
+      "items": "• Strój włóczęgi\n• Nóż sprężynowy, klucz rurowy, wałek lub kastet\n• Broń rurowa (8+4 naboje .38)\n• 1 dawka Jet lub RadAway\n• Osobisty drobiazg, 30 kapsli"
     }
   },
   "perksInfo": {
@@ -1262,6 +1387,217 @@
     "true_friends": {
       "name": "Prawdziwi przyjaciele",
       "desc": "Protect reputation and improve affinity gains."
+    },
+    "action_boy_girl": {
+      "name": "Człowiek czynu",
+      "desc": "Gdy wydajesz AP na dodatkową akcję główną, nie zwiększa ona trudności testu umiejętności."
+    },
+    "adamantium_skeleton": {
+      "name": "Adamantowy szkielet",
+      "desc": "Próg obrażeń potrzebny do zadania ci trafienia krytycznego zwiększa się o rangę tego perka."
+    },
+    "adrenalin_rush": {
+      "name": "Przypływ adrenaliny",
+      "desc": "Gdy masz mniej niż maksymalne HP, na potrzeby testów STR i ataków wręcz traktujesz STR jako 10."
+    },
+    "animal_friend": {
+      "name": "Przyjaciel zwierząt",
+      "desc": "Zwierzęta mogą zrezygnować z ataku na ciebie. Wyższe rangi pozwalają je uspokajać."
+    },
+    "aquaboy_aquagirl": {
+      "name": "Wodnik",
+      "desc": "Nie otrzymujesz obrażeń radiacyjnych od pływania i możesz wstrzymywać oddech dwa razy dłużej."
+    },
+    "armorer": {
+      "name": "Płatnerz",
+      "desc": "Możesz modyfikować pancerz modami do rangi tego perka."
+    },
+    "awareness": {
+      "name": "Spostrzegawczość",
+      "desc": "Po akcji Celowanie zauważasz słabe punkty. Następny atak zyskuje Przebicie 1."
+    },
+    "barbarian": {
+      "name": "Barbarzyńca",
+      "desc": "Twoja fizyczna odporność na obrażenia na wszystkich lokacjach rośnie zależnie od STR."
+    },
+    "basher": {
+      "name": "Kolbiarz",
+      "desc": "Gdy wykonujesz atak wręcz kolbą broni, atak zyskuje efekt obrażeń Brutalny."
+    },
+    "better_criticals": {
+      "name": "Lepsze trafienia krytyczne",
+      "desc": "Gdy zadajesz obrażenia, możesz wydać 1 punkt Szczęścia, aby automatycznie zadać trafienie krytyczne."
+    },
+    "big_leagues": {
+      "name": "Wielka liga",
+      "desc": "Atakując dwuręczną bronią do walki wręcz, nadajesz jej efekt Brutalny."
+    },
+    "black_widow_lady_killer": {
+      "name": "Czarna wdowa / Pogromca kobiet",
+      "desc": "Przerzuć 1k20 w testach CHA wpływających na określoną płeć. Ataki zadają jej +1 obrażenie."
+    },
+    "blacksmith": {
+      "name": "Kowal",
+      "desc": "Możesz modyfikować broń do walki wręcz modami do rangi tego perka."
+    },
+    "blitz": {
+      "name": "Szarża",
+      "desc": "Gdy w jednej turze wchodzisz w zasięg i atakujesz, możesz przerzucić 1k20 w teście ataku."
+    },
+    "bloody_mess": {
+      "name": "Krwawa jatka",
+      "desc": "Gdy zadasz trafienie krytyczne, rzuć 1 kością obrażeń; przy Efekcie zadajesz dodatkową ranę."
+    },
+    "can_do": {
+      "name": "Da się zrobić!",
+      "desc": "Przeszukując lokację z żywnością, zdobywasz 1 dodatkowy losowy przedmiot spożywczy bez wydawania AP."
+    },
+    "cap_collector": {
+      "name": "Kolekcjoner kapsli",
+      "desc": "Kupując lub sprzedając przedmioty, możesz zmienić cenę o 10%."
+    },
+    "cautious_nature": {
+      "name": "Ostrożna natura",
+      "desc": "Gdy kupujesz dodatkowe k20 za AP, możesz przerzucić 1k20 w tym teście."
+    },
+    "center_mass": {
+      "name": "Środek masy",
+      "desc": "Ataki dystansowe w tułów nie zwiększają trudności. Możesz przerzucić 1k20 w teście."
+    },
+    "chem_resistant": {
+      "name": "Odporność na chemy",
+      "desc": "Rzucasz mniejszą liczbą kości obrażeń przy sprawdzaniu uzależnienia. Na 2. randze jesteś odporny na uzależnienie."
+    },
+    "paralyzing_palm": {
+      "name": "Paraliżująca dłoń",
+      "desc": "Gdy wykonujesz atak bez broni w określoną lokację, atak zyskuje efekt Ogłuszenie."
+    },
+    "party_boy_girl": {
+      "name": "Imprezowicz",
+      "desc": "Nie możesz uzależnić się od alkoholu, a wypicie napoju alkoholowego leczy +2 HP."
+    },
+    "pathfinder": {
+      "name": "Tropiciel",
+      "desc": "Podczas długiej podróży udany test PER + Survival skraca czas podróży o połowę."
+    },
+    "pharma_farma": {
+      "name": "Farma farmaceutyków",
+      "desc": "Przeszukując lokację z lekami lub chemami, znajdujesz dodatkowy losowy przedmiot bez wydawania AP."
+    },
+    "pickpocket": {
+      "name": "Kieszonkowiec",
+      "desc": "Ranga 1: ignoruj pierwszą komplikację przy kradzieży kieszonkowej. Ranga 2: przerzuć 1k20. Ranga 3: zmniejsz trudność o 1."
+    },
+    "piercing_strike": {
+      "name": "Przebijające uderzenie",
+      "desc": "Ataki bez broni i bronią białą zyskują Przebicie 1 albo zwiększają istniejące Przebicie o +1."
+    },
+    "pyromaniac": {
+      "name": "Piroman",
+      "desc": "Obrażenia zadawane bronią ogniową zwiększają się o +1 kość obrażeń na rangę."
+    },
+    "quick_draw": {
+      "name": "Szybkie dobycie",
+      "desc": "Raz na turę możesz dobyć jedną noszoną broń lub przedmiot bez używania akcji pomniejszej."
+    },
+    "quick_hands": {
+      "name": "Szybkie ręce",
+      "desc": "Przy ataku dystansowym możesz wydać 2 AP, aby zwiększyć szybkostrzelność broni o +2 dla tego ataku."
+    },
+    "rad_resistance": {
+      "name": "Odporność na promieniowanie",
+      "desc": "Odporność na obrażenia radiacyjne na wszystkich lokacjach zwiększa się o +1 na rangę."
+    },
+    "refractor": {
+      "name": "Refraktor",
+      "desc": "Odporność na obrażenia energetyczne na wszystkich lokacjach zwiększa się o +1 na rangę."
+    },
+    "ricochet": {
+      "name": "Rykoszet",
+      "desc": "Jeśli wróg wyrzuci komplikację podczas ataku dystansowego przeciw tobie, możesz wydać 1 punkt Szczęścia, aby trafił siebie."
+    },
+    "rifleman": {
+      "name": "Strzelec karabinowy",
+      "desc": "Atakując nieciężką dwuręczną bronią dystansową o szybkostrzelności 2 lub mniejszej, dodajesz +1 kość obrażeń na rangę."
+    },
+    "robotics_expert": {
+      "name": "Ekspert robotyki",
+      "desc": "Możesz modyfikować pancerze i moduły robotów. Wyższe rangi odblokowują lepsze mody i przeprogramowywanie robotów."
+    },
+    "science": {
+      "name": "Nauka!",
+      "desc": "Możesz modyfikować broń energetyczną i tworzyć zaawansowane mody pancerza. Każda ranga odblokowuje kolejny poziom modów."
+    },
+    "scoundrel": {
+      "name": "Łajdak",
+      "desc": "W teście CHA + Speech służącym przekonaniu kogoś do kłamstwa możesz zignorować pierwszą komplikację."
+    },
+    "scrapper": {
+      "name": "Złomiarz",
+      "desc": "Rozkładając przedmiot, możesz odzyskiwać nietypowe materiały. Ranga 2 pozwala odzyskiwać materiały rzadkie."
+    },
+    "scrounger": {
+      "name": "Szperacz",
+      "desc": "Gdy ustalasz ilość znalezionej amunicji, znajdujesz jej więcej (+3, +6 lub +10 kości obrażeń zależnie od rangi)."
+    },
+    "shotgun_surgeon": {
+      "name": "Chirurg strzelby",
+      "desc": "Ataki dystansowe ze strzelb zyskują Przebicie 1 albo zwiększają istniejące Przebicie o +1."
+    },
+    "skilled": {
+      "name": "Uzdolniony",
+      "desc": "Dodaj +1 rangę do dwóch umiejętności albo +2 rangi do jednej, maksymalnie do 6."
+    },
+    "size_matters": {
+      "name": "Rozmiar ma znaczenie",
+      "desc": "Atakując dowolną bronią ciężką, dodajesz +1 kość obrażeń na rangę."
+    },
+    "slayer": {
+      "name": "Pogromca",
+      "desc": "Gdy zadasz obrażenia atakiem wręcz lub bez broni, możesz wydać 1 punkt Szczęścia, aby natychmiast zadać trafienie krytyczne."
+    },
+    "smooth_talker": {
+      "name": "Gładka gadka",
+      "desc": "W przeciwstawnym teście Barter lub Speech możesz przerzucić 1k20."
+    },
+    "snakeater": {
+      "name": "Pożeracz węży",
+      "desc": "Twoja odporność na obrażenia od trucizn zwiększa się o +2."
+    },
+    "sniper": {
+      "name": "Snajper",
+      "desc": "Po akcji Celowanie atak celny z dwuręcznej broni Accurate w wybraną lokację nie zwiększa trudności."
+    },
+    "solar_powered": {
+      "name": "Energia słoneczna",
+      "desc": "Za każdą godzinę spędzoną w bezpośrednim świetle słonecznym leczysz 1 obrażenie radiacyjne."
+    },
+    "steady_aim": {
+      "name": "Pewny cel",
+      "desc": "Po akcji Celowanie możesz przerzucić 2k20 przy pierwszym ataku albo 1k20 przy wszystkich atakach w tej turze."
+    },
+    "strong_back": {
+      "name": "Mocne plecy",
+      "desc": "Maksymalny udźwig zwiększa się o +25 funtów na rangę."
+    },
+    "tag": {
+      "name": "Tag!",
+      "desc": "Wybierz dodatkową umiejętność Tag. Zwiększ jej rangę o 2, maksymalnie do 6, dzięki czemu może uzyskiwać trafienia krytyczne."
+    },
+    "terrifying_presence": {
+      "name": "Przerażająca obecność",
+      "desc": "Ranga 1: przerzuć 1k20 podczas zastraszania. Ranga 2: użyj akcji, aby przy udanym teście zmusić wroga do oddalenia się."
+    },
+    "toughness": {
+      "name": "Twardziel",
+      "desc": "Fizyczna odporność na obrażenia na wszystkich lokacjach zwiększa się o +1 na rangę."
     }
+  },
+  "characterCreation": {
+    "selectOriginTitle": "WYBIERZ POCHODZENIE",
+    "selectOriginDescription": "Wybierz pochodzenie postaci, które określa cechy bazowe, maksymalne poziomy umiejętności i zdolności specjalne.",
+    "trait": "Cecha",
+    "selectTraits": "Wybierz cechy",
+    "chooseTwoTraits": "Wybierz dwie z poniższych cech albo jedną cechę i jeden dodatkowy perk."
   }
 }
