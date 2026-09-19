@@ -90,7 +90,9 @@ export async function getTelegramLink(campaignId) {
   if (cached && cached.expiresAt > Date.now()) return cached.value;
   const doc = await telegramDb().collection(LINK_COLLECTION).doc(campaignId).get();
   const value = doc.exists ? doc.data() : null;
-  linkCache.set(campaignId, { value, expiresAt: Date.now() + LINK_CACHE_TTL });
+  // Do not cache a missing link: a Telegram webhook may connect this campaign
+  // in another serverless instance a moment later.
+  if (value) linkCache.set(campaignId, { value, expiresAt: Date.now() + LINK_CACHE_TTL });
   return value;
 }
 
