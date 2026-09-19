@@ -1,3 +1,5 @@
+import { getTelegramLink, validCampaignId } from "../server/telegramCampaignStore.js";
+
 const MAX_TEXT_LENGTH = 3900;
 const MAX_ITEMS = 30;
 
@@ -143,12 +145,32 @@ export default async function handler(req, res) {
   }
 
   const botToken = text(process.env.TELEGRAM_BOT_TOKEN);
-  const chatId = text(process.env.TELEGRAM_CHAT_ID);
-  if (!botToken || !chatId) {
-    return res.status(200).json({ ok: true, skipped: true, reason: "telegram_not_configured" });
+  if (!botToken) {
+    console.warn("telegram_event_skipped", { reason: "bot_not_configured" });
+    return res.status(503).json({ ok: false, error: "telegram_not_configured" });
   }
 
-  const message = formatTelegramEvent(req.body || {});
+  const payload = req.body || {};
+  const campaignId = text(payload.campaignId);
+  let chatId = "";
+
+  if (validCampaignId(campaignId)) {
+    const link = await getTelegramLink(campaignId);
+    chatId = text(link?.chatId);
+    if (!chatId) {
+      console.info("telegram_event_skipped", { reason: "campaign_not_connected" });
+      return res.status(200).json({ ok: true, skipped: true, reason: "campaign_not_connected" });
+    }
+  } else {
+    // Backward-compatible fallback while older clients are still cached.
+    chatId = text(process.env.TELEGRAM_CHAT_ID);
+    if (!chatId) {
+      console.info("telegram_event_skipped", { reason: "missing_campaign_id" });
+      return res.status(200).json({ ok: true, skipped: true, reason: "missing_campaign_id" });
+    }
+  }
+
+  const message = formatTelegramEvent(payload);
   if (!message) {
     return res.status(400).json({ ok: false, error: "unsupported_event" });
   }
