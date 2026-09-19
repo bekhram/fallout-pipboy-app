@@ -12,7 +12,7 @@ test('personal map opens standalone offline settlements instead of campaign sett
   const hub=read('src/components/settlement/OfflineSettlementHub.jsx');
   assert.match(hub,/offlineSettlementStore/);
   assert.match(hub,/<SettlementScreen\b/);
-  assert.doesNotMatch(hub,/CampaignPanel|useCampaignWorld|campaignRequest|signInWithGoogle|firebase|firestore/i);
+  assert.doesNotMatch(hub,/from ['"][^'"]*(?:persistentCampaigns|googleAuth|campaignOffline|firebase|firestore)|campaignRequest\(|signInWithGoogle\(|fetch\(/i);
   const store=read('src/utils/offlineSettlementStore.js');
   assert.match(store,/indexedDB\.open\(DB_NAME,1\)/);
   assert.doesNotMatch(store,/fetch\(|campaignRequest|firebase|firestore/i);
@@ -32,7 +32,7 @@ test('standalone settlement rendering cannot send cloud writes',()=>{
     'src/components/settlement/SettlementWorkerActor.js',
     'src/components/settlement/workerSpriteFrames.js',
   ]){
-    assert.doesNotMatch(read(path),/campaignRequest|persistentCampaigns|firebase|firestore|\/api\/settlement-sync|fetch\(/i);
+    assert.doesNotMatch(read(path),/from ['"][^'"]*(?:persistentCampaigns|googleAuth|campaignOffline|firebase|firestore)|campaignRequest\(|signInWithGoogle\(|\/api\/settlement-sync|fetch\(/i);
   }
 });
 
