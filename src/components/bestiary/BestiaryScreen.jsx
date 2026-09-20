@@ -5,6 +5,7 @@ import {
   BESTIARY_ENTRIES,
   createEmptyBestiaryEntry,
 } from "../../data/bestiary.js";
+import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
 import "./bestiary.css";
 
 const CUSTOM_STORAGE_KEY = "fallout_pipboy_bestiary_custom_v1";
@@ -180,6 +181,20 @@ export default function BestiaryScreen() {
   }, [filtered, selectedId]);
 
   const selected = entries.find((entry) => entry.id === selectedId) || null;
+  const [tokenUrl, setTokenUrl] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selected || selected.custom) {
+      setTokenUrl("");
+      return () => { cancelled = true; };
+    }
+    setTokenUrl("");
+    getBestiaryTokenUrl(selected.id)
+      .then((url) => { if (!cancelled) setTokenUrl(url || ""); })
+      .catch(() => { if (!cancelled) setTokenUrl(""); });
+    return () => { cancelled = true; };
+  }, [selectedId, selected?.custom]);
 
   useEffect(() => {
     if (!selected || selected.custom || language === "en") {
@@ -296,6 +311,7 @@ export default function BestiaryScreen() {
           ) : (
             <article className="bestiary-card">
               <div className="bestiary-detail-head">
+                {tokenUrl ? <img className="bestiary-token-art" src={tokenUrl} alt="" aria-hidden="true" /> : null}
                 <div className="bestiary-title-block"><div className="pip-tagrow is-wrap"><span className="pip-tag is-selected">{copy[shown.category] || shown.category}</span><span className="pip-tag">{shown.custom ? copy.custom : copy.reference}</span></div><h3>{shown.name}</h3>{shown.creatureType ? <span>{shown.creatureType}</span> : null}</div>
                 {shown.custom ? <button type="button" className="pip-btn" onClick={() => setEditing(true)}>{copy.edit}</button> : language !== "en" ? <span className={`bestiary-translation-state is-${translationState}`}>{translationState === "loading" ? copy.translating : translationState === "ready" ? copy.translationReady : copy.translationFallback}</span> : null}
               </div>
