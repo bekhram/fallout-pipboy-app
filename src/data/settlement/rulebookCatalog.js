@@ -107,6 +107,7 @@ export const RULEBOOK_BUILDINGS = {
   watchtower: { materials: { common: 14 }, constructionDays: 2, effects: { guardActionDefenseBonus: 1 }, skill: { name: "Repair", rank: 2 }, rarity: "common", legacyAlias: true },
   wall_straight: { materials: { common: 3 }, constructionDays: 1, effects: {}, rarity: "common" },
   wall_corner: { materials: { common: 3 }, constructionDays: 1, effects: {}, rarity: "common" },
+  wall_corner_reverse: { materials: { common: 3 }, constructionDays: 1, effects: {}, rarity: "common" },
   gate: { materials: { common: 6 }, constructionDays: 1, effects: {}, rarity: "common" },
 };
 
