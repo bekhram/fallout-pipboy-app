@@ -1,1 +1,23 @@
 .gm-unified-token-manager-v9 .gm-token-v5-size{display:none!important}.gm-token-v9-size-picker{display:grid;gap:4px;min-width:132px}.gm-token-v9-size-picker>span{font-size:.5rem;letter-spacing:.11em;opacity:.72}.gm-token-v9-size-picker>div{display:grid;grid-template-columns:repeat(2,minmax(54px,1fr));gap:5px}.gm-token-v9-size-picker .pip-btn{min-height:34px;padding:5px 8px;font-size:.62rem;font-weight:800}.gm-token-v9-buffs{display:grid;gap:7px;margin-top:8px;padding:9px;border:1px solid color-mix(in srgb,currentColor 32%,transparent);background:rgba(0,18,7,.42)}.gm-token-v9-buff-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.gm-token-v9-buff-head strong{font-size:.68rem;letter-spacing:.08em}.gm-token-v9-buff-head span{font-size:.56rem;opacity:.72}.gm-token-v9-buff-head .pip-btn{margin-left:auto;min-height:26px;padding:3px 7px;font-size:.5rem}.gm-token-v9-buff-tiers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.gm-token-v9-buff-tiers .pip-btn{min-height:30px;padding:4px 6px;font-size:.57rem}.gm-token-v9-buff-list{display:flex;gap:5px;flex-wrap:wrap}.gm-token-v9-buff-chip{min-height:28px;padding:4px 7px;font-size:.55rem}.gm-token-v9-buff-summary{display:block;padding-top:5px;border-top:1px dashed color-mix(in srgb,currentColor 28%,transparent);font-size:.54rem;line-height:1.45;opacity:.88}@media(max-width:780px){.gm-token-v9-size-picker{min-width:118px}.gm-token-v9-size-picker .pip-btn{min-height:32px;padding:4px 6px;font-size:.58rem}.gm-unified-token-manager-v9 .gm-token-v5-preview-head{align-items:end;gap:8px}.gm-token-v9-buffs{padding:7px}.gm-token-v9-buff-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.gm-token-v9-buff-chip{white-space:normal;line-height:1.15}}
+
+@media(max-width:640px){
+  .gm-unified-token-manager-v9 .gm-token-v5-preview-head{
+    display:grid!important;
+    grid-template-columns:auto minmax(0,1fr);
+    align-items:center!important;
+    gap:8px 10px;
+  }
+  .gm-unified-token-manager-v9 .gm-token-v5-preview-head>.gm-token-v9-size-picker{
+    grid-column:1/-1;
+    width:100%;
+    min-width:0;
+  }
+  .gm-token-v9-size-picker>div{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+  .gm-token-v9-size-picker .pip-btn{
+    width:100%;
+    min-width:0;
+    min-height:38px;
+  }
+}
