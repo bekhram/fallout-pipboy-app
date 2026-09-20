@@ -21,7 +21,7 @@ export function createCampaignTransport(getSession, fetcher = globalThis.fetch, 
     const version = epoch;
     const perform = async () => {
       const body = { requestId: crypto.randomUUID(), ...command };
-      const response = await fetcher(command.type === 'syncSettlement' ? '/api/settlement-sync' : '/api/campaigns', {
+      const response = await fetcher('/api/campaigns', {
         method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.firebase.idToken}` },
         body: JSON.stringify(body), signal: AbortSignal.timeout(20000),
       });
