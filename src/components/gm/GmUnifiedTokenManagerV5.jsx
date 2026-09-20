@@ -433,10 +433,6 @@ export default function GmUnifiedTokenManagerV5({ session }) {
     let failure = "";
     const count = clampCount(spawnCount, 1, 12);
 
-    const resolvedAvatar = selectedBestiaryId
-      ? await getBestiaryTokenUrl(selectedEntry.id).catch(() => "")
-      : String(selectedEntry?.avatar || "");
-
     for (let index = 0; index < count; index += 1) {
       const stats = {
         ...quickStats,
@@ -455,7 +451,7 @@ export default function GmUnifiedTokenManagerV5({ session }) {
         name: String(selectedEntry?.name || "NPC"),
         size: footprint,
         npcId: String(selectedEntry?.id || ""),
-        avatar: resolvedAvatar || String(selectedEntry?.avatar || ""),
+        avatar: String(selectedEntry?.avatar || ""),
         stats,
         x: placement.x,
         y: placement.y,
