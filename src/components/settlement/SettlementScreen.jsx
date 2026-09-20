@@ -23,7 +23,7 @@ import "./settlementRedesign.css";
 import SheetIcon from "../layout/SheetIcon.jsx";
 import SettlementPhaserMap from "./SettlementPhaserMap.jsx";
 
-const BUILDING_ICONS = { crop_field: "🌾", water_pump: "💧", generator: "⚡", workshop: "🔧", trading_post: "¤", clinic: "+", guard_post: "▲", turret: "⌖" };
+const BUILDING_ICONS = { crop_field: "🌾", water_pump: "💧", generator: "⚡", armor_workbench: "🔧", trading_post: "¤", clinic: "+", guard_post: "▲", turret: "⌖" };
 const BUILD_CATEGORIES = ["housing", "food", "water", "power", "production", "commerce", "services", "defense"];
 const ROOM_ORDER = ["private_room", "dormitory", "quarters", "lounge", "storage", "office"];
 const PANEL_ICONS = { build: "⚒", people: "👥", resources: "▣", defense: "⬟", events: "!" };
