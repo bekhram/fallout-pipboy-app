@@ -12,3 +12,13 @@
 @media (max-width:720px){
   .gm-token-v5-art{width:68px;height:68px;flex-basis:68px}
 }
+
+
+@media(max-width:640px){
+  .gm-token-v5-quick-preview{padding:9px;overflow:hidden}
+  .gm-token-v5-art{width:64px;height:64px;flex-basis:64px}
+  .gm-token-v5-preview-head>div{min-width:0}
+  .gm-token-v5-preview-head strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gm-token-v5-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gm-token-v5-stats span{min-width:0}
+}
