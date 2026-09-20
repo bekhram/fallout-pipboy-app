@@ -1,8 +1,13 @@
-import { canonical } from './settlementOfflineProtocol.js';
 import { checkedResources, checkedPlayerResources, debitPersonalResources, creditPersonalResources, zeroResources } from '../utils/personalResources.js';
 import { isPersonalAction } from '../utils/personalConstruction.js';
 
 const fail = code => { throw new Error(code); };
+function canonical(value) {
+  if (value === undefined) return 'null';
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+}
 export const localCharacterId = form => form?._localCharacterId;
 export function newLocalCharacter(form) {
   if (!form?._localCharacterId) fail('LOCAL_CHARACTER_REQUIRED');
