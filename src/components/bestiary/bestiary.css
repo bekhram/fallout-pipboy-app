@@ -102,3 +102,16 @@
   .bestiary-translation-state { width: fit-content; }
   .bestiary-stat-grid,.bestiary-special-grid,.bestiary-edit-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
+
+
+.bestiary-token-art{
+  width:112px;
+  height:112px;
+  flex:0 0 112px;
+  object-fit:contain;
+  border-radius:50%;
+  filter:drop-shadow(0 8px 16px rgba(0,0,0,.35));
+}
+@media (max-width:720px){
+  .bestiary-token-art{width:82px;height:82px;flex-basis:82px}
+}
