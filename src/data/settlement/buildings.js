@@ -105,11 +105,6 @@ export const SETTLEMENT_BUILDINGS = {
     footprint: { width: 2, height: 2 }, asset: "radio_beacon.png", constructionSize: "small",
   },
 
-  workshop: {
-    id: "workshop", category: "production",
-    name: { en: "Workshop (legacy)", ru: "Мастерская (старая)", uk: "Майстерня (стара)", pl: "Warsztat (stary)" },
-    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "medium", workersRequired: 1, buildable: false,
-  },
   armor_workbench: {
     id: "armor_workbench", category: "production",
     name: { en: "Armor workbench", ru: "Верстак брони", uk: "Верстак броні", pl: "Warsztat pancerza" },
@@ -234,11 +229,6 @@ export const SETTLEMENT_BUILDINGS = {
     footprint: { width: 1, height: 1 }, asset: "turret.png", constructionSize: "small",
   },
 
-  watchtower: {
-    id: "watchtower", category: "defense",
-    name: { en: "Watchtower", ru: "Сторожевая вышка", uk: "Сторожова вежа", pl: "Wieża strażnicza" },
-    footprint: { width: 2, height: 2 }, asset: "watchtower.png", constructionSize: "medium", workersRequired: 1, buildable: false,
-  },
   wall_straight: {
     id: "wall_straight", category: "defense",
     name: { en: "Wall", ru: "Стена", uk: "Стіна", pl: "Mur" },
