@@ -4,18 +4,22 @@ import { SPECIAL_KEYS } from "../../constants.js";
 import { PERKS_LIST } from "../data/perks";
 import { getAddedPerkTranslation } from "../data/perkTranslations";
 import { getSupplementalPerkTranslation } from "../data/supplementalPerks.js";
+import { GENERATED_PERK_IMAGES } from "../data/perkGeneratedAssets.js";
 
 const perkImageModules = import.meta.glob("../../assets/perks/*.png", {
   eager: true,
   import: "default",
 });
 
-const PERK_IMAGES = Object.fromEntries(
-  Object.entries(perkImageModules).map(([path, image]) => [
-    path.split("/").pop().replace(/\.png$/, ""),
-    image,
-  ])
-);
+const PERK_IMAGES = {
+  ...Object.fromEntries(
+    Object.entries(perkImageModules).map(([path, image]) => [
+      path.split("/").pop().replace(/\.png$/, ""),
+      image,
+    ])
+  ),
+  ...GENERATED_PERK_IMAGES,
+};
 
 const SPECIAL_NAMES = {
   en: { S: "Strength", P: "Perception", E: "Endurance", C: "Charisma", I: "Intelligence", A: "Agility", L: "Luck" },
