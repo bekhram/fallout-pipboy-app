@@ -4,6 +4,7 @@ import {
   characterToSettlementNpc,
   addNpcToLocalSettlement,
   removeGuestNpcFromLocalSettlement,
+  migrateLocalSettlement,
 } from "../src/utils/localSettlements.js";
 import { createSettlement } from "../src/utils/settlementState.js";
 
@@ -32,4 +33,20 @@ test("guest NPC can be added and removed without deleting native settlers",()=>{
   const removed=removeGuestNpcFromLocalSettlement(withGuest,guest.id);
   assert.equal(removed.settlers.length,base.settlers.length);
   assert.deepEqual(removed.settlers.map(item=>item.id),nativeIds);
+});
+
+
+test("legacy workshop/watchtower building ids migrate to current local types",()=>{
+  const migrated=migrateLocalSettlement({
+    id:"legacy_local",
+    buildings:[
+      {id:"b1",type:"workshop"},
+      {id:"b2",type:"watchtower",upgrade:{targetType:"workshop"}},
+    ],
+    storedBuildings:[{id:"b3",type:"watchtower"}],
+  });
+  assert.equal(migrated.buildings[0].type,"weapons_workbench");
+  assert.equal(migrated.buildings[1].type,"guard_post");
+  assert.equal(migrated.buildings[1].upgrade.targetType,"weapons_workbench");
+  assert.equal(migrated.storedBuildings[0].type,"guard_post");
 });
