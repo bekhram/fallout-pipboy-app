@@ -1,4 +1,25 @@
 import barracks from "../../assets/settlement/barracks.png";
+import armorWorkbench from "../../assets/settlement/armor_workbench.png";
+import chemistryStation from "../../assets/settlement/chemistry_station.png";
+import clinicV2 from "../../assets/settlement/clinic-v2.png";
+import cookingStation from "../../assets/settlement/cooking_station.png";
+import fusionReactor from "../../assets/settlement/fusion_reactor.png";
+import generatorLargeV2 from "../../assets/settlement/generator_large-v2.png";
+import generatorMedium from "../../assets/settlement/generator_medium.png";
+import guardPostV2 from "../../assets/settlement/guard_post-v2.png";
+import largeHouseV2 from "../../assets/settlement/large_house-v2.png";
+import lights from "../../assets/settlement/lights.png";
+import powerArmorStation from "../../assets/settlement/power_armor_station.png";
+import powerPylon from "../../assets/settlement/power_pylon.png";
+import robotWorkbench from "../../assets/settlement/robot_workbench.png";
+import siren from "../../assets/settlement/siren.png";
+import surgeryCenter from "../../assets/settlement/surgery_center.png";
+import tradingEmporium from "../../assets/settlement/trading_emporium.png";
+import tradingPostV2 from "../../assets/settlement/trading_post-v2.png";
+import wallCornerReverse from "../../assets/settlement/wall_corner_reverse.png";
+import waterPurifierV2 from "../../assets/settlement/water_purifier-v2.png";
+import weaponsWorkbench from "../../assets/settlement/weapons_workbench.png";
+import windmill from "../../assets/settlement/windmill.png";
 import brahminPen from "../../assets/settlement/brahmin_pen.png";
 import caravanPost from "../../assets/settlement/caravan_post.png";
 import clinic from "../../assets/settlement/clinic.png";
@@ -28,6 +49,27 @@ import waterTower from "../../assets/settlement/water_tower.png";
 import workshop from "../../assets/settlement/workshop.png";
 
 export const SETTLEMENT_ASSETS = {
+  "armor_workbench.png": armorWorkbench,
+  "chemistry_station.png": chemistryStation,
+  "clinic-v2.png": clinicV2,
+  "cooking_station.png": cookingStation,
+  "fusion_reactor.png": fusionReactor,
+  "generator_large-v2.png": generatorLargeV2,
+  "generator_medium.png": generatorMedium,
+  "guard_post-v2.png": guardPostV2,
+  "large_house-v2.png": largeHouseV2,
+  "lights.png": lights,
+  "power_armor_station.png": powerArmorStation,
+  "power_pylon.png": powerPylon,
+  "robot_workbench.png": robotWorkbench,
+  "siren.png": siren,
+  "surgery_center.png": surgeryCenter,
+  "trading_emporium.png": tradingEmporium,
+  "trading_post-v2.png": tradingPostV2,
+  "wall_corner_reverse.png": wallCornerReverse,
+  "water_purifier-v2.png": waterPurifierV2,
+  "weapons_workbench.png": weaponsWorkbench,
+  "windmill.png": windmill,
   "barracks.png": barracks,
   "brahmin_pen.png": brahminPen,
   "caravan_post.png": caravanPost,
