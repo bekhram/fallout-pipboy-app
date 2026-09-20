@@ -31,7 +31,7 @@ export const SETTLEMENT_BUILDINGS = {
   large_house: {
     id: "large_house", category: "housing",
     name: { en: "Large house", ru: "Большой дом", uk: "Великий будинок", pl: "Duży dom" },
-    footprint: { width: 4, height: 4 }, asset: "large_house.png", constructionSize: "large",
+    footprint: { width: 4, height: 4 }, asset: "large_house-v2.png", constructionSize: "large",
   },
   crop_field: {
     id: "crop_field", category: "food",
@@ -56,7 +56,7 @@ export const SETTLEMENT_BUILDINGS = {
   water_purifier: {
     id: "water_purifier", category: "water",
     name: { en: "Water purifier", ru: "Очиститель воды", uk: "Очищувач води", pl: "Oczyszczalnia wody" },
-    footprint: { width: 3, height: 3 }, asset: "water_purifier.png", constructionSize: "medium",
+    footprint: { width: 3, height: 3 }, asset: "water_purifier-v2.png", constructionSize: "medium",
   },
   water_tower: {
     id: "water_tower", category: "water",
@@ -67,7 +67,7 @@ export const SETTLEMENT_BUILDINGS = {
   windmill: {
     id: "windmill", category: "power",
     name: { en: "Windmill", ru: "Ветряк", uk: "Вітряк", pl: "Wiatrak" },
-    footprint: { width: 2, height: 2 }, asset: "generator_small.png", constructionSize: "medium",
+    footprint: { width: 2, height: 2 }, asset: "windmill.png", constructionSize: "medium",
   },
   generator: {
     id: "generator", category: "power",
@@ -77,27 +77,27 @@ export const SETTLEMENT_BUILDINGS = {
   generator_medium: {
     id: "generator_medium", category: "power",
     name: { en: "Medium generator", ru: "Средний генератор", uk: "Середній генератор", pl: "Średni generator" },
-    footprint: { width: 2, height: 2 }, asset: "generator_small.png", constructionSize: "medium",
+    footprint: { width: 2, height: 2 }, asset: "generator_medium.png", constructionSize: "medium",
   },
   generator_large: {
     id: "generator_large", category: "power",
     name: { en: "Large generator", ru: "Большой генератор", uk: "Великий генератор", pl: "Duży generator" },
-    footprint: { width: 3, height: 3 }, asset: "generator_large.png", constructionSize: "large",
+    footprint: { width: 3, height: 3 }, asset: "generator_large-v2.png", constructionSize: "large",
   },
   fusion_reactor: {
     id: "fusion_reactor", category: "power",
     name: { en: "Fusion reactor", ru: "Термоядерный реактор", uk: "Термоядерний реактор", pl: "Reaktor fuzyjny" },
-    footprint: { width: 4, height: 4 }, asset: "generator_large.png", constructionSize: "large",
+    footprint: { width: 4, height: 4 }, asset: "fusion_reactor.png", constructionSize: "large",
   },
   power_pylon: {
     id: "power_pylon", category: "power",
     name: { en: "Power pylon", ru: "Электроопора", uk: "Електроопора", pl: "Słup energetyczny" },
-    footprint: { width: 1, height: 1 }, asset: "radio_beacon.png", constructionSize: "small",
+    footprint: { width: 1, height: 1 }, asset: "power_pylon.png", constructionSize: "small",
   },
   lights: {
     id: "lights", category: "power",
     name: { en: "Lights", ru: "Освещение", uk: "Освітлення", pl: "Oświetlenie" },
-    footprint: { width: 1, height: 1 }, asset: "radio_beacon.png", constructionSize: "small",
+    footprint: { width: 1, height: 1 }, asset: "lights.png", constructionSize: "small",
   },
   radio_beacon: {
     id: "radio_beacon", category: "power",
@@ -113,32 +113,32 @@ export const SETTLEMENT_BUILDINGS = {
   armor_workbench: {
     id: "armor_workbench", category: "production",
     name: { en: "Armor workbench", ru: "Верстак брони", uk: "Верстак броні", pl: "Warsztat pancerza" },
-    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "medium",
+    footprint: { width: 2, height: 2 }, asset: "armor_workbench.png", constructionSize: "medium",
   },
   chemistry_station: {
     id: "chemistry_station", category: "production",
     name: { en: "Chemistry station", ru: "Химическая станция", uk: "Хімічна станція", pl: "Stacja chemiczna" },
-    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "medium",
+    footprint: { width: 2, height: 2 }, asset: "chemistry_station.png", constructionSize: "medium",
   },
   cooking_station: {
     id: "cooking_station", category: "production",
     name: { en: "Cooking station", ru: "Кулинарная станция", uk: "Кулінарна станція", pl: "Stacja gotowania" },
-    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "small",
+    footprint: { width: 2, height: 2 }, asset: "cooking_station.png", constructionSize: "small",
   },
   power_armor_station: {
     id: "power_armor_station", category: "production",
     name: { en: "Power armor station", ru: "Станция силовой брони", uk: "Станція силової броні", pl: "Stacja pancerza wspomaganego" },
-    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "large",
+    footprint: { width: 3, height: 3 }, asset: "power_armor_station.png", constructionSize: "large",
   },
   weapons_workbench: {
     id: "weapons_workbench", category: "production",
     name: { en: "Weapons workbench", ru: "Оружейный верстак", uk: "Збройовий верстак", pl: "Warsztat broni" },
-    footprint: { width: 2, height: 2 }, asset: "workshop.png", constructionSize: "medium",
+    footprint: { width: 2, height: 2 }, asset: "weapons_workbench.png", constructionSize: "medium",
   },
   robot_workbench: {
     id: "robot_workbench", category: "production",
     name: { en: "Robot workbench", ru: "Верстак робототехники", uk: "Верстак робототехніки", pl: "Warsztat robotyczny" },
-    footprint: { width: 3, height: 3 }, asset: "workshop.png", constructionSize: "large",
+    footprint: { width: 3, height: 3 }, asset: "robot_workbench.png", constructionSize: "large",
   },
   scrap_yard: {
     id: "scrap_yard", category: "production",
@@ -154,17 +154,17 @@ export const SETTLEMENT_BUILDINGS = {
   trading_post: {
     id: "trading_post", category: "commerce",
     name: { en: "Trading stand", ru: "Торговый прилавок", uk: "Торговий прилавок", pl: "Stoisko handlowe" },
-    footprint: { width: 2, height: 2 }, asset: "trading_post.png", constructionSize: "small", workersRequired: 1,
+    footprint: { width: 2, height: 2 }, asset: "trading_post-v2.png", constructionSize: "small", workersRequired: 1,
   },
   trading_shop: {
     id: "trading_shop", category: "commerce",
     name: { en: "Trading shop", ru: "Торговый магазин", uk: "Торгова крамниця", pl: "Sklep handlowy" },
-    footprint: { width: 3, height: 3 }, asset: "trading_post.png", constructionSize: "medium", workersRequired: 1,
+    footprint: { width: 3, height: 3 }, asset: "trading_post-v2.png", constructionSize: "medium", workersRequired: 1,
   },
   trading_emporium: {
     id: "trading_emporium", category: "commerce",
     name: { en: "Trading emporium", ru: "Торговый эмпориум", uk: "Торговий емпоріум", pl: "Emporium handlowe" },
-    footprint: { width: 4, height: 3 }, asset: "trading_post.png", constructionSize: "large", workersRequired: 1,
+    footprint: { width: 4, height: 3 }, asset: "trading_emporium.png", constructionSize: "large", workersRequired: 1,
   },
   caravan_post: {
     id: "caravan_post", category: "commerce",
@@ -180,23 +180,23 @@ export const SETTLEMENT_BUILDINGS = {
   clinic: {
     id: "clinic", category: "services",
     name: { en: "Clinic", ru: "Клиника", uk: "Клініка", pl: "Klinika" },
-    footprint: { width: 3, height: 3 }, asset: "clinic.png", constructionSize: "medium", workersRequired: 1,
+    footprint: { width: 3, height: 3 }, asset: "clinic-v2.png", constructionSize: "medium", workersRequired: 1,
   },
   surgery_center: {
     id: "surgery_center", category: "services",
     name: { en: "Surgery center", ru: "Хирургический центр", uk: "Хірургічний центр", pl: "Centrum chirurgiczne" },
-    footprint: { width: 4, height: 3 }, asset: "clinic.png", constructionSize: "large", workersRequired: 1,
+    footprint: { width: 4, height: 3 }, asset: "surgery_center.png", constructionSize: "large", workersRequired: 1,
   },
 
   guard_post: {
     id: "guard_post", category: "defense",
     name: { en: "Guard post", ru: "Пост охраны", uk: "Пост охорони", pl: "Posterunek" },
-    footprint: { width: 2, height: 2 }, asset: "guard_post.png", constructionSize: "small", workersRequired: 1,
+    footprint: { width: 2, height: 2 }, asset: "guard_post-v2.png", constructionSize: "small", workersRequired: 1,
   },
   siren: {
     id: "siren", category: "defense",
     name: { en: "Siren", ru: "Сирена", uk: "Сирена", pl: "Syrena" },
-    footprint: { width: 1, height: 1 }, asset: "guard_post.png", constructionSize: "small",
+    footprint: { width: 1, height: 1 }, asset: "siren.png", constructionSize: "small",
   },
   turret: {
     id: "turret", category: "defense",
@@ -248,6 +248,11 @@ export const SETTLEMENT_BUILDINGS = {
     id: "wall_corner", category: "defense",
     name: { en: "Wall corner", ru: "Угол стены", uk: "Кут стіни", pl: "Narożnik muru" },
     footprint: { width: 1, height: 1 }, asset: "wall_corner.png", constructionSize: "small",
+  },
+  wall_corner_reverse: {
+    id: "wall_corner_reverse", category: "defense",
+    name: { en: "Wall corner (reverse)", ru: "Угол стены (обратный)", uk: "Кут стіни (зворотний)", pl: "Narożnik muru (odwrócony)" },
+    footprint: { width: 1, height: 1 }, asset: "wall_corner_reverse.png", constructionSize: "small",
   },
   gate: {
     id: "gate", category: "defense",
