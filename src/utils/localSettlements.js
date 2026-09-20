@@ -3,6 +3,26 @@ import { createSettlerProfile } from './settlementSettlerProfile.js';
 
 export const LOCAL_SETTLEMENTS_KEY = 'pip2d20.localSettlements.v1';
 
+const LEGACY_BUILDING_TYPES = Object.freeze({
+  workshop: 'weapons_workbench',
+  watchtower: 'guard_post',
+});
+
+export function migrateLocalSettlement(settlement){
+  if(!settlement || typeof settlement !== 'object') return settlement;
+  const remap = building => {
+    if(!building || typeof building !== 'object') return building;
+    const type = LEGACY_BUILDING_TYPES[building.type] || building.type;
+    const upgrade = building.upgrade?.targetType && LEGACY_BUILDING_TYPES[building.upgrade.targetType]
+      ? {...building.upgrade,targetType:LEGACY_BUILDING_TYPES[building.upgrade.targetType]}
+      : building.upgrade;
+    return type === building.type && upgrade === building.upgrade ? building : {...building,type,upgrade};
+  };
+  const buildings=(settlement.buildings||[]).map(remap);
+  const storedBuildings=(settlement.storedBuildings||[]).map(remap);
+  return {...settlement,buildings,storedBuildings};
+}
+
 function safeParse(value,fallback){
   try{return JSON.parse(value);}catch{return fallback;}
 }
@@ -10,7 +30,7 @@ export function loadLocalSettlements(){
   if(typeof window==='undefined')return [];
   const raw=safeParse(window.localStorage.getItem(LOCAL_SETTLEMENTS_KEY)||'[]',[]);
   if(!Array.isArray(raw))return [];
-  const simulated=raw.map(item=>runSimulation(item));
+  const simulated=raw.map(item=>runSimulation(migrateLocalSettlement(item)));
   if(JSON.stringify(simulated)!==JSON.stringify(raw))window.localStorage.setItem(LOCAL_SETTLEMENTS_KEY,JSON.stringify(simulated));
   return simulated;
 }
