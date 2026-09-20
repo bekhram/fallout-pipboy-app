@@ -410,6 +410,36 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
   const canContinue =
     step === 1 ? originReady : step === 2 ? specialReady : step === 3 ? skillsReady : perkReady;
 
+  const focusMissingStepRequirement = () => {
+    let selector = "";
+    if (step === 1) {
+      if (!originId) selector = "[data-quick-origin]";
+      else if (!selectedTraitReady) selector = "[data-quick-traits]";
+      else if (!equipmentPack) selector = "[data-quick-equipment]";
+    } else if (step === 2 && !specialReady) {
+      selector = "[data-quick-special]";
+    } else if (step === 3 && !skillsReady) {
+      selector = "[data-quick-skills]";
+    } else if (step === 4 && !perkReady) {
+      selector = "[data-quick-perks]";
+    }
+    if (!selector) return;
+    requestAnimationFrame(() => {
+      document.querySelector(selector)?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+    });
+  };
+
+  const handleNext = () => {
+    if (!canContinue) {
+      focusMissingStepRequirement();
+      return;
+    }
+    setStep((value) => Math.min(4, value + 1));
+  };
+
   const setOrigin = (id) => {
     setOriginId(id);
     setSelectedTraits([]);
@@ -612,7 +642,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 <p>{copy.originHelp}</p>
               </div>
 
-              <div className="quick-origin-grid">
+              <div className="quick-origin-grid" data-quick-origin>
                 {ORIGINS_LIST.map((entry) => (
                   <button
                     key={entry.id}
@@ -646,7 +676,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                     </div>
                   )}
                   {origin.availableTraits?.length > 0 && (
-                    <div className="quick-create-subsection">
+                    <div className="quick-create-subsection" data-quick-traits>
                       <strong>{copy.traits} ({selectedTraits.length}/{originTraitRequired})</strong>
                       {hasFlexibleTraitPerkChoice && (
                         <div className="pip-logbox" style={{ margin: "8px 0 10px" }}>
@@ -680,7 +710,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                     </div>
                   )}
 
-                  <div className="quick-create-subsection">
+                  <div className="quick-create-subsection" data-quick-equipment>
                     <label><strong>{copy.equipmentPack}</strong></label>
                     <select className="pip-input" value={equipmentPack} onChange={(e) => setPack(e.target.value)}>
                       <option value="">{copy.selectPack}</option>
@@ -733,7 +763,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 <span>{copy.total}: <strong>{specialTotal}/{specialBudget}</strong></span>
                 <span>{copy.remaining}: <strong>{specialRemaining}</strong></span>
               </div>
-              <div className="quick-special-grid">
+              <div className="quick-special-grid" data-quick-special>
                 {SPECIAL_KEYS.map((key) => {
                   const limits = origin?.specialLimits || { min: 1, max: 10 };
                   const originMin = Number(limits.min ?? 1);
@@ -771,7 +801,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 )}
               </div>
 
-              <div className="quick-skill-list">
+              <div className="quick-skill-list" data-quick-skills>
                 {SKILL_KEYS.map((skillName) => {
                   const skill = skills[skillName];
                   const isTagged = Boolean(skill?.tagged);
@@ -839,7 +869,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
                 placeholder={copy.searchPerks}
               />
 
-              <div className="quick-perk-list">
+              <div className="quick-perk-list" data-quick-perks>
                 {availablePerks.map((perk) => {
                   const localized = localizedPerk(perk);
                   const selected = perkIds.includes(perk.id);
@@ -884,7 +914,12 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
           </div>
 
           {step < 4 ? (
-            <button type="button" className="pip-btn is-primary" disabled={!canContinue} onClick={() => setStep((value) => Math.min(4, value + 1))}>
+            <button
+              type="button"
+              className="pip-btn is-primary"
+              aria-disabled={!canContinue}
+              onClick={handleNext}
+            >
               {copy.next}
             </button>
           ) : (
