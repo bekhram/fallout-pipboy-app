@@ -19,6 +19,7 @@ import {
   specialFeatureById,
 } from "../../utils/npcFeaturePresets.js";
 import { findFreePlacement } from "../../utils/gmSessionModel.js";
+import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
 import GmUnifiedTokenManagerV4 from "./GmUnifiedTokenManagerV4.jsx";
 import "./gmUnifiedTokenManagerV5.css";
 
@@ -235,6 +236,7 @@ export default function GmUnifiedTokenManagerV5({ session }) {
   const [reward, setReward] = useState("");
   const [spawning, setSpawning] = useState(false);
   const [spawnStatus, setSpawnStatus] = useState("");
+  const [tokenPreviewUrl, setTokenPreviewUrl] = useState("");
 
   const bestiaryById = useMemo(
     () => new Map(BESTIARY_ENTRIES.map((entry) => [String(entry?.id || ""), entry])),
@@ -275,6 +277,19 @@ export default function GmUnifiedTokenManagerV5({ session }) {
     () => legendaryAbilitiesFor(String(selectedEntry?.cardKind || "creature").toLowerCase() === "npc" ? "npc" : "creature"),
     [selectedEntry]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedEntry?.id || selectedCustomId) {
+      setTokenPreviewUrl(String(selectedEntry?.avatar || ""));
+      return () => { cancelled = true; };
+    }
+    setTokenPreviewUrl("");
+    getBestiaryTokenUrl(selectedEntry.id)
+      .then((url) => { if (!cancelled) setTokenPreviewUrl(url || String(selectedEntry?.avatar || "")); })
+      .catch(() => { if (!cancelled) setTokenPreviewUrl(String(selectedEntry?.avatar || "")); });
+    return () => { cancelled = true; };
+  }, [selectedEntry?.id, selectedCustomId]);
 
   useEffect(() => {
     let active = true;
@@ -418,6 +433,10 @@ export default function GmUnifiedTokenManagerV5({ session }) {
     let failure = "";
     const count = clampCount(spawnCount, 1, 12);
 
+    const resolvedAvatar = selectedBestiaryId
+      ? await getBestiaryTokenUrl(selectedEntry.id).catch(() => "")
+      : String(selectedEntry?.avatar || "");
+
     for (let index = 0; index < count; index += 1) {
       const stats = {
         ...quickStats,
@@ -436,7 +455,7 @@ export default function GmUnifiedTokenManagerV5({ session }) {
         name: String(selectedEntry?.name || "NPC"),
         size: footprint,
         npcId: String(selectedEntry?.id || ""),
-        avatar: String(selectedEntry?.avatar || ""),
+        avatar: resolvedAvatar || String(selectedEntry?.avatar || ""),
         stats,
         x: placement.x,
         y: placement.y,
@@ -502,6 +521,7 @@ export default function GmUnifiedTokenManagerV5({ session }) {
       {previewHost && selectedEntry && quickStats ? createPortal(
         <div className="gm-token-v5-quick-preview">
           <div className="gm-token-v5-preview-head">
+            {tokenPreviewUrl ? <img className="gm-token-v5-art" src={tokenPreviewUrl} alt="" aria-hidden="true" /> : null}
             <div>
               <strong>{selectedEntry.name}</strong>
               <small>{selectedEntry.creatureType || (selectedEntry.cardKind === "npc" ? copy.npc : copy.creature)} · {copy.level} {number(selectedEntry.level, 0)}</small>
