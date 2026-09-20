@@ -38,10 +38,8 @@ import turret from "../../assets/settlement/turret.webp";
 import wallCorner from "../../assets/settlement/wall_corner.webp";
 import wallStraight from "../../assets/settlement/wall_straight.webp";
 import warehouse from "../../assets/settlement/warehouse.webp";
-import watchtower from "../../assets/settlement/watchtower.webp";
 import waterPump from "../../assets/settlement/water_pump.webp";
 import waterTower from "../../assets/settlement/water_tower.webp";
-import workshop from "../../assets/settlement/workshop.webp";
 
 export const SETTLEMENT_ASSETS = {
   "armor_workbench.png": armorWorkbench,
@@ -81,10 +79,8 @@ export const SETTLEMENT_ASSETS = {
   "wall_corner.png": wallCorner,
   "wall_straight.png": wallStraight,
   "warehouse.png": warehouse,
-  "watchtower.png": watchtower,
   "water_pump.png": waterPump,
   "water_tower.png": waterTower,
-  "workshop.png": workshop,
 };
 
 export const CONSTRUCTION_ASSETS = {
