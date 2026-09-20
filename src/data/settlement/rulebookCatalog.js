@@ -18,7 +18,6 @@ export const RULEBOOK_BUILDINGS = {
   lights: { materials: { common: 2, uncommon: 2 }, constructionDays: 1, effects: { happiness: 1, requiresPower: 1 }, skill: { name: "Science", rank: 2 }, rarity: "common" },
   radio_beacon: { materials: { common: 14, uncommon: 6, rare: 4 }, constructionDays: 3, effects: { requiresPower: 1, attractsPeople: true }, skill: { name: "Science", rank: 3 }, rarity: "common" },
 
-  workshop: { materials: { common: 10, uncommon: 14 }, constructionDays: 2, effects: { crafting: true, craftingType: "weapons" }, perk: { name: "Local Leader", rank: 2 }, skill: { name: "Repair", rank: 3 }, rarity: "uncommon", legacyAlias: true },
   armor_workbench: {
     materials: { common: 3, uncommon: 21 }, constructionDays: 2,
     effects: { crafting: true, craftingType: "armor" },
@@ -104,7 +103,6 @@ export const RULEBOOK_BUILDINGS = {
   shotgun_turret: { materials: { common: 6, uncommon: 17, rare: 5 }, constructionDays: 4, effects: { requiresPower: 1, defense: 4 }, perk: { name: "Gun Nut", rank: 2 }, skill: { name: "Repair", rank: 4 }, rarity: "uncommon" },
   spotlight_turret: { materials: { common: 6, uncommon: 7, rare: 1 }, constructionDays: 2, effects: { requiresPower: 1, defense: 1 }, skill: { name: "Science", rank: 2 }, rarity: "common" },
 
-  watchtower: { materials: { common: 14 }, constructionDays: 2, effects: { guardActionDefenseBonus: 1 }, skill: { name: "Repair", rank: 2 }, rarity: "common", legacyAlias: true },
   wall_straight: { materials: { common: 3 }, constructionDays: 1, effects: {}, rarity: "common" },
   wall_corner: { materials: { common: 3 }, constructionDays: 1, effects: {}, rarity: "common" },
   wall_corner_reverse: { materials: { common: 3 }, constructionDays: 1, effects: {}, rarity: "common" },
