@@ -374,3 +374,56 @@
   .pip-modal.quick-create-modal { max-width: 100%; }
   .quick-special-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Keep the guided creator above the app shell and keep its footer reachable on phones. */
+.quick-create-backdrop {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.quick-create-modal {
+  position: relative;
+}
+.quick-create-body {
+  flex: 1 1 auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.quick-create-footer {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 4;
+  background: var(--pip-bg, #07120a);
+}
+.quick-create-footer .pip-btn[aria-disabled="true"] {
+  opacity: .7;
+}
+
+@media (max-width: 620px) {
+  .quick-create-modal {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  .quick-create-footer {
+    position: sticky;
+    bottom: 0;
+    margin: 0 -2px;
+    padding: 10px 4px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(128, 255, 128, 0.35);
+    box-shadow: 0 -10px 24px rgba(0,0,0,.45);
+  }
+  .quick-create-validation {
+    display: block;
+    min-width: 0;
+    padding: 0 4px;
+    font-size: .72rem;
+    line-height: 1.25;
+  }
+  .quick-create-footer > .pip-btn {
+    flex: 0 0 auto;
+    min-width: 82px;
+  }
+}
