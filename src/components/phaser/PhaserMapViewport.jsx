@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CELL, anchoredZoom, clampScroll, frameCamera } from "./mapCamera.js";
+import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
 import "./phaserMaps.css";
 
 const COPY = {
@@ -214,14 +215,24 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           const shape = this.add.graphics().setDepth(100);
           shape.fillStyle(0x06120d).fillCircle(x, y, radius).lineStyle(selected ? 4 : 2, selected ? 0xffd166 : color).strokeCircle(x, y, radius);
           const letter = this.add.text(x, y, String(token.name || 'T').slice(0, 1).toUpperCase(), { fontFamily: 'monospace', fontSize: `${Math.round(radius)}px`, color: '#c5eebe' }).setOrigin(.5).setDepth(102);
-          let portrait, mask, geometry;
-          const stop = this.texture(token.avatar, key => {
-            portrait = this.add.image(x, y, key).setDepth(101);
-            portrait.setScale(Math.max(radius * 2 / portrait.width, radius * 2 / portrait.height));
-            geometry = this.make.graphics({ x: 0, y: 0 }, false).fillStyle(0xffffff).fillCircle(x, y, radius - 3);
-            mask = geometry.createGeometryMask(); portrait.setMask(mask); letter.setVisible(false);
-          });
-          return () => { stop(); portrait?.destroy(); mask?.destroy(); geometry?.destroy(); letter.destroy(); shape.destroy(); };
+          let portrait, mask, geometry, disposed = false;
+          let stop = () => {};
+          const applyPortrait = (url) => {
+            if (!url || disposed) return;
+            stop = this.texture(url, key => {
+              if (disposed) return;
+              portrait = this.add.image(x, y, key).setDepth(101);
+              portrait.setScale(Math.max(radius * 2 / portrait.width, radius * 2 / portrait.height));
+              geometry = this.make.graphics({ x: 0, y: 0 }, false).fillStyle(0xffffff).fillCircle(x, y, radius - 3);
+              mask = geometry.createGeometryMask(); portrait.setMask(mask); letter.setVisible(false);
+            });
+          };
+          const avatar = String(token.avatar || "");
+          if (avatar) applyPortrait(avatar);
+          else if (token.npcId) {
+            getBestiaryTokenUrl(token.npcId).then(applyPortrait).catch(() => {});
+          }
+          return () => { disposed = true; stop(); portrait?.destroy(); mask?.destroy(); geometry?.destroy(); letter.destroy(); shape.destroy(); };
         }
         refresh() {
           const d = latest.current, w = d.cols * CELL, h = d.rows * CELL;
