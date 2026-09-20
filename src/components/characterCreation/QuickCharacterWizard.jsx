@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
   buildDefaultForm,
@@ -617,7 +618,7 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
     ? getChoiceEntries(getOriginEquipmentGrant(equipmentPack))
     : [];
 
-  return (
+  const wizard = (
     <div className="pip-modal-backdrop quick-create-backdrop">
       <div className="pip-modal pip-panel quick-create-modal">
         <div className="quick-create-header">
@@ -931,4 +932,8 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
       </div>
     </div>
   );
+
+  return typeof document !== "undefined"
+    ? createPortal(wizard, document.body)
+    : wizard;
 }
