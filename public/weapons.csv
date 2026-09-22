@@ -135,3 +135,5 @@ Unarmed,Vice Grip,1,15,30,,4,Breaking,Physical,0,C,,2,4,
 Melee Weapon,Staff of Atom,1,15,200,,6,Piercing 1,Physical,0,C,"Parry, Two-Handed",4,6,
 Small Guns,Grappling Gun,1,9,55,,5,"Piercing 1, Special",Physical,0,M,"Inaccurate, Unreliable",2,5,Grapple Rounds
 Big Guns,Tear Gas Launcher,1,18,254,,4,"Persistent, Stun, Spread",Poison,0,M,"Blast, Two-Handed, Inaccurate",3,4,Tear Gas Canister
+Explosive,Flashbang Grenade,1,1,50,,3,"Persistent, Stun",Poison,0,M,"Blast, Thrown",2,3,
+Small Guns,The Magnumnomicon,1,6,,,8,Vicious,Special,1,C,Close Quarters,Unique,8,.44 Magnum
