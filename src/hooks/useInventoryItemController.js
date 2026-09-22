@@ -253,22 +253,64 @@ export function useInventoryItemController({ form, setForm, i18n, t }) {
           ? true
           : !window.confirm("END + Survival D2: did the test succeed?");
 
+        const currentDuration = Math.max(0, Number(form.famishedFeverDuration || 0));
+        const doubled = currentDuration >= 7;
+        const healingAmount = doubled ? 20 : 10;
+        const apAmount = doubled ? 4 : 2;
+
         setForm((prev) => {
           const maxHp = Math.max(0, Number(getDerivedStats(prev).effectiveMaxHp || 0));
-          const currentDuration = Math.max(0, Number(prev.famishedFeverDuration || 0));
+          const previousDuration = Math.max(0, Number(prev.famishedFeverDuration || 0));
+          const nextDuration = contracted
+            ? (previousDuration > 0 ? previousDuration + 1 : 2)
+            : previousDuration;
+          const statuses = {
+            ...(prev.statuses || {}),
+            famishedFever: nextDuration > 0,
+          };
+          const activeConsumableEffects = (prev.activeConsumableEffects || [])
+            .filter((effect) => effect?.id !== "disease:famished-fever")
+            .concat(nextDuration > 0 ? [{
+              id: "disease:famished-fever",
+              kind: "disease",
+              sourceName: "Famished Fever",
+              effectText: "PER, CHA, and INT tests have +1 difficulty while infected.",
+              canonicalSourceName: "Famished Fever",
+              canonicalEffect: "PER/CHA/INT difficulty +1",
+              duration: "Until cured",
+              category: "disease",
+              modifiers: {
+                derived: {},
+                tests: [
+                  { keys: ["P"], difficultyDelta: 1 },
+                  { keys: ["C"], difficultyDelta: 1 },
+                  { keys: ["I"], difficultyDelta: 1 },
+                ],
+                combat: {},
+                flags: {
+                  famishedFever: true,
+                  famishedFeverDuration: nextDuration,
+                  healingRestrictedToFleshFruit: nextDuration >= 3,
+                  livingFleshActsAsFleshFruit: nextDuration >= 5,
+                  fleshFruitDoubleBenefit: nextDuration >= 7,
+                  gmControlRequired: nextDuration >= 10,
+                },
+              },
+            }] : []);
+
           return {
             ...prev,
-            currentHp: String(Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0)) + 10)),
+            currentHp: String(Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0)) + healingAmount)),
             satiety: String(Math.min(5, Math.max(0, Number(prev.satiety || 0)) + 1)),
-            famishedFeverDuration: String(
-              contracted ? (currentDuration > 0 ? currentDuration + 1 : 2) : currentDuration
-            ),
+            famishedFeverDuration: String(nextDuration),
+            statuses,
+            activeConsumableEffects,
             inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
           };
         });
 
         window.dispatchEvent(new CustomEvent(PIPBOY_CONSUMABLE_COMBAT_AP_EVENT, {
-          detail: { amount: 2, source: "Flesh Fruit" },
+          detail: { amount: apAmount, source: "Flesh Fruit" },
         }));
         return;
       }
@@ -315,7 +357,9 @@ export function useInventoryItemController({ form, setForm, i18n, t }) {
           satiety: String(Math.min(5, Math.max(0, Number(prev.satiety || 0) + Number(plan.hungerRestore || 0)))),
         };
         const maxHp = Math.max(0, Number(getDerivedStats(preview).effectiveMaxHp || 0));
-        const nextHp = Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0) + Number(plan.healingHp || 0)));
+        const famishedDuration = Math.max(0, Number(prev.famishedFeverDuration || 0));
+        const allowedHealing = famishedDuration >= 3 ? 0 : Number(plan.healingHp || 0);
+        const nextHp = Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0) + allowedHealing));
 
         return {
           ...preview,
@@ -405,9 +449,10 @@ export function useInventoryItemController({ form, setForm, i18n, t }) {
       const nextDerived = getDerivedStats(nextBase);
       const maxHp = Math.max(0, Number(nextDerived.effectiveMaxHp || nextDerived.maxHp || 0));
       const currentHp = Math.max(0, Number(prev.currentHp || 0));
+      const famishedDuration = Math.max(0, Number(prev.famishedFeverDuration || 0));
       return {
         ...nextBase,
-        currentHp: String(Math.min(maxHp, currentHp + stim.healingHp)),
+        currentHp: String(Math.min(maxHp, currentHp + (famishedDuration >= 3 ? 0 : stim.healingHp))),
       };
     });
   };
