@@ -23,6 +23,7 @@ import {
 } from "../data/startingEquipment.js";
 
 import { buildPowerArmorInventoryItems } from "../utils/powerArmorInventory.js";
+import { PIPBOY_WINTER_TRAVEL_EFFECT_EVENT } from "../utils/winterTravelAutomation.js";
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 const ORIGIN_EQUIPMENT_CHOICE_EVENT = "pipboy:set-origin-equipment-choices";
@@ -729,6 +730,41 @@ export function useCharacterStorage(initialForm) {
       });
     };
 
+    const handleWinterTravelEffect = (event) => {
+      const resolution = event?.detail?.resolution;
+      if (!resolution || resolution.kind !== "winterExposure") return;
+
+      setForm((prev) => {
+        const currentFatigue = Math.max(0, Number(prev.fatigue || 0));
+        if (resolution.success || Number(resolution.fatigue || 0) <= 0) {
+          return {
+            ...prev,
+            lastWinterExposure: {
+              at: new Date().toISOString(),
+              ...resolution,
+            },
+          };
+        }
+
+        const cap = Math.max(0, Number(resolution.fatigueCap || 0));
+        const nextFatigue = Math.min(
+          cap,
+          currentFatigue + Math.max(0, Number(resolution.fatigue || 0))
+        );
+
+        return {
+          ...prev,
+          fatigue: String(nextFatigue),
+          coldExposureRecoveryHours: String(Math.max(0, Number(resolution.recoveryHours || 0))),
+          coldExposureLocked: Boolean(resolution.lockedByComplication),
+          lastWinterExposure: {
+            at: new Date().toISOString(),
+            ...resolution,
+          },
+        };
+      });
+    };
+
     const handleTravelEncounterEffect = (event) => {
       const resolution = event?.detail?.resolution;
       if (!resolution || typeof resolution !== "object") return;
@@ -810,6 +846,7 @@ export function useCharacterStorage(initialForm) {
       handleEndConsumableEffect
     );
     window.addEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
+    window.addEventListener(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, handleWinterTravelEffect);
     window.addEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
     window.addEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
     window.addEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
@@ -821,6 +858,7 @@ export function useCharacterStorage(initialForm) {
         handleEndConsumableEffect
       );
       window.removeEventListener(PIPBOY_SURVIVAL_TRAVEL_EVENT, handleSurvivalTravel);
+      window.removeEventListener(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, handleWinterTravelEffect);
       window.removeEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
       window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
       window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
