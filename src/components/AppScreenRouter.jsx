@@ -280,6 +280,8 @@ export default function AppScreenRouter({
           inventoryItems={form.inventoryItems}
           onArmorChange={updateArmor}
           derived={derived}
+          form={form}
+          onRoll={openContextDiceRoll}
         />
       );
 
