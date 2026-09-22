@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { STATUS_LIST } from "../constants.js";
 import { getDerivedStats } from "../utils/characterMath.js";
 import { readCompanionState, writeCompanionState } from "../utils/companionStorage.js";
-import { getConsumableUsePlan, PIPBOY_USE_ITEM_EVENT } from "../utils/consumableEffects.js";
+import { getConsumableUsePlan, PIPBOY_CONSUMABLE_COMBAT_AP_EVENT, PIPBOY_USE_ITEM_EVENT } from "../utils/consumableEffects.js";
 import {
   ITEM_USE_COPY,
   consumeInventoryItemAt,
@@ -201,6 +201,84 @@ export function useInventoryItemController({ form, setForm, i18n, t }) {
             },
           };
         });
+        return;
+      }
+
+      if (name === "chem suppressant syringe") {
+        const addictionKeys = Object.keys(form.statuses || {}).filter((key) =>
+          key.toLowerCase().endsWith("addiction") && form.statuses?.[key]
+        );
+        const selectedAddiction = addictionKeys.length
+          ? chooseNumberedTarget(
+              "Choose one addiction to remove",
+              addictionKeys,
+              (key) => key
+            )
+          : null;
+
+        if (addictionKeys.length && selectedAddiction === null) return;
+
+        setForm((prev) => {
+          const statuses = { ...(prev.statuses || {}) };
+          if (selectedAddiction) statuses[selectedAddiction] = false;
+
+          const activeConsumableEffects = (prev.activeConsumableEffects || [])
+            .filter((effect) => effect?.category !== "chem" && effect?.kind !== "addiction")
+            .filter((effect) => effect?.id !== "consumable:chem-suppressant-syringe")
+            .concat({
+              id: "consumable:chem-suppressant-syringe",
+              sourceName: "Chem Suppressant Syringe",
+              effectText: "Chems have no effect while the suppressant is active.",
+              canonicalSourceName: "Chem Suppressant Syringe",
+              canonicalEffect: "Chem suppression",
+              duration: "Lasting",
+              category: "aid",
+              modifiers: { derived: {}, tests: [], combat: {}, flags: { chemsSuppressed: true } },
+            });
+
+          return {
+            ...prev,
+            fatigue: String(Math.max(0, Number(prev.fatigue || 0)) + 2),
+            statuses,
+            activeConsumableEffects,
+            inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+          };
+        });
+        return;
+      }
+
+      if (name === "flesh fruit") {
+        const infected = Number(form.famishedFeverDuration || 0) > 0;
+        const contracted = infected
+          ? true
+          : !window.confirm("END + Survival D2: did the test succeed?");
+
+        setForm((prev) => {
+          const maxHp = Math.max(0, Number(getDerivedStats(prev).effectiveMaxHp || 0));
+          const currentDuration = Math.max(0, Number(prev.famishedFeverDuration || 0));
+          return {
+            ...prev,
+            currentHp: String(Math.min(maxHp, Math.max(0, Number(prev.currentHp || 0)) + 10)),
+            satiety: String(Math.min(5, Math.max(0, Number(prev.satiety || 0)) + 1)),
+            famishedFeverDuration: String(
+              contracted ? (currentDuration > 0 ? currentDuration + 1 : 2) : currentDuration
+            ),
+            inventoryItems: consumeInventoryItemAt(prev.inventoryItems || [], index),
+          };
+        });
+
+        window.dispatchEvent(new CustomEvent(PIPBOY_CONSUMABLE_COMBAT_AP_EVENT, {
+          detail: { amount: 2, source: "Flesh Fruit" },
+        }));
+        return;
+      }
+
+      const previewPlan = getConsumableUsePlan(item, form);
+      const chemsSuppressed = (form.activeConsumableEffects || []).some(
+        (effect) => effect?.modifiers?.flags?.chemsSuppressed
+      );
+      if (chemsSuppressed && (previewPlan.statusKey || previewPlan.addictionRisk)) {
+        window.alert("Chem Suppressant is active. This chem has no effect.");
         return;
       }
 
