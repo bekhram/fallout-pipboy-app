@@ -16,6 +16,7 @@ export default [
   ["Pack Brahmin","A mutant cow that carries heavy loads and produces milk and fertiliser.","0","200","3"],
   ["Pip-Boy","All Pip-Boy units aid their wearer during combat thanks to the Vault-Tec Assisted Targeting System, or V.A.T.S. A character equipped with a Pip-Boy may use V.A.T.S. when they make an attack, ignoring the normal difficulty increase for targeting a specific location of the enemy.","0","-","-"],
   ["Radio","Picks up and plays radio transmissions.","2","75","2"],
+  ["Robot Repair Kit","Repairs a damaged robot companion by 4 HP when used.","","","Uncommon"],
   ["Signal Flare","Generates bright light withing Close range until the end of the current scene, One use only.","0.3","10","1"],
   ["Torch","Generates bright light within Close range until the end of the current scene, Requires an INT + Survival test to light, difficulty 1, +1 for each previous use.","1","10","1"]
 ];
