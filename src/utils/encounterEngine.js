@@ -4,6 +4,7 @@ import {
   OFFICIAL_WEIRD_WASTELAND_ENCOUNTERS,
 } from "../data/map/encounterTables.js";
 import { LOCATION_TYPES } from "../data/map/locationTypes.js";
+import { WINTER_RANDOM_ENCOUNTERS, lookupD20 } from "./winterOfAtomRules.js";
 
 function weightedPick(list) {
   const total = list.reduce((sum, item) => sum + Number(item.weight || 0), 0);
@@ -44,6 +45,17 @@ export function rollTravelEncounter(options = {}) {
 
   if (regionId === "commonwealth") {
     const roll = rollD20();
+    if (options?.winterMode) {
+      const winter = lookupD20(WINTER_RANDOM_ENCOUNTERS, roll);
+      return winter ? {
+        id: "winter_of_atom_" + roll,
+        type: "encounter",
+        text: winter.text,
+        roll,
+        generationSource: "winter_of_atom",
+        regionId,
+      } : null;
+    }
     const result = byD20(OFFICIAL_COMMONWEALTH_ENCOUNTERS, roll);
     if (!result) return null;
 
