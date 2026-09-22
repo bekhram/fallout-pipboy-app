@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PIPBOY_CONSUMABLE_COMBAT_AP_EVENT } from "../utils/consumableEffects.js";
 
 export function useCombatController({
   combatApMax,
@@ -20,6 +21,19 @@ export function useCombatController({
       ...prev,
       ap: Math.min(safeCombatApMax, Math.max(0, Number(prev.ap || 0))),
     }));
+  }, [safeCombatApMax]);
+
+  useEffect(() => {
+    const handleConsumableAp = (event) => {
+      const amount = Math.max(0, Number(event?.detail?.amount || 0));
+      if (amount <= 0) return;
+      setCombatState((prev) => ({
+        ...prev,
+        ap: Math.min(safeCombatApMax, Math.max(0, Number(prev.ap || 0)) + amount),
+      }));
+    };
+    window.addEventListener(PIPBOY_CONSUMABLE_COMBAT_AP_EVENT, handleConsumableAp);
+    return () => window.removeEventListener(PIPBOY_CONSUMABLE_COMBAT_AP_EVENT, handleConsumableAp);
   }, [safeCombatApMax]);
 
   const setCombatAp = (value) => {
