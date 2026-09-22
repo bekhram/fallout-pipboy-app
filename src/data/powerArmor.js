@@ -186,6 +186,7 @@ export const POWER_ARMOR_SYSTEMS = [
   { id: "rusty-knuckles", name: "Rusty Knuckles", locations: ["arm"], weight: 1, cost: 50, requirement: "Blacksmith 1", effect: "Unarmed attacks gain Persistent." },
   { id: "hydraulic-bracers", name: "Hydraulic Bracers", locations: ["arm"], weight: 1, cost: 100, requirement: "Blacksmith 3", effect: "Unarmed attacks inflict +2 CD damage while powered." },
   { id: "optimized-bracers", name: "Optimized Bracers", locations: ["arm"], weight: 1, cost: 100, requirement: "Blacksmith 1", effect: "Spend up to 4 AP on bonus melee damage while powered." },
+  { id: "at0m-tendrils", name: "Biomechanical Bladed Tendrils", locations: ["arm"], weight: 8, cost: 200, requirement: "Science! 3", onlySets: ["at0m"], effect: "While powered: unique melee attack, 10 CD Piercing, Vicious, Breaking Physical damage, Parry. Installed with Science." },
   { id: "tesla-bracers", name: "Tesla Bracers", locations: ["arm"], weight: 1, cost: 150, requirement: "Blacksmith 3, Science! 1", effect: "Unarmed attacks inflict +2 CD Energy damage while powered." },
   { id: "calibrated-shocks", name: "Calibrated Shocks", locations: ["leg"], weight: 1, cost: 100, requirement: "Science! 2", effect: "Carry weight increases by 50." },
   { id: "explosive-vent", name: "Explosive Vent", locations: ["leg"], weight: 1, cost: 100, requirement: "Science! 3", effect: "Impact landings damage creatures and objects within Close range." },
