@@ -21,6 +21,8 @@ export const MOD_SLOT_LABELS = {
   concentrate: "Concentrate",
   container: "Container",
   canister: "Canister",
+  winch: "Winch",
+  coil: "Coil",
 };
 
 const sights = [
@@ -112,6 +114,49 @@ const energyWeapons = {
 };
 
 const unique = {
+  "staff-of-atom": {
+    coil: [
+      mod(
+        "Shocking Coils",
+        "+2 damage; damage type becomes Physical/Energy",
+        0,
+        100,
+        "Blacksmith 2, Science! 2",
+        "Surging"
+      ),
+    ],
+  },
+  "grappling-gun": {
+    winch: [
+      mod("Secure Winch", "Remove Unreliable", 0, 0, "Science! 1", "Secure"),
+      mod(
+        "Powered Winch",
+        "+2 damage; damage type becomes Physical/Energy",
+        0,
+        0,
+        "Science! 2",
+        "Powered"
+      ),
+    ],
+    barrel: [
+      mod("Long Barrel", "Remove Inaccurate", 0, 0, "Science! 1", "Long"),
+      mod("Aerodynamic Barrel", "+1 damage; gain Vicious", 0, 0, "Science! 2", "Aerodynamic"),
+    ],
+  },
+  "tear-gas-launcher": {
+    barrel: [
+      mod("Extended Barrel", "Increase Range by 1 step", 1, 20, "Gun Nut 1", "Extended"),
+      mod("Snap Barrel", "+1 Fire Rate", 0, 143, "Gun Nut 2", "Double Action"),
+      mod("3-Shot Chamber", "+2 Fire Rate", 8, 218, "Gun Nut 3", "3-Shot"),
+      mod("6-Shot Chamber", "+2 Fire Rate; gain Unreliable", 10, 250, "Gun Nut 4", "6-Shot"),
+    ],
+    grip: [
+      mod("Tactical Grip", "Remove Inaccurate", 0, 28, "", "Tactical"),
+    ],
+    stock: [
+      mod("Balanced Stock", "Gain Accurate and Reliable", 10, 250, "Gun Nut 2", "Balanced"),
+    ],
+  },
   "laser-musket": {
     capacitor: [
       mod("Three-crank capacitor", "+1 damage; consumes 3 shots per attack", 0, 4, "", "Three-crank"),
@@ -597,8 +642,13 @@ const applyEffectText = (state, text) => {
   if (rangeUp) state.range = changeRange(state.range, Number(rangeUp[1]));
   if (rangeDown) state.range = changeRange(state.range, -Number(rangeDown[1]));
 
-  const damageType = source.match(/damage (?:type )?(?:becomes|to)\s+(Physical|Energy|Radiation|Poison)/i);
-  if (damageType) state.type = damageType[1].toLowerCase();
+  const hybridDamageType = source.match(/damage (?:type )?(?:becomes|to)\s+(Physical\/Energy|Energy\/Physical)/i);
+  if (hybridDamageType) {
+    state.type = "physical/energy";
+  } else {
+    const damageType = source.match(/damage (?:type )?(?:becomes|to)\s+(Physical|Energy|Radiation|Poison)/i);
+    if (damageType) state.type = damageType[1].toLowerCase();
+  }
 
   const ammo = source.match(/ammo becomes\s+([^;]+)/i);
   if (ammo) state.ammo = ammo[1].trim();
