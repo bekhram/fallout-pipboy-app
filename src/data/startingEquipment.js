@@ -57,6 +57,18 @@ export const TAG_SKILL_EQUIPMENT = {
   Unarmed: [item("Knuckles", "weapons")],
 };
 
+export const ATOMIC_WINTER_SURVIVAL_ITEMS = [
+  item("Beer", "beverages"),
+  item("Bourbon", "beverages"),
+  item("Gas Mask", "armor"),
+  item("Heavy Coat", "armor"),
+  item("Hood or Cowl", "armor"),
+  item("Molotov Cocktail", "weapons"),
+  item("Pork 'N' Beans", "food"),
+  item("RadAway", "aid"),
+  item("Stimpak", "aid"),
+];
+
 export const ORIGIN_EQUIPMENT_PACKS = {
   bos_initiate: [
     item("Brotherhood of Steel Fatigues", "armor"),
@@ -695,6 +707,17 @@ export function applyStartingEquipmentGrant(form, sourceKey, entries, databases 
 
 export function getOriginEquipmentGrant(packId) {
   return ORIGIN_EQUIPMENT_PACKS[packId] || [];
+}
+
+export function getAtomicWinterSurvivalGrant(selectedNames = []) {
+  const selected = new Set(
+    (Array.isArray(selectedNames) ? selectedNames : [])
+      .map((name) => String(name || "").trim())
+      .filter(Boolean)
+      .slice(0, 2)
+  );
+
+  return ATOMIC_WINTER_SURVIVAL_ITEMS.filter((entry) => selected.has(entry.name));
 }
 
 export function getTagSkillEquipmentGrant(skillName) {
