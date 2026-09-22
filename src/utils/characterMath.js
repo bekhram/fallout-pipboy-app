@@ -150,7 +150,8 @@ export function getDerivedStats(form) {
       toNumber(perkState.derived.carryWeightBonus),
   };
 
-  const maxHp = Math.max(1, toNumber(derivedWithPerks.maxHp, 1));
+  const campsiteMaxHpBonus = Math.max(0, toNumber(form.campsiteMaxHpBonus));
+  const maxHp = Math.max(1, toNumber(derivedWithPerks.maxHp, 1) + campsiteMaxHpBonus);
   const radiationHp = Math.max(0, toNumber(form.radiationHp));
   const effectiveMaxHp = Math.max(0, maxHp - radiationHp);
   const currentHp = Math.max(
@@ -168,6 +169,7 @@ export function getDerivedStats(form) {
     md: toNumber(derivedWithPerks.md),
     luckPoints: toNumber(derivedWithPerks.luckPoints),
     maxHp,
+    campsiteMaxHpBonus,
     radiationHp,
     effectiveMaxHp,
     currentHp,

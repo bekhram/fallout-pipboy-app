@@ -1044,6 +1044,8 @@ return {
     fatigue: "0",
     coldExposureRecoveryHours: "0",
     coldExposureLocked: false,
+    campsiteMaxHpBonus: "0",
+    activeCampsite: null,
     currentHp: "10",
     radiationHp: "0",
     carryWeightOverride: "",
