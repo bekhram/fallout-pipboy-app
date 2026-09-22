@@ -5,11 +5,26 @@ import { PERKS_LIST } from "../data/perks";
 import { getAddedPerkTranslation } from "../data/perkTranslations";
 import { getSupplementalPerkTranslation } from "../data/supplementalPerks.js";
 import { GENERATED_PERK_IMAGES } from "../data/perkGeneratedAssets.js";
+import PERK_ASSETS from "../../perkAssets.js";
 
 const perkImageModules = import.meta.glob("../../assets/perks/*.png", {
   eager: true,
   import: "default",
 });
+
+const normalizePerkAssetKey = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+const PUBLIC_PERK_IMAGES = Object.fromEntries(
+  Object.entries(PERK_ASSETS).map(([name, image]) => [
+    normalizePerkAssetKey(name),
+    image,
+  ])
+);
 
 const PERK_IMAGES = {
   ...Object.fromEntries(
@@ -19,6 +34,7 @@ const PERK_IMAGES = {
     ])
   ),
   ...GENERATED_PERK_IMAGES,
+  ...PUBLIC_PERK_IMAGES,
 };
 
 const SPECIAL_NAMES = {
