@@ -994,6 +994,8 @@ export function buildDefaultMapState() {
     discoveredKeys: [],
     travelLog: ["Entered the Wasteland"],
     sectorCache: {},
+    winterModeEnabled: false,
+    lastWinterTravel: null,
   };
 }
 
@@ -1039,6 +1041,9 @@ return {
     thirst: "3",
     vigor: "3",
     survivalTravelHoursRemainder: "0",
+    fatigue: "0",
+    coldExposureRecoveryHours: "0",
+    coldExposureLocked: false,
     currentHp: "10",
     radiationHp: "0",
     carryWeightOverride: "",
