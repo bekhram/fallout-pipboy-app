@@ -22,7 +22,6 @@ import GamesScreen from "./components/minigames/GamesScreen.jsx";
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
 import { parseCSV } from "./utils/csvParser.js"; 
-import { readLastUiState, writeLastUiState } from "./utils/uiViewState.js";
 
 import {
   buildDefaultForm,
@@ -36,22 +35,15 @@ import { useCombatController } from "./hooks/useCombatController.js";
 import { useCharacterStatusController } from "./hooks/useCharacterStatusController.js";
 import { useCharacterCollectionsController } from "./hooks/useCharacterCollectionsController.js";
 import { useCharacterRulesController } from "./hooks/useCharacterRulesController.js";
+import { useUiNavigationController } from "./hooks/useUiNavigationController.js";
 import { getDerivedStats } from "./utils/characterMath.js";
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
 import { needsWeaponMetadataHydration, hydrateWeaponMetadata } from "./utils/weaponDatabase.js";
 
 export default function App() {
-  const startupUiStateRef = useRef(null);
-  if (startupUiStateRef.current === null) startupUiStateRef.current = readLastUiState();
-  const startupUiState = startupUiStateRef.current;
   const [pendingAutoD6, setPendingAutoD6] = useState(null);
   const { t, i18n } = useTranslation();
-  const [screen, setScreen] = useState(() => (
-    startupUiState.view === "battlemap" ? "sheet" : startupUiState.screen
-  ));
-  const [sessionLobbyOpen, setSessionLobbyOpen] = useState(false);
-  const [menuSection, setMenuSection] = useState("home");
   const [isDiceOpen, setIsDiceOpen] = useState(false);
   const [diceRoll, setDiceRoll] = useState(null);
 
@@ -105,9 +97,6 @@ export default function App() {
     setDiceRoll(null);
   };
 
-  const [activeTab, setActiveTab] = useState(() => startupUiState.activeTab);
-  const [sideMenuOpen, setSideMenuOpen] = useState(false);
-  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
   const importInputRef = useRef(null);
   const [showConditions, setShowConditions] = useState(false);
@@ -130,6 +119,22 @@ export default function App() {
   } = useCharacterStorage(buildDefaultForm());
 
   const sharedSession = useSharedSession(form);
+
+  const {
+    screen,
+    setScreen,
+    activeTab,
+    setActiveTab,
+    sessionLobbyOpen,
+    setSessionLobbyOpen,
+    menuSection,
+    setMenuSection,
+    sideMenuOpen,
+    setSideMenuOpen,
+    showUnsavedPrompt,
+    setShowUnsavedPrompt,
+  } = useUiNavigationController({ sharedSession });
+
 
   const {
     updateTopLevel,
@@ -172,46 +177,6 @@ export default function App() {
     setForm,
     globalWeapons,
   });
-
-
-  useEffect(() => {
-    const current = readLastUiState();
-    const preserveBattlemap = screen === "sheet" && current.view === "battlemap";
-    writeLastUiState({
-      screen,
-      activeTab,
-      view: preserveBattlemap ? "battlemap" : screen,
-    });
-  }, [screen, activeTab]);
-
-  useEffect(() => {
-    const shouldResume = startupUiState.view === "battlemap" || startupUiState.screen === "session";
-    const lastCode = sharedSession.lastSession?.code;
-    if (!shouldResume || sharedSession.isActive || sharedSession.lastSession?.autoResume === false || !lastCode) return undefined;
-
-    let cancelled = false;
-    let inFlight = false;
-    const resume = async () => {
-      if (cancelled || inFlight) return;
-      inFlight = true;
-      try {
-        await sharedSession.resumeLastSession?.({ automatic: true });
-      } catch (error) {
-        console.warn("Could not restore the last Pip-2D20 session:", error);
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    void resume();
-    const interval = window.setInterval(() => void resume(), 5000);
-    window.addEventListener("online", resume);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("online", resume);
-    };
-  }, [sharedSession.isActive, sharedSession.lastSession?.code, sharedSession.lastSession?.autoResume, startupUiState]);
 
 
   useEffect(() => {
