@@ -7,9 +7,11 @@
     "dev": "vite",
     "check:i18n": "node scripts/check-i18n.mjs",
     "test:regression": "node --test tests/characterCreationRules.test.js tests/settlementWorkerActor.test.js tests/settlementWorkerRuntime.test.js tests/settlementSpriteFrames.test.js tests/settlementDefensePlan.test.js tests/settlementFortificationRisk.test.js tests/settlementRepair.test.js tests/settlementRaidBattle.test.js tests/settlementTowerDefense.test.js tests/settlementProfit.test.js tests/settlementLocalOffline.test.js tests/quickCreationUi.test.js",
-    "prebuild": "npm run check:i18n && npm run test:regression",
+    "prebuild": "npm run check:i18n && npm run test:all",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:all": "node --test tests/*.test.js tests/*.test.mjs",
+    "verify": "npm run check:i18n && npm run test:all && vite build"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
