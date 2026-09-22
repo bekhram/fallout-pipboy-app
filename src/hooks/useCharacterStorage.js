@@ -19,6 +19,7 @@ import {
   applyStartingEquipmentGrant,
   getOriginEquipmentGrant,
   getTagSkillEquipmentGrant,
+  getAtomicWinterSurvivalGrant,
   removeStartingEquipmentGrant,
 } from "../data/startingEquipment.js";
 
@@ -27,6 +28,7 @@ import { PIPBOY_WINTER_TRAVEL_EFFECT_EVENT } from "../utils/winterTravelAutomati
 
 const STORAGE_KEY = "fallout_pipboy_v4_last_character";
 const ORIGIN_EQUIPMENT_CHOICE_EVENT = "pipboy:set-origin-equipment-choices";
+const ATOMIC_WINTER_SURVIVAL_EVENT = "pipboy:set-atomic-winter-survival-pack";
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
 const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
 const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
@@ -224,6 +226,59 @@ export function useCharacterStorage(initialForm) {
     armorInventoryDatabase.length > 0 &&
     weaponInventoryDatabase.length > 0 &&
     ammoInventoryDatabase.length > 0;
+
+  useEffect(() => {
+    const handleAtomicWinterSurvivalPack = (event) => {
+      const selectedNames = Array.isArray(event?.detail?.selectedNames)
+        ? event.detail.selectedNames.map((name) => String(name || "").trim()).filter(Boolean).slice(0, 2)
+        : [];
+
+      setForm((prev) => ({
+        ...prev,
+        atomicWinterSurvivalItems: selectedNames,
+      }));
+    };
+
+    window.addEventListener(ATOMIC_WINTER_SURVIVAL_EVENT, handleAtomicWinterSurvivalPack);
+    return () => window.removeEventListener(ATOMIC_WINTER_SURVIVAL_EVENT, handleAtomicWinterSurvivalPack);
+  }, [setForm]);
+
+  useEffect(() => {
+    if (!starterDatabasesReady) return;
+
+    const sourceKey = "winter:atomic-survival-pack";
+    const selectedNames = Array.isArray(form.atomicWinterSurvivalItems)
+      ? form.atomicWinterSurvivalItems.map((name) => String(name || "").trim()).filter(Boolean).slice(0, 2)
+      : [];
+    const previousNames = (form.startingEquipmentGrants?.[sourceKey]?.items || [])
+      .map((entry) => String(entry?.name || "").trim())
+      .filter(Boolean);
+
+    if (JSON.stringify(previousNames) === JSON.stringify(selectedNames)) return;
+
+    setForm((prev) => {
+      if (!selectedNames.length) return removeStartingEquipmentGrant(prev, sourceKey);
+
+      return applyStartingEquipmentGrant(
+        prev,
+        sourceKey,
+        getAtomicWinterSurvivalGrant(selectedNames),
+        {
+          armor: armorInventoryDatabase,
+          weapons: weaponInventoryDatabase,
+          ammo: ammoInventoryDatabase,
+        }
+      );
+    });
+  }, [
+    starterDatabasesReady,
+    form.atomicWinterSurvivalItems,
+    form.startingEquipmentGrants,
+    armorInventoryDatabase,
+    weaponInventoryDatabase,
+    ammoInventoryDatabase,
+    setForm,
+  ]);
 
   useEffect(() => {
     if (!starterDatabasesReady || !form.origin || !form.originEquipmentPack) return;
