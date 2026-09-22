@@ -70,13 +70,15 @@ export default function OriginSelectionModal({
       );
     }
 
-    window.dispatchEvent(
-      new CustomEvent(ATOMIC_WINTER_SURVIVAL_EVENT, {
-        detail: {
-          selectedNames: winterSurvivalItems.slice(0, 2),
-        },
-      })
-    );
+    if (winterSurvivalItems.length === 2) {
+      window.dispatchEvent(
+        new CustomEvent(ATOMIC_WINTER_SURVIVAL_EVENT, {
+          detail: {
+            selectedNames: winterSurvivalItems.slice(0, 2),
+          },
+        })
+      );
+    }
   };
 
   const handleSelectOrigin = (id) => {
@@ -369,6 +371,7 @@ export default function OriginSelectionModal({
             disabled={
               !selectedId ||
               (selectedOriginData?.equipmentPacks && !selectedPack) ||
+              winterSurvivalItems.length === 1 ||
               (Number(selectedOriginData?.traitSelectCount || 0) > 0 && selectedTraits.length !== Number(selectedOriginData?.traitSelectCount || 0))
             }
           >
