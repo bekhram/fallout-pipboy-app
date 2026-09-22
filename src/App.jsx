@@ -30,6 +30,7 @@ import {
   ITEM_USE_COPY,
   consumeInventoryItemAt,
   getDamagedPowerArmorParts,
+  getRepairKitTargetKind,
   getStimpakInfo,
   isRobotCompanion,
   normalizeUtilityName,
@@ -303,10 +304,19 @@ export default function App() {
           .map((companion) => ({ kind: "robot", companion }));
         const powerArmorTargets = getDamagedPowerArmorParts(form)
           .map((target) => ({ kind: "powerArmor", ...target }));
-        const targets = [...robotTargets, ...powerArmorTargets];
+        const repairTargetKind = getRepairKitTargetKind(name);
+        const targets = repairTargetKind === "robot"
+          ? robotTargets
+          : repairTargetKind === "powerArmor"
+            ? powerArmorTargets
+            : [];
 
         if (!targets.length) {
-          window.alert(copy.noRepairTarget);
+          window.alert(
+            repairTargetKind === "robot"
+              ? copy.noRobotTarget
+              : copy.noPowerArmorTarget
+          );
           return;
         }
 

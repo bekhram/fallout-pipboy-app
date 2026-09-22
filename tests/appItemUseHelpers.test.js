@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   consumeInventoryItemAt,
+  getRepairKitTargetKind,
   getStimpakInfo,
   isRobotCompanion,
   normalizeUtilityName,
@@ -63,4 +64,10 @@ test("robot companion detection covers common robot families", () => {
   assert.equal(isRobotCompanion({ creatureType: "Robobrain" }), true);
   assert.equal(isRobotCompanion({ name: "Mister Handy" }), true);
   assert.equal(isRobotCompanion({ creatureType: "Human" }), false);
+});
+
+test("repair kits have isolated target types", () => {
+  assert.equal(getRepairKitTargetKind("Robot Repair Kit"), "robot");
+  assert.equal(getRepairKitTargetKind("Power Armor Repair Kit"), "powerArmor");
+  assert.equal(getRepairKitTargetKind("Stimpak"), null);
 });

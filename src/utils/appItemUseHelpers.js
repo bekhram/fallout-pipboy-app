@@ -2,10 +2,10 @@ import { ARMOR_PARTS } from "../constants.js";
 import { calculatePowerArmorLocations } from "../data/powerArmor.js";
 
 export const ITEM_USE_COPY = {
-  en: { noRepairTarget: "No damaged robot or power armor part found.", chooseRepairTarget: "Choose a repair target", invalid: "Invalid selection.", robot: "ROBOT", powerArmor: "POWER ARMOR" },
-  ru: { noRepairTarget: "Нет поврежденного робота или части силовой брони.", chooseRepairTarget: "Выберите цель ремонта", invalid: "Неверный выбор.", robot: "РОБОТ", powerArmor: "СИЛОВАЯ БРОНЯ" },
-  uk: { noRepairTarget: "Немає пошкодженого робота або частини силової броні.", chooseRepairTarget: "Оберіть ціль ремонту", invalid: "Невірний вибір.", robot: "РОБОТ", powerArmor: "СИЛОВА БРОНЯ" },
-  pl: { noRepairTarget: "Brak uszkodzonego robota lub części pancerza wspomaganego.", chooseRepairTarget: "Wybierz cel naprawy", invalid: "Nieprawidłowy wybór.", robot: "ROBOT", powerArmor: "PANCERZ WSPOMAGANY" },
+  en: { noRobotTarget: "No damaged robot found.", noPowerArmorTarget: "No damaged power armor part found.", chooseRepairTarget: "Choose a repair target", invalid: "Invalid selection.", robot: "ROBOT", powerArmor: "POWER ARMOR" },
+  ru: { noRobotTarget: "Нет повреждённого робота.", noPowerArmorTarget: "Нет повреждённой части силовой брони.", chooseRepairTarget: "Выберите цель ремонта", invalid: "Неверный выбор.", robot: "РОБОТ", powerArmor: "СИЛОВАЯ БРОНЯ" },
+  uk: { noRobotTarget: "Немає пошкодженого робота.", noPowerArmorTarget: "Немає пошкодженої частини силової броні.", chooseRepairTarget: "Оберіть ціль ремонту", invalid: "Невірний вибір.", robot: "РОБОТ", powerArmor: "СИЛОВА БРОНЯ" },
+  pl: { noRobotTarget: "Brak uszkodzonego robota.", noPowerArmorTarget: "Brak uszkodzonej części pancerza wspomaganego.", chooseRepairTarget: "Wybierz cel naprawy", invalid: "Nieprawidłowy wybór.", robot: "ROBOT", powerArmor: "PANCERZ WSPOMAGANY" },
 };
 
 export const STIMPAK_HEALING = {
@@ -80,4 +80,11 @@ export function isRobotCompanion(item) {
     .join(" ")
     .toLowerCase();
   return /(robot|robotic|machine|automatron|mister handy|mr\.? handy|protectron|assaultron|eyebot|sentry bot|robobrain)/i.test(text);
+}
+
+export function getRepairKitTargetKind(name) {
+  const normalized = normalizeUtilityName(name);
+  if (normalized === "robot repair kit") return "robot";
+  if (normalized === "power armor repair kit") return "powerArmor";
+  return null;
 }

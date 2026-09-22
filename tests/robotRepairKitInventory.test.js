@@ -8,3 +8,11 @@ test("Robot Repair Kit is available in the tools archive", () => {
   assert.equal(item.category, "tools");
   assert.match(item.effect, /4 HP/i);
 });
+
+test("Power Armor Repair Kit is available in the tools archive", () => {
+  const item = INVENTORY_DATABASE.find((entry) => entry.name === "Power Armor Repair Kit");
+  assert.ok(item);
+  assert.equal(item.category, "tools");
+  assert.match(item.effect, /power armor/i);
+  assert.match(item.effect, /4 HP/i);
+});
