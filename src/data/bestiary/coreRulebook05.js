@@ -60,9 +60,9 @@ export default [
   {
     id:"raider-boss",name:"Raider Boss",category:"enemy",tags:["human","raider","major-character"],level:"10",creatureType:"Human Raider • Major Character",xp:"222",statKind:"character",
     special:{STR:"8",PER:"9",END:"8",CHA:"8",INT:"7",AGI:"8",LCK:"6"},
-    skills:[{name:"Athletics",rating:2},{name:"Sneak",rating:1},{name:"Big Guns",rating:4,tagged:true},{name:"Speech",rating:2},{name:"Explosives",rating:2,tagged:true},{name:"Survival",rating:3},{name:"Melee Weapons",rating:1,tagged:true},{name:"Throwing",rating:1},{name:"Repair",rating:2},{name:"Unarmed",rating:2},{name:"Small Guns",rating:2,tagged:true}],
-    hp:"30",initiative:"17",defense:"1",carryWeight:"130 lbs.",meleeBonus:"+1 CD",luckPoints:"6",drBlock:"Physical/Energy: 0 Head; 3 Torso; 3 Arms; 2 Legs • Radiation 0 • Poison 0",
-    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 10), 3 CD Physical\n• FRAG GRENADE — PER + Explosives (TN 11), 6 CD Physical, Blast, Throwing, Range M\n• HUNTING RIFLE — AGI + Small Guns (TN 10), 6 CD Piercing Physical, Range M, Two-Handed",
+    skills:[{name:"Athletics",rating:2},{name:"Sneak",rating:1},{name:"Big Guns",rating:2,tagged:true},{name:"Speech",rating:2},{name:"Explosives",rating:2,tagged:true},{name:"Survival",rating:3},{name:"Melee Weapons",rating:3,tagged:true},{name:"Throwing",rating:1},{name:"Repair",rating:2},{name:"Unarmed",rating:2},{name:"Small Guns",rating:4,tagged:true}],
+    hp:"30",initiative:"21",defense:"1",carryWeight:"130 lbs.",meleeBonus:"+1 CD",luckPoints:"6",drBlock:"Physical/Energy: 0 Head; 3 Torso; 3 Arms; 2 Legs • Radiation 0 • Poison 0",
+    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 10), 3 CD Physical\n• FRAG GRENADE — PER + Explosives (TN 11), 6 CD Physical, Blast, Throwing, Range M\n• HUNTING RIFLE — AGI + Small Guns (TN 12), 6 CD Piercing Physical, Range M, Two-Handed",
     abilities:"• AGGRESSIVE — generates 1 AP for its side on entering a scene.\n• ACTION PACKED — starts each scene with a personal pool of 4 AP.",loot:"Heavy Raider Chest Piece, Sturdy Raider Legs ×2, Heavy Raider Arms ×2, 3 Frag Grenades, Hunting Rifle, Wealth 2.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 387."
   },
   {

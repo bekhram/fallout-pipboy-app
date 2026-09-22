@@ -1,8 +1,8 @@
 export default [
   {
     id:"children-of-atom",name:"Children of Atom",category:"npc",tags:["human","children-of-atom","normal-character"],level:"6",creatureType:"Human • Normal Character",xp:"45",statKind:"character",
-    special:{STR:"5",PER:"5",END:"6",CHA:"8",INT:"5",AGI:"5",LCK:"5"},skills:[{name:"Barter",rating:1},{name:"Sneak",rating:2},{name:"Energy Weapons",rating:3},{name:"Speech",rating:3},{name:"Melee Weapons",rating:1},{name:"Survival",rating:4,tagged:true},{name:"Repair",rating:1}],
-    hp:"14",initiative:"10",defense:"1",carryWeight:"200 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 2 (All) • Poison 0",
+    special:{STR:"5",PER:"5",END:"6",CHA:"8",INT:"5",AGI:"5",LCK:"4"},skills:[{name:"Barter",rating:1},{name:"Sneak",rating:2},{name:"Energy Weapons",rating:3},{name:"Speech",rating:3,tagged:true},{name:"Melee Weapons",rating:1},{name:"Survival",rating:4,tagged:true},{name:"Repair",rating:1}],
+    hp:"12",initiative:"10",defense:"1",carryWeight:"200 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 2 (All) • Poison 0",
     attacks:"• UNARMED — STR + Unarmed (TN 5), 2 CD Physical\n• GAMMA GUN — PER + Energy Weapons (TN 8), 3 CD Piercing, Stun Radiation, FR 1, Range M, Blast, Inaccurate",
     abilities:"• ATOM'S GLOW — +2 Radiation DR (included in the stat block).",loot:"Tough Clothing, Gamma Gun, 2d20 Gamma Rounds, Wealth 1.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 391."
   },
@@ -22,7 +22,7 @@ export default [
   },
   {
     id:"minuteman",name:"Minuteman",category:"ally",tags:["human","minutemen","normal-character"],level:"7",creatureType:"Human • Normal Character",xp:"39",statKind:"character",
-    special:{STR:"6",PER:"7",END:"5",CHA:"7",INT:"5",AGI:"5",LCK:"4"},skills:[{name:"Athletics",rating:1},{name:"Small Guns",rating:3,tagged:true},{name:"Energy Weapons",rating:3},{name:"Sneak",rating:1},{name:"Medicine",rating:1},{name:"Speech",rating:2},{name:"Melee Weapons",rating:2},{name:"Survival",rating:1,tagged:true},{name:"Repair",rating:2}],
+    special:{STR:"6",PER:"7",END:"5",CHA:"7",INT:"5",AGI:"5",LCK:"4"},skills:[{name:"Athletics",rating:1},{name:"Small Guns",rating:2},{name:"Energy Weapons",rating:3,tagged:true},{name:"Sneak",rating:1},{name:"Medicine",rating:1},{name:"Speech",rating:2},{name:"Melee Weapons",rating:2},{name:"Survival",rating:2},{name:"Repair",rating:2}],
     hp:"12",initiative:"12",defense:"1",carryWeight:"210 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 0 • Poison 0",
     attacks:"• UNARMED STRIKE — STR + Unarmed (TN 6), 3 CD Physical\n• LASER MUSKET — PER + Energy Weapons (TN 10), 5 CD Piercing Energy, Range M, Two-Handed",
     abilities:"None.",loot:"Tough Clothing, Wealth 2.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), pp. 393–394."
@@ -31,7 +31,7 @@ export default [
     id:"railroad-agent",name:"Railroad Agent",category:"ally",tags:["human","railroad","normal-character"],level:"7",creatureType:"Human • Normal Character",xp:"39",statKind:"character",
     special:{STR:"5",PER:"7",END:"6",CHA:"6",INT:"6",AGI:"5",LCK:"4"},skills:[{name:"Barter",rating:1},{name:"Science",rating:2},{name:"Energy Weapons",rating:1},{name:"Small Guns",rating:2,tagged:true},{name:"Lockpick",rating:2},{name:"Sneak",rating:3,tagged:true},{name:"Medicine",rating:1},{name:"Speech",rating:1},{name:"Melee Weapons",rating:1},{name:"Survival",rating:2},{name:"Repair",rating:1}],
     hp:"13",initiative:"12",defense:"1",carryWeight:"200 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 0 • Poison 0",
-    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 5), 2 CD Physical\n• HUNTING RIFLE — AGI + Small Guns (TN 7), 6 CD Piercing Energy, Range M, Two-Handed",
+    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 5), 2 CD Physical\n• HUNTING RIFLE — AGI + Small Guns (TN 7), 6 CD Piercing Physical, Range M, Two-Handed",
     abilities:"• RAILROAD AGENT — while undercover, +1d20 on Speech tests involving deception.",loot:"Tough Clothing, Wealth 2.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 394."
   },
   {
@@ -57,13 +57,13 @@ export default [
   },
   {
     id:"wastelander-npc",name:"Wastelander",category:"npc",tags:["human","wastelander","normal-character"],level:"2",creatureType:"Human • Normal Character",xp:"17",statKind:"character",
-    special:{STR:"7",PER:"6",END:"7",CHA:"4",INT:"5",AGI:"6",LCK:"4"},skills:[{name:"Athletics",rating:1},{name:"Small Guns",rating:2,tagged:true},{name:"Barter",rating:1},{name:"Speech",rating:1},{name:"Melee Weapons",rating:2},{name:"Survival",rating:2,tagged:true},{name:"Repair",rating:1},{name:"Unarmed",rating:1}],
-    hp:"8",initiative:"11",defense:"1",carryWeight:"200 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 0 • Poison 0",
-    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 8), 2 CD Physical\n• MACHETE — STR + Melee Weapons (TN 9), 3 CD Piercing 1 Physical\n• DOUBLE-BARRELLED SHOTGUN — AGI + Small Guns (TN 8), 5 CD Spread, Vicious Physical, Range C, Inaccurate, Two-Handed",abilities:"None.",loot:"Road Leathers, Double-Barrelled Shotgun, Wealth.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 397."
+    special:{STR:"6",PER:"5",END:"7",CHA:"4",INT:"5",AGI:"5",LCK:"4"},skills:[{name:"Athletics",rating:1},{name:"Small Guns",rating:2,tagged:true},{name:"Barter",rating:1},{name:"Speech",rating:1},{name:"Melee Weapons",rating:2},{name:"Survival",rating:2,tagged:true},{name:"Repair",rating:1},{name:"Unarmed",rating:1}],
+    hp:"9",initiative:"10",defense:"1",carryWeight:"210 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 0 • Poison 0",
+    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 7), 2 CD Physical\n• MACHETE — STR + Melee Weapons (TN 8), 3 CD Piercing 1 Physical\n• DOUBLE-BARRELLED SHOTGUN — AGI + Small Guns (TN 7), 5 CD Spread, Vicious Physical, Range C, Inaccurate, Two-Handed",abilities:"None.",loot:"Road Leathers, Double-Barrelled Shotgun, Wealth 1.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 397."
   },
   {
     id:"zetan",name:"Zetan (Aliens)",category:"enemy",tags:["alien","normal-creature"],level:"8",creatureType:"Alien • Normal Creature",xp:"38",statKind:"creature",body:"7",mind:"5",melee:"0",guns:"4",other:"2",
-    hp:"14",initiative:"12",defense:"1",drBlock:"Physical 1 (All) • Energy 3 (All) • Radiation 0 • Poison 0",
-    attacks:"• ALIEN BLASTER — BODY + Guns (TN 11), 5 CD Energy, Blast, Range C, FR 2, Reliable",abilities:"• ALIEN — cannot be reasoned with or influenced by Speech tests.",loot:"Alien Blaster, 5d20 Alien Blaster rounds.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 398."
+    hp:"15",initiative:"12",defense:"1",drBlock:"Physical 1 (All) • Energy 3 (All) • Radiation 0 • Poison 0",
+    attacks:"• ALIEN BLASTER — BODY + Guns (TN 11), 5 CD Energy, Range C, FR 2, Reliable",abilities:"• ALIEN — cannot be reasoned with or influenced by Speech tests.",loot:"Alien Blaster, 5d20 Alien Blaster rounds.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 398."
   }
 ];

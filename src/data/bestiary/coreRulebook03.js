@@ -2,22 +2,22 @@ export default [
   {
     id: "mister-handy", name: "Mister Handy", category: "robot", tags: ["robot", "notable-character"],
     level: "6", creatureType: "Robot • Notable Character", xp: "90", statKind: "character",
-    special: { STR: "6", PER: "7", END: "5", CHA: "5", INT: "7", AGI: "6", LCK: "4" },
-    skills: [{name:"Energy Weapons",rating:3,tagged:true},{name:"Repair",rating:2},{name:"Medicine",rating:1},{name:"Small Guns",rating:1},{name:"Melee Weapons",rating:3,tagged:true},{name:"Speech",rating:3,tagged:true}],
-    hp: "15", initiative: "17", defense: "1", carryWeight: "150 lbs.", meleeBonus: "+0 CD", luckPoints: "2",
+    special: { STR: "6", PER: "8", END: "5", CHA: "7", INT: "7", AGI: "7", LCK: "5" },
+    skills: [{name:"Big Guns",rating:3,tagged:true},{name:"Repair",rating:2},{name:"Medicine",rating:1},{name:"Small Guns",rating:1},{name:"Melee Weapons",rating:3},{name:"Speech",rating:3,tagged:true}],
+    hp: "16", initiative: "17", defense: "1", carryWeight: "150 lbs.", meleeBonus: "+0 CD", luckPoints: "3",
     drBlock: "Physical 1 (All) • Energy 1 (All) • Radiation Immune • Poison Immune",
-    attacks: "• PINCER — STR + Melee (TN 9), 3 CD Physical, Range C\n• BUZZSAW — STR + Melee (TN 9), 3 CD Piercing Physical, Range C\n• FLAMER — PER + Energy Weapons (TN 10), 3 CD Persistent Energy, Fire Rate 1, Range C",
+    attacks: "• PINCER — STR + Melee (TN 9), 2 CD Physical\n• BUZZSAW — STR + Melee (TN 9), 3 CD Piercing Physical\n• FLAMER — END + Big Guns (TN 8), 3 CD Persistent Energy, Fire Rate 1, Range C",
     abilities: "• ROBOT — ignores starvation, thirst and suffocation; immune to Poison/Radiation; cannot heal naturally or with Medicine and must be repaired.\n• IMMUNE TO DISEASE.\n• MISTER HANDY — 360° vision and enhanced smell/chemical/radiation sensors reduce relevant PER-test Difficulty by 1; jet propulsion ignores ground difficult terrain and obstacles.",
     source: "Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 360."
   },
   {
     id: "mister-gutsy", name: "Mister Gutsy", category: "robot", tags: ["robot", "military", "notable-character"],
     level: "7", creatureType: "Robot • Notable Character", xp: "104", statKind: "character",
-    special: { STR: "6", PER: "7", END: "5", CHA: "4", INT: "7", AGI: "7", LCK: "4" },
-    skills: [{name:"Energy Weapons",rating:4,tagged:true},{name:"Small Guns",rating:4,tagged:true},{name:"Melee Weapons",rating:3,tagged:true},{name:"Speech",rating:1},{name:"Repair",rating:1}],
-    hp: "15", initiative: "18", defense: "1", carryWeight: "150 lbs.", meleeBonus: "+0 CD", luckPoints: "2",
+    special: { STR: "6", PER: "9", END: "7", CHA: "5", INT: "7", AGI: "8", LCK: "4" },
+    skills: [{name:"Big Guns",rating:4,tagged:true},{name:"Small Guns",rating:4,tagged:true},{name:"Melee Weapons",rating:3,tagged:true},{name:"Speech",rating:1},{name:"Repair",rating:1}],
+    hp: "18", initiative: "19", defense: "1", carryWeight: "150 lbs.", meleeBonus: "+0 CD", luckPoints: "2",
     drBlock: "Physical 2 (All) • Energy 2 (All) • Radiation Immune • Poison Immune",
-    attacks: "• PINCER — STR + Melee (TN 9), 4 CD Physical, Range C\n• 10MM AUTO PISTOL — AGI + Small Guns (TN 11), 5 CD Physical, Range C, FR 4, Close Quarters, Reliable, Burst\n• FLAMER — PER + Energy Weapons (TN 11), 3 CD Persistent Energy, FR 1, Range C",
+    attacks: "• PINCER — STR + Melee (TN 9), 2 CD Physical\n• 10MM AUTO PISTOL — AGI + Small Guns (TN 11), 5 CD Physical, Range C, FR 4, Close Quarters, Reliable, Burst\n• FLAMER — END + Big Guns (TN 11), 3 CD Persistent Energy, FR 1, Range C",
     abilities: "• ROBOT / IMMUNE TO DISEASE — as other robots; damage must be repaired.\n• MISTER HANDY SENSOR/FLIGHT PACKAGE — 360° enhanced sensors; relevant PER Difficulty −1; hovers over ground obstacles.\n• MISTER GUTSY — attacks gain +1 CD and military plating is included; Speech tests to question/reason/order it are +2 Difficulty for characters not in military uniform.",
     source: "Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 361."
   },
@@ -33,8 +33,8 @@ export default [
     id: "sentry-bot", name: "Sentry Bot", category: "robot", tags: ["robot", "military", "normal-creature"], level: "15",
     creatureType: "Robot • Normal Creature", xp: "109", statKind: "creature", body: "10", mind: "6", melee: "4", guns: "5", other: "4",
     hp: "40", initiative: "16", defense: "1", drBlock: "Physical 6 (All) • Energy 5 (All) • Radiation Immune • Poison Immune",
-    attacks: "• CHAIN GUN — BODY + Guns (TN 15), 5 CD Physical, Burst, Spread, FR 5, Gatling, Range M\n• UNARMED — BODY + Melee (TN 14), 8 CD Vicious Physical\n• MISSILE LAUNCHER — BODY + Guns (TN 15), 11 CD Physical, Blast, Range L",
-    abilities: "• ROBOT / IMMUNE TO DISEASE.\n• KEEN SENSES — can detect normally imperceptible targets; other PER-test Difficulty −1.\n• AGGRESSIVE — generates 1 AP for its side when it enters a scene.\n• SELF-DESTRUCT — if both arms are injured or HP is at half or less, moves toward the nearest enemy and detonates, destroying itself.",
+    attacks: "• CHAIN GUN — BODY + Guns (TN 15), 5 CD Physical, Burst, Spread, FR 5, Gatling, Range M\n• UNARMED — BODY + Melee (TN 14), 8 CD Vicious Physical\n• MISSILE LAUNCHER — BODY + Guns (TN 15), 11 CD Physical, Blast, Range L\n• SELF DESTRUCT — BODY + Melee (TN 14), 6 CD Physical, Blast",
+    abilities: "• ROBOT / IMMUNE TO DISEASE.\n• KEEN SENSES — can detect normally imperceptible targets; other PER-test Difficulty −1.\n• AGGRESSIVE — generates 1 AP for its side when it enters a scene.\n• BIG — gains +1 HP per Level, Defense decreases by 1 to a minimum of 1, and Critical Hits require 7+ damage after DR instead of 5+.\n• SELF-DESTRUCT — if both arms are injured or HP is at half or less, moves toward the nearest enemy and detonates, destroying itself.",
     source: "Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 364."
   },
   {
@@ -71,11 +71,12 @@ export default [
     id:"super-mutant-master", name:"Super Mutant Master", category:"enemy", tags:["mutated-human","super-mutant","notable-character"], level:"10",
     creatureType:"Mutated Human • Notable Character", xp:"148", statKind:"character",
     special:{STR:"10",PER:"8",END:"8",CHA:"5",INT:"6",AGI:"5",LCK:"5"},
-    skills:[{name:"Big Guns",rating:1},{name:"Survival",rating:3,tagged:true},{name:"Melee Weapons",rating:4,tagged:true},{name:"Unarmed",rating:2},{name:"Small Guns",rating:3}],
-    hp:"23",initiative:"15",defense:"1",carryWeight:"250 lbs.",meleeBonus:"+2 CD",luckPoints:"—",
-    drBlock:"Physical: 4 Head/Legs/Torso; 3 Arms • Energy: 2 Head; 4 Legs/Torso; 3 Arms • Radiation Immune • Poison Immune",
-    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 12), 4 CD Physical\n• MINIGUN — END + Big Guns (TN 9), 3 CD Physical, Burst, Spread, FR 5, Range M, Gatling, Inaccurate, Two-Handed\nOR • MISSILE LAUNCHER — END + Big Guns (TN 9), 11 CD Physical, Range L, Blast, Two-Handed",
+    skills:[{name:"Big Guns",rating:4,tagged:true},{name:"Survival",rating:3,tagged:true},{name:"Melee Weapons",rating:4,tagged:true},{name:"Unarmed",rating:4},{name:"Small Guns",rating:3},{name:"Repair",rating:2},{name:"Speech",rating:2}],
+    hp:"23",initiative:"15",defense:"1",carryWeight:"250 lbs.",meleeBonus:"+2 CD",luckPoints:"3",
+    drBlock:"Physical 4 (All) • Energy 2 Head; 4 Arms/Legs/Torso • Radiation Immune • Poison Immune",
+    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 14), 4 CD Physical\n• MINIGUN — END + Big Guns (TN 12), 3 CD Physical, Burst, Spread, FR 5, Range M, Gatling, Inaccurate, Two-Handed\nOR • MISSILE LAUNCHER — END + Big Guns (TN 12), 11 CD Physical, Range L, Blast, Two-Handed",
     abilities:"• BARBARIAN — +2 Physical/Energy DR included.\n• IMMUNE TO RADIATION / POISON.",
+    loot:"Minigun OR Missile Launcher, Assorted human bones (2 Junk Items), Wealth 1, Army Helmet, Sturdy Raider Chest Piece, Sturdy Raider Arms ×2, Sturdy Raider Legs ×2",
     source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 369."
   },
   {
@@ -104,7 +105,7 @@ export default [
     skills:[{name:"Energy Weapons",rating:4,tagged:true},{name:"Science",rating:4,tagged:true},{name:"Lockpick",rating:2},{name:"Sneak",rating:4,tagged:true},{name:"Melee Weapons",rating:3,tagged:true},{name:"Speech",rating:3},{name:"Repair",rating:3},{name:"Unarmed",rating:2}],
     hp:"23",initiative:"17",defense:"2",carryWeight:"220 lbs.",meleeBonus:"+1 CD",luckPoints:"2",
     drBlock:"Physical: 4 Arms/Legs/Torso; 2 Head • Energy: 5 Arms/Legs/Torso; 2 Head • Radiation Immune • Poison Immune",
-    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 9), 2 CD Physical\n• INSTITUTE LASER — PER + Energy Weapons (TN 12), 6 CD Vicious Energy, Burst, FR 4, Two-Handed, Range M",
+    attacks:"• UNARMED STRIKE — STR + Unarmed (TN 9), 2 CD Physical\n• INSTITUTE LASER — PER + Energy Weapons (TN 12), 5 CD Vicious Piercing 1 Energy, Burst, FR 3, Inaccurate, Two-Handed, Range C",
     abilities:"• ROBOT; IMMUNE TO POISON / RADIATION / FEAR / DISEASE.\n• INSTITUTE ACCESS — can use Institute teleportation technology to enter/leave as permitted.\n• THIRD-GENERATION SYNTH — appears human under inspection; identified conclusively by Synth Component after death. When impersonating a known person, gains +2d20 on relevant impersonation tests.",
     source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), p. 374."
   },

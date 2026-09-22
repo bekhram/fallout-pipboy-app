@@ -5,6 +5,7 @@ import { PERKS_DICTIONARY } from "../src/components/data/perks.js";
 import { getPerkCalculationState } from "../src/utils/perkEffects.js";
 import { POWER_ARMOR_SETS } from "../src/data/powerArmor.js";
 import { CRAFTING_RECIPES } from "../src/data/craftingRecipes.js";
+import { BESTIARY_ENTRIES } from "../src/data/bestiary.js";
 
 test("Errata V6 core perk corrections are applied", () => {
   assert.equal(PERKS_DICTIONARY.gun_nut.maxRanks, 4);
@@ -75,4 +76,83 @@ test("Errata V6 weapon table corrections are applied", () => {
   assert.match(csv, /Nuke Mine[^\n]*"Blast, Mine"/);
   assert.match(csv, /Plasma Mine[^\n]*"Blast, Mine"/);
   assert.match(csv, /Pulse Mine[^\n]*"Blast, Mine"/);
+});
+
+
+test("Errata V6 bestiary corrections are applied", () => {
+  const byId = (id) => BESTIARY_ENTRIES.find((entry) => entry.id === id);
+
+  const radstag = byId("radstag");
+  assert.equal(radstag.body, "6");
+  assert.equal(radstag.hp, "11");
+  assert.match(radstag.attacks, /TN 9/);
+
+  assert.equal(byId("glowing-one").hp, "17");
+
+  const handy = byId("mister-handy");
+  assert.deepEqual(handy.special, { STR:"6", PER:"8", END:"5", CHA:"7", INT:"7", AGI:"7", LCK:"5" });
+  assert.equal(handy.hp, "16");
+  assert.equal(handy.luckPoints, "3");
+  assert.ok(handy.skills.some((s) => s.name === "Big Guns" && s.rating === 3 && s.tagged));
+  assert.match(handy.attacks, /END \+ Big Guns \(TN 8\)/);
+
+  const gutsy = byId("mister-gutsy");
+  assert.deepEqual(gutsy.special, { STR:"6", PER:"9", END:"7", CHA:"5", INT:"7", AGI:"8", LCK:"4" });
+  assert.equal(gutsy.hp, "18");
+  assert.equal(gutsy.initiative, "19");
+  assert.ok(gutsy.skills.some((s) => s.name === "Big Guns" && s.rating === 4 && s.tagged));
+
+  const sentry = byId("sentry-bot");
+  assert.match(sentry.attacks, /SELF DESTRUCT.*TN 14.*6 CD Physical.*Blast/s);
+  assert.match(sentry.abilities, /BIG/);
+
+  const master = byId("super-mutant-master");
+  assert.equal(master.luckPoints, "3");
+  assert.ok(master.skills.some((s) => s.name === "Big Guns" && s.rating === 4 && s.tagged));
+  assert.ok(master.skills.some((s) => s.name === "Unarmed" && s.rating === 4));
+  assert.match(master.attacks, /UNARMED STRIKE.*TN 14/);
+  assert.match(master.attacks, /MINIGUN.*TN 12/);
+  assert.match(master.attacks, /MISSILE LAUNCHER.*TN 12/);
+
+  const courser = byId("synth-courser");
+  assert.equal(courser.skills.find((s) => s.name === "Melee Weapons")?.tagged, undefined);
+  assert.match(courser.attacks, /5 CD Vicious Piercing 1 Energy/);
+
+  const boss = byId("raider-boss");
+  assert.equal(boss.initiative, "21");
+  assert.equal(boss.skills.find((s) => s.name === "Big Guns")?.rating, 2);
+  assert.equal(boss.skills.find((s) => s.name === "Melee Weapons")?.rating, 3);
+  assert.equal(boss.skills.find((s) => s.name === "Small Guns")?.rating, 4);
+  assert.match(boss.attacks, /HUNTING RIFLE.*TN 12/);
+
+  const atom = byId("children-of-atom");
+  assert.equal(atom.special.LCK, "4");
+  assert.equal(atom.hp, "12");
+  assert.equal(atom.skills.find((s) => s.name === "Speech")?.tagged, true);
+
+  const minuteman = byId("minuteman");
+  assert.equal(minuteman.skills.find((s) => s.name === "Energy Weapons")?.tagged, true);
+  assert.equal(minuteman.skills.find((s) => s.name === "Small Guns")?.rating, 2);
+  assert.equal(minuteman.skills.find((s) => s.name === "Small Guns")?.tagged, undefined);
+  assert.equal(minuteman.skills.find((s) => s.name === "Survival")?.rating, 2);
+  assert.equal(minuteman.skills.find((s) => s.name === "Survival")?.tagged, true);
+
+  const vault = byId("vault-dweller-npc");
+  assert.equal(vault.skills.find((s) => s.name === "Survival")?.tagged, undefined);
+
+  assert.match(byId("railroad-agent").attacks, /HUNTING RIFLE.*Physical/);
+
+  const wastelander = byId("wastelander-npc");
+  assert.deepEqual(wastelander.special, {STR:"6",PER:"5",END:"7",CHA:"4",INT:"5",AGI:"5",LCK:"4"});
+  assert.equal(wastelander.hp, "9");
+  assert.equal(wastelander.initiative, "10");
+  assert.equal(wastelander.carryWeight, "210 lbs.");
+  assert.match(wastelander.attacks, /UNARMED STRIKE.*TN 7/);
+  assert.match(wastelander.attacks, /MACHETE.*TN 8/);
+  assert.match(wastelander.attacks, /DOUBLE-BARRELLED SHOTGUN.*TN 7/);
+  assert.match(wastelander.loot, /Wealth 1/);
+
+  const zetan = byId("zetan");
+  assert.equal(zetan.hp, "15");
+  assert.doesNotMatch(zetan.attacks, /Blast/);
 });
