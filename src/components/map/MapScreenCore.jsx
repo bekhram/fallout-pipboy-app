@@ -11,6 +11,12 @@ import {
   formatEnvironmentalHazardLog,
   processEnvironmentalExposure,
 } from "../../utils/environmentSystem.js";
+import {
+  PIPBOY_WINTER_TRAVEL_EFFECT_EVENT,
+  formatWinterTravelLog,
+  readWinterTravelSettings,
+  resolveAutomaticWinterExposure,
+} from "../../utils/winterTravelAutomation.js";
 import MapGrid from "./MapGrid.jsx";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import { mapUiText } from "./mapUiText.js";
@@ -341,6 +347,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
 
   const activeRegion = getMapRegion(safeMapState.regionId);
   const regionLocations = activeRegion.locations;
+  const winterModeEnabled = activeRegion.id === "commonwealth" && Boolean(safeMapState.winterModeEnabled);
 
   const worldOffset = safeMapState.worldOffset;
   const worldTotalHours = safeMapState.worldTotalHours;
@@ -510,7 +517,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       if (step.poi) {
         detailLog.push(t("mapPanel.locationFound", { name: getPoiDisplayName(step.poi, t) }));
       }
-      const encounter = maybeRollTravelEncounter(step.terrain, { regionId: activeRegion.id, language });
+      const encounter = maybeRollTravelEncounter(step.terrain, { regionId: activeRegion.id, language, winterMode: winterModeEnabled });
       if (encounter) {
         stoppedEncounter = encounter;
         reachedDestination = step.x === targetCell.x && step.y === targetCell.y;
@@ -530,7 +537,17 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     const environmentLog = environmentExposure.effects
       .map((effect) => formatEnvironmentalHazardLog(effect, language))
       .filter(Boolean);
-    const routeLog = [summary, ...environmentLog, ...detailLog.reverse()];
+    const winterResolution = winterModeEnabled
+      ? resolveAutomaticWinterExposure({
+          character,
+          hours: totalCost,
+          settings: readWinterTravelSettings(),
+        })
+      : null;
+    const winterLog = winterResolution
+      ? [formatWinterTravelLog(winterResolution, language)].filter(Boolean)
+      : [];
+    const routeLog = [summary, ...winterLog, ...environmentLog, ...detailLog.reverse()];
     const encounterResolution = stoppedEncounter
       ? resolveTravelEncounter(stoppedEncounter, character)
       : null;
@@ -558,6 +575,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         discoveredKeys: nextDiscoveredKeys,
         travelLog: mergeTravelLog(base, routeLog),
         hazardExposureRemainders: environmentExposure.remainders,
+        lastWinterTravel: winterResolution,
         pendingTravelEncounter: encounterContext,
         interruptedRoute: stoppedEncounter
           ? {
@@ -578,6 +596,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
         detail: { hours: totalCost },
       }));
+      if (winterResolution) {
+        window.dispatchEvent(new CustomEvent(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, {
+          detail: { resolution: winterResolution },
+        }));
+      }
     }
     if (typeof window !== "undefined" && encounterContext?.resolution) {
       window.dispatchEvent(new CustomEvent(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, {
@@ -639,7 +662,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         detailLog.push(tx("passed", { name: getWorldLocationDisplayName(staticLocation, t) }));
       }
 
-      const encounter = maybeRollTravelEncounter(step.cell.terrain, { regionId: activeRegion.id, language });
+      const encounter = maybeRollTravelEncounter(step.cell.terrain, { regionId: activeRegion.id, language, winterMode: winterModeEnabled });
       if (encounter) {
         stoppedEncounter = encounter;
         detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
@@ -663,7 +686,17 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
     const environmentLog = environmentExposure.effects
       .map((effect) => formatEnvironmentalHazardLog(effect, language))
       .filter(Boolean);
-    const routeLog = [summary, ...environmentLog, ...detailLog.reverse()];
+    const winterResolution = winterModeEnabled
+      ? resolveAutomaticWinterExposure({
+          character,
+          hours: totalCost,
+          settings: readWinterTravelSettings(),
+        })
+      : null;
+    const winterLog = winterResolution
+      ? [formatWinterTravelLog(winterResolution, language)].filter(Boolean)
+      : [];
+    const routeLog = [summary, ...winterLog, ...environmentLog, ...detailLog.reverse()];
     const encounterResolution = stoppedEncounter
       ? resolveTravelEncounter(stoppedEncounter, character)
       : null;
@@ -699,6 +732,7 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
         sectorCache: { ...(base.sectorCache || {}), ...route.cache },
         travelLog: mergeTravelLog(base, routeLog),
         hazardExposureRemainders: environmentExposure.remainders,
+        lastWinterTravel: winterResolution,
         pendingTravelEncounter: encounterContext,
         interruptedRoute: stoppedEncounter
           ? {
@@ -719,6 +753,11 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
       window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
         detail: { hours: totalCost },
       }));
+      if (winterResolution) {
+        window.dispatchEvent(new CustomEvent(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, {
+          detail: { resolution: winterResolution },
+        }));
+      }
     }
     if (typeof window !== "undefined" && encounterContext?.resolution) {
       window.dispatchEvent(new CustomEvent(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, {
@@ -864,6 +903,24 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           </select>
         </label>
         <div className="pip-map-inline-hazards">{t("mapPanel.hazards")}: {renderHazardBadges(currentHazards)}</div>
+        <label className="pip-map-winter-toggle" title={activeRegion.id === "commonwealth" ? tx("winterMode") : "Winter of Atom: Commonwealth only"}>
+          <input
+            type="checkbox"
+            checked={winterModeEnabled}
+            disabled={activeRegion.id !== "commonwealth"}
+            onChange={(event) => onMapChange((prevMap) => ({
+              ...buildDefaultMapState(),
+              ...(prevMap || {}),
+              winterModeEnabled: event.target.checked,
+            }))}
+          />
+          <span>❄ {tx("winterMode")}: {winterModeEnabled ? tx("winterOn") : tx("winterOff")}</span>
+        </label>
+        {winterModeEnabled && safeMapState.lastWinterTravel ? (
+          <div className="pip-map-winter-last" title={tx("winterLast")}>
+            D{safeMapState.lastWinterTravel.difficulty} · {safeMapState.lastWinterTravel.successes}S · {safeMapState.lastWinterTravel.success ? "✓" : "FAT +" + safeMapState.lastWinterTravel.fatigue}
+          </div>
+        ) : null}
       </div>
 
       <div className="pip-map-layout">
