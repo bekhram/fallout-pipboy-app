@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { STATUS_LIST } from "../constants.js";
 import { getDerivedStats } from "../utils/characterMath.js";
 import { readCompanionState, writeCompanionState } from "../utils/companionStorage.js";
@@ -25,6 +25,57 @@ function chooseNumberedTarget(title, targets, lineForTarget) {
 }
 
 export function useInventoryItemController({ form, setForm, i18n, t }) {
+  useEffect(() => {
+    setForm((prev) => {
+      let changed = false;
+      const inventoryItems = (prev.inventoryItems || []).map((item) => {
+        if (item?.sourceType !== "crafting_material" || item?.category === "junk") return item;
+        changed = true;
+        return { ...item, category: "junk" };
+      });
+      return changed ? { ...prev, inventoryItems } : prev;
+    });
+  }, [setForm]);
+
+  const spendAmmoForWeaponRoll = useCallback((rollConfig) => {
+    if (rollConfig?.type !== "weapon" || !rollConfig?.weapon?.ammo) return;
+
+    const ammoType = String(rollConfig.weapon.ammo || "").trim();
+    const normalizedAmmo = ammoType
+      .toLowerCase()
+      .replace(/[^a-z0-9.]+/g, "")
+      .replace(/s$/, "");
+    const rateSpent = rollConfig.useRate
+      ? Math.max(0, Number(rollConfig.rate ?? rollConfig.weapon.rate ?? 0))
+      : 0;
+    const ammoSpent = 1 + rateSpent;
+
+    setForm((prev) => {
+      const nextItems = [...(prev.inventoryItems || [])];
+      const ammoIndex = nextItems.findIndex((item) => {
+        if (item?.category !== "ammo") return false;
+        const candidate = String(item?.canonicalName || item?.name || "")
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9.]+/g, "")
+          .replace(/s$/, "");
+        return candidate === normalizedAmmo;
+      });
+
+      if (ammoIndex === -1) {
+        console.warn(`No matching ammo in inventory: ${ammoType}`);
+        return prev;
+      }
+
+      const currentQty = Math.max(0, Number.parseInt(nextItems[ammoIndex].quantity, 10) || 0);
+      const actuallySpent = Math.min(currentQty, ammoSpent);
+      const remaining = Math.max(0, currentQty - actuallySpent);
+      nextItems[ammoIndex] = { ...nextItems[ammoIndex], quantity: String(remaining) };
+      console.log(`Fired! -${actuallySpent} ${ammoType}. Remaining: ${remaining}`);
+
+      return { ...prev, inventoryItems: nextItems };
+    });
+  }, [setForm]);
   useEffect(() => {
     const handleInventoryUse = (event) => {
       const index = Number(event?.detail?.index);
@@ -289,6 +340,7 @@ export function useInventoryItemController({ form, setForm, i18n, t }) {
     useQuickStimpak,
     endStealthBoy,
     advanceStealthBoyTurn,
+    spendAmmoForWeaponRoll,
   };
 }
 

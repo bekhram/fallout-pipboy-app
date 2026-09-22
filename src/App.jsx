@@ -1,157 +1,39 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PipboyShell from "./components/layout/PipboyShell.jsx";
-import StatusScreen from "./components/status/StatusScreen.jsx";
-import SpecialScreen from "./components/special/SpecialScreen.jsx";
-import WeaponsScreen from "./components/weapons/WeaponsScreen.jsx";
-import InventoryScreen from "./components/inventory/InventoryScreen.jsx";
-import ArmorScreen from "./components/armor/ArmorScreen.jsx";
-import PerksScreen from "./components/perks/PerksScreen.jsx";
-import NotesScreen from "./components/notes/NotesScreen.jsx";
-import DataScreen from "./components/data/DataScreen.jsx";
-import MenuScreen from "./components/menu/MenuScreen.jsx";
-import SessionScreen from "./components/session/SessionScreen.jsx";
+import AppScreenRouter from "./components/AppScreenRouter.jsx";
 import SessionChatDrawer from "./components/session/SessionChatDrawer.jsx";
 import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
 import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
 import DiceRollModal from "./components/dice/DiceRollModal";
-import MapScreen from "./components/map/MapScreen.jsx";
-import GamesScreen from "./components/minigames/GamesScreen.jsx";
 
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
-import { parseCSV } from "./utils/csvParser.js"; 
-import { getPowerArmorPartCondition } from "./data/powerArmor.js";
-import { readLastUiState, writeLastUiState } from "./utils/uiViewState.js";
 
 import {
   buildDefaultForm,
-  buildDefaultMapState,
-  createEmptyItem,
-  createEmptyPerk,
-  createEmptyWeapon,
   SKILL_LABEL_KEYS,
 } from "./constants.js";
 import { useCharacterStorage } from "./hooks/useCharacterStorage.js";
 import { usePortraitCropper } from "./hooks/usePortraitCropper.js";
 import { useInventoryItemController } from "./hooks/useInventoryItemController.js";
-import {
-  getDerivedStats,
-  normalizeNonNegative,
-  normalizeWeightValue,
-} from "./utils/characterMath.js";
+import { useCombatController } from "./hooks/useCombatController.js";
+import { useCharacterStatusController } from "./hooks/useCharacterStatusController.js";
+import { useCharacterCollectionsController } from "./hooks/useCharacterCollectionsController.js";
+import { useCharacterRulesController } from "./hooks/useCharacterRulesController.js";
+import { useUiNavigationController } from "./hooks/useUiNavigationController.js";
+import { useGlobalGameDatabase } from "./hooks/useGlobalGameDatabase.js";
+import { useCharacterMapController } from "./hooks/useCharacterMapController.js";
+import { useDiceController } from "./hooks/useDiceController.js";
+import { getDerivedStats } from "./utils/characterMath.js";
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
-import { ORIGINS } from "./components/data/origins.js";
-import { skillBaseRankCap } from "./utils/characterCreationRules.js";
-import {
-  hydrateWeaponMetadata,
-  needsWeaponMetadataHydration,
-} from "./utils/weaponDatabase.js";
 
 export default function App() {
-  const startupUiStateRef = useRef(null);
-  if (startupUiStateRef.current === null) startupUiStateRef.current = readLastUiState();
-  const startupUiState = startupUiStateRef.current;
-  const [pendingAutoD6, setPendingAutoD6] = useState(null);
   const { t, i18n } = useTranslation();
-  const [screen, setScreen] = useState(() => (
-    startupUiState.view === "battlemap" ? "sheet" : startupUiState.screen
-  ));
-  const [sessionLobbyOpen, setSessionLobbyOpen] = useState(false);
-  const [menuSection, setMenuSection] = useState("home");
-  const [isDiceOpen, setIsDiceOpen] = useState(false);
-  const [diceRoll, setDiceRoll] = useState(null);
 
-  // === ГЛОБАЛЬНАЯ БАЗА ДАННЫХ ===
-  const [globalWeapons, setGlobalWeapons] = useState([]);
-  const [globalAmmo, setGlobalAmmo] = useState([]);
-
-  useEffect(() => {
-    // Завантаження зброї
-    fetch('/weapons.csv')
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.text();
-      })
-      .then(csvText => {
-        const parsed = parseCSV(csvText);
-        setGlobalWeapons(parsed);
-        console.log(`Loaded ${parsed.length} weapons from global database.`);
-      })
-      .catch(err => console.error("Error loading weapons.csv:", err));
-
-    // Завантаження бази набоїв
-    fetch('/Ammo.csv')
-      .then(res => res.text())
-      .then(csv => {
-        const parsed = parseCSV(csv);
-        setGlobalAmmo(parsed);
-        console.log(`Loaded ${parsed.length} ammo types from global database.`);
-      })
-      .catch(err => console.error("Error loading ammo db:", err));
-  }, []);
-  // =============================
-
-  const openFreeDiceRoll = () => {
-    setDiceRoll(null);
-    setIsDiceOpen(true);
-  };
-
-  const openContextDiceRoll = (rollConfig) => {
-    setPendingAutoD6(null);
-    setDiceRoll(rollConfig);
-    setIsDiceOpen(true);
-
-    console.log("Rolling:", rollConfig.type, "Weapon ammo:", rollConfig.weapon?.ammo);
-
-    // === AUTOMATIC AMMO SPEND ===
-    if (rollConfig.type === "weapon" && rollConfig.weapon && rollConfig.weapon.ammo) {
-      const ammoType = String(rollConfig.weapon.ammo || "").trim();
-      const normalizedAmmo = ammoType.toLowerCase().replace(/[^a-z0-9.]+/g, "").replace(/s$/, "");
-      const rateSpent = rollConfig.useRate ? Math.max(0, Number(rollConfig.rate ?? rollConfig.weapon.rate ?? 0)) : 0;
-      const ammoSpent = 1 + rateSpent;
-
-      setForm((prev) => {
-        const nextItems = [...(prev.inventoryItems || [])];
-        const ammoIndex = nextItems.findIndex((item) => {
-          if (item?.category !== "ammo") return false;
-          const candidate = String(item?.canonicalName || item?.name || "")
-            .trim().toLowerCase().replace(/[^a-z0-9.]+/g, "").replace(/s$/, "");
-          return candidate === normalizedAmmo;
-        });
-
-        if (ammoIndex !== -1) {
-          const currentQty = Math.max(0, parseInt(nextItems[ammoIndex].quantity, 10) || 0);
-          const actuallySpent = Math.min(currentQty, ammoSpent);
-          const remaining = Math.max(0, currentQty - actuallySpent);
-          nextItems[ammoIndex] = { ...nextItems[ammoIndex], quantity: String(remaining) };
-          console.log(`Fired! -${actuallySpent} ${ammoType}. Remaining: ${remaining}`);
-        } else {
-          console.warn(`No matching ammo in inventory: ${ammoType}`);
-        }
-        return { ...prev, inventoryItems: nextItems };
-      });
-    }
-    // ============================
-  };
-
-  const closeDiceRoll = () => {
-    setIsDiceOpen(false);
-    setDiceRoll(null);
-  };
-
-  const [activeTab, setActiveTab] = useState(() => startupUiState.activeTab);
-  const [sideMenuOpen, setSideMenuOpen] = useState(false);
-  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
-  const [editingWeaponIndex, setEditingWeaponIndex] = useState(null);
-  const [editingItemIndex, setEditingItemIndex] = useState(null);
-  const [editingPerkIndex, setEditingPerkIndex] = useState(null);
-  const [weaponDraft, setWeaponDraft] = useState(createEmptyWeapon());
-  const [itemDraft, setItemDraft] = useState(createEmptyItem());
-  const [perkDraft, setPerkDraft] = useState(createEmptyPerk());
   const importInputRef = useRef(null);
   const [showConditions, setShowConditions] = useState(false);
   const [showDerived, setShowDerived] = useState(false);
@@ -172,104 +54,69 @@ export default function App() {
     changeOrigin,
   } = useCharacterStorage(buildDefaultForm());
 
+  const { globalWeapons, globalAmmo } = useGlobalGameDatabase({ setForm });
+  const { mapState, updateMapData } = useCharacterMapController({ form, setForm });
+
   const sharedSession = useSharedSession(form);
 
-  useEffect(() => {
-    const current = readLastUiState();
-    const preserveBattlemap = screen === "sheet" && current.view === "battlemap";
-    writeLastUiState({
-      screen,
-      activeTab,
-      view: preserveBattlemap ? "battlemap" : screen,
-    });
-  }, [screen, activeTab]);
-
-  useEffect(() => {
-    const shouldResume = startupUiState.view === "battlemap" || startupUiState.screen === "session";
-    const lastCode = sharedSession.lastSession?.code;
-    if (!shouldResume || sharedSession.isActive || sharedSession.lastSession?.autoResume === false || !lastCode) return undefined;
-
-    let cancelled = false;
-    let inFlight = false;
-    const resume = async () => {
-      if (cancelled || inFlight) return;
-      inFlight = true;
-      try {
-        await sharedSession.resumeLastSession?.({ automatic: true });
-      } catch (error) {
-        console.warn("Could not restore the last Pip-2D20 session:", error);
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    void resume();
-    const interval = window.setInterval(() => void resume(), 5000);
-    window.addEventListener("online", resume);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-      window.removeEventListener("online", resume);
-    };
-  }, [sharedSession.isActive, sharedSession.lastSession?.code, sharedSession.lastSession?.autoResume, startupUiState]);
+  const {
+    screen,
+    setScreen,
+    activeTab,
+    setActiveTab,
+    sessionLobbyOpen,
+    setSessionLobbyOpen,
+    menuSection,
+    setMenuSection,
+    sideMenuOpen,
+    setSideMenuOpen,
+    showUnsavedPrompt,
+    setShowUnsavedPrompt,
+  } = useUiNavigationController({ sharedSession });
 
 
-  useEffect(() => {
-    setForm((prev) => {
-      let changed = false;
-      const inventoryItems = (prev.inventoryItems || []).map((item) => {
-        if (item?.sourceType !== "crafting_material" || item?.category === "junk") return item;
-        changed = true;
-        return { ...item, category: "junk" };
-      });
-      return changed ? { ...prev, inventoryItems } : prev;
-    });
-  }, [setForm]);
+  const {
+    updateTopLevel,
+    updateDerivedOverride,
+    updateSpecial,
+    updateSkill,
+  } = useCharacterRulesController({ setForm });
 
-  useEffect(() => {
-    if (globalWeapons.length === 0) return;
 
-    setForm((prev) => {
-      let didChange = false;
-      const weapons = (prev.weapons || []).map((weapon) => {
-        if (!needsWeaponMetadataHydration(weapon, globalWeapons)) {
-          return weapon;
-        }
+  const {
+    editingWeaponIndex,
+    setEditingWeaponIndex,
+    weaponDraft,
+    setWeaponDraft,
+    addWeapon,
+    startEditWeapon,
+    saveEditWeapon,
+    copyWeapon,
+    removeWeapon,
+    editingItemIndex,
+    setEditingItemIndex,
+    itemDraft,
+    setItemDraft,
+    addItem,
+    startEditItem,
+    saveEditItem,
+    copyItem,
+    removeItem,
+    editingPerkIndex,
+    setEditingPerkIndex,
+    perkDraft,
+    setPerkDraft,
+    addPerk,
+    startEditPerk,
+    saveEditPerk,
+    copyPerk,
+    removePerk,
+  } = useCharacterCollectionsController({
+    form,
+    setForm,
+    globalWeapons,
+  });
 
-        didChange = true;
-        return hydrateWeaponMetadata(weapon, globalWeapons);
-      });
-
-      return didChange ? { ...prev, weapons } : prev;
-    });
-  }, [globalWeapons, setForm]);
-
-  const mapState = useMemo(
-    () => ({
-      ...buildDefaultMapState(),
-      ...(form.mapData || {}),
-    }),
-    [form.mapData]
-  );
-
-  const updateMapData = (patchOrUpdater) => {
-    setForm((prev) => {
-      const prevMap = {
-        ...buildDefaultMapState(),
-        ...(prev.mapData || {}),
-      };
-
-      const nextMap =
-        typeof patchOrUpdater === "function"
-          ? patchOrUpdater(prevMap)
-          : { ...prevMap, ...patchOrUpdater };
-
-      return {
-        ...prev,
-        mapData: nextMap,
-      };
-    });
-  };
 
   const portrait = usePortraitCropper((meta) => {
     setForm((prev) => ({ ...prev, ...meta }));
@@ -313,512 +160,65 @@ export default function App() {
     useQuickStimpak,
     endStealthBoy,
     advanceStealthBoyTurn,
+    spendAmmoForWeaponRoll,
   } = useInventoryItemController({
     form,
     setForm,
     i18n,
     t,
   });
+  const {
+    pendingAutoD6,
+    setPendingAutoD6,
+    isDiceOpen,
+    diceRoll,
+    openFreeDiceRoll,
+    openContextDiceRoll,
+    closeDiceRoll,
+  } = useDiceController({ spendAmmoForWeaponRoll });
+
   const combatApMax = Math.max(0, Number(derived.groupApMax || 6));
-  const [combatState, setCombatState] = useState({
-    active: false,
-    turn: 0,
-    ap: 0,
-    usedThisTurn: {},
-    usedThisCombat: {},
+  const {
+    combatState,
+    setCombatAp,
+    startCombat,
+    endCombat,
+    nextCombatTurn,
+    spendCombatAp,
+    spendCombatLuck,
+    markCombatUse,
+  } = useCombatController({
+    combatApMax,
+    currentLuckPoints,
+    setCurrentLuckPoints,
   });
 
-  useEffect(() => {
-    setCombatState((prev) => ({
-      ...prev,
-      ap: Math.min(combatApMax, Math.max(0, Number(prev.ap || 0))),
-    }));
-  }, [combatApMax]);
-
-  const setCombatAp = (value) => {
-    const next = Math.max(0, Math.min(combatApMax, Number(value || 0)));
-    setCombatState((prev) => ({ ...prev, ap: next }));
-  };
-
-  const startCombat = () => {
-    setCombatState({
-      active: true,
-      turn: 1,
-      ap: 0,
-      usedThisTurn: {},
-      usedThisCombat: {},
-    });
-  };
-
-  const endCombat = () => {
-    setCombatState({
-      active: false,
-      turn: 0,
-      ap: 0,
-      usedThisTurn: {},
-      usedThisCombat: {},
-    });
-  };
-
-  const nextCombatTurn = () => {
-    setCombatState((prev) => ({
-      ...prev,
-      active: true,
-      turn: Math.max(1, Number(prev.turn || 0) + 1),
-      usedThisTurn: {},
-    }));
-  };
-
-  const spendCombatAp = (amount = 1) => {
-    const cost = Math.max(0, Number(amount || 0));
-    if (!combatState.active || Number(combatState.ap || 0) < cost) return false;
-    setCombatState((prev) => ({ ...prev, ap: Math.max(0, Number(prev.ap || 0) - cost) }));
-    return true;
-  };
-
-  const spendCombatLuck = (amount = 1) => {
-    const cost = Math.max(1, Number(amount || 1));
-    if (Number(currentLuckPoints || 0) < cost) return false;
-    setCurrentLuckPoints((prev) => Math.max(0, Number(prev || 0) - cost));
-    return true;
-  };
-
-  const markCombatUse = (scope, key) => {
-    if (!key) return;
-    const field = scope === "turn" ? "usedThisTurn" : "usedThisCombat";
-    setCombatState((prev) => ({
-      ...prev,
-      [field]: { ...(prev[field] || {}), [key]: true },
-    }));
-  };
-
-  const baseMaxHp = Math.max(1, Number(derived.maxHp || 1));
-  const radiationHp = Math.max(
-    0,
-    Math.min(Number(form.radiationHp || 0), baseMaxHp)
-  );
-  const effectiveMaxHp = Math.max(0, baseMaxHp - radiationHp);
-  const currentHpValue = Math.max(
-    0,
-    Math.min(Number(form.currentHp || 0), effectiveMaxHp)
-  );
-
-  const setHpValues = (nextCurrent, nextRadiation = radiationHp) => {
-    const safeRadiation = Math.max(
-      0,
-      Math.min(Number(nextRadiation || 0), baseMaxHp)
-    );
-    const safeEffective = Math.max(0, baseMaxHp - safeRadiation);
-    const safeCurrent = Math.max(
-      0,
-      Math.min(Number(nextCurrent || 0), safeEffective)
-    );
-
-    setForm((prev) => ({
-      ...prev,
-      currentHp: String(safeCurrent),
-      radiationHp: String(safeRadiation),
-    }));
-  };
-
-  const handleHpSliderChange = (nextHp) => {
-    const safeHp = Math.max(0, Math.min(Number(nextHp || 0), baseMaxHp));
-    const maxAllowedRadiation = Math.max(0, baseMaxHp - safeHp);
-    const nextRadiation = Math.min(radiationHp, maxAllowedRadiation);
-    setHpValues(safeHp, nextRadiation);
-  };
-
-  const handleRadiationSliderChange = (nextRadiation) => {
-    const safeRadiation = Math.max(
-      0,
-      Math.min(Number(nextRadiation || 0), baseMaxHp)
-    );
-    const nextEffective = Math.max(0, baseMaxHp - safeRadiation);
-    const nextCurrent = Math.min(currentHpValue, nextEffective);
-    setHpValues(nextCurrent, safeRadiation);
-  };
-
-  const handleHpDecrease = () => {
-    handleHpSliderChange(currentHpValue - 1);
-  };
-
-  const handleHpIncrease = () => {
-    handleHpSliderChange(currentHpValue + 1);
-  };
+  const {
+    baseMaxHp,
+    radiationHp,
+    currentHpValue,
+    handleHpSliderChange,
+    handleRadiationSliderChange,
+    handleHpDecrease,
+    handleHpIncrease,
+    updateInjury,
+    updateArmor,
+    cycleBodyArmorState,
+  } = useCharacterStatusController({
+    form,
+    setForm,
+    derived,
+  });
 
   const lastRecordMeta = useMemo(
     () => loadLastCharacterMeta(),
     [loadStatus, saveStatus, screen]
   );
 
-  const clampNumberString = (value, min, max, fallback = "0") => {
-    const raw = String(value ?? "").trim();
-    if (raw === "") return fallback;
-    const parsed = Number(raw);
-    if (Number.isNaN(parsed)) return fallback;
-    return String(Math.max(min, Math.min(max, parsed)));
-  };
-
-  const getSkillBaseRankCap = (character, skill) => {
-    const currentOrigin = character?.origin && ORIGINS[character.origin]
-      ? ORIGINS[character.origin]
-      : null;
-    return skillBaseRankCap({
-      level: character?.level,
-      originSkillRankLimit: currentOrigin?.skillRankLimit,
-      tagged: Boolean(skill?.tagged),
-    });
-  };
-
-  const updateTopLevel = (key, value) =>
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key !== "level") return next;
-
-      const skills = Object.fromEntries(
-        Object.entries(prev.skills || {}).map(([skillName, skill]) => {
-          const maxBaseRank = getSkillBaseRankCap(next, skill);
-          return [
-            skillName,
-            {
-              ...skill,
-              rank: clampNumberString(skill?.rank, 0, maxBaseRank),
-            },
-          ];
-        })
-      );
-
-      return { ...next, skills };
-    });
-
-  const updateDerivedOverride = (key, value) =>
-    setForm((prev) => ({ ...prev, [key]: value }));
-
- const updateSpecial = (key, value) =>
-    setForm((prev) => {
-      const currentOrigin = prev.origin && ORIGINS[prev.origin] ? ORIGINS[prev.origin] : null;
-      const limits = currentOrigin?.specialLimits || { min: 1, max: 10 };
-      const originMin = Number(limits.min !== undefined ? limits.min : 1);
-      const minAllowed = key === "L" ? Math.max(4, originMin) : originMin;
-      const maxAllowed = Number(limits[key] !== undefined ? limits[key] : (limits.max !== undefined ? limits.max : 10));
-      const raw = String(value ?? "").trim();
-      const special = prev.special || {};
-      const otherTotal = Object.entries(special).reduce(
-        (sum, [entryKey, entryValue]) =>
-          entryKey === key ? sum : sum + (Number(entryValue) || 0),
-        0
-      );
-      const specialPointBudget = currentOrigin?.id === "survivor" ? 42 : 40;
-      const budgetMax = Math.max(minAllowed, specialPointBudget - otherTotal);
-      const effectiveMax = Math.min(maxAllowed, budgetMax);
-
-      return {
-        ...prev,
-        special: {
-          ...special,
-          // Keep an empty value while typing; blur restores the legal minimum.
-          [key]: raw === "" ? "" : clampNumberString(raw, minAllowed, effectiveMax),
-        },
-      };
-    });
-
-const updateSkill = (skillName, field, value) =>
-    setForm((prev) => {
-      const currentSkill = prev.skills?.[skillName] || {
-        rank: "0",
-        attribute: "A",
-        tagged: false,
-        bonus: "0",
-      };
-      const nextTagged = field === "tagged" ? Boolean(value) : Boolean(currentSkill.tagged);
-      const skillWithNextTag = { ...currentSkill, tagged: nextTagged };
-      const maxBaseRank = getSkillBaseRankCap(prev, skillWithNextTag);
-
-      const nextSkill = {
-        ...currentSkill,
-        [field]: value,
-      };
-
-      if (field === "rank") {
-        nextSkill.rank = clampNumberString(value, 0, maxBaseRank);
-      } else if (field === "tagged") {
-        nextSkill.tagged = nextTagged;
-        nextSkill.rank = clampNumberString(currentSkill.rank, 0, maxBaseRank);
-      }
-
-      return {
-        ...prev,
-        skills: {
-          ...prev.skills,
-          [skillName]: nextSkill,
-        },
-      };
-    });
-
   const updateStatus = (status, checked) =>
     setForm((prev) => ({
       ...prev,
       statuses: { ...prev.statuses, [status]: checked },
-    }));
-
-  const updateInjury = (partKey, requestedState) =>
-    setForm((prev) => {
-      const current = prev.injuries?.[partKey] || "normal";
-      const cycledState =
-        current === "normal"
-          ? "crippled"
-          : current === "crippled"
-          ? "treated"
-          : "normal";
-      const nextState = ["normal", "crippled", "treated"].includes(requestedState)
-        ? requestedState
-        : cycledState;
-
-      return {
-        ...prev,
-        injuries: { ...prev.injuries, [partKey]: nextState },
-      };
-    });
-
-  const updateArmor = (part, field, value) =>
-    setForm((prev) => ({
-      ...prev,
-      armor: {
-        ...prev.armor,
-        [part]: { ...prev.armor[part], [field]: value },
-      },
-    }));
-
-  const cycleBodyArmorState = (partKey, mode) => {
-    const slotMap = {
-      head: "Head",
-      torso: "Torso",
-      leftArm: "Left Arm",
-      rightArm: "Right Arm",
-      leftLeg: "Left Leg",
-      rightLeg: "Right Leg",
-    };
-    const slotId = slotMap[partKey];
-    if (!slotId) return;
-
-    setForm((prev) => {
-      const armorState = prev.armor || {};
-
-      if (mode === "powerArmor") {
-        const loadout = armorState?._power?.loadout;
-        const condition = getPowerArmorPartCondition(loadout, slotId);
-        if (!loadout || !condition) return prev;
-
-        const currentHp =
-          condition.state === "intact"
-            ? Math.max(0, condition.maximum - 1)
-            : condition.state === "damaged"
-              ? 0
-              : condition.maximum;
-        const existing = loadout.slots?.[slotId] || {};
-        const legacySetId =
-          loadout.setId && !["none", "frame", "mixed"].includes(loadout.setId)
-            ? loadout.setId
-            : "";
-
-        return {
-          ...prev,
-          armor: {
-            ...armorState,
-            _power: {
-              ...(armorState._power || {}),
-              loadout: {
-                ...loadout,
-                setId: "mixed",
-                slots: {
-                  ...(loadout.slots || {}),
-                  [slotId]: {
-                    ...existing,
-                    setId: existing.setId || legacySetId,
-                    currentHp,
-                  },
-                },
-              },
-            },
-          },
-        };
-      }
-
-      const parts = armorState?._condition?.parts || {};
-      const previous = parts[slotId] || {};
-      const currentStatus = ["intact", "damaged", "broken"].includes(previous.status)
-        ? previous.status
-        : "intact";
-      const nextStatus = {
-        intact: "damaged",
-        damaged: "broken",
-        broken: "intact",
-      }[currentStatus];
-
-      const current = previous.current && typeof previous.current === "object"
-        ? { ...previous.current }
-        : {};
-      if (nextStatus === "broken") {
-        current.physical = 0;
-        current.energy = 0;
-        current.radiation = 0;
-        current.poison = 0;
-      }
-
-      return {
-        ...prev,
-        armor: {
-          ...armorState,
-          _condition: {
-            ...(armorState._condition || {}),
-            parts: {
-              ...parts,
-              [slotId]: {
-                ...previous,
-                status: nextStatus,
-                current,
-              },
-            },
-          },
-        },
-      };
-    });
-  };
-
-  const addWeapon = () => {
-    setForm((prev) => ({
-      ...prev,
-      weapons: [...prev.weapons, createEmptyWeapon()],
-    }));
-    setEditingWeaponIndex(form.weapons.length);
-    setWeaponDraft(createEmptyWeapon());
-  };
-
-  const startEditWeapon = (index) => {
-    setEditingWeaponIndex(index);
-    setWeaponDraft(hydrateWeaponMetadata(form.weapons[index], globalWeapons));
-  };
-
-  const saveEditWeapon = (index) => {
-    setForm((prev) => {
-      const next = [...prev.weapons];
-      next[index] = {
-        ...weaponDraft,
-        damage: normalizeNonNegative(weaponDraft.damage) || "",
-        rate: normalizeNonNegative(weaponDraft.rate) || "",
-        cost: normalizeNonNegative(weaponDraft.cost) || "",
-        weight: normalizeWeightValue(weaponDraft.weight) || "",
-        rarity: normalizeNonNegative(weaponDraft.rarity) || "",
-      };
-      return { ...prev, weapons: next };
-    });
-    setEditingWeaponIndex(null);
-    setWeaponDraft(createEmptyWeapon());
-  };
-
-  const copyWeapon = (index) =>
-    setForm((prev) => {
-      const next = [...prev.weapons];
-      const sourceWeapon = hydrateWeaponMetadata(prev.weapons[index], globalWeapons);
-      next.splice(index + 1, 0, {
-        ...sourceWeapon,
-        name: `${sourceWeapon.name || "Weapon"} Copy`,
-      });
-      return { ...prev, weapons: next };
-    });
-
-  const removeWeapon = (index) =>
-    setForm((prev) => ({
-      ...prev,
-      weapons: prev.weapons.filter((_, i) => i !== index),
-    }));
-
-  const addItem = (category) => {
-    setForm((prev) => ({
-      ...prev,
-      inventoryItems: [...prev.inventoryItems, createEmptyItem(category)],
-    }));
-    setEditingItemIndex(form.inventoryItems.length);
-    setItemDraft(createEmptyItem(category));
-  };
-
-  const startEditItem = (index) => {
-    setEditingItemIndex(index);
-    setItemDraft({ ...form.inventoryItems[index] });
-  };
-
-  const saveEditItem = (index) => {
-    setForm((prev) => {
-      const next = [...prev.inventoryItems];
-      next[index] = {
-        ...itemDraft,
-        quantity: normalizeNonNegative(itemDraft.quantity) || "0",
-        cost: normalizeNonNegative(itemDraft.cost) || "",
-        weight: normalizeWeightValue(itemDraft.weight) || "",
-      };
-      return { ...prev, inventoryItems: next };
-    });
-    setEditingItemIndex(null);
-    setItemDraft(createEmptyItem());
-  };
-
-  const copyItem = (index) =>
-    setForm((prev) => {
-      const next = [...prev.inventoryItems];
-      next.splice(index + 1, 0, {
-        ...prev.inventoryItems[index],
-        name: `${prev.inventoryItems[index].name || "Item"} Copy`,
-      });
-      return { ...prev, inventoryItems: next };
-    });
-
-  const removeItem = (index) =>
-    setForm((prev) => ({
-      ...prev,
-      inventoryItems: prev.inventoryItems.filter((_, i) => i !== index),
-    }));
-
-  const addPerk = () => {
-    setForm((prev) => ({
-      ...prev,
-      perksAndTraits: [...prev.perksAndTraits, createEmptyPerk()],
-    }));
-    setEditingPerkIndex(form.perksAndTraits.length);
-    setPerkDraft(createEmptyPerk());
-  };
-
-  const startEditPerk = (index) => {
-    setEditingPerkIndex(index);
-    setPerkDraft({ ...form.perksAndTraits[index] });
-  };
-
-  const saveEditPerk = (index) => {
-    setForm((prev) => {
-      const next = [...prev.perksAndTraits];
-      next[index] = {
-        ...perkDraft,
-        rank: normalizeNonNegative(perkDraft.rank) || "1",
-      };
-      return { ...prev, perksAndTraits: next };
-    });
-    setEditingPerkIndex(null);
-    setPerkDraft(createEmptyPerk());
-  };
-
-  const copyPerk = (index) =>
-    setForm((prev) => {
-      const next = [...prev.perksAndTraits];
-      next.splice(index + 1, 0, {
-        ...prev.perksAndTraits[index],
-        name: `${prev.perksAndTraits[index].name || "Perk"} Copy`,
-      });
-      return { ...prev, perksAndTraits: next };
-    });
-
-  const removePerk = (index) =>
-    setForm((prev) => ({
-      ...prev,
-      perksAndTraits: prev.perksAndTraits.filter((_, i) => i !== index),
     }));
 
   const handleImport = (event) => {
@@ -862,231 +262,98 @@ const updateSkill = (skillName, field, value) =>
     setScreen("menu");
   };
 
-  let content = null;
-
-  if (screen === "menu") {
-    content = (
-      <MenuScreen
-        initialSection={menuSection}
-        hasCharacter={!!lastRecordMeta}
-        saveMeta={lastRecordMeta}
-        onNewCharacter={handleNewCharacter}
-        onContinue={handleContinue}
-        onImportClick={handleImportClick}
-        onOpenSession={(intent) => {
-          setSessionLobbyOpen(true);
-          setScreen("session");
-          if (typeof intent === "string") requestAnimationFrame(() => {
-            const card = document.querySelector(intent === "host" ? ".session-role-card--gm" : ".session-role-card:not(.session-role-card--gm)");
-            card?.scrollIntoView({block:"center"});
-            card?.querySelector("input, button")?.focus({preventScroll:true});
-          });
-        }}
-        lastSession={sharedSession.lastSession}
-        session={sharedSession}
-        onResumeSession={() => {
-          setSessionLobbyOpen(false);
-          setScreen("session");
-          if (sharedSession.isActive) {
-            if (sharedSession.status !== "online") void sharedSession.reconnectNow?.();
-            return;
-          }
-          void sharedSession.resumeLastSession?.();
-        }}
-      />
-    );
-  } else if (screen === "session") {
-    content = (
-      <SessionScreen
-        showLobby={sessionLobbyOpen}
-        onShowLobby={() => setSessionLobbyOpen(true)}
-        onEnterSession={() => setSessionLobbyOpen(false)}
-        form={form}
-        session={sharedSession}
-        onBack={() => {setMenuSection("home");setScreen("menu");}}
-        onNavigateMenu={section => {setMenuSection(section);setScreen("menu");}}
-        onOpenSheet={() => {
-          setScreen("sheet");
-          setActiveTab("status");
-        }}
-      />
-    );
-  } else {
-    switch (activeTab) {
-      case "status":
-        content = (
-          <StatusScreen
-            form={form}
-            armor={form.armor}
-            currentLuckPoints={currentLuckPoints}
-            onSpendLuck={onSpendLuck}
-            derived={derived}
-            portraitPreview={portrait.portraitPreview}
-            onPickPortrait={portrait.openFileDialog}
-            onRemovePortrait={portrait.clearPortrait}
-            onTopLevelChange={updateTopLevel}
-            onChangeOrigin={changeOrigin}
-            onStatusToggle={(status) => {
-              if (status === "invisible" && form.stealthBoyState?.active) {
-                endStealthBoy();
-                return;
-              }
-              updateStatus(status, !form.statuses[status]);
-            }}
-            onStealthBoyAdvance={advanceStealthBoyTurn}
-            onStealthBoyEnd={endStealthBoy}
-            onInjuryToggle={updateInjury}
-            onArmorChange={updateArmor}
-            onArmorStatusCycle={cycleBodyArmorState}
-            hpMax={baseMaxHp}
-            hpCurrent={currentHpValue}
-            radiationHp={radiationHp}
-            onHpSliderChange={handleHpSliderChange}
-            onRadiationSliderChange={handleRadiationSliderChange}
-            onHpDecrease={handleHpDecrease}
-            onHpIncrease={handleHpIncrease}
-            onOpenConditions={() => setShowConditions(true)}
-            onOpenDerived={() => setShowDerived(true)}
-            stimpaks={availableStimpaks}
-            treatableInjuries={treatableInjuries}
-            onUseStimpak={useQuickStimpak}
-            onRoll={openContextDiceRoll}
-          />
-        );
-        break;
-
-      case "skills":
-      case "special":
-        content = (
-          <SpecialScreen
-            section={activeTab}
-            form={form}
-            derived={derived}
-            currentLuckPoints={currentLuckPoints}
-            onSpecialChange={updateSpecial}
-            onSkillChange={updateSkill}
-            onDerivedChange={updateDerivedOverride}
-            onCurrentLuckChange={setCurrentLuckPoints}
-            onOpenSkillsEditor={() => setShowSkillsEditor(true)}
-            onRoll={openContextDiceRoll}
-          />
-        );
-        break;
-
-      case "weapons":
-        content = (
-          <WeaponsScreen
-            weapons={form.weapons}
-            editingIndex={editingWeaponIndex}
-            weaponDraft={weaponDraft}
-            setWeaponDraft={setWeaponDraft}
-            onAdd={addWeapon}
-            onEdit={startEditWeapon}
-            onCopy={copyWeapon}
-            onRemove={removeWeapon}
-            onSaveEdit={saveEditWeapon}
-            onCancelEdit={() => setEditingWeaponIndex(null)}
-            onRoll={openContextDiceRoll}
-            form={form}
-            globalWeapons={globalWeapons}
-            combatState={combatState}
-            combatApMax={combatApMax}
-            currentLuckPoints={currentLuckPoints}
-            luckMax={derived.luckPoints || 0}
-            onSetCombatAp={setCombatAp}
-            onStartCombat={startCombat}
-            onEndCombat={endCombat}
-            onNextCombatTurn={nextCombatTurn}
-            onSpendCombatAp={spendCombatAp}
-          />
-        );
-        break;
-
-      case "inventory":
-        content = (
-          <InventoryScreen
-            items={form.inventoryItems}
-            editingIndex={editingItemIndex}
-            itemDraft={itemDraft}
-            setItemDraft={setItemDraft}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            carryWeight={derived.carryWeight}
-            currentCarryWeight={derived.currentCarryWeight}
-            caps={form.caps}
-            onCapsChange={(value) => updateTopLevel("caps", value)}
-            onAdd={addItem}
-            onEdit={startEditItem}
-            onCopy={copyItem}
-            onRemove={removeItem}
-            onSaveEdit={saveEditItem}
-            onCancelEdit={() => setEditingItemIndex(null)}
-            globalAmmo={globalAmmo}
-          />
-        );
-        break;
-
-      case "armor":
-        content = (
-          <ArmorScreen
-            armor={form.armor}
-            inventoryItems={form.inventoryItems}
-            onArmorChange={updateArmor}
-            derived={derived}
-          />
-        );
-        break;
-
-      case "perks":
-        content = (
-          <PerksScreen
-            perks={form.perksAndTraits}
-            editingIndex={editingPerkIndex}
-            perkDraft={perkDraft}
-            setPerkDraft={setPerkDraft}
-            onAdd={addPerk}
-            onEdit={startEditPerk}
-            onCopy={copyPerk}
-            onRemove={removePerk}
-            onSaveEdit={saveEditPerk}
-            onCancelEdit={() => setEditingPerkIndex(null)}
-            form={form} 
-          />
-        );
-        break;
-
-      case "map":
-        content = (
-          <MapScreen
-            mapState={mapState}
-            onMapChange={updateMapData}
-            character={form}
-            weaponDatabase={globalWeapons}
-          />
-        );
-        break;
-
-      case "notes":
-        content = <NotesScreen form={form} onTopLevelChange={updateTopLevel} />;
-        break;
-
-      case "games":
-        content = <GamesScreen />;
-        break;
-
-      default:
-      content = (
-          <DataScreen
-            saveStatus={saveStatus}
-            loadStatus={loadStatus}
-            onExport={exportJson}
-            onImportClick={handleImportClick}
-            importInputRef={importInputRef}
-            database={{ weapons: globalWeapons, ammo: globalAmmo }}
-          />
-        );
-    }
-  }
+  const content = (
+    <AppScreenRouter
+      screen={screen}
+      activeTab={activeTab}
+      menuSection={menuSection}
+      setMenuSection={setMenuSection}
+      setScreen={setScreen}
+      setActiveTab={setActiveTab}
+      sessionLobbyOpen={sessionLobbyOpen}
+      setSessionLobbyOpen={setSessionLobbyOpen}
+      lastRecordMeta={lastRecordMeta}
+      handleNewCharacter={handleNewCharacter}
+      handleContinue={handleContinue}
+      handleImportClick={handleImportClick}
+      sharedSession={sharedSession}
+      form={form}
+      currentLuckPoints={currentLuckPoints}
+      onSpendLuck={onSpendLuck}
+      derived={derived}
+      portrait={portrait}
+      updateTopLevel={updateTopLevel}
+      changeOrigin={changeOrigin}
+      endStealthBoy={endStealthBoy}
+      updateStatus={updateStatus}
+      advanceStealthBoyTurn={advanceStealthBoyTurn}
+      updateInjury={updateInjury}
+      updateArmor={updateArmor}
+      cycleBodyArmorState={cycleBodyArmorState}
+      baseMaxHp={baseMaxHp}
+      currentHpValue={currentHpValue}
+      radiationHp={radiationHp}
+      handleHpSliderChange={handleHpSliderChange}
+      handleRadiationSliderChange={handleRadiationSliderChange}
+      handleHpDecrease={handleHpDecrease}
+      handleHpIncrease={handleHpIncrease}
+      setShowConditions={setShowConditions}
+      setShowDerived={setShowDerived}
+      availableStimpaks={availableStimpaks}
+      treatableInjuries={treatableInjuries}
+      useQuickStimpak={useQuickStimpak}
+      openContextDiceRoll={openContextDiceRoll}
+      updateSpecial={updateSpecial}
+      updateSkill={updateSkill}
+      updateDerivedOverride={updateDerivedOverride}
+      setCurrentLuckPoints={setCurrentLuckPoints}
+      setShowSkillsEditor={setShowSkillsEditor}
+      editingWeaponIndex={editingWeaponIndex}
+      setEditingWeaponIndex={setEditingWeaponIndex}
+      weaponDraft={weaponDraft}
+      setWeaponDraft={setWeaponDraft}
+      addWeapon={addWeapon}
+      startEditWeapon={startEditWeapon}
+      copyWeapon={copyWeapon}
+      removeWeapon={removeWeapon}
+      saveEditWeapon={saveEditWeapon}
+      globalWeapons={globalWeapons}
+      combatState={combatState}
+      combatApMax={combatApMax}
+      setCombatAp={setCombatAp}
+      startCombat={startCombat}
+      endCombat={endCombat}
+      nextCombatTurn={nextCombatTurn}
+      spendCombatAp={spendCombatAp}
+      editingItemIndex={editingItemIndex}
+      setEditingItemIndex={setEditingItemIndex}
+      itemDraft={itemDraft}
+      setItemDraft={setItemDraft}
+      activeCategory={activeCategory}
+      setActiveCategory={setActiveCategory}
+      addItem={addItem}
+      startEditItem={startEditItem}
+      copyItem={copyItem}
+      removeItem={removeItem}
+      saveEditItem={saveEditItem}
+      globalAmmo={globalAmmo}
+      editingPerkIndex={editingPerkIndex}
+      setEditingPerkIndex={setEditingPerkIndex}
+      perkDraft={perkDraft}
+      setPerkDraft={setPerkDraft}
+      addPerk={addPerk}
+      startEditPerk={startEditPerk}
+      copyPerk={copyPerk}
+      removePerk={removePerk}
+      saveEditPerk={saveEditPerk}
+      mapState={mapState}
+      updateMapData={updateMapData}
+      saveStatus={saveStatus}
+      loadStatus={loadStatus}
+      exportJson={exportJson}
+      importInputRef={importInputRef}
+    />
+  );
 
   const DerivedModal = () => {
     if (!showDerived) return null;
