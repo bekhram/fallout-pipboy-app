@@ -165,18 +165,18 @@ const WEAPON_RECIPES = [
   // The screenshots for Gatling Plasma and Gauss Minigun repeat unrelated recipe rows.
   // Keep their mod stats from the source tables, but use the app's abstract junk economy here.
   ...group({ workbench: "weapons", category: "weapons", group: "GATLING PLASMA MODS", skill: "Science", page: 70 }, [
-    ["Ported Barrel", 4, "Science! 4", "Uncommon"],
-    ["Comfort Grip", 4, "Science! 4", "Uncommon"],
-    ["Reflex Sight", 2, "Gun Nut 2", "Uncommon", "Repair"],
-    ["Beam Splitter", 4, "Science! 4", "Uncommon"],
+    ["Ported Barrel", 5, "Science! 4", "Uncommon"],
+    ["Comfort Grip", 3, "Science! 4", "Uncommon"],
+    ["Reflex Sight", 4, "Gun Nut 2", "Uncommon", "Repair"],
+    ["Beam Splitter", 5, "Science! 4", "Uncommon"],
     ["Beam Focuser", 4, "Science! 4", "Uncommon"],
   ]),
   ...group({ workbench: "weapons", category: "weapons", group: "GAUSS MINIGUN MODS", skill: "Science", page: 71 }, [
-    ["Tri-Barrel", 2, "Science! 1", "Uncommon"],
-    ["Penta-Barrel", 3, "Science! 1", "Uncommon"],
-    ["Tesla Coil Capacitor", 2, "Science! 1", "Uncommon"],
-    ["Tesla Coil Dynamo", 3, "Science! 2", "Uncommon"],
-    ["Gunner Sight", 2, "", "Common", "Repair"],
+    ["Tri-Barrel", 5, "Science! 1", "Uncommon"],
+    ["Penta-Barrel", 5, "Science! 1", "Uncommon"],
+    ["Tesla Coil Capacitor", 5, "Science! 1", "Uncommon"],
+    ["Tesla Coil Dynamo", 6, "Science! 2", "Uncommon"],
+    ["Gunner Sight", 4, "", "Common", "Repair"],
   ]),
   ...group({ workbench: "weapons", category: "weapons", group: "PLASMA CASTER MODS", skill: "Science", page: 72 }, [
     ["Calibrated Capacitor", 3, "Science! 4", "Uncommon"],
@@ -236,7 +236,7 @@ WEAPON_RECIPES.push(
     ["Armor Piercing Receiver", 3, "Gun Nut 1", "Uncommon"], ["Armor Piercing Automatic Receiver", 4, "Gun Nut 3", "Uncommon"], ["Hardened Automatic Receiver", 4, "Gun Nut 3", "Uncommon"], ["Rapid Automatic Receiver", 4, "Gun Nut 4", "Uncommon"], ["Calibrated Powerful Receiver", 4, "Gun Nut 4", "Uncommon"], ["Powerful Automatic Receiver", 4, "Gun Nut 4", "Uncommon"], ["Hardened Piercing Auto Receiver", 5, "Gun Nut 4", "Uncommon"], ["9mm Receiver", 3, "Gun Nut 2", "Uncommon"], [".357 Receiver", 3, "Gun Nut 3", "Uncommon"],
   ]),
   ...group({ workbench: "weapons", category: "weapons", group: "ADDITIONAL ENERGY WEAPON MODS", skill: "Science", page: 83 }, [
-    ["Gamma Wave Emitter", 3, "Science! 1", "Uncommon"], ["Maximized Capacitor", 3, "Science! 2", "Uncommon"], ["Boosted Photon Agitator", 4, "Science! 2", "Uncommon"], ["Boosted Gamma Wave Emitter", 5, "Science! 2", "Uncommon"], ["Overcharged Capacitor", 4, "Science! 3", "Uncommon"], ["Improved Long Barrel", 4, "Science! 2", "Uncommon"], ["Improved Automatic Barrel", 5, "Science! 3", "Uncommon"], ["Improved Sniper Barrel", 5, "Science! 3", "Uncommon"], ["Improved Splitter", 4, "Science! 3", "Uncommon"], ["Amplified Beam Splitter", 5, "Science! 2", "Uncommon"], ["Fine-Tuned Beam Focuser", 5, "Science! 2", "Uncommon"], ["Quantum Gyro-Compensating Lens", 5, "Science! 3", "Uncommon"],
+    ["Gamma Wave Emitter", 3, "Science! 1", "Uncommon"], ["Maximized Capacitor", 3, "Science! 2", "Uncommon"], ["Boosted Photon Agitator", 4, "Science! 2", "Uncommon"], ["Boosted Gamma Wave Emitter", 5, "Science! 2", "Uncommon"], ["Overcharged Capacitor", 4, "Science! 3", "Uncommon"], ["Improved Long Barrel", 4, "Science! 2", "Uncommon"], ["Improved Automatic Barrel", 5, "Science! 2", "Uncommon"], ["Improved Sniper Barrel", 5, "Science! 2", "Uncommon"], ["Improved Splitter", 4, "Science! 1", "Uncommon"], ["Amplified Beam Splitter", 5, "Science! 2", "Uncommon"], ["Fine-Tuned Beam Focuser", 5, "Science! 2", "Uncommon"], ["Quantum Gyro-Compensating Lens", 5, "Science! 3", "Uncommon"],
   ]),
   ...group({ workbench: "weapons", category: "weapons", group: "GATLING LASER ADDITIONAL MODS", skill: "Science", page: 84 }, [
     ["Gamma Wave Emitter (Gatling Laser)", 3, "Science! 3", "Uncommon", null, null, null, "Gamma Wave Emitter"], ["Maximized Capacitor (Gatling Laser)", 3, "Science! 4", "Uncommon", null, null, null, "Maximized Capacitor"], ["Boosted Photon Agitator (Gatling Laser)", 4, "Science! 4", "Uncommon", null, null, null, "Boosted Photon Agitator"], ["Boosted Gamma Wave Emitter (Gatling Laser)", 5, "Science! 4", "Uncommon", null, null, null, "Boosted Gamma Wave Emitter"], ["Overcharged Capacitor (Gatling Laser)", 4, "Science! 4", "Uncommon", null, null, null, "Overcharged Capacitor"],

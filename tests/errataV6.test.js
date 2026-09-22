@@ -156,3 +156,48 @@ test("Errata V6 bestiary corrections are applied", () => {
   assert.equal(zetan.hp, "15");
   assert.doesNotMatch(zetan.attacks, /Blast/);
 });
+
+
+test("Wanderer's Guide errata V6 weapon data is applied", () => {
+  const csv = readFileSync(new URL("../public/weapons.csv", import.meta.url), "utf8");
+  assert.match(csv, /Arc Welder[^\n]*Fusion Cell/);
+  assert.doesNotMatch(csv, /M79 Grenade Launcher[^\n]*Two-Handed/);
+
+  const source = readFileSync(new URL("../src/data/weaponMods.js", import.meta.url), "utf8");
+  for (const name of [
+    "Armor Piercing Automatic Receiver",
+    "Hardened Automatic Receiver",
+    "Rapid Automatic Receiver",
+    "Powerful Automatic Receiver",
+    "Hardened Piercing Auto Receiver",
+  ]) {
+    const line = source.split("\n").find((row) => row.includes(name));
+    assert.ok(line);
+    assert.match(line, /Burst/);
+  }
+  assert.match(
+    source,
+    /Improved Splitter"[\s\S]*?"Science! 1"/
+  );
+});
+
+test("Wanderer's Guide errata V6 crafting recipes are applied", () => {
+  const byName = (name, group) => CRAFTING_RECIPES.find((r) => r.name === name && (!group || r.group === group));
+
+  assert.equal(byName("Ported Barrel", "GATLING PLASMA MODS").complexity, 5);
+  assert.equal(byName("Comfort Grip", "GATLING PLASMA MODS").complexity, 3);
+  assert.equal(byName("Reflex Sight", "GATLING PLASMA MODS").complexity, 4);
+  assert.equal(byName("Beam Splitter", "GATLING PLASMA MODS").complexity, 5);
+  assert.equal(byName("Beam Focuser", "GATLING PLASMA MODS").complexity, 4);
+
+  assert.equal(byName("Tri-Barrel", "GAUSS MINIGUN MODS").complexity, 5);
+  assert.equal(byName("Penta-Barrel", "GAUSS MINIGUN MODS").complexity, 5);
+  assert.equal(byName("Tesla Coil Capacitor", "GAUSS MINIGUN MODS").complexity, 5);
+  assert.equal(byName("Tesla Coil Dynamo", "GAUSS MINIGUN MODS").complexity, 6);
+  assert.equal(byName("Gunner Sight", "GAUSS MINIGUN MODS").complexity, 4);
+
+  assert.equal(byName("Overcharged Capacitor", "ADDITIONAL ENERGY WEAPON MODS").perks, "Science! 3");
+  assert.equal(byName("Improved Automatic Barrel", "ADDITIONAL ENERGY WEAPON MODS").perks, "Science! 2");
+  assert.equal(byName("Improved Sniper Barrel", "ADDITIONAL ENERGY WEAPON MODS").perks, "Science! 2");
+  assert.equal(byName("Improved Splitter", "ADDITIONAL ENERGY WEAPON MODS").perks, "Science! 1");
+});

@@ -351,12 +351,12 @@ const supplementalUnique = {
 const supplementalSmallGunMods = {
   "10mm-pistol": { receiver: [
     mod("Armor Piercing Receiver", "Add Piercing 1", 0, 3, "Gun Nut 1", "Armor Piercing"),
-    mod("Armor Piercing Automatic Receiver", "-1 damage; +2 Fire Rate; add Piercing 1; gain Inaccurate", 1, 40, "Gun Nut 3", "AP Auto"),
-    mod("Hardened Automatic Receiver", "+2 Fire Rate; gain Inaccurate", 2, 58, "Gun Nut 3", "Hardened Auto"),
-    mod("Rapid Automatic Receiver", "-1 damage; +3 Fire Rate; gain Inaccurate", 2, 63, "Gun Nut 4", "Rapid"),
+    mod("Armor Piercing Automatic Receiver", "-1 damage; +2 Fire Rate; add Piercing 1; gain Burst; gain Inaccurate", 1, 40, "Gun Nut 3", "AP Auto"),
+    mod("Hardened Automatic Receiver", "+2 Fire Rate; gain Burst; gain Inaccurate", 2, 58, "Gun Nut 3", "Hardened Auto"),
+    mod("Rapid Automatic Receiver", "-1 damage; +3 Fire Rate; gain Burst; gain Inaccurate", 2, 63, "Gun Nut 4", "Rapid"),
     mod("Calibrated Powerful Receiver", "+2 damage; gain Vicious", 3, 68, "Gun Nut 4", "Calibrated Powerful"),
-    mod("Powerful Automatic Receiver", "+1 damage; +2 Fire Rate; gain Inaccurate", 4, 88, "Gun Nut 4", "Powerful Auto"),
-    mod("Hardened Piercing Auto Receiver", "+2 Fire Rate; gain Piercing 1; gain Inaccurate", 3, 78, "Gun Nut 4", "Hardened AP Auto"),
+    mod("Powerful Automatic Receiver", "+1 damage; +2 Fire Rate; gain Burst; gain Inaccurate", 4, 88, "Gun Nut 4", "Powerful Auto"),
+    mod("Hardened Piercing Auto Receiver", "+2 Fire Rate; gain Piercing 1; gain Burst; gain Inaccurate", 3, 78, "Gun Nut 4", "Hardened AP Auto"),
   ]},
   "assault-rifle": { receiver: [] },
   "combat-rifle": { receiver: [] },
@@ -414,7 +414,7 @@ supplementalEnergyMods["plasma-gun"] = {
   barrel: [
     ...supplementalEnergyMods["institute-laser"].barrel,
     mod("Improved Sniper Barrel", "+3 damage; remove Close Quarters; increase Range by 1 step; -1 Fire Rate", 1, 21, "Science! 2", "Improved Charging"),
-    mod("Improved Splitter", "Gain Spread; gain Inaccurate", 1, 25, "Science! 2", "Improved Scattergun"),
+    mod("Improved Splitter", "Gain Spread; gain Inaccurate", 1, 25, "Science! 1", "Improved Scattergun"),
   ],
 };
 
