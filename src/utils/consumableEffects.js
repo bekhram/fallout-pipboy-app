@@ -19,6 +19,7 @@ const UTILITY_CONSUMABLE_NAMES = new Set([
 ]);
 
 export const PIPBOY_USE_ITEM_EVENT = "pipboy:use-inventory-item";
+export const PIPBOY_CONSUMABLE_COMBAT_AP_EVENT = "pipboy:consumable-combat-ap";
 export const PIPBOY_END_CONSUMABLE_EFFECT_EVENT = "pipboy:end-consumable-effect";
 
 const CHEM_STATUS_BY_NAME = {
