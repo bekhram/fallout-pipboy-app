@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
-const source = readFileSync(new URL('../src/hooks/useGmAuthoritativeSessionV15.js', import.meta.url), 'utf8');
+const source = readFileSync(new URL('../src/hooks/useGmAuthoritativeSessionV2.js', import.meta.url), 'utf8');
 const resumeCode = source.slice(source.indexOf('  const resumeCurrentRole ='), source.indexOf('  const ensureSocket ='));
 function fixture({role = 'host', error = 'ROOM_NOT_FOUND'} = {}) {
   const calls = [], saved = [], state = { scenes: [{ sceneId: 'existing-map' }] };
