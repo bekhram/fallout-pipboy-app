@@ -201,3 +201,16 @@ test("Wanderer's Guide errata V6 crafting recipes are applied", () => {
   assert.equal(byName("Improved Sniper Barrel", "ADDITIONAL ENERGY WEAPON MODS").perks, "Science! 2");
   assert.equal(byName("Improved Splitter", "ADDITIONAL ENERGY WEAPON MODS").perks, "Science! 1");
 });
+
+
+test("Settler's Guide errata V6 NPC corrections are applied", () => {
+  const recruit = BESTIARY_ENTRIES.find((entry) => entry.id === "settlers-ncr-recruit");
+  assert.ok(recruit);
+  assert.match(recruit.attacks, /COMBAT RIFLE.*TN 8.*5 CD Physical.*FR 2/);
+  assert.doesNotMatch(recruit.attacks, /HUNTING RIFLE/);
+  assert.match(recruit.loot, /Combat Rifle/);
+
+  const x688 = BESTIARY_ENTRIES.find((entry) => entry.id === "settlers-x6-88");
+  assert.ok(x688);
+  assert.match(x688.attacks, /10MM PISTOL.*TN 11/);
+});
