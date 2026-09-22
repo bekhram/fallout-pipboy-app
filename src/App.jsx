@@ -21,11 +21,9 @@ import GamesScreen from "./components/minigames/GamesScreen.jsx";
 
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
-import { parseCSV } from "./utils/csvParser.js"; 
 
 import {
   buildDefaultForm,
-  buildDefaultMapState,
   SKILL_LABEL_KEYS,
 } from "./constants.js";
 import { useCharacterStorage } from "./hooks/useCharacterStorage.js";
@@ -36,66 +34,15 @@ import { useCharacterStatusController } from "./hooks/useCharacterStatusControll
 import { useCharacterCollectionsController } from "./hooks/useCharacterCollectionsController.js";
 import { useCharacterRulesController } from "./hooks/useCharacterRulesController.js";
 import { useUiNavigationController } from "./hooks/useUiNavigationController.js";
+import { useGlobalGameDatabase } from "./hooks/useGlobalGameDatabase.js";
+import { useCharacterMapController } from "./hooks/useCharacterMapController.js";
+import { useDiceController } from "./hooks/useDiceController.js";
 import { getDerivedStats } from "./utils/characterMath.js";
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
-import { needsWeaponMetadataHydration, hydrateWeaponMetadata } from "./utils/weaponDatabase.js";
 
 export default function App() {
-  const [pendingAutoD6, setPendingAutoD6] = useState(null);
   const { t, i18n } = useTranslation();
-  const [isDiceOpen, setIsDiceOpen] = useState(false);
-  const [diceRoll, setDiceRoll] = useState(null);
-
-  // === ГЛОБАЛЬНАЯ БАЗА ДАННЫХ ===
-  const [globalWeapons, setGlobalWeapons] = useState([]);
-  const [globalAmmo, setGlobalAmmo] = useState([]);
-
-  useEffect(() => {
-    // Завантаження зброї
-    fetch('/weapons.csv')
-      .then(response => {
-        if (!response.ok) throw new Error("Network response was not ok");
-        return response.text();
-      })
-      .then(csvText => {
-        const parsed = parseCSV(csvText);
-        setGlobalWeapons(parsed);
-        console.log(`Loaded ${parsed.length} weapons from global database.`);
-      })
-      .catch(err => console.error("Error loading weapons.csv:", err));
-
-    // Завантаження бази набоїв
-    fetch('/Ammo.csv')
-      .then(res => res.text())
-      .then(csv => {
-        const parsed = parseCSV(csv);
-        setGlobalAmmo(parsed);
-        console.log(`Loaded ${parsed.length} ammo types from global database.`);
-      })
-      .catch(err => console.error("Error loading ammo db:", err));
-  }, []);
-  // =============================
-
-  const openFreeDiceRoll = () => {
-    setDiceRoll(null);
-    setIsDiceOpen(true);
-  };
-
-  const openContextDiceRoll = (rollConfig) => {
-    setPendingAutoD6(null);
-    setDiceRoll(rollConfig);
-    setIsDiceOpen(true);
-
-    console.log("Rolling:", rollConfig.type, "Weapon ammo:", rollConfig.weapon?.ammo);
-
-    spendAmmoForWeaponRoll(rollConfig);
-  };
-
-  const closeDiceRoll = () => {
-    setIsDiceOpen(false);
-    setDiceRoll(null);
-  };
 
   const [activeCategory, setActiveCategory] = useState("all");
   const importInputRef = useRef(null);
@@ -117,6 +64,9 @@ export default function App() {
     continueLastCharacter,
     changeOrigin,
   } = useCharacterStorage(buildDefaultForm());
+
+  const { globalWeapons, globalAmmo } = useGlobalGameDatabase({ setForm });
+  const { mapState, updateMapData } = useCharacterMapController({ form, setForm });
 
   const sharedSession = useSharedSession(form);
 
@@ -179,51 +129,6 @@ export default function App() {
   });
 
 
-  useEffect(() => {
-    if (globalWeapons.length === 0) return;
-
-    setForm((prev) => {
-      let didChange = false;
-      const weapons = (prev.weapons || []).map((weapon) => {
-        if (!needsWeaponMetadataHydration(weapon, globalWeapons)) {
-          return weapon;
-        }
-
-        didChange = true;
-        return hydrateWeaponMetadata(weapon, globalWeapons);
-      });
-
-      return didChange ? { ...prev, weapons } : prev;
-    });
-  }, [globalWeapons, setForm]);
-
-  const mapState = useMemo(
-    () => ({
-      ...buildDefaultMapState(),
-      ...(form.mapData || {}),
-    }),
-    [form.mapData]
-  );
-
-  const updateMapData = (patchOrUpdater) => {
-    setForm((prev) => {
-      const prevMap = {
-        ...buildDefaultMapState(),
-        ...(prev.mapData || {}),
-      };
-
-      const nextMap =
-        typeof patchOrUpdater === "function"
-          ? patchOrUpdater(prevMap)
-          : { ...prevMap, ...patchOrUpdater };
-
-      return {
-        ...prev,
-        mapData: nextMap,
-      };
-    });
-  };
-
   const portrait = usePortraitCropper((meta) => {
     setForm((prev) => ({ ...prev, ...meta }));
   });
@@ -273,6 +178,16 @@ export default function App() {
     i18n,
     t,
   });
+  const {
+    pendingAutoD6,
+    setPendingAutoD6,
+    isDiceOpen,
+    diceRoll,
+    openFreeDiceRoll,
+    openContextDiceRoll,
+    closeDiceRoll,
+  } = useDiceController({ spendAmmoForWeaponRoll });
+
   const combatApMax = Math.max(0, Number(derived.groupApMax || 6));
   const {
     combatState,
