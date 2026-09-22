@@ -22,7 +22,7 @@ export default [
   },
   {
     id:"minuteman",name:"Minuteman",category:"ally",tags:["human","minutemen","normal-character"],level:"7",creatureType:"Human • Normal Character",xp:"39",statKind:"character",
-    special:{STR:"6",PER:"7",END:"5",CHA:"7",INT:"5",AGI:"5",LCK:"4"},skills:[{name:"Athletics",rating:1},{name:"Small Guns",rating:2},{name:"Energy Weapons",rating:3,tagged:true},{name:"Sneak",rating:1},{name:"Medicine",rating:1},{name:"Speech",rating:2},{name:"Melee Weapons",rating:2},{name:"Survival",rating:2},{name:"Repair",rating:2}],
+    special:{STR:"6",PER:"7",END:"5",CHA:"7",INT:"5",AGI:"5",LCK:"4"},skills:[{name:"Athletics",rating:1},{name:"Small Guns",rating:2},{name:"Energy Weapons",rating:3,tagged:true},{name:"Sneak",rating:1},{name:"Medicine",rating:1},{name:"Speech",rating:2},{name:"Melee Weapons",rating:2},{name:"Survival",rating:2,tagged:true},{name:"Repair",rating:2}],
     hp:"12",initiative:"12",defense:"1",carryWeight:"210 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 0 • Poison 0",
     attacks:"• UNARMED STRIKE — STR + Unarmed (TN 6), 3 CD Physical\n• LASER MUSKET — PER + Energy Weapons (TN 10), 5 CD Piercing Energy, Range M, Two-Handed",
     abilities:"None.",loot:"Tough Clothing, Wealth 2.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), pp. 393–394."
@@ -50,7 +50,7 @@ export default [
   },
   {
     id:"vault-dweller-npc",name:"Vault Dweller",category:"ally",tags:["human","vault-dweller","normal-character"],level:"7",creatureType:"Human • Normal Character",xp:"52",statKind:"character",
-    special:{STR:"5",PER:"6",END:"7",CHA:"6",INT:"6",AGI:"6",LCK:"5"},skills:[{name:"Barter",rating:2,tagged:true},{name:"Science",rating:3},{name:"Energy Weapons",rating:1},{name:"Small Guns",rating:3,tagged:true},{name:"Medicine",rating:1},{name:"Survival",rating:2,tagged:true},{name:"Melee Weapons",rating:2},{name:"Unarmed",rating:1},{name:"Repair",rating:2,tagged:true}],
+    special:{STR:"5",PER:"6",END:"7",CHA:"6",INT:"6",AGI:"6",LCK:"5"},skills:[{name:"Barter",rating:2,tagged:true},{name:"Science",rating:3},{name:"Energy Weapons",rating:1},{name:"Small Guns",rating:3,tagged:true},{name:"Medicine",rating:1},{name:"Survival",rating:2},{name:"Melee Weapons",rating:2},{name:"Unarmed",rating:1},{name:"Repair",rating:2,tagged:true}],
     hp:"14",initiative:"10",defense:"1",carryWeight:"200 lbs.",meleeBonus:"—",luckPoints:"—",drBlock:"Physical 1 Arms/Legs/Torso • Energy 1 Arms/Legs/Torso • Radiation 2 Arms/Legs/Torso • Poison 0",
     attacks:"• UNARMED STRIKE — STR + Unarmed (TN 6), 3 CD Physical\n• 10MM PISTOL — AGI + Small Guns (TN 9), 4 CD Physical, FR 2, Range C, Close Quarters, Reliable",
     abilities:"• VAULT KID — reduces Difficulty of END tests to resist disease; once per quest the GM may introduce a vault/isolated-life complication to restore 1 Luck.\n• EDUCATED — one additional Tag Skill.\n• GIFTED — choose two S.P.E.C.I.A.L. attributes and increase each by +1.",loot:"Vault Jumpsuit, 10mm Pistol, 2d20 10mm rounds, Wealth 2.",source:"Fallout: The Roleplaying Game Core Rulebook, 2nd Printing (April 2022 Errata), pp. 396–397."

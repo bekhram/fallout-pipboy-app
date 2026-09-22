@@ -22,7 +22,7 @@ test("Errata V6 core perk corrections are applied", () => {
 test("Barbarian adds equal physical and energy resistance", () => {
   const form = {
     special: { S: 9 },
-    perks: [{ id: "barbarian", rank: 1 }],
+    perksAndTraits: [{ id: "barbarian", rank: 1 }],
     armor: {},
     currentHp: "10",
   };
