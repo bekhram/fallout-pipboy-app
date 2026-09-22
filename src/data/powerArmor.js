@@ -65,6 +65,18 @@ export const POWER_ARMOR_SETS = [
       leg: { physical: 7, energy: 6, radiation: 7, hp: 12, weight: 15, cost: 200 },
     },
   },
+  {
+    id: "at0m",
+    name: "AT-0M Power Armor",
+    rarity: "Unique",
+    special: "While powered, the helmet automatically detects non-robot creatures within Long range and gives a vague sense of their actions, physical health, and emotional state.",
+    parts: {
+      head: { physical: 9, energy: 8, radiation: 7, hp: 14, weight: 12, cost: 800 },
+      torso: { physical: 11, energy: 9, radiation: 9, hp: 27, weight: 20, cost: 900 },
+      arm: { physical: 8, energy: 7, radiation: 7, hp: 14, weight: 15, cost: 750 },
+      leg: { physical: 8, energy: 7, radiation: 7, hp: 14, weight: 15, cost: 750 },
+    },
+  },
 ];
 
 const upgrade = (setId, tier, type, physical, energy, hp, weight, cost, requirement) => ({
