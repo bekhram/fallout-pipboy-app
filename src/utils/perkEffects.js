@@ -113,7 +113,7 @@ export function getPerkCalculationState(form, context = {}) {
     maxHpBonus: lifeGiverBonus,
     carryWeightBonus: getPerkRank(form, "strong_back") * 25,
     physicalResistBonus: toughnessRank + barbarianBonus + nerdRageRank,
-    energyResistBonus: refractorRank + nerdRageRank,
+    energyResistBonus: refractorRank + barbarianBonus + nerdRageRank,
     radiationResistBonus: radResistanceRank,
     poisonResistBonus: getPerkRank(form, "snakeater") > 0 ? 2 : 0,
   };
@@ -203,7 +203,7 @@ export function getPerkCalculationState(form, context = {}) {
   if (refractorRank) notes.push(`Refractor: +${refractorRank} energy resistance.`);
   if (radResistanceRank) notes.push(`Rad Resistance: +${radResistanceRank} radiation resistance.`);
   if (derived.poisonResistBonus) notes.push(`Snakeater: +${derived.poisonResistBonus} poison resistance.`);
-  if (barbarianBonus) notes.push(`Barbarian: +${barbarianBonus} physical resistance.`);
+  if (barbarianBonus) notes.push(`Barbarian: +${barbarianBonus} physical and energy resistance.`);
   if (nerdRageRank) notes.push(`Nerd Rage: +${nerdRageRank} physical and energy resistance while below 1/4 Max HP.`);
 
   return {

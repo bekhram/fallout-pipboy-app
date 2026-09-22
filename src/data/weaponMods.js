@@ -53,11 +53,11 @@ const smallGuns = {
     mod("Ported", "Increase Range by 1 step; +1 Fire Rate", 1, 35, "Gun Nut 4"),
     mod("Vented", "Increase Range by 1 step; +1 Fire Rate; gain Reliable", 1, 36, "Gun Nut 4"),
     mod("Sawed-Off", "Remove Two-Handed; gain Close Quarters", -2, 3, ""),
-    mod("Shielded Barrel", "+1 damage", 0, 37, "Gun Nut 3, Repair", "Shielded"),
+    mod("Shielded Barrel", "+1 damage", 0, 37, "Gun Nut 3", "Shielded"),
     mod("Finned", "+1 damage; increase Range by 1 step", 2, 15, "Gun Nut 2"),
   ],
   magazine: [
-    mod("Large Magazine", "+1 Fire Rate; gain Unreliable", 1, -3, "Gun Nut 2", "High Capacity"),
+    mod("Large Magazine", "+1 Fire Rate; gain Unreliable", 1, 8, "Gun Nut 2", "High Capacity"),
     mod("Quick-Eject Mag", "Gain Reliable", 0, 8, "Gun Nut 1", "Quick"),
     mod("Large Quick-Eject Mag", "+1 Fire Rate", 1, 23, "Gun Nut 2", "Quick High Capacity"),
   ],

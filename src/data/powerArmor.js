@@ -48,10 +48,10 @@ export const POWER_ARMOR_SETS = [
     name: "T-60 Power Armor",
     rarity: 4,
     parts: {
-      head: { physical: 7, energy: 6, radiation: 7, hp: 10, weight: 12, cost: 650 },
-      torso: { physical: 9, energy: 8, radiation: 9, hp: 21, weight: 20, cost: 750 },
-      arm: { physical: 6, energy: 5, radiation: 7, hp: 10, weight: 15, cost: 700 },
-      leg: { physical: 6, energy: 5, radiation: 7, hp: 10, weight: 15, cost: 700 },
+      head: { physical: 7, energy: 6, radiation: 7, hp: 10, weight: 12, cost: 130 },
+      torso: { physical: 9, energy: 8, radiation: 9, hp: 21, weight: 20, cost: 250 },
+      arm: { physical: 6, energy: 5, radiation: 7, hp: 10, weight: 15, cost: 170 },
+      leg: { physical: 6, energy: 5, radiation: 7, hp: 10, weight: 15, cost: 170 },
     },
   },
   {
@@ -59,10 +59,10 @@ export const POWER_ARMOR_SETS = [
     name: "X-01 Power Armor",
     rarity: 5,
     parts: {
-      head: { physical: 8, energy: 7, radiation: 7, hp: 12, weight: 12, cost: 60 },
-      torso: { physical: 10, energy: 8, radiation: 9, hp: 24, weight: 20, cost: 140 },
-      arm: { physical: 7, energy: 6, radiation: 7, hp: 12, weight: 15, cost: 100 },
-      leg: { physical: 7, energy: 6, radiation: 7, hp: 12, weight: 15, cost: 100 },
+      head: { physical: 8, energy: 7, radiation: 7, hp: 12, weight: 12, cost: 140 },
+      torso: { physical: 10, energy: 8, radiation: 9, hp: 24, weight: 20, cost: 280 },
+      arm: { physical: 7, energy: 6, radiation: 7, hp: 12, weight: 15, cost: 200 },
+      leg: { physical: 7, energy: 6, radiation: 7, hp: 12, weight: 15, cost: 200 },
     },
   },
 ];

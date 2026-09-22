@@ -6,7 +6,7 @@ export const PERKS_DICTIONARY = {
   "adrenalin_rush": { id: "adrenalin_rush", maxRanks: 1, requirements: "STR 7" },
   "animal_friend": { id: "animal_friend", maxRanks: 2, requirements: "CHA 6, Level 1+" },
   "aquaboy_aquagirl": { id: "aquaboy_aquagirl", maxRanks: 2, requirements: "END 5, Level 1+" },
-  "armorer": { id: "armorer", maxRanks: 4, requirements: "STR 5, INT 6" },
+  "armorer": { id: "armorer", maxRanks: 4, requirements: "STR 5, INT 6", rankRequirements: { 1: "STR 5, INT 6", 2: "STR 5, INT 6, Level 4+", 3: "STR 5, INT 6, Level 8+", 4: "STR 5, INT 6, Level 12+" } },
   "ammosmith": { id: "ammosmith", name: "Ammosmith", description: "Craft ammunition at a weapons workbench. Rank 2 also allows dismantling ammunition for materials; rank 3 can produce additional rounds.", maxRanks: 3, requirements: "INT 7, Level 2+", rankRequirements: { 1: "INT 7, Level 2+", 2: "INT 7, Level 6+", 3: "INT 7, Level 10+" } },
   "awareness": { id: "awareness", maxRanks: 1, requirements: "PER 7" },
   "barbarian": { id: "barbarian", maxRanks: 1, requirements: "STR 7, Level 4+, not a robot" },
