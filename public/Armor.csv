@@ -258,3 +258,5 @@ Integral Boiler Mod,0,0,0,FALSE,TRUE,FALSE,FALSE,-10,15,-,"Once per scene out of
 
 "
 Lockpick Module,0,0,0,FALSE,TRUE,FALSE,FALSE,-5,25,-,"Reduce the difficulty of Lockpick tests by 1 (min. 0), Does not need bobby pins or other lockpicking tools.
+ROBOT ARMOR
+Memorial Battle Armor Plating,5,5,0,TRUE,TRUE,TRUE,TRUE,0,300,,"Carry Weight +30. Robot only. Install: 1 hour and INT + Repair D3; failure ruins plating. Requires Armorer 2. Security clearance; reduce relevant Science/Speech difficulty by 1; overcharged Small Guns/Energy Weapons gain +1 Fire Rate."
