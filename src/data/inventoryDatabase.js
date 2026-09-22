@@ -66,6 +66,28 @@ const beverageItems = beverageRows.map(toConsumable("beverages"));
 const magazineItems = [magazineRows1, magazineRows2, magazineRows3].flat().map(([name, series, effect, weight]) => ({ name, category: "magazines", series, effect, weight }));
 const toolItems = toolRows.map(([name, effect, weight, cost, rarity]) => ({ name, category: "tools", effect, weight, cost, rarity }));
 
+const WINTER_OF_ATOM_ITEMS = [
+  {
+    name: "Chem Suppressant Syringe",
+    category: "aid",
+    effect: "Duration: Lasting. Gain 2 Fatigue and remove one addiction. All other active chems lose their effects, and chems taken during the duration have no effect.",
+    duration: "Lasting",
+    weight: "",
+    cost: "",
+    rarity: "",
+  },
+  {
+    name: "Flesh Fruit",
+    category: "food",
+    healing: "10",
+    effect: "Immediately gain 2 AP. Special: HP and AP gained ignore Fatigue. END + Survival D2 or contract Famished Fever; if already infected, increase its Duration by 1.",
+    radiation: "-",
+    weight: "1",
+    cost: "25",
+    rarity: "5",
+  },
+];
+
 export const INVENTORY_DATABASE = [
   ...aidItems,
   ...foodItems,
@@ -78,6 +100,7 @@ export const INVENTORY_DATABASE = [
   ...BOBBLEHEAD_ITEMS,
   ...CRAFTING_MATERIAL_ITEMS,
   STEALTH_BOY_ITEM,
+  ...WINTER_OF_ATOM_ITEMS,
 ];
 
 export function getInventoryArchiveItems(category) {
