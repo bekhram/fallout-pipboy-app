@@ -36,6 +36,7 @@ import {
 import { useCharacterStorage } from "./hooks/useCharacterStorage.js";
 import { usePortraitCropper } from "./hooks/usePortraitCropper.js";
 import { useInventoryItemController } from "./hooks/useInventoryItemController.js";
+import { useCombatController } from "./hooks/useCombatController.js";
 import {
   getDerivedStats,
   normalizeNonNegative,
@@ -281,77 +282,20 @@ export default function App() {
     t,
   });
   const combatApMax = Math.max(0, Number(derived.groupApMax || 6));
-  const [combatState, setCombatState] = useState({
-    active: false,
-    turn: 0,
-    ap: 0,
-    usedThisTurn: {},
-    usedThisCombat: {},
+  const {
+    combatState,
+    setCombatAp,
+    startCombat,
+    endCombat,
+    nextCombatTurn,
+    spendCombatAp,
+    spendCombatLuck,
+    markCombatUse,
+  } = useCombatController({
+    combatApMax,
+    currentLuckPoints,
+    setCurrentLuckPoints,
   });
-
-  useEffect(() => {
-    setCombatState((prev) => ({
-      ...prev,
-      ap: Math.min(combatApMax, Math.max(0, Number(prev.ap || 0))),
-    }));
-  }, [combatApMax]);
-
-  const setCombatAp = (value) => {
-    const next = Math.max(0, Math.min(combatApMax, Number(value || 0)));
-    setCombatState((prev) => ({ ...prev, ap: next }));
-  };
-
-  const startCombat = () => {
-    setCombatState({
-      active: true,
-      turn: 1,
-      ap: 0,
-      usedThisTurn: {},
-      usedThisCombat: {},
-    });
-  };
-
-  const endCombat = () => {
-    setCombatState({
-      active: false,
-      turn: 0,
-      ap: 0,
-      usedThisTurn: {},
-      usedThisCombat: {},
-    });
-  };
-
-  const nextCombatTurn = () => {
-    setCombatState((prev) => ({
-      ...prev,
-      active: true,
-      turn: Math.max(1, Number(prev.turn || 0) + 1),
-      usedThisTurn: {},
-    }));
-  };
-
-  const spendCombatAp = (amount = 1) => {
-    const cost = Math.max(0, Number(amount || 0));
-    if (!combatState.active || Number(combatState.ap || 0) < cost) return false;
-    setCombatState((prev) => ({ ...prev, ap: Math.max(0, Number(prev.ap || 0) - cost) }));
-    return true;
-  };
-
-  const spendCombatLuck = (amount = 1) => {
-    const cost = Math.max(1, Number(amount || 1));
-    if (Number(currentLuckPoints || 0) < cost) return false;
-    setCurrentLuckPoints((prev) => Math.max(0, Number(prev || 0) - cost));
-    return true;
-  };
-
-  const markCombatUse = (scope, key) => {
-    if (!key) return;
-    const field = scope === "turn" ? "usedThisTurn" : "usedThisCombat";
-    setCombatState((prev) => ({
-      ...prev,
-      [field]: { ...(prev[field] || {}), [key]: true },
-    }));
-  };
 
   const baseMaxHp = Math.max(1, Number(derived.maxHp || 1));
   const radiationHp = Math.max(
