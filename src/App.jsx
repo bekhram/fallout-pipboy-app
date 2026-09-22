@@ -1,23 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PipboyShell from "./components/layout/PipboyShell.jsx";
-import StatusScreen from "./components/status/StatusScreen.jsx";
-import SpecialScreen from "./components/special/SpecialScreen.jsx";
-import WeaponsScreen from "./components/weapons/WeaponsScreen.jsx";
-import InventoryScreen from "./components/inventory/InventoryScreen.jsx";
-import ArmorScreen from "./components/armor/ArmorScreen.jsx";
-import PerksScreen from "./components/perks/PerksScreen.jsx";
-import NotesScreen from "./components/notes/NotesScreen.jsx";
-import DataScreen from "./components/data/DataScreen.jsx";
-import MenuScreen from "./components/menu/MenuScreen.jsx";
-import SessionScreen from "./components/session/SessionScreen.jsx";
+import AppScreenRouter from "./components/AppScreenRouter.jsx";
 import SessionChatDrawer from "./components/session/SessionChatDrawer.jsx";
 import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
 import PortraitCropModal from "./components/portrait/PortraitCropModal.jsx";
 import DiceRollModal from "./components/dice/DiceRollModal";
-import MapScreen from "./components/map/MapScreen.jsx";
-import GamesScreen from "./components/minigames/GamesScreen.jsx";
 
 import "./styles/pipboy.css";
 import "./components/dice/dice.css";
@@ -273,231 +262,98 @@ export default function App() {
     setScreen("menu");
   };
 
-  let content = null;
-
-  if (screen === "menu") {
-    content = (
-      <MenuScreen
-        initialSection={menuSection}
-        hasCharacter={!!lastRecordMeta}
-        saveMeta={lastRecordMeta}
-        onNewCharacter={handleNewCharacter}
-        onContinue={handleContinue}
-        onImportClick={handleImportClick}
-        onOpenSession={(intent) => {
-          setSessionLobbyOpen(true);
-          setScreen("session");
-          if (typeof intent === "string") requestAnimationFrame(() => {
-            const card = document.querySelector(intent === "host" ? ".session-role-card--gm" : ".session-role-card:not(.session-role-card--gm)");
-            card?.scrollIntoView({block:"center"});
-            card?.querySelector("input, button")?.focus({preventScroll:true});
-          });
-        }}
-        lastSession={sharedSession.lastSession}
-        session={sharedSession}
-        onResumeSession={() => {
-          setSessionLobbyOpen(false);
-          setScreen("session");
-          if (sharedSession.isActive) {
-            if (sharedSession.status !== "online") void sharedSession.reconnectNow?.();
-            return;
-          }
-          void sharedSession.resumeLastSession?.();
-        }}
-      />
-    );
-  } else if (screen === "session") {
-    content = (
-      <SessionScreen
-        showLobby={sessionLobbyOpen}
-        onShowLobby={() => setSessionLobbyOpen(true)}
-        onEnterSession={() => setSessionLobbyOpen(false)}
-        form={form}
-        session={sharedSession}
-        onBack={() => {setMenuSection("home");setScreen("menu");}}
-        onNavigateMenu={section => {setMenuSection(section);setScreen("menu");}}
-        onOpenSheet={() => {
-          setScreen("sheet");
-          setActiveTab("status");
-        }}
-      />
-    );
-  } else {
-    switch (activeTab) {
-      case "status":
-        content = (
-          <StatusScreen
-            form={form}
-            armor={form.armor}
-            currentLuckPoints={currentLuckPoints}
-            onSpendLuck={onSpendLuck}
-            derived={derived}
-            portraitPreview={portrait.portraitPreview}
-            onPickPortrait={portrait.openFileDialog}
-            onRemovePortrait={portrait.clearPortrait}
-            onTopLevelChange={updateTopLevel}
-            onChangeOrigin={changeOrigin}
-            onStatusToggle={(status) => {
-              if (status === "invisible" && form.stealthBoyState?.active) {
-                endStealthBoy();
-                return;
-              }
-              updateStatus(status, !form.statuses[status]);
-            }}
-            onStealthBoyAdvance={advanceStealthBoyTurn}
-            onStealthBoyEnd={endStealthBoy}
-            onInjuryToggle={updateInjury}
-            onArmorChange={updateArmor}
-            onArmorStatusCycle={cycleBodyArmorState}
-            hpMax={baseMaxHp}
-            hpCurrent={currentHpValue}
-            radiationHp={radiationHp}
-            onHpSliderChange={handleHpSliderChange}
-            onRadiationSliderChange={handleRadiationSliderChange}
-            onHpDecrease={handleHpDecrease}
-            onHpIncrease={handleHpIncrease}
-            onOpenConditions={() => setShowConditions(true)}
-            onOpenDerived={() => setShowDerived(true)}
-            stimpaks={availableStimpaks}
-            treatableInjuries={treatableInjuries}
-            onUseStimpak={useQuickStimpak}
-            onRoll={openContextDiceRoll}
-          />
-        );
-        break;
-
-      case "skills":
-      case "special":
-        content = (
-          <SpecialScreen
-            section={activeTab}
-            form={form}
-            derived={derived}
-            currentLuckPoints={currentLuckPoints}
-            onSpecialChange={updateSpecial}
-            onSkillChange={updateSkill}
-            onDerivedChange={updateDerivedOverride}
-            onCurrentLuckChange={setCurrentLuckPoints}
-            onOpenSkillsEditor={() => setShowSkillsEditor(true)}
-            onRoll={openContextDiceRoll}
-          />
-        );
-        break;
-
-      case "weapons":
-        content = (
-          <WeaponsScreen
-            weapons={form.weapons}
-            editingIndex={editingWeaponIndex}
-            weaponDraft={weaponDraft}
-            setWeaponDraft={setWeaponDraft}
-            onAdd={addWeapon}
-            onEdit={startEditWeapon}
-            onCopy={copyWeapon}
-            onRemove={removeWeapon}
-            onSaveEdit={saveEditWeapon}
-            onCancelEdit={() => setEditingWeaponIndex(null)}
-            onRoll={openContextDiceRoll}
-            form={form}
-            globalWeapons={globalWeapons}
-            combatState={combatState}
-            combatApMax={combatApMax}
-            currentLuckPoints={currentLuckPoints}
-            luckMax={derived.luckPoints || 0}
-            onSetCombatAp={setCombatAp}
-            onStartCombat={startCombat}
-            onEndCombat={endCombat}
-            onNextCombatTurn={nextCombatTurn}
-            onSpendCombatAp={spendCombatAp}
-          />
-        );
-        break;
-
-      case "inventory":
-        content = (
-          <InventoryScreen
-            items={form.inventoryItems}
-            editingIndex={editingItemIndex}
-            itemDraft={itemDraft}
-            setItemDraft={setItemDraft}
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            carryWeight={derived.carryWeight}
-            currentCarryWeight={derived.currentCarryWeight}
-            caps={form.caps}
-            onCapsChange={(value) => updateTopLevel("caps", value)}
-            onAdd={addItem}
-            onEdit={startEditItem}
-            onCopy={copyItem}
-            onRemove={removeItem}
-            onSaveEdit={saveEditItem}
-            onCancelEdit={() => setEditingItemIndex(null)}
-            globalAmmo={globalAmmo}
-          />
-        );
-        break;
-
-      case "armor":
-        content = (
-          <ArmorScreen
-            armor={form.armor}
-            inventoryItems={form.inventoryItems}
-            onArmorChange={updateArmor}
-            derived={derived}
-          />
-        );
-        break;
-
-      case "perks":
-        content = (
-          <PerksScreen
-            perks={form.perksAndTraits}
-            editingIndex={editingPerkIndex}
-            perkDraft={perkDraft}
-            setPerkDraft={setPerkDraft}
-            onAdd={addPerk}
-            onEdit={startEditPerk}
-            onCopy={copyPerk}
-            onRemove={removePerk}
-            onSaveEdit={saveEditPerk}
-            onCancelEdit={() => setEditingPerkIndex(null)}
-            form={form} 
-          />
-        );
-        break;
-
-      case "map":
-        content = (
-          <MapScreen
-            mapState={mapState}
-            onMapChange={updateMapData}
-            character={form}
-            weaponDatabase={globalWeapons}
-          />
-        );
-        break;
-
-      case "notes":
-        content = <NotesScreen form={form} onTopLevelChange={updateTopLevel} />;
-        break;
-
-      case "games":
-        content = <GamesScreen />;
-        break;
-
-      default:
-      content = (
-          <DataScreen
-            saveStatus={saveStatus}
-            loadStatus={loadStatus}
-            onExport={exportJson}
-            onImportClick={handleImportClick}
-            importInputRef={importInputRef}
-            database={{ weapons: globalWeapons, ammo: globalAmmo }}
-          />
-        );
-    }
-  }
+  const content = (
+    <AppScreenRouter
+      screen={screen}
+      activeTab={activeTab}
+      menuSection={menuSection}
+      setMenuSection={setMenuSection}
+      setScreen={setScreen}
+      setActiveTab={setActiveTab}
+      sessionLobbyOpen={sessionLobbyOpen}
+      setSessionLobbyOpen={setSessionLobbyOpen}
+      lastRecordMeta={lastRecordMeta}
+      handleNewCharacter={handleNewCharacter}
+      handleContinue={handleContinue}
+      handleImportClick={handleImportClick}
+      sharedSession={sharedSession}
+      form={form}
+      currentLuckPoints={currentLuckPoints}
+      onSpendLuck={onSpendLuck}
+      derived={derived}
+      portrait={portrait}
+      updateTopLevel={updateTopLevel}
+      changeOrigin={changeOrigin}
+      endStealthBoy={endStealthBoy}
+      updateStatus={updateStatus}
+      advanceStealthBoyTurn={advanceStealthBoyTurn}
+      updateInjury={updateInjury}
+      updateArmor={updateArmor}
+      cycleBodyArmorState={cycleBodyArmorState}
+      baseMaxHp={baseMaxHp}
+      currentHpValue={currentHpValue}
+      radiationHp={radiationHp}
+      handleHpSliderChange={handleHpSliderChange}
+      handleRadiationSliderChange={handleRadiationSliderChange}
+      handleHpDecrease={handleHpDecrease}
+      handleHpIncrease={handleHpIncrease}
+      setShowConditions={setShowConditions}
+      setShowDerived={setShowDerived}
+      availableStimpaks={availableStimpaks}
+      treatableInjuries={treatableInjuries}
+      useQuickStimpak={useQuickStimpak}
+      openContextDiceRoll={openContextDiceRoll}
+      updateSpecial={updateSpecial}
+      updateSkill={updateSkill}
+      updateDerivedOverride={updateDerivedOverride}
+      setCurrentLuckPoints={setCurrentLuckPoints}
+      setShowSkillsEditor={setShowSkillsEditor}
+      editingWeaponIndex={editingWeaponIndex}
+      setEditingWeaponIndex={setEditingWeaponIndex}
+      weaponDraft={weaponDraft}
+      setWeaponDraft={setWeaponDraft}
+      addWeapon={addWeapon}
+      startEditWeapon={startEditWeapon}
+      copyWeapon={copyWeapon}
+      removeWeapon={removeWeapon}
+      saveEditWeapon={saveEditWeapon}
+      globalWeapons={globalWeapons}
+      combatState={combatState}
+      combatApMax={combatApMax}
+      setCombatAp={setCombatAp}
+      startCombat={startCombat}
+      endCombat={endCombat}
+      nextCombatTurn={nextCombatTurn}
+      spendCombatAp={spendCombatAp}
+      editingItemIndex={editingItemIndex}
+      setEditingItemIndex={setEditingItemIndex}
+      itemDraft={itemDraft}
+      setItemDraft={setItemDraft}
+      activeCategory={activeCategory}
+      setActiveCategory={setActiveCategory}
+      addItem={addItem}
+      startEditItem={startEditItem}
+      copyItem={copyItem}
+      removeItem={removeItem}
+      saveEditItem={saveEditItem}
+      globalAmmo={globalAmmo}
+      editingPerkIndex={editingPerkIndex}
+      setEditingPerkIndex={setEditingPerkIndex}
+      perkDraft={perkDraft}
+      setPerkDraft={setPerkDraft}
+      addPerk={addPerk}
+      startEditPerk={startEditPerk}
+      copyPerk={copyPerk}
+      removePerk={removePerk}
+      saveEditPerk={saveEditPerk}
+      mapState={mapState}
+      updateMapData={updateMapData}
+      saveStatus={saveStatus}
+      loadStatus={loadStatus}
+      exportJson={exportJson}
+      importInputRef={importInputRef}
+    />
+  );
 
   const DerivedModal = () => {
     if (!showDerived) return null;
