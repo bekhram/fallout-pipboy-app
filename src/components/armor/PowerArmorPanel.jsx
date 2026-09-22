@@ -10,6 +10,7 @@ import {
   calculatePowerPart,
 } from "../../data/powerArmor.js";
 import { getLegendaryArmorProperties, getLegendaryPropertyById } from "../../data/legendaryProperties.js";
+import { createWeaponRoll } from "../../utils/dice.js";
 
 const SLOT_DEFS = [
   { id: "Head", type: "head" },
@@ -62,7 +63,7 @@ function legacySlots(state) {
   );
 }
 
-export default function PowerArmorPanel({ armor, onArmorChange }) {
+export default function PowerArmorPanel({ armor, onArmorChange, form, onRoll }) {
   const { i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const labels = UI[language] || UI.en;
@@ -164,6 +165,32 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
           : Math.max(0, Math.min(Number(selected.currentHp || 0), calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade).hp)),
     };
   });
+
+  const tendrilRows = rows.filter(
+    (row) =>
+      row.definition.type === "arm" &&
+      row.set?.id === "at0m" &&
+      row.selected?.systemId === "at0m-tendrils" &&
+      Number(row.currentHp || 0) > 0
+  );
+
+  const rollTendrils = (slotId) => {
+    const attack = {
+      name: `Biomechanical Bladed Tendrils · ${slotId}`,
+      skill: "Melee Weapons",
+      specialKey: "S",
+      damage: "10",
+      effects: ["vicious", "breaking"],
+      customEffect: "Piercing, Vicious, Breaking",
+      type: "physical",
+      rate: "0",
+      range: "Melee",
+      qualities: ["parry"],
+      qualitiesCustom: "Parry",
+      ammo: "",
+    };
+    onRoll?.(createWeaponRoll({ weapon: attack, diceCount: 2, difficulty: 1, useRate: false }));
+  };
 
   const totals = rows.reduce(
     (sum, row) => ({
@@ -273,6 +300,25 @@ export default function PowerArmorPanel({ armor, onArmorChange }) {
               {stats && <div className="pip-power-part-meta"><span>{labels.weight}: {stats.weight}</span><span>{labels.cost}: {stats.cost}</span></div>}
             </article>
           ))}
+        </div>
+      )}
+
+      {tendrilRows.length > 0 && (
+        <div className="pip-power-frame">
+          <strong>BIOMECHANICAL BLADED TENDRILS</strong>
+          <span>10 CD · Piercing · Vicious · Breaking · Physical · Parry</span>
+          <div className="pip-tagrow">
+            {tendrilRows.map((row) => (
+              <button
+                key={row.definition.id}
+                type="button"
+                className="pip-btn is-primary"
+                onClick={() => rollTendrils(row.definition.id)}
+              >
+                ATTACK · {row.definition.id}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
