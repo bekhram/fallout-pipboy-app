@@ -42,6 +42,7 @@ export function useCombatController({
   };
 
   const startCombat = () => {
+    window.dispatchEvent(new CustomEvent("pipboy:scene-start"));
     setCombatState({
       active: true,
       turn: 1,

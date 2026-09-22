@@ -584,6 +584,13 @@ export const STATUS_LIST = [
     group: "positive",
   },
   {
+    key: "famishedFever",
+    nameKey: "statuses.famishedFever.name",
+    descriptionKey: "statuses.famishedFever.description",
+    durationKey: "statuses.duration.ongoing",
+    group: "disease",
+  },
+  {
     key: "exposure",
     nameKey: "statuses.exposure.name",
     descriptionKey: "statuses.exposure.description",

@@ -32,6 +32,7 @@ const ATOMIC_WINTER_SURVIVAL_EVENT = "pipboy:set-atomic-winter-survival-pack";
 const TAG_EQUIPMENT_CHOICE_EVENT = "pipboy:set-tag-equipment-choice";
 const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
 const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
+const PIPBOY_SCENE_START_EVENT = "pipboy:scene-start";
 const PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT = "pipboy:travel-encounter-effect";
 
 function makeSafeFileName(name) {
@@ -141,6 +142,7 @@ export function useCharacterStorage(initialForm) {
         originTraits: [],
         tagged_skills: [],
         activeConsumableEffects: [],
+        famishedFeverDuration: "0",
         originEquipmentPack: "",
         startingEquipmentGrants: {},
         startingEquipmentChoices: {},
@@ -159,6 +161,7 @@ export function useCharacterStorage(initialForm) {
         originTraits: [],
         tagged_skills: [],
         activeConsumableEffects: [],
+        famishedFeverDuration: "0",
         originEquipmentPack: "",
         startingEquipmentGrants: {},
         startingEquipmentChoices: {},
@@ -886,13 +889,87 @@ export function useCharacterStorage(initialForm) {
       });
     };
 
-    const handleCampRest = () => {
-      setForm((prev) => ({
+    const syncFamishedFever = (prev, nextDuration) => {
+      const duration = Math.max(0, Number(nextDuration || 0));
+      const statuses = { ...(prev.statuses || {}), famishedFever: duration > 0 };
+      const activeConsumableEffects = (prev.activeConsumableEffects || [])
+        .filter((effect) => effect?.id !== "disease:famished-fever");
+      if (duration > 0) {
+        activeConsumableEffects.push({
+          id: "disease:famished-fever",
+          kind: "disease",
+          sourceName: "Famished Fever",
+          effectText: "PER, CHA, and INT tests have +1 difficulty while infected.",
+          canonicalSourceName: "Famished Fever",
+          canonicalEffect: "PER/CHA/INT difficulty +1",
+          duration: "Until cured",
+          category: "disease",
+          modifiers: {
+            derived: {},
+            tests: [
+              { keys: ["P"], difficultyDelta: 1 },
+              { keys: ["C"], difficultyDelta: 1 },
+              { keys: ["I"], difficultyDelta: 1 },
+            ],
+            combat: {},
+            flags: {
+              famishedFever: true,
+              famishedFeverDuration: duration,
+              healingRestrictedToFleshFruit: duration >= 3,
+              livingFleshActsAsFleshFruit: duration >= 5,
+              fleshFruitDoubleBenefit: duration >= 7,
+              gmControlRequired: duration >= 10,
+            },
+          },
+        });
+      }
+      return {
         ...prev,
-        vigor: "5",
-        satiety: String(Math.max(0, Math.min(5, Number(prev.satiety || 0)) - 2)),
-        thirst: String(Math.max(0, Math.min(5, Number(prev.thirst || 0)) - 2)),
-      }));
+        famishedFeverDuration: String(duration),
+        statuses,
+        activeConsumableEffects,
+      };
+    };
+
+    const handleSceneStart = () => {
+      setForm((prev) => {
+        const duration = Math.max(0, Number(prev.famishedFeverDuration || 0));
+        if (duration <= 0) return prev;
+        return {
+          ...syncFamishedFever(prev, duration),
+          fatigue: String(duration),
+        };
+      });
+    };
+
+    const handleCampRest = () => {
+      setForm((prev) => {
+        let next = {
+          ...prev,
+          vigor: "5",
+          satiety: String(Math.max(0, Math.min(5, Number(prev.satiety || 0)) - 2)),
+          thirst: String(Math.max(0, Math.min(5, Number(prev.thirst || 0)) - 2)),
+        };
+
+        const duration = Math.max(0, Number(prev.famishedFeverDuration || 0));
+        if (duration <= 0) return next;
+
+        const difficulty = Math.min(5, duration);
+        const succeeded = window.confirm(`Famished Fever: END + Survival D${difficulty}. Did the test succeed?`);
+        if (succeeded) {
+          return syncFamishedFever(next, Math.max(0, duration - 1));
+        }
+
+        const effectDice = 2;
+        let increase = 0;
+        for (let i = 0; i < effectDice; i += 1) {
+          const face = Math.floor(Math.random() * 6) + 1;
+          if (face === 1) increase += 1;
+          else if (face === 2) increase += 2;
+          else if (face >= 5) increase += 1;
+        }
+        return syncFamishedFever(next, duration + increase);
+      });
     };
 
     window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
@@ -904,6 +981,7 @@ export function useCharacterStorage(initialForm) {
     window.addEventListener(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, handleWinterTravelEffect);
     window.addEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
     window.addEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
+    window.addEventListener(PIPBOY_SCENE_START_EVENT, handleSceneStart);
     window.addEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
 
     return () => {
@@ -916,6 +994,7 @@ export function useCharacterStorage(initialForm) {
       window.removeEventListener(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, handleWinterTravelEffect);
       window.removeEventListener(PIPBOY_TRAVEL_ENCOUNTER_EFFECT_EVENT, handleTravelEncounterEffect);
       window.removeEventListener(PIPBOY_CAMP_REST_EVENT, handleCampRest);
+      window.removeEventListener(PIPBOY_SCENE_START_EVENT, handleSceneStart);
       window.removeEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
     };
   }, [setForm]);
@@ -1022,6 +1101,7 @@ export function useCharacterStorage(initialForm) {
 
         const next = {
           activeConsumableEffects: [],
+        famishedFeverDuration: "0",
           originEquipmentPack: "",
           startingEquipmentGrants: {},
           startingEquipmentChoices: {},
@@ -1074,6 +1154,7 @@ export function useCharacterStorage(initialForm) {
       const parsed = JSON.parse(raw);
       const next = {
         activeConsumableEffects: [],
+        famishedFeverDuration: "0",
         originEquipmentPack: "",
         startingEquipmentGrants: {},
         startingEquipmentChoices: {},
