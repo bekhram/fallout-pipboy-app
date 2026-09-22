@@ -16,15 +16,23 @@ import {
   WINTER_CONDITIONS,
   SETTLEMENT_TASKS,
 } from "../../utils/winterOfAtomRules.js";
+import {
+  countCraftingMaterials,
+  canAffordMaterials,
+  applyCampsiteBuild,
+  dismantleActiveCampsite,
+  applyWinterCampRest,
+  normalizeFeatureSelection,
+} from "../../utils/winterCampsiteInventory.js";
 import "./gmWinterRulesPanel.css";
 
 const STORAGE_KEY="pip2d20_winter_rules_v1";
 
 const COPY={
-  en:{title:"WINTER SURVIVAL",travel:"TRAVEL",cold:"COLD EXPOSURE",camp:"CAMPSITE",rep:"SETTLEMENT REPUTATION",duration:"Base duration (hours)",speed:"Speed",route:"Established route",familiar:"Familiar area",friendly:"Friendly faction controls area",directions:"Good directions / landmarks",obstacles:"Major obstacles easily avoided",difficulty:"Difficulty",finalDuration:"Travel time",compRange:"Complication range",apReduction:"Clever plan reduction",roll:"d20 result",complication:"Journey complication",encounter:"Winter encounter",hours:"Hours exposed",warmClothing:"Warm clothing",extreme:"Extreme cold",shelter:"Warm shelter",hotFood:"Hot food/drink",activity:"Heavy travel/combat",failedExposure:"Apply failed exposure",complication20:"Complication rolled",fatigue:"Fatigue",recovery:"Warm shelter rest",tier:"Tier",apAfter:"AP spent after build test",buildSuccess:"Build test succeeded",materials:"Materials",features:"Feature slots",refund:"Teardown refund",settlement:"Settlement",rank:"Rank",positive:"Positive influences",negative:"Negative influences",charisma:"Charisma",dice:"Dice",resolve:"Resolve reputation test",result:"Result",success:"SUCCESS",failure:"FAILURE",apply:"Apply result",tasks:"Tasks unlocked at Friendly+",terrain:"Terrain / obstacles",conditions:"Conditions"},
-  ru:{title:"ЗИМНЕЕ ВЫЖИВАНИЕ",travel:"ПУТЕШЕСТВИЕ",cold:"ХОЛОД",camp:"ЛАГЕРЬ",rep:"РЕПУТАЦИЯ ПОСЕЛЕНИЯ",duration:"Базовое время (часы)",speed:"Темп",route:"Есть проложенный маршрут",familiar:"Местность знакома",friendly:"Зона под контролем дружественной фракции",directions:"Есть хорошие ориентиры",obstacles:"Крупные препятствия легко обойти",difficulty:"Сложность",finalDuration:"Время пути",compRange:"Диапазон осложнений",apReduction:"Снижение за умный план",roll:"Результат d20",complication:"Осложнение пути",encounter:"Зимняя встреча",hours:"Часы на холоде",warmClothing:"Тёплая одежда",extreme:"Экстремальный холод",shelter:"Тёплое укрытие",hotFood:"Горячая еда/напиток",activity:"Тяжёлый путь/бой",failedExposure:"Применить провал",complication20:"Выпала complication",fatigue:"Усталость",recovery:"Отдых в тёплом укрытии",tier:"Уровень",apAfter:"AP после теста постройки",buildSuccess:"Тест постройки успешен",materials:"Материалы",features:"Слоты особенностей",refund:"Возврат при разборке",settlement:"Поселение",rank:"Ранг",positive:"Положительные влияния",negative:"Отрицательные влияния",charisma:"Харизма",dice:"Кубы",resolve:"Рассчитать репутацию",result:"Результат",success:"УСПЕХ",failure:"ПРОВАЛ",apply:"Применить результат",tasks:"Задания доступны с Friendly+",terrain:"Местность / препятствия",conditions:"Условия"},
-  uk:{title:"ЗИМОВЕ ВИЖИВАННЯ",travel:"ПОДОРОЖ",cold:"ХОЛОД",camp:"ТАБІР",rep:"РЕПУТАЦІЯ ПОСЕЛЕННЯ",duration:"Базова тривалість (години)",speed:"Темп",route:"Є усталений маршрут",familiar:"Місцевість знайома",friendly:"Зона під контролем дружньої фракції",directions:"Є добрі орієнтири",obstacles:"Великі перешкоди легко оминути",difficulty:"Складність",finalDuration:"Час подорожі",compRange:"Діапазон ускладнень",apReduction:"Зниження за хитрий план",roll:"Результат d20",complication:"Ускладнення подорожі",encounter:"Зимова зустріч",hours:"Години на холоді",warmClothing:"Теплий одяг",extreme:"Екстремальний холод",shelter:"Тепле укриття",hotFood:"Гаряча їжа/напій",activity:"Важка подорож/бій",failedExposure:"Застосувати провал",complication20:"Випала complication",fatigue:"Втома",recovery:"Відпочинок у теплому укритті",tier:"Рівень",apAfter:"AP після тесту побудови",buildSuccess:"Тест побудови успішний",materials:"Матеріали",features:"Слоти особливостей",refund:"Повернення при розбиранні",settlement:"Поселення",rank:"Ранг",positive:"Позитивні впливи",negative:"Негативні впливи",charisma:"Харизма",dice:"Куби",resolve:"Розрахувати репутацію",result:"Результат",success:"УСПІХ",failure:"ПРОВАЛ",apply:"Застосувати результат",tasks:"Завдання доступні з Friendly+",terrain:"Місцевість / перешкоди",conditions:"Умови"},
-  pl:{title:"ZIMOWE PRZETRWANIE",travel:"PODRÓŻ",cold:"EKSPOZYCJA NA ZIMNO",camp:"OBOZOWISKO",rep:"REPUTACJA OSADY",duration:"Bazowy czas (godziny)",speed:"Tempo",route:"Ustalona trasa",familiar:"Znany teren",friendly:"Przyjazna frakcja kontroluje teren",directions:"Dobre wskazówki / punkty orientacyjne",obstacles:"Duże przeszkody łatwe do ominięcia",difficulty:"Trudność",finalDuration:"Czas podróży",compRange:"Zakres komplikacji",apReduction:"Redukcja za sprytny plan",roll:"Wynik d20",complication:"Komplikacja podróży",encounter:"Zimowe spotkanie",hours:"Godziny ekspozycji",warmClothing:"Ciepła odzież",extreme:"Ekstremalne zimno",shelter:"Ciepłe schronienie",hotFood:"Gorące jedzenie/napój",activity:"Ciężka podróż/walka",failedExposure:"Zastosuj porażkę",complication20:"Wypadła komplikacja",fatigue:"Zmęczenie",recovery:"Odpoczynek w ciepłym schronieniu",tier:"Poziom",apAfter:"AP po teście budowy",buildSuccess:"Test budowy udany",materials:"Materiały",features:"Miejsca na cechy",refund:"Zwrot po rozbiórce",settlement:"Osada",rank:"Ranga",positive:"Pozytywne wpływy",negative:"Negatywne wpływy",charisma:"Charyzma",dice:"Kości",resolve:"Rozstrzygnij reputację",result:"Wynik",success:"SUKCES",failure:"PORAŻKA",apply:"Zastosuj wynik",tasks:"Zadania dostępne od Friendly+",terrain:"Teren / przeszkody",conditions:"Warunki"}
+  en:{title:"WINTER SURVIVAL",travel:"TRAVEL",cold:"COLD EXPOSURE",camp:"CAMPSITE",rep:"SETTLEMENT REPUTATION",buildCamp:"BUILD CAMPSITE",dismantleCamp:"DISMANTLE",rest6:"REST 6H",rest24:"REST 24H",activeCamp:"ACTIVE CAMPSITE",inventoryMaterials:"Inventory materials",notEnough:"Not enough materials",selectedFeatures:"Selected features",duration:"Base duration (hours)",speed:"Speed",route:"Established route",familiar:"Familiar area",friendly:"Friendly faction controls area",directions:"Good directions / landmarks",obstacles:"Major obstacles easily avoided",difficulty:"Difficulty",finalDuration:"Travel time",compRange:"Complication range",apReduction:"Clever plan reduction",roll:"d20 result",complication:"Journey complication",encounter:"Winter encounter",hours:"Hours exposed",warmClothing:"Warm clothing",extreme:"Extreme cold",shelter:"Warm shelter",hotFood:"Hot food/drink",activity:"Heavy travel/combat",failedExposure:"Apply failed exposure",complication20:"Complication rolled",fatigue:"Fatigue",recovery:"Warm shelter rest",tier:"Tier",apAfter:"AP spent after build test",buildSuccess:"Build test succeeded",materials:"Materials",features:"Feature slots",refund:"Teardown refund",settlement:"Settlement",rank:"Rank",positive:"Positive influences",negative:"Negative influences",charisma:"Charisma",dice:"Dice",resolve:"Resolve reputation test",result:"Result",success:"SUCCESS",failure:"FAILURE",apply:"Apply result",tasks:"Tasks unlocked at Friendly+",terrain:"Terrain / obstacles",conditions:"Conditions"},
+  ru:{title:"ЗИМНЕЕ ВЫЖИВАНИЕ",travel:"ПУТЕШЕСТВИЕ",cold:"ХОЛОД",camp:"ЛАГЕРЬ",rep:"РЕПУТАЦИЯ ПОСЕЛЕНИЯ",buildCamp:"ПОСТРОИТЬ ЛАГЕРЬ",dismantleCamp:"РАЗОБРАТЬ",rest6:"ОТДЫХ 6Ч",rest24:"ОТДЫХ 24Ч",activeCamp:"АКТИВНЫЙ ЛАГЕРЬ",inventoryMaterials:"Материалы в инвентаре",notEnough:"Недостаточно материалов",selectedFeatures:"Выбранные особенности",duration:"Базовое время (часы)",speed:"Темп",route:"Есть проложенный маршрут",familiar:"Местность знакома",friendly:"Зона под контролем дружественной фракции",directions:"Есть хорошие ориентиры",obstacles:"Крупные препятствия легко обойти",difficulty:"Сложность",finalDuration:"Время пути",compRange:"Диапазон осложнений",apReduction:"Снижение за умный план",roll:"Результат d20",complication:"Осложнение пути",encounter:"Зимняя встреча",hours:"Часы на холоде",warmClothing:"Тёплая одежда",extreme:"Экстремальный холод",shelter:"Тёплое укрытие",hotFood:"Горячая еда/напиток",activity:"Тяжёлый путь/бой",failedExposure:"Применить провал",complication20:"Выпала complication",fatigue:"Усталость",recovery:"Отдых в тёплом укрытии",tier:"Уровень",apAfter:"AP после теста постройки",buildSuccess:"Тест постройки успешен",materials:"Материалы",features:"Слоты особенностей",refund:"Возврат при разборке",settlement:"Поселение",rank:"Ранг",positive:"Положительные влияния",negative:"Отрицательные влияния",charisma:"Харизма",dice:"Кубы",resolve:"Рассчитать репутацию",result:"Результат",success:"УСПЕХ",failure:"ПРОВАЛ",apply:"Применить результат",tasks:"Задания доступны с Friendly+",terrain:"Местность / препятствия",conditions:"Условия"},
+  uk:{title:"ЗИМОВЕ ВИЖИВАННЯ",travel:"ПОДОРОЖ",cold:"ХОЛОД",camp:"ТАБІР",rep:"РЕПУТАЦІЯ ПОСЕЛЕННЯ",buildCamp:"ПОБУДУВАТИ ТАБІР",dismantleCamp:"РОЗІБРАТИ",rest6:"ВІДПОЧИНОК 6Г",rest24:"ВІДПОЧИНОК 24Г",activeCamp:"АКТИВНИЙ ТАБІР",inventoryMaterials:"Матеріали в інвентарі",notEnough:"Недостатньо матеріалів",selectedFeatures:"Обрані особливості",duration:"Базова тривалість (години)",speed:"Темп",route:"Є усталений маршрут",familiar:"Місцевість знайома",friendly:"Зона під контролем дружньої фракції",directions:"Є добрі орієнтири",obstacles:"Великі перешкоди легко оминути",difficulty:"Складність",finalDuration:"Час подорожі",compRange:"Діапазон ускладнень",apReduction:"Зниження за хитрий план",roll:"Результат d20",complication:"Ускладнення подорожі",encounter:"Зимова зустріч",hours:"Години на холоді",warmClothing:"Теплий одяг",extreme:"Екстремальний холод",shelter:"Тепле укриття",hotFood:"Гаряча їжа/напій",activity:"Важка подорож/бій",failedExposure:"Застосувати провал",complication20:"Випала complication",fatigue:"Втома",recovery:"Відпочинок у теплому укритті",tier:"Рівень",apAfter:"AP після тесту побудови",buildSuccess:"Тест побудови успішний",materials:"Матеріали",features:"Слоти особливостей",refund:"Повернення при розбиранні",settlement:"Поселення",rank:"Ранг",positive:"Позитивні впливи",negative:"Негативні впливи",charisma:"Харизма",dice:"Куби",resolve:"Розрахувати репутацію",result:"Результат",success:"УСПІХ",failure:"ПРОВАЛ",apply:"Застосувати результат",tasks:"Завдання доступні з Friendly+",terrain:"Місцевість / перешкоди",conditions:"Умови"},
+  pl:{title:"ZIMOWE PRZETRWANIE",travel:"PODRÓŻ",cold:"EKSPOZYCJA NA ZIMNO",camp:"OBOZOWISKO",rep:"REPUTACJA OSADY",buildCamp:"ZBUDUJ OBÓZ",dismantleCamp:"ROZBIERZ",rest6:"ODPOCZYNEK 6H",rest24:"ODPOCZYNEK 24H",activeCamp:"AKTYWNY OBÓZ",inventoryMaterials:"Materiały w ekwipunku",notEnough:"Za mało materiałów",selectedFeatures:"Wybrane cechy",duration:"Bazowy czas (godziny)",speed:"Tempo",route:"Ustalona trasa",familiar:"Znany teren",friendly:"Przyjazna frakcja kontroluje teren",directions:"Dobre wskazówki / punkty orientacyjne",obstacles:"Duże przeszkody łatwe do ominięcia",difficulty:"Trudność",finalDuration:"Czas podróży",compRange:"Zakres komplikacji",apReduction:"Redukcja za sprytny plan",roll:"Wynik d20",complication:"Komplikacja podróży",encounter:"Zimowe spotkanie",hours:"Godziny ekspozycji",warmClothing:"Ciepła odzież",extreme:"Ekstremalne zimno",shelter:"Ciepłe schronienie",hotFood:"Gorące jedzenie/napój",activity:"Ciężka podróż/walka",failedExposure:"Zastosuj porażkę",complication20:"Wypadła komplikacja",fatigue:"Zmęczenie",recovery:"Odpoczynek w ciepłym schronieniu",tier:"Poziom",apAfter:"AP po teście budowy",buildSuccess:"Test budowy udany",materials:"Materiały",features:"Miejsca na cechy",refund:"Zwrot po rozbiórce",settlement:"Osada",rank:"Ranga",positive:"Pozytywne wpływy",negative:"Negatywne wpływy",charisma:"Charyzma",dice:"Kości",resolve:"Rozstrzygnij reputację",result:"Wynik",success:"SUKCES",failure:"PORAŻKA",apply:"Zastosuj wynik",tasks:"Zadania dostępne od Friendly+",terrain:"Teren / przeszkody",conditions:"Warunki"}
 };
 
 function lang(value){const code=String(value||"en").split("-")[0];return COPY[code]?code:"en";}
@@ -39,7 +47,7 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
   const initial=useMemo(readState,[]);
   const [travel,setTravel]=useState(initial.travel||{durationHours:24,speed:"normal",establishedRoute:true,familiarArea:true,friendlyFaction:true,goodDirections:true,obstaclesAvoidable:true,apDifficultyReduction:0,roll:1});
   const [cold,setCold]=useState(initial.cold||{hours:1,warmClothing:true,extremeCold:false,warmShelter:false,hotFood:false,physicalActivity:false,complication:false});
-  const [camp,setCamp]=useState(initial.camp||{tier:1,apSpentAfterTest:0,buildSucceeded:true});
+  const [camp,setCamp]=useState(initial.camp||{tier:1,apSpentAfterTest:0,buildSucceeded:true,features:[]});
   const [rep,setRep]=useState(initial.rep||{settlement:"Diamond City",rank:2,positive:0,negative:0,rolls:"",last:null});
   const [encounterRoll,setEncounterRoll]=useState(initial.encounterRoll||1);
 
@@ -54,6 +62,9 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
   const currentHp=Math.max(0,Number(character?.currentHp||0));
   const coldFailure=useMemo(()=>coldExposureFailure({hours:cold.hours,currentHp,complication:cold.complication}),[cold.hours,cold.complication,currentHp]);
   const campResult=useMemo(()=>calculateCampsite(camp),[camp]);
+  const materialTotals=useMemo(()=>countCraftingMaterials(character?.inventoryItems||[]),[character?.inventoryItems]);
+  const selectedFeatures=normalizeFeatureSelection(camp.features||[],campResult.featureSlots);
+  const campAffordable=canAffordMaterials(character?.inventoryItems||[],campResult.materials);
   const charisma=Math.max(0,Number(character?.special?.C??character?.special?.CHA??0));
   const repSetup=useMemo(()=>prepareReputationTest({charisma,rank:rep.rank,positive:rep.positive,negative:rep.negative}),[charisma,rep.rank,rep.positive,rep.negative]);
   const comp=lookupD20(JOURNEY_COMPLICATIONS,travel.roll);
@@ -73,6 +84,32 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
     patchRep({last:result});
   };
   const applyRep=()=>{if(!rep.last)return;patchRep({rank:rep.last.nextRank,last:null,rolls:""});};
+
+  const toggleCampFeature=(id)=>{
+    const current=normalizeFeatureSelection(camp.features||[],campResult.featureSlots);
+    const next=current.includes(id)
+      ? current.filter(feature=>feature!==id)
+      : normalizeFeatureSelection([...current,id],campResult.featureSlots);
+    patchCamp({features:next});
+  };
+
+  const buildCamp=()=>{
+    if(typeof setCharacter!=="function"||!campAffordable)return;
+    setCharacter(prev=>applyCampsiteBuild(prev,{
+      ...campResult,
+      features:selectedFeatures,
+    })||prev);
+  };
+
+  const dismantleCamp=()=>{
+    if(typeof setCharacter!=="function")return;
+    setCharacter(prev=>dismantleActiveCampsite(prev));
+  };
+
+  const restAtCamp=(hours)=>{
+    if(typeof setCharacter!=="function")return;
+    setCharacter(prev=>applyWinterCampRest(prev,{hours}));
+  };
 
   return <section className="gm-winter pip-screen">
     <header className="gm-winter__header"><span>PIP / 2D20 // WINTER OF ATOM</span><h2>[ {text.title} ]</h2></header>
@@ -109,11 +146,21 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
 
       <article className="pip-panel gm-winter-card">
         <h3>[ {text.camp} ]</h3>
-        <label>{text.tier}<select className="pip-input" value={camp.tier} onChange={e=>patchCamp({tier:e.target.value})}>{[1,2,3,4,5,6].map(v=><option key={v} value={v}>{v}</option>)}</select></label>
-        <label>{text.apAfter}<NumberInput value={camp.apSpentAfterTest} onChange={v=>patchCamp({apSpentAfterTest:v})}/></label>
-        <Checkbox label={text.buildSuccess} checked={camp.buildSucceeded} onChange={v=>patchCamp({buildSucceeded:v})}/>
+        <label>{text.tier}<select className="pip-input" value={camp.tier} onChange={e=>patchCamp({tier:e.target.value,features:[]})}>{[1,2,3,4,5,6].map(v=><option key={v} value={v}>{v}</option>)}</select></label>
+        <label>{text.apAfter}<NumberInput value={camp.apSpentAfterTest} onChange={v=>patchCamp({apSpentAfterTest:v,features:normalizeFeatureSelection(camp.features||[],calculateCampsite({...camp,apSpentAfterTest:v}).featureSlots)})}/></label>
+        <Checkbox label={text.buildSuccess} checked={camp.buildSucceeded} onChange={v=>patchCamp({buildSucceeded:v,features:[]})}/>
         <div className="winter-result"><b>{text.difficulty}: {campResult.difficulty}</b><span>{text.materials}: {materialsText(campResult.materials)}</span><span>Built tier: {campResult.builtTier}</span><span>{text.features}: {campResult.featureSlots}</span><span>{text.refund}: {materialsText(campResult.teardownRefund)}</span></div>
-        <div className="winter-feature-list">{CAMPSITE_FEATURES.map(f=><div key={f.id}><strong>{f.label}</strong><span>{f.effect}</span></div>)}</div>
+        <div className="winter-note"><b>{text.inventoryMaterials}</b><span>{materialsText(materialTotals)}</span>{!campAffordable?<span>{text.notEnough}</span>:null}</div>
+        <div className="winter-feature-list">
+          {CAMPSITE_FEATURES.map(f=><label key={f.id} className="winter-feature-choice"><input type="checkbox" checked={selectedFeatures.includes(f.id)} disabled={!selectedFeatures.includes(f.id)&&selectedFeatures.length>=campResult.featureSlots} onChange={()=>toggleCampFeature(f.id)}/><span><strong>{f.label}</strong><small>{f.effect}</small></span></label>)}
+        </div>
+        <div className="winter-note"><b>{text.selectedFeatures}: {selectedFeatures.length}/{campResult.featureSlots}</b><span>{selectedFeatures.join(", ")||"—"}</span></div>
+        {!character?.activeCampsite ? <button type="button" className="pip-btn" disabled={!campAffordable||selectedFeatures.length>campResult.featureSlots} onClick={buildCamp}>{text.buildCamp}</button> : (
+          <div className="winter-active-camp">
+            <div className="winter-result"><b>{text.activeCamp}: T{character.activeCampsite.tier}</b><span>{(character.activeCampsite.features||[]).join(", ")||"—"}</span></div>
+            <div className="gm-toolkit__button-row"><button type="button" className="pip-btn" onClick={()=>restAtCamp(6)}>{text.rest6}</button><button type="button" className="pip-btn" onClick={()=>restAtCamp(24)}>{text.rest24}</button><button type="button" className="pip-btn" onClick={dismantleCamp}>{text.dismantleCamp}</button></div>
+          </div>
+        )}
       </article>
 
       <article className="pip-panel gm-winter-card">
