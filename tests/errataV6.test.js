@@ -214,3 +214,75 @@ test("Settler's Guide errata V6 NPC corrections are applied", () => {
   assert.ok(x688);
   assert.match(x688.attacks, /10MM PISTOL.*TN 11/);
 });
+
+
+test("Winter of Atom errata V6 first bestiary batch is imported corrected", () => {
+  const byId = (id) => BESTIARY_ENTRIES.find((entry) => entry.id === id);
+
+  const wastelander = byId("woa-wastelander");
+  assert.deepEqual(wastelander.special, {STR:"6",PER:"5",END:"7",CHA:"4",INT:"5",AGI:"5",LCK:"4"});
+  assert.equal(wastelander.hp, "9");
+  assert.equal(wastelander.initiative, "10");
+  assert.match(wastelander.attacks, /MACHETE.*TN 8.*Piercing 1/);
+  assert.match(wastelander.attacks, /TIRE IRON.*TN 8/);
+  assert.doesNotMatch(wastelander.attacks, /TIRE IRON.*Piercing/);
+
+  const scavenger = byId("woa-scavenger");
+  assert.equal(scavenger.skills.find((s) => s.name === "Sneak")?.rating, 1);
+  assert.equal(scavenger.skills.find((s) => s.name === "Repair")?.tagged, true);
+  assert.equal(scavenger.skills.find((s) => s.name === "Survival")?.tagged, true);
+
+  const turret = byId("woa-machine-gun-turret-mk1");
+  assert.doesNotMatch(turret.attacks, /Stun/);
+  assert.match(turret.abilities, /must be repaired/i);
+
+  const atom = byId("woa-child-of-atom");
+  assert.equal(atom.skills.find((s) => s.name === "Speech")?.tagged, true);
+  assert.equal(atom.skills.find((s) => s.name === "Survival")?.tagged, true);
+  assert.match(atom.attacks, /GAMMA GUN/);
+  assert.match(atom.attacks, /MACHETE.*3 CD Piercing 1/);
+
+  const tinkerer = byId("woa-child-of-atom-tinkerer");
+  assert.equal(tinkerer.skills.find((s) => s.name === "Explosives")?.tagged, true);
+  assert.equal(tinkerer.skills.find((s) => s.name === "Science")?.tagged, true);
+  assert.equal(tinkerer.skills.find((s) => s.name === "Speech")?.rating, 1);
+
+  const dragon = byId("woa-elizas-dragon");
+  assert.match(dragon.attacks, /DRAGON'S FLAME — Body \+ Other/);
+  assert.match(dragon.abilities, /Remote Controlled/);
+
+  const schumacher = byId("woa-brother-schumacher");
+  for (const skill of ["Barter","Repair","Speech"]) {
+    assert.equal(schumacher.skills.find((s) => s.name === skill)?.tagged, true);
+  }
+  assert.match(schumacher.attacks, /TN 9/);
+
+  for (const id of ["woa-child-of-atom-fanatic-shotgun","woa-child-of-atom-fanatic-grappler"]) {
+    const fanatic = byId(id);
+    assert.equal(fanatic.luckPoints, "—");
+    assert.equal(fanatic.skills.find((s) => s.name === "Melee Weapons")?.tagged, true);
+    assert.equal(fanatic.skills.find((s) => s.name === "Small Guns")?.tagged, true);
+    assert.match(fanatic.attacks, /HEATED SUPER SLEDGE.*STR \+ Energy Weapons.*8 Breaking Energy/);
+  }
+
+  const rifleman = byId("woa-minuteman-rifleman");
+  assert.equal(rifleman.level, "8");
+  assert.equal(rifleman.skills.find((s) => s.name === "Energy Weapons")?.tagged, true);
+  assert.equal(rifleman.skills.find((s) => s.name === "Survival")?.tagged, true);
+
+  const yarrow = byId("woa-dr-yarrow");
+  for (const skill of ["Medicine","Science","Small Guns","Survival"]) {
+    assert.equal(yarrow.skills.find((s) => s.name === skill)?.tagged, true);
+  }
+  assert.match(yarrow.abilities, /Yellow Belly/);
+
+  const yao = byId("woa-yao-guai");
+  assert.match(yao.abilities, /Defense -1 to minimum 1/);
+
+  const scrapjaw = byId("woa-brother-scrapjaw");
+  for (const skill of ["Athletics","Energy Weapons","Melee Weapons"]) {
+    assert.equal(scrapjaw.skills.find((s) => s.name === skill)?.tagged, true);
+  }
+  assert.match(scrapjaw.attacks, /CURVED RIPPER.*8 CD Piercing 1, Vicious Physical/);
+  assert.match(scrapjaw.loot, /one Agitated Recoil Compensated Plasma Rifle/);
+});
