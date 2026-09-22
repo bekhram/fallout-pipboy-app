@@ -74,7 +74,7 @@ function garmentCoversPart(item, part) {
   return item.category !== "CLOTHING" || part !== "Head";
 }
 
-export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange }) {
+export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange, form, onRoll }) {
   const { t, i18n } = useTranslation();
   const labels = UI[i18n.resolvedLanguage?.split("-")[0]] || UI.en;
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
@@ -440,7 +440,7 @@ export default function ArmorScreen({ armor, inventoryItems = [], onArmorChange 
       ) : (
         <div role="tabpanel">
           <div className="pip-armor-section-title">[ {labels.powerArmor} ]</div>
-          <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} />
+          <PowerArmorPanel armor={armor} onArmorChange={onArmorChange} form={form} onRoll={onRoll} />
 
           <div className="pip-armor-section-title push-top">[ {labels.normalArmor} ]</div>
           {ownedCraftedArmor.length > 0 && (
