@@ -7,7 +7,6 @@ import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
 import CraftingHub from "../crafting/CraftingHub.jsx";
 import VehicleScreen from "../vehicles/VehicleScreen.jsx";
 import VehicleCombatPanel from "../vehicles/VehicleCombatPanel.jsx";
-import CombatTurnSequence from "../combat/CombatTurnSequence.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 import { installBestiaryCombatGmBridge } from "../../utils/bestiaryCombatGmBridge.js";
@@ -29,8 +28,6 @@ const INTERACTIVE_SELECTOR = [
   ".crafting-screen",
   ".vehicle-screen",
   ".armor-repair-panel",
-  ".pip-active-combat",
-  ".combat-turn-sequence",
 ].join(",");
 
 export default function PipboyShell({
@@ -176,12 +173,6 @@ export default function PipboyShell({
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
             {screenContent}
           </div>
-          {activeTab === "map" ? (
-            <CombatTurnSequence
-              character={resolvedCharacter}
-              setCharacter={resolvedSetCharacter}
-            />
-          ) : null}
         </main>
       </div>
       {overlays}
