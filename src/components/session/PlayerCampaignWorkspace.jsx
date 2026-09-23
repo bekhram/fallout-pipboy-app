@@ -47,7 +47,7 @@ export default function PlayerCampaignWorkspace({ session, form, copy, error, on
         <div hidden={tab !== "battle"}>
           {hasScene ? <SessionTacticalMap session={session} form={form} embedded /> : <div className="player-campaign__empty"><WorkspaceIcon name="battle" /><h2>{labels.waiting}</h2><p>{labels.hint}</p><button type="button" onClick={() => setTab("world")}>{labels.world} →</button></div>}
         </div>
-        {tab === "world" && <LiveSessionWorldMap session={session} />}
+        {tab === "world" && <LiveSessionWorldMap session={session} character={form} />}
       </main>
       <aside className="player-campaign__chat" ref={setChatDock} aria-label={labels.chat} />
     </div>
