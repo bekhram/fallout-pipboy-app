@@ -21,6 +21,8 @@ import MapGrid from "./MapGrid.jsx";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
+import CampsiteWorldPanel from "./CampsiteWorldPanel.jsx";
+import SettlementReputationPanel from "./SettlementReputationPanel.jsx";
 import "./map.css";
 import bostonMapImage from "../../assets/map/boston-map.png";
 import fallout1MapAsset from "../../assets/map/fallout1-southern-california.js";
@@ -300,7 +302,7 @@ function findWorldTravelRoute(start, target, cache, cols = MAP_COLS, rows = MAP_
   return { steps, cost: costs.get(targetKey) ?? 0, cache };
 }
 
-export default function MapScreen({ mapState, onMapChange, character, weaponDatabase }) {
+export default function MapScreen({ mapState, onMapChange, character, setCharacter, weaponDatabase }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
@@ -1096,6 +1098,10 @@ export default function MapScreen({ mapState, onMapChange, character, weaponData
           </div>
         </div>
       </div>
+      {mapMode === "world" ? <div className="pip-map-world-meta-panels">
+        <CampsiteWorldPanel character={character} setCharacter={setCharacter} language={language} readOnly={typeof setCharacter!=="function"} />
+        <SettlementReputationPanel language={language} readOnly={false} />
+      </div> : null}
     </div>
   );
 }
