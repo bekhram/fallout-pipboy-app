@@ -17,3 +17,7 @@
   .settlement-reputation__table td:first-child,.settlement-reputation__table td:nth-child(2),.settlement-reputation__table td:last-child{grid-column:1/-1}.settlement-reputation__table td:last-child::before{display:none}
   .settlement-reputation__remove{width:100%}
 }
+
+.settlement-reputation--compact{margin-top:0;padding:12px}.settlement-reputation--compact .settlement-reputation__header{margin-bottom:10px;align-items:center}.settlement-reputation--compact .settlement-reputation__header h3{margin:2px 0}.settlement-reputation--compact .settlement-reputation__header .pip-btn{margin:0;min-height:32px}
+.settlement-reputation__compact-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.settlement-reputation__compact-list button{display:grid;gap:5px;text-align:left;padding:9px;border:1px solid rgba(120,255,140,.16);border-radius:9px;background:rgba(0,0,0,.12);color:inherit;font:inherit}.settlement-reputation__compact-list button.is-active{border-color:rgba(180,255,190,.5);background:rgba(120,255,140,.06)}.settlement-reputation__compact-list strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.settlement-reputation__header-actions{display:flex;gap:8px}
+@media(max-width:720px){.settlement-reputation__compact-list{grid-template-columns:1fr 1fr 1fr;overflow-x:auto}.settlement-reputation__compact-list button{min-width:145px}.settlement-reputation--compact .settlement-reputation__header{display:flex}.settlement-reputation--compact .settlement-reputation__header .pip-btn{width:auto}}
