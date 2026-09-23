@@ -1,4 +1,5 @@
 import { buildFalloutD20Result, rollFalloutD6, rollSingleDie } from "./dice.js";
+import { applyCanonicalNpcType } from "./npcCanonicalTypes.js";
 
 export const NPC_RANKS = ["minion", "standard", "special", "legendary"];
 
@@ -120,6 +121,8 @@ export function livingHordeMembers(stats = {}) {
 }
 
 export function applyNpcRank(base = {}, options = {}) {
+  const canonicalBase = applyCanonicalNpcType(base, { canonicalType: options.canonicalType ?? base.canonicalType, attributeBoost: options.canonicalAttributeBoost ?? base.canonicalAttributeBoost });
+  base = canonicalBase;
   const rank = normalizeNpcRank(options.rank ?? base.rank);
   const rule = NPC_RANK_RULES[rank];
   const baseMaxHp = Math.max(1, Math.floor(number(base.baseMaxHp ?? base.maxHp ?? base.hp, 1)));
