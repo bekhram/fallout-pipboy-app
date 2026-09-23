@@ -27,6 +27,7 @@ export default function AppScreenRouter({
   handleImportClick,
   sharedSession,
   form,
+  setForm,
   currentLuckPoints,
   onSpendLuck,
   derived,
@@ -313,6 +314,7 @@ export default function AppScreenRouter({
           mapState={mapState}
           onMapChange={updateMapData}
           character={form}
+          setCharacter={setForm}
           weaponDatabase={globalWeapons}
         />
       );
