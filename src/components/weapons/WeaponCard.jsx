@@ -252,6 +252,7 @@ export default function WeaponCard({
     maxHp: form?.hp?.max ?? form?.maxHp,
     addictions: Array.isArray(form?.addictions) ? form.addictions.length : Number(form?.addictions || 0),
   });
+  const isMagnumnomicon = String(calculatedWeapon?.name || "").trim().toLowerCase() === "the magnumnomicon";
   const isRangedWeapon = ["Small Guns", "Energy Weapons", "Big Guns", "Explosives", "Throwing"]
     .includes(String(calculatedWeapon?.skill || "").trim());
   const hasQuickHands = isRangedWeapon && getPerkRank(form, "quick_hands") > 0;
@@ -396,6 +397,13 @@ export default function WeaponCard({
         perkRerollD20: totalAttackRerolls,
         damageRerollAllowed: conditionalPerkResult.damageRerollAllowed,
         perkEffectNotes: allPerkNotes,
+        specialRules: isMagnumnomicon ? {
+          magnumnomicon: true,
+          useLowestDr: true,
+          instantKillNonRobotAtZeroHp: true,
+          raiseCostAp: 3,
+          raisedHpFraction: 0.5,
+        } : undefined,
       },
       diceCount: 2,
       difficulty: attackDifficulty,

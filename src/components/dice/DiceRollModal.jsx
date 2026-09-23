@@ -16,6 +16,7 @@ export default function DiceRollModal({
   combatState,
   currentLuckPoints,
   onSpendCombatLuck,
+  onSpendCombatAp,
   onMarkCombatUse,
   onDiceResult,
   campaignId = "",
@@ -145,6 +146,7 @@ export default function DiceRollModal({
                 combatState={combatState}
                 currentLuckPoints={currentLuckPoints}
                 onSpendCombatLuck={onSpendCombatLuck}
+                onSpendCombatAp={onSpendCombatAp}
                 onMarkCombatUse={onMarkCombatUse}
                 onResult={reportDiceResult}
                 weaponEffects={[

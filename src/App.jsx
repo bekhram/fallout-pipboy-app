@@ -767,6 +767,7 @@ const SkillsEditorModal = () => {
         combatState={combatState}
         currentLuckPoints={currentLuckPoints}
         onSpendCombatLuck={spendCombatLuck}
+        onSpendCombatAp={spendCombatAp}
         onMarkCombatUse={markCombatUse}
         onDiceResult={sharedSession.sendDiceResult}
         campaignId={sharedSession.campaignId || sharedSession.roomState?.campaignId || sharedSession.lastSession?.campaignId || ""}
