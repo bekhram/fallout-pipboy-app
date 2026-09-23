@@ -186,6 +186,8 @@ export default function App() {
     nextCombatTurn,
     spendCombatAp,
     spendCombatLuck,
+    beginLuckEscape,
+    canAttemptLuckEscape,
     markCombatUse,
   } = useCombatController({
     combatApMax,
@@ -325,6 +327,8 @@ export default function App() {
       endCombat={endCombat}
       nextCombatTurn={nextCombatTurn}
       spendCombatAp={spendCombatAp}
+      beginLuckEscape={beginLuckEscape}
+      canAttemptLuckEscape={canAttemptLuckEscape}
       editingItemIndex={editingItemIndex}
       setEditingItemIndex={setEditingItemIndex}
       itemDraft={itemDraft}
