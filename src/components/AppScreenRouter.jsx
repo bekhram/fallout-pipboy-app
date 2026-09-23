@@ -74,6 +74,8 @@ export default function AppScreenRouter({
   endCombat,
   nextCombatTurn,
   spendCombatAp,
+  beginLuckEscape,
+  canAttemptLuckEscape,
   editingItemIndex,
   setEditingItemIndex,
   itemDraft,
@@ -202,6 +204,9 @@ export default function AppScreenRouter({
           treatableInjuries={treatableInjuries}
           onUseStimpak={useQuickStimpak}
           onRoll={openContextDiceRoll}
+          combatState={combatState}
+          onBeginLuckEscape={beginLuckEscape}
+          canAttemptLuckEscape={canAttemptLuckEscape}
         />
       );
 
