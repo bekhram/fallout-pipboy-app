@@ -310,6 +310,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
   const [selectedCell, setSelectedCell] = useState(null);
   const [selectedWorldTarget, setSelectedWorldTarget] = useState(null);
   const [mapMode, setMapMode] = useState("world");
+  const [campOpen,setCampOpen]=useState(false);
 
   const safeMapState = useMemo(
     () => ({ ...buildDefaultMapState(), ...(mapState || {}) }),
@@ -1082,8 +1083,8 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
               <button type="button" className="pip-action-button" onClick={() => mapMode === "world" ? handleWorldTravel(selectedWorldTarget) : handleTravel()} disabled={mapMode === "world" ? !worldSelectionRoute?.steps?.length : !canTravel}>
                 {t("mapPanel.travelButton")}
               </button>
-              <button type="button" className="pip-action-button" onClick={handleRegenerateMap}>
-                {t("mapPanel.campButton")}
+              <button type="button" className="pip-action-button pip-map-camp-button" onClick={()=>setCampOpen(true)}>
+                ▲ {t("mapPanel.campButton")}
               </button>
             </div>
           </div>
@@ -1098,10 +1099,8 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
           </div>
         </div>
       </div>
-      {mapMode === "world" ? <div className="pip-map-world-meta-panels">
-        <CampsiteWorldPanel character={character} setCharacter={setCharacter} language={language} readOnly={typeof setCharacter!=="function"} />
-        <SettlementReputationPanel language={language} readOnly={false} />
-      </div> : null}
+      {mapMode === "world" ? <div className="pip-map-world-meta-panels"><SettlementReputationPanel language={language} readOnly={false} compact /></div> : null}
+      <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} />
     </div>
   );
 }
