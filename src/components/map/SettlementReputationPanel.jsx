@@ -38,12 +38,13 @@ function initialState() {
 }
 function rankInfo(rank) { return REPUTATION_RANKS.find(item => item.rank === Number(rank)) || REPUTATION_RANKS[2]; }
 
-export default function SettlementReputationPanel({ language="en", readOnly=false }) {
+export default function SettlementReputationPanel({ language="en", readOnly=false, compact=false }) {
   const code = String(language || "en").split("-")[0];
   const text = COPY[code] || COPY.en;
   const initial = useMemo(initialState, []);
   const [rows, setRows] = useState(initial.rows);
   const [activeId, setActiveId] = useState(initial.activeId);
+  const [expanded,setExpanded]=useState(false);
 
   const persist = (nextRows, nextActiveId) => {
     setRows(nextRows);
@@ -76,10 +77,14 @@ export default function SettlementReputationPanel({ language="en", readOnly=fals
     persist(next, nextActive);
   };
 
+  if(compact&&!expanded)return <section className="pip-panel settlement-reputation settlement-reputation--compact">
+    <header className="settlement-reputation__header"><div><small>PIP / 2D20 // WORLD</small><h3>[ {text.title} ]</h3></div><button type="button" className="pip-btn" onClick={()=>setExpanded(true)}>→</button></header>
+    <div className="settlement-reputation__compact-list">{rows.slice(0,3).map(row=>{const rank=rankInfo(row.rank);return <button type="button" key={row.id} className={row.id===activeId?"is-active":""} onClick={()=>select(row.id)}><strong>{row.name}</strong><span className={`settlement-reputation__rank rank-${row.rank}`}>{rank.label}</span></button>})}</div>
+  </section>;
   return <section className="pip-panel settlement-reputation">
     <header className="settlement-reputation__header">
       <div><small>PIP / 2D20 // WORLD</small><h3>[ {text.title} ]</h3><p>{text.hint}</p></div>
-      {!readOnly ? <button type="button" className="pip-btn" onClick={add}>+ {text.add}</button> : <small>{text.readOnly}</small>}
+      <div className="settlement-reputation__header-actions">{compact?<button type="button" className="pip-btn" onClick={()=>setExpanded(false)}>×</button>:null}{!readOnly ? <button type="button" className="pip-btn" onClick={add}>+ {text.add}</button> : <small>{text.readOnly}</small>}</div>
     </header>
     {rows.length ? <div className="settlement-reputation__table-wrap">
       <table className="settlement-reputation__table">
