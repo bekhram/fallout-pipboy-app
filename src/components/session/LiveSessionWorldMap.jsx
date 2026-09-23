@@ -1,8 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
-import SettlementReputationPanel from "../map/SettlementReputationPanel.jsx";
-import CampsiteWorldPanel from "../map/CampsiteWorldPanel.jsx";
 import { MAP_REGIONS, getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
 import "./liveSessionWorldMap.css";
 
@@ -15,7 +13,7 @@ const COPY = {
 const ICONS={objective:"◎",danger:"!",loot:"$",quest:"?",note:"●",settlement:"⌂"};
 const CATEGORIES=Object.keys(ICONS);
 
-export default function LiveSessionWorldMap({ session, character=null, setCharacter=null }) {
+export default function LiveSessionWorldMap({ session }) {
   const { i18n } = useTranslation();
   const language=String(i18n.resolvedLanguage||i18n.language||"en").split("-")[0];
   const text=COPY[language]||COPY.en;
@@ -67,7 +65,5 @@ export default function LiveSessionWorldMap({ session, character=null, setCharac
         </div>
       </aside>}
     </div>
-    <CampsiteWorldPanel character={character} setCharacter={setCharacter} language={language} readOnly={!gm} />
-    <SettlementReputationPanel language={language} readOnly={!gm} />
   </section>;
 }
