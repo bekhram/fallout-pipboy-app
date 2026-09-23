@@ -14,6 +14,7 @@ export function useCombatController({
     ap: 0,
     usedThisTurn: {},
     usedThisCombat: {},
+    escapeAttemptTurn: null,
   });
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function useCombatController({
       ap: 0,
       usedThisTurn: {},
       usedThisCombat: {},
+      escapeAttemptTurn: null,
     });
   };
 
@@ -59,6 +61,7 @@ export function useCombatController({
       ap: 0,
       usedThisTurn: {},
       usedThisCombat: {},
+      escapeAttemptTurn: null,
     });
   };
 
@@ -90,6 +93,23 @@ export function useCombatController({
     return true;
   };
 
+  const beginLuckEscape = (luckCost) => {
+    const cost = Math.max(1, Number(luckCost || 1));
+    if (!combatState.active) return false;
+    if (Number(combatState.escapeAttemptTurn) === Number(combatState.turn)) return false;
+    if (!spendCombatLuck(cost)) return false;
+    setCombatState((prev) => ({
+      ...prev,
+      escapeAttemptTurn: Number(prev.turn || 0),
+    }));
+    return true;
+  };
+
+  const canAttemptLuckEscape = Boolean(
+    combatState.active &&
+    Number(combatState.escapeAttemptTurn) !== Number(combatState.turn)
+  );
+
   const markCombatUse = (scope, key) => {
     if (!key) return;
 
@@ -111,6 +131,8 @@ export function useCombatController({
     nextCombatTurn,
     spendCombatAp,
     spendCombatLuck,
+    beginLuckEscape,
+    canAttemptLuckEscape,
     markCombatUse,
   };
 }
