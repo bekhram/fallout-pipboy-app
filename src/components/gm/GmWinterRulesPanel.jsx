@@ -48,7 +48,7 @@ function Checkbox({label,checked,onChange}){return <label className="winter-chec
 function NumberInput({value,onChange,min=0,max=999}){return <input className="pip-input winter-number" type="number" min={min} max={max} value={value} onChange={e=>onChange(e.target.value)}/>;}
 function materialsText(materials){return `C ${materials.common||0} · U ${materials.uncommon||0} · R ${materials.rare||0}`;}
 
-export default function GmWinterRulesPanel({character=null,setCharacter=null,language="en"}){
+export default function GmWinterRulesPanel({character=null,setCharacter=null,language="en",showReputation=false}){
   const text=COPY[lang(language)];
   const initial=useMemo(readState,[]);
   const [travel,setTravel]=useState(initial.travel||{durationHours:24,speed:"normal",establishedRoute:true,familiarArea:true,friendlyFaction:true,goodDirections:true,obstaclesAvoidable:true,apDifficultyReduction:0,roll:1});
@@ -234,6 +234,7 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <div className="winter-note"><span>{scavenging.text}</span></div>
       </article>
 
+{showReputation ? (
       <article className="pip-panel gm-winter-card">
         <h3>[ {text.rep} ]</h3>
         <label>{text.settlement}<input className="pip-input" value={rep.settlement} onChange={e=>patchRep({settlement:e.target.value})}/></label>
@@ -245,6 +246,12 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <label>{text.dice}<input className="pip-input" placeholder="3, 11, 20" value={rep.rolls} onChange={e=>patchRep({rolls:e.target.value,last:null})}/></label>
         <button type="button" className="pip-btn" onClick={resolveRep}>{text.resolve}</button>
         {rep.last?<div className="winter-result"><b>{text.result}: {rep.last.success?text.success:text.failure}</b><span>Successes: {rep.last.successes}</span><span>GM AP: +{rep.last.gmAp}</span><span>Rank → {rep.last.nextRank}</span><button type="button" className="pip-btn" onClick={applyRep}>{text.apply}</button></div>:null}
+      </article>
+      ) : null}
+
+      <article className="pip-panel gm-winter-card gm-winter-card--tasks">
+        <h3>[ {text.taskTitle} ]</h3>
+        <div className="winter-note"><b>{rep.settlement}</b><span>{text.rank}: {REPUTATION_RANKS.find(item=>item.rank===Number(rep.rank))?.label || rep.rank}</span></div>
         <div className="winter-note"><b>{text.taskTitle}</b><span>{text.tasks}</span></div>
         <label>{text.taskDay}<NumberInput value={task.day} onChange={v=>patchTask({day:v,last:null,negativeApplied:false})} min={1}/></label>
         <label>{text.taskTitle}<select className="pip-input" value={task.taskId} onChange={e=>patchTask({taskId:e.target.value,last:null,negativeApplied:false})}>{SETTLEMENT_TASKS.map(item=><option key={item.id} value={item.id}>{item.label} · {item.attribute}</option>)}</select></label>
