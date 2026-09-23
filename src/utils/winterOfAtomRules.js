@@ -277,11 +277,71 @@ export function getIndividualEscapeSetup(distance="medium"){
 }
 
 export const SETTLEMENT_TASKS = [
-  {id:"construction",label:"Construction Work",attribute:"Strength"},
-  {id:"militia",label:"Town Militia",attribute:"Perception"},
-  {id:"courier",label:"Courier",attribute:"Endurance"},
-  {id:"merchant",label:"Merchant Assistant",attribute:"Charisma"},
-  {id:"science",label:"Science Assistant",attribute:"Intelligence"},
-  {id:"supply",label:"Supply Runner",attribute:"Agility"},
-  {id:"gambler",label:"Gambler",attribute:"Luck"},
+  {id:"construction",label:"Construction Work",attribute:"Strength",attributeKey:"S",description:"Repair walls and machines or help build a new structure."},
+  {id:"militia",label:"Town Militia",attribute:"Perception",attributeKey:"P",description:"Stand watch or join patrols protecting the settlement."},
+  {id:"courier",label:"Courier",attribute:"Endurance",attributeKey:"E",description:"Deliver packages, letters, information, and messages around the settlement."},
+  {id:"merchant",label:"Merchant Assistant",attribute:"Charisma",attributeKey:"C",description:"Help a merchant with customers, inventory, or the register."},
+  {id:"science",label:"Science Assistant",attribute:"Intelligence",attributeKey:"I",description:"Assist a local expert with chems, stimpaks, technology, or experiments."},
+  {id:"supply",label:"Supply Runner",attribute:"Agility",attributeKey:"A",description:"Scavenge the surrounding winter wastes for supplies the settlement needs."},
+  {id:"gambler",label:"Gambler",attribute:"Luck",attributeKey:"L",description:"Spend the day gambling in hopes of winning a few extra caps."},
 ];
+
+export function settlementTaskById(id){
+  return SETTLEMENT_TASKS.find((task)=>task.id===id)||SETTLEMENT_TASKS[0];
+}
+
+export function settlementTaskDayKey(settlement="",day=1){
+  const name=String(settlement||"settlement").trim().toLowerCase()||"settlement";
+  const safeDay=Math.max(1,Math.floor(Number(day)||1));
+  return `${name}::${safeDay}`;
+}
+
+export function prepareSettlementTask({
+  rank=0,
+  settlement="",
+  day=1,
+  taskId="construction",
+  skill="",
+  difficulty=1,
+  completedByDay={},
+}={}){
+  const task=settlementTaskById(taskId);
+  const key=settlementTaskDayKey(settlement,day);
+  const unlocked=Number(rank)>=3;
+  const alreadyCompleted=Boolean(completedByDay?.[key]);
+  return {
+    task,
+    key,
+    day:Math.max(1,Math.floor(Number(day)||1)),
+    skill:String(skill||"").trim(),
+    difficulty:Math.max(0,Math.floor(Number(difficulty)||0)),
+    unlocked,
+    alreadyCompleted,
+    canAttempt:unlocked&&!alreadyCompleted,
+  };
+}
+
+export function resolveSettlementTask({
+  rank=0,
+  settlement="",
+  day=1,
+  taskId="construction",
+  skill="",
+  difficulty=1,
+  successes=0,
+  reward="",
+  completedByDay={},
+}={}){
+  const setup=prepareSettlementTask({rank,settlement,day,taskId,skill,difficulty,completedByDay});
+  if(!setup.canAttempt)return {...setup,resolved:false,success:false,successes:0,reward:String(reward||"").trim(),negativeInfluenceSuggested:false};
+  const safeSuccesses=Math.max(0,Math.floor(Number(successes)||0));
+  const success=safeSuccesses>=setup.difficulty;
+  return {
+    ...setup,
+    resolved:true,
+    success,
+    successes:safeSuccesses,
+    reward:String(reward||"").trim(),
+    negativeInfluenceSuggested:!success,
+  };
+}
