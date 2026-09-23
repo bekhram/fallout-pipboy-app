@@ -58,6 +58,7 @@ export default function FalloutD6Roller({
   combatState = null,
   currentLuckPoints = 0,
   onSpendCombatLuck,
+  onSpendCombatAp,
   onMarkCombatUse,
   onResult,
 }) {
@@ -66,6 +67,10 @@ export default function FalloutD6Roller({
   const [animatedValue, setAnimatedValue] = useState(1);
   const [diceCount, setDiceCount] = useState(4);
   const [isMobile, setIsMobile] = useState(false);
+  const [targetDr, setTargetDr] = useState({ physical: "", energy: "", radiation: "", poison: "" });
+  const [targetHp, setTargetHp] = useState("");
+  const [targetIsRobot, setTargetIsRobot] = useState(false);
+  const [targetRaised, setTargetRaised] = useState(false);
 
   useEffect(() => {
     const updateIsMobile = () => {
@@ -81,6 +86,33 @@ export default function FalloutD6Roller({
   const resultStats = {
     damage: lastRoll?.totalDamage ?? 0,
     effects: lastRoll?.totalEffects ?? 0,
+  };
+
+  const magnumnomicon = Boolean(weapon?.specialRules?.magnumnomicon);
+  const drValues = Object.values(targetDr)
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value >= 0);
+  const lowestDr = drValues.length ? Math.min(...drValues) : 0;
+  const magnumnomiconNetDamage = Math.max(0, Number(lastRoll?.totalDamage || 0) - lowestDr);
+  const targetHpNumber = Math.max(0, Number(targetHp || 0));
+  const magnumnomiconKills = Boolean(
+    magnumnomicon &&
+    lastRoll &&
+    !targetIsRobot &&
+    targetHp !== "" &&
+    magnumnomiconNetDamage >= targetHpNumber
+  );
+  const canRaiseMagnumnomiconTarget = Boolean(
+    magnumnomiconKills &&
+    !targetRaised &&
+    combatState?.active &&
+    Number(combatState?.ap || 0) >= Number(weapon?.specialRules?.raiseCostAp || 3)
+  );
+
+  const handleRaiseMagnumnomiconTarget = () => {
+    const cost = Number(weapon?.specialRules?.raiseCostAp || 3);
+    if (!canRaiseMagnumnomiconTarget || !onSpendCombatAp?.(cost)) return;
+    setTargetRaised(true);
   };
 
   const finesseAvailable = Boolean(
@@ -329,6 +361,69 @@ useEffect(() => {
             {lastRoll.triggeredEffects?.freeze && <div className="dice-context-stat"><span className="dice-context-stat-value">FREEZE</span></div>}
             {lastRoll.triggeredEffects?.breaking && <div className="dice-context-stat"><span className="dice-context-stat-value">BREAKING</span></div>}
             {lastRoll.triggeredEffects?.persistent?.map((effect) => <div key={effect} className="dice-context-stat"><span className="dice-context-stat-value">{effect.toUpperCase()}</span></div>)}
+          </div>
+        )}
+
+        {magnumnomicon && (
+          <div className="pip-panel" style={{ marginBottom: 10, padding: 10 }}>
+            <strong>THE MAGNUMNOMICON · SPECIAL DAMAGE</strong>
+            <p style={{ margin: "6px 0" }}>
+              Use the target's lowest DR among Physical, Energy, Radiation, and Poison.
+            </p>
+            <div className="pip-form-grid">
+              {["physical","energy","radiation","poison"].map((type) => (
+                <label key={type}>
+                  <span>{type.toUpperCase()} DR</span>
+                  <input
+                    className="pip-input"
+                    type="number"
+                    min="0"
+                    value={targetDr[type]}
+                    onChange={(event) => setTargetDr((prev) => ({ ...prev, [type]: event.target.value }))}
+                  />
+                </label>
+              ))}
+              <label>
+                <span>TARGET HP</span>
+                <input
+                  className="pip-input"
+                  type="number"
+                  min="0"
+                  value={targetHp}
+                  onChange={(event) => { setTargetHp(event.target.value); setTargetRaised(false); }}
+                />
+              </label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input type="checkbox" checked={targetIsRobot} onChange={(event) => { setTargetIsRobot(event.target.checked); setTargetRaised(false); }} />
+                <span>ROBOT TARGET</span>
+              </label>
+            </div>
+            {lastRoll && (
+              <div className="dice-actions" style={{ marginTop: 10, flexWrap: "wrap" }}>
+                <div className="dice-context-stat"><span className="dice-context-stat-label">LOWEST DR:</span><span className="dice-context-stat-value">{lowestDr}</span></div>
+                <div className="dice-context-stat"><span className="dice-context-stat-label">NET DAMAGE:</span><span className="dice-context-stat-value">{magnumnomiconNetDamage}</span></div>
+                {magnumnomiconKills && (
+                  <div className="dice-context-stat">
+                    <span className="dice-context-stat-value">NON-ROBOT TARGET DIES AT 0 HP</span>
+                  </div>
+                )}
+                {magnumnomiconKills && !targetRaised && (
+                  <button
+                    type="button"
+                    className="dice-roll-button dice-roll-button-secondary"
+                    disabled={!canRaiseMagnumnomiconTarget}
+                    onClick={handleRaiseMagnumnomiconTarget}
+                  >
+                    RAISE TARGET · 3 AP
+                  </button>
+                )}
+                {targetRaised && (
+                  <div className="dice-context-stat">
+                    <span className="dice-context-stat-value">RAISED · HALF MAX HP · RAD/POISON IMMUNE UNTIL SCENE END</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
