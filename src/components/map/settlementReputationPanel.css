@@ -1,0 +1,19 @@
+.settlement-reputation{margin-top:16px;padding:16px;border:1px solid rgba(126,239,170,.24);background:rgba(4,22,16,.88)}
+.settlement-reputation__header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+.settlement-reputation__header h3{margin:4px 0 6px}.settlement-reputation__header p{margin:0;opacity:.72;max-width:760px}
+.settlement-reputation__table-wrap{overflow-x:auto}.settlement-reputation__table{width:100%;border-collapse:collapse;min-width:700px}
+.settlement-reputation__table th,.settlement-reputation__table td{padding:10px;border-bottom:1px solid rgba(126,239,170,.14);text-align:left;vertical-align:middle}
+.settlement-reputation__table th{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;opacity:.68}
+.settlement-reputation__table tr.is-active{background:rgba(126,239,170,.07)}
+.settlement-reputation__table td:first-child{min-width:220px}.settlement-reputation__table td:nth-child(2){min-width:180px}
+.settlement-reputation__table .pip-input{width:100%}.settlement-reputation__table input[type=number]{min-width:74px}
+.settlement-reputation__active{display:inline-block;margin-top:6px;padding:2px 7px;border:1px solid currentColor;border-radius:999px;font-size:.68rem;letter-spacing:.08em}
+.settlement-reputation__rank{font-weight:700}.settlement-reputation__remove{font-size:.72rem;opacity:.75}
+@media(max-width:720px){
+  .settlement-reputation{padding:12px;margin-top:12px}.settlement-reputation__header{display:grid}.settlement-reputation__header .pip-btn{width:100%}
+  .settlement-reputation__table-wrap{overflow:visible}.settlement-reputation__table{min-width:0;display:block}.settlement-reputation__table thead{display:none}.settlement-reputation__table tbody{display:grid;gap:10px}
+  .settlement-reputation__table tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border:1px solid rgba(126,239,170,.16);border-radius:12px}
+  .settlement-reputation__table td{display:grid;gap:4px;padding:0;border:0;min-width:0!important}.settlement-reputation__table td::before{content:attr(data-label);font-size:.68rem;opacity:.62;text-transform:uppercase;letter-spacing:.06em}
+  .settlement-reputation__table td:first-child,.settlement-reputation__table td:nth-child(2),.settlement-reputation__table td:last-child{grid-column:1/-1}.settlement-reputation__table td:last-child::before{display:none}
+  .settlement-reputation__remove{width:100%}
+}
