@@ -125,7 +125,7 @@ export default function GmSessionMap(props) {
         <nav className="gm-organic-subtabs" aria-label={ui[group]}>
           {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
-      {activeTab === "world" && <LiveSessionWorldMap session={session} />}
+      {activeTab === "world" && <LiveSessionWorldMap session={session} character={props.character} setCharacter={props.setCharacter} />}
       <div hidden={activeTab === "world"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         {activeTab === "scene" ? <div className="gm-tactical-winter"><GmWinterRulesPanel character={props.character} setCharacter={props.setCharacter} language={i18n.resolvedLanguage || i18n.language} showReputation={false} /></div> : null}
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
