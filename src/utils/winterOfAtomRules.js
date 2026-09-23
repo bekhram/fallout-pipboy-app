@@ -187,6 +187,76 @@ export function lookupD20(table,roll){
   return row?{roll:value,text:row[2]}:{roll:value,text:""};
 }
 
+
+export const CAMPSITE_VISITORS = [
+  [1,10,"Only the frigid wind visits the campsite tonight."],
+  [11,12,"A hooded stranger wanders near the camp, searching for something—or someone."],
+  [13,13,"A starving Super Mutant arrives and demands food; they may be bargained with."],
+  [14,14,"A trader approaches seeking shelter and safety and may be willing to trade."],
+  [15,15,"A cautious stranger—secretly a synth—from a nearby settlement seeks shelter."],
+  [16,16,"A small band of raiders fleeing a hazard or monstrous threat approaches warily."],
+  [17,17,"A small horde of ghouls roams near the camp but has not noticed the party yet."],
+  [18,18,"A family of refugees arrives with supplies and caps, lost and seeking help."],
+  [19,20,"A loud crash sounds in the distance; afterward the wasteland becomes deadly silent."],
+];
+
+export const WINTER_WASTELAND_SCAVENGING = [
+  [2,2,"Heavy dog armor"],
+  [3,3,"10mm pistol"],
+  [4,4,"Addictol"],
+  [5,5,"Day Tripper"],
+  [6,6,"Machete"],
+  [7,7,"Sledgehammer"],
+  [8,8,"Healing Salve"],
+  [9,9,".45 rounds (9+4 CD)"],
+  [10,10,"3+5 CD Uncommon Materials"],
+  [11,11,"Pork 'N' Beans"],
+  [12,12,"1+2 CD Signal Flares"],
+  [13,13,"Holotape Player"],
+  [14,14,"2+1 CD Tomahawks"],
+  [15,15,"Pool Cue"],
+  [16,16,"Hard Hat"],
+  [17,17,"Military Fatigues"],
+  [18,18,"Flapper Dress"],
+  [19,19,"Well-Preserved Athletic Clothes"],
+  [20,20,"Wine"],
+  [21,21,"1+2 CD glass bottles (junk; 2 Common Materials each)"],
+  [22,22,"5+5 CD Common Materials"],
+  [23,23,"Yum-Yum Deviled Eggs"],
+  [24,24,"Lab Coat"],
+  [25,25,"Iguana Bits"],
+  [26,26,"Potato Crisps"],
+  [27,27,"Flare (2+1 CD)"],
+  [28,28,"Syringer Ammo (2+2 CD)"],
+  [29,29,"Pre-War Money worth 4d20 Caps"],
+  [30,30,"Toolkit"],
+  [31,31,"First Aid Kit"],
+  [32,32,"Lantern"],
+  [33,33,"Stimpak"],
+  [34,34,"RadAway"],
+  [35,35,"Knuckle Dusters"],
+  [36,36,"Tire Iron"],
+  [37,37,"Super Stimpak"],
+  [38,38,"Buffout"],
+  [39,39,"Jet"],
+  [40,40,"1+5 CD Rare Materials"],
+];
+
+export function lookup2D20(table,rollA,rollB){
+  const a=Math.max(1,Math.min(20,Math.floor(Number(rollA)||1)));
+  const b=Math.max(1,Math.min(20,Math.floor(Number(rollB)||1)));
+  const total=a+b;
+  const row=table.find(([min,max])=>total>=min&&total<=max);
+  return row?{rollA:a,rollB:b,total,text:row[2]}:{rollA:a,rollB:b,total,text:""};
+}
+
+export function resolveCampsiteVisitor({rollA=1,rollB=null,concealed=false}={}){
+  const first=Math.max(1,Math.min(20,Math.floor(Number(rollA)||1)));
+  const second=rollB==null?null:Math.max(1,Math.min(20,Math.floor(Number(rollB)||1)));
+  const effective=concealed&&second!=null?Math.min(first,second):first;
+  return {...lookupD20(CAMPSITE_VISITORS,effective),rollA:first,rollB:second,concealed:Boolean(concealed)};
+}
+
 export const SETTLEMENT_TASKS = [
   {id:"construction",label:"Construction Work",attribute:"Strength"},
   {id:"militia",label:"Town Militia",attribute:"Perception"},
