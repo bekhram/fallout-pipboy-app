@@ -4,7 +4,6 @@ export const GM_UTILITY_EVENT = "pip2d20:gm-utility";
 export const WORKSPACE_GROUPS = {
   battle: ["battle", "world"],
   screens: ["scene", "autogm"],
-  survival: ["winter"],
   creatures: ["tokens", "custom", "roster", "participants"],
   supplies: ["loot", "merchants"],
 };
@@ -52,11 +51,11 @@ export default function GmWorkspaceNavigation({ activeTab, onSelect, labels, mor
       <button type="button" onClick={() => openWorkspaceUtility("chat")}><WorkspaceIcon name="chat"/><span>{labels.chat}</span></button>
       <button type="button" aria-pressed={group === "screens"} onClick={() => onSelect("scene")}><WorkspaceIcon name="screens"/><span>{labels.screens}</span></button>
       <button type="button" onClick={() => openWorkspaceUtility("dice")}><WorkspaceIcon name="dice"/><span>{labels.dice}</span></button>
-      <button type="button" aria-expanded={moreOpen} aria-controls="gm-workspace-more" aria-pressed={group === "creatures" || group === "supplies" || group === "survival"} onClick={() => onMore(!moreOpen)}><WorkspaceIcon name="more"/><span>{labels.more}</span></button>
+      <button type="button" aria-expanded={moreOpen} aria-controls="gm-workspace-more" aria-pressed={group === "creatures" || group === "supplies"} onClick={() => onMore(!moreOpen)}><WorkspaceIcon name="more"/><span>{labels.more}</span></button>
     </nav>
     {moreOpen && <div className="gm-organic-more" id="gm-workspace-more">
       <div><strong>{labels.menu}</strong><button type="button" onClick={() => onMore(false)} aria-label={labels.close}>×</button></div>
-      {["survival", "creatures", "supplies", "participants"].map((key) => <button type="button" key={key} onClick={() => onSelect(key === "participants" ? key : WORKSPACE_GROUPS[key][0])}><WorkspaceIcon name={key}/>{labels[key]}</button>)}
+      {["creatures", "supplies", "participants"].map((key) => <button type="button" key={key} onClick={() => onSelect(key === "participants" ? key : WORKSPACE_GROUPS[key][0])}><WorkspaceIcon name={key}/>{labels[key]}</button>)}
     </div>}
   </>;
 }
