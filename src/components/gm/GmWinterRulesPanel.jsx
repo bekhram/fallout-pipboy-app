@@ -3,18 +3,14 @@ import {
   calculateJourneyDifficulty,
   calculateColdExposureDifficulty,
   coldExposureFailure,
-  calculateCampsite,
-  CAMPSITE_FEATURES,
   REPUTATION_RANKS,
   prepareReputationTest,
   resolveReputationTest,
   lookupD20,
   JOURNEY_COMPLICATIONS,
   WINTER_RANDOM_ENCOUNTERS,
-  CAMPSITE_VISITORS,
-  WINTER_WASTELAND_SCAVENGING,
-  resolveCampsiteVisitor,
-  lookup2D20,
+    WINTER_WASTELAND_SCAVENGING,
+    lookup2D20,
   WINTER_TERRAIN,
   WINTER_OBSTACLES,
   WINTER_CONDITIONS,
@@ -22,14 +18,6 @@ import {
   prepareSettlementTask,
   resolveSettlementTask,
 } from "../../utils/winterOfAtomRules.js";
-import {
-  countCraftingMaterials,
-  canAffordMaterials,
-  applyCampsiteBuild,
-  dismantleActiveCampsite,
-  applyWinterCampRest,
-  normalizeFeatureSelection,
-} from "../../utils/winterCampsiteInventory.js";
 import "./gmWinterRulesPanel.css";
 
 const STORAGE_KEY="pip2d20_winter_rules_v1";
@@ -53,19 +41,15 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
   const initial=useMemo(readState,[]);
   const [travel,setTravel]=useState(initial.travel||{durationHours:24,speed:"normal",establishedRoute:true,familiarArea:true,friendlyFaction:true,goodDirections:true,obstaclesAvoidable:true,apDifficultyReduction:0,roll:1});
   const [cold,setCold]=useState(initial.cold||{hours:1,warmClothing:true,extremeCold:false,warmShelter:false,hotFood:false,physicalActivity:false,complication:false});
-  const [camp,setCamp]=useState(initial.camp||{tier:1,apSpentAfterTest:0,buildSucceeded:true,features:[]});
   const [rep,setRep]=useState(initial.rep||{settlement:"Diamond City",rank:2,positive:0,negative:0,rolls:"",last:null});
   const [encounterRoll,setEncounterRoll]=useState(initial.encounterRoll||1);
-  const [visitorRoll,setVisitorRoll]=useState(initial.visitorRoll||1);
-  const [visitorSecond,setVisitorSecond]=useState(initial.visitorSecond||1);
   const [scavengeRollA,setScavengeRollA]=useState(initial.scavengeRollA||1);
   const [scavengeRollB,setScavengeRollB]=useState(initial.scavengeRollB||1);
   const [task,setTask]=useState(initial.task||{day:1,taskId:"construction",skill:"Repair",difficulty:1,successes:0,reward:"",last:null,completedByDay:{},negativeApplied:false});
 
-  const save=(next)=>writeState({travel,cold,camp,rep,encounterRoll,visitorRoll,visitorSecond,scavengeRollA,scavengeRollB,task,...next});
+  const save=(next)=>writeState({...readState(),travel,cold,rep,encounterRoll,scavengeRollA,scavengeRollB,task,...next});
   const patchTravel=(patch)=>{const next={...travel,...patch};setTravel(next);save({travel:next});};
   const patchCold=(patch)=>{const next={...cold,...patch};setCold(next);save({cold:next});};
-  const patchCamp=(patch)=>{const next={...camp,...patch};setCamp(next);save({camp:next});};
   const patchRep=(patch)=>{const next={...rep,...patch};setRep(next);save({rep:next});};
   const patchTask=(patch)=>{const next={...task,...patch};setTask(next);save({task:next});};
 
@@ -73,17 +57,10 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
   const coldDifficulty=useMemo(()=>calculateColdExposureDifficulty(cold),[cold]);
   const currentHp=Math.max(0,Number(character?.currentHp||0));
   const coldFailure=useMemo(()=>coldExposureFailure({hours:cold.hours,currentHp,complication:cold.complication}),[cold.hours,cold.complication,currentHp]);
-  const campResult=useMemo(()=>calculateCampsite(camp),[camp]);
-  const materialTotals=useMemo(()=>countCraftingMaterials(character?.inventoryItems||[]),[character?.inventoryItems]);
-  const selectedFeatures=normalizeFeatureSelection(camp.features||[],campResult.featureSlots);
-  const campAffordable=canAffordMaterials(character?.inventoryItems||[],campResult.materials);
   const charisma=Math.max(0,Number(character?.special?.C??character?.special?.CHA??0));
   const repSetup=useMemo(()=>prepareReputationTest({charisma,rank:rep.rank,positive:rep.positive,negative:rep.negative}),[charisma,rep.rank,rep.positive,rep.negative]);
   const comp=lookupD20(JOURNEY_COMPLICATIONS,travel.roll);
   const encounter=lookupD20(WINTER_RANDOM_ENCOUNTERS,encounterRoll);
-  const activeCampFeatures=character?.activeCampsite?.features||selectedFeatures;
-  const concealedCamp=activeCampFeatures.includes("concealed");
-  const visitor=resolveCampsiteVisitor({rollA:visitorRoll,rollB:visitorSecond,concealed:concealedCamp});
   const scavenging=lookup2D20(WINTER_WASTELAND_SCAVENGING,scavengeRollA,scavengeRollB);
   const taskSetup=prepareSettlementTask({
     rank:rep.rank,
@@ -137,32 +114,6 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
     patchTask({negativeApplied:true});
   };
 
-  const toggleCampFeature=(id)=>{
-    const current=normalizeFeatureSelection(camp.features||[],campResult.featureSlots);
-    const next=current.includes(id)
-      ? current.filter(feature=>feature!==id)
-      : normalizeFeatureSelection([...current,id],campResult.featureSlots);
-    patchCamp({features:next});
-  };
-
-  const buildCamp=()=>{
-    if(typeof setCharacter!=="function"||!campAffordable)return;
-    setCharacter(prev=>applyCampsiteBuild(prev,{
-      ...campResult,
-      features:selectedFeatures,
-    })||prev);
-  };
-
-  const dismantleCamp=()=>{
-    if(typeof setCharacter!=="function")return;
-    setCharacter(prev=>dismantleActiveCampsite(prev));
-  };
-
-  const restAtCamp=(hours)=>{
-    if(typeof setCharacter!=="function")return;
-    setCharacter(prev=>applyWinterCampRest(prev,{hours}));
-  };
-
   return <section className="gm-winter pip-screen">
     <header className="gm-winter__header"><span>PIP / 2D20 // WINTER OF ATOM</span><h2>[ {text.title} ]</h2></header>
     <div className="gm-winter__grid">
@@ -194,36 +145,6 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <Checkbox label={text.complication20} checked={cold.complication} onChange={v=>patchCold({complication:v})}/>
         <div className="winter-result"><b>{text.difficulty}: {coldDifficulty}</b><span>{text.fatigue}: +{coldFailure.fatigue} (max {coldFailure.fatigueCap})</span><span>{text.recovery}: {coldFailure.warmShelterRestHours}h</span></div>
         <button type="button" className="pip-btn" onClick={applyColdFailure} disabled={typeof setCharacter!=="function"}>{text.failedExposure}</button>
-      </article>
-
-      <article className="pip-panel gm-winter-card">
-        <h3>[ {text.camp} ]</h3>
-        <label>{text.tier}<select className="pip-input" value={camp.tier} onChange={e=>patchCamp({tier:e.target.value,features:[]})}>{[1,2,3,4,5,6].map(v=><option key={v} value={v}>{v}</option>)}</select></label>
-        <label>{text.apAfter}<NumberInput value={camp.apSpentAfterTest} onChange={v=>patchCamp({apSpentAfterTest:v,features:normalizeFeatureSelection(camp.features||[],calculateCampsite({...camp,apSpentAfterTest:v}).featureSlots)})}/></label>
-        <Checkbox label={text.buildSuccess} checked={camp.buildSucceeded} onChange={v=>patchCamp({buildSucceeded:v,features:[]})}/>
-        <div className="winter-result"><b>{text.difficulty}: {campResult.difficulty}</b><span>{text.materials}: {materialsText(campResult.materials)}</span><span>Built tier: {campResult.builtTier}</span><span>{text.features}: {campResult.featureSlots}</span><span>{text.refund}: {materialsText(campResult.teardownRefund)}</span></div>
-        <div className="winter-note"><b>{text.inventoryMaterials}</b><span>{materialsText(materialTotals)}</span>{!campAffordable?<span>{text.notEnough}</span>:null}</div>
-        <div className="winter-feature-list">
-          {CAMPSITE_FEATURES.map(f=><label key={f.id} className="winter-feature-choice"><input type="checkbox" checked={selectedFeatures.includes(f.id)} disabled={!selectedFeatures.includes(f.id)&&selectedFeatures.length>=campResult.featureSlots} onChange={()=>toggleCampFeature(f.id)}/><span><strong>{f.label}</strong><small>{f.effect}</small></span></label>)}
-        </div>
-        <div className="winter-note"><b>{text.selectedFeatures}: {selectedFeatures.length}/{campResult.featureSlots}</b><span>{selectedFeatures.join(", ")||"—"}</span></div>
-        {!character?.activeCampsite ? <button type="button" className="pip-btn" disabled={!campAffordable||selectedFeatures.length>campResult.featureSlots} onClick={buildCamp}>{text.buildCamp}</button> : (
-          <div className="winter-active-camp">
-            <div className="winter-result"><b>{text.activeCamp}: T{character.activeCampsite.tier}</b><span>{(character.activeCampsite.features||[]).join(", ")||"—"}</span></div>
-            <div className="gm-toolkit__button-row"><button type="button" className="pip-btn" onClick={()=>restAtCamp(6)}>{text.rest6}</button><button type="button" className="pip-btn" onClick={()=>restAtCamp(24)}>{text.rest24}</button><button type="button" className="pip-btn" onClick={dismantleCamp}>{text.dismantleCamp}</button></div>
-          </div>
-        )}
-      </article>
-
-      <article className="pip-panel gm-winter-card">
-        <h3>[ {text.visitors} ]</h3>
-        <label>{text.visitorRoll}<NumberInput value={visitorRoll} onChange={v=>{setVisitorRoll(v);save({visitorRoll:v});}} min={1} max={20}/></label>
-        {concealedCamp?<label>{text.visitorSecond}<NumberInput value={visitorSecond} onChange={v=>{setVisitorSecond(v);save({visitorSecond:v});}} min={1} max={20}/></label>:null}
-        <div className="winter-result">
-          <b>{text.visitorResult}: {visitor.roll}</b>
-          {concealedCamp?<span>Concealed: min({visitor.rollA}, {visitor.rollB})</span>:null}
-        </div>
-        <div className="winter-note"><span>{visitor.text}</span></div>
       </article>
 
       <article className="pip-panel gm-winter-card">
