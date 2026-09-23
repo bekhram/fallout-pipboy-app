@@ -280,6 +280,7 @@ export default function App() {
       handleImportClick={handleImportClick}
       sharedSession={sharedSession}
       form={form}
+      setForm={setForm}
       currentLuckPoints={currentLuckPoints}
       onSpendLuck={onSpendLuck}
       derived={derived}
