@@ -8,6 +8,7 @@ import SheetProfile from "../layout/SheetProfile.jsx";
 import SheetIcon from "../layout/SheetIcon.jsx";
 import SheetDisclosure from "../layout/SheetDisclosure.jsx";
 import { sheetCopy } from "../layout/sheetCopy.js";
+import { getLuckOfTheDrawSetup, getIndividualEscapeSetup } from "../../utils/winterOfAtomRules.js";
 
 const STIM_COPY = {
   en: { title: "STIMPAK", hp: "Restore HP", injury: "Treat injury", use: "USE", none: "No Stimpaks", chooseInjury: "Choose injury", left: "left" },
@@ -31,6 +32,9 @@ export default function StatusScreen(props) {
     stimpaks = [],
     treatableInjuries = [],
     onUseStimpak,
+    combatState,
+    onBeginLuckEscape,
+    canAttemptLuckEscape = false,
   } = props;
   const { t, i18n } = useTranslation();
   const c = sheetCopy(i18n.resolvedLanguage);
@@ -39,6 +43,10 @@ export default function StatusScreen(props) {
   const [stimMode, setStimMode] = useState("hp");
   const [stimIndex, setStimIndex] = useState("");
   const [injuryKey, setInjuryKey] = useState("");
+  const [escapeChallenge, setEscapeChallenge] = useState("average");
+  const [escapeDistance, setEscapeDistance] = useState("medium");
+  const luckEscape = getLuckOfTheDrawSetup(escapeChallenge);
+  const soloEscape = getIndividualEscapeSetup(escapeDistance);
 
   const survivalConditions = [["satiety", "starving"], ["thirst", "dehydrated"], ["vigor", "exhausted"]]
     .filter(([field]) => Number(form[field] || 0) === 0)
@@ -94,6 +102,41 @@ export default function StatusScreen(props) {
       <div className="sheet-combat-grid">
         {[["shield",t("main.defense"),derived.defense],["bolt",t("main.initiative"),derived.initiative],["melee",t("main.melee"),derived.md],["luck",t("derived.luckPoints"),currentLuckPoints]].map(([icon,label,value])=><div className="sheet-combat-stat" key={icon}><SheetIcon name={icon}/><div><small>{label}</small><strong>{value}</strong></div></div>)}
       </div>
+      {combatState?.active && (
+        <details className="pip-collapsible pip-collapsible--field" style={{marginTop:8}}>
+          <summary className="pip-collapsible__summary">[ SURVIVING DEFEAT ]</summary>
+          <div className="pip-collapsible__body" style={{display:"grid",gap:8}}>
+            <div className="pip-panel" style={{padding:8}}>
+              <strong>LUCK OF THE DRAW</strong>
+              <label style={{display:"grid",gap:4,marginTop:6}}>
+                <span>Encounter challenge</span>
+                <select className="pip-input" value={escapeChallenge} onChange={e=>setEscapeChallenge(e.target.value)}>
+                  <option value="simple">Simple · 2 Luck</option>
+                  <option value="average">Average · 3 Luck</option>
+                  <option value="hard">Hard · 4 Luck</option>
+                </select>
+              </label>
+              <small>Spend {luckEscape.luckCost} Luck, then make a group escape test at D{luckEscape.difficulty}. Another attempt is blocked until the next combat turn.</small>
+              <button type="button" className="pip-btn" style={{marginTop:6}} disabled={!canAttemptLuckEscape || currentLuckPoints < luckEscape.luckCost} onClick={()=>onBeginLuckEscape?.(luckEscape.luckCost)}>
+                SPEND {luckEscape.luckCost} LUCK · ATTEMPT ESCAPE
+              </button>
+            </div>
+            <div className="pip-panel" style={{padding:8}}>
+              <strong>EVERY PERSON FOR THEMSELF</strong>
+              <label style={{display:"grid",gap:4,marginTop:6}}>
+                <span>Distance from nearest enemy who can see you</span>
+                <select className="pip-input" value={escapeDistance} onChange={e=>setEscapeDistance(e.target.value)}>
+                  <option value="medium">Medium</option>
+                  <option value="long">Long</option>
+                  <option value="extreme">Extreme</option>
+                  <option value="beyond_extreme">Beyond Extreme at round end</option>
+                </select>
+              </label>
+              <small>{soloEscape.automatic ? "Escape is automatic at the end of the round." : `Major action: STR/AGI + Athletics or AGI/PER + Sneak · D${soloEscape.difficulty}`}</small>
+            </div>
+          </div>
+        </details>
+      )}
     </section>
     <div className="sheet-body"><InjuryPanel injuries={form.injuries} statuses={form.statuses} armor={armor} derived={derived} onToggle={onInjuryToggle} onArmorChange={onArmorChange} onArmorStatusCycle={onArmorStatusCycle} survivalConditions={survivalConditions} bodyOnly /></div>
     <SheetDisclosure title={c.survival} icon="food" className="sheet-survival"><VitalsPanel form={form} onTopLevelChange={onTopLevelChange} compact /></SheetDisclosure>

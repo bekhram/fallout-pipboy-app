@@ -257,6 +257,25 @@ export function resolveCampsiteVisitor({rollA=1,rollB=null,concealed=false}={}){
   return {...lookupD20(CAMPSITE_VISITORS,effective),rollA:first,rollB:second,concealed:Boolean(concealed)};
 }
 
+
+export const SURVIVING_DEFEAT_CHALLENGES = {
+  simple: { id:"simple", label:"Simple", luckCost:2 },
+  average: { id:"average", label:"Average", luckCost:3 },
+  hard: { id:"hard", label:"Hard", luckCost:4 },
+};
+
+export function getLuckOfTheDrawSetup(challenge="average"){
+  const entry=SURVIVING_DEFEAT_CHALLENGES[challenge]||SURVIVING_DEFEAT_CHALLENGES.average;
+  return { ...entry, difficulty:entry.luckCost };
+}
+
+export function getIndividualEscapeSetup(distance="medium"){
+  const steps={ medium:1, long:2, extreme:3, beyond_extreme:4 };
+  const safe=Object.prototype.hasOwnProperty.call(steps,distance)?distance:"medium";
+  if(safe==="beyond_extreme") return {distance:safe,automatic:true,difficulty:0};
+  return {distance:safe,automatic:false,difficulty:Math.max(1,5-steps[safe])};
+}
+
 export const SETTLEMENT_TASKS = [
   {id:"construction",label:"Construction Work",attribute:"Strength"},
   {id:"militia",label:"Town Militia",attribute:"Perception"},
