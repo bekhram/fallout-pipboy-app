@@ -8,10 +8,10 @@ const VITALS = [
 ];
 
 const WINTER_COPY = {
-  en: { fatigue: "Fatigue", recovery: "Cold recovery", hours: "h warm shelter", locked: "24h required", bedding: "Bedding +2 Max HP" },
-  ru: { fatigue: "Усталость", recovery: "Восстановление от холода", hours: "ч в тёплом укрытии", locked: "нужно 24ч", bedding: "Постель +2 Max HP" },
-  uk: { fatigue: "Втома", recovery: "Відновлення від холоду", hours: "год у теплому укритті", locked: "потрібно 24год", bedding: "Постіль +2 Max HP" },
-  pl: { fatigue: "Zmęczenie", recovery: "Regeneracja po zimnie", hours: "h w ciepłym schronieniu", locked: "wymagane 24h", bedding: "Posłanie +2 Max HP" },
+  en: { fatigue: "Fatigue", recovery: "Cold recovery", hours: "h warm shelter", locked: "24h required", bedding: "Bedding +2 Max HP", fever: "Famished Fever", duration: "Duration", stage: "Stage", stage2: "Symptoms active", stage3: "Only Flesh Fruit restores HP", stage5: "Living flesh counts as Flesh Fruit", stage7: "Flesh Fruit/living flesh benefits doubled", stage10: "GM control required" },
+  ru: { fatigue: "Усталость", recovery: "Восстановление от холода", hours: "ч в тёплом укрытии", locked: "нужно 24ч", bedding: "Постель +2 Max HP", fever: "Голодная лихорадка", duration: "Длительность", stage: "Стадия", stage2: "Симптомы активны", stage3: "HP восстанавливает только Flesh Fruit", stage5: "Живая плоть считается Flesh Fruit", stage7: "Эффект Flesh Fruit/плоти удвоен", stage10: "Персонаж переходит под контроль ГМ" },
+  uk: { fatigue: "Втома", recovery: "Відновлення від холоду", hours: "год у теплому укритті", locked: "потрібно 24год", bedding: "Постіль +2 Max HP", fever: "Голодна лихоманка", duration: "Тривалість", stage: "Стадія", stage2: "Симптоми активні", stage3: "HP відновлює лише Flesh Fruit", stage5: "Жива плоть вважається Flesh Fruit", stage7: "Ефект Flesh Fruit/плоті подвоєний", stage10: "Персонаж переходить під контроль ГМ" },
+  pl: { fatigue: "Zmęczenie", recovery: "Regeneracja po zimnie", hours: "h w ciepłym schronieniu", locked: "wymagane 24h", bedding: "Posłanie +2 Max HP", fever: "Gorączka Głodu", duration: "Czas trwania", stage: "Etap", stage2: "Objawy aktywne", stage3: "HP przywraca tylko Flesh Fruit", stage5: "Żywe mięso działa jak Flesh Fruit", stage7: "Korzyści z Flesh Fruit/mięsa są podwojone", stage10: "Wymagana kontrola MG" },
 };
 
 export default function VitalsPanel({
@@ -25,6 +25,16 @@ export default function VitalsPanel({
   const fatigue = Math.max(0, Number(form.fatigue || 0));
   const recoveryHours = Math.max(0, Number(form.coldExposureRecoveryHours || 0));
   const maxHpBonus = Math.max(0, Number(form.campsiteMaxHpBonus || 0));
+  const feverDuration = Math.max(0, Number(form.famishedFeverDuration || 0));
+  const feverStage = feverDuration >= 10
+    ? winter.stage10
+    : feverDuration >= 7
+    ? winter.stage7
+    : feverDuration >= 5
+    ? winter.stage5
+    : feverDuration >= 3
+    ? winter.stage3
+    : winter.stage2;
 
   const content = <div className="sheet-vitals">
     {VITALS.map(item=>{
@@ -36,6 +46,12 @@ export default function VitalsPanel({
       {recoveryHours>0?<small>{winter.recovery}: {recoveryHours}{winter.hours}{form.coldExposureLocked?` · ${winter.locked}`:""}</small>:null}
       {maxHpBonus>0?<small>{winter.bedding}</small>:null}
     </div>
+    {feverDuration>0 && (
+      <div className={`sheet-winter-vital ${feverDuration>=10?"is-warning":""}`}>
+        <div><strong>{winter.fever}</strong><span>{winter.duration}: {feverDuration}</span></div>
+        <small>{winter.stage}: {feverStage}</small>
+      </div>
+    )}
   </div>;
 
   if (compact) return content;
