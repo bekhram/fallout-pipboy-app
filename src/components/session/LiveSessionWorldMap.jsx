@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
+import SettlementReputationPanel from "../map/SettlementReputationPanel.jsx";
 import { MAP_REGIONS, getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
 import "./liveSessionWorldMap.css";
 
@@ -65,5 +66,6 @@ export default function LiveSessionWorldMap({ session }) {
         </div>
       </aside>}
     </div>
+    <SettlementReputationPanel language={language} readOnly={!gm} />
   </section>;
 }
