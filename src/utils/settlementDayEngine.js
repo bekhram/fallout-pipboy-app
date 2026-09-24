@@ -12,6 +12,7 @@ import { resolveSettlementDailyEvent } from './settlementEvents.js';
 import { advanceSettlerRecovery } from './settlementHealth.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
+export const SETTLEMENT_INCOME_CAPS_PER_POINT = 10;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
 function randomId(prefix,now=Date.now()){return `${prefix}_${now}_${Math.random().toString(36).slice(2,8)}`;}
 function rollCombatDice(count){let total=0,effects=0;const rolls=[];for(let index=0;index<count;index+=1){const die=1+Math.floor(Math.random()*6);rolls.push(die);if(die===1)total+=1;else if(die===2)total+=2;else if(die>=5){total+=1;effects+=1;}}return {total,effects,rolls};}
@@ -84,7 +85,8 @@ function resolveResidentActions(input,now){
   const businessSkill=businessList.reduce((sum,s)=>sum+settlerActionBonus(s,"business").skillBonus,0);
   const traderBonus=businessList.filter(s=>settlerActionBonus(s,"business").hasPerk).length;
   const dailyIncome=workplacePlan.income+businessSkill+traderBonus;
-  if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome,businessSkill,traderBonus});
+  const dailyCapsIncome=Math.max(0,Math.floor(dailyIncome*SETTLEMENT_INCOME_CAPS_PER_POINT));
+  if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome,caps:dailyCapsIncome,businessSkill,traderBonus});
   const caravanWorkers=Number(actionCounts.trade_caravan || 0);
   if(caravanWorkers>0)events.push({type:"trade_caravan",workers:caravanWorkers});
   const resourceGrid=resolveSettlementResources(settlement);
@@ -96,7 +98,7 @@ function resolveResidentActions(input,now){
     const xp=Number(xpByAction[worker.settlementAction?.type] || 0);
     return xp ? addSettlerExperience(worker,xp) : worker;
   });
-  return {settlement:{...settlement,settlers:experienced,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile},dailyDefenseBonus,actionEvents:events};
+  return {settlement:{...settlement,settlers:experienced,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile,resources:{...(settlement.resources||{}),caps:Math.max(0,Number(settlement.resources?.caps||0))+dailyCapsIncome}},dailyDefenseBonus,actionEvents:events};
 }
 function applyNeedsAndDeparture(input,dailyDefenseBonus,now){
   const stats=calculateStaticAttributes(input,dailyDefenseBonus,input.attributes?.food);let happiness=clamp(stats.happiness,1,20);const failedNeeds=[];
