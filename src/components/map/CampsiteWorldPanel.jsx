@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { calculateCampsite } from "../../utils/winterOfAtomRules.js";
-import { rollFalloutD20 } from "../../utils/dice.js";
 import { countCraftingMaterials, canAffordMaterials, applyCampsiteBuild, applyWinterCampRest } from "../../utils/winterCampsiteInventory.js";
 import "./campsiteWorldPanel.css";
 
@@ -15,7 +14,7 @@ function readState(){if(typeof window==="undefined")return{};try{return JSON.par
 function writePatch(patch){if(typeof window==="undefined")return;try{localStorage.setItem(STORAGE_KEY,JSON.stringify({...readState(),...patch}));}catch{}}
 function mat(m){return `C ${m?.common||0} · U ${m?.uncommon||0} · R ${m?.rare||0}`;}
 
-export default function CampsiteWorldPanel({open=false,onClose,character=null,setCharacter=null,language="en",winterMode=false}){
+export default function CampsiteWorldPanel({open=false,onClose,character=null,setCharacter=null,language="en",winterMode=false,onRoll=null}){
   const code=String(language||"en").split("-")[0]; const text=COPY[code]||COPY.en;
   const saved=useMemo(readState,[]);
   const [tier,setTier]=useState(Number(character?.activeCampsite?.tier||saved?.camp?.tier||1));
@@ -38,8 +37,33 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
   const patch=(key,value)=>{setCheckResult(null);setAnswers(prev=>({...prev,[key]:value}));};
   const rollCheck=()=>{
     if(!needsCheck){setCheckResult({success:true,totalSuccesses:0,rolls:[],difficulty:0,complications:0});return;}
-    const roll=rollFalloutD20({diceCount:2,targetNumber,criticalRange,label:"Camp END + Survival"});
-    setCheckResult({...roll,difficulty:contaminationDifficulty,success:roll.totalSuccesses>=contaminationDifficulty});
+    if(typeof onRoll!=="function")return;
+    onRoll({
+      id:`camp-survival-${Date.now()}`,
+      type:"skill",
+      diceType:"d20",
+      title:text.check,
+      skillName:"Survival",
+      skill:{...survivalEntry,rank:String(survivalRank)},
+      targetNumber,
+      criticalRange,
+      testValue:targetNumber,
+      diceCount:2,
+      difficulty:contaminationDifficulty,
+      source:"camp-survival",
+      onResult:(result)=>{
+        if(result?.diceType!=="d20"||result?.rollType!=="skill")return;
+        const totalSuccesses=Math.max(0,Number(result.successes||0));
+        setCheckResult({
+          rolls:(result.diceValues||[]).map(value=>({value:Number(value)})),
+          totalSuccesses,
+          complications:Math.max(0,Number(result.complications||0)),
+          difficulty:contaminationDifficulty,
+          targetNumber,
+          success:totalSuccesses>=contaminationDifficulty,
+        });
+      },
+    });
   };
   const diseaseKey=()=>{
     if(answers.dirty)return "dysentery";
