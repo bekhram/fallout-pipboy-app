@@ -14,7 +14,7 @@ function readState(){if(typeof window==="undefined")return{};try{return JSON.par
 function writePatch(patch){if(typeof window==="undefined")return;try{localStorage.setItem(STORAGE_KEY,JSON.stringify({...readState(),...patch}));}catch{}}
 function mat(m){return `C ${m?.common||0} · U ${m?.uncommon||0} · R ${m?.rare||0}`;}
 
-export default function CampsiteWorldPanel({open=false,onClose,character=null,setCharacter=null,language="en",winterMode=false,onRoll=null}){
+export default function CampsiteWorldPanel({open=false,onClose,character=null,setCharacter=null,language="en",winterMode=false,onRoll=null,regionId="",currentPosition=null,onApplied=null}){
   const code=String(language||"en").split("-")[0]; const text=COPY[code]||COPY.en;
   const saved=useMemo(readState,[]);
   const [tier,setTier]=useState(Number(character?.activeCampsite?.tier||saved?.camp?.tier||1));
@@ -78,8 +78,12 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
       let next=prev;
       if(!prev?.activeCampsite){
         next=applyCampsiteBuild(prev,{...campResult,features:[]})||prev;
+        if(next?.activeCampsite) next={...next,activeCampsite:{...next.activeCampsite,regionId,worldX:Number(currentPosition?.worldX),worldY:Number(currentPosition?.worldY),placedAt:new Date().toISOString()}};
       } else if(Number(prev.activeCampsite.tier)!==Number(tier)){
         next={...prev,activeCampsite:{...prev.activeCampsite,tier:Number(tier),attemptedTier:Number(tier)}};
+      }
+      if(next?.activeCampsite&&!Number.isFinite(Number(next.activeCampsite.worldX))){
+        next={...next,activeCampsite:{...next.activeCampsite,regionId,worldX:Number(currentPosition?.worldX),worldY:Number(currentPosition?.worldY),placedAt:next.activeCampsite.placedAt||new Date().toISOString()}};
       }
       if(answers.sleep) next=applyWinterCampRest(next,{hours:6});
       const fatigueAdd=(answers.animals?1:0)+(!answers.sleep?1:0)+(winterMode&&!answers.warm?1:0);
@@ -103,6 +107,7 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
       };
     });
     writePatch({camp:{...(saved.camp||{}),tier:Number(tier)},lastCampHealthCheck:{...answers,penalty,risks,checkResult}});
+    onApplied?.({tier:Number(tier),penalty,risks,checkResult,answers,regionId,worldX:Number(currentPosition?.worldX),worldY:Number(currentPosition?.worldY)});
     onClose?.();
   };
 
