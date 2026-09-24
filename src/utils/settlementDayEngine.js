@@ -112,6 +112,32 @@ function recruitmentCapacity(settlement,stats){
   const charisma=Math.max(0,Math.floor(Number(settlement.leader?.charisma || 0)));
   return Math.max(0,Math.min(Number(stats.beds || 0),10+charisma));
 }
+export function getSettlementRecruitmentStatus(settlement){
+  const stats=calculateStaticAttributes(settlement,null,settlement?.attributes?.food);
+  const people=Number(stats.people||0);
+  const capacity=recruitmentCapacity(settlement,stats);
+  const power=resolveSettlementPower(settlement);
+  const beacon=(settlement?.buildings||[]).find(building=>{
+    if(!isActive(building))return false;
+    const effects=getRulebookBuilding(building.type)?.effects||{};
+    return Boolean(effects.attractsPeople) && (!Number(effects.requiresPower||0) || power.poweredBuildingIds.has(building.id));
+  }) || null;
+  const hasCapacity=people<capacity;
+  const hasFood=Number(stats.food||0)>=people+1;
+  const hasWater=Number(stats.water||0)>=people+1;
+  const hasBeds=Number(stats.beds||0)>=people+1;
+  const supplied=hasFood&&hasWater&&hasBeds;
+  const target=clamp(stats.happiness,1,20);
+  const chancePercent=beacon&&hasCapacity&&supplied ? Math.round((target/20)*100) : 0;
+  let blockedReason="";
+  if(!beacon)blockedReason="NO_POWERED_BEACON";
+  else if(!hasCapacity)blockedReason="NO_CAPACITY";
+  else if(!hasBeds)blockedReason="NO_BEDS";
+  else if(!hasFood)blockedReason="NO_FOOD";
+  else if(!hasWater)blockedReason="NO_WATER";
+  return {beacon,people,capacity,hasCapacity,hasFood,hasWater,hasBeds,supplied,target,chancePercent,blockedReason};
+}
+
 function createRecruit(settlement,now){
   const profile=createSettlerProfile();
   const name=randomSettlerName((settlement.settlers||[]).map(item=>item.name));
