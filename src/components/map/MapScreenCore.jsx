@@ -23,6 +23,7 @@ import { mapUiText } from "./mapUiText.js";
 import { buildDefaultMapState } from "../../constants.js";
 import CampsiteWorldPanel from "./CampsiteWorldPanel.jsx";
 import SettlementReputationPanel from "./SettlementReputationPanel.jsx";
+import WinterTravelResolver from "./WinterTravelResolver.jsx";
 import "./map.css";
 import bostonMapImage from "../../assets/map/boston-map.png";
 import fallout1MapAsset from "../../assets/map/fallout1-southern-california.js";
@@ -323,6 +324,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
   const [mapMode, setMapMode] = useState("world");
   const [campOpen,setCampOpen]=useState(false);
   const [selectedSettlement,setSelectedSettlement]=useState(null);
+  const [travelResolver,setTravelResolver]=useState(null);
   const [reputationRows,setReputationRows]=useState(()=>readReputationRows());
 
   const safeMapState = useMemo(
@@ -524,7 +526,30 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     );
   }
 
-  function handleTravel(targetOverride = null) {
+  function requestLocalTravel(target=selectedCell){
+    if(!target)return;
+    const route=findTravelRoute(mapData,playerPosition,target);
+    if(!route?.cells?.length)return;
+    setTravelResolver({kind:"local",target,baseHours:Math.max(1,Number(route.cost||route.cells.length||1))});
+  }
+
+  function requestWorldTravel(target=selectedWorldTarget||trackedLocation){
+    if(!target)return;
+    const workingCache={...sectorCache,[sectorKey]:mapData};
+    const route=findWorldTravelRoute({x:playerWorldX,y:playerWorldY},{x:Number(target.worldX),y:Number(target.worldY)},workingCache,mapData.cols,mapData.rows);
+    if(!route?.steps?.length)return;
+    setTravelResolver({kind:"world",target,baseHours:Math.max(1,Number(route.cost||route.steps.length||1))});
+  }
+
+  function resolveTravelPlan(plan){
+    const pending=travelResolver;
+    setTravelResolver(null);
+    if(!pending)return;
+    if(pending.kind==="world")handleWorldTravel(pending.target,plan);
+    else handleTravel(pending.target,plan);
+  }
+
+  function handleTravel(targetOverride = null, travelPlan = null) {
     const targetCell = targetOverride && Number.isFinite(Number(targetOverride.x)) && Number.isFinite(Number(targetOverride.y))
       ? targetOverride
       : selectedCell;
@@ -536,6 +561,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     let nextDiscoveredKeys = [...discoveredKeys];
     let stoppedEncounter = null;
     let reachedDestination = true;
+    let luckyBreakUsed = false;
     const detailLog = [];
     const exposureHoursByHazard = {};
 
@@ -558,16 +584,28 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       }
       const encounter = maybeRollTravelEncounter(step.terrain, { regionId: activeRegion.id, language, winterMode: winterModeEnabled });
       if (encounter) {
-        stoppedEncounter = encounter;
-        reachedDestination = step.x === targetCell.x && step.y === targetCell.y;
-        detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
-        break;
+        if (travelPlan?.luckyBreak && !luckyBreakUsed) {
+          luckyBreakUsed = true;
+          detailLog.push("LUCKY BREAK // encounter avoided");
+        } else {
+          stoppedEncounter = encounter;
+          reachedDestination = step.x === targetCell.x && step.y === targetCell.y;
+          detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
+          break;
+        }
       }
     }
 
+    const travelHours = Math.max(0.5, totalCost * Math.max(0.25, Number(travelPlan?.durationMultiplier || 1)));
+    const nav = travelPlan?.navigation || null;
+    const navLog = nav ? [
+      `NAVIGATION // D${travelPlan.difficulty} // ${nav.successes}S // ${nav.success ? "SUCCESS" : "FAILURE"}`,
+      ...(nav.complicationResults || []).map(item=>`COMPLICATION ${item.roll} // ${item.text}`),
+      ...(nav.scavenging ? [`SCAVENGING ${nav.scavenging.total} // ${nav.scavenging.text}`] : []),
+    ] : [];
     const summary = stoppedEncounter && !reachedDestination
       ? tx("routeInterrupted")
-      : tx("routeComplete", { steps: travelRoute.cells.length, hours: totalCost });
+      : tx("routeComplete", { steps: travelRoute.cells.length, hours: travelHours });
     const environmentExposure = processEnvironmentalExposure({
       previousRemainders: safeMapState.hazardExposureRemainders || {},
       exposureHoursByHazard,
@@ -586,7 +624,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     const winterLog = winterResolution
       ? [formatWinterTravelLog(winterResolution, language)].filter(Boolean)
       : [];
-    const routeLog = [summary, ...winterLog, ...environmentLog, ...detailLog.reverse()];
+    const routeLog = [summary, ...navLog, ...winterLog, ...environmentLog, ...detailLog.reverse()];
     const encounterResolution = stoppedEncounter
       ? resolveTravelEncounter(stoppedEncounter, character)
       : null;
@@ -597,7 +635,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
           {
             regionId: activeRegion.id,
             terrain: getCell(mapData, finalPosition.x, finalPosition.y)?.terrain || null,
-            hours: totalCost,
+            hours: travelHours,
             worldX: worldOffset.x * mapData.cols + finalPosition.x,
             worldY: worldOffset.y * mapData.rows + finalPosition.y,
             resolution: encounterResolution,
@@ -610,12 +648,13 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       return {
         ...base,
         playerPosition: finalPosition,
-        worldTotalHours: (base.worldTotalHours || 0) + totalCost,
+        worldTotalHours: (base.worldTotalHours || 0) + travelHours,
         discoveredKeys: nextDiscoveredKeys,
         travelLog: mergeTravelLog(base, routeLog),
-        activityLog: appendActivity(base,{type:"route",worldHours:(base.worldTotalHours||0)+totalCost,text:stoppedEncounter?historyText.routeStopped:`${historyText.route}: ${travelRoute.cells.length} · ${totalCost}h`}),
+        activityLog: appendActivity(base,{type:"route",worldHours:(base.worldTotalHours||0)+travelHours,text:stoppedEncounter?historyText.routeStopped:`${historyText.route}: ${travelRoute.cells.length} · ${travelHours}h`}),
         hazardExposureRemainders: environmentExposure.remainders,
         lastWinterTravel: winterResolution,
+        nextCampsiteDifficultyReduction: Math.max(Number(base.nextCampsiteDifficultyReduction||0),Number(travelPlan?.campsiteDifficultyReduction||0)),
         pendingTravelEncounter: encounterContext,
         interruptedRoute: stoppedEncounter
           ? {
@@ -632,9 +671,9 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       };
     });
 
-    if (typeof window !== "undefined" && totalCost > 0) {
+    if (typeof window !== "undefined" && travelHours > 0) {
       window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
-        detail: { hours: totalCost },
+        detail: { hours: travelHours },
       }));
       if (winterResolution) {
         window.dispatchEvent(new CustomEvent(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, {
@@ -651,7 +690,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     if (reachedDestination && !stoppedEncounter) setSelectedCell(null);
   }
 
-  function handleWorldTravel(targetOverride = null) {
+  function handleWorldTravel(targetOverride = null, travelPlan = null) {
     const targetLocation = targetOverride && Number.isFinite(Number(targetOverride.worldX)) && Number.isFinite(Number(targetOverride.worldY))
       ? targetOverride
       : trackedLocation;
@@ -680,6 +719,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     let totalCost = 0;
     let finalStep = null;
     let stoppedEncounter = null;
+    let luckyBreakUsed = false;
     let previousSectorKey = sectorKey;
     const detailLog = [tx("worldRouteStart", { name: targetName, blocks: route.steps.length })];
     const exposureHoursByHazard = {};
@@ -704,17 +744,29 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
 
       const encounter = maybeRollTravelEncounter(step.cell.terrain, { regionId: activeRegion.id, language, winterMode: winterModeEnabled });
       if (encounter) {
-        stoppedEncounter = encounter;
-        detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
-        break;
+        if (travelPlan?.luckyBreak && !luckyBreakUsed) {
+          luckyBreakUsed = true;
+          detailLog.push("LUCKY BREAK // encounter avoided");
+        } else {
+          stoppedEncounter = encounter;
+          detailLog.push(encounterText(encounter, t, tx("travelEncounter")));
+          break;
+        }
       }
     }
 
     if (!finalStep) return;
 
+    const travelHours = Math.max(0.5, totalCost * Math.max(0.25, Number(travelPlan?.durationMultiplier || 1)));
+    const nav = travelPlan?.navigation || null;
+    const navLog = nav ? [
+      `NAVIGATION // D${travelPlan.difficulty} // ${nav.successes}S // ${nav.success ? "SUCCESS" : "FAILURE"}`,
+      ...(nav.complicationResults || []).map(item=>`COMPLICATION ${item.roll} // ${item.text}`),
+      ...(nav.scavenging ? [`SCAVENGING ${nav.scavenging.total} // ${nav.scavenging.text}`] : []),
+    ] : [];
     const reachedTarget = finalStep.worldX === target.x && finalStep.worldY === target.y;
     const summary = reachedTarget
-      ? tx("arrived", { name: targetName, hours: totalCost })
+      ? tx("arrived", { name: targetName, hours: travelHours })
       : stoppedEncounter
         ? tx("worldRouteInterrupted")
         : tx("worldRouteStopped");
@@ -729,14 +781,14 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     const winterResolution = winterModeEnabled
       ? resolveAutomaticWinterExposure({
           character,
-          hours: totalCost,
+          hours: travelHours,
           settings: readWinterTravelSettings(),
         })
       : null;
     const winterLog = winterResolution
       ? [formatWinterTravelLog(winterResolution, language)].filter(Boolean)
       : [];
-    const routeLog = [summary, ...winterLog, ...environmentLog, ...detailLog.reverse()];
+    const routeLog = [summary, ...navLog, ...winterLog, ...environmentLog, ...detailLog.reverse()];
     const encounterResolution = stoppedEncounter
       ? resolveTravelEncounter(stoppedEncounter, character)
       : null;
@@ -747,7 +799,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
           {
             regionId: activeRegion.id,
             terrain: finalStep.cell?.terrain || null,
-            hours: totalCost,
+            hours: travelHours,
             worldX: finalStep.worldX,
             worldY: finalStep.worldY,
             destinationId: targetLocation.id,
@@ -767,13 +819,14 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
         ...base,
         worldOffset: finalSector.offset,
         playerPosition: finalSector.local,
-        worldTotalHours: (base.worldTotalHours || 0) + totalCost,
+        worldTotalHours: (base.worldTotalHours || 0) + travelHours,
         discoveredKeys: finalDiscovery,
         sectorCache: { ...(base.sectorCache || {}), ...route.cache },
         travelLog: mergeTravelLog(base, routeLog),
-        activityLog: appendActivity(base,{type:"route",worldHours:(base.worldTotalHours||0)+totalCost,text:reachedTarget?`${historyText.arrived}: ${targetName} · ${totalCost}h`:historyText.routeStopped}),
+        activityLog: appendActivity(base,{type:"route",worldHours:(base.worldTotalHours||0)+travelHours,text:reachedTarget?`${historyText.arrived}: ${targetName} · ${travelHours}h`:historyText.routeStopped}),
         hazardExposureRemainders: environmentExposure.remainders,
         lastWinterTravel: winterResolution,
+        nextCampsiteDifficultyReduction: Math.max(Number(base.nextCampsiteDifficultyReduction||0),Number(travelPlan?.campsiteDifficultyReduction||0)),
         pendingTravelEncounter: encounterContext,
         interruptedRoute: stoppedEncounter
           ? {
@@ -790,9 +843,9 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       };
     });
 
-    if (typeof window !== "undefined" && totalCost > 0) {
+    if (typeof window !== "undefined" && travelHours > 0) {
       window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
-        detail: { hours: totalCost },
+        detail: { hours: travelHours },
       }));
       if (winterResolution) {
         window.dispatchEvent(new CustomEvent(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, {
@@ -1020,7 +1073,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                     <div className="pip-seamless-world-route">
                       <span>{tx("destination")} {selectedWorldTarget.name || `${selectedWorldTarget.worldX},${selectedWorldTarget.worldY}`}</span>
                       <span>{worldSelectionRoute ? `${worldSelectionRoute.steps.length} ${tx("steps")} · ${worldSelectionCost?.toFixed?.(1) ?? worldSelectionCost}H` : tx("noRoute")}</span>
-                      <button type="button" className="pip-action-button" disabled={!worldSelectionRoute?.steps?.length} onClick={() => handleWorldTravel(selectedWorldTarget)}>{tx("travelToTarget")}</button>
+                      <button type="button" className="pip-action-button" disabled={!worldSelectionRoute?.steps?.length} onClick={() => requestWorldTravel(selectedWorldTarget)}>{tx("travelToTarget")}</button>
                       <button type="button" className="pip-action-button" onClick={() => setSelectedWorldTarget(null)}>×</button>
                     </div>
                   ) : null}
@@ -1042,7 +1095,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                   selectedCell={selectedCell}
                   discoveredKeys={discoveredKeys}
                   onSelectCell={setSelectedCell}
-                  onTravel={handleTravel}
+                  onTravel={()=>requestLocalTravel(selectedCell)}
                   character={character}
                   weaponDatabase={weaponDatabase}
                   mapMode={mapMode}
@@ -1097,7 +1150,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                 <button
                   type="button"
                   className="pip-map-world-route__travel"
-                  onClick={handleWorldTravel}
+                  onClick={()=>requestWorldTravel(trackedLocation)}
                   disabled={trackedAtCurrentPosition}
                 >
                   {trackedAtCurrentPosition ? tx("youAreHere") : tx("travelToTarget")}
@@ -1119,7 +1172,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                 <div><strong>{t("mapPanel.targetLabel")}:</strong> {t("mapPanel.none")}</div>
               )}
 
-              <button type="button" className="pip-action-button" onClick={() => mapMode === "world" ? handleWorldTravel(selectedWorldTarget) : handleTravel()} disabled={mapMode === "world" ? !worldSelectionRoute?.steps?.length : !canTravel}>
+              <button type="button" className="pip-action-button" onClick={() => mapMode === "world" ? requestWorldTravel(selectedWorldTarget) : requestLocalTravel(selectedCell)} disabled={mapMode === "world" ? !worldSelectionRoute?.steps?.length : !canTravel}>
                 {t("mapPanel.travelButton")}
               </button>
               <button type="button" className="pip-action-button pip-map-camp-button" onClick={()=>setCampOpen(true)}>
@@ -1136,7 +1189,16 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
           </details>
         </div> : null}
       </div>
-      <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} regionId={activeRegion.id} currentPosition={{worldX:playerWorldX,worldY:playerWorldY}} onApplied={(result)=>onMapChange(base=>({...base,activityLog:appendActivity(base,{type:"camp",worldHours:base.worldTotalHours,text:`${historyText.campApplied}: T${result.tier}${result.penalty?` · Survival -${result.penalty}`:""}${result.risks?.length?` · ${historyText.risk}: ${result.risks.join("/")}`:""}`})}))} />
+      <WinterTravelResolver
+        open={Boolean(travelResolver)}
+        character={character}
+        language={language}
+        baseHours={travelResolver?.baseHours||1}
+        onRoll={onRoll}
+        onCancel={()=>setTravelResolver(null)}
+        onResolve={resolveTravelPlan}
+      />
+      <CampsiteWorldPanel buildDifficultyReduction={Number(safeMapState.nextCampsiteDifficultyReduction||0)} open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} regionId={activeRegion.id} currentPosition={{worldX:playerWorldX,worldY:playerWorldY}} onApplied={(result)=>onMapChange(base=>({...base,nextCampsiteDifficultyReduction:0,activityLog:appendActivity(base,{type:"camp",worldHours:base.worldTotalHours,text:`${historyText.campApplied}: T${result.tier}${result.penalty?` · Survival -${result.penalty}`:""}${result.risks?.length?` · ${historyText.risk}: ${result.risks.join("/")}`:""}`})}))} />
     </div>
   );
 }
