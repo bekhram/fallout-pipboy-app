@@ -316,6 +316,7 @@ export default function AppScreenRouter({
           character={form}
           setCharacter={setForm}
           weaponDatabase={globalWeapons}
+          onRoll={openContextDiceRoll}
         />
       );
 
