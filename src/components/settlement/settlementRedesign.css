@@ -102,3 +102,89 @@
 .settlement-profit-card>.pip-panel-title{margin:0}
 .settlement-profit-card>small{opacity:.75;font-size:11px;line-height:1.35}
 .settlement-profit-card .settlement-primary{margin-top:4px}
+
+.settlement-inline-reputation{
+  margin:10px 0 12px;
+  padding:10px 12px;
+  display:grid;
+  gap:8px;
+}
+.settlement-inline-reputation__head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.settlement-inline-reputation__head>div{
+  display:grid;
+  gap:2px;
+}
+.settlement-inline-reputation__head strong{
+  font-size:1.05rem;
+}
+.settlement-inline-reputation__head strong span{
+  opacity:.7;
+  font-size:.8em;
+}
+.settlement-inline-reputation__head label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.settlement-inline-reputation__track{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:4px;
+}
+.settlement-inline-reputation__track span{
+  height:6px;
+  border:1px solid currentColor;
+  opacity:.35;
+}
+.settlement-inline-reputation__track span.is-filled{
+  opacity:1;
+  background:currentColor;
+}
+.settlement-inline-reputation__tasks{
+  display:grid;
+  gap:6px;
+}
+.settlement-inline-reputation__tasks-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.settlement-inline-reputation__tasks-head small{
+  opacity:.75;
+}
+.settlement-inline-reputation__task-list{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.settlement-inline-reputation__task-list span{
+  border:1px solid currentColor;
+  padding:4px 6px;
+  font-size:.76rem;
+  opacity:.9;
+}
+@media (max-width:720px){
+  .settlement-inline-reputation{
+    margin:8px 0;
+    padding:8px;
+  }
+  .settlement-inline-reputation__head label{
+    width:100%;
+    justify-content:space-between;
+  }
+  .settlement-inline-reputation__head select{
+    min-width:150px;
+  }
+  .settlement-inline-reputation__task-list{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+}
