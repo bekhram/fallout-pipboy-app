@@ -302,7 +302,7 @@ function findWorldTravelRoute(start, target, cache, cols = MAP_COLS, rows = MAP_
   return { steps, cost: costs.get(targetKey) ?? 0, cache };
 }
 
-export default function MapScreen({ mapState, onMapChange, character, setCharacter, weaponDatabase }) {
+export default function MapScreen({ mapState, onMapChange, character, setCharacter, weaponDatabase, onRoll }) {
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage || i18n.language || "en";
   const tx = (key, vars) => mapUiText(language, key, vars);
@@ -1100,7 +1100,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
         </div>
       </div>
       {mapMode === "world" ? <div className="pip-map-world-meta-panels"><SettlementReputationPanel language={language} readOnly={false} compact /></div> : null}
-      <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} />
+      <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} />
     </div>
   );
 }
