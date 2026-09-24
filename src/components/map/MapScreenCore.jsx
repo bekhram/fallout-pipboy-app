@@ -369,7 +369,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
 
   const activeRegion = getMapRegion(safeMapState.regionId);
   const regionLocations = activeRegion.locations;
-  const winterModeEnabled = activeRegion.id === "commonwealth" && Boolean(safeMapState.winterModeEnabled);
+  const winterModeEnabled = activeRegion.id === "commonwealth";
 
   const worldOffset = safeMapState.worldOffset;
   const worldTotalHours = safeMapState.worldTotalHours;
@@ -944,19 +944,6 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
           </select>
         </label>
         <div className="pip-map-inline-hazards">{t("mapPanel.hazards")}: {renderHazardBadges(currentHazards)}</div>
-        <label className="pip-map-winter-toggle" title={activeRegion.id === "commonwealth" ? tx("winterMode") : "Winter of Atom: Commonwealth only"}>
-          <input
-            type="checkbox"
-            checked={winterModeEnabled}
-            disabled={activeRegion.id !== "commonwealth"}
-            onChange={(event) => onMapChange((prevMap) => ({
-              ...buildDefaultMapState(),
-              ...(prevMap || {}),
-              winterModeEnabled: event.target.checked,
-            }))}
-          />
-          <span>❄ {tx("winterMode")}: {winterModeEnabled ? tx("winterOn") : tx("winterOff")}</span>
-        </label>
         {winterModeEnabled && safeMapState.lastWinterTravel ? (
           <div className="pip-map-winter-last" title={tx("winterLast")}>
             D{safeMapState.lastWinterTravel.difficulty} · {safeMapState.lastWinterTravel.successes}S · {safeMapState.lastWinterTravel.success ? "✓" : "FAT +" + safeMapState.lastWinterTravel.fatigue}

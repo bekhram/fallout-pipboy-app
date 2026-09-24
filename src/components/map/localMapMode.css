@@ -199,7 +199,7 @@ body:has(.pip-map-local-fullscreen) .dice-fab {
   .pip-map-local-fullscreen__bar { min-height: 46px; padding-left: 10px; padding-right: 10px; }
   .pip-map-local-fullscreen__bar strong { font-size: 11px; }
   .pip-map-local-fullscreen__bar button { width: 40px; height: 32px; }
-  .pip-map-local-fullscreen__content { padding: 8px 8px calc(10px + env(safe-area-inset-bottom)); }
+  .pip-map-local-fullscreen__content { padding: 8px 8px calc(118px + env(safe-area-inset-bottom)); }
   .pip-map-local-fullscreen__content .pip-local-gm__messages { max-height: none; }
   .pip-world-overview__progress-dot { width: 12px; height: 12px; right: -6px; top: -6px; font-size: 7px; }
 }
