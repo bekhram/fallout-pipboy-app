@@ -617,7 +617,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     const winterResolution = winterModeEnabled
       ? resolveAutomaticWinterExposure({
           character,
-          hours: totalCost,
+          hours: travelHours,
           settings: readWinterTravelSettings(),
         })
       : null;
