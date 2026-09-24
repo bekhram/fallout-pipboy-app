@@ -1,4 +1,20 @@
 const SKILL_NAMES = ['Repair','Science','Medicine','Survival','Barter','Small Guns'];
+const SETTLER_NAMES = [
+  'Mara','Hank','June','Eli','Nora','Cal','Ruth','Silas','Mae','Jonas','Tess','Otis',
+  'Lena','Gus','Ivy','Cole','Molly','Reed','Ada','Mason','Rose','Finn','Vera','Nash',
+  'Daisy','Walter','Mabel','Roy','Sadie','Dean','Piper','Beck','Clara','Earl','Lucy','Sam'
+];
+
+export function randomSettlerName(usedNames=[]){
+  const used=new Set((usedNames||[]).map(name=>String(name||'').toLowerCase()));
+  const pool=SETTLER_NAMES.filter(name=>!used.has(name.toLowerCase()));
+  const source=pool.length?pool:SETTLER_NAMES;
+  const base=source[Math.floor(Math.random()*source.length)] || 'Settler';
+  if(!used.has(base.toLowerCase()))return base;
+  let index=2;
+  while(used.has(`${base} ${index}`.toLowerCase()))index+=1;
+  return `${base} ${index}`;
+}
 
 export const SETTLER_PERKS = {
   scrapper: {
@@ -112,15 +128,29 @@ export function settlerXpForNextLevel(settler){
 export function addSettlerExperience(settler,amount){
   let experience=Math.max(0,Number(settler?.experience||0))+Math.max(0,Number(amount||0));
   let level=Math.max(1,Number(settler?.level||1));
-  let advancementPoints=Math.max(0,Number(settler?.advancementPoints||0));
+  let perks=[...(settler?.perks||[])];
+  let skills={...(settler?.skills||{})};
+  const autoRewards=[];
   let gained=0;
   while(experience>=level*100 && level<20){
     experience-=level*100;
     level+=1;
-    advancementPoints+=1;
     gained+=1;
+    const available=Object.keys(SETTLER_PERKS).filter(id=>!perks.includes(id));
+    if(available.length){
+      const perkId=available[Math.floor(Math.random()*available.length)];
+      perks.push(perkId);
+      autoRewards.push({type:'perk',id:perkId});
+    }else{
+      const preferred=SKILL_NAMES.includes(settler?.specialty)?settler.specialty:SKILL_NAMES[Math.floor(Math.random()*SKILL_NAMES.length)];
+      const current=Math.max(0,Number(skills?.[preferred]?.rank||0));
+      if(current<4){
+        skills={...skills,[preferred]:{...(skills?.[preferred]||{}),rank:current+1}};
+        autoRewards.push({type:'skill',id:preferred});
+      }
+    }
   }
-  return {...settler,experience,level,advancementPoints,lastXpGain:Math.max(0,Number(amount||0)),lastLevelGain:gained};
+  return {...settler,experience,level,perks,skills,advancementPoints:0,lastXpGain:Math.max(0,Number(amount||0)),lastLevelGain:gained,lastAutoRewards:autoRewards};
 }
 
 export function availableSettlerPerks(settler){
