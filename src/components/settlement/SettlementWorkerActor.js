@@ -17,9 +17,9 @@ export class SettlementWorkerActor {
     this.scene = scene; this.index = index;
     this.container = scene.add.container(0, 0).setDepth(20);
     this.body = scene.add.sprite(0, 0, WORKER_TEXTURE, 0).setOrigin(.5, .70).setScale(.5);
-    this.badge = scene.add.circle(0, -43, 11, 0x102319, .97).setStrokeStyle(1, 0xb9d89a);
-    this.symbol = scene.add.text(0, -43, '', { fontFamily:'Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif', fontSize:'17px', color:'#ffe1a0' }).setOrigin(.5);
-    this.activity = scene.add.text(12, -53, '', {fontSize:'11px',color:'#ffd29b',backgroundColor:'#102319',padding:{x:2,y:1}}).setOrigin(.5);
+    this.badge = scene.add.circle(0, -39, 8, 0x102319, .97).setStrokeStyle(1, 0xb9d89a);
+    this.symbol = scene.add.text(0, -39, '', { fontFamily:'Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif', fontSize:'12px', color:'#ffe1a0' }).setOrigin(.5);
+    this.activity = scene.add.text(9, -47, '', {fontSize:'8px',color:'#ffd29b',backgroundColor:'#102319',padding:{x:1,y:1}}).setOrigin(.5);
     this.label = scene.add.text(0, 12, '', {fontSize:'10px',color:'#e1edd4',backgroundColor:'#10251aee',padding:{x:4,y:3},wordWrap:{width:220}}).setOrigin(.5, 0).setVisible(false);
     this.container.add([this.body, this.badge, this.symbol, this.activity, this.label]);
     // The sheet has large transparent margins; they must not intercept map clicks.
@@ -71,7 +71,7 @@ export class SettlementWorkerActor {
     this.container.setDepth(this.pinned ? 200 : 20 + this.container.y / 10000);
     const zoom = Math.max(.05, this.scene.cameras?.main?.zoom || 1);
     for (const item of [this.badge, this.symbol, this.activity, this.label]) item.setScale(1 / zoom);
-    this.activity.setPosition(12 / zoom, -43 - 10 / zoom);
+    this.activity.setPosition(9 / zoom, -39 - 8 / zoom);
     const pose = workerSpritePose(state, action, { time, index: this.index, reduced: this.reduced });
     this.animationMode = pose.mode;
     if (pose.frame !== this.frame) { this.frame = pose.frame; this.body.setFrame(pose.frame); }
