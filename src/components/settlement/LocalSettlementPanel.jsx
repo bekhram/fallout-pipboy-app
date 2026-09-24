@@ -9,7 +9,7 @@ const COPY={
   pl:{title:'LOKALNE OSADY',offline:'Zapisywane wyłącznie na tym urządzeniu. Kampania ani serwer nie są używane.',name:'Nazwa osady',found:'ZAŁÓŻ OSADĘ',empty:'Brak lokalnej osady.',open:'OTWÓRZ',remove:'USUŃ',importNpc:'DODAJ POSTAĆ GRACZA JAKO NPC',importHint:'Zaimportuj JSON postaci innego gracza. Powstanie lokalna kopia NPC bez dalszego połączenia sieciowego.',imported:'NPC dodany',badFile:'Nie udało się zaimportować pliku postaci.',guest:'Gościnni NPC'},
 };
 
-export default function LocalSettlementPanel({character,language='en'}){
+export default function LocalSettlementPanel({character,setCharacter,language='en'}){
   const key=String(language||'en').split('-')[0],text=COPY[key]||COPY.en;
   const [settlements,setSettlements]=useState(()=>loadLocalSettlements());
   const [activeId,setActiveId]=useState(null);
@@ -44,7 +44,7 @@ export default function LocalSettlementPanel({character,language='en'}){
       setSettlements(next);setMessage(text.imported);
     }catch{setMessage(text.badFile);}
   }
-  if(active)return <SettlementScreen settlement={active} onUpdate={updateActive} onBack={()=>setActiveId(null)} canEdit onRemoveGuestNpc={workerId=>updateActive(current=>removeGuestNpcFromLocalSettlement(current,workerId))}/>;
+  if(active)return <SettlementScreen settlement={active} ownerCharacter={character} setOwnerCharacter={setCharacter} onUpdate={updateActive} onBack={()=>setActiveId(null)} canEdit onRemoveGuestNpc={workerId=>updateActive(current=>removeGuestNpcFromLocalSettlement(current,workerId))}/>;
   return <section className="pip-panel local-settlement-panel">
     <h2>{text.title}</h2><p>{text.offline}</p>
     <form className="campaign-world-found" onSubmit={found}><label>{text.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={!name.trim()}>{text.found}</button></form>
