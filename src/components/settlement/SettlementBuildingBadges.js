@@ -1,15 +1,16 @@
 import { SETTLEMENT_BUILDINGS, settlementBuildingName } from '../../data/settlement/buildings.js';
 import { resolveSettlementWorkplaces } from '../../utils/settlementWorkplaces.js';
 import { settlerActionBonus } from '../../utils/settlementSettlerProfile.js';
+import { SETTLEMENT_INCOME_CAPS_PER_POINT } from '../../utils/settlementDayEngine.js';
 import { buildingIndicators } from './workplaceIndicators.js';
 import { workplaceCopy } from './workplaceCopy.js';
 import { constructionCopy, constructionDuration } from './constructionCopy.js';
 
 const PRODUCTION_COPY = {
-  en:{day:'/day',common:'Common',uncommon:'Uncommon',damage:'damage',effects:'Effects',needsWorker:'needs worker',income:'income'},
-  ru:{day:'/день',common:'обычных',uncommon:'необычных',damage:'урон',effects:'эффекты',needsWorker:'нужен работник',income:'доход'},
-  uk:{day:'/день',common:'звичайних',uncommon:'незвичайних',damage:'шкода',effects:'ефекти',needsWorker:'потрібен працівник',income:'дохід'},
-  pl:{day:'/dzień',common:'pospolite',uncommon:'niepospolite',damage:'obrażenia',effects:'Efekty',needsWorker:'potrzebny pracownik',income:'dochód'},
+  en:{day:'/day',common:'Common',uncommon:'Uncommon',damage:'damage',effects:'Effects',needsWorker:'needs worker',income:'caps'},
+  ru:{day:'/день',common:'обычных',uncommon:'необычных',damage:'урон',effects:'эффекты',needsWorker:'нужен работник',income:'крышек'},
+  uk:{day:'/день',common:'звичайних',uncommon:'незвичайних',damage:'шкода',effects:'ефекти',needsWorker:'потрібен працівник',income:'кришок'},
+  pl:{day:'/dzień',common:'pospolite',uncommon:'niepospolite',damage:'obrażenia',effects:'Efekty',needsWorker:'potrzebny pracownik',income:'kapsli'},
 };
 function productionDetail(settlement,plan,site,language){
   const code=String(language||'en').split('-')[0],t=PRODUCTION_COPY[code]||PRODUCTION_COPY.en;
@@ -26,7 +27,7 @@ function productionDetail(settlement,plan,site,language){
     const workers=(settlement.settlers||[]).filter(w=>site.workerIds.includes(w.id));
     const skill=workers.reduce((sum,w)=>sum+settlerActionBonus(w,'business').skillBonus,0);
     const trader=workers.filter(w=>settlerActionBonus(w,'business').hasPerk).length;
-    return '+'+(Number(site.income||0)+skill+trader)+' '+t.income+' '+t.day;
+    return '+'+((Number(site.income||0)+skill+trader)*SETTLEMENT_INCOME_CAPS_PER_POINT)+' '+t.income+' '+t.day;
   }
   return '';
 }
