@@ -409,6 +409,10 @@
       "days1": "1 dzień",
       "days3": "3 dni",
       "days4": "4 dni"
+    },
+    "poisoned": {
+      "name": "Zatrucie",
+      "description": "Postać jest zatruta, dopóki efekt nie zostanie wyleczony lub usunięty."
     }
   },
   "main": {
