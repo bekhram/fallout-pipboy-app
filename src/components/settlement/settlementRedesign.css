@@ -110,3 +110,13 @@
 .settlement-transfer-row small{opacity:.7}
 .settlement-transfer-row input{min-width:0}
 @media(max-width:720px){.settlement-transfer-row{grid-template-columns:1fr 72px}.settlement-transfer-row .pip-action-button{min-height:38px}.settlement-transfer-row>div{grid-column:1/-1}}
+
+.settlement-recruitment-card{display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:center;margin:10px 0;padding:10px 12px}
+.settlement-recruitment-card>div:first-child{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.settlement-recruitment-card strong{font-size:1.35rem}
+.settlement-recruitment-card__meta{display:flex;gap:8px;justify-content:flex-end}
+.settlement-recruitment-card.is-blocked{opacity:.72}
+.settlement-recruitment-card>small{grid-column:1/-1}
+.settlement-recruitment-inline{display:grid;grid-template-columns:1fr auto;gap:4px 8px;padding:8px;border:1px solid rgba(120,255,140,.16)}
+.settlement-recruitment-inline small{grid-column:1/-1;opacity:.7}
+@media(max-width:720px){.settlement-recruitment-card{grid-template-columns:1fr}.settlement-recruitment-card__meta{justify-content:flex-start}}
