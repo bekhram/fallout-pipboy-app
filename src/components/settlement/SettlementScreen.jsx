@@ -64,7 +64,9 @@ function eventText(event,language){
   const key=String(language||'en').split('-')[0],name=EVENT_COPY[key]?.[event?.type]||EVENT_COPY.en[event?.type]||String(event?.type||'event').replaceAll('_',' ');
   const parts=[name];
   if(event?.caps)parts.push(`+${event.caps} caps`);
-  if(event?.common)parts.push(`+${event.common} materials`);
+  if(event?.common)parts.push(`+${event.common} common`);
+  if(event?.uncommon)parts.push(`+${event.uncommon} uncommon`);
+  if(event?.rare)parts.push(`+${event.rare} rare`);
   if(event?.food)parts.push(`+${event.food} food`);
   if(event?.happiness)parts.push(`+${event.happiness} happiness`);
   if(event?.happinessLoss)parts.push(`-${event.happinessLoss} happiness`);
@@ -94,6 +96,14 @@ function selectedBuildingProduction(settlement,building,language){
     pl:{day:'/dzień',income:'dochód',common:'pospolite',uncommon:'niepospolite',damage:'obrażenia',effects:'Efekty',needs:'potrzebny pracownik'},
   };
   const t=copy[code]||copy.en;
+  if(site.action==='trade_caravan'){
+    if(!site.workerIds.length)return '0 caps '+t.day+' · '+t.needs;
+    const worker=(settlement.settlers||[]).find(w=>site.workerIds.includes(w.id));
+    const bonus=settlerActionBonus(worker||{},'trade_caravan');
+    const minCaps=20+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0);
+    const maxCaps=40+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0);
+    return minCaps+'–'+maxCaps+' caps '+t.day+' · materials chance';
+  }
   if(site.action==='business'){
     if(!site.workerIds.length)return '0 '+t.income+' '+t.day+' · '+t.needs;
     const workers=(settlement.settlers||[]).filter(w=>site.workerIds.includes(w.id));

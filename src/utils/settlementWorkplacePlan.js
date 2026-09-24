@@ -20,7 +20,7 @@ export function workplaceState(building) {
 export function workplaceCapacity(building) {
   const action = workplaceAction(building);
   if (action === 'tend_crops') return Math.ceil(nonnegative(building.effects?.cropSlots) / 6);
-  if (action === 'business' || action === 'guard') return 1;
+  if (action === 'business' || action === 'guard' || action === 'trade_caravan') return 1;
   return action ? null : 0; // null means the catalog sets no per-building worker limit.
 }
 const manualTarget = worker => worker.settlementAction?.targetBuildingId || null;

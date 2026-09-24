@@ -21,6 +21,14 @@ function productionDetail(settlement,plan,site,language){
     const scrapper=workers.filter(w=>settlerActionBonus(w,'scavenging').hasPerk).length;
     return pool+' CD '+t.day+' → '+t.damage+'='+t.common+(scrapper?' +'+scrapper+' Common':'')+' · '+t.effects+'='+t.uncommon;
   }
+  if(site.action==='trade_caravan'){
+    if(!site.workerIds.length)return '0 caps '+t.day+' · '+t.needsWorker;
+    const worker=(settlement.settlers||[]).find(w=>site.workerIds.includes(w.id));
+    const bonus=settlerActionBonus(worker||{},'trade_caravan');
+    const minCaps=20+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0);
+    const maxCaps=40+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0);
+    return minCaps+'–'+maxCaps+' caps '+t.day+' · materials chance';
+  }
   if(site.action==='business'){
     if(!site.workerIds.length)return '0 '+t.income+' '+t.day+' · '+t.needsWorker;
     const workers=(settlement.settlers||[]).filter(w=>site.workerIds.includes(w.id));
