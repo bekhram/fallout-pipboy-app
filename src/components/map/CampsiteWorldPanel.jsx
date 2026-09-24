@@ -14,7 +14,7 @@ function readState(){if(typeof window==="undefined")return{};try{return JSON.par
 function writePatch(patch){if(typeof window==="undefined")return;try{localStorage.setItem(STORAGE_KEY,JSON.stringify({...readState(),...patch}));}catch{}}
 function mat(m){return `C ${m?.common||0} · U ${m?.uncommon||0} · R ${m?.rare||0}`;}
 
-export default function CampsiteWorldPanel({open=false,onClose,character=null,setCharacter=null,language="en",winterMode=false,onRoll=null,regionId="",currentPosition=null,onApplied=null}){
+export default function CampsiteWorldPanel({open=false,onClose,character=null,setCharacter=null,language="en",winterMode=false,onRoll=null,regionId="",currentPosition=null,onApplied=null,buildDifficultyReduction=0}){
   const code=String(language||"en").split("-")[0]; const text=COPY[code]||COPY.en;
   const saved=useMemo(readState,[]);
   const [tier,setTier]=useState(Number(character?.activeCampsite?.tier||saved?.camp?.tier||1));
@@ -24,6 +24,7 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
   if(!open)return null;
 
   const campResult=calculateCampsite({tier,apSpentAfterTest:0,buildSucceeded:true});
+  const effectiveBuildDifficulty=campResult.difficulty===0?0:Math.max(1,campResult.difficulty-Math.max(0,Number(buildDifficultyReduction)||0));
   const inventoryTotals=countCraftingMaterials(character?.inventoryItems||[]);
   const canBuild=Boolean(character?.activeCampsite)||canAffordMaterials(character?.inventoryItems||[],campResult.materials);
   const penalty=(answers.raw?1:0)+(answers.dirty?1:0)+(answers.animals?1:0)+(!answers.sleep?1:0)+(winterMode&&!answers.warm?1:0);
@@ -146,7 +147,7 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
       <section className="camp-modal__tier-info">
         <p>{text.tierDescriptions?.[tier]}</p>
         <div className="camp-modal__tier-stats">
-          <span>{text.tierDifficulty}: <b>{campResult.difficulty}</b></span>
+          <span>{text.tierDifficulty}: <b>{effectiveBuildDifficulty}</b>{buildDifficultyReduction>0?<small> (−{buildDifficultyReduction} AP)</small>:null}</span>
           <span>{text.materials}: <b>{mat(campResult.materials)}</b></span>
           <span>{text.tierFeatures}: <b>{campResult.featureSlots}</b></span>
         </div>
