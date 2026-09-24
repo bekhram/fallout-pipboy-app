@@ -31,6 +31,7 @@ export default function DiceRollModal({
 
   const reportDiceResult = (result) => {
     if (!result) return;
+    rollConfig?.onResult?.(result);
     onDiceResult?.(result);
     if (campaignId) {
       void sendTelegramEvent({
