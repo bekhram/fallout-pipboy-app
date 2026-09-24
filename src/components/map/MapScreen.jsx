@@ -25,7 +25,7 @@ export default function MapScreen(props) {
     </div>
     {sharedOpen ? <>
       <p>{text.info}</p>
-      <LocalSettlementPanel language={language} character={props.character}/>
+      <LocalSettlementPanel language={language} character={props.character} setCharacter={props.setCharacter}/>
     </> : <MapScreenCore {...props} />}
   </div>;
 }

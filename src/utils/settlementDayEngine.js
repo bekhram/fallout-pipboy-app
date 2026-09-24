@@ -7,7 +7,7 @@ import { resolveSettlementPower } from "./settlementPower.js";
 import { getTendedCropResult, resolveSettlementResources } from "./settlementResources.js";
 import { resolveSettlementWorkplaces, effectiveSettlementResidents } from './settlementWorkplaces.js';
 import { advanceBuildingRepairs } from './settlementRepair.js';
-import { addSettlerExperience, createSettlerProfile, settlerActionBonus } from './settlementSettlerProfile.js';
+import { addSettlerExperience, createSettlerProfile, randomSettlerName, settlerActionBonus } from './settlementSettlerProfile.js';
 import { resolveSettlementDailyEvent } from './settlementEvents.js';
 import { advanceSettlerRecovery } from './settlementHealth.js';
 
@@ -113,9 +113,9 @@ function recruitmentCapacity(settlement,stats){
   return Math.max(0,Math.min(Number(stats.beds || 0),10+charisma));
 }
 function createRecruit(settlement,now){
-  const count=(settlement.settlers || []).length+1;
   const profile=createSettlerProfile();
-  return {id:randomId("settler",now),name:`Settler ${count}`,role:"unassigned",assignedBuildingId:null,settlementAction:null,health:100,status:"idle",joinedAt:now,...profile};
+  const name=randomSettlerName((settlement.settlers||[]).map(item=>item.name));
+  return {id:randomId("settler",now),name,role:"unassigned",assignedBuildingId:null,settlementAction:null,health:100,status:"idle",joinedAt:now,...profile};
 }
 function resolveRecruitment(input,now){
   const stats=calculateStaticAttributes(input,null,input.attributes?.food);

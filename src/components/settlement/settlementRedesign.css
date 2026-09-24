@@ -102,3 +102,11 @@
 .settlement-profit-card>.pip-panel-title{margin:0}
 .settlement-profit-card>small{opacity:.75;font-size:11px;line-height:1.35}
 .settlement-profit-card .settlement-primary{margin-top:4px}
+
+.settlement-resource-transfer{display:grid;gap:8px;margin-top:14px;padding:10px;border:1px solid rgba(120,255,140,.2);border-radius:10px}
+.settlement-transfer-row{display:grid;grid-template-columns:minmax(0,1fr) 76px auto auto;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(120,255,140,.1)}
+.settlement-transfer-row:last-child{border-bottom:0}
+.settlement-transfer-row>div{display:grid;gap:2px}
+.settlement-transfer-row small{opacity:.7}
+.settlement-transfer-row input{min-width:0}
+@media(max-width:720px){.settlement-transfer-row{grid-template-columns:1fr 72px}.settlement-transfer-row .pip-action-button{min-height:38px}.settlement-transfer-row>div{grid-column:1/-1}}
