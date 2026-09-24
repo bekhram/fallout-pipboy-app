@@ -22,6 +22,7 @@ import "./settlement.css";
 import "./settlementRedesign.css";
 import SheetIcon from "../layout/SheetIcon.jsx";
 import SettlementPhaserMap from "./SettlementPhaserMap.jsx";
+import SettlementReputationInline from "./SettlementReputationInline.jsx";
 
 const BUILDING_ICONS = { crop_field: "🌾", water_pump: "💧", generator: "⚡", armor_workbench: "🔧", trading_post: "¤", clinic: "+", guard_post: "▲", turret: "⌖" };
 const BUILD_CATEGORIES = ["housing", "food", "water", "power", "production", "commerce", "services", "defense"];
@@ -233,6 +234,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
       <aside className="settlement-left-rail pip-panel"><nav className="settlement-left-nav">{['overview','build','people','resources','defense','events'].map(navigation)}</nav><button type="button" className="pip-action-button settlement-exit" onClick={onBack}>← {text.back}</button></aside>
       <main className="settlement-map-wrap settlement-center-panel">
         <div className="settlement-topbar settlement-resource-strip">{[['people',attributes.people,'people'],['food',attributes.food,'food'],['water',attributes.water,'flask'],['power',attributes.power,'bolt'],['defense',attributes.defense,'shield'],['happiness',`${attributes.happiness}/20`,'heart']].map(([key,value,icon])=><div className="settlement-resource-tile" key={key}><SheetIcon name={icon}/><div><small>{text[key]}</small><b>{value}</b></div></div>)}</div>
+        <SettlementReputationInline settlement={settlement} language={language} canEdit={canEdit}/>
         <SettlementPhaserMap settlement={settlement} language={language} label={ui.title} zoom={zoom} onZoom={setZoom} selectedBuildingId={selectedBuildingId} placementDef={placementDef} hoverCell={hoverCell} placementValid={placementValid && enoughResources} onHover={cell=>setHoverCell(current=>current?.x===cell?.x && current?.y===cell?.y ? current : cell)} onCell={handleCellClick} onSelect={id=>{setSelectedBuildingId(id);setPanelMode('build');setPanelOpen(true);}}/>
         <div className="settlement-map-controls"><button type="button" aria-label={ui.zoomOut} disabled={zoom===100} onClick={()=>setZoom(value=>Math.max(100,value-25))}>−</button><span>{zoom}%</span><button type="button" aria-label={ui.zoomIn} disabled={zoom===200} onClick={()=>setZoom(value=>Math.min(200,value+25))}>+</button></div>
         <div className="settlement-map-hint" role="status">{notice || (movingBuildingId ? text.move : selectedDef ? text.tapMap : ui.choose)}</div>
