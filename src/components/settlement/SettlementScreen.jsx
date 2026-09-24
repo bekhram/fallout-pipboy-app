@@ -39,6 +39,12 @@ const CATEGORY_LABELS = {
   uk: { housing: "ЖИТЛО", food: "ЇЖА", water: "ВОДА", power: "ЕНЕРГІЯ", production: "ВИРОБНИЦТВО", commerce: "ТОРГІВЛЯ", services: "СЕРВІС", defense: "ОБОРОНА" },
   pl: { housing: "MIESZKANIA", food: "ŻYWNOŚĆ", water: "WODA", power: "ENERGIA", production: "PRODUKCJA", commerce: "HANDEL", services: "USŁUGI", defense: "OBRONA" },
 };
+const BUILD_INFO_COPY = {
+  en:{gives:"PRODUCES / PROVIDES",requirements:"REQUIREMENTS",missing:"MISSING",ready:"READY",common:"Common",uncommon:"Uncommon",rare:"Rare",caps:"Caps",skill:"Skill",perk:"Perk",oneOf:"One of",powerUse:"Power use",power:"Power",water:"Water",defense:"Defense",income:"Income",happiness:"Happiness",beds:"Beds",rooms:"Room slots",storage:"Storage",crops:"Crop slots",brahmin:"Brahmin capacity",worker:"Worker",crafting:"Crafting",recruitment:"Attracts settlers",trade:"Trade outpost",scavenging:"Improved scavenging",transmit:"Transmits power",guardBonus:"Guard defense",store:"Store tier",medical:"Medical services",salvage:"Salvage bonus"},
+  ru:{gives:"ДАЁТ / ПРОИЗВОДИТ",requirements:"ТРЕБОВАНИЯ",missing:"НЕ ХВАТАЕТ",ready:"ГОТОВО",common:"Обычные",uncommon:"Необычные",rare:"Редкие",caps:"Крышки",skill:"Навык",perk:"Перк",oneOf:"Один из",powerUse:"Потребляет энергии",power:"Энергия",water:"Вода",defense:"Оборона",income:"Доход",happiness:"Счастье",beds:"Кровати",rooms:"Места комнат",storage:"Хранилище",crops:"Ячейки культур",brahmin:"Вместимость браминов",worker:"Работник",crafting:"Крафт",recruitment:"Привлекает поселенцев",trade:"Торговый пост",scavenging:"Улучшенный сбор хлама",transmit:"Передаёт энергию",guardBonus:"Бонус охраны",store:"Уровень магазина",medical:"Медицинские услуги",salvage:"Бонус хлама"},
+  uk:{gives:"ДАЄ / ВИРОБЛЯЄ",requirements:"ВИМОГИ",missing:"НЕ ВИСТАЧАЄ",ready:"ГОТОВО",common:"Звичайні",uncommon:"Незвичайні",rare:"Рідкісні",caps:"Кришки",skill:"Навичка",perk:"Перк",oneOf:"Один з",powerUse:"Споживає енергії",power:"Енергія",water:"Вода",defense:"Оборона",income:"Дохід",happiness:"Щастя",beds:"Ліжка",rooms:"Місця кімнат",storage:"Сховище",crops:"Комірки культур",brahmin:"Місткість брамінів",worker:"Працівник",crafting:"Крафт",recruitment:"Приваблює поселенців",trade:"Торговий пост",scavenging:"Покращений збір брухту",transmit:"Передає енергію",guardBonus:"Бонус охорони",store:"Рівень магазину",medical:"Медичні послуги",salvage:"Бонус брухту"},
+  pl:{gives:"DAJE / PRODUKUJE",requirements:"WYMAGANIA",missing:"BRAKUJE",ready:"GOTOWE",common:"Pospolite",uncommon:"Niepospolite",rare:"Rzadkie",caps:"Kapsle",skill:"Umiejętność",perk:"Atut",oneOf:"Jeden z",powerUse:"Zużycie energii",power:"Energia",water:"Woda",defense:"Obrona",income:"Dochód",happiness:"Szczęście",beds:"Łóżka",rooms:"Miejsca na pokoje",storage:"Magazyn",crops:"Miejsca upraw",brahmin:"Pojemność braminów",worker:"Pracownik",crafting:"Rzemiosło",recruitment:"Przyciąga osadników",trade:"Punkt handlowy",scavenging:"Lepsze zbieranie złomu",transmit:"Przesyła energię",guardBonus:"Bonus straży",store:"Poziom sklepu",medical:"Usługi medyczne",salvage:"Bonus złomu"},
+};
 const COPY = {
   en: { back: "WORLD MAP", build: "BUILD", people: "RESIDENTS", resources: "RESOURCES", defense: "DEFENSE", events: "EVENTS", cancel: "CANCEL", caps: "Caps", food: "Food", water: "Water", power: "Power", beds: "Beds", happiness: "Happiness", income: "Income", materials: "Materials", construction: "Construction", cannotPlace: "Cannot place here", insufficient: "Not enough stockpile materials", tapMap: "Choose a free area on the map", empty: "Choose a building below", manage: "BUILDING", move: "MOVE", demolish: "DISASSEMBLE", active: "Active", attack: "ATTACK", warning: "Raid warning", attackActive: "Attack in progress", strength: "Enemy strength", autoDefense: "SIMULATE DEFENSE", playBattle: "PLAY BATTLE", resumeBattle: "OPEN BATTLE", gmSessionRequired: "Start the GM session to play this raid on the battlemap.", battlePreparing: "PREPARING BATTLE...", battleFailed: "Could not prepare battlemap", defenders: "DEFENDERS", heroes: "HEROES", heroContribution: "Hero contribution", saveDefense: "SAVE DEFENSE", startsIn: "Starts in", noThreat: "No active threat", victory: "Victory", defeat: "Defeat", battleReport: "TOWER DEFENSE REPORT", rounds: "Rounds", attackers: "Attackers", defeatedEnemies: "Enemies destroyed", breached: "Reached HQ", turrets: "Turrets", turretShots: "Turret shots", turretDamage: "Turret damage", wallsDestroyed: "Walls breached", stolen: "Resources stolen", cosmeticOnly: "Heroes and residents are visual participants only", recovery: "RECOVERY", repair: "START REPAIR", repairing: "Repairing", repairCost: "Repair cost", repairWorkers: "Repair workers", noDamage: "No damaged structures", hqLocked: "Settlement HQ cannot be moved or disassembled", stockpile: "STOCKPILE", common: "Common", uncommon: "Uncommon", rare: "Rare", day: "Day", nextDay: "Next settlement day", target: "Construction target", none: "None", progress: "Progress", riskCheck: "End-of-day risk dice", rooms: "ROOMS", full: "No free room slots", roomBuilding: "Under construction", status: "Status", stable: "Stable", risk: "Attack risk", nextEvent: "Next event", grid: "Grid", condition: "Condition", production: "Production", consumption: "Power use", noEvents: "No recent events", playerProfit: "PLAYER PROFIT", claimProfit: "CLAIM PROFIT", profitEmpty: "No profit available yet", settlementReserve: "50% stays in settlement reserve", level: "Level", xp: "XP", advancement: "ADVANCEMENT", improveSkill: "Improve skill", learnPerk: "Learn perk", newSettler: "NEW SETTLER", assignNow: "ASSIGN WORK", unassigned: "Unassigned", importedNpc: "IMPORTED NPC", removeNpc: "REMOVE NPC", sourceJson: "Imported from JSON", health: "Health", sick: "Sick", injured: "Injured", recovering: "Recovering", idle: "Healthy" },
   ru: { back: "ГЛОБАЛЬНАЯ КАРТА", build: "СТРОИТЬ", people: "ЖИТЕЛИ", resources: "РЕСУРСЫ", defense: "ОБОРОНА", events: "СОБЫТИЯ", cancel: "ОТМЕНА", caps: "Крышки", food: "Еда", water: "Вода", power: "Энергия", beds: "Кровати", happiness: "Счастье", income: "Доход", materials: "Материалы", construction: "Строительство", cannotPlace: "Здесь строить нельзя", insufficient: "Недостаточно материалов в запасах", tapMap: "Выберите свободное место на карте", empty: "Выберите постройку снизу", manage: "ПОСТРОЙКА", move: "ПЕРЕМЕСТИТЬ", demolish: "РАЗОБРАТЬ", active: "Работает", attack: "АТАКА", warning: "Обнаружены враги", attackActive: "Идёт нападение", strength: "Сила врага", autoDefense: "РАССЧИТАТЬ ОБОРОНУ", playBattle: "ИГРАТЬ БОЙ", resumeBattle: "ОТКРЫТЬ БОЙ", gmSessionRequired: "Запустите сессию ГМ, чтобы провести этот рейд на боевой карте.", battlePreparing: "ПОДГОТОВКА БОЯ...", battleFailed: "Не удалось подготовить боевую карту", defenders: "ЗАЩИТНИКИ", heroes: "ГЕРОИ", heroContribution: "Вклад героев", saveDefense: "СОХРАНИТЬ ОБОРОНУ", startsIn: "Начало через", noThreat: "Активных угроз нет", victory: "Победа", defeat: "Поражение", battleReport: "ОТЧЁТ TOWER DEFENSE", rounds: "Раунды", attackers: "Нападавшие", defeatedEnemies: "Уничтожено врагов", breached: "Добрались до штаба", turrets: "Турели", turretShots: "Выстрелы турелей", turretDamage: "Урон турелей", wallsDestroyed: "Пробито стен", stolen: "Украдено ресурсов", cosmeticOnly: "Герои и жители участвуют только визуально", recovery: "ВОССТАНОВЛЕНИЕ", repair: "НАЧАТЬ РЕМОНТ", repairing: "Ремонт", repairCost: "Стоимость ремонта", repairWorkers: "Ремонтники", noDamage: "Повреждённых построек нет", hqLocked: "Штаб поселения нельзя перемещать или разбирать", stockpile: "ЗАПАСЫ", common: "Обычные", uncommon: "Необычные", rare: "Редкие", day: "День", nextDay: "Следующий день поселения", target: "Цель строительства", none: "Нет", progress: "Прогресс", riskCheck: "Кости риска в конце дня", rooms: "КОМНАТЫ", full: "Нет свободных мест для комнат", roomBuilding: "Строится", status: "Статус", stable: "Стабильно", risk: "Риск атаки", nextEvent: "Следующее событие", grid: "Сетка", condition: "Состояние", production: "Производство", consumption: "Потребление энергии", noEvents: "Нет недавних событий", playerProfit: "ПРИБЫЛЬ ИГРОКА", claimProfit: "ЗАБРАТЬ ПРИБЫЛЬ", profitEmpty: "Прибыли пока нет", settlementReserve: "50% остаётся в резерве поселения", level: "Уровень", xp: "Опыт", advancement: "РАЗВИТИЕ", improveSkill: "Улучшить навык", learnPerk: "Получить перк", newSettler: "НОВЫЙ ПОСЕЛЕНЕЦ", assignNow: "НАЗНАЧИТЬ РАБОТУ", unassigned: "Без назначения", importedNpc: "ИМПОРТИРОВАННЫЙ NPC", removeNpc: "УДАЛИТЬ NPC", sourceJson: "Импортирован из JSON", health: "Здоровье", sick: "Болен", injured: "Травмирован", recovering: "Восстанавливается", idle: "Здоров" },
@@ -68,19 +74,94 @@ function eventText(event,language){
 function roomName(type, language) { return ROOM_NAMES[language]?.[type] || ROOM_NAMES.en[type] || type; }
 function roomCost(rule) { return [[rule?.materials?.common,"C"],[rule?.materials?.uncommon,"U"],[rule?.materials?.rare,"R"]].filter(([value])=>value).map(([value,suffix])=>`${value} ${suffix}`).join(" · ") || "—"; }
 function roomEffects(rule) { const effects=rule?.effects || {}; return [effects.beds ? `🛏 +${effects.beds}` : null,effects.happiness ? `☺ ${effects.happiness > 0 ? "+" : ""}${effects.happiness}` : null,effects.storageLbs ? `📦 +${effects.storageLbs} lbs` : null,effects.office ? "OFFICE" : null].filter(Boolean).join(" · "); }
+function normalizeRuleName(value){return String(value||"").toLowerCase().replace(/[^a-z0-9а-яёіїєґ]+/gi," ").replace(/\s+/g," ").trim();}
+function characterSkillRank(character,name){
+  const needle=normalizeRuleName(name);
+  for(const [key,value] of Object.entries(character?.skills||{})){
+    if(normalizeRuleName(key)!==needle)continue;
+    return Math.max(0,Number(value?.rank ?? value ?? 0)||0);
+  }
+  return 0;
+}
+function characterPerkRank(character,name){
+  const needle=normalizeRuleName(name);
+  const source=[...(character?.perksAndTraits||[]),...(character?.perks||[])];
+  let best=0;
+  for(const item of source){
+    const itemName=normalizeRuleName(item?.name||item?.id||item);
+    if(itemName!==needle)continue;
+    best=Math.max(best,Number(item?.rank ?? item?.level ?? 1)||1);
+  }
+  return best;
+}
+function buildingEffectParts(rule,definition,copy){
+  const e=rule?.effects||{}, parts=[];
+  if(e.power)parts.push(`⚡ ${copy.power} +${e.power}`);
+  if(e.water)parts.push(`💧 ${copy.water} +${e.water}`);
+  if(e.defense)parts.push(`⬟ ${copy.defense} +${e.defense}`);
+  if(e.income)parts.push(`¤ ${copy.income} +${e.income}`);
+  if(e.happiness)parts.push(`♥ ${copy.happiness} +${e.happiness}`);
+  if(e.beds)parts.push(`🛏 ${copy.beds} +${e.beds}`);
+  if(e.roomCapacity)parts.push(`▦ ${copy.rooms} +${e.roomCapacity}`);
+  if(e.storageLbs)parts.push(`▣ ${copy.storage} +${e.storageLbs} lbs`);
+  if(e.cropSlots)parts.push(`🌾 ${copy.crops} +${e.cropSlots}`);
+  if(e.brahminCapacity)parts.push(`🐂 ${copy.brahmin} +${e.brahminCapacity}`);
+  if(e.requiresPower)parts.push(`−⚡ ${copy.powerUse} ${e.requiresPower}`);
+  if(e.crafting)parts.push(`🔧 ${copy.crafting}: ${String(e.craftingType||"").replaceAll("_"," ")}`);
+  if(e.attractsPeople)parts.push(`👥 ${copy.recruitment}`);
+  if(e.tradeOutpost)parts.push(`¤ ${copy.trade}`);
+  if(e.improvedScavenging)parts.push(`♻ ${copy.scavenging}`);
+  if(e.transmitsPower)parts.push(`⚡ ${copy.transmit}`);
+  if(e.guardActionDefenseBonus)parts.push(`⬟ ${copy.guardBonus} +${e.guardActionDefenseBonus}`);
+  if(e.defensePerGuardPost)parts.push(`⬟ ${copy.guardBonus} +${e.defensePerGuardPost}/post`);
+  if(e.storeTier)parts.push(`¤ ${copy.store} ${e.storeTier}`);
+  if(e.medical)parts.push(`+ ${copy.medical}`);
+  if(e.salvageBonusDice)parts.push(`♻ ${copy.salvage} +${e.salvageBonusDice} CD`);
+  if(Number(definition?.workersRequired||0)>0)parts.push(`👤 ${copy.worker} ×${definition.workersRequired}`);
+  return parts;
+}
+function buildingRequirementState(rule,settlement,character,copy){
+  const stock=normalizeStockpile(settlement?.stockpile,settlement?.resources?.materials);
+  const currentCaps=Math.max(0,Number(settlement?.resources?.caps||0));
+  const rows=[];
+  for(const [key,label] of [["common",copy.common],["uncommon",copy.uncommon],["rare",copy.rare]]){
+    const need=Math.max(0,Number(rule?.materials?.[key]||0));
+    if(!need)continue;
+    const have=Math.max(0,Number(stock.materials?.[key]||0));
+    rows.push({label:`${label}: ${have}/${need}`,ok:have>=need,missing:Math.max(0,need-have)});
+  }
+  if(Number(rule?.caps||0)>0)rows.push({label:`${copy.caps}: ${currentCaps}/${rule.caps}`,ok:currentCaps>=Number(rule.caps),missing:Math.max(0,Number(rule.caps)-currentCaps)});
+  const skillReqs=[...(rule?.skill?[rule.skill]:[]),...(rule?.skills||[])];
+  skillReqs.forEach(req=>{
+    const actual=character ? characterSkillRank(character,req.name) : null;
+    rows.push({label:`${copy.skill}: ${req.name} ${actual===null?"?":actual}/${req.rank}`,ok:actual===null?null:actual>=Number(req.rank),missing:actual===null?null:Math.max(0,Number(req.rank)-actual)});
+  });
+  const perkReqs=[...(rule?.perk?[rule.perk]:[]),...(rule?.perks||[])];
+  perkReqs.forEach(req=>{
+    const actual=character ? characterPerkRank(character,req.name) : null;
+    rows.push({label:`${copy.perk}: ${req.name} ${actual===null?"?":actual}/${req.rank}`,ok:actual===null?null:actual>=Number(req.rank)});
+  });
+  if(Array.isArray(rule?.perkAnyOf)&&rule.perkAnyOf.length){
+    const values=rule.perkAnyOf.map(req=>({req,actual:character?characterPerkRank(character,req.name):null}));
+    const known=character!=null, ok=known?values.some(({req,actual})=>actual>=Number(req.rank)):null;
+    rows.push({label:`${copy.oneOf}: ${values.map(({req,actual})=>`${req.name} ${actual===null?"?":actual}/${req.rank}`).join(" | ")}`,ok});
+  }
+  return {rows,missing:rows.filter(row=>row.ok===false),ok:rows.every(row=>row.ok!==false)};
+}
 function occupies(building,x,y) { const def=SETTLEMENT_BUILDINGS[building.type]; return Boolean(def && x>=building.x && y>=building.y && x<building.x+def.footprint.width && y<building.y+def.footprint.height); }
 function canPlace(settlement,def,x,y,ignoreBuildingId=null) {
   if (!def || x<0 || y<0 || x+def.footprint.width>SETTLEMENT_GRID_SIZE || y+def.footprint.height>SETTLEMENT_GRID_SIZE) return false;
   for(let yy=y;yy<y+def.footprint.height;yy+=1)for(let xx=x;xx<x+def.footprint.width;xx+=1)if((settlement.buildings || []).some(building=>building.id!==ignoreBuildingId && occupies(building,xx,yy)))return false;
   return true;
 }
-export default function SettlementScreen({ settlement, onUpdate, onBack, onCommand, canEdit=true, sharedControls, payment, canClaimProfit=false, onRemoveGuestNpc }) {
+export default function SettlementScreen({ settlement, onUpdate, onBack, onCommand, canEdit=true, sharedControls, payment, canClaimProfit=false, onRemoveGuestNpc, ownerCharacter=null }) {
   const { i18n }=useTranslation();
   const liveSession=useLiveSessionBridge();
   const language=String(i18n.resolvedLanguage || i18n.language || "en").split("-")[0];
   const text=COPY[language] || COPY.en;
   const personalText=personalConstructionCopy(language);
   const categoryLabels=CATEGORY_LABELS[language] || CATEGORY_LABELS.en;
+  const buildInfo=BUILD_INFO_COPY[language] || BUILD_INFO_COPY.en;
   const [selectedCategory,setSelectedCategory]=useState("housing");
   const [panelMode,setPanelMode]=useState("overview");
   const [panelOpen,setPanelOpen]=useState(false);
@@ -125,7 +206,12 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   const storedBuilding=settlement.storedBuildings?.find(b=>b.id===storedBuildingId);
   const placementDef=storedBuilding ? SETTLEMENT_BUILDINGS[storedBuilding.type] : movingDef || selectedDef;
   const placementValid=hoverCell && placementDef ? canPlace(settlement,placementDef,hoverCell.x,hoverCell.y,movingBuildingId) : false;
-  const enoughResources=selectedType ? payment ? payment.canAfford({type:"buildPersonal",buildingType:selectedType}) : canAffordRulebookBuilding(settlement,selectedType) : true;
+  const selectedRequirementState=selectedRule ? buildingRequirementState(selectedRule,settlement,ownerCharacter,buildInfo) : {rows:[],missing:[],ok:true};
+  const enoughResources=selectedType
+    ? payment
+      ? payment.canAfford({type:"buildPersonal",buildingType:selectedType}) && selectedRequirementState.ok
+      : canAffordRulebookBuilding(settlement,selectedType) && selectedRequirementState.ok
+    : true;
   const visibleBuildings=SETTLEMENT_BUILDING_LIST.filter(definition=>definition.category===selectedCategory && getRulebookBuilding(definition.id));
   const constructionBuildings=(settlement.buildings || []).filter(building=>building.state==="construction");
   const constructionRooms=(settlement.buildings || []).flatMap(building=>(building.rooms || []).filter(room=>room.state==="construction").map(room=>({building,room})));
@@ -139,7 +225,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
   async function createBuildingAt(x,y) {
     if(!canEdit || !selectedDef || !selectedRule)return;
     if(!canPlace(settlement,selectedDef,x,y)){setNotice(text.cannotPlace);return;}
-    if(!enoughResources){setNotice(payment ? personalText.errors.PERSONAL_RESOURCES_INSUFFICIENT : text.insufficient);return;}
+    if(!enoughResources){const missing=selectedRequirementState.missing.map(item=>item.label).join(" · ");setNotice(missing ? `${buildInfo.missing}: ${missing}` : (payment ? personalText.errors.PERSONAL_RESOURCES_INSUFFICIENT : text.insufficient));return;}
     if(onCommand){if(await onCommand({type:"build",buildingType:selectedDef.id,x,y})){setSelectedType(null);setHoverCell(null);setNotice("");}return;}
     const now=Date.now();onUpdate(current=>{const paid=payRulebookBuildingCost(current,selectedDef.id);return {...paid,buildings:[...(paid.buildings || []),createConstructionBuilding({id:`building_${now}_${Math.random().toString(36).slice(2,7)}`,type:selectedDef.id,x,y,now})]};});
     setSelectedType(null);setHoverCell(null);setNotice("");
@@ -242,7 +328,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
         <button type="button" className="settlement-panel-close pip-action-button" aria-label={ui.close} onClick={()=>setPanelOpen(false)}>×</button>
         {panelMode==='more' && <div className="settlement-more">{['overview','defense','events'].map(navigation)}<button type="button" className="pip-action-button" onClick={onBack}>← {text.back}</button></div>}
         {panelMode==='overview' && <><h2>{settlement.name}</h2><p>{statusText}</p><div className="settlement-balance"><span>{text.day}</span><b>{settlement.settlementDay || 1}</b></div><div className="settlement-balance"><span>{text.beds}</span><b>{attributes.beds}</b></div><div className="settlement-balance"><span>{text.income}</span><b>+{attributes.income}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div><div className="settlement-balance"><span>{text.materials}</span><b>{materialTotal}</b></div><div className="settlement-balance"><span>{text.risk}</span><b>{attackDice}d20</b></div><label className="settlement-building-picker">{ui.choose}<select className="pip-input" value="" onChange={event=>{if(event.target.value){setSelectedBuildingId(event.target.value);setPanelMode("build");setPanelOpen(true);}}}><option value="">—</option>{(settlement.buildings || []).map(building=><option key={building.id} value={building.id}>{settlementBuildingName(SETTLEMENT_BUILDINGS[building.type],language)}</option>)}</select></label><h3>{text.events}</h3>{(settlement.events || []).length ? settlement.events.slice(0,3).map((event,index)=><div className="settlement-event-row" key={event.id || index}>{eventText(event,language)}</div>) : <p>{text.noEvents}</p>}</>}
-        {panelMode==="build" && !selectedBuilding ? <><div className="settlement-build-categories" role="tablist" aria-label={text.build}>{BUILD_CATEGORIES.map(category=><button key={category} type="button" className={selectedCategory===category ? "is-selected" : ""} onClick={()=>{setSelectedCategory(category);setSelectedType(null);setHoverCell(null);setNotice("");}}>{categoryLabels[category]}</button>)}</div><div className="settlement-build-menu">{visibleBuildings.map(def=>{const asset=getSettlementAsset(def.asset);const rule=getRulebookBuilding(def.id);return <button key={def.id} type="button" disabled={!canEdit} className={selectedType===def.id ? "is-selected" : ""} onClick={()=>{setSelectedType(def.id);setStoredBuildingId(null);setSelectedBuildingId(null);setMovingBuildingId(null);setNotice("");setPanelOpen(false);}}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt=""/> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def,language)}</span><small>{def.footprint.width}×{def.footprint.height} · {formatRulebookCost(rule)} · {rule.constructionDays}d</small></button>;})}</div></> : null}
+        {panelMode==="build" && !selectedBuilding ? <><div className="settlement-build-categories" role="tablist" aria-label={text.build}>{BUILD_CATEGORIES.map(category=><button key={category} type="button" className={selectedCategory===category ? "is-selected" : ""} onClick={()=>{setSelectedCategory(category);setSelectedType(null);setHoverCell(null);setNotice("");}}>{categoryLabels[category]}</button>)}</div><div className="settlement-build-menu">{visibleBuildings.map(def=>{const asset=getSettlementAsset(def.asset);const rule=getRulebookBuilding(def.id);const effects=buildingEffectParts(rule,def,buildInfo);const req=buildingRequirementState(rule,settlement,ownerCharacter,buildInfo);return <button key={def.id} type="button" disabled={!canEdit} className={`${selectedType===def.id ? "is-selected " : ""}${req.ok ? "is-build-ready" : "is-build-blocked"}`} onClick={()=>{setSelectedType(def.id);setStoredBuildingId(null);setSelectedBuildingId(null);setMovingBuildingId(null);setNotice("");setPanelOpen(false);}}><div className="settlement-build-menu__preview">{asset ? <img src={asset} alt=""/> : <span>{BUILDING_ICONS[def.id] || "⌂"}</span>}</div><span>{settlementBuildingName(def,language)}</span><small>{def.footprint.width}×{def.footprint.height} · {formatRulebookCost(rule)} · {rule.constructionDays}d</small>{effects.length?<div className="settlement-build-card__effects"><b>{buildInfo.gives}</b>{effects.map((item,index)=><span key={index}>{item}</span>)}</div>:null}<div className="settlement-build-card__requirements"><b>{buildInfo.requirements}</b>{req.rows.map((item,index)=><span key={index} className={item.ok===false?"is-missing":item.ok===true?"is-ok":"is-unknown"}>{item.ok===false?"✕":item.ok===true?"✓":"•"} {item.label}</span>)}</div>{req.missing.length?<strong className="settlement-build-card__missing">{buildInfo.missing}: {req.missing.map(item=>item.label).join(" · ")}</strong>:<strong className="settlement-build-card__ready">✓ {buildInfo.ready}</strong>}</button>;})}</div></> : null}
         {panelMode==="build" ? <>
           {payment && <p className="settlement-personal-notice">{personalText.source} · {personalText.pending}</p>}
           {!!settlement.storedBuildings?.length && <section className="settlement-warehouse"><h3>{personalText.warehouse} · {settlement.storedBuildings.length}</h3><small>{personalText.storedNote}</small>
@@ -255,7 +341,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
           <div className="pip-panel-title">{selectedBuilding ? settlementBuildingName(selectedBuildingDef,language) : text.build}</div>
           {selectedBuilding ? <div className="settlement-building-hero">{selectedBuildingAsset ? <img src={selectedBuildingAsset} alt=""/> : <span>{BUILDING_ICONS[selectedBuilding.type] || "⌂"}</span>}</div> : null}
           <div className={`settlement-stockpile ${selectedBuilding ? "is-hidden" : ""}`}><div className="pip-panel-title">{text.stockpile}</div><div className="settlement-balance"><span>{text.common}</span><b>{Math.floor(stockpile.materials.common)}</b></div><div className="settlement-balance"><span>{text.uncommon}</span><b>{Math.floor(stockpile.materials.uncommon)}</b></div><div className="settlement-balance"><span>{text.rare}</span><b>{Math.floor(stockpile.materials.rare)}</b></div><div className="settlement-balance"><span>{text.caps}</span><b>{Math.floor(Number(settlement.resources?.caps || 0))}</b></div></div>
-          {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef,language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><button type="button" className="pip-action-button" onClick={()=>{setSelectedType(null);setHoverCell(null);}}>{text.cancel}</button></div> : null}
+          {selectedDef && selectedRule ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedDef,language)}</strong><span>{selectedDef.footprint.width}×{selectedDef.footprint.height}</span><span>{formatRulebookCost(selectedRule)}</span><span>{text.construction}: {selectedRule.constructionDays} d</span><div className="settlement-build-card__effects"><b>{buildInfo.gives}</b>{buildingEffectParts(selectedRule,selectedDef,buildInfo).map((item,index)=><span key={index}>{item}</span>)}</div><div className="settlement-build-card__requirements"><b>{buildInfo.requirements}</b>{selectedRequirementState.rows.map((item,index)=><span key={index} className={item.ok===false?"is-missing":item.ok===true?"is-ok":"is-unknown"}>{item.ok===false?"✕":item.ok===true?"✓":"•"} {item.label}</span>)}</div>{selectedRequirementState.missing.length?<strong className="settlement-build-card__missing">{buildInfo.missing}: {selectedRequirementState.missing.map(item=>item.label).join(" · ")}</strong>:<strong className="settlement-build-card__ready">✓ {buildInfo.ready}</strong>}<button type="button" className="pip-action-button" onClick={()=>{setSelectedType(null);setHoverCell(null);}}>{text.cancel}</button></div> : null}
           {selectedBuilding ? <div className="settlement-selected-card"><strong>{settlementBuildingName(selectedBuildingDef,language)}</strong><div className="settlement-balance"><span>{text.condition}</span><b>{Math.round(Number(selectedBuilding.condition ?? 100))}%</b></div>{selectedBuilding.state==="construction" ? <span>{text.progress}: {getConstructionProgress(selectedBuilding).progress}/{getConstructionProgress(selectedBuilding).required} d</span> : <span>{text.active}</span>}
             {selectedBuilding.state==='construction' && onCommand && <button type="button" className="pip-action-button" disabled={!canEdit} onClick={()=>onCommand({type:'cancel',key:`building:${selectedBuilding.id}`})}>{personalText.cancel}</button>}
             {payment && selectedBuilding.state==='active' && upgradeRule(selectedBuilding) && !selectedBuilding.upgrade && <button type="button" className="pip-action-button" disabled={!canEdit || !payment.canAfford({type:'upgradePersonal',buildingId:selectedBuilding.id})} onClick={()=>onCommand({type:'upgrade',buildingId:selectedBuilding.id})}>{personalText.upgrade}</button>}

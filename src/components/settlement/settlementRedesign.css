@@ -102,3 +102,18 @@
 .settlement-profit-card>.pip-panel-title{margin:0}
 .settlement-profit-card>small{opacity:.75;font-size:11px;line-height:1.35}
 .settlement-profit-card .settlement-primary{margin-top:4px}
+
+.settlement-build-card__effects,.settlement-build-card__requirements{display:grid;gap:3px;width:100%;margin-top:7px;text-align:left}
+.settlement-build-card__effects b,.settlement-build-card__requirements b{font-size:.66rem;letter-spacing:.08em;opacity:.7}
+.settlement-build-card__effects span,.settlement-build-card__requirements span{font-size:.7rem;line-height:1.25}
+.settlement-build-card__requirements .is-ok{opacity:.78}
+.settlement-build-card__requirements .is-missing{color:#ff9d86;font-weight:700}
+.settlement-build-card__requirements .is-unknown{opacity:.62}
+.settlement-build-card__missing{display:block;width:100%;margin-top:6px;color:#ff9d86;font-size:.68rem;line-height:1.3;text-align:left}
+.settlement-build-card__ready{display:block;width:100%;margin-top:6px;font-size:.68rem;line-height:1.3;text-align:left}
+.settlement-build-menu>button.is-build-blocked{border-color:rgba(255,130,105,.35)}
+.settlement-build-menu>button.is-build-ready{border-color:rgba(120,255,140,.32)}
+@media(max-width:720px){
+  .settlement-build-card__effects span,.settlement-build-card__requirements span{font-size:.66rem}
+  .settlement-build-menu>button{align-content:start}
+}
