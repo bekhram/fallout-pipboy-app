@@ -58,6 +58,17 @@ const MONTHS_IN_YEAR = 12;
 const WORLD_ROUTE_MARGIN = 6;
 const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
 const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
+const REPUTATION_STORAGE_KEY = "pip2d20_settlement_reputations_v2";
+const REPUTATION_LABELS = ["Hostile","Cautious","Neutral","Friendly","Trusting","Allied"];
+const HISTORY_COPY = {
+  en:{camp:"Camp",route:"Travel",reputation:"Reputation",survival:"Survival check",routeStopped:"Route stopped",arrived:"Arrived",campApplied:"Camp set",risk:"Risk"},
+  ru:{camp:"Лагерь",route:"Путь",reputation:"Репутация",survival:"Проверка Survival",routeStopped:"Маршрут остановлен",arrived:"Прибытие",campApplied:"Лагерь установлен",risk:"Риск"},
+  uk:{camp:"Табір",route:"Подорож",reputation:"Репутація",survival:"Перевірка Survival",routeStopped:"Маршрут зупинено",arrived:"Прибуття",campApplied:"Табір встановлено",risk:"Ризик"},
+  pl:{camp:"Obóz",route:"Podróż",reputation:"Reputacja",survival:"Test Survival",routeStopped:"Trasa zatrzymana",arrived:"Przybycie",campApplied:"Obóz rozstawiony",risk:"Ryzyko"}
+};
+function readReputationRows(){if(typeof window==="undefined")return[];try{return JSON.parse(window.localStorage.getItem(REPUTATION_STORAGE_KEY)||"{}")?.rows||[];}catch{return[];}}
+function appendActivity(base,entry){const item={id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,type:entry.type||"note",text:String(entry.text||""),worldHours:Number(entry.worldHours??base.worldTotalHours??0),at:Date.now()};return [item,...(Array.isArray(base.activityLog)?base.activityLog:[])].slice(0,40);}
+
 const REGION_MAP_ASSETS = {
   commonwealth: bostonMapImage,
   california_fo1: fallout1MapAsset,
@@ -311,6 +322,8 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
   const [selectedWorldTarget, setSelectedWorldTarget] = useState(null);
   const [mapMode, setMapMode] = useState("world");
   const [campOpen,setCampOpen]=useState(false);
+  const [selectedSettlement,setSelectedSettlement]=useState(null);
+  const [reputationRows,setReputationRows]=useState(()=>readReputationRows());
 
   const safeMapState = useMemo(
     () => ({ ...buildDefaultMapState(), ...(mapState || {}) }),
@@ -347,6 +360,12 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     // Resolve legacy pending encounters created before exact encounter mechanics existed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [safeMapState.pendingTravelEncounter?.token]);
+
+  useEffect(()=>{
+    const sync=(event)=>setReputationRows(Array.isArray(event?.detail?.rows)?event.detail.rows:readReputationRows());
+    window.addEventListener("pip2d20:settlement-reputation-changed",sync);
+    return()=>window.removeEventListener("pip2d20:settlement-reputation-changed",sync);
+  },[]);
 
   const activeRegion = getMapRegion(safeMapState.regionId);
   const regionLocations = activeRegion.locations;
@@ -404,6 +423,23 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
   const viewStartY = Math.max(0, Math.min(playerPosition.y - Math.floor(VIEW_ROWS / 2), mapData.rows - VIEW_ROWS));
   const playerWorldX = worldOffset.x * mapData.cols + playerPosition.x;
   const playerWorldY = worldOffset.y * mapData.rows + playerPosition.y;
+  const historyText=HISTORY_COPY[String(language).split("-")[0]]||HISTORY_COPY.en;
+  const reputationMarkers=useMemo(()=>reputationRows.flatMap(row=>{
+    if(row?.sourceId){
+      const loc=regionLocations.find(item=>item.id===row.sourceId);
+      return loc?[{...row,worldX:loc.worldX,worldY:loc.worldY,regionId:activeRegion.id}]:[];
+    }
+    return row?.regionId===activeRegion.id&&Number.isFinite(Number(row?.worldX))&&Number.isFinite(Number(row?.worldY))?[row]:[];
+  }),[reputationRows,regionLocations,activeRegion.id]);
+  const campMarker=useMemo(()=>{
+    const camp=character?.activeCampsite;
+    if(!camp)return null;
+    const region=camp.regionId||activeRegion.id;
+    if(region!==activeRegion.id)return null;
+    const x=Number.isFinite(Number(camp.worldX))?Number(camp.worldX):playerWorldX;
+    const y=Number.isFinite(Number(camp.worldY))?Number(camp.worldY):playerWorldY;
+    return {id:"active-camp-marker",x,y,icon:"▲",label:`${historyText.camp} T${camp.tier||1}`,campMarker:true};
+  },[character?.activeCampsite,activeRegion.id,playerWorldX,playerWorldY,historyText.camp]);
   const worldSelectionRoute = useMemo(() => {
     if (!selectedWorldTarget || (selectedWorldTarget.worldX === playerWorldX && selectedWorldTarget.worldY === playerWorldY)) return null;
     const workingCache = { ...sectorCache, [sectorKey]: mapData };
@@ -577,6 +613,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
         worldTotalHours: (base.worldTotalHours || 0) + totalCost,
         discoveredKeys: nextDiscoveredKeys,
         travelLog: mergeTravelLog(base, routeLog),
+        activityLog: appendActivity(base,{type:"route",worldHours:(base.worldTotalHours||0)+totalCost,text:stoppedEncounter?historyText.routeStopped:`${historyText.route}: ${travelRoute.cells.length} · ${totalCost}h`}),
         hazardExposureRemainders: environmentExposure.remainders,
         lastWinterTravel: winterResolution,
         pendingTravelEncounter: encounterContext,
@@ -734,6 +771,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
         discoveredKeys: finalDiscovery,
         sectorCache: { ...(base.sectorCache || {}), ...route.cache },
         travelLog: mergeTravelLog(base, routeLog),
+        activityLog: appendActivity(base,{type:"route",worldHours:(base.worldTotalHours||0)+totalCost,text:reachedTarget?`${historyText.arrived}: ${targetName} · ${totalCost}h`:historyText.routeStopped}),
         hazardExposureRemainders: environmentExposure.remainders,
         lastWinterTravel: winterResolution,
         pendingTravelEncounter: encounterContext,
@@ -938,7 +976,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
           ) : null}
 
           {mapMode === "reputation" ? (
-            <SettlementReputationPanel language={language} readOnly={false} locations={regionLocations} />
+            <SettlementReputationPanel language={language} readOnly={false} locations={regionLocations} regionId={activeRegion.id} currentPosition={{worldX:playerWorldX,worldY:playerWorldY}} onActivity={(entry)=>onMapChange(base=>({...base,activityLog:appendActivity(base,{...entry,worldHours:base.worldTotalHours})}))} />
           ) : <div className="pip-panel pip-map-panel">
           <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id}>
             <div className="pip-map-grid-layer">
@@ -962,6 +1000,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                         y: location.worldY,
                         icon: getPoiIcon(location),
                         staticLocation: true,
+                        reputationRow: reputationRows.find(row=>row.sourceId===location.id)||null,
                       })),
                       ...randomPoiCells.map(cell => ({
                         id: `poi-${sectorKey}-${cell.x}-${cell.y}`,
@@ -970,12 +1009,16 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                         icon: getPoiIcon(cell.poi),
                         poiCell: cell,
                       })),
+                      ...reputationMarkers.filter(row=>!row.sourceId).map(row=>({id:`rep-${row.id}`,x:Number(row.worldX),y:Number(row.worldY),icon:"⌂",label:row.name,reputationRow:row})),
+                      ...(campMarker?[campMarker]:[]),
                     ]}
                     onMarker={marker => {
+                      if(marker.campMarker){setCampOpen(true);return;}
+                      if(marker.reputationRow)setSelectedSettlement(marker.reputationRow); else setSelectedSettlement(null);
                       if (marker.staticLocation) onMapChange({ trackedLocationId: marker.id });
                       setSelectedWorldTarget({
                         id: marker.id || null,
-                        name: marker.staticLocation ? getWorldLocationDisplayName(marker, t) : getPoiDisplayName(marker.poiCell?.poi, t),
+                        name: marker.reputationRow?.name || (marker.staticLocation ? getWorldLocationDisplayName(marker, t) : getPoiDisplayName(marker.poiCell?.poi, t)),
                         worldX: marker.x,
                         worldY: marker.y,
                       });
@@ -994,6 +1037,12 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
                       <button type="button" className="pip-action-button" onClick={() => setSelectedWorldTarget(null)}>×</button>
                     </div>
                   ) : null}
+                  {selectedSettlement ? <div className="pip-map-settlement-card">
+                    <div><small>⌂ ${historyText.reputation}</small><strong>${selectedSettlement.name}</strong></div>
+                    <span className="pip-map-settlement-card__rank">${REPUTATION_LABELS[Math.max(0,Math.min(5,Number(selectedSettlement.rank||2)))]}</span>
+                    <div className="pip-map-settlement-card__notes"><span><b>+</b> ${selectedSettlement.bonus||"—"}</span><span><b>−</b> ${selectedSettlement.penalty||"—"}</span></div>
+                    <div className="pip-map-settlement-card__actions"><button type="button" className="pip-btn" onClick={()=>setMapMode("reputation")}>${tx("reputation")}</button><button type="button" className="pip-btn" onClick={()=>setSelectedSettlement(null)}>×</button></div>
+                  </div> : null}
                 </div>
               ) : (
                 <MapGrid
@@ -1092,17 +1141,15 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
             </div>
           </div>
 
-          <div className="pip-panel pip-map-info">
-            <div className="pip-panel-title">{t("mapPanel.log")}</div>
-            <div className="pip-map-log" key={travelLog.join("|")}>
-              {travelLog.map((entry, index) => (
-                <div key={`${entry}-${index}`} className="pip-map-log__item">{entry}</div>
-              ))}
+          <details className="pip-panel pip-map-info pip-map-history" open>
+            <summary className="pip-panel-title">{t("mapPanel.log")} · {(safeMapState.activityLog||[]).length}</summary>
+            <div className="pip-map-log">
+              {(safeMapState.activityLog||[]).length ? (safeMapState.activityLog||[]).slice(0,8).map(entry=><div key={entry.id} className="pip-map-log__item"><small>{String(Math.floor((Number(entry.worldHours)||0)%24)).padStart(2,"0")}:00</small><span>{entry.text}</span></div>) : travelLog.filter(entry=>!/encounter|встреч|зустріч|spotkani/i.test(String(entry))).slice(0,6).map((entry,index)=><div key={`${entry}-${index}`} className="pip-map-log__item"><span>{entry}</span></div>)}
             </div>
-          </div>
+          </details>
         </div> : null}
       </div>
-      <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} />
+      <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} regionId={activeRegion.id} currentPosition={{worldX:playerWorldX,worldY:playerWorldY}} onApplied={(result)=>onMapChange(base=>({...base,activityLog:appendActivity(base,{type:"camp",worldHours:base.worldTotalHours,text:`${historyText.campApplied}: T${result.tier}${result.penalty?` · Survival -${result.penalty}`:""}${result.risks?.length?` · ${historyText.risk}: ${result.risks.join("/")}`:""}`})}))} />
     </div>
   );
 }
