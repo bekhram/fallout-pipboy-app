@@ -5,7 +5,7 @@ import {
 } from "../data/settlement/buildings.js";
 import { processSettlementAttacks } from "./settlementAttackEngine.js";
 import { processSettlementCommerce } from "./settlementCommerce.js";
-import { createSettlerProfile } from "./settlementSettlerProfile.js";
+import { createSettlerProfile, randomSettlerName } from "./settlementSettlerProfile.js";
 import {
   normalizeStockpile,
   processAutomaticSettlementDays,
@@ -38,16 +38,20 @@ function ensureSettlementHQ(settlement) {
 }
 
 function createInitialSettlers(createdAt, count = 4) {
-  return Array.from({ length: count }, (_, index) => ({
-    id: `settler_${createdAt}_${index + 1}`,
-    name: `Settler ${index + 1}`,
-    role: "unassigned",
-    assignedBuildingId: null,
-    settlementAction: null,
-    health: 100,
-    status: "idle",
-    ...createSettlerProfile(),
-  }));
+  const names=[];
+  return Array.from({ length: count }, (_, index) => {
+    const name=randomSettlerName(names);names.push(name);
+    return {
+      id: `settler_${createdAt}_${index + 1}`,
+      name,
+      role: "unassigned",
+      assignedBuildingId: null,
+      settlementAction: null,
+      health: 100,
+      status: "idle",
+      ...createSettlerProfile(),
+    };
+  });
 }
 
 function clampHappiness(value) {
