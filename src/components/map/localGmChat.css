@@ -408,3 +408,28 @@
     min-width: 100%;
   }
 }
+@media (max-width:700px){
+  .pip-local-gm{
+    padding-bottom:8px;
+  }
+  .pip-local-gm__composer{
+    position:sticky;
+    bottom:88px;
+    z-index:20;
+    padding:8px;
+    margin:0 -2px;
+    border-top:1px solid rgba(120,255,140,.28);
+    background:rgba(5,12,7,.985);
+    box-shadow:0 -8px 18px rgba(0,0,0,.38);
+  }
+  .pip-local-gm__composer textarea{
+    min-height:92px;
+    max-height:32vh;
+  }
+  .pip-local-gm__composer .pip-action-button{
+    width:100%;
+    min-height:46px;
+    position:relative;
+    z-index:1;
+  }
+}
