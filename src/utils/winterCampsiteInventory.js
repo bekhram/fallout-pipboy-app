@@ -119,12 +119,21 @@ export function applyWinterCampRest(character = {}, { hours = 6 } = {}) {
 }
 
 export function normalizeFeatureSelection(features = [], maxSlots = 0) {
-  const unique = [];
+  const selected = [];
+  const seen = new Set();
+  let defensibleCount = 0;
   for (const feature of features || []) {
     const id = String(feature || "");
-    if (!id || unique.includes(id)) continue;
-    if (unique.length >= Math.max(0, Number(maxSlots) || 0)) break;
-    unique.push(id);
+    if (!id || selected.length >= Math.max(0, Number(maxSlots) || 0)) break;
+    if (id === "defensible") {
+      if (defensibleCount >= 3) continue;
+      defensibleCount += 1;
+      selected.push(id);
+      continue;
+    }
+    if (seen.has(id)) continue;
+    seen.add(id);
+    selected.push(id);
   }
-  return unique;
+  return selected;
 }
