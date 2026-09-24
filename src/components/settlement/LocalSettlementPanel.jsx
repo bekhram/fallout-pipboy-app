@@ -44,7 +44,7 @@ export default function LocalSettlementPanel({character,language='en'}){
       setSettlements(next);setMessage(text.imported);
     }catch{setMessage(text.badFile);}
   }
-  if(active)return <SettlementScreen settlement={active} onUpdate={updateActive} onBack={()=>setActiveId(null)} canEdit onRemoveGuestNpc={workerId=>updateActive(current=>removeGuestNpcFromLocalSettlement(current,workerId))}/>;
+  if(active)return <SettlementScreen settlement={active} ownerCharacter={character} onUpdate={updateActive} onBack={()=>setActiveId(null)} canEdit onRemoveGuestNpc={workerId=>updateActive(current=>removeGuestNpcFromLocalSettlement(current,workerId))}/>;
   return <section className="pip-panel local-settlement-panel">
     <h2>{text.title}</h2><p>{text.offline}</p>
     <form className="campaign-world-found" onSubmit={found}><label>{text.name}<input required maxLength={80} value={name} onChange={e=>setName(e.target.value)}/></label><button className="pip-btn is-primary" disabled={!name.trim()}>{text.found}</button></form>
