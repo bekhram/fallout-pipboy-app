@@ -409,6 +409,10 @@
       "days1": "1 day",
       "days3": "3 days",
       "days4": "4 days"
+    },
+    "poisoned": {
+      "name": "Poisoned",
+      "description": "The character is suffering from poisoning until the effect is treated or removed."
     }
   },
   "main": {
