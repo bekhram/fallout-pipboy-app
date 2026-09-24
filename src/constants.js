@@ -1008,6 +1008,7 @@ export function buildDefaultMapState() {
     trackedLocationId: "diamond_city",
     discoveredKeys: [],
     travelLog: ["Entered the Wasteland"],
+    activityLog: [],
     sectorCache: {},
     winterModeEnabled: false,
     lastWinterTravel: null,
