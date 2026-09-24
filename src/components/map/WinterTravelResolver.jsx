@@ -26,6 +26,8 @@ export default function WinterTravelResolver({open=false,character=null,language
     apDifficultyReduction:Math.floor(Math.max(0,Number(form.cleverAp)||0)/2),
   }),[form,baseHours]);
   const survival=useMemo(()=>getWinterSurvivalTest(character||{}),[character]);
+  const automaticResult=journey.difficulty===0 ? {success:true,successes:0,complications:0,rolls:[],complicationResults:[],scavenging:null,automatic:true} : null;
+  const effectiveResult=result||automaticResult;
   if(!open)return null;
 
   const patch=(key,value)=>{setForm(prev=>({...prev,[key]:value}));setResult(null);};
@@ -56,10 +58,10 @@ export default function WinterTravelResolver({open=false,character=null,language
   };
 
   const confirm=()=>{
-    if(!result)return;
+    if(!effectiveResult)return;
     onResolve?.({
       ...journey,
-      navigation:result,
+      navigation:effectiveResult,
       speed:form.speed,
       durationMultiplier:journey.durationHours/Math.max(1,Number(baseHours)||1),
       cleverPlanAp:Math.max(0,Math.floor(Number(form.cleverAp)||0)),
@@ -82,13 +84,13 @@ export default function WinterTravelResolver({open=false,character=null,language
       <div className="pip-travel-resolver__summary"><strong>{t.difficulty}: D{journey.difficulty}</strong><span>{t.duration}: {journey.durationHours}h</span><span>END + Survival TN {survival.targetNumber}</span></div>
       <section><h3>{t.ap}</h3>
         <label className="pip-travel-ap"><span><b>{t.ideal}</b><small>{t.idealHint}</small></span><input className="pip-input" type="number" min="0" max="10" value={form.idealAp} onChange={e=>patch("idealAp",e.target.value)}/></label>
-        <label className="pip-travel-ap"><span><b>{t.clever}</b><small>{t.cleverHint}</small></span><input className="pip-input" type="number" min="0" max="10" step="2" value={form.cleverAp} onChange={e=>patch("cleverAp",e.target.value)}/></label>
+        <label className="pip-travel-ap"><span><b>{t.clever}</b><small>{t.cleverHint}</small></span><input className="pip-input" type="number" min="0" max="10" step="2" value={form.cleverAp} onChange={e=>patch("cleverAp",Math.floor(Math.max(0,Number(e.target.value)||0)/2)*2)}/></label>
         <label className="pip-travel-check"><input type="checkbox" checked={form.luckyBreak} onChange={e=>patch("luckyBreak",e.target.checked)}/><span><b>{t.lucky}</b><small>{t.luckyHint}</small></span></label>
         <label className="pip-travel-check"><input type="checkbox" checked={form.treasure} onChange={e=>patch("treasure",e.target.checked)}/><span><b>{t.trash}</b><small>{t.trashHint}</small></span></label>
       </section>
-      <button type="button" className="pip-btn is-primary" onClick={roll}>{t.roll}</button>
-      {result?<section className={`pip-travel-result ${result.success?"is-success":"is-failure"}`}><strong>{result.success?t.success:t.failure}</strong><span>{result.successes}S · {result.complications}C</span>{result.complicationResults?.length?<div><b>{t.complications}</b>{result.complicationResults.map((item,index)=><small key={index}>{item.roll}: {item.text}</small>)}</div>:null}{result.scavenging?<div><b>{t.scavenged}</b><small>{result.scavenging.rollA}+{result.scavenging.rollB}={result.scavenging.total}: {result.scavenging.text}</small></div>:null}</section>:null}
-      <footer><button type="button" className="pip-btn" onClick={onCancel}>{t.cancel}</button><button type="button" className="pip-btn is-primary" disabled={!result} title={!result?t.needRoll:""} onClick={confirm}>{t.continue}</button></footer>
+      {journey.difficulty>0 ? <button type="button" className="pip-btn is-primary" onClick={roll}>{t.roll}</button> : null}
+      {effectiveResult?<section className={`pip-travel-result ${effectiveResult.success?"is-success":"is-failure"}`}><strong>{effectiveResult.success?t.success:t.failure}</strong><span>{effectiveResult.automatic?"D0 · AUTO":`${effectiveResult.successes}S · ${effectiveResult.complications}C`}</span>{effectiveResult.complicationResults?.length?<div><b>{t.complications}</b>{effectiveResult.complicationResults.map((item,index)=><small key={index}>{item.roll}: {item.text}</small>)}</div>:null}{effectiveResult.scavenging?<div><b>{t.scavenged}</b><small>{effectiveResult.scavenging.rollA}+{effectiveResult.scavenging.rollB}={effectiveResult.scavenging.total}: {effectiveResult.scavenging.text}</small></div>:null}</section>:null}
+      <footer><button type="button" className="pip-btn" onClick={onCancel}>{t.cancel}</button><button type="button" className="pip-btn is-primary" disabled={!effectiveResult} title={!effectiveResult?t.needRoll:""} onClick={confirm}>{t.continue}</button></footer>
     </div>
   </div>;
 }
