@@ -556,6 +556,13 @@ export const STATUS_LIST = [
     group: "positive",
   },
   {
+    key: "poisoned",
+    nameKey: "statuses.poisoned.name",
+    descriptionKey: "statuses.poisoned.description",
+    durationKey: "statuses.duration.untilRemoved",
+    group: "negative",
+  },
+  {
     key: "persistentDamage",
     nameKey: "statuses.persistentDamage.name",
     descriptionKey: "statuses.persistentDamage.description",
