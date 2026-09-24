@@ -1,9 +1,35 @@
 import { SETTLEMENT_BUILDINGS, settlementBuildingName } from '../../data/settlement/buildings.js';
 import { resolveSettlementWorkplaces } from '../../utils/settlementWorkplaces.js';
+import { settlerActionBonus } from '../../utils/settlementSettlerProfile.js';
 import { buildingIndicators } from './workplaceIndicators.js';
 import { workplaceCopy } from './workplaceCopy.js';
 import { constructionCopy, constructionDuration } from './constructionCopy.js';
 
+const PRODUCTION_COPY = {
+  en:{day:'/day',common:'Common',uncommon:'Uncommon',damage:'damage',effects:'Effects',needsWorker:'needs worker',income:'income'},
+  ru:{day:'/день',common:'обычных',uncommon:'необычных',damage:'урон',effects:'эффекты',needsWorker:'нужен работник',income:'доход'},
+  uk:{day:'/день',common:'звичайних',uncommon:'незвичайних',damage:'шкода',effects:'ефекти',needsWorker:'потрібен працівник',income:'дохід'},
+  pl:{day:'/dzień',common:'pospolite',uncommon:'niepospolite',damage:'obrażenia',effects:'Efekty',needsWorker:'potrzebny pracownik',income:'dochód'},
+};
+function productionDetail(settlement,plan,site,language){
+  const code=String(language||'en').split('-')[0],t=PRODUCTION_COPY[code]||PRODUCTION_COPY.en;
+  if(site.action==='scavenging'){
+    const workers=(settlement.settlers||[]).filter(w=>w.settlementAction?.type==='scavenging'&&plan.byWorker[w.id]?.active);
+    if(!workers.length)return '0 CD '+t.day+' · '+t.needsWorker;
+    const skillDice=workers.reduce((sum,w)=>sum+settlerActionBonus(w,'scavenging').skillBonus,0);
+    const pool=3+Math.max(0,workers.length-1)+skillDice;
+    const scrapper=workers.filter(w=>settlerActionBonus(w,'scavenging').hasPerk).length;
+    return pool+' CD '+t.day+' → '+t.damage+'='+t.common+(scrapper?' +'+scrapper+' Common':'')+' · '+t.effects+'='+t.uncommon;
+  }
+  if(site.action==='business'){
+    if(!site.workerIds.length)return '0 '+t.income+' '+t.day+' · '+t.needsWorker;
+    const workers=(settlement.settlers||[]).filter(w=>site.workerIds.includes(w.id));
+    const skill=workers.reduce((sum,w)=>sum+settlerActionBonus(w,'business').skillBonus,0);
+    const trader=workers.filter(w=>settlerActionBonus(w,'business').hasPerk).length;
+    return '+'+(Number(site.income||0)+skill+trader)+' '+t.income+' '+t.day;
+  }
+  return '';
+}
 // Screen-sized badges anchored to world buildings. They never intercept map drags.
 export class SettlementBuildingBadges {
   constructor(scene, onSelect) {
@@ -54,7 +80,8 @@ export class SettlementBuildingBadges {
       unit.status.setText(unit.baseStatus);
       unit.disc.setStrokeStyle(1.5, site.state !== 'active' || noStaff ? 0xe4b578 : 0xb9d89a);
       const lines = indicators.map(i => `${text[i.kind]}${i.amount !== null ? `: ${i.amount}` : ''}${i.mode === 'daily' ? ` · ${text.daily}` : i.mode === 'rating' ? ` · ${text.rating}` : i.mode === 'roll' ? ` · ${text.roll}` : ''}`);
-      unit.baseTooltip = [settlementBuildingName(def, language), ...lines, noStaff ? text.none : text[site.state], `${text.workers}: ${site.workerIds.length}`].join('\n');
+      const production = productionDetail(settlement,plan,site,language);
+      unit.baseTooltip = [settlementBuildingName(def, language), production, ...lines, noStaff ? text.none : text[site.state], `${text.workers}: ${site.workerIds.length}`].filter(Boolean).join('\n');
       unit.tooltip.setText(unit.baseTooltip);
       const bound = bounds.get(b.id);
       unit.anchorX = (b.x + def.footprint.width/2) * 40;
