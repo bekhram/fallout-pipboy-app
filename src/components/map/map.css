@@ -68,3 +68,23 @@
 .pip-map-settlement-card{display:grid;grid-template-columns:1fr auto;gap:8px 12px;padding:11px;border:1px solid rgba(120,255,140,.3);border-radius:10px;background:rgba(2,18,9,.94)}.pip-map-settlement-card>div:first-child{display:grid;gap:3px}.pip-map-settlement-card>div:first-child small{opacity:.65}.pip-map-settlement-card__rank{align-self:center;padding:4px 8px;border:1px solid rgba(120,255,140,.25);border-radius:999px;font-size:10px;font-weight:800}.pip-map-settlement-card__notes{grid-column:1/-1;display:grid;gap:5px;font-size:10px}.pip-map-settlement-card__notes span{padding:6px 8px;border:1px solid rgba(120,255,140,.1);border-radius:7px}.pip-map-settlement-card__actions{grid-column:1/-1;display:flex;gap:8px}.pip-map-settlement-card__actions .pip-btn{margin:0}
 .pip-map-history summary{cursor:pointer;list-style:none}.pip-map-history summary::-webkit-details-marker{display:none}.pip-map-history .pip-map-log__item{display:grid;grid-template-columns:46px 1fr;gap:8px;align-items:start}.pip-map-history .pip-map-log__item small{opacity:.55;font-size:9px}.pip-map-history .pip-map-log__item span{min-width:0}
 @media(max-width:640px){.pip-map-mode-switch--external button{font-size:9px}.pip-map-settlement-card{grid-template-columns:1fr}.pip-map-settlement-card__rank{justify-self:start}.pip-map-settlement-card__actions{display:grid;grid-template-columns:1fr auto}}
+
+.pip-travel-resolver{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:16px;background:rgba(0,8,5,.82)}
+.pip-travel-resolver__card{width:min(680px,100%);max-height:92dvh;overflow:auto;padding:16px;display:grid;gap:12px}
+.pip-travel-resolver__card>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.pip-travel-resolver__card>header h2{margin:4px 0}
+.pip-travel-resolver__card>header button{border:1px solid currentColor;background:transparent;color:inherit;font-size:24px}
+.pip-travel-resolver__card section{display:grid;gap:7px}
+.pip-travel-check{display:flex;align-items:flex-start;gap:8px}
+.pip-travel-check>span{display:grid;gap:2px}
+.pip-travel-field{display:grid;gap:5px}
+.pip-travel-ap{display:grid;grid-template-columns:1fr 90px;gap:10px;align-items:center}
+.pip-travel-ap>span{display:grid;gap:2px}
+.pip-travel-ap small,.pip-travel-check small{opacity:.7}
+.pip-travel-resolver__summary{display:flex;gap:8px;flex-wrap:wrap;padding:10px;border:1px solid rgba(120,255,140,.2)}
+.pip-travel-resolver__summary>*{padding:3px 6px}
+.pip-travel-result{display:grid;gap:5px;padding:10px;border:1px solid rgba(120,255,140,.25)}
+.pip-travel-result.is-failure{border-color:rgba(255,130,105,.5)}
+.pip-travel-result>div{display:grid;gap:3px}
+.pip-travel-resolver__card>footer{position:sticky;bottom:-16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px -16px -16px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(2,17,10,.99);border-top:1px solid rgba(120,255,140,.18)}
+@media(max-width:620px){.pip-travel-resolver{padding:0;place-items:stretch}.pip-travel-resolver__card{width:100%;max-height:100dvh;border-radius:0;padding:14px}.pip-travel-ap{grid-template-columns:1fr 72px}.pip-travel-resolver__card>footer{bottom:-14px;margin-left:-14px;margin-right:-14px}}
