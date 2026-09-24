@@ -211,7 +211,7 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     const marker=`settlement_transfer_${kind}`;
     const next=structuredClone(items||[]);
     const existing=next.find(item=>item?.sourceType===marker);
-    if(existing){existing.quantity=String(Math.max(0,Number(existing.quantity??existing.qty||0))+amount);return next;}
+    if(existing){existing.quantity=String(Math.max(0,Number((existing.quantity ?? existing.qty) || 0))+amount);return next;}
     next.push({sourceType:marker,canonicalName:kind==="food"?"Settlement Food Supply":"Settlement Water Supply",name:kind==="food"?"Settlement Food Supply":"Settlement Water Supply",category:kind==="food"?"food":"beverage",quantity:String(amount),cost:"0",weight:"1"});
     return next;
   }
@@ -221,14 +221,14 @@ export default function SettlementScreen({ settlement, onUpdate, onBack, onComma
     const next=[];
     for(const item of items||[]){
       if(!left||!categories.includes(String(item?.category||"").toLowerCase())){next.push(item);continue;}
-      const qty=Math.max(0,Number(item.quantity??item.qty||0));const take=Math.min(left,qty);left-=take;const remain=qty-take;if(remain)next.push({...item,quantity:String(remain),...(Object.hasOwn(item,"qty")?{qty:remain}:{})});
+      const qty=Math.max(0,Number((item.quantity ?? item.qty) || 0));const take=Math.min(left,qty);left-=take;const remain=qty-take;if(remain)next.push({...item,quantity:String(remain),...(Object.hasOwn(item,"qty")?{qty:remain}:{})});
     }
     if(left>0)throw new Error("INSUFFICIENT_SUPPLY");
     return next;
   }
   function playerSupplyCount(kind){
     const categories=kind==="food"?["food"]:["beverage","drink"];
-    return (ownerCharacter?.inventoryItems||[]).filter(item=>categories.includes(String(item?.category||"").toLowerCase())).reduce((sum,item)=>sum+Math.max(0,Number(item.quantity??item.qty||0)),0);
+    return (ownerCharacter?.inventoryItems||[]).filter(item=>categories.includes(String(item?.category||"").toLowerCase())).reduce((sum,item)=>sum+Math.max(0,Number((item.quantity ?? item.qty) || 0)),0);
   }
   function transferLocalResource(kind,direction){
     if(!setOwnerCharacter||onCommand)return;
