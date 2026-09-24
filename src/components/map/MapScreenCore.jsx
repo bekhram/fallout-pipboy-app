@@ -933,10 +933,13 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
               <button type="button" role="tab" aria-selected={mapMode === "world"} className={mapMode === "world" ? "is-active" : ""} onClick={() => setMapMode("world")}>{tx("world")}</button>
               <button type="button" role="tab" aria-selected={mapMode === "overview"} className={mapMode === "overview" ? "is-active" : ""} onClick={() => setMapMode("overview")}>{tx("overview")}</button>
               <button type="button" role="tab" aria-selected={false} onClick={() => setMapMode("local")}>{tx("local")}</button>
+              <button type="button" role="tab" aria-selected={mapMode === "reputation"} className={mapMode === "reputation" ? "is-active" : ""} onClick={() => setMapMode("reputation")}>{tx("reputation")}</button>
             </div>
           ) : null}
 
-          <div className="pip-panel pip-map-panel">
+          {mapMode === "reputation" ? (
+            <SettlementReputationPanel language={language} readOnly={false} locations={regionLocations} />
+          ) : <div className="pip-panel pip-map-panel">
           <div className={`pip-map-board pip-map-board--${activeRegion.id}`} data-region={activeRegion.id}>
             <div className="pip-map-grid-layer">
               {mapMode === "world" ? (
@@ -1016,10 +1019,10 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
               )}
             </div>
           </div>
-        </div>
+        </div>}
         </div>
 
-        <div className="pip-map-sidebar">
+        {mapMode !== "reputation" ? <div className="pip-map-sidebar">
           <div className="pip-panel pip-map-info">
             <label className="pip-map-select-label">
               {t("mapPanel.target")}
@@ -1097,9 +1100,8 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
               ))}
             </div>
           </div>
-        </div>
+        </div> : null}
       </div>
-      {mapMode === "world" ? <div className="pip-map-world-meta-panels"><SettlementReputationPanel language={language} readOnly={false} compact /></div> : null}
       <CampsiteWorldPanel open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} />
     </div>
   );
