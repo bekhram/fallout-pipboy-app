@@ -30,3 +30,5 @@
 .settlement-reputation__note{resize:vertical;min-height:58px}.settlement-reputation__empty{padding:26px;text-align:center;border:1px dashed rgba(120,255,140,.18);border-radius:10px;opacity:.7}
 @media(max-width:900px){.settlement-reputation__add-grid{grid-template-columns:1fr}.settlement-reputation--standalone{min-height:0}}
 @media(max-width:720px){.settlement-reputation--standalone{padding:12px}.settlement-reputation__add-card{grid-template-columns:1fr}.settlement-reputation__add-card .pip-btn{width:100%}.settlement-reputation__table tr{grid-template-columns:1fr}.settlement-reputation__table td,.settlement-reputation__table td:first-child,.settlement-reputation__table td:nth-child(2),.settlement-reputation__table td:last-child{grid-column:1/-1}.settlement-reputation__note{min-height:64px}}
+
+.settlement-reputation__position-note{grid-column:1/-1;opacity:.62;font-size:.72rem;line-height:1.3}
