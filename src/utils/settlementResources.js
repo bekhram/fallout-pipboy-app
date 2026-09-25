@@ -1,6 +1,7 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 import { resolveSettlementWorkplaces } from './settlementWorkplaces.js';
+import { effectiveBuildingEffects } from './settlementBuildingLevels.js';
 
 function isActive(building) {
   return building?.state === "active" && Number(building.condition ?? 100) > 0 && !building.autoDisabled;
@@ -13,7 +14,7 @@ export function resolveSettlementResources(settlement) {
     if (!isActive(building)) continue;
     const rule = getRulebookBuilding(building.type);
     if (!rule) continue;
-    const effects = rule.effects || {};
+    const effects = effectiveBuildingEffects(building, rule.effects || {});
     const requiresPower = Math.max(0, Number(effects.requiresPower || 0));
     const powered = !requiresPower || powerGrid.poweredBuildingIds.has(building.id);
     if (!effects.water && !effects.cropSlots && !effects.brahminCapacity) continue;

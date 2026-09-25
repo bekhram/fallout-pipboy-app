@@ -2,11 +2,12 @@ import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { resolveSettlementPower } from './settlementPower.js';
 import { createWorkplacePlan, assignWorkplace, workplaceAssignmentError } from './settlementWorkplacePlan.js';
 import { settlerAvailableForWork } from './settlementHealth.js';
+import { effectiveBuildingEffects } from './settlementBuildingLevels.js';
 
 export function workplaceBuildings(settlement) {
   const power = resolveSettlementPower(settlement);
   return (settlement.buildings || []).map(b => {
-    const effects = getRulebookBuilding(b.type)?.effects || {};
+    const effects = effectiveBuildingEffects(b,getRulebookBuilding(b.type)?.effects || {});
     return { ...b, effects, powered: !Number(effects.requiresPower || 0) || power.poweredBuildingIds.has(b.id) };
   });
 }
