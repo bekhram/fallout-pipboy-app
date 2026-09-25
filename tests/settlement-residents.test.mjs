@@ -18,7 +18,11 @@ test('guard posts and powered sirens are counted independent of building order',
 test('robots have no food, water or bed needs',()=>{
  const s=base();s.settlers=[{...resident('r'),isRobot:true}];
  assert.equal(getSettlementRulebookSnapshot(s).needsPeople,0);
- assert.equal(advanceSettlementDay(s,100000).attributes.happiness,20);
+ const originalRandom=Math.random;
+ try{
+   Math.random=()=>0.99; // suppress unrelated random daily events
+   assert.equal(advanceSettlementDay(s,100000).attributes.happiness,20);
+ }finally{Math.random=originalRandom;}
 });
 test('assignments requiring structures are unavailable and rejected by commands',()=>{
  const s=base();assert.ok(!availableSettlementActions(s).some(a=>a.id==='business'));
