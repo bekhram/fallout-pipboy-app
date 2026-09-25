@@ -18,6 +18,7 @@ import { SETTLER_PERKS, SETTLER_SKILLS, advanceSettlerProfile, settlerProfileLab
 import { checkedPlayerResources, creditPersonalResources, debitPersonalResources } from "../../utils/personalResources.js";
 import { resolveSettlementWorkplaces } from "../../utils/settlementWorkplaces.js";
 import { getSettlementMarket } from "../../utils/settlementTrade.js";
+import { levelActionBonus } from "../../utils/settlementBuildingLevels.js";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { SETTLEMENT_DAY_MS, canAffordRoom, canAffordRulebookBuilding, createConstructionBuilding, createRoomConstruction, getConstructionProgress, getRoomConstructionProgress, getSettlementRulebookSnapshot, getStructureRoomCapacity, normalizeStockpile, payRoomCost, payRulebookBuildingCost } from "../../utils/settlementDayEngine.js";
 import { getSettlementAsset } from "./settlementAssets.js";
@@ -100,8 +101,8 @@ function selectedBuildingProduction(settlement,building,language){
     if(!site.workerIds.length)return '0 caps '+t.day+' · '+t.needs;
     const worker=(settlement.settlers||[]).find(w=>site.workerIds.includes(w.id));
     const bonus=settlerActionBonus(worker||{},'trade_caravan');
-    const minCaps=20+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0);
-    const maxCaps=40+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0);
+    const levelBonus=levelActionBonus(building);const minCaps=20+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0)+(levelBonus*10);
+    const maxCaps=40+(Number(bonus.rank||0)*5)+(bonus.hasPerk?10:0)+(levelBonus*10);
     return minCaps+'–'+maxCaps+' caps '+t.day+' · materials chance';
   }
   if(site.action==='business'){
@@ -115,7 +116,7 @@ function selectedBuildingProduction(settlement,building,language){
     const workers=(settlement.settlers||[]).filter(w=>w.settlementAction?.type==='scavenging'&&plan.byWorker[w.id]?.active);
     if(!workers.length)return '0 CD '+t.day+' · '+t.needs;
     const skill=workers.reduce((sum,w)=>sum+settlerActionBonus(w,'scavenging').skillBonus,0);
-    const pool=3+Math.max(0,workers.length-1)+skill;
+    const siteBonus=levelActionBonus(building);const pool=3+Math.max(0,workers.length-1)+skill+siteBonus;
     const perk=workers.filter(w=>settlerActionBonus(w,'scavenging').hasPerk).length;
     return pool+' CD '+t.day+' → '+t.damage+'='+t.common+(perk?' +'+perk+' Common':'')+' · '+t.effects+'='+t.uncommon;
   }
