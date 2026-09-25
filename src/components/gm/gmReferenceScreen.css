@@ -1,1 +1,18 @@
 .gm-reference-screen{display:grid;gap:12px;min-width:0}.gm-reference-screen__head{display:grid;gap:4px}.gm-reference-screen__head>span{font-size:11px;opacity:.62;letter-spacing:.12em}.gm-reference-screen__head h2{margin:0}.gm-reference-screen__head p{margin:0;opacity:.7}.gm-reference-screen__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}.gm-reference-card{min-width:0}.gm-reference-card--rooms{grid-column:1/-1}.gm-reference-row{display:flex;justify-content:space-between;gap:12px;border-top:1px solid rgba(128,255,128,.18);padding:8px 0}.gm-reference-row span{opacity:.82}.gm-reference-condition{display:grid;gap:3px;border-top:1px solid rgba(128,255,128,.18);padding:9px 0}.gm-reference-condition span{font-size:12px;opacity:.78;line-height:1.5}@media(max-width:899px){.gm-reference-screen__grid{grid-template-columns:1fr}.gm-reference-card--rooms{grid-column:auto}}
+.gm-reference-ap-strip{display:flex;justify-content:flex-end;align-items:center;padding:8px 10px;border:1px solid rgba(128,255,128,.18);border-radius:8px;background:rgba(128,255,128,.025)}
+.gm-reference-card--economy,.gm-reference-card--complications,.gm-reference-card--events{grid-column:1/-1}
+.gm-reference-card__title-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gm-reference-card__title-row h3{margin:0}
+.gm-reference-table{display:grid;gap:0;overflow:hidden;border:1px solid rgba(128,255,128,.14);border-radius:8px}
+.gm-reference-table__head,.gm-reference-table__row{display:grid;grid-template-columns:70px minmax(150px,.65fr) minmax(260px,1.35fr) 110px;gap:8px;align-items:center;padding:8px 10px}
+.gm-reference-table__head{font-size:11px;opacity:.65;background:rgba(128,255,128,.04)}
+.gm-reference-table__row{border-top:1px solid rgba(128,255,128,.12)}
+.gm-reference-table__row>span{font-size:12px;opacity:.78;line-height:1.45}
+.gm-reference-table__row .pip-btn{min-height:34px;padding:6px 8px}
+.gm-reference-event{display:grid;gap:3px;padding:7px 0;border-top:1px solid rgba(128,255,128,.14)}
+.gm-reference-event span{font-size:12px;opacity:.75}
+@media(max-width:899px){
+  .gm-reference-table{overflow-x:auto}
+  .gm-reference-table__head,.gm-reference-table__row{min-width:720px}
+  .gm-reference-ap-strip{justify-content:flex-start}
+}
