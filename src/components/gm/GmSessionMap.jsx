@@ -59,13 +59,15 @@ function normalizeTab(tab) {
 }
 function ActionPointCounter({session,labels}){
   const ap=session?.tacticalScene?.actionPoints||{players:0,gm:0,max:6};
-  const max=Math.max(1,Number(ap.max||6));
+  const playerMax=6;
   const change=async(key,delta)=>{
-    const current=Math.max(0,Math.min(max,Number(ap[key]||0)));
-    const next=Math.max(0,Math.min(max,current+delta));
-    await session?.updateTacticalScene?.({actionPoints:{...ap,max,[key]:next}});
+    const current=Math.max(0,Math.floor(Number(ap[key]||0)));
+    const next=key==="players"
+      ? Math.max(0,Math.min(playerMax,current+delta))
+      : Math.max(0,current+delta);
+    await session?.updateTacticalScene?.({actionPoints:{players:Math.max(0,Math.min(playerMax,Math.floor(Number(ap.players||0)))),gm:Math.max(0,Math.floor(Number(ap.gm||0))),max:playerMax,[key]:next}});
   };
-  const row=(key,label)=><div className="gm-ap-counter__row" key={key}><span>{label}</span><div><button type="button" onClick={()=>change(key,-1)} aria-label={label+" -1"}>−</button><strong>{Number(ap[key]||0)}/{max}</strong><button type="button" onClick={()=>change(key,1)} aria-label={label+" +1"}>+</button></div></div>;
+  const row=(key,label)=><div className="gm-ap-counter__row" key={key}><span>{label}</span><div><button type="button" onClick={()=>change(key,-1)} aria-label={label+" -1"}>−</button><strong>{key==="players" ? `${Math.max(0,Math.min(playerMax,Number(ap.players||0)))}/${playerMax}` : Math.max(0,Number(ap.gm||0))}</strong><button type="button" onClick={()=>change(key,1)} aria-label={label+" +1"}>+</button></div></div>;
   return <section className="gm-ap-counter" aria-label={labels.ap}>{row("players",labels.playersAp)}{row("gm",labels.gmAp)}</section>;
 }
 
