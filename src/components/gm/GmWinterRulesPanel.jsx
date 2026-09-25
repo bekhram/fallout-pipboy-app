@@ -117,7 +117,7 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
   return <section className="gm-winter pip-screen">
     <header className="gm-winter__header"><span>PIP / 2D20 // WINTER OF ATOM</span><h2>[ {text.title} ]</h2></header>
     <div className="gm-winter__grid">
-      <article className="pip-panel gm-winter-card">
+      <article className="pip-panel gm-winter-card gm-winter-card--travel">
         <h3>[ {text.travel} ]</h3>
         <label>{text.duration}<NumberInput value={travel.durationHours} onChange={v=>patchTravel({durationHours:v})}/></label>
         <label>{text.speed}<select className="pip-input" value={travel.speed} onChange={e=>patchTravel({speed:e.target.value})}><option value="cautious">Cautious</option><option value="normal">Normal</option><option value="hurried">Hurried</option></select></label>
@@ -134,7 +134,7 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <div className="winter-note"><span>{encounter.text}</span></div>
       </article>
 
-      <article className="pip-panel gm-winter-card">
+      <article className="pip-panel gm-winter-card gm-winter-card--cold">
         <h3>[ {text.cold} ]</h3>
         <label>{text.hours}<NumberInput value={cold.hours} onChange={v=>patchCold({hours:v})}/></label>
         <Checkbox label={text.warmClothing} checked={cold.warmClothing} onChange={v=>patchCold({warmClothing:v})}/>
@@ -147,7 +147,7 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <button type="button" className="pip-btn" onClick={applyColdFailure} disabled={typeof setCharacter!=="function"}>{text.failedExposure}</button>
       </article>
 
-      <article className="pip-panel gm-winter-card">
+      <article className="pip-panel gm-winter-card gm-winter-card--scavenge">
         <h3>[ {text.scavenge} ]</h3>
         <label>{text.scavengeA}<NumberInput value={scavengeRollA} onChange={v=>{setScavengeRollA(v);save({scavengeRollA:v});}} min={1} max={20}/></label>
         <label>{text.scavengeB}<NumberInput value={scavengeRollB} onChange={v=>{setScavengeRollB(v);save({scavengeRollB:v});}} min={1} max={20}/></label>
@@ -156,7 +156,7 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
       </article>
 
 {showReputation ? (
-      <article className="pip-panel gm-winter-card">
+      <article className="pip-panel gm-winter-card gm-winter-card--reputation">
         <h3>[ {text.rep} ]</h3>
         <label>{text.settlement}<input className="pip-input" value={rep.settlement} onChange={e=>patchRep({settlement:e.target.value})}/></label>
         <label>{text.rank}<select className="pip-input" value={rep.rank} onChange={e=>patchRep({rank:Number(e.target.value),last:null})}>{REPUTATION_RANKS.map(r=><option key={r.rank} value={r.rank}>{r.rank} · {r.label}</option>)}</select></label>
@@ -187,9 +187,12 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         {task.last?.resolved?<div className="winter-result"><b>{task.last.success?text.taskSuccess:text.taskFailure}</b><span>{task.last.task.label} · {task.last.skill||task.last.task.attribute} · D{task.last.difficulty} · {task.last.successes} successes</span>{task.last.reward?<span>{task.last.reward}</span>:null}{task.last.negativeInfluenceSuggested?<button type="button" className="pip-btn" disabled={task.negativeApplied} onClick={applyTaskNegativeInfluence}>{task.negativeApplied?text.taskApplied:text.taskNegative}</button>:null}</div>:null}
       </article>
 
-      <article className="pip-panel gm-winter-card gm-winter-card--reference">
+      <article className="pip-panel gm-winter-card gm-winter-card--reference gm-winter-card--terrain">
         <h3>[ {text.terrain} ]</h3>
         {[...WINTER_TERRAIN,...WINTER_OBSTACLES].map(item=><div key={item.id} className="winter-ref-row"><span>{item.label}</span><b>{item.ap} AP</b></div>)}
+      </article>
+
+      <article className="pip-panel gm-winter-card gm-winter-card--reference gm-winter-card--conditions">
         <h3>[ {text.conditions} ]</h3>
         {WINTER_CONDITIONS.map(item=><div key={item.id} className="winter-ref-row winter-ref-row--stack"><strong>{item.label}</strong><span>{item.effect}</span></div>)}
       </article>

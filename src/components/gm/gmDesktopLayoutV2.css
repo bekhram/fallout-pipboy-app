@@ -162,3 +162,133 @@
     min-height: 760px;
   }
 }
+
+
+/* GM Environment & encounters dashboard — compact desktop composition.
+   The battlemap is intentionally not rendered in scene mode; only its tools remain. */
+@media (min-width: 1280px) {
+  .gm-organic-workspace .gm-tactical-view--scene {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    grid-template-areas: none !important;
+    grid-auto-flow: row;
+    gap: 12px !important;
+    align-items: start;
+  }
+
+  /* Flatten Winter wrapper so its functional cards share the same dashboard grid. */
+  .gm-tactical-view--scene > .gm-tactical-winter,
+  .gm-tactical-view--scene > .gm-tactical-winter > .gm-winter,
+  .gm-tactical-view--scene > .gm-tactical-winter > .gm-winter > .gm-winter__grid {
+    display: contents !important;
+  }
+
+  .gm-tactical-view--scene .gm-winter__header,
+  .gm-tactical-view--scene .gm-tactical-battle-effects,
+  .gm-tactical-view--scene .gm-tactical-map-core {
+    display: none !important;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card {
+    min-width: 0;
+    height: auto;
+    align-self: start;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card--travel {
+    grid-column: 1 / 4;
+    grid-row: 1;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card--cold {
+    grid-column: 4 / 7;
+    grid-row: 1;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-environment-edit {
+    grid-column: 7 / 13;
+    grid-row: 1;
+    position: relative;
+    z-index: 4;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card--scavenge {
+    grid-column: 1 / 4;
+    grid-row: 2;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card--tasks {
+    grid-column: 4 / 7;
+    grid-row: 2;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-scene-presets {
+    grid-column: 7 / 13;
+    grid-row: 2 / span 2;
+    display: grid !important;
+    gap: 12px;
+    align-content: start;
+    position: relative;
+    z-index: 4;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card--terrain {
+    grid-column: 1 / 4 !important;
+    grid-row: 3;
+  }
+
+  .gm-tactical-view--scene .gm-winter-card--conditions {
+    grid-column: 4 / 7 !important;
+    grid-row: 3;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-environment-edit > *,
+  .gm-tactical-view--scene .gm-tactical-scene-presets > *,
+  .gm-tactical-view--scene .gm-tactical-scene-presets .pip-panel {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .gm-tactical-view--scene :is(.gm-winter-card,.tactical-environment-panel,.gm-tactical-scene-presets .pip-panel) {
+    margin: 0;
+  }
+
+  /* Remove minimum heights inherited from tactical/battle views. */
+  .gm-tactical-view--scene,
+  .gm-tactical-view--scene > *,
+  .gm-tactical-view--scene .gm-winter-card {
+    min-height: 0 !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1279px) {
+  .gm-organic-workspace .gm-tactical-view--scene {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-map-core {
+    display: none !important;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-winter,
+  .gm-tactical-view--scene .gm-tactical-environment-edit,
+  .gm-tactical-view--scene .gm-tactical-scene-presets {
+    min-width: 0;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-winter {
+    grid-column: 1;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-environment-edit {
+    grid-column: 2;
+  }
+
+  .gm-tactical-view--scene .gm-tactical-scene-presets {
+    grid-column: 1 / -1;
+  }
+}
