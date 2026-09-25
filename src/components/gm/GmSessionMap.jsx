@@ -25,6 +25,7 @@ import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
 import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import GmWinterRulesPanel from "./GmWinterRulesPanel.jsx";
+import GmReferenceScreen from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
@@ -39,13 +40,13 @@ import LiveSessionWorldMap from "../session/LiveSessionWorldMap.jsx";
 import { worldCopy } from "../campaign/worldCopy.js";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["world", "battle", "autogm", "loot", "merchants", "custom", "scene", "tokens", "roster", "participants"];
+const TABS = ["world", "battle", "autogm", "loot", "merchants", "custom", "scene", "reference", "tokens", "roster", "participants"];
 const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
-  en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu" },
-  ru: { battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC", scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ", waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ" },
+  en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu", ap:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP" },
+  ru: { battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC", scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ", waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ", ap:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа" },
   uk: { battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC", scene: "ЗУСТРІЧ / СЦЕНА", tokens: "ТОКЕНИ", waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ" },
-  pl: { battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC", scene: "SPOTKANIE / SCENA", tokens: "TOKENY", waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG" },
+  pl: { battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC", scene: "SPOTKANIE / SCENA", tokens: "TOKENY", waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG", ap:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG" },
 };
 
 function languageCode(language) {
@@ -56,6 +57,18 @@ function normalizeTab(tab) {
   if (tab === "encounter" || tab === "scenes") return "scene";
   return TABS.includes(tab) ? tab : "battle";
 }
+function ActionPointCounter({session,labels}){
+  const ap=session?.tacticalScene?.actionPoints||{players:0,gm:0,max:6};
+  const max=Math.max(1,Number(ap.max||6));
+  const change=async(key,delta)=>{
+    const current=Math.max(0,Math.min(max,Number(ap[key]||0)));
+    const next=Math.max(0,Math.min(max,current+delta));
+    await session?.updateTacticalScene?.({actionPoints:{...ap,max,[key]:next}});
+  };
+  const row=(key,label)=><div className="gm-ap-counter__row" key={key}><span>{label}</span><div><button type="button" onClick={()=>change(key,-1)} aria-label={label+" -1"}>−</button><strong>{Number(ap[key]||0)}/{max}</strong><button type="button" onClick={()=>change(key,1)} aria-label={label+" +1"}>+</button></div></div>;
+  return <section className="gm-ap-counter" aria-label={labels.ap}>{row("players",labels.playersAp)}{row("gm",labels.gmAp)}</section>;
+}
+
 function initialTab() {
   if (typeof window === "undefined") return "battle";
   try { return normalizeTab(window.localStorage.getItem(TAB_STORAGE_KEY)); } catch { return "battle"; }
@@ -121,12 +134,13 @@ export default function GmSessionMap(props) {
     <section className={`gm-tactical-tabs-shell gm-organic-workspace gm-organic-group--${group}`}>
       <GmWorkspaceNavigation activeTab={activeTab} onSelect={selectTab} labels={ui} moreOpen={moreOpen} onMore={setMoreOpen} />
       <div className="gm-organic-content">
-        <header className="gm-organic-pagehead"><div><span>{ui.subtitle}</span><h1>{ui[group]}</h1></div><span className="gm-organic-scene-name">{session.tacticalScene.name || session.tacticalScene.title || ""}</span></header>
+        <header className="gm-organic-pagehead"><div><span>{ui.subtitle}</span><h1>{ui[group]}</h1></div><div className="gm-organic-pagehead__tools"><ActionPointCounter session={session} labels={labels}/><span className="gm-organic-scene-name">{session.tacticalScene.name || session.tacticalScene.title || ""}</span></div></header>
         <nav className="gm-organic-subtabs" aria-label={ui[group]}>
           {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
       {activeTab === "world" && <LiveSessionWorldMap session={session} />}
-      <div hidden={activeTab === "world"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
+      {activeTab === "reference" && <GmReferenceScreen session={session}/>} 
+      <div hidden={activeTab === "world" || activeTab === "reference"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         {activeTab === "scene" ? <div className="gm-tactical-winter"><GmWinterRulesPanel character={props.character} setCharacter={props.setCharacter} language={i18n.resolvedLanguage || i18n.language} showReputation={false} /></div> : null}
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
