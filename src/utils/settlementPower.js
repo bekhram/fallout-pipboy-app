@@ -1,4 +1,5 @@
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
+import { effectiveBuildingEffects } from "./settlementBuildingLevels.js";
 
 function isActive(building) {
   return building?.state === "active"
@@ -12,7 +13,7 @@ export function resolveSettlementPower(settlement) {
   let required = 0;
 
   for (const building of activeBuildings) {
-    const effects = getRulebookBuilding(building.type)?.effects || {};
+    const effects = effectiveBuildingEffects(building,getRulebookBuilding(building.type)?.effects || {});
     produced += Math.max(0, Number(effects.power || 0));
     required += Math.max(0, Number(effects.requiresPower || 0));
   }
@@ -23,13 +24,13 @@ export function resolveSettlementPower(settlement) {
   const unpoweredBuildingIds = new Set();
 
   for (const building of activeBuildings) {
-    const effects = getRulebookBuilding(building.type)?.effects || {};
+    const effects = effectiveBuildingEffects(building,getRulebookBuilding(building.type)?.effects || {});
     const need = Math.max(0, Number(effects.requiresPower || 0));
     if (!need) poweredBuildingIds.add(building.id);
   }
 
   for (const building of activeBuildings) {
-    const effects = getRulebookBuilding(building.type)?.effects || {};
+    const effects = effectiveBuildingEffects(building,getRulebookBuilding(building.type)?.effects || {});
     const need = Math.max(0, Number(effects.requiresPower || 0));
     if (!need) continue;
     if (remaining >= need) {
