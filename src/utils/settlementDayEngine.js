@@ -12,6 +12,7 @@ import { resolveSettlementDailyEvent } from './settlementEvents.js';
 import { advanceSettlerRecovery } from './settlementHealth.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
+export const SETTLEMENT_INCOME_CAPS_PER_POINT = 10;
 function clamp(value,min,max){return Math.max(min,Math.min(max,Number(value) || 0));}
 function randomId(prefix,now=Date.now()){return `${prefix}_${now}_${Math.random().toString(36).slice(2,8)}`;}
 function rollCombatDice(count){let total=0,effects=0;const rolls=[];for(let index=0;index<count;index+=1){const die=1+Math.floor(Math.random()*6);rolls.push(die);if(die===1)total+=1;else if(die===2)total+=2;else if(die>=5){total+=1;effects+=1;}}return {total,effects,rolls};}
@@ -100,7 +101,8 @@ function resolveResidentActions(input,now){
   const businessSkill=businessList.reduce((sum,s)=>sum+settlerActionBonus(s,"business").skillBonus,0);
   const traderBonus=businessList.filter(s=>settlerActionBonus(s,"business").hasPerk).length;
   const dailyIncome=workplacePlan.income+businessSkill+traderBonus;
-  if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome,businessSkill,traderBonus});
+  const storeCaps=Math.max(0,Math.floor(dailyIncome*SETTLEMENT_INCOME_CAPS_PER_POINT));
+  if(businessWorkers>0)events.push({type:"business",workers:businessWorkers,stores:workplacePlan.staffedStoreIds.length,storeIds:workplacePlan.staffedStoreIds,income:dailyIncome,caps:storeCaps,businessSkill,traderBonus});
   const caravanList=settlers.filter(s=>s.settlementAction?.type==="trade_caravan" && workplacePlan.byWorker[s.id]?.active);
   let caravanCaps=0;
   if(caravanList.length>0){
@@ -125,7 +127,7 @@ function resolveResidentActions(input,now){
     const xp=Number(xpByAction[worker.settlementAction?.type] || 0);
     return xp ? addSettlerExperience(worker,xp) : worker;
   });
-  return {settlement:{...settlement,settlers:experienced,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile,resources:{...(settlement.resources||{}),caps:Math.max(0,Number(settlement.resources?.caps||0))+caravanCaps}},dailyDefenseBonus,actionEvents:events};
+  return {settlement:{...settlement,settlers:experienced,activeDaySupplies:settlement.nextDaySupplies || {},attributes,stockpile,resources:{...(settlement.resources||{}),caps:Math.max(0,Number(settlement.resources?.caps||0))+caravanCaps+storeCaps}},dailyDefenseBonus,actionEvents:events};
 }
 function applyNeedsAndDeparture(input,dailyDefenseBonus,now){
   const stats=calculateStaticAttributes(input,dailyDefenseBonus,input.attributes?.food);let happiness=clamp(stats.happiness,1,20);const failedNeeds=[];
@@ -201,3 +203,63 @@ export function createConstructionBuilding({id,type,x,y,now=Date.now()}){
 }
 export function getConstructionProgress(building){const rule=getRulebookBuilding(building?.type),required=Math.max(1,Number(building?.constructionDaysRequired || rule?.constructionDays || 1)),progress=Math.max(0,Number(building?.constructionProgressDays || 0));return {progress,required,remaining:Math.max(0,required-progress)};}
 export function getSettlementRulebookSnapshot(settlement){return calculateStaticAttributes(settlement,null,settlement.attributes?.food);}
+
+export function getSettlementDailyForecast(settlement){
+  const workplaces=resolveSettlementWorkplaces(settlement);
+  const residents=effectiveSettlementResidents(settlement);
+  const resourceGrid=resolveSettlementResources(settlement);
+  const snapshot=calculateStaticAttributes(settlement,null,settlement.attributes?.food);
+
+  const cropWorkers=residents.filter(s=>s.settlementAction?.type==="tend_crops");
+  const cropBase=workplaces.food;
+  const cropSkill=cropWorkers.reduce((sum,s)=>sum+settlerActionBonus(s,"tend_crops").skillBonus,0);
+  const cropPerks=cropWorkers.filter(s=>settlerActionBonus(s,"tend_crops").hasPerk).length;
+  const foodProduced=Math.max(0,cropBase+cropSkill+cropPerks);
+
+  const businessWorkers=residents.filter(s=>s.settlementAction?.type==="business");
+  const businessSkill=businessWorkers.reduce((sum,s)=>sum+settlerActionBonus(s,"business").skillBonus,0);
+  const businessPerks=businessWorkers.filter(s=>settlerActionBonus(s,"business").hasPerk).length;
+  const storeIncome=Math.max(0,workplaces.income+businessSkill+businessPerks);
+  const storeCaps=storeIncome*SETTLEMENT_INCOME_CAPS_PER_POINT;
+
+  const scavengers=residents.filter(s=>s.settlementAction?.type==="scavenging");
+  const scavengerSkill=scavengers.reduce((sum,s)=>sum+settlerActionBonus(s,"scavenging").skillBonus,0);
+  const scavengerPerks=scavengers.filter(s=>settlerActionBonus(s,"scavenging").hasPerk).length;
+  const scavengingDice=scavengers.length ? 3+Math.max(0,scavengers.length-1)+scavengerSkill : 0;
+
+  const caravans=residents.filter(s=>s.settlementAction?.type==="trade_caravan");
+  const caravanRanges=caravans.map(worker=>{
+    const bonus=settlerActionBonus(worker,"trade_caravan");
+    const extra=Number(bonus.rank||0)*5+(bonus.hasPerk?10:0);
+    return {workerId:worker.id,workerName:worker.name,minCaps:20+extra,maxCaps:40+extra,barter:Number(bonus.rank||0),trader:Boolean(bonus.hasPerk)};
+  });
+  const caravanCapsMin=caravanRanges.reduce((sum,row)=>sum+row.minCaps,0);
+  const caravanCapsMax=caravanRanges.reduce((sum,row)=>sum+row.maxCaps,0);
+
+  const needs=Math.max(0,Number(snapshot.needsPeople||0));
+  const waterProduced=Math.max(0,Number(resourceGrid.waterProduced||0));
+  const waterCropUse=Math.max(0,Number(resourceGrid.cropWater||0));
+  const waterAfterCrops=Math.max(0,Number(resourceGrid.water||0));
+  const foodNet=foodProduced-needs;
+  const waterNet=waterAfterCrops-needs;
+
+  const idleBuildings=[];
+  for(const site of Object.values(workplaces.byBuilding||{})){
+    if(site.state!=="active")continue;
+    if(["business","tend_crops","trade_caravan"].includes(site.action) && !site.workerIds.length)idleBuildings.push({id:site.id,type:site.type,reason:"no_worker"});
+  }
+  const power=resolveSettlementPower(settlement);
+  for(const id of power.unpoweredBuildingIds||[])idleBuildings.push({id,type:(settlement.buildings||[]).find(b=>b.id===id)?.type||"",reason:"no_power"});
+
+  return {
+    people:needs,
+    food:{produced:foodProduced,consumed:needs,net:foodNet},
+    water:{produced:waterProduced,cropUse:waterCropUse,available:waterAfterCrops,consumed:needs,net:waterNet},
+    caps:{stores:storeCaps,caravanMin:caravanCapsMin,caravanMax:caravanCapsMax,totalMin:storeCaps+caravanCapsMin,totalMax:storeCaps+caravanCapsMax},
+    materials:{scavengers:scavengers.length,dice:scavengingDice,commonBonus:scavengerPerks,caravanRuns:caravans.length},
+    power:{produced:Number(power.produced||0),consumed:Number(power.consumed||0),available:Number(power.available||0),deficit:Number(power.deficit||0)},
+    defense:Number(snapshot.defense||0),
+    idleBuildings,
+    caravanRanges,
+  };
+}
