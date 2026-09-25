@@ -192,3 +192,126 @@ body:has(.session-gm-host--organic)::after { display: none; }
 }
 
 .gm-organic-workspace .gm-tactical-shell[hidden] { display: none; }
+
+
+/* Production hotfix: gmOrganicWorkspace.css loads after gmDesktopLayoutV2.css.
+   Keep the approved 12-column Environment & encounters dashboard from being
+   collapsed back to the legacy 2-column scene layout. */
+@media (min-width: 1280px) {
+  .gm-organic-workspace.gm-tactical-tabs-shell .gm-tactical-view--scene {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    grid-template-areas: none !important;
+    grid-auto-flow: row !important;
+    gap: 12px !important;
+    align-items: start !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene > .gm-tactical-winter,
+  .gm-organic-workspace .gm-tactical-view--scene > .gm-tactical-winter > .gm-winter,
+  .gm-organic-workspace .gm-tactical-view--scene > .gm-tactical-winter > .gm-winter > .gm-winter__grid {
+    display: contents !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter__header,
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-battle-effects,
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-map-core {
+    display: none !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--travel {
+    grid-column: 1 / 4 !important;
+    grid-row: 1 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--cold {
+    grid-column: 4 / 7 !important;
+    grid-row: 1 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-environment-edit {
+    grid-column: 7 / 13 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--scavenge {
+    grid-column: 1 / 4 !important;
+    grid-row: 2 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--tasks {
+    grid-column: 4 / 7 !important;
+    grid-row: 2 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-scene-presets {
+    grid-column: 7 / 13 !important;
+    grid-row: 2 / span 2 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--terrain {
+    grid-column: 1 / 4 !important;
+    grid-row: 3 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--conditions {
+    grid-column: 4 / 7 !important;
+    grid-row: 3 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene :is(
+    .gm-winter-card,
+    .tactical-environment-panel,
+    .gm-tactical-scene-presets,
+    .gm-tactical-scene-presets > *,
+    .gm-tactical-scene-presets .pip-panel
+  ) {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene :is(
+    .gm-winter-card,
+    .tactical-environment-panel,
+    .gm-tactical-scene-presets .pip-panel
+  ) {
+    margin: 0 !important;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1279px) {
+  .gm-organic-workspace.gm-tactical-tabs-shell .gm-tactical-view--scene {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    align-items: start !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-map-core {
+    display: none !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-winter {
+    grid-column: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-environment-edit {
+    grid-column: 2 !important;
+    min-width: 0 !important;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-scene-presets {
+    grid-column: 1 / -1 !important;
+    min-width: 0 !important;
+  }
+}
