@@ -192,3 +192,18 @@ export function deposit(s, c, input, now = Date.now()) {
   const next = changeBalance(s,amounts);
   return { character: { ...c, caps: String(number(c.caps)-amounts.caps), inventoryItems }, settlement: event({ ...next, orders: creditOrders(s.orders,amounts,now), members: { ...s.members, [actorFor(c).id]: { name: c.name || 'Player' } } }, 'stockpile_deposit', { contributor: c.name || 'Player', amounts }, now) };
 }
+
+export function buildingUpgradeInfo(building){
+  const targetType=UPGRADE_PATHS[building?.type];
+  const rule=upgradeRule(building);
+  if(!targetType||!rule)return null;
+  const current=getRulebookBuilding(building.type)||{};
+  const target=getRulebookBuilding(targetType)||{};
+  const keys=['power','water','defense','income','happiness','beds','roomCapacity','storageLbs','cropSlots','brahminCapacity','requiresPower','storeTier'];
+  const changes=[];
+  for(const key of keys){
+    const from=Number(current.effects?.[key]||0),to=Number(target.effects?.[key]||0);
+    if(from!==to)changes.push({key,from,to,delta:to-from});
+  }
+  return {targetType,rule,current,target,level:Math.max(1,Number(building?.level||1)),nextLevel:Math.max(1,Number(building?.level||1))+1,changes};
+}
