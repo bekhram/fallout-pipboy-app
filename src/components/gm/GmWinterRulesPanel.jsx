@@ -117,22 +117,6 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
   return <section className="gm-winter pip-screen">
     <header className="gm-winter__header"><span>PIP / 2D20 // WINTER OF ATOM</span><h2>[ {text.title} ]</h2></header>
     <div className="gm-winter__grid">
-      <article className="pip-panel gm-winter-card gm-winter-card--travel">
-        <h3>[ {text.travel} ]</h3>
-        <label>{text.duration}<NumberInput value={travel.durationHours} onChange={v=>patchTravel({durationHours:v})}/></label>
-        <label>{text.speed}<select className="pip-input" value={travel.speed} onChange={e=>patchTravel({speed:e.target.value})}><option value="cautious">Cautious</option><option value="normal">Normal</option><option value="hurried">Hurried</option></select></label>
-        <Checkbox label={text.route} checked={travel.establishedRoute} onChange={v=>patchTravel({establishedRoute:v})}/>
-        <Checkbox label={text.familiar} checked={travel.familiarArea} onChange={v=>patchTravel({familiarArea:v})}/>
-        <Checkbox label={text.friendly} checked={travel.friendlyFaction} onChange={v=>patchTravel({friendlyFaction:v})}/>
-        <Checkbox label={text.directions} checked={travel.goodDirections} onChange={v=>patchTravel({goodDirections:v})}/>
-        <Checkbox label={text.obstacles} checked={travel.obstaclesAvoidable} onChange={v=>patchTravel({obstaclesAvoidable:v})}/>
-        <label>{text.apReduction}<NumberInput value={travel.apDifficultyReduction} onChange={v=>patchTravel({apDifficultyReduction:v})} max={5}/></label>
-        <div className="winter-result"><b>{text.difficulty}: {travelResult.difficulty}</b><span>{text.finalDuration}: {travelResult.durationHours}h</span><span>{text.compRange}: {travelResult.complicationRange? `${21-travelResult.complicationRange}-20`:"—"}</span></div>
-        <label>{text.roll}<NumberInput value={travel.roll} onChange={v=>patchTravel({roll:v})} min={1} max={20}/></label>
-        <div className="winter-note"><b>{text.complication}</b><span>{comp.text}</span></div>
-        <label>{text.encounter}<NumberInput value={encounterRoll} onChange={v=>{setEncounterRoll(v);save({encounterRoll:v});}} min={1} max={20}/></label>
-        <div className="winter-note"><span>{encounter.text}</span></div>
-      </article>
 
       <article className="pip-panel gm-winter-card gm-winter-card--cold">
         <h3>[ {text.cold} ]</h3>
@@ -145,14 +129,6 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <Checkbox label={text.complication20} checked={cold.complication} onChange={v=>patchCold({complication:v})}/>
         <div className="winter-result"><b>{text.difficulty}: {coldDifficulty}</b><span>{text.fatigue}: +{coldFailure.fatigue} (max {coldFailure.fatigueCap})</span><span>{text.recovery}: {coldFailure.warmShelterRestHours}h</span></div>
         <button type="button" className="pip-btn" onClick={applyColdFailure} disabled={typeof setCharacter!=="function"}>{text.failedExposure}</button>
-      </article>
-
-      <article className="pip-panel gm-winter-card gm-winter-card--scavenge">
-        <h3>[ {text.scavenge} ]</h3>
-        <label>{text.scavengeA}<NumberInput value={scavengeRollA} onChange={v=>{setScavengeRollA(v);save({scavengeRollA:v});}} min={1} max={20}/></label>
-        <label>{text.scavengeB}<NumberInput value={scavengeRollB} onChange={v=>{setScavengeRollB(v);save({scavengeRollB:v});}} min={1} max={20}/></label>
-        <div className="winter-result"><b>{text.scavengeResult}: {scavenging.total}</b><span>{scavenging.rollA}+{scavenging.rollB}</span></div>
-        <div className="winter-note"><span>{scavenging.text}</span></div>
       </article>
 
 {showReputation ? (
