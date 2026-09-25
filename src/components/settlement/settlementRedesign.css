@@ -150,3 +150,12 @@
 .settlement-daily-idle{display:grid;gap:4px;padding:8px;border:1px solid rgba(255,150,110,.24);border-radius:8px}
 .settlement-daily-idle span{font-size:.72rem;color:#ffb19a}
 @media(max-width:720px){.settlement-daily-grid{grid-template-columns:1fr}.settlement-daily-grid article{padding:7px}}
+
+.settlement-upgrade-card,.settlement-market-card{display:grid;gap:8px;padding:9px;border:1px solid rgba(120,255,140,.18);border-radius:8px;background:rgba(120,255,140,.025)}
+.settlement-upgrade-card>div:first-child{display:grid;gap:2px}
+.settlement-upgrade-changes{display:grid;gap:3px;font-size:.72rem}
+.settlement-upgrade-changes b{font-size:.68rem;opacity:.72}
+.settlement-market-row{display:grid;grid-template-columns:minmax(0,1fr) 64px auto auto;gap:6px;align-items:center}
+.settlement-market-row>div{display:grid;gap:2px}
+.settlement-market-row small{font-size:.68rem;opacity:.72}
+@media(max-width:720px){.settlement-market-row{grid-template-columns:minmax(0,1fr) 58px}.settlement-market-row .pip-action-button{width:100%}}
