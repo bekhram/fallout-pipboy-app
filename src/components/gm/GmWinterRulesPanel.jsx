@@ -186,16 +186,6 @@ export default function GmWinterRulesPanel({character=null,setCharacter=null,lan
         <button type="button" className="pip-btn" disabled={!taskSetup.canAttempt} onClick={runSettlementTask}>{text.taskRun}</button>
         {task.last?.resolved?<div className="winter-result"><b>{task.last.success?text.taskSuccess:text.taskFailure}</b><span>{task.last.task.label} · {task.last.skill||task.last.task.attribute} · D{task.last.difficulty} · {task.last.successes} successes</span>{task.last.reward?<span>{task.last.reward}</span>:null}{task.last.negativeInfluenceSuggested?<button type="button" className="pip-btn" disabled={task.negativeApplied} onClick={applyTaskNegativeInfluence}>{task.negativeApplied?text.taskApplied:text.taskNegative}</button>:null}</div>:null}
       </article>
-
-      <article className="pip-panel gm-winter-card gm-winter-card--reference gm-winter-card--terrain">
-        <h3>[ {text.terrain} ]</h3>
-        {[...WINTER_TERRAIN,...WINTER_OBSTACLES].map(item=><div key={item.id} className="winter-ref-row"><span>{item.label}</span><b>{item.ap} AP</b></div>)}
-      </article>
-
-      <article className="pip-panel gm-winter-card gm-winter-card--reference gm-winter-card--conditions">
-        <h3>[ {text.conditions} ]</h3>
-        {WINTER_CONDITIONS.map(item=><div key={item.id} className="winter-ref-row winter-ref-row--stack"><strong>{item.label}</strong><span>{item.effect}</span></div>)}
-      </article>
     </div>
   </section>;
 }
