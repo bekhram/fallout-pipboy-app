@@ -1354,6 +1354,22 @@ export default function useGmAuthoritativeSessionV2(form) {
         scene.tokens = (scene.tokens || []).filter((token) => token.x >= 0 && token.y >= 0 && token.x + tokenSize(token) <= cols && token.y + tokenSize(token) <= rows);
       }
       if (Array.isArray(payload.startZone) || cols !== scene.cols || rows !== scene.rows) scene.startZone = normalizeStartZone(payload.startZone || scene.startZone, cols, rows);
+      if (Object.prototype.hasOwnProperty.call(payload, "actionPoints")) {
+        const sourceAp = payload.actionPoints && typeof payload.actionPoints === "object" ? payload.actionPoints : {};
+        scene.actionPoints = {
+          players: Math.max(0, Math.min(6, Math.floor(Number(sourceAp.players || 0)))),
+          gm: Math.max(0, Math.floor(Number(sourceAp.gm || 0))),
+          max: 6,
+        };
+      }
+      if (Object.prototype.hasOwnProperty.call(payload, "gmApEvents")) {
+        scene.gmApEvents = Array.isArray(payload.gmApEvents) ? payload.gmApEvents.slice(0, 30) : [];
+      }
+      if (Object.prototype.hasOwnProperty.call(payload, "lastGmComplication")) {
+        scene.lastGmComplication = payload.lastGmComplication && typeof payload.lastGmComplication === "object"
+          ? safeClone(payload.lastGmComplication)
+          : null;
+      }
       scene.revision = Number(scene.revision || 0) + 1;
       next.scene = safeClone(scene);
       return { scene };
