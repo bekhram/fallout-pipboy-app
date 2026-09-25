@@ -10,6 +10,7 @@ import { advanceBuildingRepairs } from './settlementRepair.js';
 import { addSettlerExperience, createSettlerProfile, randomSettlerName, settlerActionBonus } from './settlementSettlerProfile.js';
 import { resolveSettlementDailyEvent } from './settlementEvents.js';
 import { advanceSettlerRecovery } from './settlementHealth.js';
+import { getSettlementTurretFirepower } from './settlementTowerDefense.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 export const SETTLEMENT_INCOME_CAPS_PER_POINT = 10;
@@ -65,8 +66,9 @@ function calculateStaticAttributes(settlement,dailyDefenseBonus=null,foodOverrid
     const rule=getRulebookBuilding(building.type);if(!rule)continue;
     const effects=rule.effects || {},requiresPower=Math.max(0,Number(effects.requiresPower || 0));
     const powered=!requiresPower || powerGrid.poweredBuildingIds.has(building.id);
-    if(powered){base.defense+=Number(effects.defense || 0);base.beds+=Number(effects.beds || 0);storageBonus+=Number(effects.storageLbs || 0);if(effects.guardActionDefenseBonus)guardStructures+=1;if(effects.defensePerGuardPost)sirenCount+=Number(effects.defensePerGuardPost || 0);}
-    if(building.type==="wall_straight" || building.type==="wall_corner")fortificationPoints+=1;
+    const isTurret=/turret/.test(String(building.type||""));
+    if(powered){if(!isTurret)base.defense+=Number(effects.defense || 0);base.beds+=Number(effects.beds || 0);storageBonus+=Number(effects.storageLbs || 0);if(effects.guardActionDefenseBonus)guardStructures+=1;if(effects.defensePerGuardPost)sirenCount+=Number(effects.defensePerGuardPost || 0);}
+    if(building.type==="wall_straight" || building.type==="wall_corner" || building.type==="wall_corner_reverse")fortificationPoints+=1;
     if(building.type==="gate")fortificationPoints+=2;
     if(effects.noisy)noisyCount+=1;
     for(const room of building.rooms || []){if(room.state!=="active")continue;const roomEffects=getRoomRule(room.type)?.effects || room.effects || {};base.beds+=Number(roomEffects.beds || 0);storageBonus+=Number(roomEffects.storageLbs || 0);if(roomEffects.office)officeCount+=1;}
@@ -74,7 +76,8 @@ function calculateStaticAttributes(settlement,dailyDefenseBonus=null,foodOverrid
   base.defense+=sirenCount*guardStructures;
   if(dailyDefenseBonus===null)base.defense+=guardDefense(settlement,guardStructures);
   const wallDeterrence=Math.min(8,Math.floor(fortificationPoints/2));
-  return {...base,noisyCount,fortificationPoints,wallDeterrence,cropSlots:resourceGrid.cropSlots,cropStructures:resourceGrid.cropStructures,brahmin:resourceGrid.brahmin,brahminCapacity:resourceGrid.brahminCapacity,guardStructures,storageBonus,stockpileCapacityLbs:SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs+storageBonus,powerRequired:powerGrid.required,powerConsumed:powerGrid.consumed,powerAvailable:powerGrid.available,powerDeficit:powerGrid.deficit,unpoweredBuildings:powerGrid.unpoweredBuildingIds.size,officeCount};
+  const turretFirepower=getSettlementTurretFirepower(settlement);
+  return {...base,noisyCount,fortificationPoints,wallDeterrence,turretCount:turretFirepower.count,turretFirepower:turretFirepower.firepower,cropSlots:resourceGrid.cropSlots,cropStructures:resourceGrid.cropStructures,brahmin:resourceGrid.brahmin,brahminCapacity:resourceGrid.brahminCapacity,guardStructures,storageBonus,stockpileCapacityLbs:SETTLEMENT_RULEBOOK.stockpile.baseCapacityLbs+storageBonus,powerRequired:powerGrid.required,powerConsumed:powerGrid.consumed,powerAvailable:powerGrid.available,powerDeficit:powerGrid.deficit,unpoweredBuildings:powerGrid.unpoweredBuildingIds.size,officeCount};
 }
 function resolveConstruction(settlement,now){return advanceConstruction(settlement,now);}
 function resolveResidentActions(input,now){
