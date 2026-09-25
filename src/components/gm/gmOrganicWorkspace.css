@@ -256,16 +256,6 @@ body:has(.session-gm-host--organic)::after { display: none; }
     min-width: 0 !important;
   }
 
-  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--terrain {
-    grid-column: 1 / 4 !important;
-    grid-row: 3 !important;
-  }
-
-  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--conditions {
-    grid-column: 4 / 7 !important;
-    grid-row: 3 !important;
-  }
-
   .gm-organic-workspace .gm-tactical-view--scene :is(
     .gm-winter-card,
     .tactical-environment-panel,
