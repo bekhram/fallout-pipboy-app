@@ -12,6 +12,7 @@ import { resolveSettlementDailyEvent } from './settlementEvents.js';
 import { advanceSettlerRecovery } from './settlementHealth.js';
 import { getSettlementTurretFirepower } from './settlementTowerDefense.js';
 import { effectiveBuildingEffects, levelActionBonus } from './settlementBuildingLevels.js';
+import { applySettlementOperatingCosts, getSettlementOperatingCosts } from './settlementOperatingCosts.js';
 
 export const SETTLEMENT_DAY_MS = 24 * 60 * 60 * 1000;
 export const SETTLEMENT_INCOME_CAPS_PER_POINT = 10;
@@ -190,7 +191,7 @@ export function advanceSettlementDay(input,now=Date.now()){
   const actionResult=resolveResidentActions(input,now);
   const production=calculateStaticAttributes(actionResult.settlement,actionResult.dailyDefenseBonus,actionResult.settlement.attributes.food);
   let settlement=applyNeedsAndDeparture(actionResult.settlement,actionResult.dailyDefenseBonus,now);
-  settlement=collectDailySurplus(settlement,production);settlement=advanceBuildingRepairs(settlement,now);settlement=advanceSettlerRecovery(settlement,now);settlement=resolveRecruitment(settlement,now);settlement=resolveSettlementDailyEvent(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
+  settlement=collectDailySurplus(settlement,production);settlement=applySettlementOperatingCosts(settlement,now);settlement=advanceBuildingRepairs(settlement,now);settlement=advanceSettlerRecovery(settlement,now);settlement=resolveRecruitment(settlement,now);settlement=resolveSettlementDailyEvent(settlement,now);settlement=scheduleAttackAtEndOfDay(settlement,now);
   const derived=calculateStaticAttributes(settlement,null,settlement.attributes?.food);
   const stockpile={...normalizeStockpile(settlement.stockpile,settlement.resources?.materials),capacityLbs:derived.stockpileCapacityLbs};
   return {...settlement,livestock:{...(settlement.livestock || {}),brahmin:Math.min(Math.max(0,Number(settlement.livestock?.brahmin || 0)),derived.brahminCapacity)},settlementDay:Math.max(1,Number(settlement.settlementDay || 1)+1),lastDayAt:now,nextDayAt:now+SETTLEMENT_DAY_MS,stockpile,
@@ -242,6 +243,7 @@ export function getSettlementDailyForecast(settlement){
   const caravanCapsMin=caravanRanges.reduce((sum,row)=>sum+row.minCaps,0);
   const caravanCapsMax=caravanRanges.reduce((sum,row)=>sum+row.maxCaps,0);
 
+  const operating=getSettlementOperatingCosts(settlement);
   const needs=Math.max(0,Number(snapshot.needsPeople||0));
   const waterProduced=Math.max(0,Number(resourceGrid.waterProduced||0));
   const waterCropUse=Math.max(0,Number(resourceGrid.cropWater||0));
@@ -261,7 +263,7 @@ export function getSettlementDailyForecast(settlement){
     people:needs,
     food:{produced:foodProduced,consumed:needs,net:foodNet},
     water:{produced:waterProduced,cropUse:waterCropUse,available:waterAfterCrops,consumed:needs,net:waterNet},
-    caps:{stores:storeCaps,caravanMin:caravanCapsMin,caravanMax:caravanCapsMax,totalMin:storeCaps+caravanCapsMin,totalMax:storeCaps+caravanCapsMax},
+    caps:{stores:storeCaps,caravanMin:caravanCapsMin,caravanMax:caravanCapsMax,grossMin:storeCaps+caravanCapsMin,grossMax:storeCaps+caravanCapsMax,operating:operating.daily,debt:operating.debtBefore,totalMin:storeCaps+caravanCapsMin-operating.daily,totalMax:storeCaps+caravanCapsMax-operating.daily},
     materials:{scavengers:scavengers.length,dice:scavengingDice,commonBonus:scavengerPerks,caravanRuns:caravans.length},
     power:{produced:Number(power.produced||0),consumed:Number(power.consumed||0),available:Number(power.available||0),deficit:Number(power.deficit||0)},
     defense:Number(snapshot.defense||0),
