@@ -305,3 +305,19 @@ body:has(.session-gm-host--organic)::after { display: none; }
     min-width: 0 !important;
   }
 }
+
+.gm-organic-pagehead__tools{display:flex;align-items:center;justify-content:flex-end;gap:12px;min-width:0}
+.gm-ap-counter{display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:8px}
+.gm-ap-counter__row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border:1px solid var(--gm-line);border-radius:8px;background:var(--gm-surface)}
+.gm-ap-counter__row>span{font-size:11px;color:var(--gm-muted);white-space:nowrap}
+.gm-ap-counter__row>div{display:flex;align-items:center;gap:8px}
+.gm-ap-counter__row button{width:28px;height:28px;min-height:28px;padding:0;border:1px solid var(--gm-line);border-radius:6px;background:var(--gm-bg);color:var(--gm-accent);font:700 16px/1 system-ui}
+.gm-ap-counter__row strong{min-width:34px;text-align:center;color:var(--gm-accent)}
+@media (max-width:899px){.gm-organic-pagehead{align-items:flex-start;flex-direction:column}.gm-organic-pagehead__tools{width:100%;justify-content:stretch}.gm-ap-counter{width:100%;grid-template-columns:1fr 1fr}.gm-organic-scene-name{display:none}}
+@media (max-width:520px){.gm-ap-counter{grid-template-columns:1fr}}
+@media (min-width:1280px){
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--cold{grid-column:1 / 4 !important;grid-row:1 !important}
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-environment-edit{grid-column:4 / 13 !important;grid-row:1 !important}
+  .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--tasks{grid-column:1 / 4 !important;grid-row:2 !important}
+  .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-scene-presets{grid-column:4 / 13 !important;grid-row:2 !important}
+}
