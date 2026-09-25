@@ -31,9 +31,13 @@ jobs:
         run: node --test tests/campaign*.test.js tests/settlement*.test.js
       - run: npm run build
       - uses: actions/setup-python@v5
+        if: ${{ hashFiles('tests/browser_offline.py') != '' }}
         with:
           python-version: '3.12'
       - run: python -m pip install playwright==1.57.0
+        if: ${{ hashFiles('tests/browser_offline.py') != '' }}
       - run: python -m playwright install --with-deps chromium
+        if: ${{ hashFiles('tests/browser_offline.py') != '' }}
       - name: Native IndexedDB reload, concurrency and browser-restart tests
+        if: ${{ hashFiles('tests/browser_offline.py') != '' }}
         run: python tests/browser_offline.py
