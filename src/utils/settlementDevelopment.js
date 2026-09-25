@@ -2,6 +2,7 @@ import { getRulebookBuilding } from '../data/settlement/rulebookCatalog.js';
 import { ROOMS } from '../data/settlement/rulebook.js';
 import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from '../data/settlement/buildings.js';
 import { settlerActionBonus } from './settlementSettlerProfile.js';
+import { buildingLevel, effectiveBuildingEffects, levelUpgradeRule } from './settlementBuildingLevels.js';
 
 export const RESOURCE_KEYS = ['caps', 'common', 'uncommon', 'rare'];
 const TIERS = RESOURCE_KEYS.slice(1);
@@ -135,9 +136,11 @@ export function assignWorker(s, actor, workerId, key) {
   return { ...s, settlers: (s.settlers || []).map(w => w.id === workerId ? { ...w, settlementAction: action, assignedBuildingId: task?.buildingId || null, status: action ? 'working' : 'idle' } : w) };
 }
 export function upgradeRule(b) {
-  const target = getRulebookBuilding(UPGRADE_PATHS[b?.type]), old = getRulebookBuilding(b?.type);
-  if (!target) return null;
-  return { ...target, constructionDays: Math.max(1, target.constructionDays - (old?.constructionDays || 0)), caps: Math.max(0, (target.caps || 0) - (old?.caps || 0)), materials: Object.fromEntries(TIERS.map(k => [k, Math.max(0, (target.materials?.[k] || 0) - (old?.materials?.[k] || 0))])) };
+  const old = getRulebookBuilding(b?.type);
+  const targetType = UPGRADE_PATHS[b?.type];
+  const target = getRulebookBuilding(targetType);
+  if (target) return { ...target, constructionDays: Math.max(1, target.constructionDays - (old?.constructionDays || 0)), caps: Math.max(0, (target.caps || 0) - (old?.caps || 0)), materials: Object.fromEntries(TIERS.map(k => [k, Math.max(0, (target.materials?.[k] || 0) - (old?.materials?.[k] || 0))])) };
+  return levelUpgradeRule(b, old);
 }
 export function canFit(s, type, x, y, ignoreId) {
   const size = SETTLEMENT_BUILDINGS[type]?.footprint;
@@ -145,7 +148,7 @@ export function canFit(s, type, x, y, ignoreId) {
   return !(s.buildings || []).some(b => { if (b.id === ignoreId) return false; const f = SETTLEMENT_BUILDINGS[b.upgrade?.targetType || b.type]?.footprint; return f && x < b.x + f.width && x + size.width > b.x && y < b.y + f.height && y + size.height > b.y; });
 }
 export function startUpgrade(s, character, actor, id, now = Date.now()) {
-  const current = advanceConstruction(s, now), b = current.buildings?.find(b => b.id === id), rule = upgradeRule(b), targetType = UPGRADE_PATHS[b?.type];
+  const current = advanceConstruction(s, now), b = current.buildings?.find(b => b.id === id), rule = upgradeRule(b), targetType = UPGRADE_PATHS[b?.type] || (rule?.levelOnly ? b?.type : null);
   if (!b || b.state !== 'active' || b.upgrade || Number(b.condition ?? 100) <= 0 || !rule || buildBlockers(current, character, rule, actor).length || !canFit(current, targetType, b.x, b.y, b.id)) return current;
   const next = changeBalance(current, cost(rule), -1);
   return { ...next, buildings: next.buildings.map(item => item.id === id ? { ...item, upgrade: { state: 'construction', targetType, constructionDaysRequired: rule.constructionDays, constructionProgressDays: 0, paidCost: cost(rule), startedAt: now } } : item) };
@@ -194,16 +197,19 @@ export function deposit(s, c, input, now = Date.now()) {
 }
 
 export function buildingUpgradeInfo(building){
-  const targetType=UPGRADE_PATHS[building?.type];
-  const rule=upgradeRule(building);
-  if(!targetType||!rule)return null;
+  const rule=upgradeRule(building); if(!rule)return null;
+  const targetType=UPGRADE_PATHS[building?.type] || building.type;
   const current=getRulebookBuilding(building.type)||{};
-  const target=getRulebookBuilding(targetType)||{};
+  const target=getRulebookBuilding(targetType)||current;
   const keys=['power','water','defense','income','happiness','beds','roomCapacity','storageLbs','cropSlots','brahminCapacity','requiresPower','storeTier'];
+  const currentEffects=effectiveBuildingEffects(building,current.effects||{});
+  const nextEffects=rule.levelOnly?effectiveBuildingEffects({...building,level:buildingLevel(building)+1},current.effects||{}):(target.effects||{});
   const changes=[];
   for(const key of keys){
-    const from=Number(current.effects?.[key]||0),to=Number(target.effects?.[key]||0);
+    const from=Number(currentEffects?.[key]||0),to=Number(nextEffects?.[key]||0);
     if(from!==to)changes.push({key,from,to,delta:to-from});
   }
-  return {targetType,rule,current,target,level:Math.max(1,Number(building?.level||1)),nextLevel:Math.max(1,Number(building?.level||1))+1,changes};
+  if(rule.levelOnly&&building.type==='scrap_yard')changes.push({key:'scavenging CD',from:buildingLevel(building)-1,to:buildingLevel(building),delta:1});
+  if(rule.levelOnly&&building.type==='caravan_post')changes.push({key:'caravan caps',from:(buildingLevel(building)-1)*10,to:buildingLevel(building)*10,delta:10});
+  return {targetType,rule,current,target,level:buildingLevel(building),nextLevel:buildingLevel(building)+1,changes};
 }
