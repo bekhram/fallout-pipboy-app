@@ -2,7 +2,7 @@ import { SETTLEMENT_BUILDINGS, SETTLEMENT_GRID_SIZE } from "../data/settlement/b
 import { getRulebookBuilding } from "../data/settlement/rulebookCatalog.js";
 import { resolveSettlementPower } from "./settlementPower.js";
 
-const WALL_TYPES = new Set(["wall_straight", "wall_corner", "gate"]);
+const WALL_TYPES = new Set(["wall_straight", "wall_corner", "wall_corner_reverse", "gate"]);
 const TURRET_TYPES = new Set(["turret","machine_gun_turret","heavy_machine_gun_turret","laser_turret","heavy_laser_turret","shotgun_turret","spotlight_turret"]);
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
 const key=(x,y)=>`${x},${y}`;
@@ -70,6 +70,21 @@ function turretProfile(building){
   if(building.type==="laser_turret")return {range:5,damage:5};
   if(building.type==="heavy_machine_gun_turret")return {range:5,damage:5};
   return {range:4,damage:Math.max(3,defense)};
+}
+
+export function getSettlementTurretFirepower(settlement){
+  const power=resolveSettlementPower(settlement);
+  const turrets=(settlement.buildings||[]).filter(b=>{
+    if(!TURRET_TYPES.has(b.type) || b.state!=="active" || Number(b.condition??100)<=0 || b.autoDisabled)return false;
+    const effects=getRulebookBuilding(b.type)?.effects||{};
+    const required=Math.max(0,Number(effects.requiresPower||0));
+    return !required || power.poweredBuildingIds.has(b.id);
+  }).map(b=>({id:b.id,type:b.type,...turretProfile(b)}));
+  return {
+    count:turrets.length,
+    firepower:turrets.reduce((sum,t)=>sum+Number(t.damage||0),0),
+    turrets,
+  };
 }
 
 function enemyHp(faction,strength){
