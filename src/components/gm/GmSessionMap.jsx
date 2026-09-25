@@ -25,6 +25,7 @@ import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
 import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import GmWinterRulesPanel from "./GmWinterRulesPanel.jsx";
+import GmReferenceScreen from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
@@ -39,7 +40,7 @@ import LiveSessionWorldMap from "../session/LiveSessionWorldMap.jsx";
 import { worldCopy } from "../campaign/worldCopy.js";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["world", "battle", "autogm", "loot", "merchants", "custom", "scene", "tokens", "roster", "participants"];
+const TABS = ["world", "battle", "autogm", "loot", "merchants", "custom", "scene", "reference", "tokens", "roster", "participants"];
 const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
   en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu" },
@@ -126,7 +127,8 @@ export default function GmSessionMap(props) {
           {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
       {activeTab === "world" && <LiveSessionWorldMap session={session} />}
-      <div hidden={activeTab === "world"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
+      {activeTab === "reference" && <GmReferenceScreen session={session}/>} 
+      <div hidden={activeTab === "world" || activeTab === "reference"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         {activeTab === "scene" ? <div className="gm-tactical-winter"><GmWinterRulesPanel character={props.character} setCharacter={props.setCharacter} language={i18n.resolvedLanguage || i18n.language} showReputation={false} /></div> : null}
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
