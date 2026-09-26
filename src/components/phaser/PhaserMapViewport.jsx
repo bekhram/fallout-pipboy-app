@@ -214,7 +214,15 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           const color = token.kind === 'player' ? 0x62d9ff : palette[Math.abs(Number.isFinite(Number(token.stats?.tokenColorIndex)) ? Math.floor(Number(token.stats.tokenColorIndex)) : hash) % palette.length];
           const shape = this.add.graphics().setDepth(100);
           shape.fillStyle(0x06120d).fillCircle(x, y, radius).lineStyle(selected ? 4 : 2, selected ? 0xffd166 : color).strokeCircle(x, y, radius);
+          const dead = token.kind !== 'player' && Number(token.stats?.hp ?? token.stats?.currentHp ?? 1) <= 0;
           const letter = this.add.text(x, y, String(token.name || 'T').slice(0, 1).toUpperCase(), { fontFamily: 'monospace', fontSize: `${Math.round(radius)}px`, color: '#c5eebe' }).setOrigin(.5).setDepth(102);
+          const deathMark = dead ? this.add.graphics().setDepth(104) : null;
+          if (deathMark) {
+            const arm = radius * .72;
+            deathMark.lineStyle(Math.max(3, radius * .14), 0xff7f7f, .98);
+            deathMark.lineBetween(x - arm, y - arm, x + arm, y + arm);
+            deathMark.lineBetween(x + arm, y - arm, x - arm, y + arm);
+          }
           let portrait, mask, geometry, disposed = false;
           let stop = () => {};
           const applyPortrait = (url) => {
@@ -232,7 +240,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           else if (token.npcId) {
             getBestiaryTokenUrl(token.npcId).then(applyPortrait).catch(() => {});
           }
-          return () => { disposed = true; stop(); portrait?.destroy(); mask?.destroy(); geometry?.destroy(); letter.destroy(); shape.destroy(); };
+          return () => { disposed = true; stop(); portrait?.destroy(); mask?.destroy(); geometry?.destroy(); deathMark?.destroy(); letter.destroy(); shape.destroy(); };
         }
         refresh() {
           const d = latest.current, w = d.cols * CELL, h = d.rows * CELL;
