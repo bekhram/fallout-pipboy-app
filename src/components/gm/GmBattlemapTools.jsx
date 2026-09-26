@@ -59,7 +59,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
     const sync = () => {
       const nextContainer = document.querySelector(role === "player"
         ? ".session-tactical-player__tools-slot"
-        : ".gm-tactical-map-core .gm-session-map.tactical-map");
+        : ".gm-tactical-map-core .phaser-map.phaser-map--tactical");
       const nextGrid = document.querySelector(role === "player"
         ? ".session-tactical-player .gm-session-map__grid.tactical-grid"
         : ".gm-tactical-map-core .gm-session-map__grid.tactical-grid");
