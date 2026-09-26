@@ -80,6 +80,22 @@ function occupiedCells(scene) {
   return occupied;
 }
 
+function wastelandSpawnCandidates(poi, cols = 24, rows = 24) {
+  const cx = Math.floor(Number(poi?.x || 0));
+  const cy = Math.floor(Number(poi?.y || 0));
+  return cellsAroundWastelandPoi(poi, cols, rows)
+    .filter((cell) => !(cell.x === cx && cell.y === cy))
+    .sort((a, b) => {
+      const ad = Math.max(Math.abs(a.x - cx), Math.abs(a.y - cy));
+      const bd = Math.max(Math.abs(b.x - cx), Math.abs(b.y - cy));
+      if (ad !== bd) return ad - bd;
+      const aa = Math.atan2(a.y - cy, a.x - cx);
+      const ba = Math.atan2(b.y - cy, b.x - cx);
+      return aa - ba;
+    });
+}
+
+
 function specStamp(spec) {
   return [
     spec.type,
@@ -160,7 +176,7 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
         const occupants = [...(room.enemies || []), ...(room.residents || [])];
         if (!occupants.length) continue;
         const candidates = String(spec?.type || "") === "wasteland"
-          ? cellsAroundWastelandPoi(room, Number(spec?.cols || 24), Number(spec?.rows || 24)).reverse()
+          ? wastelandSpawnCandidates(room, Number(spec?.cols || 24), Number(spec?.rows || 24))
           : bounds
             ? cellsInsideRoom(bounds).reverse()
             : [];
@@ -250,14 +266,17 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
         </div>
       ) : null}
 
-      {rooms.length ? <div className="gm-room-descriptions__list">{rooms.map((room) => {
+      {rooms.length ? <div className="gm-room-descriptions__list">{rooms.map((room, roomIndex) => {
         const numberedMarker = numberedMarkerByRoom[room.id];
+        const locationNumber = String(spec?.type || "") === "wasteland"
+          ? roomIndex + 1
+          : numberedMarker?.marker || null;
         return (
-        <article key={room.id} className="gm-room-card">
+        <article key={room.id} className="gm-room-card" data-location-number={locationNumber || undefined}>
           <div className="gm-room-card__head">
             <div className="gm-room-card__title">
               <div className="gm-room-card__numbered-title">
-                {numberedMarker ? <span className="gm-room-card__number">{numberedMarker.marker}</span> : null}
+                {locationNumber ? <span className="gm-room-card__number">{locationNumber}</span> : null}
                 <strong>{room.name}</strong>
               </div>
               {room.enemyGroup && (room.enemies || []).length ? <small>{text.group}: {enemyGroupLabel(room.enemyGroup, lang)}</small> : null}
