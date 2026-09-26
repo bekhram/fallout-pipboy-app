@@ -437,3 +437,13 @@ body:has(.session-gm-host--organic)::after { display: none; }
 .gm-organic-workspace .gm-tactical-view--scene > :not(.gm-environment-screen){
   max-width:100%;
 }
+
+
+/* Hidden tactical views must stay hidden.
+   This prevents the legacy scene shell from rendering a second Environment panel
+   underneath the dedicated Environment & encounters screen. */
+.gm-organic-workspace .gm-tactical-shell[hidden],
+.gm-organic-workspace [hidden].gm-tactical-view--scene,
+.gm-organic-workspace .gm-tactical-environment-edit[hidden]{
+  display:none!important;
+}
