@@ -48,7 +48,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", openCard:"OPEN CARD", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -81,7 +81,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", openCard:"КАРТОЧКА", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -115,7 +115,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", openCard:"КАРТКА", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -148,7 +148,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", openCard:"KARTA", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
   },
 };
 
@@ -521,7 +521,19 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
 
   const focusToken = (tokenId) => {
     setSelectedTokenId(tokenId);
-    gridRef.current?.scrollIntoView?.({behavior:"smooth",block:"center"});
+    const token = tokens.find((item) => String(item.id) === String(tokenId));
+    if (token && gridRef.current?.phaserMap) {
+      gridRef.current.phaserMap.focus(Number(token.x || 0), Number(token.y || 0));
+    } else {
+      gridRef.current?.scrollIntoView?.({behavior:"smooth",block:"center"});
+    }
+  };
+
+  const openTokenCard = (tokenId) => {
+    setSelectedTokenId(tokenId);
+    window.dispatchEvent(new CustomEvent("pip2d20:gm-open-token-card", {
+      detail: { tokenId: String(tokenId) },
+    }));
   };
 
   const toggleTokenVisibility = async (token) => {
@@ -1048,10 +1060,18 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           const maxHp=Number(token?.stats?.maxHp ?? token?.stats?.hp ?? 0);
           const init=Number(token?.stats?.initiative ?? 0);
           const visible=token.kind==="player" || token?.stats?.visibleToPlayers !== false;
-          return <article className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")} key={token.id}>
-            <div className="gm-map-creature__main"><strong>{token.name||"Token"}</strong><small>{token.kind==="player"?"PLAYER":"NPC"} · [{Number(token.x)||0},{Number(token.y)||0}] · {text.hp} {hp}{maxHp?"/"+maxHp:""} · {text.initiative} {init}</small></div>
+          return <article
+            className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")}
+            data-token-id={String(token.id)}
+            key={token.id}
+            onDoubleClick={()=>token.kind!=="player"&&openTokenCard(token.id)}
+          >
+            <div className="gm-map-creature__main" onClick={()=>token.kind!=="player"&&openTokenCard(token.id)} role={token.kind!=="player"?"button":undefined} tabIndex={token.kind!=="player"?0:undefined} onKeyDown={(event)=>{if(token.kind!=="player"&&(event.key==="Enter"||event.key===" "))openTokenCard(token.id);}}>
+              <strong>{token.name||"Token"}</strong><small>{token.kind==="player"?"PLAYER":"NPC"} · [{Number(token.x)||0},{Number(token.y)||0}] · {text.hp} {hp}{maxHp?"/"+maxHp:""} · {text.initiative} {init}</small>
+            </div>
             <div className="gm-map-creature__actions">
               <button type="button" className="pip-btn" onClick={()=>focusToken(token.id)}>{text.focus}</button>
+              {token.kind!=="player"?<button type="button" className="pip-btn is-primary" onClick={()=>openTokenCard(token.id)}>{text.openCard}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>toggleTokenVisibility(token)}>{visible?text.hide:text.show}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>session.deleteToken?.(token.id)}>{text.remove}</button>:null}
             </div>
