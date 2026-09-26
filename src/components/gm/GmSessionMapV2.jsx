@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
 import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
+import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
 import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
@@ -1037,6 +1038,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         {cells}
       </div>
       </PhaserMapViewport>
+
+      <GmBattlemapExtrasPanel session={session} />
 
       <section className="gm-map-creatures pip-panel">
         <div className="pip-panel-title">{text.creatures}</div>
