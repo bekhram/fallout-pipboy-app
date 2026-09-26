@@ -1155,6 +1155,13 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 {detail("SKILLS",stats.skills??linked?.skills)}
                 {detail("SPECIAL",stats.special??linked?.special)}
                 {detail("ABILITIES",stats.abilities??linked?.abilities)}
+                {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail("LEGENDARY PERKS",stats.legendaryPerks.map((perk)=>perk.name+" — "+perk.description).join("\n")):null}
+                {(stats.physicalDrBonus||stats.energyDrBonus||stats.radiationDrBonus||stats.poisonDrBonus)?detail("PERK DR",[
+                  stats.physicalDrBonus?`Physical +${stats.physicalDrBonus}`:"",
+                  stats.energyDrBonus?`Energy +${stats.energyDrBonus}`:"",
+                  stats.radiationDrBonus?`Radiation +${stats.radiationDrBonus}`:"",
+                  stats.poisonDrBonus?`Poison +${stats.poisonDrBonus}`:"",
+                ].filter(Boolean).join(" · ")):null}
                 {detail("RESISTANCE",stats.drBlock??linked?.drBlock)}
                 {detail("TACTICS",stats.tactics??linked?.tactics)}
                 {detail("LOOT",stats.loot??linked?.loot)}
