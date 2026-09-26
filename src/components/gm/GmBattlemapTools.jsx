@@ -32,10 +32,10 @@ function pointFor(grid, event) {
 
 function labels() {
   const lang = String(document?.documentElement?.lang || "en").toLowerCase().split("-")[0];
-  if (lang === "ru") return { tools:"ИНСТРУМЕНТЫ", draw:"КАРАНДАШ", ruler:"ЛИНЕЙКА", zones:"ЗОН" };
-  if (lang === "uk") return { tools:"ІНСТРУМЕНТИ", draw:"ОЛІВЕЦЬ", ruler:"ЛІНІЙКА", zones:"ЗОН" };
-  if (lang === "pl") return { tools:"NARZĘDZIA", draw:"OŁÓWEK", ruler:"LINIJKA", zones:"STREF" };
-  return { tools:"TOOLS", draw:"PENCIL", ruler:"RULER", zones:"ZONES" };
+  if (lang === "ru") return { tools:"ИНСТРУМЕНТЫ", draw:"КАРАНДАШ", ruler:"ЛИНЕЙКА", zones:"ЗОН", fit:"ВПИСАТЬ", focus:"ФОКУС", pan:"ДВИГАТЬ", select:"ВЫБОР", full:"НА ВЕСЬ ЭКРАН", close:"СВЕРНУТЬ" };
+  if (lang === "uk") return { tools:"ІНСТРУМЕНТИ", draw:"ОЛІВЕЦЬ", ruler:"ЛІНІЙКА", zones:"ЗОН", fit:"ВМІСТИТИ", focus:"ФОКУС", pan:"РУХАТИ", select:"ВИБІР", full:"НА ВЕСЬ ЕКРАН", close:"ЗГОРНУТИ" };
+  if (lang === "pl") return { tools:"NARZĘDZIA", draw:"OŁÓWEK", ruler:"LINIJKA", zones:"STREF", fit:"DOPASUJ", focus:"FOKUS", pan:"PRZESUŃ", select:"WYBÓR", full:"PEŁNY EKRAN", close:"ZWIŃ" };
+  return { tools:"TOOLS", draw:"PENCIL", ruler:"RULER", zones:"ZONES", fit:"FIT", focus:"FOCUS", pan:"PAN", select:"SELECT", full:"FULL SCREEN", close:"COLLAPSE" };
 }
 
 export default function GmBattlemapTools({ session, role = "gm" }) {
@@ -44,6 +44,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
   const [grid, setGrid] = useState(null);
   const [open, setOpen] = useState(() => readOpen(role));
   const [mode, setMode] = useState("");
+  const [cameraState, setCameraState] = useState({ zoom:100, pan:false, expanded:false, ready:false });
   const [draft, setDraft] = useState(null);
   const [ruler, setRuler] = useState(null);
   const gestureRef = useRef(null);
@@ -76,6 +77,23 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
     const key = role === "player" ? PLAYER_STORAGE_KEY : STORAGE_KEY;
     try { localStorage.setItem(key, open ? "1" : "0"); } catch {}
   }, [open, role]);
+
+  useEffect(() => {
+    if (!container) return undefined;
+    const sync = (event) => {
+      const next = event?.detail || container.phaserToolbar?.state;
+      if (!next) return;
+      setCameraState({
+        zoom: Number(next.zoom || 100),
+        pan: Boolean(next.pan),
+        expanded: Boolean(next.expanded),
+        ready: Boolean(next.ready),
+      });
+    };
+    sync();
+    container.addEventListener("pip2d20:phaser-toolbar-state", sync);
+    return () => container.removeEventListener("pip2d20:phaser-toolbar-state", sync);
+  }, [container]);
 
   useEffect(() => {
     if (!grid) return undefined;
@@ -231,6 +249,17 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
         <button type="button" className={mode === "draw" ? "is-active" : ""} onClick={() => setMode((v) => v === "draw" ? "" : "draw")} title={text.draw}>✎</button>
         <button type="button" className={mode === "ruler" ? "is-active" : ""} onClick={() => setMode((v) => v === "ruler" ? "" : "ruler")} title={text.ruler}>↔</button>
       </div>
+      {role === "gm" ? (
+        <div className="battlemap-mobile-camera" aria-label={text.tools}>
+          <button type="button" onClick={() => container.phaserToolbar?.togglePan?.()} aria-pressed={cameraState.pan} title={cameraState.pan ? text.select : text.pan}>{cameraState.pan ? "✋" : "↖"}</button>
+          <button type="button" onClick={() => container.phaserToolbar?.zoomOut?.()} disabled={!cameraState.ready}>−</button>
+          <button type="button" className="battlemap-mobile-camera__zoom" onClick={() => container.phaserToolbar?.fit?.()} disabled={!cameraState.ready}>{Math.round(cameraState.zoom)}%</button>
+          <button type="button" onClick={() => container.phaserToolbar?.zoomIn?.()} disabled={!cameraState.ready}>+</button>
+          <button type="button" className="battlemap-mobile-camera__text" onClick={() => container.phaserToolbar?.fit?.()} disabled={!cameraState.ready}>{text.fit}</button>
+          <button type="button" onClick={() => container.phaserToolbar?.focus?.()} disabled={!cameraState.ready} title={text.focus}>◎</button>
+          <button type="button" onClick={() => container.phaserToolbar?.toggleExpanded?.()} title={cameraState.expanded ? text.close : text.full}>{cameraState.expanded ? "×" : "⛶"}</button>
+        </div>
+      ) : null}
     </div>,
     container
   );
