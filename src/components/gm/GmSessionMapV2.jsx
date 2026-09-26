@@ -190,7 +190,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", initiativeOrder:"INITIATIVE", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", initiativeOrder:"INITIATIVE", previousTurn:"PREV", nextTurn:"NEXT", round:"ROUND", dead:"DEAD", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
     stat:{type:"TYPE",body:"BODY",mind:"MIND",melee:"MELEE",guns:"GUNS",other:"OTHER",skills:"SKILLS",special:"SPECIAL",specialFeature:"SPECIAL FEATURE",legendaryAbility:"LEGENDARY ABILITY",abilities:"ABILITIES",legendaryPerks:"LEGENDARY PERKS",perkDr:"PERK DR",resistance:"RESISTANCE",tactics:"TACTICS",loot:"LOOT",summary:"SUMMARY",notes:"NOTES",source:"SOURCE",rank:"RANK",size:"SIZE"},
   },
   ru: {
@@ -224,7 +224,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", initiativeOrder:"ИНИЦИАТИВА", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", initiativeOrder:"ИНИЦИАТИВА", previousTurn:"ПРЕД. ХОД", nextTurn:"СЛЕД. ХОД", round:"РАУНД", dead:"МЕРТВ", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
     stat:{type:"ТИП",body:"ТЕЛО",mind:"РАЗУМ",melee:"БЛИЖНИЙ БОЙ",guns:"СТРЕЛЬБА",other:"ДРУГОЕ",skills:"НАВЫКИ",special:"SPECIAL",specialFeature:"ОСОБОЕ СВОЙСТВО",legendaryAbility:"ЛЕГЕНДАРНАЯ СПОСОБНОСТЬ",abilities:"СПОСОБНОСТИ",legendaryPerks:"ЛЕГЕНДАРНЫЕ ПЕРКИ",perkDr:"СОПРОТИВЛЕНИЯ ОТ ПЕРКОВ",resistance:"СОПРОТИВЛЕНИЯ",tactics:"ТАКТИКА",loot:"ДОБЫЧА",summary:"ОПИСАНИЕ",notes:"ЗАМЕТКИ",source:"ИСТОЧНИК",rank:"РАНГ",size:"РАЗМЕР"},
   },
   uk: {
@@ -259,7 +259,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", initiativeOrder:"ІНІЦІАТИВА", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", initiativeOrder:"ІНІЦІАТИВА", previousTurn:"ПОПЕР. ХІД", nextTurn:"НАСТ. ХІД", round:"РАУНД", dead:"МЕРТВИЙ", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
     stat:{type:"ТИП",body:"ТІЛО",mind:"РОЗУМ",melee:"БЛИЖНІЙ БІЙ",guns:"СТРІЛЬБА",other:"ІНШЕ",skills:"НАВИЧКИ",special:"SPECIAL",specialFeature:"ОСОБЛИВА ВЛАСТИВІСТЬ",legendaryAbility:"ЛЕГЕНДАРНА ЗДІБНІСТЬ",abilities:"ЗДІБНОСТІ",legendaryPerks:"ЛЕГЕНДАРНІ ПЕРКИ",perkDr:"ОПІР ВІД ПЕРКІВ",resistance:"ОПІР",tactics:"ТАКТИКА",loot:"ЗДОБИЧ",summary:"ОПИС",notes:"НОТАТКИ",source:"ДЖЕРЕЛО",rank:"РАНГ",size:"РОЗМІР"},
   },
   pl: {
@@ -293,7 +293,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", initiativeOrder:"INICJATYWA", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", initiativeOrder:"INICJATYWA", previousTurn:"POPRZ. TURA", nextTurn:"NAST. TURA", round:"RUNDA", dead:"MARTWY", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
     stat:{type:"TYP",body:"CIAŁO",mind:"UMYSŁ",melee:"WALKA WRĘCZ",guns:"STRZELECTWO",other:"INNE",skills:"UMIEJĘTNOŚCI",special:"SPECIAL",specialFeature:"CECHA SPECJALNA",legendaryAbility:"ZDOLNOŚĆ LEGENDARNA",abilities:"ZDOLNOŚCI",legendaryPerks:"LEGENDARNE PERKI",perkDr:"ODPORNOŚCI Z PERKÓW",resistance:"ODPORNOŚCI",tactics:"TAKTYKA",loot:"ŁUP",summary:"OPIS",notes:"NOTATKI",source:"ŹRÓDŁO",rank:"RANGA",size:"ROZMIAR"},
   },
 };
@@ -544,6 +544,15 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const tokens = Array.isArray(scene.tokens) ? scene.tokens : [];
   const playerTokens = tokens.filter((token) => token.kind === "player");
   const enemyTokens = tokens.filter((token) => token.kind !== "player");
+  const initiativeTokens = [...tokens].sort((a,b) =>
+    Number(b?.stats?.initiative || 0) - Number(a?.stats?.initiative || 0)
+    || String(a?.name || "").localeCompare(String(b?.name || ""))
+  );
+  const aliveInitiativeTokenIds = initiativeTokens
+    .filter((token) => token.kind === "player" || Number(token?.stats?.hp ?? token?.stats?.currentHp ?? 1) > 0)
+    .map((token) => String(token.id));
+  const activeTurnTokenId = String(session?.turnState?.activeTokenId || "");
+  const currentRound = Math.max(1, Number(session?.turnState?.round || 1));
   const startKeys = new Set(
     (scene.startZone || []).map((cell) => cellKey(cell.x, cell.y))
   );
@@ -673,6 +682,16 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     }
     await session.updateToken?.(tokenId, next);
   };
+
+  const changeEnemyHp = async (token, delta) => {
+    if (!token || token.kind === "player") return;
+    const stats = token.stats || {};
+    const maxHp = Math.max(1, Number(stats.maxHp ?? stats.hp ?? 1));
+    const currentHp = Math.max(0, Number(stats.hp ?? stats.currentHp ?? maxHp));
+    const nextHp = Math.max(0, Math.min(maxHp, currentHp + Number(delta || 0)));
+    await updateEnemy(token.id, { hp: nextHp });
+  };
+
 
   const placeGeneratedEnemies = async () => {
     if(sceneActionBusy)return;
@@ -1226,15 +1245,29 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       </section>
 
       <section className="gm-mobile-initiative" aria-label={text.initiativeOrder}>
-        <div className="gm-mobile-initiative__title">[ {text.initiativeOrder} ]</div>
+        <div className="gm-mobile-initiative__head">
+          <button type="button" className="pip-btn" disabled={!aliveInitiativeTokenIds.length} onClick={()=>session.advanceTurn?.(aliveInitiativeTokenIds,-1)}>{text.previousTurn}</button>
+          <strong>{text.round} {currentRound}</strong>
+          <button type="button" className="pip-btn is-primary" disabled={!aliveInitiativeTokenIds.length} onClick={()=>session.advanceTurn?.(aliveInitiativeTokenIds,1)}>{text.nextTurn}</button>
+        </div>
         <div className="gm-mobile-initiative__list">
-          {[...tokens].sort((a,b)=>Number(b?.stats?.initiative||0)-Number(a?.stats?.initiative||0)).map((token,index)=>{
+          {initiativeTokens.map((token,index)=>{
             const init=Number(token?.stats?.initiative||0);
-            return <button type="button" className={"gm-mobile-initiative__entry"+(selectedTokenId===token.id?" is-selected":"")} key={token.id} onClick={()=>focusToken(token.id)}>
-              <span className="gm-mobile-initiative__pos">{index+1}</span>
-              <span className="gm-mobile-initiative__avatar">{token.avatar?<img src={token.avatar} alt="" />:<b>{String(token.name||"T").slice(0,1)}</b>}</span>
-              <span className="gm-mobile-initiative__name">{token.name||"Token"}</span>
-              <strong>{init}</strong>
+            const hp=Number(token?.stats?.hp ?? token?.stats?.currentHp ?? 1);
+            const dead=token.kind!=="player"&&hp<=0;
+            const active=String(token.id)===activeTurnTokenId;
+            return <button
+              type="button"
+              className={"gm-mobile-initiative__entry"+(active?" is-active":"")+(dead?" is-dead":"")}
+              key={token.id}
+              onClick={()=>focusToken(token.id)}
+              title={(token.name||"Token")+" · "+text.initiative+" "+init+(dead?" · "+text.dead:"")}
+              aria-label={(token.name||"Token")+" · "+text.initiative+" "+init}
+            >
+              <span className="gm-mobile-initiative__avatar">
+                {token.avatar?<img src={token.avatar} alt="" />:<b>{String(token.name||"T").slice(0,1)}</b>}
+                {dead?<i aria-hidden="true">×</i>:null}
+              </span>
             </button>;
           })}
         </div>
@@ -1274,7 +1307,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           const linked=token.kind!=="player"?mapBestiaryEntry(token):null;
           const detail=(label,value)=>value!==undefined&&value!==null&&String(value).trim()!==""?<div className="gm-map-creature__detail-line"><strong>{label}</strong><span>{typeof value==="object"?JSON.stringify(value):String(value)}</span></div>:null;
           return <article
-            className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")+(expanded?" is-expanded":"")}
+            className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")+(expanded?" is-expanded":"")+(token.kind!=="player"&&hp<=0?" is-dead":"")}
             data-token-id={String(token.id)}
             key={token.id}
           >
@@ -1288,9 +1321,12 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
             </div>
             <div className="gm-map-creature__actions">
               <button type="button" className="pip-btn" onClick={()=>focusToken(token.id)}>{text.focus}</button>
+              {token.kind!=="player"?<button type="button" className="pip-btn gm-map-creature__hp-btn" onClick={()=>changeEnemyHp(token,-1)} disabled={hp<=0}>− HP</button>:null}
+              {token.kind!=="player"?<button type="button" className="pip-btn gm-map-creature__hp-btn" onClick={()=>changeEnemyHp(token,1)} disabled={hp>=Math.max(1,maxHp)}>+ HP</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>toggleTokenVisibility(token)}>{visible?text.hide:text.show}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>session.deleteToken?.(token.id)}>{text.remove}</button>:null}
             </div>
+            {token.kind!=="player"&&hp<=0?<div className="gm-map-creature__dead-label">[ {text.dead} ]</div>:null}
             {expanded&&token.kind!=="player"?<div className="gm-map-creature__details">
               <div className="gm-map-creature__stats">
                 <span>HP <b>{hp}/{maxHp||"—"}</b></span>
