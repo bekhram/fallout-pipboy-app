@@ -295,6 +295,25 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
   }, [sceneKey, cols, rows, retry]);
 
   useEffect(() => { api.current?.refresh(); }, [background, cells, markers, route, player, selected]);
+
+  useEffect(() => {
+    const node = host.current;
+    if (!node) return undefined;
+    const state = { zoom, pan, expanded, ready };
+    node.phaserToolbar = {
+      zoomOut: () => api.current?.zoomAt(api.current.cameras.main.zoom / 1.25),
+      zoomIn: () => api.current?.zoomAt(api.current.cameras.main.zoom * 1.25),
+      fit: () => api.current?.fit(),
+      focus: () => player && api.current?.focus(player.x, player.y),
+      togglePan: () => setPan((value) => !value),
+      toggleExpanded: () => setExpanded((value) => !value),
+      state,
+    };
+    node.dispatchEvent(new CustomEvent("pip2d20:phaser-toolbar-state", { detail: state }));
+    return () => {
+      if (node.phaserToolbar?.state === state) delete node.phaserToolbar;
+    };
+  }, [ready, zoom, pan, expanded, player?.x, player?.y]);
   useEffect(() => {
     const grid = gridRef?.current;
     if (!grid || !ready) return;
