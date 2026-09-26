@@ -96,3 +96,9 @@ body:has(.phaser-map.is-expanded) { overflow: hidden; }
     padding:6px;
   }
 }
+
+@media(max-width:780px){
+  .gm-tactical-map-core .phaser-map.phaser-map--tactical > .phaser-map__controls{
+    display:none!important;
+  }
+}
