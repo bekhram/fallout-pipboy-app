@@ -1096,17 +1096,22 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           const expanded=String(expandedMapCreatureId)===String(token.id);
           const attacks=token.kind!=="player"?mapCreatureAttacks(token):[];
           const stats=token?.stats||{};
+          const linked=token.kind!=="player"?mapBestiaryEntry(token):null;
+          const detail=(label,value)=>value!==undefined&&value!==null&&String(value).trim()!==""?<div className="gm-map-creature__detail-line"><strong>{label}</strong><span>{typeof value==="object"?JSON.stringify(value):String(value)}</span></div>:null;
           return <article
             className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")+(expanded?" is-expanded":"")}
             data-token-id={String(token.id)}
             key={token.id}
           >
             <div className="gm-map-creature__main">
-              <strong>{token.name||"Token"}</strong><small>{token.kind==="player"?"PLAYER":"NPC"} · [{Number(token.x)||0},{Number(token.y)||0}] · {text.hp} {hp}{maxHp?"/"+maxHp:""} · {text.initiative} {init}</small>
+              <div className="gm-map-creature__title-row">
+                <strong>{token.name||"Token"}</strong>
+                {token.kind!=="player"?<button type="button" className="gm-map-creature__expand" aria-label={expanded?text.collapse:text.expand} aria-expanded={expanded} onClick={()=>toggleMapCreatureCard(token.id)}>{expanded?"⌃":"⌄"}</button>:null}
+              </div>
+              <small>{token.kind==="player"?"PLAYER":"NPC"} · [{Number(token.x)||0},{Number(token.y)||0}] · {text.hp} {hp}{maxHp?"/"+maxHp:""} · {text.initiative} {init}</small>
             </div>
             <div className="gm-map-creature__actions">
               <button type="button" className="pip-btn" onClick={()=>focusToken(token.id)}>{text.focus}</button>
-              {token.kind!=="player"?<button type="button" className={"pip-btn"+(expanded?" is-primary":"")} onClick={()=>toggleMapCreatureCard(token.id)}>{expanded?text.collapse:text.expand}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>toggleTokenVisibility(token)}>{visible?text.hide:text.show}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>session.deleteToken?.(token.id)}>{text.remove}</button>:null}
             </div>
@@ -1117,6 +1122,27 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 <span>{text.initiative} <b>{init}</b></span>
                 <span>LVL <b>{Number(stats.level||0)}</b></span>
                 <span>XP <b>{Number(stats.xp||0)}</b></span>
+                <span>RANK <b>{String(stats.rank||"standard")}</b></span>
+                <span>DR <b>+{Number(stats.resistanceBonus||0)}</b></span>
+                <span>DMG <b>×{Number(stats.damageMultiplier||1)}</b></span>
+                <span>SIZE <b>{Number(stats.footprint||token.size||1)}×{Number(stats.footprint||token.size||1)}</b></span>
+              </div>
+              <div className="gm-map-creature__full-stats">
+                {detail("TYPE",stats.creatureType||linked?.creatureType)}
+                {detail("BODY",stats.body??linked?.body)}
+                {detail("MIND",stats.mind??linked?.mind)}
+                {detail("MELEE",stats.melee??linked?.melee)}
+                {detail("GUNS",stats.guns??linked?.guns)}
+                {detail("OTHER",stats.other??linked?.other)}
+                {detail("SKILLS",stats.skills??linked?.skills)}
+                {detail("SPECIAL",stats.special??linked?.special)}
+                {detail("ABILITIES",stats.abilities??linked?.abilities)}
+                {detail("RESISTANCE",stats.drBlock??linked?.drBlock)}
+                {detail("TACTICS",stats.tactics??linked?.tactics)}
+                {detail("LOOT",stats.loot??linked?.loot)}
+                {detail("SUMMARY",stats.summary??linked?.summary)}
+                {detail("NOTES",stats.notes)}
+                {detail("SOURCE",stats.source??linked?.source)}
               </div>
               <div className="gm-map-creature__attacks">
                 <strong>[ {text.attacks} ]</strong>
