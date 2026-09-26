@@ -53,7 +53,7 @@ function languageCode(language) {
   return COPY[code] ? code : "en";
 }
 function normalizeTab(tab) {
-  if (tab === "encounter" || tab === "scenes") return "scene";
+  if (tab === "encounter") return "scene";
   return TABS.includes(tab) ? tab : "battle";
 }
 function ActionPointCounter({session,labels}){
