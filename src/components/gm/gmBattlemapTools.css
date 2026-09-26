@@ -147,3 +147,93 @@
     min-width:0;
   }
 }
+
+@media(max-width:780px){
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    gap:4px!important;
+    top:6px!important;
+    left:6px!important;
+    right:6px!important;
+    width:auto!important;
+    max-width:none!important;
+    padding:3px!important;
+    border-radius:9px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    white-space:nowrap!important;
+    scrollbar-width:none;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer::-webkit-scrollbar{display:none}
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer .battlemap-tools-toggle{
+    flex:0 0 34px!important;
+    width:34px!important;
+    min-width:34px!important;
+    height:34px!important;
+    min-height:34px!important;
+    padding:0!important;
+    display:grid!important;
+    place-items:center!important;
+    border-radius:7px!important;
+    font-size:18px!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer .battlemap-tools-toggle b{display:none!important}
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer .battlemap-tools-toggle span{font-size:18px!important;line-height:1!important}
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer:not(.is-open){
+    right:auto!important;
+    width:40px!important;
+    overflow:hidden!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer:not(.is-open) .battlemap-tools-panel,
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer:not(.is-open) .battlemap-mobile-camera{
+    display:none!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer.is-open .battlemap-tools-panel{
+    display:flex!important;
+    flex:0 0 auto!important;
+    width:auto!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    gap:4px!important;
+    opacity:1!important;
+    visibility:visible!important;
+    transform:none!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer.is-open .battlemap-tools-panel button,
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer.is-open .battlemap-mobile-camera button{
+    width:34px!important;
+    min-width:34px!important;
+    height:34px!important;
+    min-height:34px!important;
+    padding:0 6px!important;
+    border-radius:7px!important;
+    font-size:12px!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer.is-open .battlemap-mobile-camera{
+    display:flex!important;
+    flex:0 0 auto!important;
+    width:auto!important;
+    padding:0!important;
+    border:0!important;
+    background:transparent!important;
+    gap:4px!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer.is-open .battlemap-mobile-camera__zoom{
+    width:52px!important;
+    min-width:52px!important;
+  }
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer.is-open .battlemap-mobile-camera__text{
+    width:66px!important;
+    min-width:66px!important;
+  }
+}
+@media(max-width:430px){
+  .phaser-map.phaser-map--tactical > .battlemap-tools-drawer{
+    left:5px!important;
+    right:5px!important;
+  }
+}
