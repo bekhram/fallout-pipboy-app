@@ -300,3 +300,9 @@
 .gm-map-ap__row strong{text-align:center;min-width:34px}
 @media(max-width:640px){.gm-map-actions__head{align-items:stretch;flex-direction:column}.gm-map-ap{display:grid;grid-template-columns:1fr 1fr}.gm-map-ap__row{grid-template-columns:minmax(0,1fr) 28px 42px 28px}.gm-map-ap__row>span{overflow:hidden;text-overflow:ellipsis}}
 @media(max-width:420px){.gm-map-ap{grid-template-columns:1fr}}
+
+.gm-map-action-result{display:grid;gap:4px;padding:8px 10px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);border-radius:8px;background:color-mix(in srgb,currentColor 5%,transparent)}
+.gm-map-action-result strong{color:var(--gm-accent,currentColor)}
+.gm-map-action-result span{font-size:.72rem;line-height:1.45;opacity:.82}
+.gm-map-action-result small{font-size:.64rem;opacity:.65}
+.gm-map-action-result.is-error{border-color:rgba(255,120,100,.45)}
