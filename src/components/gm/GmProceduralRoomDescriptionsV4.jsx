@@ -132,13 +132,19 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
   if (session?.mode !== "host") return null;
 
   const placeEnemies = async () => {
-    if (!spec || placing) return;
-    if (!spawnTotal) { setMessage(text.noEnemies); return; }
-    if (!session?.liveSceneId || session.liveSceneId !== scene?.sceneId) { setMessage(text.startLive); return; }
+    if (!spec || placing) return { ok: false, error: "NOT_READY", message: "" };
+    if (!spawnTotal) { setMessage(text.noEnemies); return { ok: false, error: "NO_ENEMIES", message: text.noEnemies }; }
+    if (!session?.liveSceneId || session.liveSceneId !== scene?.sceneId) {
+      setMessage(text.startLive);
+      return { ok: false, error: "SCENE_NOT_LIVE", message: text.startLive };
+    }
 
     const stamp = specStamp(spec);
     const alreadyPlaced = (scene?.tokens || []).some((token) => token?.stats?.generatedEncounterSeed === stamp);
-    if (alreadyPlaced) { setMessage(text.already); return; }
+    if (alreadyPlaced) {
+      setMessage(text.already);
+      return { ok: true, already: true, count: 0, message: text.already };
+    }
 
     setPlacing(true);
     setMessage("");
@@ -179,11 +185,30 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
               x: cell.x,
               y: cell.y,
             });
-            if (response?.ok) { occupied.add(`${cell.x}:${cell.y}`); created += 1; } else failed = true;
+            let placed = Boolean(response?.ok);
+            const tokenId = response?.token?.id;
+            if (placed && tokenId && typeof session.moveToken === "function") {
+              const moved = await session.moveToken(tokenId, cell.x, cell.y);
+              if (moved?.ok === false) {
+                placed = false;
+                await session.deleteToken?.(tokenId);
+              }
+            }
+            if (placed) {
+              occupied.add(`${cell.x}:${cell.y}`);
+              created += 1;
+            } else {
+              failed = true;
+            }
           }
         }
       }
-      setMessage(failed ? `${text.spawned(created)} ${text.failed}` : text.spawned(created));
+      const finalMessage = failed ? `${text.spawned(created)} ${text.failed}` : text.spawned(created);
+      setMessage(finalMessage);
+      return { ok: created > 0 && !failed, partial: created > 0 && failed, count: created, message: finalMessage };
+    } catch (error) {
+      setMessage(text.failed);
+      return { ok: false, error: error?.message || "PLACE_ENEMIES_FAILED", count: created, message: text.failed };
     } finally {
       setPlacing(false);
     }
