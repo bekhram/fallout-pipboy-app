@@ -1,6 +1,7 @@
 import { getSelectedWeaponMods, getWeaponModGroups, applyWeaponMods } from "../data/weaponMods.js";
 import { applyNpcRank, normalizeWeaponAttack, parseAttackText } from "./npcCombat.js";
 import { formatLegendaryAbility, formatSpecialFeature, legendaryAbilityById, randomLegendaryAbilityFor, randomSpecialFeatureFor, specialFeatureById } from "./npcFeaturePresets.js";
+import { applyLegendaryNpcCombatPerks, chooseLegendaryNpcCombatPerks, legendaryNpcUsesPerks } from "./legendaryNpcCombatPerks.js";
 import { loadNpcWeaponDatabase } from "./npcWeaponDatabase.js";
 import { buildProceduralNpcLevelStats } from "./proceduralNpcLeveling.js";
 import {
@@ -363,11 +364,20 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
   const explicitSpecialFeature = enemy?.specialFeatureId ? specialFeatureById(enemy.specialFeatureId) : null;
   const selectedSpecialFeature = explicitSpecialFeature || generatedSpecialFeature;
 
+  const isNpc = String(entry?.cardKind || "").toLowerCase() === "npc"
+    || String(entry?.statKind || "").toLowerCase() === "character";
+  const hasExplicitLegendaryAbility = Boolean(enemy?.legendaryAbilityId || enemy?.legendaryAbility);
+  const useLegendaryPerks = String(rank) === "legendary"
+    && isNpc
+    && !hasExplicitLegendaryAbility
+    && !Array.isArray(enemy?.legendaryPerks)
+    && legendaryNpcUsesPerks(context.stamp || "", salt);
+
   const generatedLegendaryAbility = String(rank) === "legendary"
-    && !enemy?.legendaryAbilityId
-    && !enemy?.legendaryAbility
+    && !useLegendaryPerks
+    && !hasExplicitLegendaryAbility
       ? randomLegendaryAbilityFor({
-          kind: String(entry?.cardKind || "").toLowerCase() === "npc" || String(entry?.statKind || "").toLowerCase() === "character" ? "npc" : "creature",
+          kind: isNpc ? "npc" : "creature",
           seed: context.stamp || "",
           salt,
         })
@@ -396,7 +406,7 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     baseSize: 1,
   };
 
-  const ranked = applyNpcRank(base, {
+  let ranked = applyNpcRank(base, {
     rank,
     specialFeatureId: enemy?.specialFeatureId || selectedSpecialFeature?.id || "",
     specialFeature: enemy?.specialFeature || formatSpecialFeature(selectedSpecialFeature),
@@ -405,6 +415,25 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     legendaryRewardType: enemy?.legendaryRewardType || "",
     legendaryReward: enemy?.legendaryReward || "",
   });
+
+  let selectedLegendaryPerks = [];
+  if (String(rank) === "legendary" && isNpc) {
+    if (Array.isArray(enemy?.legendaryPerks) && enemy.legendaryPerks.length) {
+      const wanted = new Set(enemy.legendaryPerks.map((item) => String(item?.id || item)));
+      selectedLegendaryPerks = chooseLegendaryNpcCombatPerks(ranked, context.stamp || "", `${salt}:explicit-fallback`, 15)
+        .filter((perk) => wanted.has(perk.id))
+        .slice(0, 2);
+    } else if (useLegendaryPerks) {
+      selectedLegendaryPerks = chooseLegendaryNpcCombatPerks(ranked, context.stamp || "", salt, 2);
+    }
+    if (selectedLegendaryPerks.length) {
+      ranked = applyLegendaryNpcCombatPerks({
+        ...ranked,
+        legendaryAbilityId: "",
+        legendaryAbility: "",
+      }, selectedLegendaryPerks);
+    }
+  }
 
   // Procedural encounters no longer assign random combat buffs. Explicit buff IDs
   // are still respected for manually-authored/custom encounter data.
@@ -425,6 +454,8 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     generatedEncounterRank: rank,
     generatedEnemyGroup: enemy?.enemyGroup || "",
     generatedSpecialFeatureId: selectedSpecialFeature?.id || enemy?.specialFeatureId || "",
-    generatedLegendaryAbilityId: selectedLegendaryAbility?.id || enemy?.legendaryAbilityId || "",
+    generatedLegendaryAbilityId: selectedLegendaryPerks.length ? "" : (selectedLegendaryAbility?.id || enemy?.legendaryAbilityId || ""),
+    generatedLegendaryPerkMode: selectedLegendaryPerks.length ? "perks" : "ability",
+    generatedLegendaryPerkIds: selectedLegendaryPerks.map((perk) => perk.id),
   };
 }
