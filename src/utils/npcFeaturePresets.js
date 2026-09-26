@@ -29,3 +29,20 @@ export function legendaryAbilityById(id) {
 export function legendaryAbilitiesFor(kind = "creature") {
   return LEGENDARY_CREATURE_ABILITIES.filter((item) => !item.npcOnly || kind === "npc");
 }
+
+
+function featureHash(value) {
+  const text = String(value ?? "0");
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+export function randomLegendaryAbilityFor({ kind = "creature", seed = "", salt = "" } = {}) {
+  const pool = legendaryAbilitiesFor(kind);
+  if (!pool.length) return null;
+  return pool[featureHash(`${seed}:${salt}:${kind}:legendary-creature-property`) % pool.length] || null;
+}
