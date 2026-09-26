@@ -3,6 +3,7 @@ import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
+import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
 import "./gmSessionMap.css";
@@ -45,7 +46,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS",
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -78,7 +79,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ",
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -112,7 +113,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ",
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -145,7 +146,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ",
   },
 };
 
@@ -328,6 +329,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const dragRef = useRef(null);
   const suppressCellClickRef = useRef(false);
   const fileRef = useRef(null);
+  const roomDescriptionsRef = useRef(null);
+  const [sceneActionBusy,setSceneActionBusy]=useState("");
 
   useEffect(() => {
     setSceneName(scene?.name || "");
@@ -478,6 +481,37 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       });
     }
     await session.updateToken?.(tokenId, next);
+  };
+
+  const placeGeneratedEnemies = async () => {
+    if(sceneActionBusy)return;
+    setSceneActionBusy("place");
+    try{
+      await roomDescriptionsRef.current?.placeEnemies?.();
+    } finally {
+      setSceneActionBusy("");
+    }
+  };
+
+  const removeAllEnemies = async () => {
+    if(sceneActionBusy)return;
+    setSceneActionBusy("remove");
+    try{
+      for(const token of enemyTokens) await session.deleteToken?.(token.id);
+      setSelectedTokenId(null);
+    } finally {
+      setSceneActionBusy("");
+    }
+  };
+
+  const focusToken = (tokenId) => {
+    setSelectedTokenId(tokenId);
+    gridRef.current?.scrollIntoView?.({behavior:"smooth",block:"center"});
+  };
+
+  const toggleTokenVisibility = async (token) => {
+    const current=token?.stats?.visibleToPlayers !== false;
+    await session.updateToken?.(token.id,{stats:{...(token.stats||{}),visibleToPlayers:!current}});
   };
 
   const moveSelected = async (x, y) => {
@@ -892,6 +926,18 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         </div>
       ) : null}
       </details>
+
+      <section className="gm-map-actions pip-panel">
+        <div className="pip-panel-title">{text.sceneActions}</div>
+        <div className="gm-map-actions__buttons">
+          <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)} onClick={placeGeneratedEnemies}>{text.placeEnemies}</button>
+          <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)||!enemyTokens.length} onClick={removeAllEnemies}>{text.removeEnemies}</button>
+          {!selectedIsLive
+            ? <button type="button" className="pip-btn is-primary" disabled={Boolean(sceneActionBusy)} onClick={enableScene}>{text.activateScene}</button>
+            : <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)} onClick={()=>session.disableTacticalScene?.()}>{text.deactivateScene}</button>}
+        </div>
+      </section>
+
       <PhaserMapViewport cols={cols} rows={rows} sceneKey={scene.sceneId} background={scene.backgroundUrl} gridRef={gridRef} player={playerTokens[0]} label={text.title}>
       <div
         data-phaser-grid="true"
@@ -910,6 +956,28 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         {cells}
       </div>
       </PhaserMapViewport>
+
+      <section className="gm-map-creatures pip-panel">
+        <div className="pip-panel-title">{text.creatures}</div>
+        {tokens.length ? <div className="gm-map-creatures__list">{tokens.map(token=>{
+          const hp=Number(token?.stats?.hp ?? token?.stats?.currentHp ?? 0);
+          const maxHp=Number(token?.stats?.maxHp ?? token?.stats?.hp ?? 0);
+          const init=Number(token?.stats?.initiative ?? 0);
+          const visible=token.kind==="player" || token?.stats?.visibleToPlayers !== false;
+          return <article className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")} key={token.id}>
+            <div className="gm-map-creature__main"><strong>{token.name||"Token"}</strong><small>{token.kind==="player"?"PLAYER":"NPC"} · [{Number(token.x)||0},{Number(token.y)||0}] · {text.hp} {hp}{maxHp?"/"+maxHp:""} · {text.initiative} {init}</small></div>
+            <div className="gm-map-creature__actions">
+              <button type="button" className="pip-btn" onClick={()=>focusToken(token.id)}>{text.focus}</button>
+              {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>toggleTokenVisibility(token)}>{visible?text.hide:text.show}</button>:null}
+              {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>session.deleteToken?.(token.id)}>{text.remove}</button>:null}
+            </div>
+          </article>;
+        })}</div>:<small className="gm-map-creatures__empty">{text.emptyCreatures}</small>}
+      </section>
+
+      <section className="gm-map-rooms">
+        <GmProceduralRoomDescriptionsV4 ref={roomDescriptionsRef} session={session} embedded />
+      </section>
 
       <TacticalEnemyManager
         tokens={enemyTokens.map(managerToken)}
