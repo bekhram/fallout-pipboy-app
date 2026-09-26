@@ -3,7 +3,16 @@ import { buildFalloutD20Result, rollFalloutD6, rollSingleDie } from "./dice.js";
 export const NPC_RANKS = ["minion", "standard", "special", "legendary"];
 
 export const NPC_RANK_RULES = {
-  minion: { hpMultiplier: 0, xpMultiplier: 1 / 3, defenseMultiplier: 1, damageMultiplier: 1, resistanceBonus: 0 },
+  minion: {
+    hpMultiplier: 0,
+    xpMultiplier: 1 / 3,
+    defenseMultiplier: 1,
+    damageMultiplier: 1,
+    resistanceBonus: 0,
+    environmentalDamageImmune: true,
+    blastDamageMode: "effect-check",
+    fixedDamage: true,
+  },
   standard: { hpMultiplier: 1, xpMultiplier: 1, defenseMultiplier: 1, damageMultiplier: 1, resistanceBonus: 0 },
   // Special/Legendary keep the project's extra Defense and DR scaling, but rank itself
   // no longer multiplies attack damage. Damage grows through NPC level progression,
@@ -158,6 +167,9 @@ export function applyNpcRank(base = {}, options = {}) {
     defense: Math.max(0, Math.round(baseDefense * rule.defenseMultiplier)),
     resistanceBonus: rule.resistanceBonus,
     damageMultiplier: rule.damageMultiplier,
+    environmentalDamageImmune: Boolean(rule.environmentalDamageImmune),
+    blastDamageMode: rule.blastDamageMode || "normal",
+    fixedDamage: Boolean(rule.fixedDamage),
     hordeEnabled,
     hordeSize,
     hordeHp,
@@ -178,13 +190,52 @@ export function effectiveAttackProfile(attack, stats = {}) {
   const rank = normalizeNpcRank(stats.rank);
   const rule = NPC_RANK_RULES[rank];
   const living = livingHordeMembers(stats);
+  const isMinion = rank === "minion";
+  const groupedAllies = stats.hordeEnabled ? Math.max(0, living - 1) : 0;
+  const baseMinionDamage = Math.max(1, Math.ceil(Math.max(1, number(stats.level, 1)) / 2));
+
   return {
     ...normalized,
-    d20Count: Math.max(1, 2 + (stats.hordeEnabled ? living : 0)),
-    damageDice: Math.max(0, Math.round(normalized.damageDice * rule.damageMultiplier) + (stats.hordeEnabled ? living : 0)),
-    hordeBonusD20: stats.hordeEnabled ? living : 0,
-    hordeBonusDamage: stats.hordeEnabled ? living : 0,
+    d20Count: Math.max(1, 2 + groupedAllies),
+    damageDice: isMinion
+      ? 0
+      : Math.max(0, Math.round(normalized.damageDice * rule.damageMultiplier) + groupedAllies),
+    hordeBonusD20: groupedAllies,
+    hordeBonusDamage: groupedAllies,
     rankDamageMultiplier: rule.damageMultiplier,
+    minionFixedDamage: isMinion,
+    minionBaseDamage: isMinion ? baseMinionDamage : 0,
+    minionGroupDamageBonus: isMinion ? groupedAllies : 0,
+    minionEffectsTriggerOnce: isMinion,
+  };
+}
+
+export function resolveMinionAttackDamage(profile = {}, totalSuccesses = 0, targetDefense = 0) {
+  if (!profile?.minionFixedDamage) return null;
+  const extraSuccesses = Math.max(
+    0,
+    Number(totalSuccesses || 0) - Math.max(0, Number(targetDefense || 0))
+  );
+  return {
+    total: Math.max(
+      0,
+      Number(profile.minionBaseDamage || 0)
+      + Number(profile.minionGroupDamageBonus || 0)
+      + extraSuccesses
+    ),
+    base: Number(profile.minionBaseDamage || 0),
+    groupBonus: Number(profile.minionGroupDamageBonus || 0),
+    extraSuccesses,
+    effectsTriggerOnce: true,
+    effects: String(profile.effects || "").split(",").map((item) => item.trim()).filter(Boolean),
+  };
+}
+
+export function resolveMinionBlastDamage(effectRolled = false) {
+  return {
+    defeated: Boolean(effectRolled),
+    damage: 0,
+    rule: "Minions ignore normal Blast damage; roll 1 CD and defeat the Minion only on an Effect.",
   };
 }
 
@@ -205,7 +256,7 @@ export function buildNpcAttackRollConfig(attack, stats = {}, actorName = "NPC") 
     npcAttack: true,
     weapon: {
       name: `${actorName} · ${profile.name}`,
-      damage: `${profile.damageDice} CD`,
+      damage: profile.minionFixedDamage ? `${profile.minionBaseDamage + profile.minionGroupDamageBonus} fixed` : `${profile.damageDice} CD`,
       effects,
       customEffect: "",
       skill: profile.skill,
@@ -218,7 +269,7 @@ export function buildNpcAttackRollConfig(attack, stats = {}, actorName = "NPC") 
   };
 }
 
-export function rollNpcAttack(attack, stats = {}, actorName = "NPC") {
+export function rollNpcAttack(attack, stats = {}, actorName = "NPC", options = {}) {
   const profile = effectiveAttackProfile(attack, stats);
   const values = Array.from({ length: profile.d20Count }, () => rollSingleDie(20));
   const check = buildFalloutD20Result(values, {
@@ -227,7 +278,14 @@ export function rollNpcAttack(attack, stats = {}, actorName = "NPC") {
     label: `${actorName} · ${profile.name}`,
   });
   const effects = profile.effects.split(",").map((item) => item.trim()).filter(Boolean);
-  const damage = profile.damageDice > 0 ? rollFalloutD6({ diceCount: profile.damageDice, effects }) : null;
+  const minionDamage = resolveMinionAttackDamage(
+    profile,
+    check.totalSuccesses,
+    options.targetDefense ?? 0
+  );
+  const damage = !profile.minionFixedDamage && profile.damageDice > 0
+    ? rollFalloutD6({ diceCount: profile.damageDice, effects })
+    : null;
 
   return {
     check: {
@@ -243,7 +301,20 @@ export function rollNpcAttack(attack, stats = {}, actorName = "NPC") {
       diceCount: profile.d20Count,
       info: `${rankLabel(stats.rank)}${stats.hordeEnabled ? ` · HORDE ${livingHordeMembers(stats)}/${stats.hordeSize}` : ""}`,
     },
-    damage: damage ? {
+    damage: minionDamage ? {
+      diceType: "fixed",
+      source: "npc_damage",
+      title: `${actorName}: ${profile.name} DAMAGE`,
+      label: `${minionDamage.total} ${profile.damageType}${profile.effects ? ` · ${profile.effects}` : ""}`,
+      digits: [],
+      rolls: [],
+      total: minionDamage.total,
+      effects: minionDamage.effects.length,
+      triggeredEffects: minionDamage.effects,
+      diceCount: 0,
+      info: `MINION FIXED ${minionDamage.base} + GROUP ${minionDamage.groupBonus} + EXTRA SUCCESSES ${minionDamage.extraSuccesses}`,
+      effectsTriggerOnce: true,
+    } : damage ? {
       diceType: "combat",
       source: "npc_damage",
       title: `${actorName}: ${profile.name} DAMAGE`,
