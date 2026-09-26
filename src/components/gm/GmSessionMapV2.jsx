@@ -46,7 +46,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS",
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -79,7 +79,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ",
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -113,7 +113,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ",
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -146,7 +146,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ",
   },
 };
 
@@ -512,6 +512,22 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const toggleTokenVisibility = async (token) => {
     const current=token?.stats?.visibleToPlayers !== false;
     await session.updateToken?.(token.id,{stats:{...(token.stats||{}),visibleToPlayers:!current}});
+  };
+
+  const actionPoints=scene.actionPoints||{players:0,gm:0,max:6};
+  const changeActionPoints = async (pool,delta) => {
+    const current=Math.max(0,Math.floor(Number(actionPoints?.[pool]||0)));
+    const next=pool==="players"
+      ? Math.max(0,Math.min(6,current+delta))
+      : Math.max(0,current+delta);
+    await session.updateTacticalScene?.({
+      actionPoints:{
+        players:Math.max(0,Math.min(6,Math.floor(Number(actionPoints.players||0)))),
+        gm:Math.max(0,Math.floor(Number(actionPoints.gm||0))),
+        max:6,
+        [pool]:next,
+      },
+    });
   };
 
   const moveSelected = async (x, y) => {
@@ -928,7 +944,23 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       </details>
 
       <section className="gm-map-actions pip-panel">
-        <div className="pip-panel-title">{text.sceneActions}</div>
+        <div className="gm-map-actions__head">
+          <div className="pip-panel-title">{text.sceneActions}</div>
+          <div className="gm-map-ap" aria-label={text.actionPoints}>
+            <div className="gm-map-ap__row">
+              <span>{text.playersAp}</span>
+              <button type="button" onClick={()=>changeActionPoints("players",-1)}>−</button>
+              <strong>{Math.max(0,Math.min(6,Number(actionPoints.players||0)))}/6</strong>
+              <button type="button" onClick={()=>changeActionPoints("players",1)}>+</button>
+            </div>
+            <div className="gm-map-ap__row">
+              <span>{text.gmAp}</span>
+              <button type="button" onClick={()=>changeActionPoints("gm",-1)}>−</button>
+              <strong>{Math.max(0,Number(actionPoints.gm||0))}</strong>
+              <button type="button" onClick={()=>changeActionPoints("gm",1)}>+</button>
+            </div>
+          </div>
+        </div>
         <div className="gm-map-actions__buttons">
           <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)} onClick={placeGeneratedEnemies}>{text.placeEnemies}</button>
           <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)||!enemyTokens.length} onClick={removeAllEnemies}>{text.removeEnemies}</button>
