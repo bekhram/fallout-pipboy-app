@@ -20,6 +20,85 @@ const DEFAULT_ROWS = 12;
 const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
 const MAX_BACKGROUND_LENGTH = 790000;
 
+const CREATURE_FEATURE_COPY = {
+  en: {
+    alpha: { name:"Alpha", effect:"One level higher than normal; improves Body or Mind, one skill, and one additional combat stat. Gains Aggressive and Leader of the Pack." },
+    glowing: { name:"Glowing", effect:"Gains Glowing and Immune to Radiation. Deals radiation nearby each turn and improves melee radiation effects." },
+    rabid: { name:"Rabid", effect:"Gains Feral and Rabid. Melee attacks gain Persistent (Poison); poison exposure counts as two disease exposures." },
+    scorched: { name:"Scorched", effect:"Gains the Scorched ability: aggressive hive-mind behavior against the uninfected. Attacks count as disease exposure." },
+    cruel: { name:"Cruel", effect:"Gain 1 Luck point whenever this creature inflicts a critical hit.", mutation:"All attacks gain Vicious; attacks already with Vicious gain +2 CD instead." },
+    explosive: { name:"Explosive", effect:"No normal effect.", mutation:"Melee attacks gain Radioactive. At 0 HP the creature explodes for 12 CD Radiation damage at Close range; salvage tests are +2 difficulty." },
+    legendary_damage: { name:"Legendary Damage", effect:"Choose one attack: it gains +3 CD. A ranged attack with Fire Rate 1+ may use Let Rip one extra time per scene.", mutation:"The chosen attack can fuel an extra major action for only 1 AP; Let Rip refreshes." },
+    legendary_proficiency: { name:"Legendary Proficiency", effect:"Choose one Tag skill. Tests with it gain 1 automatic success.", mutation:"Tests with that Tag skill gain 2 automatic successes instead." },
+    radioactive: { name:"Radioactive", effect:"Immune to Radiation damage; all melee attacks gain Radioactive.", mutation:"Creatures within Close range suffer 5 CD Piercing 1 Radiation damage at the start of their turns." },
+    rage_heal: { name:"Rage Heal", effect:"Regain 3 HP at the start of each turn.", mutation:"Immediately heal back to maximum HP." },
+    scarred: { name:"Scarred", effect:"Physical DR and Energy DR both increase by +2.", mutation:"Roll 1 CD per Injury; on Effect remove that Injury. Physical and Energy DR gain another +2 for the rest of the scene." },
+    stalker: { name:"Stalker", effect:"Gain 1 automatic success on Sneak, +2 Initiative, and +1 Defense in concealment.", mutation:"Become invisible as if using a Stealth Boy for the rest of the scene." },
+    toxic: { name:"Toxic", effect:"Melee attacks gain Persistent (Poison) plus Radioactive, Stun, or Vicious.", mutation:"Creatures within Reach suffer 5 CD Poison damage at the start of their turns, with the chosen damage effect." },
+    tyrant: { name:"Tyrant", effect:"Accompanied by Normal creatures of the same type; number depends on their relative level.", mutation:"The same number of reinforcements arrives when mutation triggers." },
+  },
+  ru: {
+    alpha: { name:"Альфа", effect:"На 1 уровень выше нормы; улучшает Body или Mind, один навык и ещё один боевой параметр. Получает Aggressive и Leader of the Pack." },
+    glowing: { name:"Светящийся", effect:"Получает Glowing и иммунитет к радиации. Наносит радиационный урон рядом с собой каждый ход и усиливает радиационные эффекты атак ближнего боя." },
+    rabid: { name:"Бешеный", effect:"Получает Feral и Rabid. Атаки ближнего боя получают Persistent (Poison); яд считается двумя воздействиями болезни." },
+    scorched: { name:"Обожжённый", effect:"Получает способность Scorched: агрессивное поведение улья против незаражённых. Его атаки считаются воздействием болезни." },
+    cruel: { name:"Жестокий", effect:"Получает 1 очко Удачи каждый раз, когда наносит критическое попадание.", mutation:"Все атаки получают Vicious; если Vicious уже есть, атака вместо этого получает +2 КУ." },
+    explosive: { name:"Взрывоопасный", effect:"Постоянного эффекта нет.", mutation:"Атаки ближнего боя получают Radioactive. При 0 HP существо взрывается, нанося 12 КУ радиационного урона всем на близкой дистанции; сложность добычи останков +2." },
+    legendary_damage: { name:"Легендарный урон", effect:"Выбранная атака получает +3 КУ. Дальняя атака с скорострельностью 1+ может ещё раз за сцену использовать Let Rip.", mutation:"Выбранную атаку можно использовать для дополнительного основного действия за 1 AP; Let Rip восстанавливается." },
+    legendary_proficiency: { name:"Легендарное мастерство", effect:"Выберите один Tag-навык. Проверки этим навыком получают 1 автоматический успех.", mutation:"Проверки этим Tag-навыком получают уже 2 автоматических успеха." },
+    radioactive: { name:"Радиоактивный", effect:"Иммунитет к радиационному урону; все атаки ближнего боя получают Radioactive.", mutation:"Существа на близкой дистанции получают 5 КУ радиационного урона с Piercing 1 в начале своего хода." },
+    rage_heal: { name:"Яростное исцеление", effect:"В начале каждого хода восстанавливает 3 HP.", mutation:"Немедленно восстанавливает HP до максимума." },
+    scarred: { name:"Израненный", effect:"Физическое и энергетическое сопротивление увеличиваются на +2.", mutation:"Бросьте 1 КУ за каждую травму; на эффекте травма снимается. Физическое и энергетическое сопротивление дополнительно увеличиваются ещё на +2 до конца сцены." },
+    stalker: { name:"Сталкер", effect:"1 автоматический успех на Sneak, +2 к инициативе и +1 к защите в укрытии/темноте.", mutation:"Становится невидимым как при использовании Stealth Boy до конца сцены." },
+    toxic: { name:"Токсичный", effect:"Атаки ближнего боя получают Persistent (Poison) и один эффект: Radioactive, Stun или Vicious.", mutation:"Существа в пределах Reach получают 5 КУ ядовитого урона в начале своего хода с выбранным эффектом." },
+    tyrant: { name:"Тиран", effect:"Сопровождается обычными существами того же типа; количество зависит от разницы уровней.", mutation:"При мутации прибывает такое же количество подкреплений." },
+  },
+  uk: {
+    alpha: { name:"Альфа", effect:"На 1 рівень вище норми; покращує Body або Mind, одну навичку та ще один бойовий параметр. Отримує Aggressive і Leader of the Pack." },
+    glowing: { name:"Сяючий", effect:"Отримує Glowing та імунітет до радіації. Завдає радіаційної шкоди поруч щохід і посилює радіаційні ефекти атак ближнього бою." },
+    rabid: { name:"Скажений", effect:"Отримує Feral і Rabid. Атаки ближнього бою отримують Persistent (Poison); отрута рахується як два впливи хвороби." },
+    scorched: { name:"Обпалений", effect:"Отримує здатність Scorched: агресивна поведінка вулика проти незаражених. Атаки рахуються як вплив хвороби." },
+    cruel: { name:"Жорстокий", effect:"Отримує 1 очко Удачі щоразу, коли завдає критичного влучання.", mutation:"Усі атаки отримують Vicious; якщо Vicious уже є, атака натомість отримує +2 КУ." },
+    explosive: { name:"Вибуховий", effect:"Постійного ефекту немає.", mutation:"Атаки ближнього бою отримують Radioactive. При 0 HP істота вибухає, завдаючи 12 КУ радіаційної шкоди всім на близькій дистанції; складність збору здобичі +2." },
+    legendary_damage: { name:"Легендарна шкода", effect:"Обрана атака отримує +3 КУ. Дальня атака зі скорострільністю 1+ може ще раз за сцену використати Let Rip.", mutation:"Обрану атаку можна використати для додаткової основної дії за 1 AP; Let Rip відновлюється." },
+    legendary_proficiency: { name:"Легендарна майстерність", effect:"Оберіть одну Tag-навичку. Перевірки нею отримують 1 автоматичний успіх.", mutation:"Перевірки цією Tag-навичкою отримують 2 автоматичні успіхи." },
+    radioactive: { name:"Радіоактивний", effect:"Імунітет до радіаційної шкоди; усі атаки ближнього бою отримують Radioactive.", mutation:"Істоти на близькій дистанції отримують 5 КУ радіаційної шкоди з Piercing 1 на початку свого ходу." },
+    rage_heal: { name:"Люте зцілення", effect:"На початку кожного ходу відновлює 3 HP.", mutation:"Негайно відновлює HP до максимуму." },
+    scarred: { name:"Пошрамований", effect:"Фізичний та енергетичний опір збільшуються на +2.", mutation:"Киньте 1 КУ за кожну травму; на ефекті травма знімається. Фізичний та енергетичний опір додатково збільшуються ще на +2 до кінця сцени." },
+    stalker: { name:"Сталкер", effect:"1 автоматичний успіх на Sneak, +2 до ініціативи та +1 до захисту в укритті/темряві.", mutation:"Стає невидимим як під дією Stealth Boy до кінця сцени." },
+    toxic: { name:"Токсичний", effect:"Атаки ближнього бою отримують Persistent (Poison) і один ефект: Radioactive, Stun або Vicious.", mutation:"Істоти в межах Reach отримують 5 КУ отруйної шкоди на початку свого ходу з обраним ефектом." },
+    tyrant: { name:"Тиран", effect:"Супроводжується звичайними істотами того самого типу; кількість залежить від різниці рівнів.", mutation:"Під час мутації прибуває така сама кількість підкріплень." },
+  },
+  pl: {
+    alpha: { name:"Alfa", effect:"Jest o 1 poziom wyżej niż normalnie; poprawia Body lub Mind, jedną umiejętność i dodatkowy parametr bojowy. Otrzymuje Aggressive i Leader of the Pack." },
+    glowing: { name:"Świecący", effect:"Otrzymuje Glowing i odporność na promieniowanie. Co turę zadaje obrażenia radiacyjne w pobliżu i wzmacnia radiacyjne efekty ataków wręcz." },
+    rabid: { name:"Wściekły", effect:"Otrzymuje Feral i Rabid. Ataki wręcz zyskują Persistent (Poison); trucizna liczy się jako dwa narażenia na chorobę." },
+    scorched: { name:"Spalony", effect:"Otrzymuje zdolność Scorched: agresywne zachowanie roju wobec niezarażonych. Ataki liczą się jako narażenie na chorobę." },
+    cruel: { name:"Okrutny", effect:"Otrzymuje 1 punkt Szczęścia za każdym razem, gdy zada trafienie krytyczne.", mutation:"Wszystkie ataki zyskują Vicious; jeśli już mają Vicious, zamiast tego zyskują +2 CD." },
+    explosive: { name:"Wybuchowy", effect:"Brak stałego efektu.", mutation:"Ataki wręcz zyskują Radioactive. Przy 0 HP istota eksploduje, zadając 12 CD obrażeń radiacyjnych wszystkim w zasięgu Close; trudność pozyskania łupu +2." },
+    legendary_damage: { name:"Legendarne obrażenia", effect:"Wybrany atak zyskuje +3 CD. Atak dystansowy z Fire Rate 1+ może raz dodatkowo na scenę użyć Let Rip.", mutation:"Wybrany atak może służyć jako dodatkowa akcja główna za 1 AP; Let Rip odnawia się." },
+    legendary_proficiency: { name:"Legendarna biegłość", effect:"Wybierz jedną umiejętność Tag. Testy nią zyskują 1 automatyczny sukces.", mutation:"Testy tą umiejętnością Tag zyskują 2 automatyczne sukcesy." },
+    radioactive: { name:"Radioaktywny", effect:"Odporność na obrażenia radiacyjne; wszystkie ataki wręcz zyskują Radioactive.", mutation:"Istoty w zasięgu Close otrzymują 5 CD obrażeń radiacyjnych z Piercing 1 na początku swojej tury." },
+    rage_heal: { name:"Szał leczenia", effect:"Na początku każdej tury odzyskuje 3 HP.", mutation:"Natychmiast leczy się do maksymalnego HP." },
+    scarred: { name:"Bliznowaty", effect:"Fizyczny i energetyczny DR rosną o +2.", mutation:"Rzuć 1 CD za każdy Uraz; na Efekcie uraz zostaje usunięty. Fizyczny i energetyczny DR rosną o kolejne +2 do końca sceny." },
+    stalker: { name:"Stalker", effect:"1 automatyczny sukces na Sneak, +2 Inicjatywy i +1 Obrony w ukryciu/ciemności.", mutation:"Staje się niewidzialny jak po użyciu Stealth Boy do końca sceny." },
+    toxic: { name:"Toksyczny", effect:"Ataki wręcz zyskują Persistent (Poison) i jeden efekt: Radioactive, Stun lub Vicious.", mutation:"Istoty w zasięgu Reach otrzymują 5 CD obrażeń od trucizny na początku swojej tury z wybranym efektem." },
+    tyrant: { name:"Tyran", effect:"Towarzyszą mu zwykłe istoty tego samego typu; liczba zależy od różnicy poziomów.", mutation:"Po mutacji przybywa taka sama liczba posiłków." },
+  },
+};
+
+function localizedFeatureText(id, language, kind) {
+  const code = CREATURE_FEATURE_COPY[language] ? language : "en";
+  const item = CREATURE_FEATURE_COPY[code]?.[String(id || "")];
+  if (!item) return "";
+  if (kind === "legendary") {
+    const effectLabel = code === "ru" ? "Эффект" : code === "uk" ? "Ефект" : code === "pl" ? "Efekt" : "Effect";
+    const mutationLabel = code === "ru" ? "Мутация" : code === "uk" ? "Мутація" : code === "pl" ? "Mutacja" : "Mutation";
+    return [item.name, item.effect ? `${effectLabel}: ${item.effect}` : "", item.mutation ? `${mutationLabel}: ${item.mutation}` : ""].filter(Boolean).join("\n");
+  }
+  return [item.name, item.effect].filter(Boolean).join("\n");
+}
+
 const COPY = {
   en: {
     title: "TACTICAL MAP",
@@ -53,6 +132,7 @@ const COPY = {
     sceneName: "SCENE NAME",
     live: "LIVE",
     authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
+    stat:{type:"TYPE",body:"BODY",mind:"MIND",melee:"MELEE",guns:"GUNS",other:"OTHER",skills:"SKILLS",special:"SPECIAL",specialFeature:"SPECIAL FEATURE",legendaryAbility:"LEGENDARY ABILITY",abilities:"ABILITIES",legendaryPerks:"LEGENDARY PERKS",perkDr:"PERK DR",resistance:"RESISTANCE",tactics:"TACTICS",loot:"LOOT",summary:"SUMMARY",notes:"NOTES",source:"SOURCE",rank:"RANK",size:"SIZE"},
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -86,6 +166,7 @@ const COPY = {
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
     authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
+    stat:{type:"ТИП",body:"ТЕЛО",mind:"РАЗУМ",melee:"БЛИЖНИЙ БОЙ",guns:"СТРЕЛЬБА",other:"ДРУГОЕ",skills:"НАВЫКИ",special:"SPECIAL",specialFeature:"ОСОБОЕ СВОЙСТВО",legendaryAbility:"ЛЕГЕНДАРНАЯ СПОСОБНОСТЬ",abilities:"СПОСОБНОСТИ",legendaryPerks:"ЛЕГЕНДАРНЫЕ ПЕРКИ",perkDr:"СОПРОТИВЛЕНИЯ ОТ ПЕРКОВ",resistance:"СОПРОТИВЛЕНИЯ",tactics:"ТАКТИКА",loot:"ДОБЫЧА",summary:"ОПИСАНИЕ",notes:"ЗАМЕТКИ",source:"ИСТОЧНИК",rank:"РАНГ",size:"РАЗМЕР"},
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -120,6 +201,7 @@ const COPY = {
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
     authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
+    stat:{type:"ТИП",body:"ТІЛО",mind:"РОЗУМ",melee:"БЛИЖНІЙ БІЙ",guns:"СТРІЛЬБА",other:"ІНШЕ",skills:"НАВИЧКИ",special:"SPECIAL",specialFeature:"ОСОБЛИВА ВЛАСТИВІСТЬ",legendaryAbility:"ЛЕГЕНДАРНА ЗДІБНІСТЬ",abilities:"ЗДІБНОСТІ",legendaryPerks:"ЛЕГЕНДАРНІ ПЕРКИ",perkDr:"ОПІР ВІД ПЕРКІВ",resistance:"ОПІР",tactics:"ТАКТИКА",loot:"ЗДОБИЧ",summary:"ОПИС",notes:"НОТАТКИ",source:"ДЖЕРЕЛО",rank:"РАНГ",size:"РОЗМІР"},
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -153,6 +235,7 @@ const COPY = {
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
     authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
+    stat:{type:"TYP",body:"CIAŁO",mind:"UMYSŁ",melee:"WALKA WRĘCZ",guns:"STRZELECTWO",other:"INNE",skills:"UMIEJĘTNOŚCI",special:"SPECIAL",specialFeature:"CECHA SPECJALNA",legendaryAbility:"ZDOLNOŚĆ LEGENDARNA",abilities:"ZDOLNOŚCI",legendaryPerks:"LEGENDARNE PERKI",perkDr:"ODPORNOŚCI Z PERKÓW",resistance:"ODPORNOŚCI",tactics:"TAKTYKA",loot:"ŁUP",summary:"OPIS",notes:"NOTATKI",source:"ŹRÓDŁO",rank:"RANGA",size:"ROZMIAR"},
   },
 };
 
@@ -356,7 +439,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const { i18n } = useTranslation();
   const bridgedSession = useLiveSessionBridge();
   const session = sessionProp || bridgedSession;
-  const text = COPY[languageCode(i18n.resolvedLanguage || i18n.language)];
+  const language = languageCode(i18n.resolvedLanguage || i18n.language);
+  const text = COPY[language];
   const scene = session?.tacticalScene || null;
   const scenes = Array.isArray(session?.tacticalScenes)
     ? session.tacticalScenes
@@ -1140,36 +1224,36 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 <span>{text.initiative} <b>{init}</b></span>
                 <span>LVL <b>{Number(stats.level||0)}</b></span>
                 <span>XP <b>{Number(stats.xp||0)}</b></span>
-                <span>RANK <b>{String(stats.rank||"standard")}</b></span>
+                <span>{text.stat.rank} <b>{String(stats.rank||"standard")}</b></span>
                 <span>DR <b>+{Number(stats.resistanceBonus||0)}</b></span>
                 <span>DMG <b>×{Number(stats.damageMultiplier||1)}</b></span>
-                <span>SIZE <b>{Number(stats.footprint||token.size||1)}×{Number(stats.footprint||token.size||1)}</b></span>
+                <span>{text.stat.size} <b>{Number(stats.footprint||token.size||1)}×{Number(stats.footprint||token.size||1)}</b></span>
               </div>
               <div className="gm-map-creature__full-stats">
-                {detail("TYPE",stats.creatureType||linked?.creatureType)}
-                {detail("BODY",stats.body??linked?.body)}
-                {detail("MIND",stats.mind??linked?.mind)}
-                {detail("MELEE",stats.melee??linked?.melee)}
-                {detail("GUNS",stats.guns??linked?.guns)}
-                {detail("OTHER",stats.other??linked?.other)}
-                {detail("SKILLS",stats.skills??linked?.skills)}
-                {detail("SPECIAL",stats.special??linked?.special)}
-                {detail("SPECIAL FEATURE",stats.specialFeature)}
-                {detail("LEGENDARY ABILITY",stats.legendaryAbility)}
-                {detail("ABILITIES",stats.abilities??linked?.abilities)}
-                {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail("LEGENDARY PERKS",stats.legendaryPerks.map((perk)=>perk.name+" — "+perk.description).join("\n")):null}
-                {(stats.physicalDrBonus||stats.energyDrBonus||stats.radiationDrBonus||stats.poisonDrBonus)?detail("PERK DR",[
+                {detail(text.stat.type,stats.creatureType||linked?.creatureType)}
+                {detail(text.stat.body,stats.body??linked?.body)}
+                {detail(text.stat.mind,stats.mind??linked?.mind)}
+                {detail(text.stat.melee,stats.melee??linked?.melee)}
+                {detail(text.stat.guns,stats.guns??linked?.guns)}
+                {detail(text.stat.other,stats.other??linked?.other)}
+                {detail(text.stat.skills,stats.skills??linked?.skills)}
+                {detail(text.stat.special,stats.special??linked?.special)}
+                {detail(text.stat.specialFeature, localizedFeatureText(stats.specialFeatureId,language,"special") || stats.specialFeature)}
+                {detail(text.stat.legendaryAbility, localizedFeatureText(stats.legendaryAbilityId,language,"legendary") || stats.legendaryAbility)}
+                {detail(text.stat.abilities,stats.abilities??linked?.abilities)}
+                {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail(text.stat.legendaryPerks,stats.legendaryPerks.map((perk)=>perk.name+" — "+perk.description).join("\n")):null}
+                {(stats.physicalDrBonus||stats.energyDrBonus||stats.radiationDrBonus||stats.poisonDrBonus)?detail(text.stat.perkDr,[
                   stats.physicalDrBonus?`Physical +${stats.physicalDrBonus}`:"",
                   stats.energyDrBonus?`Energy +${stats.energyDrBonus}`:"",
                   stats.radiationDrBonus?`Radiation +${stats.radiationDrBonus}`:"",
                   stats.poisonDrBonus?`Poison +${stats.poisonDrBonus}`:"",
                 ].filter(Boolean).join(" · ")):null}
-                {detail("RESISTANCE",stats.drBlock??linked?.drBlock)}
-                {detail("TACTICS",stats.tactics??linked?.tactics)}
-                {detail("LOOT",stats.loot??linked?.loot)}
-                {detail("SUMMARY",stats.summary??linked?.summary)}
-                {detail("NOTES",stats.notes)}
-                {detail("SOURCE",stats.source??linked?.source)}
+                {detail(text.stat.resistance,stats.drBlock??linked?.drBlock)}
+                {detail(text.stat.tactics,stats.tactics??linked?.tactics)}
+                {detail(text.stat.loot,stats.loot??linked?.loot)}
+                {detail(text.stat.summary,stats.summary??linked?.summary)}
+                {detail(text.stat.notes,stats.notes)}
+                {detail(text.stat.source,stats.source??linked?.source)}
               </div>
               <div className="gm-map-creature__attacks">
                 <strong>[ {text.attacks} ]</strong>
