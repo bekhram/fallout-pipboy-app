@@ -244,7 +244,7 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
 
   const panel = createPortal(
     <div className={`battlemap-tools-drawer${role === "player" ? " is-player-tools" : ""}${open ? " is-open" : ""}`}>
-      <button type="button" className="battlemap-tools-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}><span>{open ? "▴" : "▾"}</span><b>{text.tools}</b></button>
+      <button type="button" className="battlemap-tools-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-label={text.tools} title={text.tools}><span aria-hidden="true">⚙</span><b>{text.tools}</b></button>
       <div className="battlemap-tools-panel">
         <button type="button" className={mode === "draw" ? "is-active" : ""} onClick={() => setMode((v) => v === "draw" ? "" : "draw")} title={text.draw}>✎</button>
         <button type="button" className={mode === "ruler" ? "is-active" : ""} onClick={() => setMode((v) => v === "ruler" ? "" : "ruler")} title={text.ruler}>↔</button>
