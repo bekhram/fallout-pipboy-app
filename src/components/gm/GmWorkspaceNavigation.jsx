@@ -7,7 +7,7 @@ export const WORKSPACE_GROUPS = {
   creatures: ["tokens", "custom", "roster", "participants"],
   supplies: ["loot", "merchants"],
 };
-export const workspaceGroup = (tab) => Object.keys(WORKSPACE_GROUPS).find((key) => WORKSPACE_GROUPS[key].includes(tab)) || "battle";
+export const workspaceGroup = (tab) => tab === "reference" ? "screens" : (Object.keys(WORKSPACE_GROUPS).find((key) => WORKSPACE_GROUPS[key].includes(tab)) || "battle");
 const COPY = {
   en: { battle: "Map", screens: "Screens", survival: "Survival", winter: "Winter", creatures: "Creatures", supplies: "Supplies", scenes:"Scenes", scene: "Environment & encounters", autogm: "Auto GM", reference: "GM Reference", tokens: "Bestiary", custom: "My NPCs", roster: "On map", participants: "Players", loot: "Loot", merchants: "Merchants", journal: "Journal", chat: "Chat", dice: "Dice", more: "More", menu: "GM workspace", close: "Close", effects: "Active effects", subtitle: "Your session, at a glance" },
   ru: { battle: "Карта", screens: "Экраны", survival: "Выживание", winter: "Зима", creatures: "Существа", supplies: "Снабжение", scenes:"Сцены", scene: "Окружение и встречи", autogm: "Авто ГМ", reference: "Подсказки ГМу", tokens: "Бестиарий", custom: "Мои NPC", roster: "На карте", participants: "Игроки", loot: "Лут", merchants: "Торговцы", journal: "Журнал", chat: "Чат", dice: "Кубики", more: "Ещё", menu: "Рабочее место ГМ", close: "Закрыть", effects: "Активные эффекты", subtitle: "Всё для текущей сессии" },
