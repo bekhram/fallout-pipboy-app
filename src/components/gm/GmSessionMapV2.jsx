@@ -1,6 +1,7 @@
 import { PhaserToken } from "../phaser/PhaserAsset.jsx";
 import DiceRollModal from "../dice/DiceRollModal.jsx";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
+import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
 import { buildNpcAttackRollConfig, effectiveAttackProfile, normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText } from "../../utils/npcCombat.js";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import React, { useEffect, useRef, useState } from "react";
@@ -334,6 +335,22 @@ function mapCreatureAttacks(token) {
     return true;
   });
 }
+function MapCreatureAvatar({ token, linked }) {
+  const [url, setUrl] = useState(String(token?.avatar || linked?.avatar || ""));
+  useEffect(() => {
+    let cancelled = false;
+    const direct = String(token?.avatar || linked?.avatar || "");
+    if (direct) { setUrl(direct); return () => { cancelled = true; }; }
+    if (!token?.npcId) { setUrl(""); return () => { cancelled = true; }; }
+    getBestiaryTokenUrl(token.npcId)
+      .then((next) => { if (!cancelled) setUrl(String(next || "")); })
+      .catch(() => { if (!cancelled) setUrl(""); });
+    return () => { cancelled = true; };
+  }, [token?.id, token?.avatar, token?.npcId, linked?.avatar]);
+  const fallback = String(token?.name || "N").trim().slice(0, 1).toUpperCase() || "N";
+  return <div className="gm-map-creature__avatar">{url ? <img src={url} alt="" draggable={false} /> : <span>{fallback}</span>}</div>;
+}
+
 
 export default function GmSessionMapV2({ session: sessionProp = null }) {
   const { i18n } = useTranslation();
@@ -1103,6 +1120,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
             data-token-id={String(token.id)}
             key={token.id}
           >
+            <MapCreatureAvatar token={token} linked={linked} />
             <div className="gm-map-creature__main">
               <div className="gm-map-creature__title-row">
                 <strong>{token.name||"Token"}</strong>
