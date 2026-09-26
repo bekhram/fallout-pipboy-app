@@ -59,6 +59,18 @@ body:has(.phaser-map.is-expanded) { overflow: hidden; }
 @media (max-width: 780px) {
   .phaser-map { height: 62dvh; min-height: 360px; border-radius: 12px; }
   .phaser-map__controls { top: 10px; bottom: auto; gap: 0; padding: 3px; flex-wrap: wrap; justify-content: center; width: max-content; }
+  .phaser-map.phaser-map--tactical > .phaser-map__controls {
+    top: 62px;
+    left: 8px;
+    right: 8px;
+    transform: none;
+    width: auto;
+    max-width: none;
+    justify-content: center;
+  }
+  .phaser-map.phaser-map--tactical.is-expanded > .phaser-map__controls {
+    top: max(62px, calc(env(safe-area-inset-top) + 54px));
+  }
   .phaser-map.is-expanded .phaser-map__controls { top: max(10px, env(safe-area-inset-top)); bottom: auto; }
   .phaser-map__controls button { min-width: 35px; padding: 7px; font-size: 11px; }
   .phaser-map__controls button span { display: none; }
@@ -70,4 +82,17 @@ body:has(.phaser-map.is-expanded) { overflow: hidden; }
   .pip-map-with-settlement-menu:has(.phaser-map) .pip-map-settlement-toolbar__button { min-height: 40px; padding: 8px; font-size: 11px; }
   .session-tactical-player:has(.phaser-map) { overflow-y: auto !important; display: flex !important; flex-direction: column; }
   .session-tactical-player:has(.phaser-map) .phaser-map { flex: 0 0 62dvh; }
+}
+
+@media (max-width: 430px){
+  .phaser-map.phaser-map--tactical > .phaser-map__controls{
+    top:58px;
+    left:6px;
+    right:6px;
+  }
+  .phaser-map.phaser-map--tactical > .phaser-map__controls button{
+    min-width:32px;
+    min-height:38px;
+    padding:6px;
+  }
 }
