@@ -10,6 +10,7 @@ import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStat
 import { cellsInsideRoom, getProceduralRoomBounds } from "../../utils/proceduralRoomLayout.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
 import { generateRedRocketRoomMarkers } from "../../utils/proceduralSettlementRoomMarkers.js";
+import { cellsAroundWastelandPoi } from "../../utils/proceduralWastelandPoi.js";
 import "./gmProceduralRoomDescriptions.css";
 import "./gmProceduralRoomMarkers.css";
 
@@ -157,8 +158,13 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
       for (const room of rawRooms) {
         const bounds = boundsByRoom[room.id];
         const occupants = [...(room.enemies || []), ...(room.residents || [])];
-        if (!bounds || !occupants.length) continue;
-        const candidates = cellsInsideRoom(bounds).reverse();
+        if (!occupants.length) continue;
+        const candidates = String(spec?.type || "") === "wasteland"
+          ? cellsAroundWastelandPoi(room, Number(spec?.cols || 24), Number(spec?.rows || 24)).reverse()
+          : bounds
+            ? cellsInsideRoom(bounds).reverse()
+            : [];
+        if (!candidates.length) { failed = true; continue; }
         let cursor = 0;
         for (const enemy of occupants) {
           for (let index = 0; index < Number(enemy.count || 0); index += 1) {
