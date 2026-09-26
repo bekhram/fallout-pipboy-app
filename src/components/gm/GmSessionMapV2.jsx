@@ -1,4 +1,7 @@
 import { PhaserToken } from "../phaser/PhaserAsset.jsx";
+import DiceRollModal from "../dice/DiceRollModal.jsx";
+import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
+import { buildNpcAttackRollConfig, effectiveAttackProfile, normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText } from "../../utils/npcCombat.js";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -312,6 +315,26 @@ function managerToken(token) {
   };
 }
 
+function mapBestiaryEntry(token) {
+  const id = String(token?.npcId || "");
+  return BESTIARY_ENTRIES.find((entry) => String(entry?.id || "") === id) || null;
+}
+
+function mapCreatureAttacks(token) {
+  const stats = token?.stats || {};
+  const linked = mapBestiaryEntry(token);
+  const parsed = parseAttackText(stats.attacks || linked?.attacks || "");
+  const custom = (Array.isArray(stats.customAttacks) ? stats.customAttacks : []).map(normalizeStructuredAttack);
+  const weapons = (Array.isArray(stats.weapons) ? stats.weapons : []).map(normalizeWeaponAttack);
+  const seen = new Set();
+  return [...parsed, ...custom, ...weapons].filter((attack) => {
+    const key = String(attack?.name || "").trim().toLowerCase() || JSON.stringify([Number(attack?.targetNumber || 0), Number(attack?.damageDice || 0), String(attack?.damageType || "")]);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function GmSessionMapV2({ session: sessionProp = null }) {
   const { i18n } = useTranslation();
   const bridgedSession = useLiveSessionBridge();
@@ -334,10 +357,15 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const roomDescriptionsRef = useRef(null);
   const [sceneActionBusy,setSceneActionBusy]=useState("");
   const [gmActionResult,setGmActionResult]=useState(null);
+  const [expandedMapCreatureId,setExpandedMapCreatureId]=useState("");
+  const [mapDiceOpen,setMapDiceOpen]=useState(false);
+  const [mapRollConfig,setMapRollConfig]=useState(null);
+  const [mapPendingAutoD6,setMapPendingAutoD6]=useState(null);
 
   useEffect(() => {
     setSceneName(scene?.name || "");
     setSelectedTokenId(null);
+    setExpandedMapCreatureId("");
     setEditingStart(false);
     dragRef.current = null;
     setDragState(null);
@@ -529,11 +557,16 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     }
   };
 
-  const openTokenCard = (tokenId) => {
+  const toggleMapCreatureCard = (tokenId) => {
     setSelectedTokenId(tokenId);
-    window.dispatchEvent(new CustomEvent("pip2d20:gm-open-token-card", {
-      detail: { tokenId: String(tokenId) },
-    }));
+    setExpandedMapCreatureId((current) => String(current) === String(tokenId) ? "" : String(tokenId));
+  };
+
+  const openMapAttackRoll = (attack, token) => {
+    setSelectedTokenId(token.id);
+    setMapRollConfig(buildNpcAttackRollConfig(attack, token?.stats || {}, token?.name || "NPC"));
+    setMapPendingAutoD6(null);
+    setMapDiceOpen(true);
   };
 
   const toggleTokenVisibility = async (token) => {
