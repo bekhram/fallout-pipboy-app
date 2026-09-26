@@ -22,8 +22,8 @@ import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
-import GmWinterRulesPanel from "./GmWinterRulesPanel.jsx";
 import GmReferenceScreen from "./GmReferenceScreen.jsx";
+import GmEnvironmentEncounterScreen from "./GmEnvironmentEncounterScreen.jsx";
 import GmSceneManagerScreen from "./GmSceneManagerScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
@@ -143,12 +143,12 @@ export default function GmSessionMap(props) {
       {activeTab === "scenes" && <GmSceneManagerScreen session={session} onOpenBattlemap={()=>selectTab("battle")}/>} 
       {activeTab === "reference" && <GmReferenceScreen session={session}/>} 
       <div hidden={activeTab === "world" || activeTab === "reference" || activeTab === "scenes"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
-        {activeTab === "scene" ? <div className="gm-tactical-winter"><GmWinterRulesPanel character={props.character} setCharacter={props.setCharacter} language={i18n.resolvedLanguage || i18n.language} showReputation={false} /></div> : null}
+        {activeTab === "scene" ? <GmEnvironmentEncounterScreen session={session}/> : null}
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
-        <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
+        <div className="gm-tactical-environment-edit" hidden={activeTab === "scene"}><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
         <div className="gm-organic-initiative" hidden={activeTab !== "battle"} />
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />
