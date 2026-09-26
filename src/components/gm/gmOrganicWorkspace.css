@@ -413,3 +413,27 @@ body:has(.session-gm-host--organic)::after { display: none; }
     gap:12px!important;
   }
 }
+
+
+/* Final scene-screen layout reset.
+   Environment & encounters no longer uses the legacy 12-column dashboard. */
+.gm-organic-workspace .gm-tactical-view--scene{
+  display:block!important;
+  grid-template-columns:none!important;
+  grid-template-areas:none!important;
+  grid-auto-flow:initial!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+}
+.gm-organic-workspace .gm-tactical-view--scene > .gm-environment-screen{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
+}
+.gm-organic-workspace .gm-tactical-view--scene > :not(.gm-environment-screen){
+  max-width:100%;
+}
