@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
 import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
+import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
 import "./gmSessionMap.css";
@@ -46,7 +47,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
   },
   ru: {
     title: "ТАКТИЧЕСКАЯ КАРТА",
@@ -79,7 +80,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
   },
   uk: {
     title: "ТАКТИЧНА МАПА",
@@ -113,7 +114,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
   },
   pl: {
     title: "MAPA TAKTYCZNA",
@@ -146,7 +147,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
   },
 };
 
@@ -331,6 +332,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const fileRef = useRef(null);
   const roomDescriptionsRef = useRef(null);
   const [sceneActionBusy,setSceneActionBusy]=useState("");
+  const [gmActionResult,setGmActionResult]=useState(null);
 
   useEffect(() => {
     setSceneName(scene?.name || "");
@@ -528,6 +530,34 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         [pool]:next,
       },
     });
+  };
+
+  const persistGmApEvent = async ({cost,type,label,effect,roll=null,random=true}) => {
+    const currentAp=scene.actionPoints||{players:0,gm:0,max:6};
+    const gm=Math.max(0,Math.floor(Number(currentAp.gm||0)));
+    if(gm<cost){setGmActionResult({error:true,label:text.notEnoughAp,effect:""});return false;}
+    const event={id:"gm_ap_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),type,label,effect,cost,roll,random,createdAt:Date.now()};
+    await session.updateTacticalScene?.({
+      actionPoints:{players:Math.max(0,Math.min(6,Math.floor(Number(currentAp.players||0)))),gm:Math.max(0,gm-cost),max:6},
+      gmApEvents:[event,...(scene.gmApEvents||[])].slice(0,30),
+      ...(type==="complication"?{lastGmComplication:event}:{}),
+    });
+    setGmActionResult(event);
+    return true;
+  };
+
+  const runRandomComplication = async () => {
+    const item=GM_COMPLICATIONS[Math.floor(Math.random()*GM_COMPLICATIONS.length)];
+    await persistGmApEvent({cost:2,type:"complication",label:item.name[languageCode(i18n.resolvedLanguage||i18n.language)],effect:item.effect[languageCode(i18n.resolvedLanguage||i18n.language)],roll:item.roll,random:true});
+  };
+
+  const runRandomApSpend = async () => {
+    const gm=Math.max(0,Math.floor(Number(scene.actionPoints?.gm||0)));
+    const affordable=GM_AP_ACTIONS.filter(item=>Number(item.cost||0)<=gm);
+    if(!affordable.length){setGmActionResult({error:true,label:text.notEnoughAp,effect:""});return;}
+    const item=affordable[Math.floor(Math.random()*affordable.length)];
+    const lang=languageCode(i18n.resolvedLanguage||i18n.language);
+    await persistGmApEvent({cost:item.cost,type:"action",label:item.name[lang],effect:item.effect[lang],random:true});
   };
 
   const moveSelected = async (x, y) => {
@@ -967,7 +997,14 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           {!selectedIsLive
             ? <button type="button" className="pip-btn is-primary" disabled={Boolean(sceneActionBusy)} onClick={enableScene}>{text.activateScene}</button>
             : <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)} onClick={()=>session.disableTacticalScene?.()}>{text.deactivateScene}</button>}
+          <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)||Math.max(0,Number(actionPoints.gm||0))<2} onClick={runRandomComplication}>{text.randomComplication}</button>
+          <button type="button" className="pip-btn" disabled={Boolean(sceneActionBusy)||Math.max(0,Number(actionPoints.gm||0))<1} onClick={runRandomApSpend}>{text.randomApSpend}</button>
         </div>
+        {gmActionResult ? <div className={"gm-map-action-result"+(gmActionResult.error?" is-error":"")}>
+          <strong>{gmActionResult.cost?("−"+gmActionResult.cost+" AP · "):""}{gmActionResult.label}</strong>
+          {gmActionResult.effect?<span>{gmActionResult.effect}</span>:null}
+          {gmActionResult.roll?<small>d20: {gmActionResult.roll}</small>:null}
+        </div>:null}
       </section>
 
       <PhaserMapViewport cols={cols} rows={rows} sceneKey={scene.sceneId} background={scene.backgroundUrl} gridRef={gridRef} player={playerTokens[0]} label={text.title}>
