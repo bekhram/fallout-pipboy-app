@@ -36,6 +36,14 @@ initFullscreenEditorUx();
 initCloudCharacterSync();
 
 if ("serviceWorker" in navigator) {
+  let reloadingForUpdate = false;
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadingForUpdate) return;
+    reloadingForUpdate = true;
+    window.location.reload();
+  });
+
   const updateSW = registerSW({
     immediate: true,
     onNeedRefresh() {
