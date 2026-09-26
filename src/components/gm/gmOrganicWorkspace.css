@@ -321,3 +321,9 @@ body:has(.session-gm-host--organic)::after { display: none; }
   .gm-organic-workspace .gm-tactical-view--scene .gm-winter-card--tasks{grid-column:1 / 4 !important;grid-row:2 !important}
   .gm-organic-workspace .gm-tactical-view--scene .gm-tactical-scene-presets{grid-column:4 / 13 !important;grid-row:2 !important}
 }
+
+@media(max-width:899px){
+  .gm-organic-workspace,.gm-organic-content,.gm-tactical-shell,.gm-tactical-view--battle{min-width:0!important;max-width:100%!important;overflow-x:hidden!important}
+  .gm-organic-content{padding-inline:10px!important}
+  .gm-tactical-view--battle>.gm-tactical-map-core{width:100%!important;min-width:0!important;max-width:100%!important}
+}

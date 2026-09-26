@@ -263,3 +263,46 @@
     font-size: .6rem;
   }
 }
+
+.gm-map-actions{display:grid;gap:8px;margin:10px 0}
+.gm-map-actions__buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.gm-map-creatures{display:grid;gap:8px;margin-top:10px}
+.gm-map-creatures__list{display:grid;gap:6px}
+.gm-map-creature{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;border:1px solid color-mix(in srgb,currentColor 14%,transparent);border-radius:8px}
+.gm-map-creature.is-selected{border-color:color-mix(in srgb,currentColor 55%,transparent);box-shadow:inset 3px 0 0 currentColor}
+.gm-map-creature__main{display:grid;gap:2px;min-width:0}
+.gm-map-creature__main strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gm-map-creature__main small{font-size:.66rem;opacity:.7}
+.gm-map-creature__actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.gm-map-creature__actions .pip-btn{min-height:32px;padding:5px 8px;font-size:.62rem}
+.gm-map-creatures__empty{opacity:.65}
+.gm-map-rooms{margin-top:10px;min-width:0}
+.gm-map-rooms .gm-room-descriptions{width:100%;max-width:none;box-sizing:border-box}
+.gm-map-rooms .gm-room-descriptions.is-embedded{margin:0}
+@media(max-width:800px){
+  .gm-map-actions__buttons{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .gm-map-creature{grid-template-columns:1fr}
+  .gm-map-creature__actions{justify-content:stretch}
+  .gm-map-creature__actions .pip-btn{flex:1 1 auto}
+}
+@media(max-width:520px){
+  .gm-map-actions__buttons{grid-template-columns:1fr}
+  .gm-session-map{width:100%;max-width:100%;min-width:0;overflow:hidden;padding:6px}
+  .gm-session-map .phaser-map-settings,.gm-session-map .tactical-background-bar,.gm-session-map .gm-map-actions,.gm-session-map .gm-map-creatures,.gm-session-map .gm-map-rooms{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+  .gm-session-map .phaser-map-viewport{width:100%;max-width:100%;min-width:0}
+}
+
+.gm-map-actions__head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.gm-map-ap{display:flex;gap:8px;flex-wrap:wrap}
+.gm-map-ap__row{display:grid;grid-template-columns:auto 28px minmax(38px,auto) 28px;gap:6px;align-items:center;padding:5px 7px;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:8px;background:color-mix(in srgb,currentColor 3%,transparent)}
+.gm-map-ap__row>span{font-size:.64rem;opacity:.72;white-space:nowrap}
+.gm-map-ap__row button{width:28px;height:28px;min-height:28px;padding:0;border:1px solid color-mix(in srgb,currentColor 24%,transparent);border-radius:6px;background:transparent;color:inherit;font:700 16px/1 system-ui}
+.gm-map-ap__row strong{text-align:center;min-width:34px}
+@media(max-width:640px){.gm-map-actions__head{align-items:stretch;flex-direction:column}.gm-map-ap{display:grid;grid-template-columns:1fr 1fr}.gm-map-ap__row{grid-template-columns:minmax(0,1fr) 28px 42px 28px}.gm-map-ap__row>span{overflow:hidden;text-overflow:ellipsis}}
+@media(max-width:420px){.gm-map-ap{grid-template-columns:1fr}}
+
+.gm-map-action-result{display:grid;gap:4px;padding:8px 10px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);border-radius:8px;background:color-mix(in srgb,currentColor 5%,transparent)}
+.gm-map-action-result strong{color:var(--gm-accent,currentColor)}
+.gm-map-action-result span{font-size:.72rem;line-height:1.45;opacity:.82}
+.gm-map-action-result small{font-size:.64rem;opacity:.65}
+.gm-map-action-result.is-error{border-color:rgba(255,120,100,.45)}

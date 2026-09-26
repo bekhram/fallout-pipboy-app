@@ -12,7 +12,7 @@ const COPY={
 };
 function lang(value){const code=String(value||"en").toLowerCase().split("-")[0];return COPY[code]?code:"en";}
 
-const ACTIONS=[
+export const GM_AP_ACTIONS=[
   {id:"position",cost:1,name:{en:"Tactical position",ru:"Выгодная позиция",uk:"Вигідна позиція",pl:"Pozycja taktyczna"},effect:{en:"One NPC takes a better position or cover. No free attack.",ru:"Один NPC занимает более выгодную позицию или укрытие. Без бесплатной атаки.",uk:"Один NPC займає кращу позицію або укриття. Без безкоштовної атаки.",pl:"Jeden NPC zajmuje lepszą pozycję lub osłonę. Bez darmowego ataku."}},
   {id:"hazard",cost:1,name:{en:"Minor hazard",ru:"Опасная местность",uk:"Небезпечна місцевість",pl:"Małe zagrożenie"},effect:{en:"Add a small logical hazard to one zone.",ru:"Добавить небольшой логичный hazard в одну зону.",uk:"Додати невелику логічну небезпеку в одну зону.",pl:"Dodaj małe logiczne zagrożenie w jednej strefie."}},
   {id:"pressure",cost:1,name:{en:"Pressure",ru:"Давление",uk:"Тиск",pl:"Presja"},effect:{en:"Next specific test gets +1 Difficulty, up to D5.",ru:"Следующая конкретная проверка получает +1 сложности, максимум D5.",uk:"Наступна конкретна перевірка отримує +1 складності, максимум D5.",pl:"Następny konkretny test otrzymuje +1 trudności, maks. D5."}},
@@ -29,7 +29,7 @@ const ACTIONS=[
   {id:"wave",cost:5,name:{en:"Second wave",ru:"Вторая волна",uk:"Друга хвиля",pl:"Druga fala"},effect:{en:"Introduce a prepared full reinforcement wave.",ru:"Ввести подготовленную полноценную волну подкрепления.",uk:"Ввести підготовлену повну хвилю підкріплення.",pl:"Wprowadź przygotowaną pełną falę posiłków."}},
 ];
 
-const COMPLICATIONS=[
+export const GM_COMPLICATIONS=[
   ["Ammo pressure","Боеприпасы на исходе","Боєприпаси закінчуються","Brak amunicji","A character faces an ammo/reload problem.","У персонажа возникает проблема с боезапасом/перезарядкой.","Персонаж має проблему з боєзапасом/перезаряджанням.","Postać ma problem z amunicją/przeładowaniem."],
   ["Weapon jam","Заклинивание оружия","Заклинювання зброї","Zacięcie broni","Weapon needs an action/test to restore.","Оружие требует действия/проверки для восстановления.","Зброя потребує дії/перевірки для відновлення.","Broń wymaga akcji/testu, by ją przywrócić."],
   ["Cover lost","Потеря укрытия","Втрата укриття","Utrata osłony","Current cover is destroyed or negated.","Текущее укрытие разрушается или перестаёт защищать.","Поточне укриття руйнується або перестає захищати.","Obecna osłona zostaje zniszczona lub przestaje działać."],
@@ -71,7 +71,7 @@ export default function GmReferenceScreen({session}){
 
   const randomComplication=()=>{
     if(gmAp<2)return;
-    const item=COMPLICATIONS[Math.floor(Math.random()*COMPLICATIONS.length)];
+    const item=GM_COMPLICATIONS[Math.floor(Math.random()*GM_COMPLICATIONS.length)];
     void spend(2,"complication",item.name[language],item.effect[language],{roll:item.roll,random:true});
   };
 
@@ -83,7 +83,7 @@ export default function GmReferenceScreen({session}){
         <h3>[ {text.economy} ]</h3>
         <div className="gm-reference-table gm-reference-table--actions">
           <div className="gm-reference-table__head"><span>{text.cost}</span><span>{text.action}</span><span>{text.effect}</span><span/></div>
-          {ACTIONS.map(item=><div className="gm-reference-table__row" key={item.id}><b>{item.cost} AP</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="pip-btn" disabled={gmAp<item.cost} onClick={()=>spend(item.cost,"action",item.name[language],item.effect[language])}>{text.spend}</button></div>)}
+          {GM_AP_ACTIONS.map(item=><div className="gm-reference-table__row" key={item.id}><b>{item.cost} AP</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="pip-btn" disabled={gmAp<item.cost} onClick={()=>spend(item.cost,"action",item.name[language],item.effect[language])}>{text.spend}</button></div>)}
         </div>
       </article>
 
@@ -91,7 +91,7 @@ export default function GmReferenceScreen({session}){
         <div className="gm-reference-card__title-row"><h3>[ {text.complications} ]</h3><button type="button" className="pip-btn" disabled={gmAp<2} onClick={randomComplication}>{text.random}</button></div>
         <div className="gm-reference-table gm-reference-table--complications">
           <div className="gm-reference-table__head"><span>d20</span><span>{text.action}</span><span>{text.effect}</span><span/></div>
-          {COMPLICATIONS.map(item=><div className="gm-reference-table__row" key={item.roll}><b>{item.roll}</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="pip-btn" disabled={gmAp<3} onClick={()=>spend(3,"complication",item.name[language],item.effect[language],{roll:item.roll,random:false})}>{text.choose}</button></div>)}
+          {GM_COMPLICATIONS.map(item=><div className="gm-reference-table__row" key={item.roll}><b>{item.roll}</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="pip-btn" disabled={gmAp<3} onClick={()=>spend(3,"complication",item.name[language],item.effect[language],{roll:item.roll,random:false})}>{text.choose}</button></div>)}
         </div>
       </article>
 
