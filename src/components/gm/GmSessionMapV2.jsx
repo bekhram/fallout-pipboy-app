@@ -1154,6 +1154,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 {detail("OTHER",stats.other??linked?.other)}
                 {detail("SKILLS",stats.skills??linked?.skills)}
                 {detail("SPECIAL",stats.special??linked?.special)}
+                {detail("SPECIAL FEATURE",stats.specialFeature)}
+                {detail("LEGENDARY ABILITY",stats.legendaryAbility)}
                 {detail("ABILITIES",stats.abilities??linked?.abilities)}
                 {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail("LEGENDARY PERKS",stats.legendaryPerks.map((perk)=>perk.name+" — "+perk.description).join("\n")):null}
                 {(stats.physicalDrBonus||stats.energyDrBonus||stats.radiationDrBonus||stats.poisonDrBonus)?detail("PERK DR",[
