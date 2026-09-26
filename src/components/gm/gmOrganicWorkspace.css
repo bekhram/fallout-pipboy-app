@@ -382,3 +382,34 @@ body:has(.session-gm-host--organic)::after { display: none; }
     margin:0!important;
   }
 }
+
+
+/* Environment & encounters is now a single dedicated screen.
+   It must span the whole tactical content width instead of inheriting
+   the legacy 12-column scene dashboard placement. */
+.gm-organic-workspace .gm-tactical-view--scene > .gm-environment-screen{
+  grid-column:1 / -1!important;
+  grid-row:auto!important;
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+  justify-self:stretch!important;
+}
+.gm-organic-workspace .gm-tactical-view--scene > .gm-environment-screen .gm-environment-screen__environment,
+.gm-organic-workspace .gm-tactical-view--scene > .gm-environment-screen .gm-environment-screen__references{
+  width:100%!important;
+  max-width:none!important;
+  min-width:0!important;
+}
+@media(min-width:900px){
+  .gm-organic-workspace .gm-tactical-view--scene > .gm-environment-screen{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:12px!important;
+  }
+  .gm-organic-workspace .gm-tactical-view--scene > .gm-environment-screen .gm-environment-screen__references{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:12px!important;
+  }
+}
