@@ -423,6 +423,26 @@ export default function GmUnifiedTokenManagerV4({ session }) {
       setExpandedTokenId("");
   }, [expandedTokenId, npcTokens]);
 
+  useEffect(() => {
+    const openTokenCard = (event) => {
+      const tokenId = String(event?.detail?.tokenId || "");
+      if (!tokenId || !npcTokens.some((token) => String(token.id) === tokenId)) return;
+      setExpandedTokenId(tokenId);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const card = document.querySelector(
+            `.gm-npc-v4-scene-card[data-token-id="${CSS.escape(tokenId)}"]`
+          );
+          card?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+          card?.classList.add("is-map-card-focus");
+          window.setTimeout(() => card?.classList.remove("is-map-card-focus"), 1400);
+        });
+      });
+    };
+    window.addEventListener("pip2d20:gm-open-token-card", openTokenCard);
+    return () => window.removeEventListener("pip2d20:gm-open-token-card", openTokenCard);
+  }, [npcTokens]);
+
   if (!session?.isActive || session?.mode !== "host" || !scene) return null;
 
   const playerTokenFor = (clientId) =>
@@ -1698,6 +1718,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
                 const attacks = attacksFor(stats, linked);
                 return (
                   <article
+                    data-token-id={String(token.id)}
                     className={`gm-npc-token-row gm-npc-v4-scene-card${
                       visible ? " is-active" : " is-hidden"
                     }${expanded ? " is-expanded" : ""}`}
