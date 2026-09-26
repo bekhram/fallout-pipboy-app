@@ -99,6 +99,65 @@ function localizedFeatureText(id, language, kind) {
   return [item.name, item.effect].filter(Boolean).join("\n");
 }
 
+const LEGENDARY_PERK_COPY = {
+  ru: {
+    commando:["Коммандо","Высокоскорострельное стрелковое или энергетическое оружие получает +1 КУ."],
+    gunslinger:["Стрелок","Одноручное стрелковое или энергетическое оружие с низкой скорострельностью получает +1 КУ."],
+    rifleman:["Стрелок из винтовки","Двуручное стрелковое или энергетическое оружие с низкой скорострельностью получает +1 КУ."],
+    laser_commander:["Лазерный командир","Энергетическое оружие получает +1 КУ."],
+    size_matters:["Размер имеет значение","Тяжёлое оружие получает +1 КУ."],
+    iron_fist:["Железный кулак","Безоружные атаки получают +1 КУ."],
+    big_leagues:["Высшая лига","Двуручные атаки ближнего боя получают Vicious."],
+    shotgun_surgeon:["Хирург с дробовиком","Дробовики получают Piercing +1."],
+    piercing_strike:["Пробивающий удар","Безоружные и клинковые атаки ближнего боя получают Piercing +1."],
+    demolition_expert:["Эксперт по взрывчатке","Blast-атаки получают Vicious."],
+    pyromaniac:["Пироман","Огненные атаки получают +1 КУ."],
+    toughness:["Стойкость","Физическое сопротивление +1."],
+    refractor:["Рефрактор","Энергетическое сопротивление +1."],
+    rad_resistance:["Радиационная стойкость","Сопротивление радиации +1."],
+    snakeater:["Змеелов","Сопротивление яду +2."],
+  },
+  uk: {
+    commando:["Командо","Високошвидкісна стрілецька або енергетична зброя отримує +1 КУ."],
+    gunslinger:["Стрілець","Одноручна стрілецька або енергетична зброя з низькою скорострільністю отримує +1 КУ."],
+    rifleman:["Стрілець із гвинтівки","Дворучна стрілецька або енергетична зброя з низькою скорострільністю отримує +1 КУ."],
+    laser_commander:["Лазерний командир","Енергетична зброя отримує +1 КУ."],
+    size_matters:["Розмір має значення","Важка зброя отримує +1 КУ."],
+    iron_fist:["Залізний кулак","Беззбройні атаки отримують +1 КУ."],
+    big_leagues:["Вища ліга","Дворучні атаки ближнього бою отримують Vicious."],
+    shotgun_surgeon:["Хірург із дробовиком","Дробовики отримують Piercing +1."],
+    piercing_strike:["Пробивний удар","Беззбройні та клинкові атаки ближнього бою отримують Piercing +1."],
+    demolition_expert:["Експерт із вибухівки","Blast-атаки отримують Vicious."],
+    pyromaniac:["Піроман","Вогняні атаки отримують +1 КУ."],
+    toughness:["Стійкість","Фізичний опір +1."],
+    refractor:["Рефрактор","Енергетичний опір +1."],
+    rad_resistance:["Радіаційна стійкість","Опір радіації +1."],
+    snakeater:["Змієїд","Опір отруті +2."],
+  },
+  pl: {
+    commando:["Komandos","Broń strzelecka lub energetyczna o wysokiej szybkostrzelności zyskuje +1 CD."],
+    gunslinger:["Rewolwerowiec","Jednoręczna broń strzelecka lub energetyczna o niskiej szybkostrzelności zyskuje +1 CD."],
+    rifleman:["Strzelec","Dwuręczna broń strzelecka lub energetyczna o niskiej szybkostrzelności zyskuje +1 CD."],
+    laser_commander:["Dowódca laserów","Broń energetyczna zyskuje +1 CD."],
+    size_matters:["Rozmiar ma znaczenie","Ciężka broń zyskuje +1 CD."],
+    iron_fist:["Żelazna pięść","Ataki bez broni zyskują +1 CD."],
+    big_leagues:["Wielka liga","Dwuręczne ataki wręcz zyskują Vicious."],
+    shotgun_surgeon:["Chirurg ze strzelbą","Strzelby zyskują Piercing +1."],
+    piercing_strike:["Przebijające uderzenie","Ataki bez broni i bronią sieczną zyskują Piercing +1."],
+    demolition_expert:["Ekspert od materiałów wybuchowych","Ataki Blast zyskują Vicious."],
+    pyromaniac:["Piroman","Ataki ogniowe zyskują +1 CD."],
+    toughness:["Wytrzymałość","Fizyczny DR +1."],
+    refractor:["Refraktor","Energetyczny DR +1."],
+    rad_resistance:["Odporność na radiację","Radiacyjny DR +1."],
+    snakeater:["Pożeracz węży","Odporność na truciznę +2."],
+  },
+};
+
+function localizedLegendaryPerk(perk, language) {
+  const item = LEGENDARY_PERK_COPY[language]?.[String(perk?.id || "")];
+  return item ? `${item[0]} — ${item[1]}` : `${perk?.name || ""} — ${perk?.description || ""}`;
+}
+
 const COPY = {
   en: {
     title: "TACTICAL MAP",
@@ -1241,7 +1300,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 {detail(text.stat.specialFeature, localizedFeatureText(stats.specialFeatureId,language,"special") || stats.specialFeature)}
                 {detail(text.stat.legendaryAbility, localizedFeatureText(stats.legendaryAbilityId,language,"legendary") || stats.legendaryAbility)}
                 {detail(text.stat.abilities,stats.abilities??linked?.abilities)}
-                {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail(text.stat.legendaryPerks,stats.legendaryPerks.map((perk)=>perk.name+" — "+perk.description).join("\n")):null}
+                {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail(text.stat.legendaryPerks,stats.legendaryPerks.map((perk)=>localizedLegendaryPerk(perk,language)).join("\n")):null}
                 {(stats.physicalDrBonus||stats.energyDrBonus||stats.radiationDrBonus||stats.poisonDrBonus)?detail(text.stat.perkDr,[
                   stats.physicalDrBonus?`Physical +${stats.physicalDrBonus}`:"",
                   stats.energyDrBonus?`Energy +${stats.energyDrBonus}`:"",
