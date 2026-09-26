@@ -1,7 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { WINTER_TERRAIN, WINTER_OBSTACLES, WINTER_CONDITIONS } from "../../utils/winterOfAtomRules.js";
-import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
 import "./gmReferenceScreen.css";
 
 const COPY={
@@ -75,41 +73,34 @@ export default function GmReferenceScreen({session}){
     void spend(2,"complication",item.name[language],item.effect[language],{roll:item.roll,random:true});
   };
 
-  return <section className="gm-reference-screen">
-    <header className="gm-reference-screen__head"><span>PIP / 2D20 // GM</span><h2>[ {text.title} ]</h2><p>{text.subtitle}</p></header>
-    <div className="gm-reference-ap-strip"><strong>{text.gmAp}: {gmAp}</strong></div>
+  return <section className="gm-reference-screen gm-reference-screen--compact">
+    <div className="gm-reference-screen__intro">
+      <h2>{text.title}</h2>
+      <p>{text.subtitle}</p>
+    </div>
     <div className="gm-reference-screen__grid">
       <article className="pip-panel gm-reference-card gm-reference-card--economy">
-        <h3>[ {text.economy} ]</h3>
+        <h3>{text.economy}</h3>
         <div className="gm-reference-table gm-reference-table--actions">
           <div className="gm-reference-table__head"><span>{text.cost}</span><span>{text.action}</span><span>{text.effect}</span><span/></div>
-          {GM_AP_ACTIONS.map(item=><div className="gm-reference-table__row" key={item.id}><b>{item.cost} AP</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="pip-btn" disabled={gmAp<item.cost} onClick={()=>spend(item.cost,"action",item.name[language],item.effect[language])}>{text.spend}</button></div>)}
+          {GM_AP_ACTIONS.slice(0,4).map(item=><div className="gm-reference-table__row" key={item.id}><b>{item.cost} AP</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="gm-reference-row-action" disabled={gmAp<item.cost} onClick={()=>spend(item.cost,"action",item.name[language],item.effect[language])}>›</button></div>)}
         </div>
       </article>
 
       <article className="pip-panel gm-reference-card gm-reference-card--complications">
-        <div className="gm-reference-card__title-row"><h3>[ {text.complications} ]</h3><button type="button" className="pip-btn" disabled={gmAp<2} onClick={randomComplication}>{text.random}</button></div>
+        <h3>{text.complications}</h3>
         <div className="gm-reference-table gm-reference-table--complications">
-          <div className="gm-reference-table__head"><span>d20</span><span>{text.action}</span><span>{text.effect}</span><span/></div>
-          {GM_COMPLICATIONS.map(item=><div className="gm-reference-table__row" key={item.roll}><b>{item.roll}</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="pip-btn" disabled={gmAp<3} onClick={()=>spend(3,"complication",item.name[language],item.effect[language],{roll:item.roll,random:false})}>{text.choose}</button></div>)}
+          {GM_COMPLICATIONS.slice(13,16).map(item=><div className="gm-reference-table__row" key={item.roll}><b>{item.roll===14?"1 AP":item.roll===15?"1 AP":"2 AP"}</b><strong>{item.name[language]}</strong><span>{item.effect[language]}</span><button type="button" className="gm-reference-row-action" disabled={gmAp<2} onClick={()=>spend(2,"complication",item.name[language],item.effect[language],{roll:item.roll,random:false})}>›</button></div>)}
         </div>
-      </article>
-
-      <article className="pip-panel gm-reference-card gm-reference-card--events">
-        <h3>[ {text.recent} ]</h3>
-        {(scene.gmApEvents||[]).length?(scene.gmApEvents||[]).slice(0,8).map(event=><div className="gm-reference-event" key={event.id}><b>−{event.cost} AP · {event.label}</b><span>{event.effect}</span></div>):<small>—</small>}
-      </article>
-
-      <article className="pip-panel gm-reference-card gm-reference-card--terrain">
-        <h3>[ {text.terrain} ]</h3>
-        {[...WINTER_TERRAIN,...WINTER_OBSTACLES].map(item=><div key={item.id} className="gm-reference-row"><span>{item.label}</span><b>{item.ap} AP</b></div>)}
-      </article>
-      <article className="pip-panel gm-reference-card gm-reference-card--conditions">
-        <h3>[ {text.conditions} ]</h3>
-        {WINTER_CONDITIONS.map(item=><div key={item.id} className="gm-reference-condition"><strong>{item.label}</strong><span>{item.effect}</span></div>)}
-      </article>
-      <article className="gm-reference-card gm-reference-card--rooms">
-        <GmProceduralRoomDescriptionsV4 session={session}/>
+        <div className="gm-reference-quick-actions">
+          <button type="button" className="pip-btn" disabled={gmAp<2} onClick={randomComplication}>{text.random}</button>
+          <button type="button" className="pip-btn" disabled={gmAp<1} onClick={()=>{
+            const affordable=GM_AP_ACTIONS.filter(item=>item.cost<=gmAp);
+            if(!affordable.length)return;
+            const item=affordable[Math.floor(Math.random()*affordable.length)];
+            void spend(item.cost,"action",item.name[language],item.effect[language]);
+          }}>⚡ {language==="ru"?"СЛУЧАЙНАЯ ТРАТА AP":language==="uk"?"ВИПАДКОВА ВИТРАТА AP":language==="pl"?"LOSOWY WYDATEK AP":"RANDOM AP SPEND"}</button>
+        </div>
       </article>
     </div>
   </section>;
