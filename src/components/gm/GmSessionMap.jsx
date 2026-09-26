@@ -141,9 +141,9 @@ export default function GmSessionMap(props) {
         </nav>
       {activeTab === "world" && <LiveSessionWorldMap session={session} />}
       {activeTab === "scenes" && <GmSceneManagerScreen session={session} onOpenBattlemap={()=>selectTab("battle")}/>} 
+      {activeTab === "scene" && <GmEnvironmentEncounterScreen session={session}/>}
       {activeTab === "reference" && <GmReferenceScreen session={session}/>} 
-      <div hidden={activeTab === "world" || activeTab === "reference" || activeTab === "scenes"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
-        {activeTab === "scene" ? <GmEnvironmentEncounterScreen session={session}/> : null}
+      <div hidden={activeTab === "world" || activeTab === "reference" || activeTab === "scenes" || activeTab === "scene"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
