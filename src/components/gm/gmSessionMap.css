@@ -306,3 +306,13 @@
 .gm-map-action-result span{font-size:.72rem;line-height:1.45;opacity:.82}
 .gm-map-action-result small{font-size:.64rem;opacity:.65}
 .gm-map-action-result.is-error{border-color:rgba(255,120,100,.45)}
+
+
+.gm-map-creature.is-expanded{border-color:var(--enemy-accent,currentColor);box-shadow:inset 3px 0 0 var(--enemy-accent,currentColor)}
+.gm-map-creature__details{grid-column:1/-1;display:grid;gap:10px;padding:10px 12px 12px;border-top:1px solid color-mix(in srgb,var(--enemy-accent,currentColor) 32%,transparent);background:color-mix(in srgb,var(--enemy-accent,currentColor) 4%,transparent)}
+.gm-map-creature__stats{display:flex;flex-wrap:wrap;gap:8px}
+.gm-map-creature__stats>span{border:1px solid color-mix(in srgb,var(--enemy-accent,currentColor) 28%,transparent);padding:4px 7px;border-radius:6px;font-size:.68rem}
+.gm-map-creature__attacks{display:grid;gap:7px}
+.gm-map-creature__attacks>strong{font-size:.72rem;letter-spacing:.08em}
+.gm-map-creature__attacks .gm-npc-attack-button{width:100%;text-align:left}
+@media(max-width:640px){.gm-map-creature__details{padding:8px}.gm-map-creature__stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.gm-map-creature__actions{display:grid;grid-template-columns:1fr 1fr}}
