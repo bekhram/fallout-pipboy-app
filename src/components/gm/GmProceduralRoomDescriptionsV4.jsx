@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useImperativeHandle, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
 import {
@@ -92,7 +92,7 @@ function specStamp(spec) {
   ].join(":");
 }
 
-export default function GmProceduralRoomDescriptionsV4({ session }) {
+const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoomDescriptionsV4({ session, embedded = false }, ref) {
   const { i18n } = useTranslation();
   const lang = langCode(i18n.resolvedLanguage || i18n.language);
   const text = COPY[lang];
@@ -189,10 +189,16 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
     }
   };
 
+  useImperativeHandle(ref,()=>({
+    placeEnemies,
+    canPlace:Boolean(spec && spawnTotal && !placing),
+    spawnTotal:Number(spawnTotal||0),
+  }),[spec,spawnTotal,placing,scene?.sceneId,scene?.active]);
+
   const ranks = encounter?.rankCounts || { minion: 0, standard: 0, special: 0, legendary: 0 };
 
   return (
-    <section className="gm-room-descriptions pip-panel">
+    <section className={`gm-room-descriptions pip-panel${embedded ? " is-embedded" : ""}`}>
       <header className="gm-room-descriptions__head"><strong>{text.title}</strong><small>{text.subtitle}</small></header>
       {!spec ? <div className="gm-room-descriptions__empty">{text.noMap}</div> : null}
 
@@ -235,4 +241,6 @@ export default function GmProceduralRoomDescriptionsV4({ session }) {
       {spec ? <div className="gm-room-descriptions__actions"><button type="button" className="pip-btn is-primary" disabled={placing || !spawnTotal} onClick={placeEnemies}>{placing ? text.spawning : `${text.spawn}${spawnTotal ? ` (${spawnTotal})` : ""}`}</button>{message ? <div className="gm-room-descriptions__message">{message}</div> : null}</div> : null}
     </section>
   );
-}
+});
+
+export default GmProceduralRoomDescriptionsV4;
