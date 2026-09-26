@@ -488,8 +488,20 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const placeGeneratedEnemies = async () => {
     if(sceneActionBusy)return;
     setSceneActionBusy("place");
+    setGmActionResult(null);
     try{
-      await roomDescriptionsRef.current?.placeEnemies?.();
+      const result = await roomDescriptionsRef.current?.placeEnemies?.();
+      if (!result) {
+        setGmActionResult({ error:true, label:text.placeEnemies, effect:"Encounter data is not ready." });
+        return;
+      }
+      setGmActionResult({
+        error: result.ok === false && !result.partial,
+        label: result.message || text.placeEnemies,
+        effect: result.count ? `${result.count}` : "",
+      });
+    } catch (error) {
+      setGmActionResult({ error:true, label:text.placeEnemies, effect:error?.message || "PLACE_ENEMIES_FAILED" });
     } finally {
       setSceneActionBusy("");
     }
