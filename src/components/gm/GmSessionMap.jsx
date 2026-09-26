@@ -21,8 +21,6 @@ import GmZoomDrawerToggle from "./GmZoomDrawerToggle.jsx";
 import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
-import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
-import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import GmWinterRulesPanel from "./GmWinterRulesPanel.jsx";
 import GmReferenceScreen from "./GmReferenceScreen.jsx";
@@ -151,10 +149,6 @@ export default function GmSessionMap(props) {
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
-        <div className="gm-tactical-scene-presets">
-          <GmScenePresetPanelV2 session={session} />
-          <GmProceduralExplorationPanel session={session} />
-        </div>
         <div className="gm-organic-initiative" hidden={activeTab !== "battle"} />
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />
