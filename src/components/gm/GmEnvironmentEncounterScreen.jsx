@@ -1,4 +1,5 @@
 import React from "react";
+import {useTranslation} from "react-i18next";
 import TacticalEnvironmentPanel from "./TacticalEnvironmentPanel.jsx";
 import {WINTER_TERRAIN,WINTER_OBSTACLES,WINTER_CONDITIONS} from "../../utils/winterOfAtomRules.js";
 import "./gmEnvironmentEncounterScreen.css";
@@ -16,7 +17,8 @@ function lang(v){
 }
 
 export default function GmEnvironmentEncounterScreen({session}){
- const language=lang(session?.language || document?.documentElement?.lang || "en");
+ const {i18n}=useTranslation();
+ const language=lang(i18n.resolvedLanguage||i18n.language);
  const text=COPY[language];
  const scene=session?.tacticalScene||null;
 
