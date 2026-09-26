@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
+import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import "./gmSceneManagerScreen.css";
 
 const COPY={
-  en:{title:"SCENE MANAGEMENT",subtitle:"Create, prepare and publish tactical scenes",newScene:"NEW SCENE",name:"Scene name",grid:"Grid",create:"CREATE",selected:"SELECTED",live:"LIVE",offline:"OFFLINE",edit:"EDIT",rename:"RENAME",makeLive:"MAKE LIVE",stopLive:"STOP LIVE",delete:"DELETE",tokens:"tokens",cannotDelete:"Keep at least one scene",confirmDelete:"Delete this scene?",empty:"No scenes"},
-  ru:{title:"УПРАВЛЕНИЕ СЦЕНАМИ",subtitle:"Создание, подготовка и запуск тактических сцен",newScene:"НОВАЯ СЦЕНА",name:"Название сцены",grid:"Сетка",create:"СОЗДАТЬ",selected:"ВЫБРАНА",live:"LIVE",offline:"OFFLINE",edit:"РЕДАКТИРОВАТЬ",rename:"ПЕРЕИМЕНОВАТЬ",makeLive:"СДЕЛАТЬ LIVE",stopLive:"ОСТАНОВИТЬ LIVE",delete:"УДАЛИТЬ",tokens:"токенов",cannotDelete:"Должна остаться хотя бы одна сцена",confirmDelete:"Удалить эту сцену?",empty:"Нет сцен"},
-  uk:{title:"КЕРУВАННЯ СЦЕНАМИ",subtitle:"Створення, підготовка та запуск тактичних сцен",newScene:"НОВА СЦЕНА",name:"Назва сцени",grid:"Сітка",create:"СТВОРИТИ",selected:"ОБРАНА",live:"LIVE",offline:"OFFLINE",edit:"РЕДАГУВАТИ",rename:"ПЕРЕЙМЕНУВАТИ",makeLive:"ЗРОБИТИ LIVE",stopLive:"ЗУПИНИТИ LIVE",delete:"ВИДАЛИТИ",tokens:"токенів",cannotDelete:"Має залишитися хоча б одна сцена",confirmDelete:"Видалити цю сцену?",empty:"Немає сцен"},
-  pl:{title:"ZARZĄDZANIE SCENAMI",subtitle:"Twórz, przygotowuj i publikuj sceny taktyczne",newScene:"NOWA SCENA",name:"Nazwa sceny",grid:"Siatka",create:"UTWÓRZ",selected:"WYBRANA",live:"LIVE",offline:"OFFLINE",edit:"EDYTUJ",rename:"ZMIEŃ NAZWĘ",makeLive:"USTAW LIVE",stopLive:"ZATRZYMAJ LIVE",delete:"USUŃ",tokens:"tokenów",cannotDelete:"Musi pozostać co najmniej jedna scena",confirmDelete:"Usunąć tę scenę?",empty:"Brak scen"},
+  en:{title:"SCENE MANAGEMENT",subtitle:"Create, prepare and publish tactical scenes",newScene:"NEW SCENE",name:"Scene name",grid:"Grid",create:"CREATE",selected:"SELECTED",live:"LIVE",offline:"OFFLINE",edit:"EDIT",rename:"RENAME",makeLive:"MAKE LIVE",stopLive:"STOP LIVE",delete:"DELETE",tokens:"tokens",cannotDelete:"Keep at least one scene",confirmDelete:"Delete this scene?",empty:"No scenes",encounter:"ENCOUNTER GENERATOR"},
+  ru:{title:"УПРАВЛЕНИЕ СЦЕНАМИ",subtitle:"Создание, подготовка и запуск тактических сцен",newScene:"НОВАЯ СЦЕНА",name:"Название сцены",grid:"Сетка",create:"СОЗДАТЬ",selected:"ВЫБРАНА",live:"LIVE",offline:"OFFLINE",edit:"РЕДАКТИРОВАТЬ",rename:"ПЕРЕИМЕНОВАТЬ",makeLive:"СДЕЛАТЬ LIVE",stopLive:"ОСТАНОВИТЬ LIVE",delete:"УДАЛИТЬ",tokens:"токенов",cannotDelete:"Должна остаться хотя бы одна сцена",confirmDelete:"Удалить эту сцену?",empty:"Нет сцен",encounter:"ГЕНЕРАТОР ЭНКАУНТЕРА"},
+  uk:{title:"КЕРУВАННЯ СЦЕНАМИ",subtitle:"Створення, підготовка та запуск тактичних сцен",newScene:"НОВА СЦЕНА",name:"Назва сцени",grid:"Сітка",create:"СТВОРИТИ",selected:"ОБРАНА",live:"LIVE",offline:"OFFLINE",edit:"РЕДАГУВАТИ",rename:"ПЕРЕЙМЕНУВАТИ",makeLive:"ЗРОБИТИ LIVE",stopLive:"ЗУПИНИТИ LIVE",delete:"ВИДАЛИТИ",tokens:"токенів",cannotDelete:"Має залишитися хоча б одна сцена",confirmDelete:"Видалити цю сцену?",empty:"Немає сцен",encounter:"ГЕНЕРАТОР ЕНКАУНТЕРА"},
+  pl:{title:"ZARZĄDZANIE SCENAMI",subtitle:"Twórz, przygotowuj i publikuj sceny taktyczne",newScene:"NOWA SCENA",name:"Nazwa sceny",grid:"Siatka",create:"UTWÓRZ",selected:"WYBRANA",live:"LIVE",offline:"OFFLINE",edit:"EDYTUJ",rename:"ZMIEŃ NAZWĘ",makeLive:"USTAW LIVE",stopLive:"ZATRZYMAJ LIVE",delete:"USUŃ",tokens:"tokenów",cannotDelete:"Musi pozostać co najmniej jedna scena",confirmDelete:"Usunąć tę scenę?",empty:"Brak scen",encounter:"GENERATOR SPOTKANIA"},
 };
 function lang(value){const code=String(value||"en").toLowerCase().split("-")[0];return COPY[code]?code:"en";}
 
@@ -94,5 +96,10 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
       }):<div className="stat-sub">{text.empty}</div>}
     </div>
     {selected?<small className="gm-scene-manager__selected">{text.selected}: {selected.name}</small>:null}
+    <section className="gm-scene-manager__encounter">
+      <div className="pip-panel-title">{text.encounter}</div>
+      <GmScenePresetPanelV2 session={session}/>
+      <GmProceduralExplorationPanel session={session}/>
+    </section>
   </section>;
 }
