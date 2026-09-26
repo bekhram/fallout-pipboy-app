@@ -477,6 +477,32 @@ function mapCreatureAttacks(token) {
     return true;
   });
 }
+const MOBILE_TOKEN_PALETTE = [
+  "#78ff98",
+  "#ffd166",
+  "#62d9ff",
+  "#ff7ad9",
+  "#ff9b54",
+  "#8da2ff",
+  "#d6ff63",
+  "#c58cff",
+];
+
+function tokenAccentColor(token) {
+  if (token?.kind === "player") return "#62d9ff";
+  const explicit = Number(token?.stats?.tokenColorIndex);
+  let index;
+  if (Number.isFinite(explicit)) {
+    index = Math.abs(Math.floor(explicit)) % MOBILE_TOKEN_PALETTE.length;
+  } else {
+    const text = String(token?.stats?.hordeGroupId || token?.id || token?.name || "");
+    let hash = 0;
+    for (let i = 0; i < text.length; i += 1) hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
+    index = Math.abs(hash) % MOBILE_TOKEN_PALETTE.length;
+  }
+  return MOBILE_TOKEN_PALETTE[index];
+}
+
 function MapCreatureAvatar({ token, linked }) {
   const [url, setUrl] = useState(String(token?.avatar || linked?.avatar || ""));
   useEffect(() => {
@@ -1264,7 +1290,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
               title={(token.name||"Token")+" · "+text.initiative+" "+init+(dead?" · "+text.dead:"")}
               aria-label={(token.name||"Token")+" · "+text.initiative+" "+init}
             >
-              <span className="gm-mobile-initiative__avatar">
+              <span className="gm-mobile-initiative__avatar" style={{"--token-accent":tokenAccentColor(token)}}>
                 {token.avatar?<img src={token.avatar} alt="" />:<b>{String(token.name||"T").slice(0,1)}</b>}
                 {dead?<i aria-hidden="true">×</i>:null}
               </span>
