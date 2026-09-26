@@ -519,6 +519,67 @@ function MapCreatureAvatar({ token, linked }) {
   return <div className="gm-map-creature__avatar">{url ? <img src={url} alt="" draggable={false} /> : <span>{fallback}</span>}</div>;
 }
 
+function localizedRankLabel(rank, language) {
+  const value = String(rank || "standard").toLowerCase();
+  const labels = {
+    en: { minion:"MINION", standard:"STANDARD", special:"SPECIAL", legendary:"LEGENDARY" },
+    ru: { minion:"МИНЬОН", standard:"ОБЫЧНЫЙ", special:"ОСОБЫЙ", legendary:"ЛЕГЕНДАРНЫЙ" },
+    uk: { minion:"МІНЬЙОН", standard:"ЗВИЧАЙНИЙ", special:"ОСОБЛИВИЙ", legendary:"ЛЕГЕНДАРНИЙ" },
+    pl: { minion:"SŁUGA", standard:"ZWYKŁY", special:"SPECJALNY", legendary:"LEGENDARNY" },
+  };
+  return labels[language]?.[value] || value.toUpperCase();
+}
+
+function InitiativeAvatar({ token, dead }) {
+  const linked = mapBestiaryEntry(token);
+  const [url, setUrl] = useState(String(token?.avatar || linked?.avatar || ""));
+  useEffect(() => {
+    let cancelled = false;
+    const direct = String(token?.avatar || linked?.avatar || "");
+    if (direct) { setUrl(direct); return () => { cancelled = true; }; }
+    if (!token?.npcId) { setUrl(""); return () => { cancelled = true; }; }
+    getBestiaryTokenUrl(token.npcId)
+      .then((next) => { if (!cancelled) setUrl(String(next || "")); })
+      .catch(() => { if (!cancelled) setUrl(""); });
+    return () => { cancelled = true; };
+  }, [token?.id, token?.avatar, token?.npcId, linked?.avatar]);
+
+  return (
+    <span className="gm-mobile-initiative__avatar" style={{"--token-accent":tokenAccentColor(token)}}>
+      {url ? <img src={url} alt="" draggable={false} /> : <b>{String(token?.name || "T").slice(0,1)}</b>}
+      {dead ? <i aria-hidden="true">×</i> : null}
+    </span>
+  );
+}
+
+function EnemyHpEditor({ token, hp, maxHp, onCommit }) {
+  const [draft, setDraft] = useState(String(hp));
+  useEffect(() => { setDraft(String(hp)); }, [hp, token?.id]);
+  const commit = () => {
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed)) { setDraft(String(hp)); return; }
+    const next = Math.max(0, Math.min(Math.max(1, maxHp), Math.round(parsed)));
+    setDraft(String(next));
+    if (next !== hp) onCommit?.(next);
+  };
+  return (
+    <label className="gm-map-creature__hp-editor">
+      <span>HP</span>
+      <input
+        type="number"
+        min="0"
+        max={Math.max(1,maxHp)}
+        value={draft}
+        onChange={(event)=>setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event)=>{ if(event.key==="Enter"){ event.currentTarget.blur(); } }}
+        aria-label="HP"
+      />
+      <small>/ {Math.max(1,maxHp)}</small>
+    </label>
+  );
+}
+
 
 export default function GmSessionMapV2({ session: sessionProp = null }) {
   const { i18n } = useTranslation();
@@ -1290,9 +1351,10 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
               title={(token.name||"Token")+" · "+text.initiative+" "+init+(dead?" · "+text.dead:"")}
               aria-label={(token.name||"Token")+" · "+text.initiative+" "+init}
             >
-              <span className="gm-mobile-initiative__avatar" style={{"--token-accent":tokenAccentColor(token)}}>
-                {token.avatar?<img src={token.avatar} alt="" />:<b>{String(token.name||"T").slice(0,1)}</b>}
-                {dead?<i aria-hidden="true">×</i>:null}
+              <InitiativeAvatar token={token} dead={dead} />
+              <span className="gm-mobile-initiative__meta">
+                <b>{token.name||"Token"}</b>
+                <small>{token.kind==="player"?"PLAYER":localizedRankLabel(token?.stats?.rank,language)}</small>
               </span>
             </button>;
           })}
@@ -1348,6 +1410,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
             <div className="gm-map-creature__actions">
               <button type="button" className="pip-btn" onClick={()=>focusToken(token.id)}>{text.focus}</button>
               {token.kind!=="player"?<button type="button" className="pip-btn gm-map-creature__hp-btn" onClick={()=>changeEnemyHp(token,-1)} disabled={hp<=0}>− HP</button>:null}
+              {token.kind!=="player"?<EnemyHpEditor token={token} hp={hp} maxHp={Math.max(1,maxHp)} onCommit={(next)=>updateEnemy(token.id,{hp:next})} />:null}
               {token.kind!=="player"?<button type="button" className="pip-btn gm-map-creature__hp-btn" onClick={()=>changeEnemyHp(token,1)} disabled={hp>=Math.max(1,maxHp)}>+ HP</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>toggleTokenVisibility(token)}>{visible?text.hide:text.show}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>session.deleteToken?.(token.id)}>{text.remove}</button>:null}
