@@ -353,3 +353,32 @@ body:has(.session-gm-host--organic)::after { display: none; }
   .gm-ap-counter__row>div{justify-content:flex-end}
   .gm-organic-subtabs button{font-size:11px!important;padding-inline:5px!important}
 }
+
+
+/* Battlemap layout: do not reserve empty grid rows above the map. */
+.gm-organic-workspace .gm-tactical-view--battle > .gm-organic-initiative:empty{
+  display:none!important;
+}
+@media(max-width:899px){
+  .gm-organic-workspace .gm-tactical-view--battle{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:stretch!important;
+    gap:10px!important;
+  }
+  .gm-organic-workspace .gm-tactical-view--battle > .gm-tactical-map-core{
+    order:1!important;
+    margin:0!important;
+    padding:0!important;
+    min-height:0!important;
+  }
+  .gm-organic-workspace .gm-tactical-view--battle > .gm-tactical-battle-effects{
+    order:2!important;
+    margin:0!important;
+  }
+  .gm-organic-workspace .gm-tactical-view--battle > .gm-organic-initiative{
+    order:3!important;
+    min-height:0!important;
+    margin:0!important;
+  }
+}
