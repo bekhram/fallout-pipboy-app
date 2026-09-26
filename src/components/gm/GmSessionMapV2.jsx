@@ -190,7 +190,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", initiativeOrder:"INITIATIVE", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
     stat:{type:"TYPE",body:"BODY",mind:"MIND",melee:"MELEE",guns:"GUNS",other:"OTHER",skills:"SKILLS",special:"SPECIAL",specialFeature:"SPECIAL FEATURE",legendaryAbility:"LEGENDARY ABILITY",abilities:"ABILITIES",legendaryPerks:"LEGENDARY PERKS",perkDr:"PERK DR",resistance:"RESISTANCE",tactics:"TACTICS",loot:"LOOT",summary:"SUMMARY",notes:"NOTES",source:"SOURCE",rank:"RANK",size:"SIZE"},
   },
   ru: {
@@ -224,7 +224,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", initiativeOrder:"ИНИЦИАТИВА", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
     stat:{type:"ТИП",body:"ТЕЛО",mind:"РАЗУМ",melee:"БЛИЖНИЙ БОЙ",guns:"СТРЕЛЬБА",other:"ДРУГОЕ",skills:"НАВЫКИ",special:"SPECIAL",specialFeature:"ОСОБОЕ СВОЙСТВО",legendaryAbility:"ЛЕГЕНДАРНАЯ СПОСОБНОСТЬ",abilities:"СПОСОБНОСТИ",legendaryPerks:"ЛЕГЕНДАРНЫЕ ПЕРКИ",perkDr:"СОПРОТИВЛЕНИЯ ОТ ПЕРКОВ",resistance:"СОПРОТИВЛЕНИЯ",tactics:"ТАКТИКА",loot:"ДОБЫЧА",summary:"ОПИСАНИЕ",notes:"ЗАМЕТКИ",source:"ИСТОЧНИК",rank:"РАНГ",size:"РАЗМЕР"},
   },
   uk: {
@@ -259,7 +259,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", initiativeOrder:"ІНІЦІАТИВА", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
     stat:{type:"ТИП",body:"ТІЛО",mind:"РОЗУМ",melee:"БЛИЖНІЙ БІЙ",guns:"СТРІЛЬБА",other:"ІНШЕ",skills:"НАВИЧКИ",special:"SPECIAL",specialFeature:"ОСОБЛИВА ВЛАСТИВІСТЬ",legendaryAbility:"ЛЕГЕНДАРНА ЗДІБНІСТЬ",abilities:"ЗДІБНОСТІ",legendaryPerks:"ЛЕГЕНДАРНІ ПЕРКИ",perkDr:"ОПІР ВІД ПЕРКІВ",resistance:"ОПІР",tactics:"ТАКТИКА",loot:"ЗДОБИЧ",summary:"ОПИС",notes:"НОТАТКИ",source:"ДЖЕРЕЛО",rank:"РАНГ",size:"РОЗМІР"},
   },
   pl: {
@@ -293,7 +293,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", initiativeOrder:"INICJATYWA", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
     stat:{type:"TYP",body:"CIAŁO",mind:"UMYSŁ",melee:"WALKA WRĘCZ",guns:"STRZELECTWO",other:"INNE",skills:"UMIEJĘTNOŚCI",special:"SPECIAL",specialFeature:"CECHA SPECJALNA",legendaryAbility:"ZDOLNOŚĆ LEGENDARNA",abilities:"ZDOLNOŚCI",legendaryPerks:"LEGENDARNE PERKI",perkDr:"ODPORNOŚCI Z PERKÓW",resistance:"ODPORNOŚCI",tactics:"TAKTYKA",loot:"ŁUP",summary:"OPIS",notes:"NOTATKI",source:"ŹRÓDŁO",rank:"RANGA",size:"ROZMIAR"},
   },
 };
@@ -1223,6 +1223,21 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           {gmActionResult.effect?<span>{gmActionResult.effect}</span>:null}
           {gmActionResult.roll?<small>d20: {gmActionResult.roll}</small>:null}
         </div>:null}
+      </section>
+
+      <section className="gm-mobile-initiative" aria-label={text.initiativeOrder}>
+        <div className="gm-mobile-initiative__title">[ {text.initiativeOrder} ]</div>
+        <div className="gm-mobile-initiative__list">
+          {[...tokens].sort((a,b)=>Number(b?.stats?.initiative||0)-Number(a?.stats?.initiative||0)).map((token,index)=>{
+            const init=Number(token?.stats?.initiative||0);
+            return <button type="button" className={"gm-mobile-initiative__entry"+(selectedTokenId===token.id?" is-selected":"")} key={token.id} onClick={()=>focusToken(token.id)}>
+              <span className="gm-mobile-initiative__pos">{index+1}</span>
+              <span className="gm-mobile-initiative__avatar">{token.avatar?<img src={token.avatar} alt="" />:<b>{String(token.name||"T").slice(0,1)}</b>}</span>
+              <span className="gm-mobile-initiative__name">{token.name||"Token"}</span>
+              <strong>{init}</strong>
+            </button>;
+          })}
+        </div>
       </section>
 
       <PhaserMapViewport cols={cols} rows={rows} sceneKey={scene.sceneId} background={scene.backgroundUrl} gridRef={gridRef} player={playerTokens[0]} label={text.title}>
