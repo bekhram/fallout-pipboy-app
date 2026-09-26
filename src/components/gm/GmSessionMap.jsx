@@ -21,11 +21,10 @@ import GmZoomDrawerToggle from "./GmZoomDrawerToggle.jsx";
 import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
 import GmLootGenerator from "./GmLootGenerator.jsx";
 import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
-import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
-import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 import GmWinterRulesPanel from "./GmWinterRulesPanel.jsx";
 import GmReferenceScreen from "./GmReferenceScreen.jsx";
+import GmSceneManagerScreen from "./GmSceneManagerScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
@@ -40,7 +39,7 @@ import LiveSessionWorldMap from "../session/LiveSessionWorldMap.jsx";
 import { worldCopy } from "../campaign/worldCopy.js";
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
-const TABS = ["world", "battle", "autogm", "loot", "merchants", "custom", "scene", "reference", "tokens", "roster", "participants"];
+const TABS = ["world", "battle", "scenes", "autogm", "loot", "merchants", "custom", "scene", "reference", "tokens", "roster", "participants"];
 const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
   en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu", ap:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP" },
@@ -59,13 +58,15 @@ function normalizeTab(tab) {
 }
 function ActionPointCounter({session,labels}){
   const ap=session?.tacticalScene?.actionPoints||{players:0,gm:0,max:6};
-  const max=Math.max(1,Number(ap.max||6));
+  const playerMax=6;
   const change=async(key,delta)=>{
-    const current=Math.max(0,Math.min(max,Number(ap[key]||0)));
-    const next=Math.max(0,Math.min(max,current+delta));
-    await session?.updateTacticalScene?.({actionPoints:{...ap,max,[key]:next}});
+    const current=Math.max(0,Math.floor(Number(ap[key]||0)));
+    const next=key==="players"
+      ? Math.max(0,Math.min(playerMax,current+delta))
+      : Math.max(0,current+delta);
+    await session?.updateTacticalScene?.({actionPoints:{players:Math.max(0,Math.min(playerMax,Math.floor(Number(ap.players||0)))),gm:Math.max(0,Math.floor(Number(ap.gm||0))),max:playerMax,[key]:next}});
   };
-  const row=(key,label)=><div className="gm-ap-counter__row" key={key}><span>{label}</span><div><button type="button" onClick={()=>change(key,-1)} aria-label={label+" -1"}>−</button><strong>{Number(ap[key]||0)}/{max}</strong><button type="button" onClick={()=>change(key,1)} aria-label={label+" +1"}>+</button></div></div>;
+  const row=(key,label)=><div className="gm-ap-counter__row" key={key}><span>{label}</span><div><button type="button" onClick={()=>change(key,-1)} aria-label={label+" -1"}>−</button><strong>{key==="players" ? `${Math.max(0,Math.min(playerMax,Number(ap.players||0)))}/${playerMax}` : Math.max(0,Number(ap.gm||0))}</strong><button type="button" onClick={()=>change(key,1)} aria-label={label+" +1"}>+</button></div></div>;
   return <section className="gm-ap-counter" aria-label={labels.ap}>{row("players",labels.playersAp)}{row("gm",labels.gmAp)}</section>;
 }
 
@@ -139,18 +140,15 @@ export default function GmSessionMap(props) {
           {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
       {activeTab === "world" && <LiveSessionWorldMap session={session} />}
+      {activeTab === "scenes" && <GmSceneManagerScreen session={session} onOpenBattlemap={()=>selectTab("battle")}/>} 
       {activeTab === "reference" && <GmReferenceScreen session={session}/>} 
-      <div hidden={activeTab === "world" || activeTab === "reference"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
+      <div hidden={activeTab === "world" || activeTab === "reference" || activeTab === "scenes"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
         {activeTab === "scene" ? <div className="gm-tactical-winter"><GmWinterRulesPanel character={props.character} setCharacter={props.setCharacter} language={i18n.resolvedLanguage || i18n.language} showReputation={false} /></div> : null}
         <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
         <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
         <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
         <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
         <div className="gm-tactical-environment-edit"><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
-        <div className="gm-tactical-scene-presets">
-          <GmScenePresetPanelV2 session={session} />
-          <GmProceduralExplorationPanel session={session} />
-        </div>
         <div className="gm-organic-initiative" hidden={activeTab !== "battle"} />
         <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
         <WastelandAssetPortal session={session} />

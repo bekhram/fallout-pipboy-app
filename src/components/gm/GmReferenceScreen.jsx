@@ -57,13 +57,13 @@ export default function GmReferenceScreen({session}){
   const language=lang(i18n.resolvedLanguage||i18n.language),text=COPY[language];
   const scene=session?.tacticalScene||{};
   const ap=scene.actionPoints||{players:0,gm:0,max:6};
-  const gmAp=Math.max(0,Number(ap.gm||0));
+  const gmAp=Math.max(0,Math.floor(Number(ap.gm||0)));
 
   const spend=async(cost,type,label,effect,extra={})=>{
     if(gmAp<cost)return;
     const event={id:"gm_ap_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),type,label,effect,cost,createdAt:Date.now(),...extra};
     await session?.updateTacticalScene?.({
-      actionPoints:{...ap,gm:Math.max(0,gmAp-cost),max:Math.max(1,Number(ap.max||6))},
+      actionPoints:{players:Math.max(0,Math.min(6,Math.floor(Number(ap.players||0)))),gm:Math.max(0,gmAp-cost),max:6},
       gmApEvents:[event,...(scene.gmApEvents||[])].slice(0,30),
       ...(type==="complication"?{lastGmComplication:event}:{}),
     });
@@ -77,7 +77,7 @@ export default function GmReferenceScreen({session}){
 
   return <section className="gm-reference-screen">
     <header className="gm-reference-screen__head"><span>PIP / 2D20 // GM</span><h2>[ {text.title} ]</h2><p>{text.subtitle}</p></header>
-    <div className="gm-reference-ap-strip"><strong>{text.gmAp}: {gmAp}/{Math.max(1,Number(ap.max||6))}</strong></div>
+    <div className="gm-reference-ap-strip"><strong>{text.gmAp}: {gmAp}</strong></div>
     <div className="gm-reference-screen__grid">
       <article className="pip-panel gm-reference-card gm-reference-card--economy">
         <h3>[ {text.economy} ]</h3>
