@@ -357,3 +357,77 @@
 .gm-map-creature.is-dead .gm-map-creature__avatar::after{content:"×";position:absolute;inset:0;display:grid;place-items:center;font:900 34px/1 system-ui;color:#ff8b8b;text-shadow:0 0 5px #000;background:rgba(0,0,0,.2)}
 .gm-map-creature__dead-label{grid-column:1/-1;padding:5px 8px;border:1px solid rgba(255,110,110,.45);border-radius:7px;color:#ff9d9d;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-align:center}
 .gm-map-creature__hp-btn{min-width:64px}
+
+@media(max-width:899px){
+  .gm-mobile-initiative__list{gap:8px}
+  .gm-mobile-initiative__entry{
+    width:74px;
+    height:auto;
+    min-height:58px;
+    padding:3px 2px 2px;
+    display:grid;
+    grid-template-rows:auto auto;
+    justify-items:center;
+    align-content:start;
+    gap:3px;
+  }
+  .gm-mobile-initiative__avatar{
+    width:34px;
+    height:34px;
+  }
+  .gm-mobile-initiative__meta{
+    display:grid;
+    gap:1px;
+    width:72px;
+    min-width:0;
+    text-align:center;
+  }
+  .gm-mobile-initiative__meta b{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.58rem;
+    line-height:1.15;
+  }
+  .gm-mobile-initiative__meta small{
+    display:block;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-size:.48rem;
+    line-height:1.1;
+    opacity:.72;
+  }
+}
+.gm-map-creature__hp-editor{
+  display:grid;
+  grid-template-columns:auto 54px auto;
+  align-items:center;
+  gap:5px;
+  min-height:32px;
+  padding:4px 6px;
+  border:1px solid color-mix(in srgb,currentColor 24%,transparent);
+  border-radius:7px;
+  background:color-mix(in srgb,currentColor 3%,transparent);
+  font-size:.62rem;
+}
+.gm-map-creature__hp-editor input{
+  width:54px;
+  min-width:0;
+  height:28px;
+  padding:2px 4px;
+  border:1px solid color-mix(in srgb,currentColor 28%,transparent);
+  border-radius:5px;
+  background:var(--pip-bg,#071008);
+  color:inherit;
+  text-align:center;
+  font:700 .72rem/1 monospace;
+}
+.gm-map-creature__hp-editor small{opacity:.7}
+@media(max-width:640px){
+  .gm-map-creature__hp-editor{
+    grid-template-columns:auto minmax(44px,1fr) auto;
+  }
+  .gm-map-creature__hp-editor input{width:100%}
+}
