@@ -1,5 +1,6 @@
 import { getSelectedWeaponMods, getWeaponModGroups, applyWeaponMods } from "../data/weaponMods.js";
 import { applyNpcRank, normalizeWeaponAttack, parseAttackText } from "./npcCombat.js";
+import { legendaryAbilityById, randomLegendaryAbilityFor } from "./npcFeaturePresets.js";
 import { loadNpcWeaponDatabase } from "./npcWeaponDatabase.js";
 import { buildProceduralNpcLevelStats } from "./proceduralNpcLeveling.js";
 import {
@@ -349,6 +350,19 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
   const equipment = await buildProceduralNpcEquipment(entry, enemy, leveled, context);
   const baseXp = Math.max(1, num(enemy?.baseXp ?? entry?.baseXp ?? entry?.xp, enemy?.xp || 10));
   const rank = enemy?.rank || "standard";
+  const generatedLegendaryAbility = ["special", "legendary"].includes(String(rank))
+    && !enemy?.legendaryAbilityId
+    && !enemy?.legendaryAbility
+      ? randomLegendaryAbilityFor({
+          kind: String(entry?.cardKind || "").toLowerCase() === "npc" || String(entry?.statKind || "").toLowerCase() === "character" ? "npc" : "creature",
+          seed: context.stamp || "",
+          salt: [context.locationId || context.roomId || context.poiId || "", entry?.id || entry?.name || enemy?.type || "enemy", rank].join(":"),
+        })
+      : null;
+  const explicitLegendaryAbility = enemy?.legendaryAbilityId
+    ? legendaryAbilityById(enemy.legendaryAbilityId)
+    : null;
+  const selectedLegendaryAbility = explicitLegendaryAbility || generatedLegendaryAbility;
   const base = {
     ...leveled,
     xp: baseXp,
@@ -373,8 +387,8 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     rank,
     specialFeatureId: enemy?.specialFeatureId || "",
     specialFeature: enemy?.specialFeature || "",
-    legendaryAbilityId: enemy?.legendaryAbilityId || "",
-    legendaryAbility: enemy?.legendaryAbility || "",
+    legendaryAbilityId: enemy?.legendaryAbilityId || selectedLegendaryAbility?.id || "",
+    legendaryAbility: enemy?.legendaryAbility || (selectedLegendaryAbility ? `${selectedLegendaryAbility.name} — ${selectedLegendaryAbility.summary}` : ""),
     legendaryRewardType: enemy?.legendaryRewardType || "",
     legendaryReward: enemy?.legendaryReward || "",
   });
@@ -397,5 +411,6 @@ export async function buildProceduralNpcTokenStats(entry = {}, enemy = {}, conte
     ...(context.poiId ? { generatedPoiId: context.poiId } : {}),
     generatedEncounterRank: rank,
     generatedEnemyGroup: enemy?.enemyGroup || "",
+    generatedLegendaryAbilityId: selectedLegendaryAbility?.id || enemy?.legendaryAbilityId || "",
   };
 }
