@@ -36,3 +36,27 @@
   .gm-reference-screen--compact .gm-reference-table__row>.gm-reference-row-action{grid-column:3;grid-row:1/span 2}
   .gm-reference-quick-actions{grid-template-columns:1fr}
 }
+
+@media (min-width: 900px) {
+  .gm-reference-screen {
+    width: 100%;
+    max-width: none;
+  }
+
+  .gm-reference-screen__grid {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(320px, 1fr));
+    gap: 14px;
+  }
+
+  .gm-reference-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .gm-reference-screen--compact .gm-reference-screen__grid {
+    grid-template-columns: 1fr;
+  }
+}
