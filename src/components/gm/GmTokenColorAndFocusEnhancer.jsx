@@ -104,11 +104,13 @@ export default function GmTokenColorAndFocusEnhancer({ session }) {
 
         const decorateCards = (selector) => {
           [...root.querySelectorAll(selector)].forEach((card, index) => {
-            const token = npcTokens[index];
+            const explicitId = String(card.dataset?.tokenId || "");
+            const token = (explicitId ? npcTokens.find((item) => String(item.id) === explicitId) : null) || npcTokens[index];
             if (!token) return;
             const accent = tokenAccent(token);
             card.classList.add("is-token-color-linked");
             card.style.setProperty("--enemy-accent", accent);
+            card.style.borderColor = accent;
 
             const host =
               card.querySelector(".tactical-enemy-card__actions") ||
@@ -116,24 +118,27 @@ export default function GmTokenColorAndFocusEnhancer({ session }) {
               card.querySelector(".gm-npc-v4-compact-row") ||
               card;
             let button = card.querySelector(".gm-show-token-on-map");
-            if (!button) {
+            if (!button && !card.classList.contains("gm-map-creature")) {
               button = document.createElement("button");
               button.type = "button";
               button.className = "pip-btn gm-show-token-on-map";
               host.appendChild(button);
             }
-            button.textContent = `◎ ${showLabel()}`;
-            button.dataset.tokenId = String(token.id);
-            button.onclick = (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              focusToken(token);
-            };
+            if (button) {
+              button.textContent = `◎ ${showLabel()}`;
+              button.dataset.tokenId = String(token.id);
+              button.onclick = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                focusToken(token);
+              };
+            }
           });
         };
 
         decorateCards(".tactical-enemy-card");
         decorateCards(".gm-npc-v4-scene-card");
+        decorateCards(".gm-map-creature[data-token-id]");
       }, 0);
     };
 
