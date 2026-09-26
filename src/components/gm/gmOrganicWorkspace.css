@@ -353,3 +353,32 @@ body:has(.session-gm-host--organic)::after { display: none; }
   .gm-ap-counter__row>div{justify-content:flex-end}
   .gm-organic-subtabs button{font-size:11px!important;padding-inline:5px!important}
 }
+
+/* Final GM workspace width guard: prevent reference/environment cards from
+   collapsing into implicit narrow columns on desktop. */
+@media (min-width: 900px) {
+  .gm-organic-content {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+  }
+
+  .gm-organic-content > .gm-reference-screen,
+  .gm-organic-content > .gm-scene-manager {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .gm-organic-workspace .gm-tactical-view--scene > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
