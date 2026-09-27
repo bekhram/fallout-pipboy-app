@@ -64,6 +64,14 @@ import { buildOpenWastelandSite } from "../../utils/proceduralWastelandOpen.js";
 
 const GRID = 24;
 
+function gridCols(spec = {}) {
+  return Math.max(GRID, Number(spec?.cols || spec?.rows || GRID));
+}
+function gridRows(spec = {}) {
+  const cols = gridCols(spec);
+  return Math.max(GRID, Number(spec?.rows || spec?.cols || cols));
+}
+
 const OVERLAP_PAD = 0.08;
 
 const ROAD_TILE = 8;
@@ -375,7 +383,7 @@ function visualBounds(item) {
   };
 }
 
-function fitVisualItemToGrid(item) {
+function fitVisualItemToGrid(item, cols = GRID, rows = cols) {
   const bounds =
     visualBounds(item);
 
@@ -387,10 +395,10 @@ function fitVisualItemToGrid(item) {
   } else if (
     bounds.x +
       bounds.w >
-    GRID
+    cols
   ) {
     dx =
-      GRID -
+      cols -
       (
         bounds.x +
         bounds.w
@@ -402,10 +410,10 @@ function fitVisualItemToGrid(item) {
   } else if (
     bounds.y +
       bounds.h >
-    GRID
+    rows
   ) {
     dy =
-      GRID -
+      rows -
       (
         bounds.y +
         bounds.h
@@ -846,6 +854,8 @@ function roadFromConnector(
   seed,
   {
     damagedEvery = 0,
+    cols = GRID,
+    rows = cols,
   } = {}
 ) {
   const connector =
@@ -895,7 +905,7 @@ function roadFromConnector(
         ROAD_TILE / 2 -
         overlap,
 
-      to: GRID,
+      to: rows,
 
       fixed:
         connector.x,
@@ -937,7 +947,7 @@ function roadFromConnector(
       ROAD_TILE / 2 -
       overlap,
 
-    to: GRID,
+    to: cols,
 
     fixed:
       connector.y,
@@ -1019,7 +1029,9 @@ function intersectionInfo(
 function makeCrossRoads(
   roads,
   seed,
-  forceFullCross = false
+  forceFullCross = false,
+  cols = GRID,
+  rows = cols
 ) {
   const info =
     intersectionInfo(
@@ -1094,6 +1106,8 @@ function makeCrossRoads(
           {
             damagedEvery:
               10,
+            cols,
+            rows,
           }
         )
     );
@@ -1116,7 +1130,9 @@ function makeCrossRoads(
 
 function makeBentSingleRoad(
   road,
-  seed
+  seed,
+  cols = GRID,
+  rows = cols
 ) {
   const vertical =
     Number(road.h || 0) >=
@@ -1130,7 +1146,7 @@ function makeBentSingleRoad(
   return lineTiles({
     axis: vertical ? "v" : "h",
     from: 0,
-    to: GRID,
+    to: vertical ? rows : cols,
     fixed,
     seed,
     damagedEvery: 7,
@@ -1272,6 +1288,8 @@ export function planRoadAssets(
   site,
   spec
 ) {
+  const cols = Math.max(GRID, Number(site?.cols || spec?.cols || GRID));
+  const rows = Math.max(GRID, Number(site?.rows || spec?.rows || cols));
   const roads =
     site?.roads || [];
 
@@ -1295,7 +1313,9 @@ export function planRoadAssets(
     return makeCrossRoads(
       roads,
       seed,
-      Boolean(spec?.forceFullCross)
+      Boolean(spec?.forceFullCross),
+      cols,
+      rows
     );
   }
 
@@ -1312,7 +1332,9 @@ export function planRoadAssets(
 
   return makeBentSingleRoad(
     roads[0],
-    seed
+    seed,
+    cols,
+    rows
   );
 }
 
@@ -1382,7 +1404,7 @@ function removeRoadOverlaps(
  * ============================================================
  */
 
-export function RoadAsset({ road, fullSize = false, visualScale = 1.35 }) {
+export function RoadAsset({ road, fullSize = false, visualScale = 1.35, cols = GRID, rows = cols }) {
   const isJunction = road.name === "cross" || road.name === "t-junction" || road.name.startsWith("curve");
   const config = ROAD_VISUAL_CONFIG[road.name] || {
     scale: 1,
@@ -1415,10 +1437,10 @@ export function RoadAsset({ road, fullSize = false, visualScale = 1.35 }) {
       data-road-rotation={road.rotation || 0}
       style={{
         position: "absolute",
-        left: `${(left / GRID) * 100}%`,
-        top: `${(top / GRID) * 100}%`,
-        width: `${((fullSize ? visualSize : width * visualScale) / GRID) * 100}%`,
-        height: `${((fullSize ? visualSize : height * visualScale) / GRID) * 100}%`,
+        left: `${(left / cols) * 100}%`,
+        top: `${(top / rows) * 100}%`,
+        width: `${((fullSize ? visualSize : width * visualScale) / cols) * 100}%`,
+        height: `${((fullSize ? visualSize : height * visualScale) / rows) * 100}%`,
         objectFit: fullSize ? "contain" : "fill",
         transform: fullSize
           ? `rotate(${road.rotation || 0}deg)`
@@ -1458,13 +1480,17 @@ function centeredRailAsset(
 function railLineTiles({
   axis,
   fixed,
+  cols = GRID,
+  rows = cols,
 }) {
   const out = [];
   const half = RAIL_LENGTH / 2;
 
+  const length = axis === "v" ? rows : cols;
+
   for (
     let along = half;
-    along <= GRID - half + 0.01;
+    along <= length - half + 0.01;
     along += RAIL_STEP
   ) {
     const cx = axis === "v" ? fixed : along;
@@ -1479,7 +1505,7 @@ function railLineTiles({
     );
   }
 
-  const tailCenter = GRID - half;
+  const tailCenter = length - half;
   const last = out[out.length - 1];
 
   if (last) {
@@ -1506,9 +1532,11 @@ function railLineTiles({
 }
 
 function planRailAssets(spec) {
+  const cols = gridCols(spec);
+  const rows = gridRows(spec);
   const seed =
     hashValue(
-      `rail:${spec?.seed || "1"}:${spec?.terrain || "wasteland"}`
+      `rail:${spec?.seed || "1"}:${spec?.terrain || "wasteland"}:${cols}x${rows}`
     );
 
   const axis =
@@ -1516,16 +1544,19 @@ function planRailAssets(spec) {
       ? "h"
       : "v";
 
+  const axisSize = axis === "h" ? rows : cols;
   const fixed =
     clamp(
-      6 + ((seed >>> 3) % 13),
-      6,
-      18
+      Math.round(axisSize * (0.25 + ((seed >>> 3) % 50) / 100)),
+      3,
+      Math.max(3, axisSize - 3)
     );
 
   return railLineTiles({
     axis,
     fixed,
+    cols,
+    rows,
   });
 }
 
@@ -1581,7 +1612,7 @@ function removeRailOverlaps(
   );
 }
 
-function RailAsset({ rail }) {
+function RailAsset({ rail, cols = GRID, rows = cols }) {
   return (
     <PhaserAsset
       src={rail.src}
@@ -1590,10 +1621,10 @@ function RailAsset({ rail }) {
       data-wasteland-rail={rail.name}
       style={{
         position: "absolute",
-        left: `${(rail.centerX / GRID) * 100}%`,
-        top: `${(rail.centerY / GRID) * 100}%`,
-        width: `${(RAIL_LENGTH / GRID) * 100}%`,
-        height: `${(RAIL_WIDTH / GRID) * 100}%`,
+        left: `${(rail.centerX / cols) * 100}%`,
+        top: `${(rail.centerY / rows) * 100}%`,
+        width: `${(RAIL_LENGTH / cols) * 100}%`,
+        height: `${(RAIL_WIDTH / rows) * 100}%`,
         objectFit: "fill",
         transform: `translate(-50%, -50%) rotate(${rail.rotation || 0}deg)`,
         transformOrigin: "50% 50%",
@@ -1615,6 +1646,8 @@ function RailAsset({ rail }) {
 function SpriteImage({
   item,
   preview = false,
+  cols = GRID,
+  rows = cols,
 }) {
   const asset =
     assetForItem(item);
@@ -1696,7 +1729,7 @@ function SpriteImage({
           `${
             (
               box.x /
-              GRID
+              cols
             ) *
             100
           }%`,
@@ -1705,7 +1738,7 @@ function SpriteImage({
           `${
             (
               box.y /
-              GRID
+              rows
             ) *
             100
           }%`,
@@ -1714,7 +1747,7 @@ function SpriteImage({
           `${
             (
               box.w /
-              GRID
+              cols
             ) *
             100
           }%`,
@@ -1723,7 +1756,7 @@ function SpriteImage({
           `${
             (
               box.h /
-              GRID
+              rows
             ) *
             100
           }%`,
@@ -1769,17 +1802,15 @@ export function WastelandAssetLayer({
   preview = false,
   showBackground = true,
 }) {
+  const cols = gridCols(spec);
+  const rows = gridRows(spec);
   const site =
     useMemo(
       () =>
         buildOpenWastelandSite({
           ...spec,
-
-          cols:
-            GRID,
-
-          rows:
-            GRID,
+          cols,
+          rows,
         }),
 
       [
@@ -1790,6 +1821,8 @@ export function WastelandAssetLayer({
         spec?.assetProfile,
         spec?.roadPlacement,
         spec?.allowRoadVehicles,
+        spec?.cols,
+        spec?.rows,
         JSON.stringify(spec?.reservedRects || []),
       ]
     );
@@ -1870,7 +1903,7 @@ export function WastelandAssetLayer({
               normalizeVisualSize
             ),
           ].map(
-            fitVisualItemToGrid
+            (item) => fitVisualItemToGrid(item, cols, rows)
           );
 
         return removeRailOverlaps(
@@ -2001,6 +2034,8 @@ export function WastelandAssetLayer({
               road={
                 road
               }
+              cols={cols}
+              rows={rows}
             />
           )
         )}
@@ -2024,6 +2059,8 @@ export function WastelandAssetLayer({
             <RailAsset
               key={`${rail.name}-${rail.centerX}-${rail.centerY}-${rail.rotation}-${index}`}
               rail={rail}
+              cols={cols}
+              rows={rows}
             />
           )
         )}
@@ -2057,6 +2094,8 @@ export function WastelandAssetLayer({
               preview={
                 preview
               }
+              cols={cols}
+              rows={rows}
             />
           )
         )}
@@ -2146,6 +2185,8 @@ export default function WastelandAssetPortal({
       spec?.seed,
       spec?.type,
       spec?.terrain,
+      spec?.cols,
+      spec?.rows,
     ]
   );
 
