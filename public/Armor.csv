@@ -37,6 +37,7 @@ Spike Armour,2,2,0,TRUE,TRUE,TRUE,TRUE,17,65,2,
 Utility Coveralls,2,0,0,FALSE,TRUE,TRUE,TRUE,2,12,1,"Utility Coveralls increase the wearer's maximum carry weight by +5.
 
 "
+The Ghoul's Gunslinger Outfit,4,3,0,FALSE,TRUE,TRUE,TRUE,10,65,5,"A tattered leather duster and waistcoat with pinstripe trousers and a bandolier of custom shells."
 HEADGEAR,,,,,,,,,,,
 Army Helmet,2,0,0,TRUE,FALSE,FALSE,FALSE,3,20,1,
 Brotherhood of Steel Hood,0,1,0,TRUE,FALSE,FALSE,FALSE,"0,5",12,2,
