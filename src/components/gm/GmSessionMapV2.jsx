@@ -1005,19 +1005,26 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           )
       );
     }
-    setDragState((value) =>
-      value
-        ? {
-            ...value,
-            x: event.clientX,
-            y: event.clientY,
-            moved: drag.moved,
-            targetX: placement?.x,
-            targetY: placement?.y,
-            valid,
-          }
-        : value
-    );
+    setDragState((value) => {
+      if (!value) return value;
+      const nextTargetX = placement?.x;
+      const nextTargetY = placement?.y;
+      if (
+        value.moved === drag.moved &&
+        value.targetX === nextTargetX &&
+        value.targetY === nextTargetY &&
+        value.valid === valid
+      ) {
+        return value;
+      }
+      return {
+        ...value,
+        moved: drag.moved,
+        targetX: nextTargetX,
+        targetY: nextTargetY,
+        valid,
+      };
+    });
   };
 
   const finishDrag = async (event) => {
