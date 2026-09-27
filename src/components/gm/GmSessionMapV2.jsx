@@ -1,14 +1,10 @@
 import { PhaserToken } from "../phaser/PhaserAsset.jsx";
 import DiceRollModal from "../dice/DiceRollModal.jsx";
-import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
 import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
 import { buildNpcAttackRollConfig, effectiveAttackProfile, normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText, parseCombatAbilityAttacks } from "../../utils/npcCombat.js";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
-import React, { useEffect, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
-import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
-import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
@@ -16,8 +12,12 @@ import SuperDuperMartRoomMarkerPortal from "./SuperDuperMartRoomMarkerPortal.jsx
 import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
+import GmLazyCreatureAdder from "./GmLazyCreatureAdder.jsx";
 import "./gmSessionMap.css";
 import "./sceneLibrary.css";
+
+const LazyRoomDescriptions = lazy(() => import("./GmProceduralRoomDescriptionsV4.jsx"));
+const LazyBattlemapExtrasPanel = lazy(() => import("./GmBattlemapExtrasPanel.jsx"));
 
 const DEFAULT_COLS = 12;
 const DEFAULT_ROWS = 12;
@@ -446,39 +446,32 @@ function npcStats(entry) {
     defense: Number(entry.defense ?? entry.def ?? 0) || null,
     initiative: Number(entry.initiative ?? entry.init ?? 0) || null,
     level: Number(entry.level ?? 0) || null,
+    xp: Number(entry.xp ?? 0) || null,
     attacks: String(entry.attacks ?? entry.attack ?? ""),
     drBlock: String(entry.drBlock ?? entry.dr ?? entry.resistance ?? ""),
+    creatureType: entry.creatureType || "",
+    body: entry.body ?? "",
+    mind: entry.mind ?? "",
+    melee: entry.melee ?? "",
+    guns: entry.guns ?? "",
+    other: entry.other ?? "",
+    skills: entry.skills ?? [],
+    special: entry.special ?? null,
+    abilities: entry.abilities ?? "",
+    tactics: entry.tactics ?? "",
+    loot: entry.loot ?? "",
+    summary: entry.summary ?? "",
+    source: entry.source ?? "",
   };
-}
-
-function managerToken(token) {
-  const stats = token.stats || {};
-  return {
-    ...token,
-    bestiaryId: token.npcId || "",
-    hp: stats.hp ?? stats.currentHp ?? null,
-    maxHp: stats.maxHp ?? null,
-    defense: stats.defense ?? null,
-    initiative: stats.initiative ?? null,
-    level: stats.level ?? null,
-    attacks: stats.attacks ?? "",
-    drBlock: stats.drBlock ?? "",
-  };
-}
-
-function mapBestiaryEntry(token) {
-  const id = String(token?.npcId || "");
-  return BESTIARY_ENTRIES.find((entry) => String(entry?.id || "") === id) || null;
 }
 
 function mapCreatureAttacks(token) {
   const stats = token?.stats || {};
-  const linked = mapBestiaryEntry(token);
-  const attacksText = stats.attacks || linked?.attacks || "";
+  const attacksText = stats.attacks || "";
   const parsed = parseAttackText(attacksText);
   const custom = (Array.isArray(stats.customAttacks) ? stats.customAttacks : []).map(normalizeStructuredAttack);
   const weapons = (Array.isArray(stats.weapons) ? stats.weapons : []).map(normalizeWeaponAttack);
-  const abilityAttacks = parseCombatAbilityAttacks(stats.abilities || linked?.abilities || "", attacksText);
+  const abilityAttacks = parseCombatAbilityAttacks(stats.abilities || "", attacksText);
   const seen = new Set();
   return [...parsed, ...custom, ...weapons, ...abilityAttacks].filter((attack) => {
     const key = String(attack?.name || "").trim().toLowerCase() || JSON.stringify([Number(attack?.targetNumber || 0), Number(attack?.damageDice || 0), String(attack?.damageType || "")]);
@@ -534,18 +527,18 @@ function tokenAccentColor(token) {
   return MOBILE_TOKEN_PALETTE[index];
 }
 
-function MapCreatureAvatar({ token, linked }) {
-  const [url, setUrl] = useState(String(token?.avatar || linked?.avatar || ""));
+function MapCreatureAvatar({ token }) {
+  const [url, setUrl] = useState(String(token?.avatar || ""));
   useEffect(() => {
     let cancelled = false;
-    const direct = String(token?.avatar || linked?.avatar || "");
+    const direct = String(token?.avatar || "");
     if (direct) { setUrl(direct); return () => { cancelled = true; }; }
     if (!token?.npcId) { setUrl(""); return () => { cancelled = true; }; }
     getBestiaryTokenUrl(token.npcId)
       .then((next) => { if (!cancelled) setUrl(String(next || "")); })
       .catch(() => { if (!cancelled) setUrl(""); });
     return () => { cancelled = true; };
-  }, [token?.id, token?.avatar, token?.npcId, linked?.avatar]);
+  }, [token?.id, token?.avatar, token?.npcId]);
   const fallback = String(token?.name || "N").trim().slice(0, 1).toUpperCase() || "N";
   return <div className="gm-map-creature__avatar">{url ? <img src={url} alt="" draggable={false} /> : <span>{fallback}</span>}</div>;
 }
@@ -562,18 +555,17 @@ function localizedRankLabel(rank, language) {
 }
 
 function InitiativeAvatar({ token, dead }) {
-  const linked = mapBestiaryEntry(token);
-  const [url, setUrl] = useState(String(token?.avatar || linked?.avatar || ""));
+  const [url, setUrl] = useState(String(token?.avatar || ""));
   useEffect(() => {
     let cancelled = false;
-    const direct = String(token?.avatar || linked?.avatar || "");
+    const direct = String(token?.avatar || "");
     if (direct) { setUrl(direct); return () => { cancelled = true; }; }
     if (!token?.npcId) { setUrl(""); return () => { cancelled = true; }; }
     getBestiaryTokenUrl(token.npcId)
       .then((next) => { if (!cancelled) setUrl(String(next || "")); })
       .catch(() => { if (!cancelled) setUrl(""); });
     return () => { cancelled = true; };
-  }, [token?.id, token?.avatar, token?.npcId, linked?.avatar]);
+  }, [token?.id, token?.avatar, token?.npcId]);
 
   return (
     <span className="gm-mobile-initiative__avatar" style={{"--token-accent":tokenAccentColor(token)}}>
@@ -639,6 +631,9 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const [mapDiceOpen,setMapDiceOpen]=useState(false);
   const [mapRollConfig,setMapRollConfig]=useState(null);
   const [mapPendingAutoD6,setMapPendingAutoD6]=useState(null);
+  const [showExtras,setShowExtras]=useState(false);
+  const [showRooms,setShowRooms]=useState(false);
+  const [pendingPlaceEnemies,setPendingPlaceEnemies]=useState(false);
 
   useEffect(() => {
     setSceneName(scene?.name || "");
@@ -647,6 +642,9 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     setEditingStart(false);
     dragRef.current = null;
     setDragState(null);
+    setShowExtras(false);
+    setShowRooms(false);
+    setPendingPlaceEnemies(false);
   }, [scene?.sceneId]);
 
   if (!session?.isActive || session?.mode !== "host" || !scene) {
@@ -822,7 +820,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   };
 
 
-  const placeGeneratedEnemies = async () => {
+  const runPlaceGeneratedEnemies = async () => {
     if(sceneActionBusy)return;
     setSceneActionBusy("place");
     setGmActionResult(null);
@@ -843,6 +841,21 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       setSceneActionBusy("");
     }
   };
+
+  const placeGeneratedEnemies = () => {
+    if (roomDescriptionsRef.current?.placeEnemies) {
+      void runPlaceGeneratedEnemies();
+      return;
+    }
+    setShowRooms(true);
+    setPendingPlaceEnemies(true);
+  };
+
+  useEffect(() => {
+    if (!pendingPlaceEnemies || !showRooms || !roomDescriptionsRef.current?.placeEnemies) return;
+    setPendingPlaceEnemies(false);
+    void runPlaceGeneratedEnemies();
+  }, [pendingPlaceEnemies, showRooms]);
 
   const removeAllEnemies = async () => {
     if(sceneActionBusy)return;
@@ -1494,26 +1507,33 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       <SettlementRoomMarkerPortal session={session} />
       <SuperDuperMartRoomMarkerPortal session={session} />
 
-      <GmBattlemapExtrasPanel session={session} />
+      <section className="gm-map-lazy-panel pip-panel">
+        <button type="button" className="pip-btn" onClick={()=>setShowExtras((value)=>!value)}>
+          {showExtras ? "− " : "+ "}{text.events || "EVENTS"}
+        </button>
+        {showExtras ? <Suspense fallback={<small>…</small>}><LazyBattlemapExtrasPanel session={session} /></Suspense> : null}
+      </section>
 
       <section className="gm-map-creatures pip-panel">
-        <div className="pip-panel-title">{text.creatures}</div>
+        <div className="gm-map-creatures__header">
+          <div className="pip-panel-title">{text.creatures}</div>
+          <GmLazyCreatureAdder onAddToken={addEnemy} language={language} />
+        </div>
         {tokens.length ? <div className="gm-map-creatures__list">{tokens.map(token=>{
           const hp=Number(token?.stats?.hp ?? token?.stats?.currentHp ?? 0);
           const maxHp=Number(token?.stats?.maxHp ?? token?.stats?.hp ?? 0);
           const init=Number(token?.stats?.initiative ?? 0);
           const visible=token.kind==="player" || token?.stats?.visibleToPlayers !== false;
           const expanded=String(expandedMapCreatureId)===String(token.id);
-          const attacks=token.kind!=="player"?mapCreatureAttacks(token):[];
+          const attacks=expanded&&token.kind!=="player"?mapCreatureAttacks(token):[];
           const stats=token?.stats||{};
-          const linked=token.kind!=="player"?mapBestiaryEntry(token):null;
           const detail=(label,value)=>value!==undefined&&value!==null&&String(value).trim()!==""?<div className="gm-map-creature__detail-line"><strong>{label}</strong><span>{typeof value==="object"?JSON.stringify(value):String(value)}</span></div>:null;
           return <article
             className={"gm-map-creature"+(selectedTokenId===token.id?" is-selected":"")+(expanded?" is-expanded":"")+(token.kind!=="player"&&hp<=0?" is-dead":"")}
             data-token-id={String(token.id)}
             key={token.id}
           >
-            <MapCreatureAvatar token={token} linked={linked} />
+            <MapCreatureAvatar token={token} />
             <div className="gm-map-creature__main">
               <div className="gm-map-creature__title-row">
                 <strong>{token.name||"Token"}</strong>
@@ -1543,17 +1563,17 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 <span>{text.stat.size} <b>{Number(stats.footprint||token.size||1)}×{Number(stats.footprint||token.size||1)}</b></span>
               </div>
               <div className="gm-map-creature__full-stats">
-                {detail(text.stat.type,stats.creatureType||linked?.creatureType)}
-                {detail(text.stat.body,stats.body??linked?.body)}
-                {detail(text.stat.mind,stats.mind??linked?.mind)}
-                {detail(text.stat.melee,stats.melee??linked?.melee)}
-                {detail(text.stat.guns,stats.guns??linked?.guns)}
-                {detail(text.stat.other,stats.other??linked?.other)}
-                {detail(text.stat.skills,stats.skills??linked?.skills)}
-                {detail(text.stat.special,stats.special??linked?.special)}
+                {detail(text.stat.type,stats.creatureType)}
+                {detail(text.stat.body,stats.body)}
+                {detail(text.stat.mind,stats.mind)}
+                {detail(text.stat.melee,stats.melee)}
+                {detail(text.stat.guns,stats.guns)}
+                {detail(text.stat.other,stats.other)}
+                {detail(text.stat.skills,stats.skills)}
+                {detail(text.stat.special,stats.special)}
                 {detail(text.stat.specialFeature, localizedFeatureText(stats.specialFeatureId,language,"special") || stats.specialFeature)}
                 {detail(text.stat.legendaryAbility, localizedFeatureText(stats.legendaryAbilityId,language,"legendary") || stats.legendaryAbility)}
-                {detail(text.stat.abilities,stats.abilities??linked?.abilities)}
+                {detail(text.stat.abilities,stats.abilities)}
                 {Array.isArray(stats.legendaryPerks)&&stats.legendaryPerks.length?detail(text.stat.legendaryPerks,stats.legendaryPerks.map((perk)=>localizedLegendaryPerk(perk,language)).join("\n")):null}
                 {(stats.physicalDrBonus||stats.energyDrBonus||stats.radiationDrBonus||stats.poisonDrBonus)?detail(text.stat.perkDr,[
                   stats.physicalDrBonus?`Physical +${stats.physicalDrBonus}`:"",
@@ -1561,12 +1581,12 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                   stats.radiationDrBonus?`Radiation +${stats.radiationDrBonus}`:"",
                   stats.poisonDrBonus?`Poison +${stats.poisonDrBonus}`:"",
                 ].filter(Boolean).join(" · ")):null}
-                {detail(text.stat.resistance,stats.drBlock??linked?.drBlock)}
-                {detail(text.stat.tactics,stats.tactics??linked?.tactics)}
-                {detail(text.stat.loot,stats.loot??linked?.loot)}
-                {detail(text.stat.summary,stats.summary??linked?.summary)}
+                {detail(text.stat.resistance,stats.drBlock)}
+                {detail(text.stat.tactics,stats.tactics)}
+                {detail(text.stat.loot,stats.loot)}
+                {detail(text.stat.summary,stats.summary)}
                 {detail(text.stat.notes,stats.notes)}
-                {detail(text.stat.source,stats.source??linked?.source)}
+                {detail(text.stat.source,stats.source)}
               </div>
               <div className="gm-map-creature__attacks">
                 <strong>[ {text.attacks} ]</strong>
@@ -1583,18 +1603,16 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         })}</div>:<small className="gm-map-creatures__empty">{text.emptyCreatures}</small>}
       </section>
 
-      <section className="gm-map-rooms">
-        <GmProceduralRoomDescriptionsV4 ref={roomDescriptionsRef} session={session} embedded />
+      <section className="gm-map-rooms pip-panel">
+        <button type="button" className="pip-btn" onClick={()=>setShowRooms((value)=>!value)}>
+          {showRooms ? "− " : "+ "}{text.rooms || "ROOMS"}
+        </button>
+        {showRooms ? (
+          <Suspense fallback={<small>…</small>}>
+            <LazyRoomDescriptions ref={roomDescriptionsRef} session={session} embedded />
+          </Suspense>
+        ) : null}
       </section>
-
-      <TacticalEnemyManager
-        tokens={enemyTokens.map(managerToken)}
-        selectedTokenId={selectedTokenId}
-        onSelectToken={setSelectedTokenId}
-        onAddToken={addEnemy}
-        onRemoveToken={(tokenId) => session.deleteToken?.(tokenId)}
-        onUpdateToken={updateEnemy}
-      />
       <DiceRollModal
         isOpen={mapDiceOpen}
         onClose={()=>setMapDiceOpen(false)}
