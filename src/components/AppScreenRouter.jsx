@@ -324,7 +324,7 @@ export default function AppScreenRouter({
       return <NotesScreen form={form} onTopLevelChange={updateTopLevel} />;
 
     case "games":
-      return <GamesScreen />;
+      return <GamesScreen form={form} setForm={setForm} />;
 
     default:
       return (
