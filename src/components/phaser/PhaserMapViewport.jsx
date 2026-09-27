@@ -294,15 +294,25 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           if (this.bg) { this.bg.destroy(); this.bg = null; }
           if (d.background) {
             const key = this.textureUrls.get(d.background);
-            if (key && this.textures.exists(key)) { this.bg = this.add.image(0, 0, key).setOrigin(0).setDisplaySize(w, h).setDepth(0); g.clear(); }
-            else if (!key && !this.failedUrls.has(d.background) && this.mapAlive !== false && this.load?.list != null && this.load?.inflight != null) {
-              const url = d.background, nextKey = `map-bg-${this.textureUrls.size}`;
+            if (key && this.textures?.exists?.(key)) {
+              this.bg = this.add.image(0, 0, key).setOrigin(0).setDisplaySize(w, h).setDepth(0);
+              g.clear();
+            } else if (!key && !this.failedUrls.has(d.background) && this.mapAlive !== false && this.load?.list != null && this.load?.inflight != null) {
+              const url = d.background;
+              const nextKey = `map-bg-${this.textureUrls.size}`;
               this.textureUrls.set(url, nextKey);
               try {
                 this.load.image(nextKey, url);
-                this.load.once(`filecomplete-image-${nextKey}`, () => { if (!cancelled && this.mapAlive !== false && latest.current.background === url) this.refresh(); });
-                this.load.once('loaderror', file => { if (file.key === nextKey) this.failedUrls.add(url); });
-              this.load.start();
+                this.load.once(`filecomplete-image-${nextKey}`, () => {
+                  if (!cancelled && this.mapAlive !== false && latest.current.background === url) this.refresh();
+                });
+                this.load.once('loaderror', (file) => {
+                  if (file?.key === nextKey) this.failedUrls.add(url);
+                });
+                if (!this.load.isLoading?.()) this.load.start();
+              } catch {
+                this.failedUrls.add(url);
+              }
             }
           }
           for (const c of d.cells) {
