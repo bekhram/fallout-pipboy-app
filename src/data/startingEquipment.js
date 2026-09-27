@@ -343,6 +343,68 @@ export const ORIGIN_EQUIPMENT_PACKS = {
     { type: "randomFood", count: 3 }, { type: "randomBeverage", count: 3 },
   ],
 
+  // ROYAL_FLUSH_STARTING_PACKS
+  enclave_scientist: [
+    item("Lab Coat", "armor"),
+    item("Gas Mask", "armor"),
+    item("Laser Pistol", "weapons"),
+    item("Fusion Cell", "ammo", cd(6, 3)),
+  ],
+  enclave_soldier: [
+    item("Military Fatigues", "armor"),
+    item("Combat Chest Piece", "armor"),
+    choice("enclaveLongarm", [
+      [item("Laser Rifle", "weapons", 1, { mods: { stock: "Standard Stock", barrel: "Long Barrel" } }), item("Fusion Cell", "ammo", cd(8, 4))],
+      [item("Assault Rifle", "weapons"), item("5.56mm", "ammo", cd(8, 4))],
+    ]),
+  ],
+  follower_scholar: [
+    choice("followerClothing", [[item("Heavy Coat", "armor")], [item("Utility Coveralls", "armor")]]),
+    choice("followerMelee", [[item("Switchblade", "weapons")], [item("Pipe Wrench", "weapons")], [item("Knuckles", "weapons")]]),
+    choice("followerRanged", [
+      [item("Pipe Gun", "weapons"), item(".38", "ammo", cd(6, 3))],
+      [item("Syringer", "weapons"), item("Tranq Ammunition", "ammo", cd(6, 3))],
+    ]),
+    { type: "randomFoodOrBeverage", count: 2 },
+    item("Holotape Player", "tools"),
+    caps(35),
+  ],
+  follower_doctor: [
+    choice("followerDoctorCoat", [[item("Heavy Coat", "armor")], [item("Lab Coat", "armor")]]),
+    choice("followerDoctorRanged", [
+      [item("Pipe Gun", "weapons"), item(".38", "ammo", cd(6, 3))],
+      [item("Syringer", "weapons"), item("Tranq Ammunition", "ammo", cd(6, 3))],
+    ]),
+    item("Stimpak", "aid", 2),
+    choice("followerDoctorChem", [[item("Med-X", "aid")], [item("RadAway", "aid")]]),
+    item("Doctor's Bag", "tools"),
+    caps(20),
+  ],
+  viper_raider: [
+    item("Tough Clothing", "armor"),
+    choice("viperArmor", [
+      [item("Metal Chest Piece", "armor")],
+      [item("Metal Arm", "armor"), item("Metal Leg", "armor")],
+    ]),
+    choice("viperMelee", [[item("Combat Knife", "weapons")], [item("Switchblade", "weapons")], [item("Machete", "weapons")]]),
+    item("Pipe Gun", "weapons"),
+    item(".38", "ammo", cd(10, 5)),
+    choice("viperChem", [[item("Jet", "aid")], [item("RadAway", "aid")]]),
+    item("Stimpak", "aid"),
+    item("Common Materials", "junk", 2),
+    item("Uncommon Materials", "junk", 2),
+    caps(15),
+  ],
+  viper_priest: [
+    item("Tough Clothing", "armor"),
+    choice("viperPriestMelee", [[item("Combat Knife", "weapons")], [item("Switchblade", "weapons")], [item("Machete", "weapons")]]),
+    item("Pipe Revolver", "weapons"),
+    item(".45", "ammo", cd(6, 3)),
+    item("Viper Fang Amulet", "misc"),
+    item("Venomous Tinctures", "aid", 2, { effect: "Pit viper venom tinctures. Non-Viper users suffer 4 CD Poison damage with no additional effect." }),
+    caps(25),
+  ],
+
   // SETTLERS_GUIDE_STARTING_PACKS
   minuteman_rifleman: [
     item("Casual Clothing", "armor"), item("Casual Hat", "armor"),
@@ -570,6 +632,15 @@ function flattenGrant(entries = [], form = {}, choices = {}) {
         if (!foods.length) break;
         const picked = randomFrom(foods);
         result.push(item(picked.name, "food"));
+      }
+      return;
+    }
+    if (entry.type === "randomFoodOrBeverage") {
+      const pool = INVENTORY_DATABASE.filter((candidate) => ["food", "beverages"].includes(candidate.category));
+      for (let i = 0; i < Number(entry.count || 1); i += 1) {
+        if (!pool.length) break;
+        const picked = randomFrom(pool);
+        result.push(item(picked.name, picked.category || "food"));
       }
       return;
     }
