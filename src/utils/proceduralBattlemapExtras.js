@@ -17,7 +17,7 @@ const TRAP_PROFILES = {
 
 const COPY = {
   en: {
-    trap: "Trap", event: "Event", loot: "Loot cache", workbench: "Workbench", discovery: "Discovery",
+    trap: "Trap", event: "Event", lootCategory: "Loot", workbench: "Workbench", discovery: "Discovery",
     trapNames: ["Hidden trigger", "Electrical hazard", "Radiation trap", "Alarm trap"],
     trapDetail: (profile) => `Detection/disable difficulty ${profile.difficulty}; suggested damage ${profile.damageDice} CD.`,
     events: [
@@ -50,7 +50,7 @@ const COPY = {
     rarity: "Maximum loot rarity",
   },
   ru: {
-    trap: "Ловушка", event: "Событие", loot: "Тайник", workbench: "Верстак", discovery: "Находка",
+    trap: "Ловушка", event: "Событие", lootCategory: "Лут", workbench: "Верстак", discovery: "Находка",
     trapNames: ["Скрытый механизм", "Электрическая ловушка", "Радиационная ловушка", "Сигнальная ловушка"],
     trapDetail: (profile) => `Сложность обнаружения/обезвреживания ${profile.difficulty}; рекомендуемый урон ${profile.damageDice} КУ.`,
     events: [
@@ -83,7 +83,7 @@ const COPY = {
     rarity: "Максимальная редкость лута",
   },
   uk: {
-    trap: "Пастка", event: "Подія", loot: "Схованка", workbench: "Верстак", discovery: "Знахідка",
+    trap: "Пастка", event: "Подія", lootCategory: "Лут", workbench: "Верстак", discovery: "Знахідка",
     trapNames: ["Прихований механізм", "Електрична пастка", "Радіаційна пастка", "Сигнальна пастка"],
     trapDetail: (profile) => `Складність виявлення/знешкодження ${profile.difficulty}; рекомендована шкода ${profile.damageDice} КУ.`,
     events: [
@@ -116,7 +116,7 @@ const COPY = {
     rarity: "Максимальна рідкість луту",
   },
   pl: {
-    trap: "Pułapka", event: "Zdarzenie", loot: "Skrytka", workbench: "Warsztat", discovery: "Odkrycie",
+    trap: "Pułapka", event: "Zdarzenie", lootCategory: "Łup", workbench: "Warsztat", discovery: "Odkrycie",
     trapNames: ["Ukryty mechanizm", "Pułapka elektryczna", "Pułapka radiacyjna", "Pułapka alarmowa"],
     trapDetail: (profile) => `Trudność wykrycia/rozbrojenia ${profile.difficulty}; sugerowane obrażenia ${profile.damageDice} CD.`,
     events: [
@@ -357,6 +357,7 @@ export function localizeProceduralBattlemapExtras(extras = [], lang = "en") {
         category: text.trap,
         name: text.trapNames[Math.max(0, nameIndex)] || text.trap,
         description: text.trapDetail({ difficulty: extra.difficulty, damageDice: extra.damageDice }),
+        meta: `Difficulty ${extra.difficulty} · ${extra.damageDice} CD`,
       };
     }
     if (extra.kind === "event") {
@@ -365,7 +366,7 @@ export function localizeProceduralBattlemapExtras(extras = [], lang = "en") {
     }
     if (extra.kind === "loot") {
       const [name, description] = text.loot[extra.variant % text.loot.length];
-      return { ...extra, category: text.loot, name, description: `${description} ${text.rarity}: ${String(extra.lootRarity || "r3").toUpperCase()}.` };
+      return { ...extra, category: text.lootCategory, name, description, meta: `${text.rarity}: ${String(extra.lootRarity || "r3").toUpperCase()}` };
     }
     if (extra.kind === "workbench") {
       const [name, description] = text.workbenches[extra.workbenchType] || [text.workbench, ""];
