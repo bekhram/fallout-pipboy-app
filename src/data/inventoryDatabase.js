@@ -12,6 +12,7 @@ import { CRAFTING_MATERIAL_ITEMS } from "./inventory/craftingMaterials.js";
 import { STEALTH_BOY_ITEM } from "./inventory/stealthBoy.js";
 import { SETTLERS_GUIDE_ROBOT_PARTS, SETTLERS_GUIDE_TOOL_ITEMS } from "./inventory/settlersGuideRobotParts.js";
 import { HOLLYWOOD_HEROES_ITEMS } from "./inventory/hollywoodHeroes.js";
+import { ROYAL_FLUSH_ITEMS } from "./inventory/royalFlush.js";
 import {
   translateInventoryItemEffect,
   translateInventoryItemName,
@@ -106,6 +107,7 @@ export const INVENTORY_DATABASE = [
   STEALTH_BOY_ITEM,
   ...WINTER_OF_ATOM_ITEMS,
   ...HOLLYWOOD_HEROES_ITEMS,
+  ...ROYAL_FLUSH_ITEMS,
 ];
 
 export function getInventoryArchiveItems(category) {
