@@ -182,6 +182,7 @@ export const POWER_ARMOR_PLATING = [
   { id: "winterized", name: "Winterized Coating", energy: 1, weight: 1, cost: 10, requirement: "Armorer 1", excludedSets: ["x01"] },
   { id: "prism", name: "Prism Shielding", energy: 3, weight: 2, cost: 10, requirement: "Science! 2" },
   { id: "explosive", name: "Explosive Shielding", weight: 1, cost: 10, requirement: "Science! 1", effect: "+2 all DR against Blast weapons." },
+  { id: "titus-tempered", name: "Knight Titus' Tempered Lining", weight: 0, cost: 0, requirement: "", onlySets: ["titus-t60"], effect: "Unique tempered lining installed on Knight Titus' T-60; its protection is already included in the armor stat line." },
   { id: "emp", name: "EMP Shielding", energy: 2, weight: 1, cost: 20, requirement: "Armorer 1", onlySets: ["x01"] },
 ];
 
