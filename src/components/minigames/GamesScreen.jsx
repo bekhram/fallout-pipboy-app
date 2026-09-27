@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { playSound } from "../../utils/soundManager";
 import LockpickMiniGame from "./LockpickMiniGame";
 import TerminalHackMiniGame from "./TerminalHackMiniGame";
+import GamblingHub from "./GamblingHub.jsx";
 import "./games.css";
 
 const gameList = [
@@ -14,6 +15,11 @@ const gameList = [
     key: "terminalHack",
     title: "Terminal Hack",
     description: "Hack RobCo terminals and find the correct password.",
+  },
+  {
+    key: "gambling",
+    title: "Gambling",
+    description: "Blackjack, Roulette, Craps, Poker and Caravan with real Caps stakes.",
   },
 ];
 
@@ -31,7 +37,7 @@ const TERMINAL_DIFFICULTIES = [
   { key: "veryHard", label: "Very Hard" },
 ];
 
-export default function GamesScreen() {
+export default function GamesScreen({form=null,setForm=null}) {
   const [activeGame, setActiveGame] = useState(null);
   const [lastResult, setLastResult] = useState("");
   const [lockpickDifficulty, setLockpickDifficulty] = useState("medium");
@@ -71,6 +77,21 @@ export default function GamesScreen() {
             setActiveGame(null);
           }}
         />
+      </div>
+    );
+  }
+
+  if (activeGame === "gambling") {
+    return (
+      <div className="games-screen">
+        <div className="games-header games-header-inline">
+          <div>
+            <div className="games-title">GAMES</div>
+            <div className="games-subtitle">Royal Flush · Gambling & Games of Chance</div>
+          </div>
+          <button type="button" className="pip-btn" onClick={()=>setActiveGame(null)}>BACK</button>
+        </div>
+        <GamblingHub form={form} setForm={setForm}/>
       </div>
     );
   }
