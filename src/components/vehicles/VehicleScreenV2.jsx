@@ -16,6 +16,7 @@ import {
   applyVehicleInjury,
 } from "../../data/vehicles.js";
 import { vehicleAssetFor } from "../../data/vehicleAssets.js";
+import { createWeaponRoll } from "../../utils/dice.js";
 import "./vehicleScreen.css";
 
 const COPY = {
@@ -28,7 +29,7 @@ const COPY = {
     outControl:"OUT OF CONTROL",resources:"RESOURCES",noResources:"Not enough resources",build:"BUILD CUSTOM",name:"Name",
     scale:"Scale",speed:"Speed",physical:"Physical DR",energy:"Energy DR",hp:"HP",cover:"Cover",impact:"Impact",passengers:"Passengers",
     cargo:"Cargo Capacity",fuelTrack:"Fuel Track",weapons:"Weapons",location:"Repair location",difficulty:"Difficulty",rules:"Royal Flush vehicle rules",
-    ram:"RAM",zones:"zones",recent:"Recent effects",none:"No active vehicle effects",gallery:"Garage",damageButton:"DAMAGE -5 HP"
+    ram:"RAM",zones:"zones",recent:"Recent effects",none:"No active vehicle effects",gallery:"Garage",damageButton:"DAMAGE -5 HP",mounted:"MOUNTED WEAPONS",attack:"ATTACK",noMounted:"No mounted weapons",ramTest:"END + Pilot · D1"
   },
   ru: {
     title:"ТРАНСПОРТ",subtitle:"Машины, путешествия и дороги Пустоши",my:"МОЙ ТРАНСПОРТ",catalog:"КАТАЛОГ",custom:"СВОЙ ТРАНСПОРТ",
@@ -39,7 +40,7 @@ const COPY = {
     outControl:"ПОТЕРЯ УПРАВЛЕНИЯ",resources:"РЕСУРСЫ",noResources:"Не хватает ресурсов",build:"СОБРАТЬ СВОЙ",name:"Название",
     scale:"Масштаб",speed:"Скорость",physical:"Физ. DR",energy:"Энерг. DR",hp:"HP",cover:"Укрытие",impact:"Impact",passengers:"Пассажиры",
     cargo:"Груз",fuelTrack:"Топливо",weapons:"Оружие",location:"Узел ремонта",difficulty:"Сложность",rules:"Правила транспорта Royal Flush",
-    ram:"ТАРАН",zones:"зон",recent:"Последние эффекты",none:"Нет активных эффектов",gallery:"Гараж",damageButton:"УРОН -5 HP"
+    ram:"ТАРАН",zones:"зон",recent:"Последние эффекты",none:"Нет активных эффектов",gallery:"Гараж",damageButton:"УРОН -5 HP",mounted:"УСТАНОВЛЕННОЕ ОРУЖИЕ",attack:"АТАКА",noMounted:"Нет установленного оружия",ramTest:"END + Pilot · D1"
   },
   uk: {
     title:"ТРАНСПОРТ",subtitle:"Машини, подорожі та дороги Пустки",my:"МІЙ ТРАНСПОРТ",catalog:"КАТАЛОГ",custom:"ВЛАСНИЙ ТРАНСПОРТ",
@@ -50,7 +51,7 @@ const COPY = {
     outControl:"ВТРАТА КЕРУВАННЯ",resources:"РЕСУРСИ",noResources:"Не вистачає ресурсів",build:"ЗІБРАТИ ВЛАСНИЙ",name:"Назва",
     scale:"Масштаб",speed:"Швидкість",physical:"Фіз. DR",energy:"Енерг. DR",hp:"HP",cover:"Укриття",impact:"Impact",passengers:"Пасажири",
     cargo:"Вантаж",fuelTrack:"Паливо",weapons:"Зброя",location:"Вузол ремонту",difficulty:"Складність",rules:"Правила транспорту Royal Flush",
-    ram:"ТАРАН",zones:"зон",recent:"Останні ефекти",none:"Немає активних ефектів",gallery:"Гараж",damageButton:"ШКОДА -5 HP"
+    ram:"ТАРАН",zones:"зон",recent:"Останні ефекти",none:"Немає активних ефектів",gallery:"Гараж",damageButton:"ШКОДА -5 HP",mounted:"ВСТАНОВЛЕНА ЗБРОЯ",attack:"АТАКА",noMounted:"Немає встановленої зброї",ramTest:"END + Pilot · D1"
   },
   pl: {
     title:"POJAZDY",subtitle:"Pojazdy, podróże i drogi pustkowi",my:"MOJE POJAZDY",catalog:"KATALOG",custom:"WŁASNY POJAZD",
@@ -61,7 +62,7 @@ const COPY = {
     outControl:"UTRATA KONTROLI",resources:"ZASOBY",noResources:"Za mało zasobów",build:"ZBUDUJ WŁASNY",name:"Nazwa",
     scale:"Skala",speed:"Prędkość",physical:"Fiz. DR",energy:"Energia DR",hp:"HP",cover:"Osłona",impact:"Impact",passengers:"Pasażerowie",
     cargo:"Ładunek",fuelTrack:"Paliwo",weapons:"Broń",location:"Naprawiana część",difficulty:"Trudność",rules:"Zasady pojazdów Royal Flush",
-    ram:"TARAN",zones:"stref",recent:"Ostatnie efekty",none:"Brak aktywnych efektów",gallery:"Garaż",damageButton:"OBRAŻENIA -5 HP"
+    ram:"TARAN",zones:"stref",recent:"Ostatnie efekty",none:"Brak aktywnych efektów",gallery:"Garaż",damageButton:"OBRAŻENIA -5 HP",mounted:"BROŃ POKŁADOWA",attack:"ATAK",noMounted:"Brak zamontowanej broni",ramTest:"END + Pilot · D1"
   },
 };
 
@@ -102,7 +103,7 @@ function StatRow({label,children}){return <div className="vehicle-v2-stat-row"><
 
 const CUSTOM_DEFAULT={name:"Wasteland Vehicle",scale:2,maxHp:25,cover:"2",speedZones:2,speedMph:45,passengers:"4",impact:5,cargo:100,qualities:["Cargo","Exposed"],locations:[],weapons:[],fuelMax:4,fuelCurrent:4};
 
-export default function VehicleScreenV2({character=null,setCharacter=null}){
+export default function VehicleScreenV2({character=null,setCharacter=null,onRoll=null}){
   const {i18n}=useTranslation();
   const labels=COPY[langCode(i18n.resolvedLanguage||i18n.language)];
   const [mode,setMode]=useState("garage");
@@ -133,6 +134,56 @@ export default function VehicleScreenV2({character=null,setCharacter=null}){
     update(prev=>({...prev,inventoryItems:spendMaterials(prev.inventoryItems||[],plan.cost),vehicles:(prev.vehicles||[]).map(v=>v.id===vehicle.id?{...v,currentHp:Math.min(Number(v.maxHp||1),Number(v.currentHp||0)+plan.restore)}:v)}));
   };
   const setCrew=(role,value)=>active&&patchVehicle(active.id,v=>({...v,crewRoles:{...(v.crewRoles||{}),[role]:value}}));
+  const pilotSkillEntry=Object.entries(character?.skills||{}).find(([key])=>String(key).toLowerCase().replaceAll("_"," ").trim()==="pilot")?.[1]||{};
+  const endurance=Math.max(0,Number(character?.special?.E||character?.special?.END||0));
+  const pilotRank=Math.max(0,Number(pilotSkillEntry.rank||0)+Number(pilotSkillEntry.bonus||0));
+  const pilotTarget=Math.max(0,Math.min(20,endurance+pilotRank));
+  const pilotCritical=pilotSkillEntry.tagged?Math.max(1,Number(pilotSkillEntry.rank||1)):1;
+  const attackWithMountedWeapon=(weapon)=>{
+    if(typeof onRoll!=="function")return;
+    onRoll({...createWeaponRoll({
+      weapon:{...weapon,rate:Number(weapon?.rate??weapon?.fireRate??0),damage:Number(weapon?.damage||0),skill:weapon?.skill||(/laser/i.test(String(weapon?.name||""))?"Energy Weapons":"Big Guns")},
+      diceCount:2,
+      difficulty:1,
+      useRate:false,
+    }),id:`vehicle-weapon-${Date.now()}`,source:"vehicle-mounted"});
+  };
+  const ramVehicle=()=>{
+    if(!active||typeof onRoll!=="function")return;
+    onRoll({
+      id:`vehicle-ram-${Date.now()}`,
+      type:"skill",
+      diceType:"d20",
+      title:`${labels.ram}: ${active.name}`,
+      skillName:"Pilot",
+      skill:{...pilotSkillEntry,rank:String(pilotRank),attribute:"E"},
+      targetNumber:pilotTarget,
+      criticalRange:pilotCritical,
+      testValue:pilotTarget,
+      diceCount:2,
+      difficulty:1,
+      source:"vehicle-ram",
+      onResult:(result)=>{
+        if(result?.diceType!=="d20"||result?.rollType!=="skill")return;
+        if(Number(result?.successes||0)<1)return;
+        window.setTimeout(()=>{
+          onRoll({
+            id:`vehicle-ram-damage-${Date.now()}`,
+            type:"weapon",
+            diceType:"d20",
+            title:`${labels.ram}: ${active.name}`,
+            weapon:{name:`${labels.ram}: ${active.name}`,skill:"Pilot",damage:Number(active.impact||0),rate:0,effects:[],qualities:[]},
+            targetNumber:pilotTarget,
+            criticalRange:pilotCritical,
+            diceCount:1,
+            difficulty:0,
+            source:"vehicle-ram-damage",
+          });
+        },150);
+      },
+    });
+  };
+
   const movement=active?vehicleMovementPlan(active,movementAction,movementAp):null;
   const fuelInfo=active?vehicleFuelMilesPerPoint(active):null;
   const repairPlan=active?getVehicleRepairPlan(active,repairLocation):null;
@@ -199,8 +250,16 @@ export default function VehicleScreenV2({character=null,setCharacter=null}){
       <div className="vehicle-v2-inline"><input type="number" min="0" value={fuelMiles} onChange={e=>setFuelMiles(Number(e.target.value)||0)}/><button className="pip-btn" onClick={()=>patchVehicle(active.id,v=>consumeVehicleFuel(v,fuelMiles,{difficultTerrain:false}))}>{labels.useFuel}</button></div>
     </section>
 
+    <section className="vehicle-v2-weapons pip-panel">
+      <h3>{labels.mounted}</h3>
+      {(active.weapons||[]).length?(active.weapons||[]).map((weapon,index)=><article className="vehicle-v2-weapon" key={(weapon.name||"weapon")+"-"+index}>
+        <div><strong>{weapon.name||labels.weapons}</strong><small>{Number(weapon.damage||0)} CD · {weapon.type||"Physical"} · FR {Number(weapon.fireRate??weapon.rate??0)} · {weapon.range||"M"}</small></div>
+        <button type="button" className="pip-btn is-primary" onClick={()=>attackWithMountedWeapon(weapon)}>{labels.attack}</button>
+      </article>):<small>{labels.noMounted}</small>}
+    </section>
+
     <section className="vehicle-v2-ram pip-panel">
-      <h3>{labels.ramming}</h3><div className="vehicle-v2-ram-value">{vehicleRamDamage(active)} CD</div><small>END + Pilot · D1</small><button className="pip-btn is-primary">{labels.ram}</button>
+      <h3>{labels.ramming}</h3><div className="vehicle-v2-ram-value">{vehicleRamDamage(active)} CD</div><small>{labels.ramTest} · TN {pilotTarget}</small><button className="pip-btn is-primary" onClick={ramVehicle}>{labels.ram}</button>
     </section>
 
     <section className="vehicle-v2-control pip-panel">
