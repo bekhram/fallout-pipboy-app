@@ -190,8 +190,25 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
   const pilotRank=Math.max(0,Number(pilotSkillEntry.rank||0)+Number(pilotSkillEntry.bonus||0));
   const pilotTarget=Math.max(0,Math.min(20,endurance+pilotRank));
   const pilotCritical=pilotSkillEntry.tagged?Math.max(1,Number(pilotSkillEntry.rank||1)):1;
-  const attackWithMountedWeapon=(weapon)=>{
+  const hasChassisInjury=Boolean(active?.injuries?.some(injury=>injury?.id==="chassis"));
+  const hasWeaponInjury=Boolean(active?.injuries?.some(injury=>injury?.id==="weapon"));
+  const rollChassisBonusDamage=()=>{
     if(typeof onRoll!=="function")return;
+    onRoll({
+      id:"vehicle-chassis-bonus-"+Date.now(),
+      type:"damage",
+      diceType:"d6",
+      title:"Chassis Injury +2 CD",
+      diceCount:2,
+      source:"vehicle-chassis-injury",
+      onResult:(result)=>{
+        if(result?.diceType!=="d6")return;
+        setIncomingDamage(value=>Math.max(0,Number(value||0)+Number(result?.totalDamage||0)));
+      },
+    });
+  };
+  const attackWithMountedWeapon=(weapon)=>{
+    if(typeof onRoll!=="function"||hasWeaponInjury)return;
     onRoll({...createWeaponRoll({
       weapon:{...weapon,rate:Number(weapon?.rate??weapon?.fireRate??0),damage:Number(weapon?.damage||0),skill:weapon?.skill||(/laser/i.test(String(weapon?.name||""))?"Energy Weapons":"Big Guns")},
       diceCount:2,
@@ -330,6 +347,7 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
         <label><span>{damageLabels.type}</span><select value={damageType} onChange={e=>setDamageType(e.target.value)}><option>Physical</option><option>Energy</option></select></label>
         <label><span>{damageLabels.location}</span><select value={damageLocation} onChange={e=>setDamageLocation(e.target.value)}>{vehicleLocations.map((location,index)=><option key={location.name+"-"+index} value={location.name}>{location.roll} · {location.name}</option>)}</select></label>
         <div className="vehicle-v2-damage-preview"><span>DR <b>{damageDr}</b></span><span>{damageLabels.after} <b>{postDrDamage}</b></span><span>{damageLabels.threshold} <b>{criticalThreshold}</b></span></div>
+        {hasChassisInjury?<button type="button" className="pip-btn vehicle-v2-chassis-bonus" onClick={rollChassisBonusDamage}>Chassis Injury · ROLL +2 CD</button>:null}
         <button type="button" className="pip-btn is-primary" onClick={applyIncomingDamage}>{damageLabels.apply}</button>
       </div>
       {criticalPending?<div className="vehicle-v2-critical-ready"><strong>⚠ {damageLabels.triggered}</strong><span>{criticalPending.damage} ≥ {criticalThreshold}</span><button type="button" className="pip-btn is-primary" onClick={rollCriticalLocation}>{damageLabels.roll}</button></div>:null}
@@ -352,7 +370,7 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
       <h3>{labels.mounted}</h3>
       {(active.weapons||[]).length?(active.weapons||[]).map((weapon,index)=><article className="vehicle-v2-weapon" key={(weapon.name||"weapon")+"-"+index}>
         <div><strong>{weapon.name||labels.weapons}</strong><small>{Number(weapon.damage||0)} CD · {weapon.type||"Physical"} · FR {Number(weapon.fireRate??weapon.rate??0)} · {weapon.range||"M"}</small></div>
-        <button type="button" className="pip-btn is-primary" onClick={()=>attackWithMountedWeapon(weapon)}>{labels.attack}</button>
+        <button type="button" className="pip-btn is-primary" disabled={hasWeaponInjury} title={hasWeaponInjury?"Weapon Injury":undefined} onClick={()=>attackWithMountedWeapon(weapon)}>{hasWeaponInjury?"DISABLED":labels.attack}</button>
       </article>):<small>{labels.noMounted}</small>}
     </section>
 
