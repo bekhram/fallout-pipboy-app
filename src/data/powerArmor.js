@@ -66,6 +66,19 @@ export const POWER_ARMOR_SETS = [
     },
   },
   {
+    id: "titus-t60",
+    baseSetId: "t60",
+    name: "Knight Titus' Tempered T-60 Power Armor",
+    rarity: 6,
+    special: "Integrated Flight System pre-installed. Can accept the same mods as standard T-60 Power Armor.",
+    parts: {
+      head: { physical: 7, energy: 6, radiation: 7, hp: 10, weight: 12, cost: 330 },
+      torso: { physical: 9, energy: 8, radiation: 9, hp: 21, weight: 20, cost: 410 },
+      arm: { physical: 6, energy: 5, radiation: 7, hp: 10, weight: 15, cost: 250 },
+      leg: { physical: 6, energy: 5, radiation: 7, hp: 10, weight: 15, cost: 250 },
+    },
+  },
+  {
     id: "at0m",
     name: "AT-0M Power Armor",
     rarity: "Unique",
@@ -149,9 +162,15 @@ export const POWER_ARMOR_UPGRADES = [
   ),
 ];
 
+function basePowerArmorSetId(setId) {
+  const set = POWER_ARMOR_SETS.find((item) => item.id === setId);
+  return set?.baseSetId || setId;
+}
+
 export function availablePowerUpgrades(setId, type) {
+  const resolved = basePowerArmorSetId(setId);
   return POWER_ARMOR_UPGRADES.filter(
-    (item) => item.setId === setId && item.type === type
+    (item) => item.setId === resolved && item.type === type
   );
 }
 
@@ -183,6 +202,7 @@ export const POWER_ARMOR_SYSTEMS = [
   { id: "tesla-coils", name: "Tesla Coils", locations: ["torso"], weight: 2, cost: 100, requirement: "Science! 3", effect: "Enemies making melee attacks suffer 4 CD Energy damage." },
   { id: "stealth-boy", name: "Stealth Boy", locations: ["torso"], weight: 1, cost: 100, requirement: "Science! 4", effect: "Activate a Stealth Boy once per scene by spending 1 charge." },
   { id: "jetpack", name: "Jetpack", locations: ["torso"], weight: 1, cost: 500, requirement: "Armorer 4, Science! 4", effect: "Spend 1 charge to move one additional zone or perform an impact landing." },
+  { id: "integrated-flight-system", name: "Integrated Flight System", locations: ["torso"], weight: 0, cost: 0, requirement: "", onlySets: ["titus-t60"], effect: "Major action: make a PER + Pilot test with difficulty equal to the number of zones you want to move through. On success, fly to the destination. On failure, roll 4 CD and move a number of zones equal to Effects rolled before crashing and suffering that amount of damage." },
   { id: "rusty-knuckles", name: "Rusty Knuckles", locations: ["arm"], weight: 1, cost: 50, requirement: "Blacksmith 1", effect: "Unarmed attacks gain Persistent." },
   { id: "hydraulic-bracers", name: "Hydraulic Bracers", locations: ["arm"], weight: 1, cost: 100, requirement: "Blacksmith 3", effect: "Unarmed attacks inflict +2 CD damage while powered." },
   { id: "optimized-bracers", name: "Optimized Bracers", locations: ["arm"], weight: 1, cost: 100, requirement: "Blacksmith 1", effect: "Spend up to 4 AP on bonus melee damage while powered." },
@@ -201,10 +221,11 @@ export const POWER_PARTS = [
 ];
 
 export function availablePowerMods(mods, setId, location) {
+  const resolved = basePowerArmorSetId(setId);
   return mods.filter((mod) => {
     if (mod.locations && !mod.locations.includes(location)) return false;
-    if (mod.onlySets && !mod.onlySets.includes(setId)) return false;
-    if (mod.excludedSets?.includes(setId)) return false;
+    if (mod.onlySets && !mod.onlySets.includes(setId) && !mod.onlySets.includes(resolved)) return false;
+    if (mod.excludedSets?.includes(setId) || mod.excludedSets?.includes(resolved)) return false;
     return true;
   });
 }
