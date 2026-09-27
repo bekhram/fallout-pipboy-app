@@ -100,18 +100,24 @@ function templateSet(terrain) {
 
 function buildSeedPois(spec = {}) {
   const terrain = String(spec?.terrain || "wasteland").toLowerCase();
-  const rng = mulberry32(hashSeed(`${spec?.seed || "1"}:${terrain}:wasteland-poi-v1`));
+  const cols = Math.max(24, Math.floor(Number(spec?.cols || GRID)));
+  const rows = Math.max(24, Math.floor(Number(spec?.rows || GRID)));
+  const rng = mulberry32(hashSeed(`${spec?.seed || "1"}:${terrain}:${cols}x${rows}:wasteland-poi-v2`));
   const templates = templateSet(terrain);
   const density = clamp(spec?.density ?? 0.55, 0.1, 1);
-  const desired = Math.max(4, Math.min(7, 4 + Math.round(density * 3)));
-  const anchorOffset = hashSeed(`${spec?.seed || "1"}:poi-anchor`) % ANCHORS.length;
+  const sizeScale = Math.max(1, Math.min(2, Math.max(cols, rows) / GRID));
+  const desired = Math.max(4, Math.min(14, Math.round((4 + density * 3) * sizeScale)));
+  const anchorOffset = hashSeed(`${spec?.seed || "1"}:${cols}x${rows}:poi-anchor`) % ANCHORS.length;
   const pois = [];
 
   for (let index = 0; index < desired; index += 1) {
     const template = templates[index % templates.length] || templates[0];
     const anchor = ANCHORS[(index + anchorOffset) % ANCHORS.length];
-    const x = clamp(anchor[0] + Math.floor(rng() * 3) - 1, 2, GRID - 3);
-    const y = clamp(anchor[1] + Math.floor(rng() * 3) - 1, 2, GRID - 3);
+    const baseX = (anchor[0] / GRID) * cols;
+    const baseY = (anchor[1] / GRID) * rows;
+    const jitter = Math.max(1, Math.round(sizeScale));
+    const x = clamp(Math.round(baseX) + Math.floor(rng() * (jitter * 2 + 1)) - jitter, 2, cols - 3);
+    const y = clamp(Math.round(baseY) + Math.floor(rng() * (jitter * 2 + 1)) - jitter, 2, rows - 3);
     const group = chooseEnemyGroup(spec, rng, index);
     const hasEnemySeed = index < 2 || template.marker === "ENEMY" || rng() < 0.38;
     const enemy = hasEnemySeed ? seedEnemy(spec, rng, group, index) : null;
