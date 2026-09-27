@@ -11,6 +11,7 @@ import { BOBBLEHEAD_ITEMS } from "./inventory/bobbleheads.js";
 import { CRAFTING_MATERIAL_ITEMS } from "./inventory/craftingMaterials.js";
 import { STEALTH_BOY_ITEM } from "./inventory/stealthBoy.js";
 import { SETTLERS_GUIDE_ROBOT_PARTS, SETTLERS_GUIDE_TOOL_ITEMS } from "./inventory/settlersGuideRobotParts.js";
+import { HOLLYWOOD_HEROES_ITEMS } from "./inventory/hollywoodHeroes.js";
 import {
   translateInventoryItemEffect,
   translateInventoryItemName,
@@ -18,6 +19,7 @@ import {
 
 export const EXTRA_INVENTORY_CATEGORIES = [
   { value: "armor", label: "Armor" },
+  { value: "ammo", label: "Ammo" },
   { value: "robot_parts", label: "Robot Parts" },
   { value: "beverages", label: "Beverages" },
   { value: "magazines", label: "Magazines" },
@@ -26,6 +28,7 @@ export const EXTRA_INVENTORY_CATEGORIES = [
 
 const EXTRA_CATEGORY_LABELS = {
   armor: { en: "Armor", ru: "Броня", uk: "Броня", pl: "Pancerz" },
+  ammo: { en: "Ammo", ru: "Боеприпасы", uk: "Боєприпаси", pl: "Amunicja" },
   robot_parts: { en: "Robot Parts", ru: "Детали роботов", uk: "Деталі роботів", pl: "Części robotów" },
   beverages: { en: "Beverages", ru: "Напитки", uk: "Напої", pl: "Napoje" },
   magazines: { en: "Magazines", ru: "Журналы", uk: "Журнали", pl: "Czasopisma" },
@@ -50,6 +53,7 @@ export function extendInventoryCategories(categories = []) {
     const magazineIndex = next.findIndex((item) => item.value === "magazines");
     let insertAt = next.length;
     if (extra.value === "armor") insertAt = weaponsIndex >= 0 ? weaponsIndex + 1 : next.length;
+    else if (extra.value === "ammo") insertAt = armorIndex >= 0 ? armorIndex + 1 : (weaponsIndex >= 0 ? weaponsIndex + 1 : next.length);
     else if (extra.value === "robot_parts") insertAt = armorIndex >= 0 ? armorIndex + 1 : (weaponsIndex >= 0 ? weaponsIndex + 1 : next.length);
     else if (extra.value === "beverages") insertAt = foodIndex >= 0 ? foodIndex + 1 : next.length;
     else if (extra.value === "magazines") insertAt = beverageIndex >= 0 ? beverageIndex + 1 : (foodIndex >= 0 ? foodIndex + 1 : next.length);
@@ -101,6 +105,7 @@ export const INVENTORY_DATABASE = [
   ...CRAFTING_MATERIAL_ITEMS,
   STEALTH_BOY_ITEM,
   ...WINTER_OF_ATOM_ITEMS,
+  ...HOLLYWOOD_HEROES_ITEMS,
 ];
 
 export function getInventoryArchiveItems(category) {
