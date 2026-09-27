@@ -31,6 +31,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
       class MapScene extends Phaser.Scene {
         create() {
           scene = this;
+          this.mapAlive = true;
           this.cameras.main.setOrigin(0, 0);
           this.ink = this.add.graphics().setDepth(50);
           this.labels = [];
@@ -39,7 +40,17 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           this.worldClip = this.make.graphics({ x: 0, y: 0 }, false);
           this.worldClip.fillStyle(0xffffff).fillRect(0, 0, cols * CELL, rows * CELL);
           this.worldMask = this.worldClip.createGeometryMask();
-          this.events.once('shutdown', () => { this.worldMask.destroy(); this.worldClip.destroy(); });
+          this.events.once('shutdown', () => {
+            this.mapAlive = false;
+            try { this.load?.reset?.(); } catch {}
+            try { this.worldMask?.destroy?.(); } catch {}
+            try { this.worldClip?.destroy?.(); } catch {}
+            const grid = host.current?.querySelector?.('[data-phaser-grid]') || host.current;
+            if (grid?.phaserMap === this) {
+              try { delete grid.phaserMap; } catch { grid.phaserMap = null; }
+            }
+          });
+          this.events.once('destroy', () => { this.mapAlive = false; });
           this.refresh();
           this.fit(children ? 'fill' : 'fit');
           api.current = this;
@@ -171,18 +182,51 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
         }
         texture(url, apply) {
           let disposed = false;
-          const key = this.textureUrls.get(url);
-          if (key && this.textures.exists(key)) apply(key);
-          else if (url && !this.failedUrls.has(url)) {
-            const nextKey = key || `map-bg-${this.textureUrls.size}`;
-            const complete = () => { if (!disposed && !cancelled) apply(nextKey); };
-            this.load.once(`filecomplete-image-${nextKey}`, complete);
-            if (!key) { this.textureUrls.set(url, nextKey); this.load.image(nextKey, url); this.load.start(); }
-            return () => { disposed = true; this.load.off(`filecomplete-image-${nextKey}`, complete); };
+          const safeUrl = typeof url === 'string' ? url.trim() : url;
+          const active = () => !disposed && !cancelled && this.mapAlive !== false && this.sys?.isActive?.() !== false;
+          if (!safeUrl || !active()) return () => { disposed = true; };
+
+          const key = this.textureUrls.get(safeUrl);
+          if (key && this.textures?.exists?.(key)) {
+            if (active()) apply(key);
+            return () => { disposed = true; };
           }
-          return () => { disposed = true; };
+
+          if (this.failedUrls.has(safeUrl)) return () => { disposed = true; };
+
+          const loader = this.load;
+          if (!loader || loader.list == null || loader.inflight == null) {
+            return () => { disposed = true; };
+          }
+
+          const nextKey = key || `map-bg-${this.textureUrls.size}`;
+          const complete = () => {
+            if (active() && this.textures?.exists?.(nextKey)) apply(nextKey);
+          };
+          const fail = (file) => {
+            if (file?.key === nextKey) this.failedUrls.add(safeUrl);
+          };
+
+          try {
+            loader.once(`filecomplete-image-${nextKey}`, complete);
+            loader.on('loaderror', fail);
+            if (!key) {
+              this.textureUrls.set(safeUrl, nextKey);
+              loader.image(nextKey, safeUrl);
+              if (!loader.isLoading?.()) loader.start();
+            }
+          } catch {
+            this.failedUrls.add(safeUrl);
+          }
+
+          return () => {
+            disposed = true;
+            try { loader.off(`filecomplete-image-${nextKey}`, complete); } catch {}
+            try { loader.off('loaderror', fail); } catch {}
+          };
         }
         asset(props, onReady) {
+          if (this.mapAlive === false || this.sys?.isActive?.() === false) return () => {};
           let sprite;
           const { style = {}, src } = props, d = latest.current;
           const W = d.cols * CELL, H = d.rows * CELL;
@@ -207,6 +251,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           return () => { stop(); sprite?.destroy(); };
         }
         token(token, selected) {
+          if (this.mapAlive === false || this.sys?.isActive?.() === false) return () => {};
           const size = Math.max(1, Math.min(3, Number(token.stats?.footprint || token.size || 1)));
           const x = (Number(token.x) + size / 2) * CELL, y = (Number(token.y) + size / 2) * CELL, radius = size * CELL / 2 - 5;
           const palette = [0x78ff98, 0xffd166, 0x62d9ff, 0xff7ad9, 0xff9b54, 0x8da2ff, 0xd6ff63, 0xc58cff];
@@ -250,12 +295,13 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           if (d.background) {
             const key = this.textureUrls.get(d.background);
             if (key && this.textures.exists(key)) { this.bg = this.add.image(0, 0, key).setOrigin(0).setDisplaySize(w, h).setDepth(0); g.clear(); }
-            else if (!key && !this.failedUrls.has(d.background)) {
+            else if (!key && !this.failedUrls.has(d.background) && this.mapAlive !== false && this.load?.list != null && this.load?.inflight != null) {
               const url = d.background, nextKey = `map-bg-${this.textureUrls.size}`;
               this.textureUrls.set(url, nextKey);
-              this.load.image(nextKey, url);
-              this.load.once(`filecomplete-image-${nextKey}`, () => { if (!cancelled && latest.current.background === url) this.refresh(); });
-              this.load.once('loaderror', file => { if (file.key === nextKey) this.failedUrls.add(url); });
+              try {
+                this.load.image(nextKey, url);
+                this.load.once(`filecomplete-image-${nextKey}`, () => { if (!cancelled && this.mapAlive !== false && latest.current.background === url) this.refresh(); });
+                this.load.once('loaderror', file => { if (file.key === nextKey) this.failedUrls.add(url); });
               this.load.start();
             }
           }
