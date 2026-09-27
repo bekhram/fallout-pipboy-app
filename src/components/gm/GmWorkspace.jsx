@@ -6,7 +6,7 @@ import "./gmSessionMapLayout.css";
 
 export default function GmWorkspace({ character = null, setCharacter = null, session = null, onChatDockReady, onOpenCampaigns }) {
   const tacticalMapRef = useRef(null);
-  const bridgedSession = useLiveSessionBridge();
+  const bridgedSession = useLiveSessionBridge(!session);
   const effectiveSession = session || bridgedSession;
 
   return (
