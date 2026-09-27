@@ -994,7 +994,10 @@
       "chain_that_binds": "The Chain That Binds",
       "necrotic_post_human": "Necrotic Post-Human",
       "forced_evolution": "Forced Evolution",
-      "mister_handy_robot": "Mister Handy Robot"
+      "mister_handy_robot": "Mister Handy Robot",
+      "hidden_and_hunted": "Hidden & Hunted",
+      "trying_to_make_a_difference": "Trying to Make a Difference",
+      "winding_way_great_snake": "The Winding Way of the Great Snake"
     },
     "assaultron": "Assaultron",
     "brotherhood_outcast": "Brotherhood Outcast",
@@ -1006,7 +1009,10 @@
     "protectron": "Protectron",
     "robobrain": "Robobrain",
     "securitron": "Securitron",
-    "generation_3_synth": "Generation 3 Synth"
+    "generation_3_synth": "Generation 3 Synth",
+    "enclave_remnant": "Enclave Remnant",
+    "follower_of_the_apocalypse": "Follower of the Apocalypse",
+    "viper_initiate": "Viper Initiate"
   },
   "characterCreation": {
     "selectOriginTitle": "SELECT ORIGIN",
@@ -1135,6 +1141,18 @@
     "brahmin_baron": {
       "name": "Brahmin Baron",
       "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
+    },
+    "hidden_and_hunted": {
+      "name": "Hidden & Hunted",
+      "desc": "Gain one additional Tag Skill: Sneak or Survival. Your old identity can make the NCR and Brotherhood hostile. Create Supply Caches equal to half your Luck, rounded up; once per quest you may spend 1 Luck to declare a cache nearby."
+    },
+    "trying_to_make_a_difference": {
+      "name": "Trying to Make a Difference",
+      "desc": "Gain one additional Tag Skill: Medicine, Repair, Science, or Speech. You may re-roll 1d20 on sincere CHA + Speech tests to offer help, but intimidation or threats are more difficult."
+    },
+    "winding_way_great_snake": {
+      "name": "The Winding Way of the Great Snake",
+      "desc": "Gain one additional Tag Skill: Medicine or Sneak. Start with Poison Resistance 1, increasing by +1 at level 5 and every 5 levels thereafter. You can craft Improvised Poison at a Chemistry or Cooking Station."
     }
   },
   "perksInfo": {
@@ -1565,6 +1583,30 @@
     "tribal_naturalist": {
       "name": "Naturalist",
       "items": "Bow and arrows, Machete, Combat Knife, hunter clothing, wood armor, food and beverages."
+    },
+    "enclave_scientist": {
+      "name": "Former Enclave Scientist",
+      "items": "Lab Coat; Gas Mask; Laser Pistol; Fusion Cell with 6+3 shots."
+    },
+    "enclave_soldier": {
+      "name": "Former Enclave Soldier",
+      "items": "Military Fatigues; Combat Armor Chest Piece; Laser Rifle with Standard Stock + Long Barrel and 8+4 Fusion Cell shots OR Assault Rifle with 8+4 rounds of 5.56mm."
+    },
+    "follower_scholar": {
+      "name": "Follower Scholar",
+      "items": "Heavy Coat or Utility Coveralls; Switchblade/Pipe Wrench/Knuckles; Pipe Gun + 6+3 .38 OR Syringer + 6+3 Tranq Ammunition; 2 random Food/Beverage items; Holotape Player; 35 Caps."
+    },
+    "follower_doctor": {
+      "name": "Follower Doctor",
+      "items": "Heavy Coat or Lab Coat; Pipe Gun + 6+3 .38 OR Syringer + 6+3 Tranq Ammunition; 2 Stimpaks; Med-X or RadAway; Doctor's Bag; 20 Caps."
+    },
+    "viper_raider": {
+      "name": "Viper Raider",
+      "items": "Tough Clothing; Metal Chest Piece OR Metal Arm + Metal Leg; Combat Knife/Switchblade/Machete; Pipe Gun + 10+5 .38; Jet or RadAway; Stimpak; 2 Common + 2 Uncommon Materials; 15 Caps."
+    },
+    "viper_priest": {
+      "name": "Viper Priest",
+      "items": "Tough Clothing; Combat Knife/Switchblade/Machete; Pipe Revolver + 6+3 .45; Viper Fang Amulet; 2 Venomous Tinctures; 25 Caps."
     }
   },
   "weaponMods": {
@@ -1602,6 +1644,9 @@
     "protectron": "A purpose-built RobCo work robot adapted to life in the wasteland.",
     "robobrain": "A cybernetic robot whose processor is a preserved human brain.",
     "securitron": "A RobCo security robot built for policing and combat around New Vegas.",
-    "generation_3_synth": "A bio-synthetic humanoid created by the Institute and nearly indistinguishable from a human."
+    "generation_3_synth": "A bio-synthetic humanoid created by the Institute and nearly indistinguishable from a human.",
+    "enclave_remnant": "A former Enclave member living in hiding, marked by old enemies and relying on hidden supply caches.",
+    "follower_of_the_apocalypse": "A humanitarian scholar or doctor dedicated to spreading knowledge, healing people and helping communities.",
+    "viper_initiate": "A survivor of the Viper clans, trained in stealth, poison resistance and improvised toxins."
   }
 }
