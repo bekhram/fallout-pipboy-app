@@ -14,14 +14,15 @@ export function getLiveSessionBridge() {
   return currentSession;
 }
 
-export function useLiveSessionBridge() {
+export function useLiveSessionBridge(enabled = true) {
   const [session, setSession] = useState(() => currentSession);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     listeners.add(setSession);
     setSession(currentSession);
     return () => listeners.delete(setSession);
-  }, []);
+  }, [enabled]);
 
-  return session;
+  return enabled ? session : currentSession;
 }
