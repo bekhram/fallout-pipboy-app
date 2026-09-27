@@ -228,14 +228,22 @@ function roadSvg(road, surface) {
 
 export function buildOpenWastelandSite(spec = {}) {
   const terrainType = normalizeTerrain(spec.terrain || spec.terrainType);
+  const targetCols = Math.max(GRID, Math.floor(Number(spec.cols || spec.rows || GRID)));
+  const targetRows = Math.max(GRID, Math.floor(Number(spec.rows || spec.cols || targetCols)));
   const profile = terrainProfile(terrainType, spec.assetProfile);
-  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${terrainType}:24x24:open-wasteland-assets-v9`));
+  const rng = mulberry32(hashSeed(`${spec.seed || "1"}:${terrainType}:${targetCols}x${targetRows}:open-wasteland-assets-v10`));
   const road = roadProfile(rng, spec.roadPlacement);
   const roads = roadRects(road, rng);
-  const reservedRects = normalizeReservedRects(spec.reservedRects);
+  const reservedRects = normalizeReservedRects(
+    (Array.isArray(spec.reservedRects) ? spec.reservedRects : []).map((rect) => ({
+      ...rect,
+      x: Number(rect?.x || 0) * GRID / targetCols,
+      y: Number(rect?.y || 0) * GRID / targetRows,
+      w: Number(rect?.w || 0) * GRID / targetCols,
+      h: Number(rect?.h || 0) * GRID / targetRows,
+    })),
+  );
 
-  // Reserved rectangles are occupied before every environmental asset is
-  // placed. Settlement houses use this to reserve their full visual footprint.
   const occupied = [...roads, ...reservedRects];
   const terrain = placeTerrain(rng, occupied, terrainType, profile);
   const obstacles = placeObstacles(rng, occupied, terrainType, profile);
@@ -243,19 +251,35 @@ export function buildOpenWastelandSite(spec = {}) {
   const vehicles = placeVehicles(rng, vehicleOccupied, roads, profile);
   const trees = placeTrees(rng, occupied, profile);
 
+  const sx = targetCols / GRID;
+  const sy = targetRows / GRID;
+  const scaleRect = (item) => ({
+    ...item,
+    x: Number(item?.x || 0) * sx,
+    y: Number(item?.y || 0) * sy,
+    w: Number(item?.w || 0) * sx,
+    h: Number(item?.h || 0) * sy,
+  });
+  const scaledRoads = roads.map(scaleRect);
+  const scaledReservedRects = reservedRects.map(scaleRect);
+  const scaledTerrain = terrain.map(scaleRect);
+  const scaledObstacles = obstacles.map(scaleRect);
+  const scaledVehicles = vehicles.map(scaleRect);
+  const scaledTrees = trees.map(scaleRect);
+
   return {
-    cols: GRID,
-    rows: GRID,
+    cols: targetCols,
+    rows: targetRows,
     terrainType,
     profile: { ...road, terrain: terrainType },
-    roads,
-    reservedRects,
-    terrain,
-    obstacles,
-    ruins: terrain.filter((item) => item.type === "ruins"),
-    vehicles,
-    trees,
-    buildings: buildOpenWastelandRoomLayout(spec),
+    roads: scaledRoads,
+    reservedRects: scaledReservedRects,
+    terrain: scaledTerrain,
+    obstacles: scaledObstacles,
+    ruins: scaledTerrain.filter((item) => item.type === "ruins"),
+    vehicles: scaledVehicles,
+    trees: scaledTrees,
+    buildings: buildOpenWastelandRoomLayout({ ...spec, cols: targetCols, rows: targetRows }),
   };
 }
 
