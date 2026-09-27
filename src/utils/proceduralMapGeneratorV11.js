@@ -4,9 +4,18 @@ export const MAP_TYPES = V10.MAP_TYPES;
 export const makeProceduralSeed = V10.makeProceduralSeed;
 export const proceduralLocationType = V10.proceduralLocationType;
 
+const ALLOWED_SIZES = [24, 36, 48];
+
+function normalizeSize(value, fallback = 24) {
+  const n = Number(value);
+  return ALLOWED_SIZES.includes(n) ? n : fallback;
+}
+
 export function normalizeProceduralMapSpec(value = {}) {
-  const base = V10.normalizeProceduralMapSpec({ ...value, cols: 24, rows: 24 });
-  return { ...base, cols: 24, rows: 24, version: Math.max(15, Number(base.version || 0)) };
+  const cols = normalizeSize(value.cols ?? value.rows, 24);
+  const rows = normalizeSize(value.rows ?? value.cols, cols);
+  const base = V10.normalizeProceduralMapSpec({ ...value, cols, rows });
+  return { ...base, cols, rows, version: Math.max(17, Number(base.version || 0)) };
 }
 
 function stripDoorSwingArcs(svg) {
