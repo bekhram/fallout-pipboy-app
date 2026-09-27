@@ -601,8 +601,6 @@
   border-radius:50%!important;
 }
 .phaser-map .gm-session-token--lightweight.is-phaser-token{
-  width:var(--lw-token-width,auto)!important;
-  height:var(--lw-token-height,auto)!important;
   transform:translate(-50%,-50%)!important;
 }
 .gm-session-token--lightweight small{
