@@ -6,27 +6,31 @@ import "./gmProceduralRoomDescriptions.css";
 const COPY = {
   en: {
     title: "[ BATTLEMAP EVENTS & DISCOVERIES ]",
-    subtitle: "Numbered markers use the same map seed as the scene",
     position: "Map",
     legend: "! trap · E event · L loot · W workbench · ? discovery",
+    type: "Type",
+    details: "Details",
   },
   ru: {
     title: "[ СОБЫТИЯ И НАХОДКИ НА КАРТЕ ]",
-    subtitle: "Номер метки соответствует тому же seed и позиции на тактической карте",
-    position: "Карта",
+    position: "Координаты",
     legend: "! ловушка · E событие · L лут · W верстак · ? находка",
+    type: "Тип",
+    details: "Детали",
   },
   uk: {
     title: "[ ПОДІЇ ТА ЗНАХІДКИ НА МАПІ ]",
-    subtitle: "Номер мітки відповідає тому самому seed і позиції на тактичній мапі",
-    position: "Мапа",
+    position: "Координати",
     legend: "! пастка · E подія · L лут · W верстак · ? знахідка",
+    type: "Тип",
+    details: "Деталі",
   },
   pl: {
     title: "[ ZDARZENIA I ODKRYCIA NA MAPIE ]",
-    subtitle: "Numer znacznika odpowiada temu samemu seedowi i pozycji na mapie taktycznej",
-    position: "Mapa",
+    position: "Pozycja",
     legend: "! pułapka · E zdarzenie · L łup · W warsztat · ? odkrycie",
+    type: "Typ",
+    details: "Szczegóły",
   },
 };
 
@@ -63,23 +67,23 @@ export default function GmBattlemapExtrasPanel({ session }) {
     <section className="gm-room-descriptions pip-panel">
       <header className="gm-room-descriptions__head">
         <strong>{text.title}</strong>
-        <small>{text.subtitle}</small>
       </header>
       <div className="gm-room-descriptions__summary">
         <span>{text.legend}</span>
       </div>
       <div className="gm-room-descriptions__list">
         {extras.map((extra) => (
-          <article key={extra.id} className="gm-room-card">
+          <article key={extra.id} className="gm-room-card gm-room-card--compact-extra">
             <div className="gm-room-card__head">
               <div className="gm-room-card__title">
                 <strong>{extra.marker}. {extra.name}</strong>
-                <small>{extra.category} · {text.position}: {extra.x + 1}:{extra.y + 1}</small>
+                <small>{text.type}: {extra.category} · {text.position}: {extra.x + 1}:{extra.y + 1}</small>
               </div>
               <div className="gm-room-card__markers"><span>{extra.symbol}</span></div>
             </div>
             <div className="gm-room-card__body">
               <p>{extra.description}</p>
+              {extra.meta ? <small className="gm-room-card__meta">{extra.meta}</small> : null}
             </div>
           </article>
         ))}
