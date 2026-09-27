@@ -9,8 +9,8 @@ const BASE_TOP_ENVIRONMENT_ROWS = 5;
 function gridSize(spec = {}) {
   return Math.max(24, Number(spec.cols || spec.rows || BASE_GRID));
 }
-function scaleCell(value, grid) {
-  return (Number(value) / BASE_GRID) * grid;
+function moduleOffset(grid) {
+  return Math.max(0, (Number(grid) - BASE_GRID) / 2);
 }
 
 function hashSeed(value) {
@@ -54,6 +54,7 @@ export function superDuperMartAssetPool(spec = {}) {
  */
 export function buildSuperDuperMartRoomLayout(spec = {}) {
   const grid = gridSize(spec);
+  const offset = moduleOffset(grid);
   return [
     { id: "sales-floor", name: "Sales Floor", x: 5, y: 7, w: 11, h: 8, markerX: 10, markerY: 10 },
     { id: "checkout", name: "Checkout", x: 7, y: 14, w: 8, h: 4, markerX: 11, markerY: 16 },
@@ -64,12 +65,10 @@ export function buildSuperDuperMartRoomLayout(spec = {}) {
     { id: "loading-bay", name: "Loading Bay", x: 17, y: 14, w: 6, h: 5, markerX: 20, markerY: 16 },
   ].map((room) => ({
     ...room,
-    x: scaleCell(room.x, grid),
-    y: scaleCell(room.y, grid),
-    w: scaleCell(room.w, grid),
-    h: scaleCell(room.h, grid),
-    markerX: scaleCell(room.markerX, grid),
-    markerY: scaleCell(room.markerY, grid),
+    x: room.x + offset,
+    y: room.y + offset,
+    markerX: room.markerX + offset,
+    markerY: room.markerY + offset,
   }));
 }
 
@@ -81,15 +80,13 @@ export function buildSuperDuperMartAssetLayout(spec = {}) {
     ? 0
     : hashSeed(`${spec.seed || "1"}:${terrain}:${grid}x${grid}:super-duper-mart`) % pool.length;
   const chosen = pool[assetIndex];
-  const scale = grid / BASE_GRID;
-  const footprint = BASE_FOOTPRINT * scale;
-  const topEnvironmentRows = BASE_TOP_ENVIRONMENT_ROWS * scale;
+  const offset = moduleOffset(grid);
   const building = {
     id: "super-duper-mart",
-    x: 0,
-    y: -1 * scale,
-    w: footprint,
-    h: footprint,
+    x: offset,
+    y: offset - 1,
+    w: BASE_FOOTPRINT,
+    h: BASE_FOOTPRINT,
     assetSrc: chosen.src,
     assetIndex,
     assetVariant: chosen.variant,
@@ -100,8 +97,8 @@ export function buildSuperDuperMartAssetLayout(spec = {}) {
     terrain,
     buildings: [building],
     environmentReservedRects: [
-      { x: 0, y: topEnvironmentRows, w: grid, h: Math.max(0, grid - topEnvironmentRows - 2 * scale) },
+      { x: offset, y: offset + BASE_TOP_ENVIRONMENT_ROWS, w: BASE_GRID, h: BASE_GRID - BASE_TOP_ENVIRONMENT_ROWS - 2 },
     ],
-    roadRect: { x: 0, y: grid - 2 * scale, w: grid, h: 2 * scale },
+    roadRect: { x: 0, y: grid - 2, w: grid, h: 2 },
   };
 }
