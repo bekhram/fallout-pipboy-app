@@ -9,14 +9,14 @@ import {
 } from "../../utils/proceduralSuperDuperMartAssets.js";
 import { WastelandAssetLayer, wastelandBackgroundForSpec } from "./WastelandAssetPortal.jsx";
 
-const GRID = 24;
-
 function wastelandSpec(spec = {}, reservedRects = []) {
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
   return {
     ...spec,
     type: "wasteland",
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
     reservedRects,
     roadPlacement: "bottom-edge",
     assetProfile: "super_duper_mart",
@@ -28,7 +28,7 @@ export function superDuperMartBackgroundForSpec(spec = {}) {
   return wastelandBackgroundForSpec(wastelandSpec(spec));
 }
 
-function SuperDuperMartAsset({ building, preview }) {
+function SuperDuperMartAsset({ building, preview, cols, rows }) {
   return (
     <PhaserAsset
       src={building.assetSrc}
@@ -39,10 +39,10 @@ function SuperDuperMartAsset({ building, preview }) {
       data-super-duper-mart-footprint={`${building.w}x${building.h}`}
       style={{
         position: "absolute",
-        left: `${(building.x / GRID) * 100}%`,
-        top: `${(building.y / GRID) * 100}%`,
-        width: `${(building.w / GRID) * 100}%`,
-        height: `${(building.h / GRID) * 100}%`,
+        left: `${(building.x / cols) * 100}%`,
+        top: `${(building.y / rows) * 100}%`,
+        width: `${(building.w / cols) * 100}%`,
+        height: `${(building.h / rows) * 100}%`,
         objectFit: "contain",
         pointerEvents: "none",
         userSelect: "none",
@@ -53,9 +53,11 @@ function SuperDuperMartAsset({ building, preview }) {
 }
 
 export function SuperDuperMartAssetLayer({ spec, preview = false }) {
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
   const layout = useMemo(
     () => buildSuperDuperMartAssetLayout(spec),
-    [spec?.seed, spec?.terrain, spec?.backgroundType, spec?.terrainType],
+    [spec?.seed, spec?.terrain, spec?.backgroundType, spec?.terrainType, spec?.cols, spec?.rows],
   );
   const buildings = layout.buildings || [];
 
@@ -82,7 +84,7 @@ export function SuperDuperMartAssetLayer({ spec, preview = false }) {
         }}
       >
         {buildings.map((building) => (
-          <SuperDuperMartAsset key={building.id} building={building} preview={preview} />
+          <SuperDuperMartAsset key={building.id} building={building} preview={preview} cols={cols} rows={rows} />
         ))}
       </div>
     </>
@@ -90,7 +92,9 @@ export function SuperDuperMartAssetLayer({ spec, preview = false }) {
 }
 
 function SuperDuperMartRoomMarkers({ spec }) {
-  const rooms = useMemo(() => buildSuperDuperMartRoomLayout(spec), [spec?.seed]);
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
+  const rooms = useMemo(() => buildSuperDuperMartRoomLayout(spec), [spec?.seed, spec?.cols, spec?.rows]);
   return (
     <div
       aria-hidden="true"
@@ -115,8 +119,8 @@ function SuperDuperMartRoomMarkers({ spec }) {
           title={`${index + 1}. ${room.name}`}
           style={{
             position: "absolute",
-            left: `${((Number(room.markerX) + 0.5) / GRID) * 100}%`,
-            top: `${((Number(room.markerY) + 0.5) / GRID) * 100}%`,
+            left: `${((Number(room.markerX) + 0.5) / cols) * 100}%`,
+            top: `${((Number(room.markerY) + 0.5) / rows) * 100}%`,
             width: 34,
             height: 34,
             transform: "translate(-50%, -50%)",
@@ -169,7 +173,7 @@ export default function SuperDuperMartAssetPortal({ session }) {
       cancelled = true;
       setTarget(null);
     };
-  }, [scene?.sceneId, spec?.type, spec?.seed, spec?.terrain]);
+  }, [scene?.sceneId, spec?.type, spec?.seed, spec?.terrain, spec?.cols, spec?.rows]);
 
   if (!target || !spec || !isSuperDuperMartAssetType(spec.type)) return null;
   return createPortal(
