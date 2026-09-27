@@ -5,8 +5,6 @@ import {
   generateSettlementRoomMarkers,
 } from "../../utils/proceduralSettlementRoomMarkers.js";
 
-const GRID = 24;
-
 export default function SettlementRoomMarkerPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
@@ -14,6 +12,8 @@ export default function SettlementRoomMarkerPortal({ session }) {
   const isGmHost = Boolean(session?.isActive && session?.mode === "host");
   const supportsRoomMarkers = locationType === "settlement" || locationType === "red_rocket";
   const [target, setTarget] = useState(null);
+  const cols = Math.max(1, Number(spec?.cols || scene?.cols || 24));
+  const rows = Math.max(1, Number(spec?.rows || scene?.rows || 24));
 
   const markers = useMemo(() => {
     if (!isGmHost || !spec || !supportsRoomMarkers) return [];
@@ -27,6 +27,8 @@ export default function SettlementRoomMarkerPortal({ session }) {
     spec?.density,
     spec?.lootRarity,
     spec?.wealth,
+    spec?.cols,
+    spec?.rows,
     spec?.avgPartyLevel,
     spec?.partySize,
     spec?.encounterDifficulty,
@@ -93,8 +95,8 @@ export default function SettlementRoomMarkerPortal({ session }) {
           title={`Room ${marker.marker}`}
           style={{
             position: "absolute",
-            left: `${((Number(marker.x || 0) + 0.5) / GRID) * 100}%`,
-            top: `${((Number(marker.y || 0) + 0.5) / GRID) * 100}%`,
+            left: `${((Number(marker.x || 0) + 0.5) / cols) * 100}%`,
+            top: `${((Number(marker.y || 0) + 0.5) / rows) * 100}%`,
             width: 30,
             height: 30,
             transform: "translate(-50%, -50%)",
