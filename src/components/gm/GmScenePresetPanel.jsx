@@ -1,9 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { WastelandAssetLayer } from "./WastelandAssetPortal.jsx";
-import { SettlementAssetLayer, settlementBackgroundForSpec } from "./SettlementAssetPortal.jsx";
-import { RedRocketAssetLayer, redRocketBackgroundForSpec } from "./RedRocketAssetPortal.jsx";
-import { SuperDuperMartAssetLayer, superDuperMartBackgroundForSpec } from "./SuperDuperMartAssetPortal.jsx";
 import {
   generateProceduralMapDataUrl,
   makeProceduralSeed,
@@ -19,6 +15,11 @@ import {
   normalizeLootRarity,
 } from "../../utils/proceduralRoomContent.js";
 import "./gmScenePresetPanel.css";
+
+const LazyWastelandPreview = lazy(() => import("./WastelandAssetPortal.jsx").then((m) => ({ default: m.WastelandAssetLayer })));
+const LazySettlementPreview = lazy(() => import("./SettlementAssetPortal.jsx").then((m) => ({ default: m.SettlementAssetLayer })));
+const LazyRedRocketPreview = lazy(() => import("./RedRocketAssetPortal.jsx").then((m) => ({ default: m.RedRocketAssetLayer })));
+const LazySuperDuperPreview = lazy(() => import("./SuperDuperMartAssetPortal.jsx").then((m) => ({ default: m.SuperDuperMartAssetLayer })));
 
 const MAP_TYPES = ["wasteland", "settlement", "red_rocket", "super_duper_mart"];
 const LOOT_RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
@@ -174,13 +175,7 @@ export default function GmScenePresetPanel({ session }) {
     applyContrastClass(value);
   };
 
-  const previewBackground = !previewOpen ? "" : type === "settlement"
-    ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(settlementBackgroundForSpec())})`
-    : type === "red_rocket"
-      ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(redRocketBackgroundForSpec(generationSpec))})`
-      : type === "super_duper_mart"
-        ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(superDuperMartBackgroundForSpec(generationSpec))})`
-        : `url(${JSON.stringify(previewUrl)})`;
+  const previewBackground = previewOpen && previewUrl ? `url(${JSON.stringify(previewUrl)})` : "";
 
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
@@ -192,10 +187,12 @@ export default function GmScenePresetPanel({ session }) {
       </div>
       {previewOpen ? (
         <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: previewBackground, backgroundSize: "100% 100%", backgroundPosition: "0 0", backgroundRepeat: "no-repeat" }}>
-          {type === "wasteland" ? <WastelandAssetLayer spec={generationSpec} preview /> : null}
-          {type === "settlement" ? <SettlementAssetLayer spec={generationSpec} preview /> : null}
-          {type === "red_rocket" ? <RedRocketAssetLayer spec={generationSpec} preview /> : null}
-          {type === "super_duper_mart" ? <SuperDuperMartAssetLayer spec={generationSpec} preview /> : null}
+          <Suspense fallback={<small>…</small>}>
+            {type === "wasteland" ? <LazyWastelandPreview spec={generationSpec} preview /> : null}
+            {type === "settlement" ? <LazySettlementPreview spec={generationSpec} preview /> : null}
+            {type === "red_rocket" ? <LazyRedRocketPreview spec={generationSpec} preview /> : null}
+            {type === "super_duper_mart" ? <LazySuperDuperPreview spec={generationSpec} preview /> : null}
+          </Suspense>
           <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
         </div>
       ) : null}
