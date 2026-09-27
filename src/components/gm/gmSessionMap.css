@@ -431,3 +431,100 @@
   }
   .gm-map-creature__hp-editor input{width:100%}
 }
+
+/* Compact mobile enemy cards */
+@media(max-width:640px){
+  .gm-map-creature{
+    gap:6px;
+    padding:6px;
+    border-radius:7px;
+  }
+  .gm-map-creature__avatar{
+    width:36px;
+    height:36px;
+    min-width:36px;
+    font-size:14px;
+  }
+  .gm-map-creature__main{gap:1px}
+  .gm-map-creature__main strong{font-size:.82rem}
+  .gm-map-creature__main small{font-size:.56rem}
+  .gm-map-creature__expand{
+    width:24px;
+    height:24px;
+    min-width:24px;
+    font-size:15px;
+    border-radius:6px;
+  }
+  .gm-map-creature__actions{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;
+  }
+  .gm-map-creature__actions .pip-btn{
+    min-height:34px;
+    padding:4px 6px;
+    font-size:.56rem;
+    border-radius:6px;
+  }
+  .gm-map-creature__hp-row{
+    grid-column:1/-1;
+    display:grid;
+    grid-template-columns:36px minmax(0,1fr) 36px;
+    gap:5px;
+    width:100%;
+  }
+  .gm-map-creature__hp-step{
+    min-height:34px!important;
+    height:34px!important;
+    padding:0!important;
+    font-size:.9rem!important;
+  }
+  .gm-map-creature__hp-editor{
+    min-height:34px;
+    padding:3px 5px;
+    border-radius:6px;
+    gap:4px;
+    grid-template-columns:auto minmax(40px,1fr) auto;
+    font-size:.56rem;
+  }
+  .gm-map-creature__hp-editor input{
+    height:26px;
+    min-height:26px;
+    padding:2px 4px;
+    border-radius:5px;
+    font-size:.8rem;
+  }
+  .gm-map-creature__hp-editor small{font-size:.54rem}
+  .gm-map-creature__details{
+    gap:7px;
+    padding:7px;
+  }
+  .gm-map-creature__stats{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:5px;
+  }
+  .gm-map-creature__stats>span{
+    padding:3px 5px;
+    border-radius:5px;
+    font-size:.56rem;
+  }
+  .gm-map-creature__full-stats{gap:5px}
+  .gm-map-creature__detail-line{
+    gap:2px;
+    padding:5px 6px;
+    border-radius:6px;
+  }
+  .gm-map-creature__detail-line strong{font-size:.52rem}
+  .gm-map-creature__detail-line span{font-size:.6rem;line-height:1.28}
+  .gm-map-creature__attacks{gap:5px}
+  .gm-map-creature__attacks>strong{font-size:.58rem}
+  .gm-map-creature__attacks .gm-npc-attack-button{
+    min-height:34px;
+    padding:5px 6px;
+    border-radius:6px;
+  }
+  .gm-map-creature__dead-label{
+    padding:4px 6px;
+    font-size:.56rem;
+  }
+}
