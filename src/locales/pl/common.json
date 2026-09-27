@@ -1029,8 +1029,14 @@
       "chain_that_binds": "Łańcuch, który wiąże",
       "necrotic_post_human": "Nekrotyczny postczłowiek",
       "forced_evolution": "Wymuszona ewolucja",
-      "mister_handy_robot": "Robot Mister Handy"
-    }
+      "mister_handy_robot": "Robot Mister Handy",
+      "hidden_and_hunted": "Ukryty i ścigany",
+      "trying_to_make_a_difference": "Próbując coś zmienić",
+      "winding_way_great_snake": "Kręta Droga Wielkiego Węża"
+    },
+    "enclave_remnant": "Pozostałość Enklawy",
+    "follower_of_the_apocalypse": "Wyznawca Apokalipsy",
+    "viper_initiate": "Wtajemniczony Żmij"
   },
   "originDescriptions": {
     "assaultron": "Robot bojowy pierwszej linii stworzony do przetrwania na Pustkowiu. Jest odporny na promieniowanie, trucizny i choroby, ma stały udźwig 150 funtów i odzyskuje sprawność dzięki naprawom.",
@@ -1043,7 +1049,10 @@
     "protectron": "Robot roboczy RobCo przystosowany do życia na pustkowiu.",
     "robobrain": "Cybernetyczny robot wykorzystujący zachowany ludzki mózg jako procesor.",
     "securitron": "Robot ochronny RobCo przeznaczony do patrolowania i walki w rejonie New Vegas.",
-    "generation_3_synth": "Bio-syntetyczny humanoid Instytutu, niemal nieodróżnialny od człowieka."
+    "generation_3_synth": "Bio-syntetyczny humanoid Instytutu, niemal nieodróżnialny od człowieka.",
+    "enclave_remnant": "Były członek Enklawy ukrywający się przed dawnymi wrogami i korzystający z ukrytych skrytek zaopatrzenia.",
+    "follower_of_the_apocalypse": "Humanitarysta, uczony lub lekarz szerzący wiedzę, leczący ludzi i wspierający społeczności.",
+    "viper_initiate": "Ocalały z klanów Żmij, wyszkolony w skradaniu, odporności na trucizny i improwizowanych toksynach."
   },
   "traitsInfo": {
     "designed_for_frontline": {
@@ -1165,6 +1174,18 @@
     "small_frame": {
       "name": "Drobna budowa (cecha)",
       "desc": "Możesz przerzucić 1k20 we wszystkich testach AGI opartych na równowadze lub wyginaniu ciała."
+    },
+    "hidden_and_hunted": {
+      "name": "Ukryty i ścigany",
+      "desc": "Zyskujesz dodatkową umiejętność Tag: Sneak lub Survival. Ujawniona tożsamość może uczynić NCR i Bractwo Stali wrogimi. Liczba skrytek zaopatrzenia to połowa Luck zaokrąglona w górę; raz na zadanie możesz wydać 1 Luck i zadeklarować skrytkę w pobliżu."
+    },
+    "trying_to_make_a_difference": {
+      "name": "Próbując coś zmienić",
+      "desc": "Zyskujesz dodatkową umiejętność Tag: Medicine, Repair, Science lub Speech. Możesz przerzucić 1k20 w szczerych testach CHA + Speech przy oferowaniu pomocy, ale groźby i zastraszanie są trudniejsze."
+    },
+    "winding_way_great_snake": {
+      "name": "Kręta Droga Wielkiego Węża",
+      "desc": "Zyskujesz dodatkową umiejętność Tag: Medicine lub Sneak. Początkowa odporność na truciznę 1, +1 na 5 poziomie i co 5 poziomów później. Możesz tworzyć Improwizowaną Truciznę przy stacji chemicznej lub gotowania."
     }
   },
   "equipmentPacks": {
@@ -1277,6 +1298,30 @@
     "wanderer": {
       "name": "Wędrowiec",
       "items": "• Strój włóczęgi\n• Nóż sprężynowy, klucz rurowy, wałek lub kastet\n• Broń rurowa (8+4 naboje .38)\n• 1 dawka Jet lub RadAway\n• Osobisty drobiazg, 30 kapsli"
+    },
+    "enclave_scientist": {
+      "name": "Były naukowiec Enklawy",
+      "items": "Fartuch laboratoryjny; maska gazowa; pistolet laserowy; Fusion Cell na 6+3 strzały."
+    },
+    "enclave_soldier": {
+      "name": "Były żołnierz Enklawy",
+      "items": "Mundur wojskowy; napierśnik pancerza bojowego; karabin laserowy ze standardową kolbą i długą lufą + 8+4 Fusion Cell ALBO karabin szturmowy + 8+4 nabojów 5.56mm."
+    },
+    "follower_scholar": {
+      "name": "Uczony Followers",
+      "items": "Ciężki płaszcz lub kombinezon roboczy; Switchblade/Pipe Wrench/Knuckles; Pipe Gun + 6+3 .38 ALBO Syringer + 6+3 Tranq Ammunition; 2 losowe jedzenie/napój; Holotape Player; 35 kapsli."
+    },
+    "follower_doctor": {
+      "name": "Lekarz Followers",
+      "items": "Ciężki płaszcz lub fartuch laboratoryjny; Pipe Gun + 6+3 .38 ALBO Syringer + 6+3 Tranq Ammunition; 2 Stimpaki; Med-X lub RadAway; Doctor's Bag; 20 kapsli."
+    },
+    "viper_raider": {
+      "name": "Rajder Żmij",
+      "items": "Wytrzymałe ubranie; metalowy napierśnik ALBO ramię + noga; Combat Knife/Switchblade/Machete; Pipe Gun + 10+5 .38; Jet lub RadAway; Stimpak; 2 zwykłe + 2 niezwykłe materiały; 15 kapsli."
+    },
+    "viper_priest": {
+      "name": "Kapłan Żmij",
+      "items": "Wytrzymałe ubranie; Combat Knife/Switchblade/Machete; Pipe Revolver + 6+3 .45; amulet z kła żmii; 2 jadowite nalewki; 25 kapsli."
     }
   },
   "perksInfo": {
