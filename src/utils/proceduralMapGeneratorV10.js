@@ -5,12 +5,21 @@ export const MAP_TYPES = V9.MAP_TYPES;
 export const makeProceduralSeed = V9.makeProceduralSeed;
 export const proceduralLocationType = V9.proceduralLocationType;
 
+const ALLOWED_SIZES = [24, 36, 48];
+
+function normalizeSize(value, fallback = 24) {
+  const n = Number(value);
+  return ALLOWED_SIZES.includes(n) ? n : fallback;
+}
+
 export function normalizeProceduralMapSpec(value = {}) {
-  const base = V9.normalizeProceduralMapSpec(value);
+  const cols = normalizeSize(value.cols ?? value.rows, 24);
+  const rows = normalizeSize(value.rows ?? value.cols, cols);
+  const base = V9.normalizeProceduralMapSpec({ ...value, cols, rows });
   if (String(value?.type || "wasteland") === "wasteland") {
-    return { ...base, cols: 24, rows: 24, version: Math.max(16, Number(base.version || 0)) };
+    return { ...base, cols, rows, version: Math.max(17, Number(base.version || 0)) };
   }
-  return { ...base, version: Math.max(16, Number(base.version || 0)) };
+  return { ...base, cols, rows, version: Math.max(17, Number(base.version || 0)) };
 }
 
 export function generateProceduralMapSvg(input = {}) {
