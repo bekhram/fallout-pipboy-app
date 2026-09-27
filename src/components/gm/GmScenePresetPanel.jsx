@@ -98,6 +98,7 @@ export default function GmScenePresetPanel({ session }) {
   const [partySize, setPartySize] = useState(clampInteger(saved.partySize, 1, 8, detectedPlayers || 4));
   const [contrast, setContrast] = useState(() => readContrast(scene?.sceneId));
   const [message, setMessage] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     const spec = scene?.environment?.proceduralMapSpec;
@@ -134,7 +135,10 @@ export default function GmScenePresetPanel({ session }) {
     partySize,
   }), [type, terrain, seed, gridSize, density, lootRarity, wealth, avgPartyLevel, partySize]);
 
-  const previewUrl = useMemo(() => generateProceduralMapDataUrl(generationSpec), [generationSpec]);
+  const previewUrl = useMemo(
+    () => (previewOpen ? generateProceduralMapDataUrl(generationSpec) : ""),
+    [previewOpen, generationSpec],
+  );
   const encounter = useMemo(() => generateProceduralEncounterSummary(generationSpec), [generationSpec]);
 
   if (!scene || session?.mode !== "host") return null;
@@ -170,7 +174,7 @@ export default function GmScenePresetPanel({ session }) {
     applyContrastClass(value);
   };
 
-  const previewBackground = type === "settlement"
+  const previewBackground = !previewOpen ? "" : type === "settlement"
     ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(settlementBackgroundForSpec())})`
     : type === "red_rocket"
       ? `url(${JSON.stringify(previewUrl)}), url(${JSON.stringify(redRocketBackgroundForSpec(generationSpec))})`
@@ -181,13 +185,20 @@ export default function GmScenePresetPanel({ session }) {
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
       <header className="gm-scene-presets__head"><div><strong>{text.title}</strong><small>{text.fixed}</small></div></header>
-      <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: previewBackground, backgroundSize: "100% 100%", backgroundPosition: "0 0", backgroundRepeat: "no-repeat" }}>
-        {type === "wasteland" ? <WastelandAssetLayer spec={generationSpec} preview /> : null}
-        {type === "settlement" ? <SettlementAssetLayer spec={generationSpec} preview /> : null}
-        {type === "red_rocket" ? <RedRocketAssetLayer spec={generationSpec} preview /> : null}
-        {type === "super_duper_mart" ? <SuperDuperMartAssetLayer spec={generationSpec} preview /> : null}
-        <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
+      <div className="gm-proc-map__preview-toggle">
+        <button type="button" className="pip-btn" onClick={() => setPreviewOpen((value) => !value)}>
+          {previewOpen ? "− PREVIEW" : "+ PREVIEW"}
+        </button>
       </div>
+      {previewOpen ? (
+        <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: previewBackground, backgroundSize: "100% 100%", backgroundPosition: "0 0", backgroundRepeat: "no-repeat" }}>
+          {type === "wasteland" ? <WastelandAssetLayer spec={generationSpec} preview /> : null}
+          {type === "settlement" ? <SettlementAssetLayer spec={generationSpec} preview /> : null}
+          {type === "red_rocket" ? <RedRocketAssetLayer spec={generationSpec} preview /> : null}
+          {type === "super_duper_mart" ? <SuperDuperMartAssetLayer spec={generationSpec} preview /> : null}
+          <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
+        </div>
+      ) : null}
       <div className="gm-proc-map__controls">
         <label><span>{text.type}</span><select className="pip-input" value={type} onChange={(e) => setType(e.target.value)}>{MAP_TYPES.map((value) => <option key={value} value={value}>{LABELS[lang]?.[value] || LABELS.en[value]}</option>)}</select></label>
         <label><span>{text.terrain}</span><select className="pip-input" value={terrain} onChange={(e) => setTerrain(e.target.value)}>{TERRAIN_TYPES.map((value) => <option key={value} value={value}>{labelFor("terrain", value, lang)}</option>)}</select></label>
