@@ -32,3 +32,61 @@
 .camp-modal__feature-stepper button{height:30px;border:1px solid rgba(120,255,140,.35);background:rgba(120,255,140,.04);color:inherit}
 .camp-modal__feature-stepper small{grid-column:1/-1;opacity:.6;font-size:.68rem}
 @media(max-width:620px){.camp-modal__feature{grid-template-columns:1fr}.camp-modal__feature-stepper{justify-content:start}}
+
+.camp-modal__rules,
+.camp-modal__site-search,
+.camp-modal__production,
+.camp-modal__teardown,
+.camp-modal__inhabitants{
+  border:1px solid rgba(126,255,166,.2);
+  border-radius:10px;
+  padding:10px;
+  background:rgba(5,24,16,.72);
+}
+.camp-modal__rules label,
+.camp-modal__site-search label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.camp-modal__site-search,
+.camp-modal__production,
+.camp-modal__teardown{
+  display:grid;
+  gap:8px;
+}
+.camp-modal__site-search header,
+.camp-modal__production header,
+.camp-modal__teardown header{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+}
+.camp-modal__inhabitants{
+  display:grid;
+  gap:4px;
+  border-color:rgba(255,210,100,.35);
+}
+.camp-modal__production>span{
+  opacity:.82;
+}
+.camp-modal__teardown{
+  grid-template-columns:1fr 1fr;
+}
+.camp-modal__teardown header{
+  grid-column:1/-1;
+}
+.camp-modal__tier-stats .pip-btn{
+  min-height:26px;
+  padding:3px 7px;
+  margin-left:6px;
+}
+@media(max-width:720px){
+  .camp-modal__teardown{
+    grid-template-columns:1fr;
+  }
+  .camp-modal__teardown header{
+    grid-column:auto;
+  }
+}
