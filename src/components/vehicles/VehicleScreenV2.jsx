@@ -184,10 +184,10 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
     update((prev)=>({...prev,inventoryItems:spendMaterials(prev.inventoryItems||[],plan.cost),vehicles:(prev.vehicles||[]).map((vehicle)=>vehicle.id!==active.id?vehicle:removeVehicleInjury(vehicle,injury.id))}));
   };
   const pilotSkillEntry=Object.entries(character?.skills||{}).find(([key])=>String(key).toLowerCase().replaceAll("_"," ").trim()==="pilot")?.[1]||{};
+  const pilotRank=Math.max(0,Number(pilotSkillEntry.rank||0)+Number(pilotSkillEntry.bonus||0));
   const endurance=Math.max(0,Number(character?.special?.E||character?.special?.END||0));
   const agility=Math.max(0,Number(character?.special?.A||character?.special?.AGI||0));
   const pilotAgilityTarget=Math.max(0,Math.min(20,agility+pilotRank));
-  const pilotRank=Math.max(0,Number(pilotSkillEntry.rank||0)+Number(pilotSkillEntry.bonus||0));
   const pilotTarget=Math.max(0,Math.min(20,endurance+pilotRank));
   const pilotCritical=pilotSkillEntry.tagged?Math.max(1,Number(pilotSkillEntry.rank||1)):1;
   const hasChassisInjury=Boolean(active?.injuries?.some(injury=>injury?.id==="chassis"));
