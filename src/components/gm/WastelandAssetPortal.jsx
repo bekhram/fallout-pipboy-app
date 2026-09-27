@@ -465,6 +465,39 @@ function boxesOverlap(
   );
 }
 
+function applyAssetLod(items, cols, rows, preview = false) {
+  if (preview) return items;
+  const maxSide = Math.max(Number(cols || GRID), Number(rows || cols || GRID));
+  const limit = maxSide >= 48 ? 42 : maxSide >= 36 ? 56 : 90;
+  if (items.length <= limit) return items;
+
+  const priority = {
+    lake: 0,
+    swamp: 0,
+    ravine: 0,
+    ruins: 1,
+    cliff: 1,
+    hills: 1,
+    wreck_truck: 2,
+    wreck_car: 2,
+    retro_pickup: 2,
+    retro_car: 2,
+    retro_motorcycle: 2,
+    crater: 3,
+    rocks: 4,
+    dead_tree: 5,
+  };
+
+  return [...items]
+    .sort((a, b) => {
+      const pa = priority[a.type] ?? 6;
+      const pb = priority[b.type] ?? 6;
+      if (pa !== pb) return pa - pb;
+      return Number(a.y || 0) - Number(b.y || 0) || Number(a.x || 0) - Number(b.x || 0);
+    })
+    .slice(0, limit);
+}
+
 function removeVisualOverlaps(items) {
   const accepted = [];
   const occupied = [];
@@ -1906,7 +1939,7 @@ export function WastelandAssetLayer({
             (item) => fitVisualItemToGrid(item, cols, rows)
           );
 
-        return removeRailOverlaps(
+        const filtered = removeRailOverlaps(
           removeRoadOverlaps(
             removeVisualOverlaps(
               normalized
@@ -1916,6 +1949,7 @@ export function WastelandAssetLayer({
           ),
           railAssets
         );
+        return applyAssetLod(filtered, cols, rows, preview);
       },
 
       [
