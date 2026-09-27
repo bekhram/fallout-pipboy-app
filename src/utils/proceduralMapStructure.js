@@ -244,8 +244,8 @@ export function normalizeProceduralStructureSpec(value = {}) {
     version: 2,
     type: TYPES.includes(value.type) ? value.type : "wasteland",
     seed: String(value.seed || "1").slice(0, 40),
-    cols: clamp(value.cols || 12, 6, 30),
-    rows: clamp(value.rows || 12, 6, 30),
+    cols: clamp(value.cols || 12, 6, 48),
+    rows: clamp(value.rows || 12, 6, 48),
     density: clamp(value.density ?? 0.55, 0.1, 1),
   };
 }
