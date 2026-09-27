@@ -13,10 +13,10 @@ const BASE_GRID = 24;
 const MIN_HOUSES = 2;
 const MAX_HOUSES = 4;
 const HOUSE_CELLS = 10;
-const HOUSE_GAP = 1;
+const HOUSE_GAP = 2;
 const HOUSE_BORDER = 1;
-const ROAD_HOUSE_CLEARANCE = 2.25;
-const RAIL_HOUSE_CLEARANCE = 0.5;
+const ROAD_HOUSE_CLEARANCE = 3;
+const RAIL_HOUSE_CLEARANCE = 1.5;
 const RAIL_WIDTH = 2.67;
 const ROAD_TYPES = ["asphalt", "dirt", "cobblestone"];
 const HOUSE_TYPES = ["civilian", "ruined", "raider"];
@@ -291,7 +291,7 @@ function findHouseSet(rng, blocked, count, border = HOUSE_BORDER, cols = BASE_GR
 
 function findRelaxedHouseSet(terrainSeed, route, requestedHouseCount, cols, rows) {
   const fallbackRng = mulberry32(hashSeed(`${terrainSeed}:${cols}x${rows}:settlement-house-fallback-v2`));
-  const routeFootprints = route.footprints || [];
+  const routeFootprints = route.reserved?.length ? route.reserved : (route.footprints || []);
 
   for (let count = requestedHouseCount; count >= MIN_HOUSES; count -= 1) {
     const result = findHouseSet(fallbackRng, routeFootprints, count, 0, cols, rows);
