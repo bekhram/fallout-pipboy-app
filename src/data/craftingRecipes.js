@@ -244,6 +244,15 @@ WEAPON_RECIPES.push(
 );
 
 
+const HOLLYWOOD_HEROES_CHEMISTRY_RECIPES = [
+  ...group({ workbench: "chemistry", category: "items", group: "HOLLYWOOD HEROES AMMUNITION", skill: "Explosives", page: 29, outputCategory: "ammo" }, [
+    ["Custom Shells", 5, "", "Rare", "Explosives", { "Common Materials": 3, "Rare Materials": 2 }],
+  ]),
+  ...group({ workbench: "chemistry", category: "items", group: "HOLLYWOOD HEROES AMMUNITION", skill: "Science", page: 29, outputCategory: "ammo" }, [
+    ["Tranquilizer Darts", 5, "Chemist", "Rare", "Science", { "Common Materials": 2, "Rare Materials": 3 }],
+  ]),
+];
+
 const CHEMISTRY_RECIPES = [
   ...group({ workbench: "chemistry", category: "items", group: "CHEMS", skill: "Science", page: 213, outputCategory: "aid" }, [
     ["Antibiotics", 4, "Chemist", "Uncommon", null, { "Rare Materials": 2, "Glowing Fungus": 3, "Purified Water": 2, "Stimpak": 3 }],
@@ -481,6 +490,7 @@ WEAPON_RECIPES.push(
 );
 
 export const CRAFTING_RECIPES = [
+  ...HOLLYWOOD_HEROES_CHEMISTRY_RECIPES,
   ...AMMO_RECIPES,
   ...WEAPON_RECIPES,
   ...ARMOR_RECIPES,
