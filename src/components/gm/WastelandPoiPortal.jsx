@@ -13,10 +13,12 @@ export default function WastelandPoiPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
   const [target, setTarget] = useState(null);
+  const cols = Math.max(1, Number(spec?.cols || scene?.cols || 24));
+  const rows = Math.max(1, Number(spec?.rows || scene?.rows || 24));
   const pois = useMemo(() => {
     if (!spec || String(spec?.type || "") !== "wasteland") return [];
     return generateProceduralWastelandPoiData(spec);
-  }, [spec?.seed, spec?.terrain, spec?.density, spec?.avgPartyLevel, spec?.partySize, spec?.encounterDifficulty, spec?.enemyFaction]);
+  }, [spec?.seed, spec?.terrain, spec?.density, spec?.cols, spec?.rows, spec?.avgPartyLevel, spec?.partySize, spec?.encounterDifficulty, spec?.enemyFaction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,8 +44,8 @@ export default function WastelandPoiPortal({ session }) {
           title={poi.poiType}
           style={{
             position: "absolute",
-            left: `${((Number(poi.x || 0) + 0.5) / 24) * 100}%`,
-            top: `${((Number(poi.y || 0) + 0.5) / 24) * 100}%`,
+            left: `${((Number(poi.x || 0) + 0.5) / cols) * 100}%`,
+            top: `${((Number(poi.y || 0) + 0.5) / rows) * 100}%`,
             width: 30,
             height: 30,
             transform: "translate(-50%, -50%)",
