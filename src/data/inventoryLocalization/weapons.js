@@ -61,7 +61,15 @@ export const WEAPON_NAMES = {
   "Frag Mine": ["Осколочная мина", "Осколкова міна", "Mina odłamkowa"],
   "Nuke Mine": ["Ядерная мина", "Ядерна міна", "Mina atomowa"],
   "Plasma Mine": ["Плазменная мина", "Плазмова міна", "Mina plazmowa"],
-  "Pulse Mine": ["Импульсная мина", "Імпульсна міна", "Mina impulsowa"]
+  "Pulse Mine": ["Импульсная мина", "Імпульсна міна", "Mina impulsowa"],
+  "Tranquilizer Pistol": ["Транквилизаторный пистолет", "Транквілізаторний пістолет", "Pistolet usypiający"],
+  "Tranquilizer Sten Gun": ["Транквилизаторный Sten Gun", "Транквілізаторний Sten Gun", "Usypiający Sten Gun"],
+  "Sten Gun": ["Sten Gun", "Sten Gun", "Sten Gun"],
+  "Shovel": ["Лопата", "Лопата", "Łopata"],
+  "Long Powerful Scoped Assault Rifle": ["Длинная мощная штурмовая винтовка с прицелом", "Довга потужна штурмова гвинтівка з прицілом", "Długi mocny karabin szturmowy z lunetą"],
+  "The Ghoul's Pistol": ["Пистолет Гуля", "Пістолет Гуля", "Pistolet Ghula"],
+  "The Ghoul's Rifle": ["Винтовка Гуля", "Гвинтівка Гуля", "Karabin Ghula"],
+  "Makeshift Lasso": ["Самодельное лассо", "Саморобне ласо", "Prowizoryczne lasso"]
 };
 
 export const WEAPON_TERMS = {
@@ -96,5 +104,7 @@ export const WEAPON_TERMS = {
   "Suppressed": ["Бесшумный", "Безшумний", "Wyciszony"],
   "Supressed": ["Бесшумный", "Безшумний", "Wyciszony"],
   "Thrown": ["Метательный", "Метальний", "Rzucany"],
-  "Mine": ["Мина", "Міна", "Mina"]
+  "Mine": ["Мина", "Міна", "Mina"],
+  "Tranquilize": ["Транквилизация", "Транквілізація", "Uśpienie"],
+  "Wrangle": ["Стреножить", "Стреножити", "Spętanie"]
 };
