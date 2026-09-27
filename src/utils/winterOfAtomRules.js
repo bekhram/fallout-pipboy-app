@@ -96,6 +96,15 @@ export const CAMPSITE_TIERS = {
   6:{tier:6,difficulty:6,materials:{common:7,uncommon:5,rare:3}},
 };
 
+export const ROYAL_FLUSH_CAMPSITE_TIERS = {
+  1:{tier:1,difficulty:0,materials:{common:2,uncommon:0,rare:0}},
+  2:{tier:2,difficulty:1,materials:{common:3,uncommon:0,rare:0}},
+  3:{tier:3,difficulty:2,materials:{common:4,uncommon:2,rare:0}},
+  4:{tier:4,difficulty:3,materials:{common:5,uncommon:3,rare:0}},
+  5:{tier:5,difficulty:4,materials:{common:6,uncommon:4,rare:2}},
+  6:{tier:6,difficulty:5,materials:{common:7,uncommon:5,rare:3}},
+};
+
 export const CAMPSITE_FEATURES = [
   {id:"campfire",label:"Campfire",effect:"Warmth against cold exposure for short periods."},
   {id:"shelter",label:"Shelter",effect:"Protection from weather; with heat allows recovery from cold Fatigue."},
@@ -105,16 +114,19 @@ export const CAMPSITE_FEATURES = [
   {id:"cleaned",label:"Cleaned Site",effect:"Disease/poison sources cleared and irradiated spots marked."},
   {id:"concealed",label:"Concealed Site",effect:"Tracking Survival difficulty +2; roll campsite visitors twice and use lowest."},
   {id:"defensible",label:"Defensible Site",effect:"2 CD cover; repeated picks +1 CD each, max 4 CD."},
+  {id:"water_source",label:"Water Source",effect:"Produces Purified Water every 8 hours. Extra instances increase production."},
+  {id:"hunting_traps",label:"Hunting Traps",effect:"Produces Critter Meat every 8 hours. Extra instances increase production."},
 ];
 
-export function calculateCampsite({tier=1,apSpentAfterTest=0,buildSucceeded=true}={}) {
+export function calculateCampsite({tier=1,apSpentAfterTest=0,buildSucceeded=true,rulesMode="winter"}={}) {
   const attempted=Math.max(1,Math.min(6,Math.floor(Number(tier)||1)));
   const built=buildSucceeded?attempted:Math.max(1,attempted-2);
-  const def=CAMPSITE_TIERS[attempted];
-  const builtDef=CAMPSITE_TIERS[built];
+  const table=rulesMode==="royal_flush"?ROYAL_FLUSH_CAMPSITE_TIERS:CAMPSITE_TIERS;
+  const def=table[attempted];
+  const builtDef=table[built];
   const features=built+Math.floor(Math.max(0,Number(apSpentAfterTest)||0)/3);
   const refund=Object.fromEntries(Object.entries(builtDef.materials).map(([key,value])=>[key,Math.ceil(value/2)]));
-  return {attemptedTier:attempted,builtTier:built,difficulty:def.difficulty,materials:def.materials,featureSlots:features,teardownRefund:refund};
+  return {attemptedTier:attempted,builtTier:built,difficulty:def.difficulty,materials:def.materials,featureSlots:features,teardownRefund:refund,rulesMode};
 }
 
 export const REPUTATION_RANKS = [
@@ -344,4 +356,70 @@ export function resolveSettlementTask({
     reward:String(reward||"").trim(),
     negativeInfluenceSuggested:!success,
   };
+}
+
+
+export const ROYAL_FLUSH_CAMPING_INHABITANTS = [
+  [1,2,"A strange mixed group of travelers occupies the site and argues over their last meal."],
+  [3,4,"A trader has already set up shop here; the guards are wary of newcomers."],
+  [5,6,"A Mr. Handy and several Protectrons are repairing the site for an absent owner."],
+  [7,8,"Scavengers are stripping the area for anything useful."],
+  [9,10,"A pack of feral ghouls has taken over the campsite."],
+  [11,12,"A sprung trap with a fresh victim shows that the area is not as quiet as it looks."],
+  [13,14,"Bodies stripped of gear and raider graffiti mark this as hostile territory."],
+  [15,16,"Super Mutant signs and crude warnings suggest dangerous occupants nearby."],
+  [17,18,"Claw marks and shed scales reveal a Deathclaw nest."],
+  [19,20,"A broken cage and destroyed camp suggest something dangerous escaped recently."],
+];
+
+export function royalFlushCampSearchDifficulty({dangerous=false,inhospitable=false,modifier=0}={}) {
+  return Math.max(1,1+(dangerous?1:0)+(inhospitable?1:0)+Math.max(0,Math.floor(Number(modifier)||0)));
+}
+
+export function resolveRoyalFlushCampSearch({rolls=[],targetNumber=0,difficulty=1,complicationRange=20}={}) {
+  const clean=(rolls||[]).map(Number).filter(Number.isFinite);
+  let successes=0,complications=0;
+  for(const die of clean){
+    if(die<=targetNumber) successes+=1;
+    if(die>=complicationRange) complications+=1;
+  }
+  return {rolls:clean,targetNumber,difficulty,successes,complications,success:successes>=difficulty};
+}
+
+function combatDieValue(roll){
+  const n=Math.max(1,Math.min(6,Math.floor(Number(roll)||1)));
+  if(n===1)return 1;
+  if(n===2)return 2;
+  if(n>=5)return 1;
+  return 0;
+}
+
+export function rollRoyalFlushCampProduction({featureId,instances=1,periods=1,random=Math.random}={}) {
+  const count=Math.max(1,Math.floor(Number(instances)||1));
+  const cycles=Math.max(0,Math.floor(Number(periods)||0));
+  const dicePerCycle=count;
+  let quantity=0;
+  const rolls=[];
+  for(let cycle=0;cycle<cycles;cycle+=1){
+    let cycleQty=1;
+    for(let d=0;d<dicePerCycle;d+=1){
+      const roll=1+Math.floor(random()*6);
+      rolls.push(roll);
+      cycleQty+=combatDieValue(roll);
+    }
+    quantity+=cycleQty;
+  }
+  return {
+    featureId,
+    periods:cycles,
+    instances:count,
+    quantity,
+    itemName:featureId==="water_source"?"Purified Water":"Critter Meat",
+    rolls,
+  };
+}
+
+export function royalFlushCampEncounterDice(tier=1){
+  const safe=Math.max(1,Math.min(6,Math.floor(Number(tier)||1)));
+  return Math.max(0,safe-1);
 }
