@@ -91,9 +91,12 @@ const spendMaterials=(items,cost)=>{
   }).filter(item=>itemQuantity(item)>0||!Object.keys(cost||{}).some(key=>isMaterial(item,key)));
 };
 
-function Bar({value,max=5}){
-  const safeMax=Math.max(1,Number(max)||1),safe=Math.max(0,Math.min(safeMax,Number(value)||0));
-  return <span className="vehicle-v2-bar">{Array.from({length:safeMax},(_,i)=><i key={i} className={i<safe?"is-filled":""}/>)}</span>;
+function Bar({value,max=5,segments=null}){
+  const safeMax=Math.max(1,Number(max)||1);
+  const safe=Math.max(0,Math.min(safeMax,Number(value)||0));
+  const count=Math.max(1,Math.min(10,Number(segments)||safeMax));
+  const filled=Math.round((safe/safeMax)*count);
+  return <span className="vehicle-v2-bar" style={{"--vehicle-bar-segments":count}}>{Array.from({length:count},(_,i)=><i key={i} className={i<filled?"is-filled":""}/>)}</span>;
 }
 
 function Cost({cost,inventory,labels}){
@@ -292,7 +295,7 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
           <button type="button" className="pip-btn" onClick={()=>setHp(active.id,1)}>+1</button>
           <button type="button" className="pip-btn" onClick={()=>setHp(active.id,5)}>+5</button>
         </div>
-        <Bar value={active.currentHp??active.maxHp} max={active.maxHp}/>
+        <Bar value={active.currentHp??active.maxHp} max={active.maxHp} segments={10}/>
       </div>
       <div className="vehicle-v2-crit-help"><strong>{damageLabels.threshold}: {criticalThreshold}</strong><small>{damageLabels.help}</small></div>
       <div className="vehicle-v2-damage-form">
