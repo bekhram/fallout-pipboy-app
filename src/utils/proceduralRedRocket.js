@@ -2,12 +2,15 @@ import redRocket1 from "../assets/wasteland/red-rocket/red-rocket-1.png";
 import redRocket2 from "../assets/wasteland/red-rocket/red-rocket-2.png";
 import redRocket3 from "../assets/wasteland/red-rocket/red-rocket-3.png";
 
-const GRID = 24;
 const FOOTPRINT = 20;
 const ROOM_SCALE = FOOTPRINT / 10;
 const BORDER = 1;
 const ROUTE_CLEARANCE = 0.75;
-const EDGE_ROAD = { x: 0, y: GRID - 2, w: GRID, h: 2 };
+function gridDimensions(spec = {}) {
+  const cols = Math.max(24, Math.floor(Number(spec.cols || spec.rows || 24)));
+  const rows = Math.max(24, Math.floor(Number(spec.rows || spec.cols || cols)));
+  return { cols, rows };
+}
 const ASSETS = [redRocket1, redRocket2, redRocket3];
 
 // Logical room bounds are still shared by the procedural encounter system.
@@ -101,16 +104,17 @@ function overlaps(a, b, pad = 0) {
   );
 }
 
-function routeReservations() {
-  return { routeKind: "road", reservations: [{ ...EDGE_ROAD }] };
+function routeReservations(spec = {}) {
+  const { cols, rows } = gridDimensions(spec);
+  return { routeKind: "road", reservations: [{ x: 0, y: rows - 2, w: cols, h: 2 }] };
 }
 
-function placementCandidates(reservations) {
+function placementCandidates(reservations, cols, rows) {
   const result = [];
-  const max = GRID - FOOTPRINT - BORDER;
-  const maxY = Math.min(max, GRID - FOOTPRINT - 3);
+  const maxX = Math.max(BORDER, cols - FOOTPRINT - BORDER);
+  const maxY = Math.max(BORDER, rows - FOOTPRINT - 3);
   for (let y = BORDER; y <= maxY; y += 1) {
-    for (let x = BORDER; x <= max; x += 1) {
+    for (let x = BORDER; x <= maxX; x += 1) {
       const candidate = { x, y, w: FOOTPRINT, h: FOOTPRINT };
       if (reservations.some((route) => overlaps(candidate, route, ROUTE_CLEARANCE))) continue;
       result.push(candidate);
@@ -119,10 +123,10 @@ function placementCandidates(reservations) {
   return result;
 }
 
-function fallbackPlacement(reservations) {
+function fallbackPlacement(reservations, cols, rows) {
   const candidates = [];
-  for (let y = 0; y <= GRID - FOOTPRINT; y += 1) {
-    for (let x = 0; x <= GRID - FOOTPRINT; x += 1) {
+  for (let y = 0; y <= rows - FOOTPRINT; y += 1) {
+    for (let x = 0; x <= cols - FOOTPRINT; x += 1) {
       const candidate = { x, y, w: FOOTPRINT, h: FOOTPRINT };
       const collisions = reservations.filter((route) => overlaps(candidate, route)).length;
       candidates.push({ ...candidate, collisions });
@@ -146,10 +150,11 @@ export function isRedRocketType(type) {
 export function buildRedRocketLayout(spec = {}) {
   const seed = String(spec.renderSeed || spec.seed || "1");
   const terrain = String(spec.terrain || spec.terrainType || "wasteland");
-  const rng = mulberry32(hashSeed(`${seed}:${terrain}:red-rocket-layout-v1`));
+  const { cols, rows } = gridDimensions(spec);
+  const rng = mulberry32(hashSeed(`${seed}:${terrain}:${cols}x${rows}:red-rocket-layout-v2`));
   const { routeKind, reservations } = routeReservations(spec);
-  const candidates = shuffled(rng, placementCandidates(reservations));
-  const placed = candidates[0] || fallbackPlacement(reservations);
+  const candidates = shuffled(rng, placementCandidates(reservations, cols, rows));
+  const placed = candidates[0] || fallbackPlacement(reservations, cols, rows);
   const assetIndex = hashSeed(`${seed}:${terrain}:red-rocket-asset-v1`) % ASSETS.length;
   const building = {
     id: "red-rocket",
@@ -160,8 +165,8 @@ export function buildRedRocketLayout(spec = {}) {
   };
 
   return {
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
     routeKind,
     roadPlacement: "bottom-edge",
     routeReservations: reservations,
