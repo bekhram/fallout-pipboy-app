@@ -90,3 +90,47 @@
     grid-column:auto;
   }
 }
+
+.camp-modal__heat{
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border:1px solid rgba(255,190,90,.28);
+  border-radius:10px;
+  background:rgba(60,31,5,.22);
+}
+.camp-modal__heat>header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.camp-modal__heat-toggle{
+  display:flex!important;
+  align-items:center;
+  gap:6px;
+}
+.camp-modal__heat-body{
+  display:grid;
+  gap:8px;
+}
+.camp-modal__heat-body>label{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.camp-modal__heat-body>label:first-child{
+  display:grid;
+  grid-template-columns:1fr 92px;
+}
+.camp-modal__heat-summary{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:4px 8px;
+  padding:8px;
+  border:1px solid rgba(255,190,90,.2);
+  border-radius:8px;
+}
+.camp-modal__heat-summary small{
+  grid-column:1/-1;
+}
