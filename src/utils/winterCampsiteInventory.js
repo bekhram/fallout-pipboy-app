@@ -122,12 +122,17 @@ export function normalizeFeatureSelection(features = [], maxSlots = 0) {
   const selected = [];
   const seen = new Set();
   let defensibleCount = 0;
+  const repeatable = new Set(["defensible", "water_source", "hunting_traps"]);
   for (const feature of features || []) {
     const id = String(feature || "");
     if (!id || selected.length >= Math.max(0, Number(maxSlots) || 0)) break;
     if (id === "defensible") {
       if (defensibleCount >= 3) continue;
       defensibleCount += 1;
+      selected.push(id);
+      continue;
+    }
+    if (repeatable.has(id)) {
       selected.push(id);
       continue;
     }
