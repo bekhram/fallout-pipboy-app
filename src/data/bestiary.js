@@ -13,6 +13,7 @@ import settlersWastelandNpcs03 from "./bestiary/settlersWastelandNpcs03.js";
 import settlersWastelandRobotsTraps from "./bestiary/settlersWastelandRobotsTraps.js";
 import winterOfAtom01 from "./bestiary/winterOfAtom01.js";
 import winterOfAtom02 from "./bestiary/winterOfAtom02.js";
+import hollywoodHeroes01 from "./bestiary/hollywoodHeroes01.js";
 
 export const BESTIARY_CATEGORIES = [
   "all",
@@ -50,6 +51,7 @@ export const BESTIARY_ENTRIES = [
   ...settlersWastelandRobotsTraps,
   ...winterOfAtom01,
   ...winterOfAtom02,
+  ...hollywoodHeroes01,
 ].map(normalizeBestiaryEntry);
 
 export function createEmptyBestiaryEntry(category = "creature") {
