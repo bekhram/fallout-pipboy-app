@@ -288,7 +288,7 @@ export function buildOpenWastelandRoomBlueprints() { return []; }
 
 export function generateOpenWastelandSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
-  const width = GRID * CELL, height = GRID * CELL;
+  const width = site.cols * CELL, height = site.rows * CELL;
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   site.roads.forEach((road) => out.push(roadSvg(road, site.profile.surface)));
   out.push("</svg>");
