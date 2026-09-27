@@ -2,7 +2,7 @@ import { PhaserToken } from "../phaser/PhaserAsset.jsx";
 import DiceRollModal from "../dice/DiceRollModal.jsx";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
 import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
-import { buildNpcAttackRollConfig, effectiveAttackProfile, normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText } from "../../utils/npcCombat.js";
+import { buildNpcAttackRollConfig, effectiveAttackProfile, normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText, parseCombatAbilityAttacks } from "../../utils/npcCombat.js";
 import PhaserMapViewport from "../phaser/PhaserMapViewport.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -466,11 +466,13 @@ function mapBestiaryEntry(token) {
 function mapCreatureAttacks(token) {
   const stats = token?.stats || {};
   const linked = mapBestiaryEntry(token);
-  const parsed = parseAttackText(stats.attacks || linked?.attacks || "");
+  const attacksText = stats.attacks || linked?.attacks || "";
+  const parsed = parseAttackText(attacksText);
   const custom = (Array.isArray(stats.customAttacks) ? stats.customAttacks : []).map(normalizeStructuredAttack);
   const weapons = (Array.isArray(stats.weapons) ? stats.weapons : []).map(normalizeWeaponAttack);
+  const abilityAttacks = parseCombatAbilityAttacks(stats.abilities || linked?.abilities || "", attacksText);
   const seen = new Set();
-  return [...parsed, ...custom, ...weapons].filter((attack) => {
+  return [...parsed, ...custom, ...weapons, ...abilityAttacks].filter((attack) => {
     const key = String(attack?.name || "").trim().toLowerCase() || JSON.stringify([Number(attack?.targetNumber || 0), Number(attack?.damageDice || 0), String(attack?.damageType || "")]);
     if (seen.has(key)) return false;
     seen.add(key);
