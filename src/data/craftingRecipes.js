@@ -244,6 +244,12 @@ WEAPON_RECIPES.push(
 );
 
 
+const ROYAL_FLUSH_RECIPES = [
+  ...group({ workbench: "chemistry", category: "items", group: "ROYAL FLUSH", skill: "Medicine", page: 15, outputCategory: "aid" }, [
+    ["Improvised Poison", 1, "", "Common", "Medicine", { "Common Materials": 1, "Uncommon Materials": 1 }],
+  ]),
+];
+
 const HOLLYWOOD_HEROES_CHEMISTRY_RECIPES = [
   ...group({ workbench: "chemistry", category: "items", group: "HOLLYWOOD HEROES AMMUNITION", skill: "Explosives", page: 29, outputCategory: "ammo" }, [
     ["Custom Shells", 5, "", "Rare", "Explosives", { "Common Materials": 3, "Rare Materials": 2 }],
@@ -490,6 +496,7 @@ WEAPON_RECIPES.push(
 );
 
 export const CRAFTING_RECIPES = [
+  ...ROYAL_FLUSH_RECIPES,
   ...HOLLYWOOD_HEROES_CHEMISTRY_RECIPES,
   ...AMMO_RECIPES,
   ...WEAPON_RECIPES,
