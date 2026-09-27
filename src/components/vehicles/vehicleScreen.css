@@ -37,3 +37,81 @@
 @media(max-width:760px){
   .vehicle-rf-grid{grid-template-columns:1fr}
 }
+
+.vehicle-screen-v2{display:grid;gap:14px;padding:14px}
+.vehicle-v2-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:8px 6px;border-bottom:1px solid rgba(126,255,166,.16)}
+.vehicle-v2-header h1{margin:2px 0 0;font-size:28px;letter-spacing:.04em}
+.vehicle-v2-header p{margin:3px 0 0;opacity:.68}
+.vehicle-v2-header>small{opacity:.7}
+.vehicle-v2-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.vehicle-v2-tabs button{min-height:46px;border:1px solid rgba(126,255,166,.24);background:rgba(5,25,17,.7);color:inherit;border-radius:9px;font:inherit;font-weight:700}
+.vehicle-v2-tabs button.is-active{background:rgba(54,151,91,.2);border-color:#78ff98;box-shadow:inset 0 0 0 1px rgba(120,255,152,.18)}
+.vehicle-v2-dashboard{display:grid;grid-template-columns:1.2fr 1.05fr 1fr;gap:12px;align-items:start}
+.vehicle-v2-dashboard>.pip-panel{margin:0}
+.vehicle-v2-hero{grid-row:span 2;display:grid;gap:10px;overflow:hidden}
+.vehicle-v2-title-row,.vehicle-v2-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vehicle-v2-title-row h2,.vehicle-v2-section-head h3,.vehicle-v2-dashboard h3{margin:0}
+.vehicle-v2-active{padding:4px 8px;border:1px solid #78ff98;border-radius:999px;font-size:11px}
+.vehicle-v2-art{height:270px;border:1px solid rgba(126,255,166,.18);border-radius:10px;overflow:hidden;background:radial-gradient(circle at 50% 30%,rgba(70,122,88,.18),rgba(4,18,12,.9))}
+.vehicle-v2-art img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 10px rgba(0,0,0,.45))}
+.vehicle-v2-thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.vehicle-v2-thumbs button{display:grid;gap:4px;padding:5px;border:1px solid rgba(126,255,166,.15);background:rgba(3,17,11,.72);color:inherit;border-radius:8px;min-width:0}
+.vehicle-v2-thumbs button.is-active{border-color:#78ff98}
+.vehicle-v2-thumbs img{width:100%;height:54px;object-fit:contain}
+.vehicle-v2-thumbs span{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vehicle-v2-qualities{display:flex;gap:6px;flex-wrap:wrap}
+.vehicle-v2-qualities span{padding:4px 8px;border-radius:999px;border:1px solid rgba(126,255,166,.35);background:rgba(56,135,85,.14);font-size:11px}
+.vehicle-v2-stats{display:grid;gap:4px}
+.vehicle-v2-stat-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 8px;border-radius:6px;background:rgba(9,38,26,.72)}
+.vehicle-v2-stat-row>b{display:flex;align-items:center;gap:8px}
+.vehicle-v2-bar{display:inline-flex;gap:3px;vertical-align:middle}
+.vehicle-v2-bar i{display:block;width:18px;height:9px;border-radius:2px;border:1px solid rgba(126,255,166,.35);background:rgba(5,25,17,.8)}
+.vehicle-v2-bar i.is-filled{background:#78ff98;border-color:#78ff98;box-shadow:0 0 6px rgba(120,255,152,.25)}
+.vehicle-v2-crew,.vehicle-v2-qualities-panel,.vehicle-v2-fuel,.vehicle-v2-ram,.vehicle-v2-control{display:grid;gap:9px}
+.vehicle-v2-crew label{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:center}
+.vehicle-v2-crew input,.vehicle-v2-inline input,.vehicle-v2-inline select,.vehicle-v2-builder input,.vehicle-v2-movement input{min-width:0;width:100%;background:rgba(2,16,10,.9);color:inherit;border:1px solid rgba(126,255,166,.22);border-radius:7px;padding:8px}
+.vehicle-v2-movement{grid-column:1/2}
+.vehicle-v2-move-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.vehicle-v2-move-grid button{display:grid;gap:4px;text-align:left;padding:10px;border:1px solid rgba(126,255,166,.18);background:rgba(5,24,16,.75);color:inherit;border-radius:9px}
+.vehicle-v2-move-grid button.is-active{border-color:#78ff98;background:rgba(49,132,79,.17)}
+.vehicle-v2-move-grid small{opacity:.66}
+.vehicle-v2-test{padding:8px;border-left:2px solid #78ff98;background:rgba(8,34,23,.65)}
+.vehicle-v2-damage{grid-column:2/3;display:grid;gap:8px}
+.vehicle-v2-damage-row{display:grid;grid-template-columns:90px 1fr auto;gap:8px;align-items:center}
+.vehicle-v2-injury{display:grid;gap:3px;padding:7px;border-left:2px solid #d9a84e;background:rgba(45,31,10,.25)}
+.vehicle-v2-inline{display:flex;align-items:center;gap:8px}
+.vehicle-v2-fuel-main{display:flex;align-items:center;gap:10px;font-size:22px}
+.vehicle-v2-ram-value{font-size:34px;font-weight:800;color:#78ff98}
+.vehicle-v2-control{grid-column:3/4}
+.vehicle-v2-control-list{display:grid;gap:5px}
+.vehicle-v2-control-list details{border:1px solid rgba(126,255,166,.13);border-radius:7px;padding:7px;background:rgba(5,23,15,.62)}
+.vehicle-v2-catalog{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.vehicle-v2-catalog-card{display:grid;gap:10px}
+.vehicle-v2-catalog-card>img{width:100%;height:150px;object-fit:contain;border-radius:8px;background:rgba(3,17,11,.75)}
+.vehicle-v2-mini-stats{display:flex;flex-wrap:wrap;gap:6px}
+.vehicle-v2-mini-stats span{padding:4px 7px;border:1px solid rgba(126,255,166,.15);border-radius:6px;font-size:11px}
+.vehicle-v2-builder{display:grid;gap:12px}
+.vehicle-v2-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.vehicle-v2-form label{display:grid;gap:4px}
+.vehicle-v2-quality-picker{display:flex;flex-wrap:wrap;gap:8px}
+.vehicle-v2-quality-picker label{padding:6px 8px;border:1px solid rgba(126,255,166,.15);border-radius:7px}
+@media(max-width:1180px){
+  .vehicle-v2-dashboard{grid-template-columns:1fr 1fr}
+  .vehicle-v2-hero{grid-row:auto}
+  .vehicle-v2-control{grid-column:auto}
+  .vehicle-v2-catalog{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .vehicle-screen-v2{padding:8px;gap:9px}
+  .vehicle-v2-header{align-items:flex-start;flex-direction:column}
+  .vehicle-v2-tabs{grid-template-columns:1fr}
+  .vehicle-v2-dashboard{grid-template-columns:1fr}
+  .vehicle-v2-movement,.vehicle-v2-damage,.vehicle-v2-control{grid-column:auto}
+  .vehicle-v2-art{height:210px}
+  .vehicle-v2-thumbs{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .vehicle-v2-move-grid{grid-template-columns:1fr}
+  .vehicle-v2-catalog{grid-template-columns:1fr}
+  .vehicle-v2-form{grid-template-columns:1fr 1fr}
+  .vehicle-v2-crew label{grid-template-columns:1fr}
+  .vehicle-v2-bar i{width:14px}
+}
