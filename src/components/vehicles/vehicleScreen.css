@@ -121,3 +121,77 @@
 .vehicle-v2-weapon>div{display:grid;gap:3px}
 .vehicle-v2-weapon small{opacity:.7}
 @media(max-width:760px){.vehicle-v2-weapon{align-items:stretch;flex-direction:column}}
+
+.vehicle-v2-hp-editor,
+.vehicle-v2-crit-help,
+.vehicle-v2-damage-form,
+.vehicle-v2-critical-ready,
+.vehicle-v2-injuries,
+.vehicle-v2-manual-injury{
+  display:grid;
+  gap:8px;
+  padding:9px;
+  border:1px solid rgba(126,255,166,.14);
+  border-radius:8px;
+  background:rgba(5,23,15,.62);
+}
+.vehicle-v2-hp-controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.vehicle-v2-hp-controls input{
+  width:88px;
+  min-width:72px;
+  background:rgba(2,16,10,.9);
+  color:inherit;
+  border:1px solid rgba(126,255,166,.22);
+  border-radius:7px;
+  padding:8px;
+}
+.vehicle-v2-crit-help strong{color:#f0d37b}
+.vehicle-v2-crit-help small{opacity:.78;line-height:1.35}
+.vehicle-v2-damage-form{grid-template-columns:repeat(3,minmax(0,1fr));align-items:end}
+.vehicle-v2-damage-form label{display:grid;gap:4px}
+.vehicle-v2-damage-form input,
+.vehicle-v2-damage-form select{
+  min-width:0;
+  width:100%;
+  background:rgba(2,16,10,.9);
+  color:inherit;
+  border:1px solid rgba(126,255,166,.22);
+  border-radius:7px;
+  padding:8px;
+}
+.vehicle-v2-damage-preview{
+  grid-column:1/-1;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.vehicle-v2-damage-preview span{
+  padding:5px 8px;
+  border:1px solid rgba(126,255,166,.15);
+  border-radius:6px;
+}
+.vehicle-v2-critical-ready{
+  border-color:rgba(255,196,84,.55);
+  background:rgba(71,42,8,.34);
+}
+.vehicle-v2-injury{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.vehicle-v2-injury>div:first-child{display:grid;gap:3px}
+.vehicle-v2-injury>div:first-child>span{font-size:11px;opacity:.75}
+.vehicle-v2-injury-actions{display:flex;gap:6px;flex-wrap:wrap}
+.vehicle-v2-manual-injury summary{cursor:pointer;font-weight:700}
+@media(max-width:760px){
+  .vehicle-v2-damage-form{grid-template-columns:1fr}
+  .vehicle-v2-damage-preview{grid-column:auto}
+  .vehicle-v2-injury{flex-direction:column}
+  .vehicle-v2-injury-actions{width:100%}
+}
