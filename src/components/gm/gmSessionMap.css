@@ -528,3 +528,30 @@
     font-size:.56rem;
   }
 }
+
+.gm-map-creature__attacks .gm-npc-attack-button b{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.gm-map-creature__attacks .gm-npc-attack-button b em{
+  flex:0 0 auto;
+  padding:2px 5px;
+  border:1px solid color-mix(in srgb,currentColor 28%,transparent);
+  border-radius:5px;
+  font:700 .5rem/1.15 system-ui;
+  font-style:normal;
+  letter-spacing:.04em;
+  opacity:.82;
+}
+@media(max-width:640px){
+  .gm-map-creature__attacks .gm-npc-attack-button b{
+    align-items:flex-start;
+    gap:5px;
+  }
+  .gm-map-creature__attacks .gm-npc-attack-button b em{
+    font-size:.46rem;
+    padding:2px 4px;
+  }
+}
