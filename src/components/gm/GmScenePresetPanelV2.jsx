@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import GmScenePresetPanel from "./GmScenePresetPanel.jsx";
-import { generateProceduralEncounterSummary } from "../../utils/proceduralRoomContent.js";
 import {
   MAX_MANUAL_ENEMY_COUNT,
   normalizeEncounterDifficulty,
@@ -119,19 +118,6 @@ export default function GmScenePresetPanelV2({ session }) {
     };
   }, [session, difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality]);
 
-  const previewSpec = savedSpec ? {
-    ...stripLegacyEncounterOptions(savedSpec),
-    encounterDifficulty: difficulty,
-    enemyFaction,
-    enemyCountOverride,
-    trapCount,
-    trapLethality,
-  } : null;
-
-  const encounter = useMemo(
-    () => (previewSpec ? generateProceduralEncounterSummary(previewSpec) : null),
-    [previewSpec?.type, previewSpec?.seed, previewSpec?.avgPartyLevel, previewSpec?.partySize, previewSpec?.lootRarity, previewSpec?.wealth, difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality],
-  );
 
   const persistSetting = async (patch) => {
     const spec = specFromScene(scene);
@@ -171,9 +157,6 @@ export default function GmScenePresetPanelV2({ session }) {
           <label><span>{text.trapCount}</span><input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(e) => changeTrapCount(e.target.value)} /></label>
           <label><span>{text.trapLethality}</span><select className="pip-input" value={trapLethality} onChange={(e) => changeTrapLethality(e.target.value)}>{TRAP_LETHALITIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
         </div>
-
-        {encounter ? <div className="gm-encounter-difficulty__summary"><span>{text.enemies}<b>{generatedEnemyCount}</b></span><span>{text.target}<b>{encounter.targetXp}</b></span><span>{text.actual}<b>{encounter.actualXp}</b></span><span>{text.reward}<b>{encounter.xpPerPlayer}</b></span></div> : null}
-        {encounter ? <div className="gm-encounter-difficulty__ranks"><span>{text.minion}<b>{ranks.minion}</b></span><span>{text.normal}<b>{ranks.standard}</b></span><span>{text.special}<b>{ranks.special}</b></span><span>{text.legendary}<b>{ranks.legendary}</b></span></div> : null}
         <small>{text.note}</small>
       </section>
       <GmScenePresetPanel session={sessionWithEncounterSettings} />
