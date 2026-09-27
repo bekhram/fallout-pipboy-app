@@ -24,7 +24,7 @@ export default function SheetEffects({form,derived,survivalConditions,onOpenCond
       if(item.key==="famishedFever"&&feverCopy){
         return <details className="sheet-effect" key={item.key}><summary>{feverCopy.name} · {form.famishedFeverDuration||0}</summary><p>{feverCopy.desc}</p><small>{feverCopy.duration}</small></details>;
       }
-      return <details className="sheet-effect" key={item.key}><summary>{t(item.nameKey)}</summary><p>{t(item.descriptionKey)}</p><small>{t(item.durationKey)}</small></details>;
+      return <details className="sheet-effect" key={item.key}><summary>{t(item.nameKey)}</summary><p>{t(item.descriptionKey)}</p>{item.randomEffectName?<div className="sheet-effect-random"><strong>{item.randomEffectName}</strong><p>{item.randomEffectDescription}</p></div>:null}<small>{t(item.durationKey)}</small></details>;
     })}
     {effects.map(effect=><div className="sheet-effect" key={effect.id}><strong>{effect.sourceName}</strong><p>{effect.effectText}</p><small>{effect.duration}</small><button type="button" className="pip-btn" onClick={()=>window.dispatchEvent(new CustomEvent(PIPBOY_END_CONSUMABLE_EFFECT_EVENT,{detail:{effectId:effect.id}}))}>{c.end}</button></div>)}
     {stealth&&<div className="sheet-effect"><strong>Stealth Boy · {form.stealthBoyState.remainingTurns}</strong><div className="pip-tagrow"><button type="button" className="pip-btn" onClick={onStealthBoyAdvance}>{c.nextTurn}</button><button type="button" className="pip-btn" onClick={onStealthBoyEnd}>{c.end}</button></div></div>}
