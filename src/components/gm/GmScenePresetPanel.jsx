@@ -8,6 +8,7 @@ import {
   generateProceduralMapDataUrl,
   makeProceduralSeed,
   proceduralLocationType,
+  PROCEDURAL_MAP_SIZES,
 } from "../../utils/proceduralMapGenerator.js";
 import {
   TERRAIN_TYPES,
@@ -20,7 +21,6 @@ import {
 import "./gmScenePresetPanel.css";
 
 const MAP_TYPES = ["wasteland", "settlement", "red_rocket", "super_duper_mart"];
-const FIXED_GRID = 24;
 const LOOT_RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const WEALTH_LEVELS = ["poor", "standard", "rich", "wealthy"];
 
@@ -32,10 +32,10 @@ const LABELS = {
 };
 
 const COPY = {
-  en: { title: "[ FALLOUT MAP GENERATOR ]", type: "LOCATION", terrain: "TERRAIN", grid: "MAP SIZE", seed: "SEED", newSeed: "NEW SEED", density: "DETAIL DENSITY", loot: "MAX LOOT RARITY", wealth: "LOCATION WEALTH", level: "AVG. PARTY LEVEL", party: "PARTY SIZE", generate: "GENERATE / APPLY", regenerate: "NEW VARIANT", upload: "UPLOAD CUSTOM BACKGROUND", applied: "Generated background applied to scene", fixed: "Procedural maps use a fixed 24×24 grid", weak: "WEAK", normal: "NORMAL", strong: "STRONG", gridVisibility: "GRID VISIBILITY" },
-  ru: { title: "[ ГЕНЕРАТОР КАРТ FALLOUT ]", type: "ЛОКАЦИЯ", terrain: "ЛАНДШАФТ", grid: "РАЗМЕР КАРТЫ", seed: "SEED", newSeed: "НОВЫЙ SEED", density: "ПЛОТНОСТЬ ДЕТАЛЕЙ", loot: "МАКС. РЕДКОСТЬ ЛУТА", wealth: "БОГАТСТВО ЛОКАЦИИ", level: "СР. УРОВЕНЬ ГРУППЫ", party: "РАЗМЕР ГРУППЫ", generate: "СГЕНЕРИРОВАТЬ / ПРИМЕНИТЬ", regenerate: "НОВЫЙ ВАРИАНТ", upload: "ЗАГРУЗИТЬ СВОЙ ФОН", applied: "Сгенерированный фон применён к сцене", fixed: "Процедурные карты используют фиксированный грид 24×24", weak: "СЛАБЫЙ", normal: "ОБЫЧНЫЙ", strong: "КОНТРАСТНЫЙ", gridVisibility: "ВИДИМОСТЬ ГРИДА" },
+  en: { title: "[ FALLOUT MAP GENERATOR ]", type: "LOCATION", terrain: "TERRAIN", grid: "MAP SIZE", seed: "SEED", newSeed: "NEW SEED", density: "DETAIL DENSITY", loot: "MAX LOOT RARITY", wealth: "LOCATION WEALTH", level: "AVG. PARTY LEVEL", party: "PARTY SIZE", generate: "GENERATE / APPLY", regenerate: "NEW VARIANT", upload: "UPLOAD CUSTOM BACKGROUND", applied: "Generated background applied to scene", fixed: "Procedural map size: 24×24 / 36×36 / 48×48", weak: "WEAK", normal: "NORMAL", strong: "STRONG", gridVisibility: "GRID VISIBILITY" },
+  ru: { title: "[ ГЕНЕРАТОР КАРТ FALLOUT ]", type: "ЛОКАЦИЯ", terrain: "ЛАНДШАФТ", grid: "РАЗМЕР КАРТЫ", seed: "SEED", newSeed: "НОВЫЙ SEED", density: "ПЛОТНОСТЬ ДЕТАЛЕЙ", loot: "МАКС. РЕДКОСТЬ ЛУТА", wealth: "БОГАТСТВО ЛОКАЦИИ", level: "СР. УРОВЕНЬ ГРУППЫ", party: "РАЗМЕР ГРУППЫ", generate: "СГЕНЕРИРОВАТЬ / ПРИМЕНИТЬ", regenerate: "НОВЫЙ ВАРИАНТ", upload: "ЗАГРУЗИТЬ СВОЙ ФОН", applied: "Сгенерированный фон применён к сцене", fixed: "Размер процедурной карты: 24×24 / 36×36 / 48×48", weak: "СЛАБЫЙ", normal: "ОБЫЧНЫЙ", strong: "КОНТРАСТНЫЙ", gridVisibility: "ВИДИМОСТЬ ГРИДА" },
   uk: { title: "[ ГЕНЕРАТОР МАП FALLOUT ]", type: "ЛОКАЦІЯ", terrain: "ЛАНДШАФТ", grid: "РОЗМІР МАПИ", seed: "SEED", newSeed: "НОВИЙ SEED", density: "ЩІЛЬНІСТЬ ДЕТАЛЕЙ", loot: "МАКС. РІДКІСТЬ ЛУТУ", wealth: "БАГАТСТВО ЛОКАЦІЇ", level: "СЕР. РІВЕНЬ ГРУПИ", party: "РОЗМІР ГРУПИ", generate: "ЗГЕНЕРУВАТИ / ЗАСТОСУВАТИ", regenerate: "НОВИЙ ВАРІАНТ", upload: "ЗАВАНТАЖИТИ ВЛАСНИЙ ФОН", applied: "Згенерований фон застосовано до сцени", fixed: "Процедурні мапи використовують фіксовану сітку 24×24", weak: "СЛАБКА", normal: "ЗВИЧАЙНА", strong: "КОНТРАСТНА", gridVisibility: "ВИДИМІСТЬ СІТКИ" },
-  pl: { title: "[ GENERATOR MAP FALLOUT ]", type: "LOKACJA", terrain: "TEREN", grid: "ROZMIAR MAPY", seed: "SEED", newSeed: "NOWY SEED", density: "GĘSTOŚĆ SZCZEGÓŁÓW", loot: "MAKS. RZADKOŚĆ ŁUPU", wealth: "BOGACTWO LOKACJI", level: "ŚR. POZIOM DRUŻYNY", party: "ROZMIAR DRUŻYNY", generate: "GENERUJ / ZASTOSUJ", regenerate: "NOWY WARIANT", upload: "WGRAJ WŁASNE TŁO", applied: "Wygenerowane tło zastosowano do sceny", fixed: "Mapy proceduralne używają stałej siatki 24×24", weak: "SŁABA", normal: "NORMALNA", strong: "KONTRASTOWA", gridVisibility: "WIDOCZNOŚĆ SIATKI" },
+  pl: { title: "[ GENERATOR MAP FALLOUT ]", type: "LOKACJA", terrain: "TEREN", grid: "ROZMIAR MAPY", seed: "SEED", newSeed: "NOWY SEED", density: "GĘSTOŚĆ SZCZEGÓŁÓW", loot: "MAKS. RZADKOŚĆ ŁUPU", wealth: "BOGACTWO LOKACJI", level: "ŚR. POZIOM DRUŻYNY", party: "ROZMIAR DRUŻYNY", generate: "GENERUJ / ZASTOSUJ", regenerate: "NOWY WARIANT", upload: "WGRAJ WŁASNE TŁO", applied: "Wygenerowane tło zastosowano do sceny", fixed: "Rozmiar mapy proceduralnej: 24×24 / 36×36 / 48×48", weak: "SŁABA", normal: "NORMALNA", strong: "KONTRASTOWA", gridVisibility: "WIDOCZNOŚĆ SIATKI" },
 };
 
 const WEALTH_LABELS = {
@@ -56,9 +56,14 @@ function clampInteger(value, min, max, fallback) {
   const parsed = Math.floor(Number(value));
   return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
 }
-function makeStartZone() {
+function normalizeGridSize(value) {
+  const n = Number(value);
+  return PROCEDURAL_MAP_SIZES.includes(n) ? n : 24;
+}
+function makeStartZone(size) {
+  const grid = normalizeGridSize(size);
   const result = [];
-  for (let y = FIXED_GRID - 3; y < FIXED_GRID; y += 1) for (let x = 0; x < 3; x += 1) result.push({ x, y });
+  for (let y = grid - 3; y < grid; y += 1) for (let x = 0; x < 3; x += 1) result.push({ x, y });
   return result;
 }
 function contrastKey(sceneId) { return `pip2d20_gm_grid_contrast_v1:${sceneId || "default"}`; }
@@ -83,6 +88,7 @@ export default function GmScenePresetPanel({ session }) {
   const detectedPlayers = Math.max(0, (scene?.tokens || []).filter((token) => token?.kind === "player").length);
 
   const [type, setType] = useState(selectableMapType(saved.type));
+  const [gridSize, setGridSize] = useState(normalizeGridSize(saved.cols || saved.rows || scene?.cols || 24));
   const [terrain, setTerrain] = useState(saved.terrain || scene?.environment?.terrain || "wasteland");
   const [seed, setSeed] = useState(saved.seed || makeProceduralSeed());
   const [density, setDensity] = useState(Math.round(Number(saved.density ?? 0.55) * 100));
@@ -97,6 +103,7 @@ export default function GmScenePresetPanel({ session }) {
     const spec = scene?.environment?.proceduralMapSpec;
     if (spec) {
       setType(selectableMapType(spec.type));
+      setGridSize(normalizeGridSize(spec.cols || spec.rows || scene?.cols || 24));
       setTerrain(spec.terrain || scene?.environment?.terrain || "wasteland");
       setSeed(spec.seed || makeProceduralSeed());
       setDensity(Math.round(Number(spec.density ?? 0.55) * 100));
@@ -105,6 +112,7 @@ export default function GmScenePresetPanel({ session }) {
       setAvgPartyLevel(clampInteger(spec.avgPartyLevel, 1, 50, 1));
       setPartySize(clampInteger(spec.partySize, 1, 8, detectedPlayers || 4));
     } else {
+      setGridSize(normalizeGridSize(scene?.cols || scene?.rows || 24));
       setTerrain(scene?.environment?.terrain || "wasteland");
     }
     const next = readContrast(scene?.sceneId);
@@ -117,14 +125,14 @@ export default function GmScenePresetPanel({ session }) {
     type,
     terrain,
     seed,
-    cols: FIXED_GRID,
-    rows: FIXED_GRID,
+    cols: gridSize,
+    rows: gridSize,
     density: density / 100,
     lootRarity,
     wealth,
     avgPartyLevel,
     partySize,
-  }), [type, terrain, seed, density, lootRarity, wealth, avgPartyLevel, partySize]);
+  }), [type, terrain, seed, gridSize, density, lootRarity, wealth, avgPartyLevel, partySize]);
 
   const previewUrl = useMemo(() => generateProceduralMapDataUrl(generationSpec), [generationSpec]);
   const encounter = useMemo(() => generateProceduralEncounterSummary(generationSpec), [generationSpec]);
@@ -136,16 +144,16 @@ export default function GmScenePresetPanel({ session }) {
     if (nextSeed !== seed) setSeed(nextSeed);
     const nextSpec = { ...generationSpec, seed: nextSeed };
     await session.updateTacticalScene?.({
-      cols: FIXED_GRID,
-      rows: FIXED_GRID,
-      startZone: makeStartZone(),
+      cols: gridSize,
+      rows: gridSize,
+      startZone: makeStartZone(gridSize),
       backgroundUrl: "",
       backgroundName: `PROC // ${LABELS.en[type]} // ${labelFor("terrain", terrain, "en")} // ${nextSeed}`,
       environment: {
         ...(scene.environment || {}),
         locationType: proceduralLocationType(type),
         terrain,
-        mapAssetId: `procedural:${type}:${terrain}:24x24-v2`,
+        mapAssetId: `procedural:${type}:${terrain}:${gridSize}x${gridSize}-v3`,
         mapVariantSeed: nextSeed,
         proceduralMapSpec: nextSpec,
         proceduralMap: null,
@@ -178,12 +186,12 @@ export default function GmScenePresetPanel({ session }) {
         {type === "settlement" ? <SettlementAssetLayer spec={generationSpec} preview /> : null}
         {type === "red_rocket" ? <RedRocketAssetLayer spec={generationSpec} preview /> : null}
         {type === "super_duper_mart" ? <SuperDuperMartAssetLayer spec={generationSpec} preview /> : null}
-        <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>24×24 · seed {seed}</small>
+        <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
       </div>
       <div className="gm-proc-map__controls">
         <label><span>{text.type}</span><select className="pip-input" value={type} onChange={(e) => setType(e.target.value)}>{MAP_TYPES.map((value) => <option key={value} value={value}>{LABELS[lang]?.[value] || LABELS.en[value]}</option>)}</select></label>
         <label><span>{text.terrain}</span><select className="pip-input" value={terrain} onChange={(e) => setTerrain(e.target.value)}>{TERRAIN_TYPES.map((value) => <option key={value} value={value}>{labelFor("terrain", value, lang)}</option>)}</select></label>
-        <label><span>{text.grid}</span><input className="pip-input" value="24×24" disabled /></label>
+        <label><span>{text.grid}</span><select className="pip-input" value={gridSize} onChange={(e) => setGridSize(normalizeGridSize(e.target.value))}>{PROCEDURAL_MAP_SIZES.map((size) => <option key={size} value={size}>{size}×{size}</option>)}</select></label>
         <label><span>{text.loot}</span><select className="pip-input" value={lootRarity} onChange={(e) => setLootRarity(e.target.value)}>{LOOT_RARITIES.map((value) => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
         <label><span>{text.wealth}</span><select className="pip-input" value={wealth} onChange={(e) => setWealth(e.target.value)}>{WEALTH_LEVELS.map((value) => <option key={value} value={value}>{WEALTH_LABELS[lang][value]}</option>)}</select></label>
         <label><span>{text.level}</span><input className="pip-input" type="number" min="1" max="50" value={avgPartyLevel} onChange={(e) => setAvgPartyLevel(clampInteger(e.target.value, 1, 50, 1))} /></label>
