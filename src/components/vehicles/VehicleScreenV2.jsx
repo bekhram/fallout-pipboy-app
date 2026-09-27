@@ -14,6 +14,10 @@ import {
   vehicleRamDamage,
   consumeVehicleFuel,
   applyVehicleInjury,
+  removeVehicleInjury,
+  vehicleCriticalThreshold,
+  vehicleLocationForRoll,
+  vehicleInjuryIdForLocation,
 } from "../../data/vehicles.js";
 import { vehicleAssetFor } from "../../data/vehicleAssets.js";
 import { createWeaponRoll } from "../../utils/dice.js";
@@ -101,6 +105,12 @@ function Cost({cost,inventory,labels}){
 
 function StatRow({label,children}){return <div className="vehicle-v2-stat-row"><span>{label}</span><b>{children}</b></div>;}
 
+const DAMAGE_COPY={
+  en:{incoming:"Incoming damage",type:"Damage type",location:"Hit location",apply:"APPLY DAMAGE",after:"After DR",threshold:"Critical threshold",triggered:"Critical hit triggered",roll:"ROLL CRITICAL LOCATION",hp:"Current HP",repair:"REPAIR INJURY",remove:"REMOVE",help:"Critical Hit: if one attack deals at least 5 + Scale damage after DR, roll d20 on the vehicle hit-location table and apply the matching Injury."},
+  ru:{incoming:"Входящий урон",type:"Тип урона",location:"Локация попадания",apply:"ПРИМЕНИТЬ УРОН",after:"После DR",threshold:"Порог крита",triggered:"Сработал крит",roll:"БРОСИТЬ ЛОКАЦИЮ КРИТА",hp:"Текущий HP",repair:"ПОЧИНИТЬ КРИТ",remove:"УДАЛИТЬ",help:"Крит: если одна атака после DR наносит не меньше 5 + Scale урона, бросьте d20 по таблице локаций транспорта и примените соответствующее повреждение."},
+  uk:{incoming:"Вхідна шкода",type:"Тип шкоди",location:"Локація влучання",apply:"ЗАСТОСУВАТИ ШКОДУ",after:"Після DR",threshold:"Поріг крита",triggered:"Спрацював крит",roll:"КИНУТИ ЛОКАЦІЮ КРИТА",hp:"Поточний HP",repair:"ПОЛАГОДИТИ КРИТ",remove:"ВИДАЛИТИ",help:"Крит: якщо одна атака після DR завдає не менше 5 + Scale шкоди, киньте d20 за таблицею локацій транспорту й застосуйте відповідне пошкодження."},
+  pl:{incoming:"Nadchodzące obrażenia",type:"Typ obrażeń",location:"Miejsce trafienia",apply:"ZASTOSUJ OBRAŻENIA",after:"Po DR",threshold:"Próg krytyka",triggered:"Trafienie krytyczne",roll:"RZUĆ LOKACJĘ KRYTYCZNĄ",hp:"Bieżące HP",repair:"NAPRAW KRYTYK",remove:"USUŃ",help:"Krytyk: jeśli jeden atak zada po DR co najmniej 5 + Scale obrażeń, rzuć k20 na tabelę lokalizacji pojazdu i zastosuj odpowiednie uszkodzenie."}
+};
 const CUSTOM_DEFAULT={name:"Wasteland Vehicle",scale:2,maxHp:25,cover:"2",speedZones:2,speedMph:45,passengers:"4",impact:5,cargo:100,qualities:["Cargo","Exposed"],locations:[],weapons:[],fuelMax:4,fuelCurrent:4};
 
 export default function VehicleScreenV2({character=null,setCharacter=null,onRoll=null}){
