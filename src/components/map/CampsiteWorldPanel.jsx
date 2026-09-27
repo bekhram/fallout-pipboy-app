@@ -110,10 +110,11 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
   };
 
   const featureCount=id=>selectedFeatures.filter(item=>item===id).length;
+  const repeatableFeatures=new Set(["defensible","water_source","hunting_traps"]);
   const toggleFeature=id=>{
     setSelectedFeatures(current=>{
       const count=current.filter(item=>item===id).length;
-      if(id==="defensible"){
+      if(repeatableFeatures.has(id)){
         if(count>0){
           const copy=[...current];const index=copy.lastIndexOf(id);copy.splice(index,1);return copy;
         }
@@ -248,6 +249,7 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
               <span>{count?"✓":"○"}</span><div><strong>{copy[0]}</strong><small>{copy[1]}</small></div>
             </button>
             {feature.id==="defensible"?<div className="camp-modal__feature-stepper"><button type="button" onClick={removeDefensible} disabled={count<=0}>−</button><b>{count}</b><button type="button" onClick={addDefensible} disabled={count>=3 || selectedFeatures.length>=campResult.featureSlots}>+</button><small>{text.featureMax}: 3</small></div>:null}
+            {["water_source","hunting_traps"].includes(feature.id)?<div className="camp-modal__feature-stepper"><button type="button" onClick={()=>setSelectedFeatures(current=>{const i=current.lastIndexOf(feature.id);if(i<0)return current;const copy=[...current];copy.splice(i,1);return copy;})} disabled={count<=0}>−</button><b>{count}</b><button type="button" onClick={()=>setSelectedFeatures(current=>current.length>=campResult.featureSlots?current:[...current,feature.id])} disabled={selectedFeatures.length>=campResult.featureSlots}>+</button></div>:null}
           </div>})}
         </div>
       </section>
