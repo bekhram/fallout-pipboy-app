@@ -115,13 +115,19 @@ const CUSTOM_DEFAULT={name:"Wasteland Vehicle",scale:2,maxHp:25,cover:"2",speedZ
 
 export default function VehicleScreenV2({character=null,setCharacter=null,onRoll=null}){
   const {i18n}=useTranslation();
-  const labels=COPY[langCode(i18n.resolvedLanguage||i18n.language)];
+  const language=langCode(i18n.resolvedLanguage||i18n.language);
+  const labels=COPY[language];
+  const damageLabels=DAMAGE_COPY[language]||DAMAGE_COPY.en;
   const [mode,setMode]=useState("garage");
   const [repairLocation,setRepairLocation]=useState("Chassis");
   const [movementAction,setMovementAction]=useState("maneuver");
   const [movementAp,setMovementAp]=useState(0);
   const [fuelMiles,setFuelMiles]=useState(10);
   const [injuryType,setInjuryType]=useState("chassis");
+  const [incomingDamage,setIncomingDamage]=useState(0);
+  const [damageType,setDamageType]=useState("Physical");
+  const [damageLocation,setDamageLocation]=useState("Chassis");
+  const [criticalPending,setCriticalPending]=useState(null);
   const [draft,setDraft]=useState(CUSTOM_DEFAULT);
   const vehicles=Array.isArray(character?.vehicles)?character.vehicles:[];
   const inventory=Array.isArray(character?.inventoryItems)?character.inventoryItems:[];
@@ -144,6 +150,35 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
     update(prev=>({...prev,inventoryItems:spendMaterials(prev.inventoryItems||[],plan.cost),vehicles:(prev.vehicles||[]).map(v=>v.id===vehicle.id?{...v,currentHp:Math.min(Number(v.maxHp||1),Number(v.currentHp||0)+plan.restore)}:v)}));
   };
   const setCrew=(role,value)=>active&&patchVehicle(active.id,v=>({...v,crewRoles:{...(v.crewRoles||{}),[role]:value}}));
+  const vehicleLocations=active?.locations?.length?active.locations:[{roll:"1-20",name:"Chassis",physical:0,energy:0}];
+  const selectedDamageLocation=vehicleLocations.find((location)=>location.name===damageLocation)||vehicleLocations[0];
+  const damageDr=damageType==="Energy"?Number(selectedDamageLocation?.energy||0):Number(selectedDamageLocation?.physical||0);
+  const postDrDamage=Math.max(0,Number(incomingDamage||0)-damageDr);
+  const criticalThreshold=active?vehicleCriticalThreshold(active):5;
+  const setVehicleHp=(value)=>active&&patchVehicle(active.id,(vehicle)=>({...vehicle,currentHp:Math.max(0,Math.min(Number(vehicle.maxHp||1),Number(value)||0))}));
+  const applyIncomingDamage=()=>{
+    if(!active)return;
+    const finalDamage=postDrDamage;
+    patchVehicle(active.id,(vehicle)=>({...vehicle,currentHp:Math.max(0,Number(vehicle.currentHp??vehicle.maxHp)-finalDamage),lastDamage:{raw:Number(incomingDamage||0),damageType,location:selectedDamageLocation?.name||"Chassis",dr:damageDr,finalDamage,critical:finalDamage>=criticalThreshold,at:Date.now()}}));
+    setCriticalPending(finalDamage>=criticalThreshold?{damage:finalDamage}:null);
+  };
+  const rollCriticalLocation=()=>{
+    if(!active||typeof onRoll!=="function")return;
+    onRoll({id:"vehicle-critical-location-"+Date.now(),type:"free",diceType:"d20",title:damageLabels.roll,diceCount:1,source:"vehicle-critical-location",onResult:(result)=>{
+      const roll=Number(result?.diceValues?.[0]||0); if(!roll)return;
+      const location=vehicleLocationForRoll(active,roll);
+      const injuryId=vehicleInjuryIdForLocation(location?.name);
+      patchVehicle(active.id,(vehicle)=>applyVehicleInjury(vehicle,injuryId,{location:location?.name,roll}));
+      setCriticalPending(null);
+    }});
+  };
+  const repairCriticalInjury=(injury)=>{
+    if(!active)return;
+    const location=injury?.location||(injury?.id==="engine"?"Engine":injury?.id==="weapon"?"Weapon":injury?.id==="mobility"?"Wheel":"Chassis");
+    const plan=getVehicleRepairPlan(active,location);
+    if(!canPay(inventory,plan.cost)){window.alert(labels.noResources);return;}
+    update((prev)=>({...prev,inventoryItems:spendMaterials(prev.inventoryItems||[],plan.cost),vehicles:(prev.vehicles||[]).map((vehicle)=>vehicle.id!==active.id?vehicle:removeVehicleInjury(vehicle,injury.id))}));
+  };
   const pilotSkillEntry=Object.entries(character?.skills||{}).find(([key])=>String(key).toLowerCase().replaceAll("_"," ").trim()==="pilot")?.[1]||{};
   const endurance=Math.max(0,Number(character?.special?.E||character?.special?.END||0));
   const pilotRank=Math.max(0,Number(pilotSkillEntry.rank||0)+Number(pilotSkillEntry.bonus||0));
