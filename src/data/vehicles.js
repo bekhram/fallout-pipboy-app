@@ -41,9 +41,20 @@ export const STOCK_VEHICLES = [
     locations: [loc("1-7", "Chassis", 2, 2), loc("8-11", "Front Wheel", 1, 1), loc("12-16", "Engine", 2, 1), loc("17-20", "Rear Wheel", 1, 1)],
   },
   {
+    id: "wasteland-scrambler", name: "Wasteland Scrambler", scale: 0, maxHp: 12, cover: "0", speedZones: 3, speedMph: 65,
+    passengers: "1", impact: 4, cargo: 35, qualities: ["Cargo", "Exposed", "Single-Seater", "High-Performance"],
+    locations: [loc("1-7", "Chassis", 2, 2), loc("8-11", "Front Wheel", 1, 1), loc("12-16", "Engine", 2, 1), loc("17-20", "Rear Wheel", 1, 1)],
+  },
+  {
     id: "pickup-truck", name: "Pick-Up Truck", scale: 2, maxHp: 32, cover: "3", speedZones: 2, speedMph: 40,
     passengers: "3", impact: 7, cargo: 200, qualities: ["Cargo", "Exposed", "Rugged"],
     locations: [loc("1-8", "Chassis", 4, 4), loc("9-10", "Front Left Wheel", 2, 1), loc("11-12", "Front Right Wheel", 2, 1), loc("13-16", "Engine", 4, 3), loc("17-18", "Rear Left Wheel", 2, 1), loc("19-20", "Rear Right Wheel", 2, 1)],
+  },
+  {
+    id: "gun-jeep", name: "Wasteland Gun Jeep", scale: 1, maxHp: 24, cover: "2", speedZones: 3, speedMph: 55,
+    passengers: "4", impact: 6, cargo: 120, qualities: ["Cargo", "Exposed", "All-Terrain"],
+    locations: [loc("1-8", "Chassis", 3, 2), loc("9-10", "Front Left Wheel", 1, 1), loc("11-12", "Front Right Wheel", 1, 1), loc("13-16", "Engine", 3, 2), loc("17-18", "Rear Left Wheel", 1, 1), loc("19-20", "Rear Right Wheel", 1, 1)],
+    weapons: [weapon("Mounted Machine Gun", 6, "Burst", "Physical", 4, "M")],
   },
   {
     id: "bus", name: "Bus", scale: 3, maxHp: 40, cover: "3", speedZones: 2, speedMph: 40,
@@ -54,6 +65,11 @@ export const STOCK_VEHICLES = [
     id: "armored-truck", name: "Armored Truck", scale: 2, maxHp: 32, cover: "Enclosed", speedZones: 2, speedMph: 40,
     passengers: "3", impact: 8, cargo: 400, qualities: ["Cargo", "Enclosed"],
     locations: [loc("1-8", "Chassis", 8, 8), loc("9-10", "Front Left Wheel", 4, 3), loc("11-12", "Front Right Wheel", 4, 3), loc("13-16", "Engine", 7, 6), loc("17-18", "Rear Left Wheel", 4, 3), loc("19-20", "Rear Right Wheel", 4, 3)],
+  },
+  {
+    id: "cargo-truck-6x6", name: "Armored Cargo Truck 6×6", scale: 3, maxHp: 42, cover: "3", speedZones: 2, speedMph: 35,
+    passengers: "4", impact: 9, cargo: 800, qualities: ["Cargo", "Rugged", "All-Terrain"],
+    locations: [loc("1-9", "Chassis", 6, 5), loc("10", "Front Left Wheel", 3, 2), loc("11", "Front Right Wheel", 3, 2), loc("12-15", "Engine", 5, 4), loc("16-17", "Middle Wheels", 3, 2), loc("18-20", "Rear Wheels", 3, 2)],
   },
   {
     id: "apc", name: "Armored Personnel Carrier", scale: 3, maxHp: 50, cover: "Enclosed", speedZones: 2, speedMph: 40,
