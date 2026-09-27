@@ -2,9 +2,7 @@ import React, { useImperativeHandle, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
 import {
-  generateLocalizedProceduralRooms,
-  generateProceduralEncounterSummary,
-  generateProceduralRoomData,
+  generateProceduralRoomBundle,
 } from "../../utils/proceduralRoomContent.js";
 import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStats.js";
 import { cellsInsideRoom, getProceduralRoomBounds } from "../../utils/proceduralRoomLayout.js";
@@ -131,9 +129,13 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
     spec.encounterDifficulty,
     spec.enemyFaction || "auto",
   ].join("|") : "";
-  const rawRooms = useMemo(() => (spec ? generateProceduralRoomData(spec) : []), [specKey]);
-  const rooms = useMemo(() => (spec ? generateLocalizedProceduralRooms(spec, lang) : []), [specKey, lang]);
-  const encounter = useMemo(() => (spec ? generateProceduralEncounterSummary(spec) : null), [specKey]);
+  const bundle = useMemo(
+    () => (spec ? generateProceduralRoomBundle(spec, lang) : { data: [], localized: [], encounter: null }),
+    [specKey, lang],
+  );
+  const rawRooms = bundle.data;
+  const rooms = bundle.localized;
+  const encounter = bundle.encounter;
   const numberedMarkers = useMemo(
     () => (String(spec?.type || "") === "red_rocket" ? generateRedRocketRoomMarkers(spec) : []),
     [specKey],
