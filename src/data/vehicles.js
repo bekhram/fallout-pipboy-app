@@ -121,7 +121,7 @@ export function consumeVehicleFuel(vehicle = {}, miles = 0, { difficultTerrain=f
   const points=effectiveMiles<=0?0:Math.ceil(effectiveMiles/Math.max(1,info.miles));
   const current=Math.max(0,Number(vehicle?.fuelCurrent??vehicle?.fuelMax??0));
   const next=Math.max(0,current-points);
-  return {...vehicle,fuelCurrent:next,speedZones:next<=0?0:Number(vehicle?.speedZones||0),lastFuelUse:{miles:effectiveMiles,points}};
+  return {...vehicle,fuelCurrent:next,outOfFuel:next<=0,lastFuelUse:{miles:effectiveMiles,points}};
 }
 
 export function vehicleMovementPlan(vehicle = {}, actionId = "maneuver", apSpent = 0) {
