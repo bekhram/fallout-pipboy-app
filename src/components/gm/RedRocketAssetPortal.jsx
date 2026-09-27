@@ -5,14 +5,14 @@ import { createPortal } from "react-dom";
 import { buildRedRocketLayout, isRedRocketType } from "../../utils/proceduralRedRocket.js";
 import { WastelandAssetLayer, wastelandBackgroundForSpec } from "./WastelandAssetPortal.jsx";
 
-const GRID = 24;
-
 function wastelandSpec(spec = {}, reservedRects = []) {
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
   return {
     ...spec,
     type: "wasteland",
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
     reservedRects,
     roadPlacement: "bottom-edge",
     assetProfile: "red_rocket",
@@ -24,7 +24,7 @@ export function redRocketBackgroundForSpec(spec = {}) {
   return wastelandBackgroundForSpec(wastelandSpec(spec));
 }
 
-function RedRocketAsset({ building, preview }) {
+function RedRocketAsset({ building, preview, cols, rows }) {
   return (
     <PhaserAsset
       src={building.assetSrc}
@@ -35,10 +35,10 @@ function RedRocketAsset({ building, preview }) {
       data-red-rocket-footprint={`${building.w}x${building.h}`}
       style={{
         position: "absolute",
-        left: `${(building.x / GRID) * 100}%`,
-        top: `${(building.y / GRID) * 100}%`,
-        width: `${(building.w / GRID) * 100}%`,
-        height: `${(building.h / GRID) * 100}%`,
+        left: `${(building.x / cols) * 100}%`,
+        top: `${(building.y / rows) * 100}%`,
+        width: `${(building.w / cols) * 100}%`,
+        height: `${(building.h / rows) * 100}%`,
         objectFit: "contain",
         pointerEvents: "none",
         userSelect: "none",
@@ -49,9 +49,11 @@ function RedRocketAsset({ building, preview }) {
 }
 
 export function RedRocketAssetLayer({ spec, preview = false }) {
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
   const layout = useMemo(
     () => buildRedRocketLayout(spec),
-    [spec?.seed, spec?.terrain, spec?.backgroundType, spec?.terrainType],
+    [spec?.seed, spec?.terrain, spec?.backgroundType, spec?.terrainType, spec?.cols, spec?.rows],
   );
   const buildings = layout.buildings || [];
 
@@ -78,7 +80,7 @@ export function RedRocketAssetLayer({ spec, preview = false }) {
         }}
       >
         {buildings.map((building) => (
-          <RedRocketAsset key={building.id} building={building} preview={preview} />
+          <RedRocketAsset key={building.id} building={building} preview={preview} cols={cols} rows={rows} />
         ))}
       </div>
     </>
@@ -114,7 +116,7 @@ export default function RedRocketAssetPortal({ session }) {
       cancelled = true;
       setTarget(null);
     };
-  }, [scene?.sceneId, spec?.type, spec?.seed, spec?.terrain]);
+  }, [scene?.sceneId, spec?.type, spec?.seed, spec?.terrain, spec?.cols, spec?.rows]);
 
   if (!target || !spec || !isRedRocketType(spec.type)) return null;
   return createPortal(<RedRocketAssetLayer spec={spec} />, target);
