@@ -994,7 +994,10 @@
       "chain_that_binds": "Цепь, которая связывает",
       "necrotic_post_human": "Некротический постчеловек",
       "forced_evolution": "Форсированная эволюция",
-      "mister_handy_robot": "Робот-помощник"
+      "mister_handy_robot": "Робот-помощник",
+      "hidden_and_hunted": "Скрытый и преследуемый",
+      "trying_to_make_a_difference": "Пытаясь изменить мир",
+      "winding_way_great_snake": "Извилистый путь Великой Змеи"
     },
     "assaultron": "Штурмотрон",
     "brotherhood_outcast": "Изгнанник Братства",
@@ -1006,7 +1009,10 @@
     "protectron": "Протектрон",
     "robobrain": "Робомозг",
     "securitron": "Секьюритрон",
-    "generation_3_synth": "Синт 3-го поколения"
+    "generation_3_synth": "Синт 3-го поколения",
+    "enclave_remnant": "Остатки Анклава",
+    "follower_of_the_apocalypse": "Последователь Апокалипсиса",
+    "viper_initiate": "Посвящённый Гадюк"
   },
   "characterCreation": {
     "selectOriginTitle": "ВЫБОР ПРОИСХОЖДЕНИЯ",
@@ -1135,6 +1141,18 @@
     "brahmin_baron": {
       "name": "Brahmin Baron",
       "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
+    },
+    "hidden_and_hunted": {
+      "name": "Скрытый и преследуемый",
+      "desc": "Получите один дополнительный Tag Skill: Sneak или Survival. Раскрытая личность может сделать NCR и Братство Стали враждебными. Число тайников снабжения равно половине Luck с округлением вверх; раз за квест можно потратить 1 Luck и объявить, что один тайник рядом."
+    },
+    "trying_to_make_a_difference": {
+      "name": "Пытаясь изменить мир",
+      "desc": "Получите один дополнительный Tag Skill: Medicine, Repair, Science или Speech. Можно перебросить 1d20 на искренних CHA + Speech проверках при предложении помощи, но угрозы и запугивание сложнее."
+    },
+    "winding_way_great_snake": {
+      "name": "Извилистый путь Великой Змеи",
+      "desc": "Получите один дополнительный Tag Skill: Medicine или Sneak. Начальное сопротивление яду 1, +1 на 5 уровне и каждые 5 уровней после. Можно создавать Импровизированный яд на химстанции или станции готовки."
     }
   },
   "perksInfo": {
@@ -1565,6 +1583,30 @@
     "tribal_naturalist": {
       "name": "Натуралист",
       "items": "Лук и стрелы; мачете и боевой нож; охотничья одежда и капюшон; деревянная броня; 3 случайные еды; 3 случайных напитка."
+    },
+    "enclave_scientist": {
+      "name": "Бывший учёный Анклава",
+      "items": "Лабораторный халат; противогаз; лазерный пистолет; Fusion Cell на 6+3 выстрела."
+    },
+    "enclave_soldier": {
+      "name": "Бывший солдат Анклава",
+      "items": "Военная форма; нагрудник боевой брони; лазерная винтовка со стандартным прикладом и длинным стволом + 8+4 Fusion Cell ИЛИ штурмовая винтовка + 8+4 патрона 5.56mm."
+    },
+    "follower_scholar": {
+      "name": "Учёный Последователей",
+      "items": "Тяжёлое пальто или рабочий комбинезон; Switchblade/Pipe Wrench/Knuckles; Pipe Gun + 6+3 .38 ИЛИ Syringer + 6+3 Tranq Ammunition; 2 случайных еды/напитка; Holotape Player; 35 крышек."
+    },
+    "follower_doctor": {
+      "name": "Врач Последователей",
+      "items": "Тяжёлое пальто или лабораторный халат; Pipe Gun + 6+3 .38 ИЛИ Syringer + 6+3 Tranq Ammunition; 2 Stimpak; Med-X или RadAway; Doctor's Bag; 20 крышек."
+    },
+    "viper_raider": {
+      "name": "Рейдер Гадюк",
+      "items": "Прочная одежда; нагрудник металлической брони ИЛИ рука + нога; Combat Knife/Switchblade/Machete; Pipe Gun + 10+5 .38; Jet или RadAway; Stimpak; 2 обычных + 2 необычных материала; 15 крышек."
+    },
+    "viper_priest": {
+      "name": "Жрец Гадюк",
+      "items": "Прочная одежда; Combat Knife/Switchblade/Machete; Pipe Revolver + 6+3 .45; амулет из клыка гадюки; 2 ядовитые настойки; 25 крышек."
     }
   },
   "weaponMods": {
@@ -1602,6 +1644,9 @@
     "protectron": "Рабочий робот RobCo, приспособившийся к жизни в Пустоши.",
     "robobrain": "Кибернетический робот с сохранённым человеческим мозгом в роли процессора.",
     "securitron": "Охранный робот RobCo для патрулирования и боя в районе Нью-Вегаса.",
-    "generation_3_synth": "Биосинтетический гуманоид Института, почти неотличимый от человека."
+    "generation_3_synth": "Биосинтетический гуманоид Института, почти неотличимый от человека.",
+    "enclave_remnant": "Бывший член Анклава, скрывающийся от старых врагов и полагающийся на спрятанные тайники снабжения.",
+    "follower_of_the_apocalypse": "Гуманитарий, учёный или врач, распространяющий знания, лечащий людей и помогающий общинам.",
+    "viper_initiate": "Выживший представитель кланов Гадюк, обученный скрытности, сопротивлению ядам и изготовлению простых токсинов."
   }
 }
