@@ -137,3 +137,93 @@ export function normalizeFeatureSelection(features = [], maxSlots = 0) {
   }
   return selected;
 }
+
+
+function countFeature(features = [], id) {
+  return (features || []).filter((value) => String(value) === id).length;
+}
+
+export function addInventoryItem(inventory = [], itemName = "", quantity = 0, defaults = {}) {
+  const amount = Math.max(0, Math.floor(Number(quantity) || 0));
+  if (!amount || !itemName) return [...(inventory || [])];
+  const next = [...(inventory || [])];
+  const index = next.findIndex((item) => String(item?.canonicalName || item?.name || "").toLowerCase() === String(itemName).toLowerCase());
+  if (index >= 0) {
+    const current = Math.max(0, Number(next[index]?.quantity ?? next[index]?.qty ?? 0));
+    next[index] = { ...next[index], quantity: String(current + amount) };
+    return next;
+  }
+  next.push({
+    name: itemName,
+    canonicalName: itemName,
+    quantity: String(amount),
+    ...defaults,
+  });
+  return next;
+}
+
+export function applyRoyalFlushCampProduction(character = {}, production = {}) {
+  const campsite = character?.activeCampsite;
+  if (!campsite || !production?.quantity || !production?.itemName) return character;
+  const defaults = production.itemName === "Purified Water"
+    ? { category: "beverages", weight: "1", cost: "20", rarity: "1" }
+    : { category: "food", healing: "4", radiation: "1", weight: "<1", cost: "8", rarity: "1", effect: "Food item. Heals 4 HP and has Irradiated 1." };
+  return {
+    ...character,
+    inventoryItems: addInventoryItem(character.inventoryItems || [], production.itemName, production.quantity, defaults),
+    activeCampsite: {
+      ...campsite,
+      lastProductionAt: new Date().toISOString(),
+      lastProduction: {
+        itemName: production.itemName,
+        quantity: Number(production.quantity || 0),
+        periods: Number(production.periods || 0),
+        instances: Number(production.instances || 0),
+        rolls: Array.isArray(production.rolls) ? [...production.rolls] : [],
+      },
+    },
+  };
+}
+
+export function campsiteFeatureCounts(character = {}) {
+  const features = character?.activeCampsite?.features || [];
+  return {
+    waterSource: countFeature(features, "water_source"),
+    huntingTraps: countFeature(features, "hunting_traps"),
+  };
+}
+
+export function strikeDownActiveCampsite(character = {}, { campers = 1 } = {}) {
+  if (!character?.activeCampsite) return character;
+  return {
+    ...character,
+    activeCampsite: null,
+    campsiteMaxHpBonus: "0",
+    lastCampTeardown: {
+      method: "strike_down",
+      minutes: Math.max(1, Math.floor(Number(campers) || 1)) * 5,
+      recoveredMaterials: false,
+      at: new Date().toISOString(),
+    },
+  };
+}
+
+export function recoverActiveCampsite(character = {}, { campers = 1, success = true } = {}) {
+  const campsite = character?.activeCampsite;
+  if (!campsite) return character;
+  const inventoryItems = success
+    ? addCraftingMaterials(character.inventoryItems || [], campsite.teardownRefund || {})
+    : [...(character.inventoryItems || [])];
+  return {
+    ...character,
+    inventoryItems,
+    activeCampsite: null,
+    campsiteMaxHpBonus: "0",
+    lastCampTeardown: {
+      method: "recover",
+      minutes: Math.max(1, Math.floor(Number(campers) || 1)) * 15,
+      recoveredMaterials: Boolean(success),
+      at: new Date().toISOString(),
+    },
+  };
+}
