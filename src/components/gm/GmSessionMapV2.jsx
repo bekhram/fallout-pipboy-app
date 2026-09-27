@@ -346,16 +346,20 @@ function freeCell(tokens, movingId, x, y, size, cols, rows) {
 }
 
 function pointerPlacement(grid, event, cols, rows, drag) {
-  const firstCell = grid?.querySelector?.(".gm-session-map__cell");
-  if (!grid || !firstCell) return null;
+  if (!grid) return null;
+  const rect = grid.getBoundingClientRect();
+  const firstCell = grid.querySelector?.(".gm-session-map__cell");
+  const cellRect = firstCell?.getBoundingClientRect?.();
+  const cellWidth = cellRect?.width || rect.width / Math.max(1, cols);
+  const cellHeight = cellRect?.height || rect.height / Math.max(1, rows);
   return gridDropCell({
     clientX: event.clientX,
     clientY: event.clientY,
-    rect: grid.getBoundingClientRect(),
-    scrollLeft: grid.scrollLeft,
-    scrollTop: grid.scrollTop,
-    cellWidth: firstCell.getBoundingClientRect().width,
-    cellHeight: firstCell.getBoundingClientRect().height,
+    rect,
+    scrollLeft: grid.dataset.phaserGrid ? 0 : grid.scrollLeft,
+    scrollTop: grid.dataset.phaserGrid ? 0 : grid.scrollTop,
+    cellWidth,
+    cellHeight,
     cols,
     rows,
     size: drag.size,
@@ -1076,6 +1080,27 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     }).forEach((key) => dragTargetKeys.add(key));
   }
 
+  const lightweightGrid = cols * rows > 576;
+
+  const gridPointFromEvent = (event) => {
+    const grid = gridRef.current;
+    if (!grid) return null;
+    const rect = grid.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    const x = Math.max(0, Math.min(cols - 1, Math.floor(((event.clientX - rect.left) / rect.width) * cols)));
+    const y = Math.max(0, Math.min(rows - 1, Math.floor(((event.clientY - rect.top) / rect.height) * rows)));
+    return { x, y };
+  };
+
+  const handleLightweightGridClick = (event) => {
+    if (!lightweightGrid || suppressCellClickRef.current) return;
+    if (event.target?.closest?.(".gm-session-token")) return;
+    const point = gridPointFromEvent(event);
+    if (!point) return;
+    if (editingStart) void toggleStartCell(point.x, point.y);
+    else void moveSelected(point.x, point.y);
+  };
+
   const tokensByAnchor = new Map();
   tokens.forEach((token) => {
     const key = cellKey(Number(token.x), Number(token.y));
@@ -1085,53 +1110,91 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   });
 
   const cells = [];
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < cols; x += 1) {
-      const anchored = tokensByAnchor.get(cellKey(x, y)) || [];
-      cells.push(
-        <button
-          type="button"
-          key={cellKey(x, y)}
-          className={`gm-session-map__cell tactical-cell${
-            startKeys.has(cellKey(x, y)) ? " is-start-zone" : ""
-          }${editingStart ? " is-start-edit" : ""}${
-            dragTargetKeys.has(cellKey(x, y))
-              ? dragState?.valid
-                ? " is-drag-target"
-                : " is-drag-invalid"
-              : ""
-          }`}
-          onClick={() =>
-            editingStart ? toggleStartCell(x, y) : moveSelected(x, y)
-          }
-        >
-          {anchored.length ? (
-            <span className="gm-session-map__tokens">
-              {anchored.map((token) => {
-                const size = tokenSize(token);
-                return (
-                  <span
-                    key={token.id}
-                    className={`gm-session-token ${
-                      token.kind === "player" ? "is-player" : "is-npc is-enemy"
-                    } is-size-${size}${
-                      selectedTokenId === token.id ? " is-selected" : ""
-                    }${dragState?.tokenId === token.id ? " is-dragging" : ""}`}
-                    onPointerDown={(event) => beginDrag(event, token)}
-                    onPointerMove={moveDrag}
-                    onPointerUp={finishDrag}
-                    onPointerCancel={cancelDrag}
-                  >
-                    <PhaserToken token={token} selected={selectedTokenId === token.id} />
-                    <small>{token.name}</small>
-                  </span>
-                );
-              })}
-            </span>
-          ) : null}
-        </button>
-      );
+  if (!lightweightGrid) {
+    for (let y = 0; y < rows; y += 1) {
+      for (let x = 0; x < cols; x += 1) {
+        const anchored = tokensByAnchor.get(cellKey(x, y)) || [];
+        cells.push(
+          <button
+            type="button"
+            key={cellKey(x, y)}
+            className={`gm-session-map__cell tactical-cell${startKeys.has(cellKey(x, y)) ? " is-start-zone" : ""}${editingStart ? " is-start-edit" : ""}${dragTargetKeys.has(cellKey(x, y)) ? dragState?.valid ? " is-drag-target" : " is-drag-invalid" : ""}`}
+            onClick={() => editingStart ? toggleStartCell(x, y) : moveSelected(x, y)}
+          >
+            {anchored.length ? (
+              <span className="gm-session-map__tokens">
+                {anchored.map((token) => {
+                  const size = tokenSize(token);
+                  return (
+                    <span
+                      key={token.id}
+                      className={`gm-session-token ${token.kind === "player" ? "is-player" : "is-npc is-enemy"} is-size-${size}${selectedTokenId === token.id ? " is-selected" : ""}${dragState?.tokenId === token.id ? " is-dragging" : ""}`}
+                      onPointerDown={(event) => beginDrag(event, token)}
+                      onPointerMove={moveDrag}
+                      onPointerUp={finishDrag}
+                      onPointerCancel={cancelDrag}
+                    >
+                      <PhaserToken token={token} selected={selectedTokenId === token.id} />
+                      <small>{token.name}</small>
+                    </span>
+                  );
+                })}
+              </span>
+            ) : null}
+          </button>
+        );
+      }
     }
+  } else {
+    cells.push(
+      <div key="lightweight-grid" className="gm-session-map__lightweight-layer" aria-hidden="true">
+        {(scene.startZone || []).map((cell) => (
+          <i
+            key={`start:${cell.x}:${cell.y}`}
+            className={`gm-session-map__light-cell is-start-zone${editingStart ? " is-start-edit" : ""}`}
+            style={{
+              left: `${(Number(cell.x || 0) / cols) * 100}%`,
+              top: `${(Number(cell.y || 0) / rows) * 100}%`,
+              width: `${100 / cols}%`,
+              height: `${100 / rows}%`,
+            }}
+          />
+        ))}
+        {dragState?.moved && Number.isFinite(dragState.targetX) && Number.isFinite(dragState.targetY) ? (
+          <i
+            className={`gm-session-map__light-cell ${dragState.valid ? "is-drag-target" : "is-drag-invalid"}`}
+            style={{
+              left: `${(dragState.targetX / cols) * 100}%`,
+              top: `${(dragState.targetY / rows) * 100}%`,
+              width: `${(100 / cols) * Math.max(1, dragState.size || 1)}%`,
+              height: `${(100 / rows) * Math.max(1, dragState.size || 1)}%`,
+            }}
+          />
+        ) : null}
+        {tokens.map((token) => {
+          const size = tokenSize(token);
+          return (
+            <span
+              key={token.id}
+              className={`gm-session-token gm-session-token--lightweight ${token.kind === "player" ? "is-player" : "is-npc is-enemy"} is-size-${size}${selectedTokenId === token.id ? " is-selected" : ""}${dragState?.tokenId === token.id ? " is-dragging" : ""}`}
+              style={{
+                left: `${((Number(token.x || 0) + size / 2) / cols) * 100}%`,
+                top: `${((Number(token.y || 0) + size / 2) / rows) * 100}%`,
+                width: `${(100 / cols) * size}%`,
+                height: `${(100 / rows) * size}%`,
+              }}
+              onPointerDown={(event) => beginDrag(event, token)}
+              onPointerMove={moveDrag}
+              onPointerUp={finishDrag}
+              onPointerCancel={cancelDrag}
+            >
+              <PhaserToken token={token} selected={selectedTokenId === token.id} />
+              <small>{token.name}</small>
+            </span>
+          );
+        })}
+      </div>
+    );
   }
 
   return (
@@ -1403,7 +1466,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       <div
         data-phaser-grid="true"
         ref={gridRef}
-        className={`gm-session-map__grid tactical-grid${
+        onClick={handleLightweightGridClick}
+        className={`gm-session-map__grid tactical-grid${lightweightGrid ? " is-lightweight-grid" : ""}${
           scene.backgroundUrl ? " has-background" : ""
         }${dragState?.moved ? " is-drag-active" : ""}`}
         style={{
