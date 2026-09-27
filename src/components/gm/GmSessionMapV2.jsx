@@ -477,6 +477,27 @@ function mapCreatureAttacks(token) {
     return true;
   });
 }
+
+function attackKindLabel(attack, language) {
+  const skill = String(attack?.skill || attack?.weaponType || "").trim().toLowerCase();
+  const range = String(attack?.range || "").trim().toUpperCase();
+  const rangedSkills = ["small guns","energy weapons","big guns","explosives","throwing"];
+  const meleeSkills = ["melee weapons","unarmed","melee"];
+  let kind = "";
+  if (rangedSkills.includes(skill) || range) kind = "ranged";
+  else if (meleeSkills.includes(skill)) kind = "melee";
+  else kind = "melee";
+
+  const labels = {
+    en: { melee:"MELEE", ranged:"RANGED" },
+    ru: { melee:"БЛИЖНИЙ БОЙ", ranged:"ДАЛЬНЯЯ" },
+    uk: { melee:"БЛИЖНІЙ БІЙ", ranged:"ДАЛЬНЯ" },
+    pl: { melee:"WALKA WRĘCZ", ranged:"DYSTANSOWA" },
+  };
+  const label = labels[language]?.[kind] || labels.en[kind];
+  return range ? `${label} · ${range}` : label;
+}
+
 const MOBILE_TOKEN_PALETTE = [
   "#78ff98",
   "#ffd166",
@@ -1459,7 +1480,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                 {attacks.length?attacks.map((attack,index)=>{
                   const profile=effectiveAttackProfile(attack,stats);
                   return <button type="button" className="gm-npc-attack-button" key={attack.id||attack.name||index} onClick={()=>openMapAttackRoll(attack,token)}>
-                    <b>{attack.name||text.attacks}</b>
+                    <b>{attack.name||text.attacks}<em>{attackKindLabel(profile,language)}</em></b>
                     <span>{profile.d20Count}d20 · TN {profile.targetNumber||"—"} · {profile.damageDice} CD · {profile.damageType||"—"}{profile.effects?" · "+profile.effects:""}</span>
                   </button>;
                 }):<small>{text.noAttacks}</small>}
