@@ -994,7 +994,10 @@
       "chain_that_binds": "Ланцюг, що зв'язує",
       "necrotic_post_human": "Некротична постлюдина",
       "forced_evolution": "Форсована еволюція",
-      "mister_handy_robot": "Робот-помічник"
+      "mister_handy_robot": "Робот-помічник",
+      "hidden_and_hunted": "Прихований і переслідуваний",
+      "trying_to_make_a_difference": "Намагаючись змінити світ",
+      "winding_way_great_snake": "Звивистий шлях Великої Змії"
     },
     "assaultron": "Штурмотрон",
     "brotherhood_outcast": "Вигнанець Братства",
@@ -1006,7 +1009,10 @@
     "protectron": "Протектрон",
     "robobrain": "Робомозок",
     "securitron": "Сек'юритрон",
-    "generation_3_synth": "Синт 3-го покоління"
+    "generation_3_synth": "Синт 3-го покоління",
+    "enclave_remnant": "Залишки Анклаву",
+    "follower_of_the_apocalypse": "Послідовник Апокаліпсису",
+    "viper_initiate": "Посвячений Гадюк"
   },
   "characterCreation": {
     "selectOriginTitle": "ВИБІР ПОХОДЖЕННЯ",
@@ -1135,6 +1141,18 @@
     "brahmin_baron": {
       "name": "Brahmin Baron",
       "desc": "Brahmin feed troughs support more animals and Tend Crops can produce extra milk, but high-food settlements face increased attack risk."
+    },
+    "hidden_and_hunted": {
+      "name": "Прихований і переслідуваний",
+      "desc": "Отримайте один додатковий Tag Skill: Sneak або Survival. Викрита особа може зробити NCR і Братство Сталі ворожими. Кількість схронів дорівнює половині Luck з округленням вгору; раз за квест можна витратити 1 Luck і оголосити схрон поблизу."
+    },
+    "trying_to_make_a_difference": {
+      "name": "Намагаючись змінити світ",
+      "desc": "Отримайте один додатковий Tag Skill: Medicine, Repair, Science або Speech. Можна перекинути 1d20 у щирих CHA + Speech тестах при пропозиції допомоги, але погрози та залякування складніші."
+    },
+    "winding_way_great_snake": {
+      "name": "Звивистий шлях Великої Змії",
+      "desc": "Отримайте один додатковий Tag Skill: Medicine або Sneak. Початковий опір отруті 1, +1 на 5 рівні та кожні 5 рівнів після. Можна створювати Імпровізовану отруту на хімічній або кулінарній станції."
     }
   },
   "perksInfo": {
@@ -1565,6 +1583,30 @@
     "tribal_naturalist": {
       "name": "Натураліст",
       "items": "Лук і стріли; мачете та бойовий ніж; мисливський одяг і каптур; дерев’яна броня; 3 випадкові їжі; 3 випадкові напої."
+    },
+    "enclave_scientist": {
+      "name": "Колишній науковець Анклаву",
+      "items": "Лабораторний халат; протигаз; лазерний пістолет; Fusion Cell на 6+3 постріли."
+    },
+    "enclave_soldier": {
+      "name": "Колишній солдат Анклаву",
+      "items": "Військова форма; нагрудник бойової броні; лазерна гвинтівка зі стандартним прикладом і довгим стволом + 8+4 Fusion Cell АБО штурмова гвинтівка + 8+4 патрони 5.56mm."
+    },
+    "follower_scholar": {
+      "name": "Учений Послідовників",
+      "items": "Важке пальто або робочий комбінезон; Switchblade/Pipe Wrench/Knuckles; Pipe Gun + 6+3 .38 АБО Syringer + 6+3 Tranq Ammunition; 2 випадкові їжа/напій; Holotape Player; 35 кришок."
+    },
+    "follower_doctor": {
+      "name": "Лікар Послідовників",
+      "items": "Важке пальто або лабораторний халат; Pipe Gun + 6+3 .38 АБО Syringer + 6+3 Tranq Ammunition; 2 Stimpak; Med-X або RadAway; Doctor's Bag; 20 кришок."
+    },
+    "viper_raider": {
+      "name": "Рейдер Гадюк",
+      "items": "Міцний одяг; нагрудник металевої броні АБО рука + нога; Combat Knife/Switchblade/Machete; Pipe Gun + 10+5 .38; Jet або RadAway; Stimpak; 2 звичайні + 2 незвичайні матеріали; 15 кришок."
+    },
+    "viper_priest": {
+      "name": "Жрець Гадюк",
+      "items": "Міцний одяг; Combat Knife/Switchblade/Machete; Pipe Revolver + 6+3 .45; амулет ікла гадюки; 2 отруйні настоянки; 25 кришок."
     }
   },
   "weaponMods": {
@@ -1602,6 +1644,9 @@
     "protectron": "Робочий робот RobCo, пристосований до життя в Пустці.",
     "robobrain": "Кібернетичний робот зі збереженим людським мозком як процесором.",
     "securitron": "Охоронний робот RobCo для патрулювання та бою біля Нью-Вегаса.",
-    "generation_3_synth": "Біосинтетичний гуманоїд Інституту, майже невідрізнимий від людини."
+    "generation_3_synth": "Біосинтетичний гуманоїд Інституту, майже невідрізнимий від людини.",
+    "enclave_remnant": "Колишній член Анклаву, що переховується від давніх ворогів і покладається на приховані схрони.",
+    "follower_of_the_apocalypse": "Гуманітарій, науковець або лікар, який поширює знання, лікує людей і допомагає громадам.",
+    "viper_initiate": "Вцілілий представник кланів Гадюк, навчений скритності, опору отрутам і створенню простих токсинів."
   }
 }
