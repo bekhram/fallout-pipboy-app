@@ -115,3 +115,9 @@
   .vehicle-v2-crew label{grid-template-columns:1fr}
   .vehicle-v2-bar i{width:14px}
 }
+
+.vehicle-v2-weapons{display:grid;gap:8px}
+.vehicle-v2-weapon{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px;border:1px solid rgba(126,255,166,.14);border-radius:8px;background:rgba(5,23,15,.66)}
+.vehicle-v2-weapon>div{display:grid;gap:3px}
+.vehicle-v2-weapon small{opacity:.7}
+@media(max-width:760px){.vehicle-v2-weapon{align-items:stretch;flex-direction:column}}
