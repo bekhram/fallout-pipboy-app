@@ -10,6 +10,57 @@ import SheetDisclosure from "../layout/SheetDisclosure.jsx";
 import { sheetCopy } from "../layout/sheetCopy.js";
 import { getLuckOfTheDrawSetup, getIndividualEscapeSetup } from "../../utils/winterOfAtomRules.js";
 
+const DEHYDRATION_EFFECTS = {
+  en: [
+    ["Dry Mouth", "Speech tests +1 difficulty; END + Survival D1 before eating."],
+    ["Can't Sweat", "Heat exposure causes 2 Fatigue instead of 1."],
+    ["Extreme Thirst", "First water source: INT + Survival D2 or consume as much water as possible."],
+    ["Dizziness", "AGI tests +1 difficulty; Sprint can make you fall prone."],
+    ["Swollen Feet", "After every 2 hours of heavy travel on foot, END + Athletics D1 or suffer 1 Fatigue."],
+    ["Weakness", "STR tests +1 difficulty and carrying capacity is reduced."],
+    ["Confusion", "INT tests +1 difficulty; Interact becomes a Major Action."],
+    ["Headache", "PER tests +1 difficulty and Initiative −2."],
+    ["Racing Heart and Breath", "END tests +1 difficulty; suffer 1 Fatigue after an Action scene."],
+    ["Fainting", "When gaining Fatigue, END + Survival or fall unconscious for rounds equal to Fatigue."],
+  ],
+  ru: [
+    ["Сухость во рту", "Проверки Speech +1 к сложности; перед едой END + Survival D1."],
+    ["Не потеет", "От жары получает 2 Fatigue вместо 1."],
+    ["Сильная жажда", "При первом источнике воды INT + Survival D2 или персонаж пьёт максимально возможное количество."],
+    ["Головокружение", "Проверки AGI +1 к сложности; Sprint может сбить персонажа с ног."],
+    ["Опухшие ноги", "Каждые 2 часа тяжёлого пешего пути END + Athletics D1 или +1 Fatigue."],
+    ["Слабость", "Проверки STR +1 к сложности и снижена грузоподъёмность."],
+    ["Спутанность", "Проверки INT +1 к сложности; Interact становится Major Action."],
+    ["Головная боль", "Проверки PER +1 к сложности; Initiative −2."],
+    ["Учащённое сердце и дыхание", "Проверки END +1 к сложности; после Action scene +1 Fatigue."],
+    ["Обморок", "При получении Fatigue — END + Survival, иначе потеря сознания на число раундов, равное Fatigue."],
+  ],
+  uk: [
+    ["Сухість у роті", "Перевірки Speech +1 до складності; перед їжею END + Survival D1."],
+    ["Не пітніє", "Від спеки отримує 2 Fatigue замість 1."],
+    ["Сильна спрага", "При першому джерелі води INT + Survival D2 або персонаж п'є максимально можливу кількість."],
+    ["Запаморочення", "Перевірки AGI +1 до складності; Sprint може збити персонажа з ніг."],
+    ["Набряклі ноги", "Кожні 2 години важкої ходьби END + Athletics D1 або +1 Fatigue."],
+    ["Слабкість", "Перевірки STR +1 до складності та знижена вантажопідйомність."],
+    ["Сплутаність", "Перевірки INT +1 до складності; Interact стає Major Action."],
+    ["Головний біль", "Перевірки PER +1 до складності; Initiative −2."],
+    ["Прискорене серце й дихання", "Перевірки END +1 до складності; після Action scene +1 Fatigue."],
+    ["Непритомність", "При отриманні Fatigue — END + Survival, інакше непритомність на кількість раундів, рівну Fatigue."],
+  ],
+  pl: [
+    ["Suchość w ustach", "Testy Speech +1 trudności; przed jedzeniem END + Survival D1."],
+    ["Brak potu", "Ekspozycja na upał powoduje 2 Fatigue zamiast 1."],
+    ["Skrajne pragnienie", "Pierwsze źródło wody: INT + Survival D2 albo wypicie maksymalnej ilości."],
+    ["Zawroty głowy", "Testy AGI +1 trudności; Sprint może przewrócić postać."],
+    ["Spuchnięte stopy", "Co 2 godziny ciężkiej podróży pieszo END + Athletics D1 albo +1 Fatigue."],
+    ["Osłabienie", "Testy STR +1 trudności i mniejszy udźwig."],
+    ["Dezorientacja", "Testy INT +1 trudności; Interact staje się Major Action."],
+    ["Ból głowy", "Testy PER +1 trudności; Initiative −2."],
+    ["Kołatanie serca i oddech", "Testy END +1 trudności; po Action scene +1 Fatigue."],
+    ["Omdlenie", "Przy otrzymaniu Fatigue: END + Survival albo utrata przytomności na liczbę rund równą Fatigue."],
+  ],
+};
+
 const STIM_COPY = {
   en: { title: "STIMPAK", hp: "Restore HP", injury: "Treat injury", use: "USE", none: "No Stimpaks", chooseInjury: "Choose injury", left: "left" },
   ru: { title: "СТИМПАК", hp: "Восстановить HP", injury: "Вылечить травму", use: "ПРИМЕНИТЬ", none: "Нет стимпаков", chooseInjury: "Выберите травму", left: "ост." },
@@ -45,6 +96,7 @@ export default function StatusScreen(props) {
   const [injuryKey, setInjuryKey] = useState("");
   const [escapeChallenge, setEscapeChallenge] = useState("average");
   const [escapeDistance, setEscapeDistance] = useState("medium");
+  const [dehydrationEffect, setDehydrationEffect] = useState(null);
   const luckEscape = getLuckOfTheDrawSetup(escapeChallenge);
   const soloEscape = getIndividualEscapeSetup(escapeDistance);
 
@@ -56,7 +108,23 @@ export default function StatusScreen(props) {
       nameKey: `statuses.${key}.name`,
       descriptionKey: `statuses.${key}.description`,
       durationKey: "statuses.duration.whileZero",
+      ...(key === "dehydrated" && dehydrationEffect
+        ? { randomEffectName: dehydrationEffect[0], randomEffectDescription: dehydrationEffect[1] }
+        : {}),
     }));
+
+  useEffect(() => {
+    const dehydrated = Number(form.thirst || 0) === 0;
+    if (!dehydrated) {
+      setDehydrationEffect(null);
+      return;
+    }
+    setDehydrationEffect((current) => {
+      if (current) return current;
+      const table = DEHYDRATION_EFFECTS[language] || DEHYDRATION_EFFECTS.en;
+      return table[Math.floor(Math.random() * table.length)] || table[0];
+    });
+  }, [form.thirst, language]);
 
   useEffect(() => {
     if (!stimpaks.length) {
