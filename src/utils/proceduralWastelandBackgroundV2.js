@@ -1,7 +1,6 @@
 import { buildOpenWastelandSite } from "./proceduralWastelandOpen.js";
 
 const CELL = 100;
-const GRID = 24;
 
 function rect(x, y, w, h, fill, stroke = "none", sw = 0, rx = 0, extra = "") {
   return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" ${extra}/>`;
@@ -71,11 +70,11 @@ function terrainObstacleSvg(obj) {
   return "";
 }
 
-function scatterSvg(rng, blocked) {
+function scatterSvg(rng, blocked, cols, rows) {
   let out = "";
   for (let i = 0; i < 70; i += 1) {
-    const gx = randint(rng, 0, GRID - 1);
-    const gy = randint(rng, 0, GRID - 1);
+    const gx = randint(rng, 0, cols - 1);
+    const gy = randint(rng, 0, rows - 1);
     if (blocked.some((o) => gx >= o.x && gx < o.x + o.w && gy >= o.y && gy < o.y + o.h)) continue;
     const cx = (gx + 0.25 + rng() * 0.5) * CELL;
     const cy = (gy + 0.25 + rng() * 0.5) * CELL;
@@ -87,17 +86,19 @@ function scatterSvg(rng, blocked) {
 
 export function generateOpenWastelandBackgroundSvg(input = {}) {
   const site = buildOpenWastelandSite(input);
-  const rng = mulberry32(hashSeed(`${input.seed || "1"}:24x24:open-wasteland-background-v2`));
-  const width = GRID * CELL;
-  const height = GRID * CELL;
+  const cols = Math.max(24, Math.floor(Number(input.cols || input.rows || 24)));
+  const rows = Math.max(24, Math.floor(Number(input.rows || input.cols || cols)));
+  const rng = mulberry32(hashSeed(`${input.seed || "1"}:${cols}x${rows}:open-wasteland-background-v3`));
+  const width = cols * CELL;
+  const height = rows * CELL;
   const blocked = [...site.roads, ...site.obstacles, ...site.vehicles, ...site.trees];
   const out = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`];
   out.push(rect(0, 0, width, height, "#756b58"));
-  out.push(scatterSvg(rng, blocked));
+  out.push(scatterSvg(rng, blocked, cols, rows));
   site.roads.forEach((road) => out.push(roadSvg(road, site.profile.surface)));
   site.obstacles.forEach((obj) => out.push(terrainObstacleSvg(obj)));
   out.push(rect(18, 18, 500, 42, "#d2c3a2", "#40372e", 2, 4, 'opacity="0.93"'));
-  out.push(`<text x="34" y="40" text-anchor="start" dominant-baseline="middle" fill="#332d27" font-family="monospace" font-size="11" font-weight="900">WASTELAND // 24x24 // ${site.profile.type.toUpperCase()}${site.profile.type !== "none" ? ` // ${site.profile.surface.toUpperCase()}` : ""}</text>`);
+  out.push(`<text x="34" y="40" text-anchor="start" dominant-baseline="middle" fill="#332d27" font-family="monospace" font-size="11" font-weight="900">WASTELAND // ${cols}x${rows} // ${site.profile.type.toUpperCase()}${site.profile.type !== "none" ? ` // ${site.profile.surface.toUpperCase()}` : ""}</text>`);
   out.push("</svg>");
   return out.join("");
 }
