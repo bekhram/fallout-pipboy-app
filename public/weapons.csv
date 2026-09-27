@@ -137,3 +137,11 @@ Small Guns,Grappling Gun,1,9,55,,5,"Piercing 1, Special",Physical,0,M,"Inaccurat
 Big Guns,Tear Gas Launcher,1,18,254,,4,"Persistent, Stun, Spread",Poison,0,M,"Blast, Two-Handed, Inaccurate",3,4,Tear Gas Canister
 Explosive,Flashbang Grenade,1,1,50,,3,"Persistent, Stun",Poison,0,M,"Blast, Thrown",2,3,
 Small Guns,The Magnumnomicon,1,6,,,8,Vicious,Special,1,C,Close Quarters,Unique,8,.44 Magnum
+Small Guns,Tranquilizer Pistol,1,5,333,,5,"Tranquilize 3, Persistent",Poison,0,C,"Close Quarters, Reliable",5,5,Tranquilizer Dart
+Big Guns,Tranquilizer Sten Gun,1,9,445,,4,"Tranquilize 3, Burst, Persistent",Poison,3,M,"Two-Handed, Inaccurate",5,4,9mm
+Small Guns,Sten Gun,1,9,133,,4,Burst,Physical,3,M,"Two-Handed, Inaccurate",5,4,9mm
+Melee Weapon,Shovel,1,2,10,,3,,Physical,0,C,Two-Handed,1,3,
+Small Guns,Long Powerful Scoped Assault Rifle,1,,,,7,Burst,Physical,2,L,"Accurate, Two-Handed",,7,5.56mm
+Small Guns,The Ghoul's Pistol,1,,,,8,Piercing 1,Physical,1,M,"Close Quarters, Debilitating",Unique,8,Custom Shells
+Small Guns,The Ghoul's Rifle,1,,,,7,Piercing 1,Physical,3,M,Two-Handed,Unique,7,.308
+Throwing,Makeshift Lasso,1,,,,5,Stun,Physical,0,M,"Thrown, Two-Handed, Wrangle",Unique,5,
