@@ -674,10 +674,21 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     if (selectedIsLive) return;
     const [nextCols, nextRows] = String(value).split("x").map(Number);
     if (!nextCols || !nextRows) return;
+    const proceduralSpec = scene?.environment?.proceduralMapSpec;
     await session.updateTacticalScene?.({
       cols: nextCols,
       rows: nextRows,
       startZone: makeStartZone(nextCols, nextRows),
+      ...(proceduralSpec ? {
+        environment: {
+          ...(scene.environment || {}),
+          proceduralMapSpec: {
+            ...proceduralSpec,
+            cols: nextCols,
+            rows: nextRows,
+          },
+        },
+      } : {}),
     });
   };
 
