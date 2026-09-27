@@ -6,7 +6,6 @@ import {
 import { generateProceduralWastelandPoiData } from "./proceduralWastelandPoi.js";
 import { buildRedRocketLayout } from "./proceduralRedRocket.js";
 
-const GRID = 24;
 const TRAP_LETHALITIES = ["low", "standard", "high", "deadly"];
 
 const TRAP_PROFILES = {
@@ -227,6 +226,8 @@ function markerOffset(spec) {
 
 function openCells(spec) {
   const type = String(spec?.type || "wasteland");
+  const cols = Math.max(24, Math.floor(Number(spec?.cols || 24)));
+  const rows = Math.max(24, Math.floor(Number(spec?.rows || cols)));
   let blocked = [];
   if (type === "settlement") {
     const layout = buildSettlementLayout(spec);
@@ -242,8 +243,8 @@ function openCells(spec) {
   }
 
   const cells = [];
-  for (let y = 1; y < GRID - 1; y += 1) {
-    for (let x = 1; x < GRID - 1; x += 1) {
+  for (let y = 1; y < rows - 1; y += 1) {
+    for (let x = 1; x < cols - 1; x += 1) {
       if (blocked.some((rect) => overlapsCell(rect, x, y, 0.25))) continue;
       cells.push({ x, y });
     }
@@ -252,7 +253,9 @@ function openCells(spec) {
 }
 
 function pickCells(spec, count) {
-  const rng = mulberry32(hashSeed(`${spec?.seed || "1"}:${spec?.type || "wasteland"}:${spec?.terrain || "wasteland"}:battlemap-extras-v1`));
+  const cols = Math.max(24, Math.floor(Number(spec?.cols || 24)));
+  const rows = Math.max(24, Math.floor(Number(spec?.rows || cols)));
+  const rng = mulberry32(hashSeed(`${spec?.seed || "1"}:${spec?.type || "wasteland"}:${spec?.terrain || "wasteland"}:${cols}x${rows}:battlemap-extras-v2`));
   const candidates = shuffle(rng, openCells(spec));
   const chosen = [];
   for (const cell of candidates) {
