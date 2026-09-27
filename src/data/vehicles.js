@@ -143,10 +143,50 @@ export function vehicleCriticalThreshold(vehicle = {}) {
   return Math.max(1,5+Math.max(0,Number(vehicle?.scale||0)));
 }
 
-export function applyVehicleInjury(vehicle = {}, injuryId = "chassis") {
+export function applyVehicleInjury(vehicle = {}, injuryId = "chassis", meta = {}) {
   const injury=VEHICLE_INJURIES.find(item=>item.id===injuryId)||VEHICLE_INJURIES[0];
   const injuries=Array.isArray(vehicle?.injuries)?vehicle.injuries:[];
-  return {...vehicle,injuries:[...injuries,{...injury,at:Date.now()}]};
+  if(injuries.some((entry)=>entry?.id===injury.id)) return vehicle;
+  return {
+    ...vehicle,
+    injuries:[...injuries,{
+      ...injury,
+      location:meta?.location||"",
+      roll:Number(meta?.roll||0)||null,
+      at:Date.now(),
+    }],
+  };
+}
+
+export function removeVehicleInjury(vehicle = {}, injuryId = "") {
+  return {
+    ...vehicle,
+    injuries:(Array.isArray(vehicle?.injuries)?vehicle.injuries:[]).filter((entry)=>entry?.id!==injuryId),
+  };
+}
+
+export function vehicleLocationForRoll(vehicle = {}, roll = 1) {
+  const value=Math.max(1,Math.min(20,Math.floor(Number(roll)||1)));
+  const parseRange=(raw)=>{
+    const text=String(raw||"").trim();
+    const match=text.match(/^(\d+)\s*-\s*(\d+)$/);
+    if(match)return [Number(match[1]),Number(match[2])];
+    const single=Number(text);
+    return Number.isFinite(single)?[single,single]:null;
+  };
+  for(const location of vehicle?.locations||[]){
+    const range=parseRange(location?.roll);
+    if(range&&value>=range[0]&&value<=range[1]) return {...location,rollValue:value};
+  }
+  return {name:"Chassis",physical:0,energy:0,rollValue:value};
+}
+
+export function vehicleInjuryIdForLocation(locationName = "") {
+  const name=String(locationName||"").toLowerCase();
+  if(name.includes("engine")) return "engine";
+  if(name.includes("weapon")) return "weapon";
+  if(name.includes("wheel")||name.includes("wing")||name.includes("rudder")) return "mobility";
+  return "chassis";
 }
 
 export function cloneVehicle(template, overrides = {}) {
