@@ -41,6 +41,7 @@ export function normalizeStructuredAttack(value = {}, index = 0) {
     damageType: String(value.damageType || "Physical").trim().slice(0, 60) || "Physical",
     effects: String(value.effects ?? value.effect ?? "").trim().slice(0, 500),
     range: String(value.range || "").trim().slice(0, 20),
+    rate: Math.max(0, number(value.rate ?? value.fr, 0)),
     weaponType: String(value.weaponType || value.attackType || "").slice(0, 100),
     qualities: String(value.qualities || "").slice(0, 500),
     source: String(value.source || "custom").slice(0, 40),
@@ -90,6 +91,12 @@ export function parseAttackText(value = "") {
     const cdMatch = line.match(/(\d+)\s*(?:CD|КУ|DC)\b/i);
     const profileMatch = line.match(/\b(BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\s*\+\s*([A-Za-z][A-Za-z ]*)\s*\(/i);
     const typeMatch = line.match(/\b(Physical|Energy|Radiation|Poison)(?:\s+damage)?/i);
+    const rangeMatch = line.match(/\bRange\s+([CMLE])\b/i);
+    const rateMatch = line.match(/\bFR\s*(\d+)\b/i);
+    const qualities = [];
+    ["Two-Handed", "Close Quarters", "Reliable", "Inaccurate", "Blast", "Gatling", "Concealed"].forEach((quality) => {
+      if (line.toLowerCase().includes(quality.toLowerCase())) qualities.push(quality);
+    });
     const effects = [];
     ["Vicious", "Piercing 1", "Piercing 2", "Breaking", "Stun", "Spread", "Burst", "Persistent", "Radioactive"].forEach((effect) => {
       if (line.toLowerCase().includes(effect.toLowerCase())) effects.push(effect);
@@ -103,9 +110,76 @@ export function parseAttackText(value = "") {
       damageDice: number(cdMatch?.[1], 0),
       damageType: typeMatch?.[1] || "Physical",
       effects: effects.join(", "),
+      range: rangeMatch?.[1]?.toUpperCase() || "",
+      rate: number(rateMatch?.[1], 0),
+      qualities: qualities.join(", "),
       source: "bestiary",
     }, index);
   });
+}
+
+
+function normalizeAttackName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function abilityLines(value = "") {
+  return String(value || "")
+    .split(/\n+|;\s*/)
+    .map((line) => line.replace(/^\s*[•\-–—]\s*/, "").trim())
+    .filter(Boolean);
+}
+
+export function parseCombatAbilityAttacks(abilities = "", attacksText = "") {
+  const baseAttacks = parseAttackText(attacksText);
+  const lines = abilityLines(abilities);
+  const result = [];
+
+  lines.forEach((line, abilityIndex) => {
+    if (!/\bLET\s+RIP\b/i.test(line)) return;
+
+    const totalMatch = line.match(/\b(\d+)\s*CD\s*total\b/i);
+    const frMatch = line.match(/\bFR\s*(\d+)\b/i);
+    const explicitFr = number(frMatch?.[1], 0);
+    const normalizedLine = normalizeAttackName(line);
+
+    let candidates = baseAttacks.filter((attack) => {
+      const name = normalizeAttackName(attack.name);
+      return name && normalizedLine.includes(name);
+    });
+
+    if (!candidates.length) {
+      candidates = baseAttacks.filter((attack) => number(attack.rate, 0) > 0);
+    }
+
+    if (!candidates.length) return;
+
+    candidates.forEach((base, candidateIndex) => {
+      const rate = explicitFr || number(base.rate, 0);
+      const totalDamage = totalMatch
+        ? number(totalMatch[1], number(base.damageDice, 0) + rate)
+        : number(base.damageDice, 0) + rate;
+      if (totalDamage <= number(base.damageDice, 0)) return;
+
+      result.push(normalizeStructuredAttack({
+        ...base,
+        id: `ability-let-rip-${abilityIndex}-${candidateIndex}-${String(base.id || base.name || "attack")}`,
+        name: `LET RIP · ${base.name || "Attack"}`,
+        damageDice: totalDamage,
+        rate,
+        source: "ability",
+        abilityId: "let_rip",
+        abilityText: line,
+      }, abilityIndex));
+    });
+  });
+
+  return result;
 }
 
 export function normalizeHordeHp(value, count, memberMaxHp) {
