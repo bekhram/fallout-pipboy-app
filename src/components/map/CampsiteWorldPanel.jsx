@@ -30,10 +30,10 @@ const COPY={
 };
 
 const ROYAL_COPY={
-  en:{rules:"Rules",winter:"Winter of Atom",royal:"Royal Flush",findSite:"FIND CAMPSITE",dangerous:"Dangerous area",inhospitable:"Inhospitable area",siteCheck:"PER + Survival",siteReady:"Campsite found",siteFailed:"No suitable campsite found",inhabitants:"Camping inhabitants",campAp:"Camping Kit AP",spendKit:"SPEND 1 CAMP AP",production:"CAMP PRODUCTION · 8H",produce:"PRODUCE",strike:"STRIKE DOWN",recover:"RECOVER",recoverCheck:"AGI + Survival D1",teardown:"TAKE DOWN CAMP"},
-  ru:{rules:"Правила",winter:"Winter of Atom",royal:"Royal Flush",findSite:"НАЙТИ МЕСТО",dangerous:"Опасная местность",inhospitable:"Негостеприимная местность",siteCheck:"PER + Survival",siteReady:"Место для лагеря найдено",siteFailed:"Подходящее место не найдено",inhabitants:"Обитатели места",campAp:"AP Camping Kit",spendKit:"ПОТРАТИТЬ 1 CAMP AP",production:"ПРОИЗВОДСТВО ЛАГЕРЯ · 8Ч",produce:"ПРОИЗВЕСТИ",strike:"БЫСТРО СВЕРНУТЬ",recover:"РАЗОБРАТЬ И ВЕРНУТЬ",recoverCheck:"AGI + Survival D1",teardown:"СВЕРНУТЬ ЛАГЕРЬ"},
-  uk:{rules:"Правила",winter:"Winter of Atom",royal:"Royal Flush",findSite:"ЗНАЙТИ МІСЦЕ",dangerous:"Небезпечна місцевість",inhospitable:"Негостинна місцевість",siteCheck:"PER + Survival",siteReady:"Місце для табору знайдено",siteFailed:"Придатне місце не знайдено",inhabitants:"Мешканці місця",campAp:"AP Camping Kit",spendKit:"ВИТРАТИТИ 1 CAMP AP",production:"ВИРОБНИЦТВО ТАБОРУ · 8Г",produce:"ВИРОБИТИ",strike:"ШВИДКО ЗГОРНУТИ",recover:"РОЗІБРАТИ Й ПОВЕРНУТИ",recoverCheck:"AGI + Survival D1",teardown:"ЗГОРНУТИ ТАБІР"},
-  pl:{rules:"Zasady",winter:"Winter of Atom",royal:"Royal Flush",findSite:"ZNAJDŹ MIEJSCE",dangerous:"Niebezpieczny teren",inhospitable:"Nieprzyjazny teren",siteCheck:"PER + Survival",siteReady:"Znaleziono miejsce na obóz",siteFailed:"Nie znaleziono odpowiedniego miejsca",inhabitants:"Mieszkańcy miejsca",campAp:"AP Camping Kit",spendKit:"WYDAJ 1 CAMP AP",production:"PRODUKCJA OBOZU · 8H",produce:"PRODUKUJ",strike:"SZYBKO ZWIŃ",recover:"ODZYSKAJ MATERIAŁY",recoverCheck:"AGI + Survival D1",teardown:"ZWIŃ OBÓZ"}
+  en:{rules:"Rules",winter:"Winter of Atom",royal:"Royal Flush",findSite:"FIND CAMPSITE",dangerous:"Dangerous area",inhospitable:"Inhospitable area",siteCheck:"PER + Survival",siteReady:"Campsite found",siteFailed:"No suitable campsite found",inhabitants:"Camping inhabitants",campAp:"Camping Kit AP",spendKit:"SPEND 1 CAMP AP",production:"CAMP PRODUCTION · 8H",produce:"PRODUCE",strike:"STRIKE DOWN",recover:"RECOVER",recoverCheck:"AGI + Survival D1",teardown:"TAKE DOWN CAMP",heat:"EXTREME HEAT",heatHours:"Hours exposed",heavy:"Heavy clothing / armor",terrain:"Difficult terrain / obstacles",thirsty:"Thirsty / Dehydrated",shade:"Breaks in shelter / shade",hydrated:"Hydrated",heatCheck:"END + Survival",heatRoll:"ROLL HEAT CHECK",heatFailure:"Heat exposure failure",heatSuccess:"Heat resisted",heatFatigue:"Fatigue on failure"},
+  ru:{rules:"Правила",winter:"Winter of Atom",royal:"Royal Flush",findSite:"НАЙТИ МЕСТО",dangerous:"Опасная местность",inhospitable:"Негостеприимная местность",siteCheck:"PER + Survival",siteReady:"Место для лагеря найдено",siteFailed:"Подходящее место не найдено",inhabitants:"Обитатели места",campAp:"AP Camping Kit",spendKit:"ПОТРАТИТЬ 1 CAMP AP",production:"ПРОИЗВОДСТВО ЛАГЕРЯ · 8Ч",produce:"ПРОИЗВЕСТИ",strike:"БЫСТРО СВЕРНУТЬ",recover:"РАЗОБРАТЬ И ВЕРНУТЬ",recoverCheck:"AGI + Survival D1",teardown:"СВЕРНУТЬ ЛАГЕРЬ",heat:"ЭКСТРЕМАЛЬНАЯ ЖАРА",heatHours:"Часов под жарой",heavy:"Тяжёлая одежда / броня",terrain:"Сложная местность / препятствия",thirsty:"Thirsty / Dehydrated",shade:"Перерывы в укрытии / тени",hydrated:"Hydrated",heatCheck:"END + Survival",heatRoll:"БРОСИТЬ ПРОВЕРКУ ЖАРЫ",heatFailure:"Провал воздействия жары",heatSuccess:"Жара перенесена",heatFatigue:"Fatigue при провале"},
+  uk:{rules:"Правила",winter:"Winter of Atom",royal:"Royal Flush",findSite:"ЗНАЙТИ МІСЦЕ",dangerous:"Небезпечна місцевість",inhospitable:"Негостинна місцевість",siteCheck:"PER + Survival",siteReady:"Місце для табору знайдено",siteFailed:"Придатне місце не знайдено",inhabitants:"Мешканці місця",campAp:"AP Camping Kit",spendKit:"ВИТРАТИТИ 1 CAMP AP",production:"ВИРОБНИЦТВО ТАБОРУ · 8Г",produce:"ВИРОБИТИ",strike:"ШВИДКО ЗГОРНУТИ",recover:"РОЗІБРАТИ Й ПОВЕРНУТИ",recoverCheck:"AGI + Survival D1",teardown:"ЗГОРНУТИ ТАБІР",heat:"ЕКСТРЕМАЛЬНА СПЕКА",heatHours:"Годин під спекою",heavy:"Важкий одяг / броня",terrain:"Складна місцевість / перешкоди",thirsty:"Thirsty / Dehydrated",shade:"Перерви в укритті / тіні",hydrated:"Hydrated",heatCheck:"END + Survival",heatRoll:"КИНУТИ ПЕРЕВІРКУ СПЕКИ",heatFailure:"Провал впливу спеки",heatSuccess:"Спеку витримано",heatFatigue:"Fatigue при провалі"},
+  pl:{rules:"Zasady",winter:"Winter of Atom",royal:"Royal Flush",findSite:"ZNAJDŹ MIEJSCE",dangerous:"Niebezpieczny teren",inhospitable:"Nieprzyjazny teren",siteCheck:"PER + Survival",siteReady:"Znaleziono miejsce na obóz",siteFailed:"Nie znaleziono odpowiedniego miejsca",inhabitants:"Mieszkańcy miejsca",campAp:"AP Camping Kit",spendKit:"WYDAJ 1 CAMP AP",production:"PRODUKCJA OBOZU · 8H",produce:"PRODUKUJ",strike:"SZYBKO ZWIŃ",recover:"ODZYSKAJ MATERIAŁY",recoverCheck:"AGI + Survival D1",teardown:"ZWIŃ OBÓZ",heat:"EKSTREMALNY UPAŁ",heatHours:"Godziny ekspozycji",heavy:"Ciężka odzież / pancerz",terrain:"Trudny teren / przeszkody",thirsty:"Thirsty / Dehydrated",shade:"Przerwy w schronieniu / cieniu",hydrated:"Hydrated",heatCheck:"END + Survival",heatRoll:"RZUĆ TEST UPAŁU",heatFailure:"Nieudany test upału",heatSuccess:"Upał wytrzymany",heatFatigue:"Fatigue przy porażce"}
 };
 
 function readState(){if(typeof window==="undefined")return{};try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}")||{};}catch{return{};}}
@@ -53,6 +53,16 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
   const [inhabitantResult,setInhabitantResult]=useState(null);
   const [campKitSpent,setCampKitSpent]=useState(false);
   const [recoverResult,setRecoverResult]=useState(null);
+  const [heatOptions,setHeatOptions]=useState(()=>({
+    enabled:false,
+    hours:1,
+    heavy:false,
+    terrain:false,
+    thirsty:Number(character?.thirst||0)===0,
+    shade:false,
+    hydrated:Number(character?.thirst||0)>=4,
+  }));
+  const [heatResult,setHeatResult]=useState(null);
   if(!open)return null;
 
   const campResult=calculateCampsite({tier,apSpentAfterTest:0,buildSucceeded:true,rulesMode});
@@ -69,6 +79,36 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
   const survivalRank=Math.max(0,Number(survivalEntry.rank||0)+Number(survivalEntry.bonus||0));
   const criticalRange=survivalEntry.tagged?Math.max(1,Number(survivalEntry.rank||1)):1;
   const targetNumber=Math.max(0,Math.min(20,endurance+survivalRank));
+  const heatHours=Math.max(1,Math.min(8,Math.floor(Number(heatOptions.hours)||1)));
+  const heatDifficulty=Math.max(0,Math.min(5,
+    heatHours+
+    (heatOptions.heavy?1:0)+
+    (heatOptions.terrain?1:0)+
+    (heatOptions.thirsty?1:0)-
+    (heatOptions.shade?1:0)-
+    (heatOptions.hydrated?1:0)
+  ));
+  const patchHeat=(key,value)=>{setHeatResult(null);setHeatOptions(prev=>({...prev,[key]:value}));};
+  const rollHeatCheck=()=>{
+    if(!heatOptions.enabled||typeof onRoll!=="function")return;
+    onRoll({
+      id:`camp-heat-${Date.now()}`,
+      type:"skill",diceType:"d20",title:royalText.heatCheck,skillName:"Survival",
+      skill:{...survivalEntry,rank:String(survivalRank)},
+      targetNumber,criticalRange,testValue:targetNumber,diceCount:2,difficulty:heatDifficulty,source:"royal-flush-extreme-heat",
+      onResult:(result)=>{
+        if(result?.diceType!=="d20"||result?.rollType!=="skill")return;
+        const successes=Math.max(0,Number(result.successes||0));
+        setHeatResult({
+          success:successes>=heatDifficulty,
+          successes,
+          difficulty:heatDifficulty,
+          diceValues:result.diceValues||[],
+          complications:Math.max(0,Number(result.complications||0)),
+        });
+      },
+    });
+  };
   const contaminationDifficulty=Math.min(5,(answers.raw?1:0)+(answers.dirty?1:0)+(answers.animals?1:0));
   const needsCheck=contaminationDifficulty>0;
   const patch=(key,value)=>{setCheckResult(null);setAnswers(prev=>({...prev,[key]:value}));};
@@ -188,7 +228,8 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
         next={...next,activeCampsite:{...next.activeCampsite,regionId,worldX:Number(currentPosition?.worldX),worldY:Number(currentPosition?.worldY),placedAt:next.activeCampsite.placedAt||new Date().toISOString()}};
       }
       if(answers.sleep) next=applyWinterCampRest(next,{hours:6});
-      const fatigueAdd=(answers.animals?1:0)+(!answers.sleep?1:0)+(winterMode&&!answers.warm?1:0);
+      const heatFatigue=heatOptions.enabled&&heatResult&&!heatResult.success?heatHours:0;
+      const fatigueAdd=(answers.animals?1:0)+(!answers.sleep?1:0)+(winterMode&&!answers.warm?1:0)+heatFatigue;
       const statuses={...(next.statuses||{})};
       if(winterMode&&!answers.warm) statuses.exposure=true;
       const failedCheck=Boolean(needsCheck&&checkResult&&!checkResult.success);
@@ -198,13 +239,22 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
       return {
         ...next,
         fatigue:String(Math.max(0,Number(next.fatigue||0)+fatigueAdd)),
+        thirst:heatOptions.enabled
+          ? String(Math.max(0,Number(next.thirst||0)-Math.floor(heatHours/2)))
+          : next.thirst,
         statuses,
         campSurvivalPenalty:penalty,
         lastCampHealthCheck:{
           at:new Date().toISOString(),tier:Number(tier),warmClothing:answers.warm,rawFood:answers.raw,dirtyWater:answers.dirty,
           foughtAnimals:answers.animals,slept:answers.sleep,survivalPenalty:penalty,risks,
           survivalCheck:checkResult?{dice:(checkResult.rolls||[]).map(d=>d.value),targetNumber,difficulty:contaminationDifficulty,successes:checkResult.totalSuccesses||0,complications:checkResult.complications||0,success:Boolean(checkResult.success)}:null,
-          diseaseApplied:illness||null,poisoned:Boolean(failedCheck&&answers.dirty)
+          diseaseApplied:illness||null,poisoned:Boolean(failedCheck&&answers.dirty),
+          extremeHeat:heatOptions.enabled?{
+            hours:heatHours,difficulty:heatDifficulty,
+            options:{...heatOptions},
+            result:heatResult,
+            fatigueApplied:heatFatigue,
+          }:null
         }
       };
     });
@@ -261,6 +311,24 @@ export default function CampsiteWorldPanel({open=false,onClose,character=null,se
         {needsCheck?<><div className="camp-modal__check-meta"><span>END {endurance}</span><span>Survival {survivalRank}{survivalEntry.tagged?" ★":""}</span></div><button type="button" className="pip-btn" onClick={rollCheck}>{text.roll}</button>
         {checkResult?<div className={`camp-modal__roll-result ${checkResult.success?"is-success":"is-failure"}`}><strong>{checkResult.success?text.success:text.failure}</strong><span>{(checkResult.rolls||[]).map(d=>d.value).join(" + ")} · {checkResult.totalSuccesses||0} {text.successes}</span><small>{checkResult.complications||0} {text.complications}</small>{!checkResult.success?<span>{text.diseaseApplied}: {answers.dirty?"Dysentery":answers.raw?"Parasites":answers.animals?"Weeping Sores":"—"}{answers.dirty?` · ${text.poisonApplied}`:""}</span>:null}</div>:null}</>:<small>{text.noExposure}</small>}
       </section>
+      {rulesMode==="royal_flush"?<section className="camp-modal__heat">
+        <header><strong>{royalText.heat}</strong><label className="camp-modal__heat-toggle"><input type="checkbox" checked={heatOptions.enabled} onChange={e=>patchHeat("enabled",e.target.checked)}/><span>ON</span></label></header>
+        {heatOptions.enabled?<div className="camp-modal__heat-body">
+          <label><span>{royalText.heatHours}</span><input className="pip-input" type="number" min="1" max="8" value={heatOptions.hours} onChange={e=>patchHeat("hours",Math.max(1,Math.min(8,Number(e.target.value)||1)))}/></label>
+          <label><input type="checkbox" checked={heatOptions.heavy} onChange={e=>patchHeat("heavy",e.target.checked)}/><span>{royalText.heavy} · +1D</span></label>
+          <label><input type="checkbox" checked={heatOptions.terrain} onChange={e=>patchHeat("terrain",e.target.checked)}/><span>{royalText.terrain} · +1D</span></label>
+          <label><input type="checkbox" checked={heatOptions.thirsty} onChange={e=>{patchHeat("thirsty",e.target.checked);if(e.target.checked)patchHeat("hydrated",false);}}/><span>{royalText.thirsty} · +1D</span></label>
+          <label><input type="checkbox" checked={heatOptions.shade} onChange={e=>patchHeat("shade",e.target.checked)}/><span>{royalText.shade} · −1D</span></label>
+          <label><input type="checkbox" checked={heatOptions.hydrated} onChange={e=>{patchHeat("hydrated",e.target.checked);if(e.target.checked)patchHeat("thirsty",false);}}/><span>{royalText.hydrated} · −1D</span></label>
+          <div className="camp-modal__heat-summary"><strong>{royalText.heatCheck}</strong><span>TN {targetNumber} · D{heatDifficulty}</span><small>{royalText.heatFatigue}: {heatHours}</small></div>
+          <button type="button" className="pip-btn" onClick={rollHeatCheck}>{royalText.heatRoll}</button>
+          {heatResult?<div className={`camp-modal__roll-result ${heatResult.success?"is-success":"is-failure"}`}>
+            <strong>{heatResult.success?royalText.heatSuccess:royalText.heatFailure}</strong>
+            <span>{heatResult.successes} / {heatResult.difficulty}</span>
+            {!heatResult.success?<small>+{heatHours} Fatigue</small>:null}
+          </div>:null}
+        </div>:null}
+      </section>:null}
       <section className={`camp-modal__result ${penalty?"is-warning":"is-safe"}`}><div className="camp-modal__result-icon">♨</div><div><strong>{text.penalty}: <em>{penalty?`-${penalty}`:"0"}</em></strong><span>{text.risk}: {risks.length?risks.join(" / "):text.none}</span><small>{answers.animals?"+1 Fatigue · ":""}{!answers.sleep?"+1 Fatigue · ":""}{winterMode&&!answers.warm?"Exposure · ":""}{answers.sleep?"6h rest applied":""}</small></div></section>
       {rulesMode==="royal_flush"&&character?.activeCampsite?<section className="camp-modal__production">
         <header><strong>{royalText.production}</strong></header>
