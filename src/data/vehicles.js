@@ -125,14 +125,30 @@ export function consumeVehicleFuel(vehicle = {}, miles = 0, { difficultTerrain=f
 }
 
 export function vehicleMovementPlan(vehicle = {}, actionId = "maneuver", apSpent = 0) {
-  const speed=Math.max(0,Number(vehicle?.speedZones||0));
+  const injuries=Array.isArray(vehicle?.injuries)?vehicle.injuries:[];
+  const hasMobility=injuries.some((entry)=>entry?.id==="mobility");
+  const speed=Math.max(0,Number(vehicle?.speedZones||0)-(hasMobility?1:0));
   const scale=Math.max(0,Number(vehicle?.scale||0));
+  const pilotPenalty=hasMobility?1:0;
   const action=VEHICLE_MOVEMENT_ACTIONS[actionId]||VEHICLE_MOVEMENT_ACTIONS.maneuver;
-  if(actionId==="maneuver") return {action,zones:1,test:null,crewDifficultyModifier:0,defenseBonus:0};
-  if(actionId==="careful") return {action,zones:Math.ceil(speed/2),test:{attribute:"AGI",skill:"Pilot",difficultyModifier:-1},crewDifficultyModifier:0,defenseBonus:0};
-  if(actionId==="hasty") return {action,zones:speed,test:null,crewDifficultyModifier:1,defenseBonus:0};
-  if(actionId==="defensive") return {action,zones:Math.max(0,speed-1),test:{attribute:"AGI",skill:"Pilot",difficulty:scale},crewDifficultyModifier:0,defenseBonus:1};
-  return {action,zones:speed+Math.max(0,Math.floor(Number(apSpent)||0)),test:{attribute:"AGI",skill:"Pilot",difficulty:1},crewDifficultyModifier:1,defenseBonus:0};
+  if(actionId==="maneuver") return {action,zones:1,test:null,crewDifficultyModifier:0,defenseBonus:0,effectiveSpeed:speed,pilotPenalty};
+  if(actionId==="careful") return {action,zones:Math.ceil(speed/2),test:{attribute:"AGI",skill:"Pilot",difficultyModifier:-1+pilotPenalty},crewDifficultyModifier:0,defenseBonus:0,effectiveSpeed:speed,pilotPenalty};
+  if(actionId==="hasty") return {action,zones:speed,test:null,crewDifficultyModifier:1,defenseBonus:0,effectiveSpeed:speed,pilotPenalty};
+  if(actionId==="defensive") return {action,zones:Math.max(0,speed-1),test:{attribute:"AGI",skill:"Pilot",difficulty:Math.max(0,scale+pilotPenalty)},crewDifficultyModifier:0,defenseBonus:1,effectiveSpeed:speed,pilotPenalty};
+  return {action,zones:speed+Math.max(0,Math.floor(Number(apSpent)||0)),test:{attribute:"AGI",skill:"Pilot",difficulty:1+pilotPenalty},crewDifficultyModifier:1,defenseBonus:0,effectiveSpeed:speed,pilotPenalty};
+}
+
+export function vehicleHasInjury(vehicle = {}, injuryId = "") {
+  return (Array.isArray(vehicle?.injuries)?vehicle.injuries:[]).some((entry)=>entry?.id===injuryId);
+}
+
+export function beginVehicleTurn(vehicle = {}) {
+  if(!vehicleHasInjury(vehicle,"engine")) return vehicle;
+  return {
+    ...vehicle,
+    fuelCurrent:Math.max(0,Number(vehicle?.fuelCurrent??vehicle?.fuelMax??0)-1),
+    lastEngineLeakAt:Date.now(),
+  };
 }
 
 export function vehicleRamDamage(vehicle = {}) {
