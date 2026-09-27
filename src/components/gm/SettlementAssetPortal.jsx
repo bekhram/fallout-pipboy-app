@@ -9,14 +9,14 @@ import {
 } from "./WastelandAssetPortal.jsx";
 import "./settlementAssetLayer.css";
 
-const GRID = 24;
-
 function settlementBaseSpec(spec = {}) {
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
   return {
     ...spec,
     type: "wasteland",
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
   };
 }
 
@@ -24,11 +24,11 @@ export function settlementBackgroundForSpec(spec = {}) {
   return wastelandBackgroundForSpec(settlementBaseSpec(spec));
 }
 
-function SettlementHouseAsset({ house, preview = false }) {
-  const visualX = Math.max(0, Math.min(GRID - 1, Math.round(Number(house?.x || 0))));
-  const visualY = Math.max(0, Math.min(GRID - 1, Math.round(Number(house?.y || 0))));
-  const visualW = Math.max(1, Math.min(GRID - visualX, Math.round(Number(house?.w || 10))));
-  const visualH = Math.max(1, Math.min(GRID - visualY, Math.round(Number(house?.h || 10))));
+function SettlementHouseAsset({ house, preview = false, cols, rows }) {
+  const visualX = Math.max(0, Math.min(cols - 1, Number(house?.x || 0)));
+  const visualY = Math.max(0, Math.min(rows - 1, Number(house?.y || 0)));
+  const visualW = Math.max(1, Math.min(cols - visualX, Number(house?.w || 10)));
+  const visualH = Math.max(1, Math.min(rows - visualY, Number(house?.h || 10)));
 
   return (
     <PhaserAsset
@@ -42,10 +42,10 @@ function SettlementHouseAsset({ house, preview = false }) {
       data-settlement-house-footprint={`${visualW}x${visualH}`}
       style={{
         position: "absolute",
-        left: `${(visualX / GRID) * 100}%`,
-        top: `${(visualY / GRID) * 100}%`,
-        width: `${(visualW / GRID) * 100}%`,
-        height: `${(visualH / GRID) * 100}%`,
+        left: `${(visualX / cols) * 100}%`,
+        top: `${(visualY / rows) * 100}%`,
+        width: `${(visualW / cols) * 100}%`,
+        height: `${(visualH / rows) * 100}%`,
         objectFit: "fill",
         pointerEvents: "none",
         userSelect: "none",
@@ -56,9 +56,11 @@ function SettlementHouseAsset({ house, preview = false }) {
 }
 
 export function SettlementAssetLayer({ spec, preview = false }) {
+  const cols = Math.max(24, Number(spec?.cols || spec?.rows || 24));
+  const rows = Math.max(24, Number(spec?.rows || spec?.cols || cols));
   const layout = useMemo(
     () => buildSettlementLayout(spec),
-    [spec?.seed, spec?.terrain, spec?.settlementStyle, spec?.roadType],
+    [spec?.seed, spec?.terrain, spec?.settlementStyle, spec?.roadType, spec?.cols, spec?.rows],
   );
 
   const houses = layout.houses || [];
@@ -106,6 +108,8 @@ export function SettlementAssetLayer({ spec, preview = false }) {
             key={house.id}
             house={house}
             preview={preview}
+            cols={cols}
+            rows={rows}
           />
         ))}
       </div>
@@ -153,7 +157,7 @@ export default function SettlementAssetPortal({ session }) {
       settlementGrid?.removeAttribute("data-settlement-grid");
       setTarget(null);
     };
-  }, [scene?.sceneId, scene?.backgroundName, spec?.seed, spec?.type, spec?.terrain]);
+  }, [scene?.sceneId, scene?.backgroundName, spec?.seed, spec?.type, spec?.terrain, spec?.cols, spec?.rows]);
 
   if (!target || !spec || String(spec.type || "") !== "settlement") {
     return null;
