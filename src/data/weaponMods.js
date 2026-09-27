@@ -289,6 +289,51 @@ const unique = {
 
 // === SUPPLEMENTAL WEAPON BATCH 2 ===
 const supplementalUnique = {
+  "sten-gun": {
+    receiver: [
+      mod("Hardened Receiver", "+1 damage", 0, 20, "", "Hardened"),
+      mod("Hair Trigger Receiver", "+1 Fire Rate", 0, 20, "Gun Nut 2", "Hair Trigger"),
+    ],
+    barrel: [
+      mod("Ported Barrel", "Gain Accurate", 1, 20, "Gun Nut 1", "Ported"),
+      mod("Finned Barrel", "Gain Reliable", 1, 20, "Gun Nut 1", "Finned"),
+    ],
+    stock: [
+      mod("Full Stock", "Gain Two-Handed", 1, 10, "", "Full Stock"),
+      mod("Marksman's Stock", "Gain Accurate", 1, 25, "Gun Nut 2", "Marksman's"),
+      mod("Recoil Compensating Stock", "+1 Fire Rate", 2, 40, "Gun Nut 3", "Recoil Compensating"),
+    ],
+    sights: [...sights],
+    muzzle: [
+      mod("Compensator", "Improve recoil/handling", 1, 15, "Gun Nut 1", "Compensated"),
+      mod("Muzzle Brake", "Improve recoil/handling", 1, 15, "Gun Nut 1", "Muzzle Braked"),
+      mod("Suppressor", "Gain Suppressed", 1, 20, "Gun Nut 2", "Suppressed"),
+    ],
+  },
+  "the-ghouls-rifle": {
+    receiver: [
+      mod("Calibrated Receiver", "Gain Vicious", 0, 25, "", "Calibrated"),
+      mod("Hardened Receiver", "+1 damage", 0, 20, "", "Hardened"),
+      mod("Powerful Receiver", "+2 damage", 1, 25, "Gun Nut 1", "Powerful"),
+      mod("Advanced Receiver", "+3 damage; +1 Fire Rate", 2, 35, "Gun Nut 2", "Advanced"),
+      mod("Calibrated Powerful Receiver", "+2 damage; gain Vicious", 3, 68, "Gun Nut 4", "Calibrated Powerful"),
+      mod(".357 Receiver", "Ammo becomes .357", 1, 35, "Gun Nut 3", ".357"),
+    ],
+    barrel: [
+      mod("Long Barrel", "Increase Range by 1 step", 2, 20, "Gun Nut 1", "Long"),
+      mod("Ported Barrel", "Gain Accurate", 1, 20, "Gun Nut 1", "Ported"),
+    ],
+    stock: [
+      mod("Full Stock", "Gain Two-Handed", 1, 10, "", "Full Stock"),
+      mod("Marksman's Stock", "Gain Accurate", 1, 25, "Gun Nut 2", "Marksman's"),
+    ],
+    sights: [...sights],
+    muzzle: [mod("Suppressor", "Gain Suppressed", 1, 20, "Gun Nut 2", "Suppressed")],
+  },
+  shovel: {
+    blade: [mod("Serrated Edge", "+1 damage; gain Persistent", 0, 10, "Blacksmith 1", "Serrated")],
+  },
+
 
   // === SETTLERS GUIDE EQUIPMENT ===
   "m79-grenade-launcher": {
