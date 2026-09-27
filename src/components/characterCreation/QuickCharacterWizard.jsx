@@ -603,6 +603,12 @@ export default function QuickCharacterWizard({ open, onCancel, onComplete }) {
         }),
       ],
       characterCreationMode: "quick",
+      originRules: {
+        supplyCaches: origin?.supplyCachesFromLuck ? Math.ceil(Number(special?.L || 0) / 2) : 0,
+        poisonResistance: Number(origin?.basePoisonResistance || 0),
+        poisonResistanceProgression: origin?.poisonResistanceProgression || null,
+        improvisedPoisonCrafting: Boolean(origin?.improvisedPoisonCrafting),
+      },
     };
 
     const derived = getDerivedStats(finalForm);
