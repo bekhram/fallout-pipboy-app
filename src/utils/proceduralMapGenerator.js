@@ -8,6 +8,13 @@ import {
 const RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
 const TERRAINS = ["wasteland", "forest", "swamp", "ruins"];
+export const PROCEDURAL_MAP_SIZES = [24, 36, 48];
+
+function normalizeMapSize(value) {
+  const n = Number(value);
+  if (PROCEDURAL_MAP_SIZES.includes(n)) return n;
+  return 24;
+}
 const LEGACY_TO_R = { common: "r1", uncommon: "r3", rare: "r5", legendary: "r7" };
 const R_TO_LEGACY = { r0: "common", r1: "common", r2: "uncommon", r3: "uncommon", r4: "rare", r5: "rare", r6: "legendary", r7: "legendary" };
 
@@ -60,8 +67,8 @@ export function normalizeProceduralMapSpec(value = {}) {
   return {
     ...base,
     seed: canonicalProceduralSeed(value.seed ?? base.seed),
-    cols: 24,
-    rows: 24,
+    cols: normalizeMapSize(value.cols ?? value.rows ?? base.cols),
+    rows: normalizeMapSize(value.rows ?? value.cols ?? base.rows),
     terrain,
     lootRarity: rarity,
     encounterDifficulty: normalizeDifficulty(value.encounterDifficulty ?? value.difficulty),
