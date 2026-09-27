@@ -9,6 +9,10 @@ import { useTranslation } from "react-i18next";
 import TacticalEnemyManager from "./TacticalEnemyManager.jsx";
 import GmProceduralRoomDescriptionsV4 from "./GmProceduralRoomDescriptionsV4.jsx";
 import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
+import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
+import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
+import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
+import SuperDuperMartRoomMarkerPortal from "./SuperDuperMartRoomMarkerPortal.jsx";
 import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
@@ -1413,6 +1417,11 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         {cells}
       </div>
       </PhaserMapViewport>
+
+      <WastelandPoiPortal session={session} />
+      <ProceduralBattlemapExtraPortal session={session} />
+      <SettlementRoomMarkerPortal session={session} />
+      <SuperDuperMartRoomMarkerPortal session={session} />
 
       <GmBattlemapExtrasPanel session={session} />
 
