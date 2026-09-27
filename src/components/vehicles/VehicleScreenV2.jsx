@@ -15,6 +15,7 @@ import {
   consumeVehicleFuel,
   applyVehicleInjury,
   removeVehicleInjury,
+  beginVehicleTurn,
   vehicleCriticalThreshold,
   vehicleLocationForRoll,
   vehicleInjuryIdForLocation,
@@ -184,6 +185,8 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
   };
   const pilotSkillEntry=Object.entries(character?.skills||{}).find(([key])=>String(key).toLowerCase().replaceAll("_"," ").trim()==="pilot")?.[1]||{};
   const endurance=Math.max(0,Number(character?.special?.E||character?.special?.END||0));
+  const agility=Math.max(0,Number(character?.special?.A||character?.special?.AGI||0));
+  const pilotAgilityTarget=Math.max(0,Math.min(20,agility+pilotRank));
   const pilotRank=Math.max(0,Number(pilotSkillEntry.rank||0)+Number(pilotSkillEntry.bonus||0));
   const pilotTarget=Math.max(0,Math.min(20,endurance+pilotRank));
   const pilotCritical=pilotSkillEntry.tagged?Math.max(1,Number(pilotSkillEntry.rank||1)):1;
@@ -232,6 +235,27 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
     });
   };
 
+  const executeMovementAction=()=>{
+    if(!active||!movement)return;
+    const commitState=(success,difficulty=0,successes=0,controlLoss=null)=>patchVehicle(active.id,(vehicle)=>{
+      const started=beginVehicleTurn(vehicle);
+      return {...started,vehicleTurnState:{action:movementAction,zones:success?movement.zones:0,success,difficulty,successes,crewDifficultyModifier:success?(movement.crewDifficultyModifier||0):0,defenseBonus:success?(movement.defenseBonus||0):0,at:Date.now()},lastControlLoss:controlLoss?{...controlLoss,at:Date.now()}:null};
+    });
+    if(!movement.test){commitState(true,0,0,null);return;}
+    if(typeof onRoll!=="function")return;
+    const difficulty=Math.max(0,Number(movement.test.difficulty ?? (1+Number(movement.test.difficultyModifier||0))));
+    onRoll({
+      id:"vehicle-pilot-"+Date.now(),type:"skill",diceType:"d20",title:movement.action.label,skillName:"Pilot",
+      skill:{...pilotSkillEntry,rank:String(pilotRank),attribute:"A"},targetNumber:pilotAgilityTarget,criticalRange:pilotCritical,testValue:pilotAgilityTarget,diceCount:2,difficulty,source:"vehicle-pilot",
+      onResult:(result)=>{
+        if(result?.diceType!=="d20"||result?.rollType!=="skill")return;
+        const success=Number(result?.successes||0)>=difficulty;
+        const validOutcomes=VEHICLE_OUT_OF_CONTROL.filter(item=>item.id!=="plummet"||(active.qualities||[]).includes("Flying"));
+        const controlLoss=!success&&validOutcomes.length?validOutcomes[Math.floor(Math.random()*validOutcomes.length)]:null;
+        commitState(success,difficulty,Number(result?.successes||0),controlLoss);
+      }
+    });
+  };
   const movement=active?vehicleMovementPlan(active,movementAction,movementAp):null;
   const fuelInfo=active?vehicleFuelMilesPerPoint(active):null;
   const repairPlan=active?getVehicleRepairPlan(active,repairLocation):null;
@@ -280,7 +304,10 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
         </button>;
       })}</div>
       {movementAction==="focused"?<label className="vehicle-v2-ap">AP <input type="number" min="0" max="6" value={movementAp} onChange={e=>setMovementAp(Number(e.target.value)||0)}/></label>:null}
-      {movement?.test?<div className="vehicle-v2-test">{movement.test.attribute} + {movement.test.skill} · D{movement.test.difficulty??Math.max(0,1+Number(movement.test.difficultyModifier||0))}</div>:null}
+      {movement?.test?<div className="vehicle-v2-test">{movement.test.attribute} + {movement.test.skill} · D{movement.test.difficulty??Math.max(0,1+Number(movement.test.difficultyModifier||0))} · TN {pilotAgilityTarget}</div>:null}
+      <button type="button" className="pip-btn is-primary" onClick={executeMovementAction}>{movement?.test?labels.attack:labels.action}</button>
+      {active.vehicleTurnState?<div className="vehicle-v2-move-status"><strong>{active.vehicleTurnState.action}</strong><span>{active.vehicleTurnState.success===false?"FAILURE":"ACTIVE"} · {active.vehicleTurnState.zones} {labels.zones}{active.vehicleTurnState.defenseBonus?" · Defense +"+active.vehicleTurnState.defenseBonus:""}{active.vehicleTurnState.crewDifficultyModifier?" · Crew D+"+active.vehicleTurnState.crewDifficultyModifier:""}</span></div>:null}
+      {active.lastControlLoss?<div className="vehicle-v2-control-warning"><strong>{active.lastControlLoss.label}</strong><small>{active.lastControlLoss.effect}</small></div>:null}
     </section>
 
     <section className="vehicle-v2-damage pip-panel">
