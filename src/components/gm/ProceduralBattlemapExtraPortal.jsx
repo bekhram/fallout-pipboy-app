@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { generateProceduralBattlemapExtras } from "../../utils/proceduralBattlemapExtras.js";
 
-const GRID = 24;
-
 export default function ProceduralBattlemapExtraPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
   const [target, setTarget] = useState(null);
+  const cols = Math.max(1, Number(spec?.cols || scene?.cols || 24));
+  const rows = Math.max(1, Number(spec?.rows || scene?.rows || 24));
 
   const extras = useMemo(
     () => (spec ? generateProceduralBattlemapExtras(spec) : []),
@@ -18,6 +18,8 @@ export default function ProceduralBattlemapExtraPortal({ session }) {
       spec?.density,
       spec?.lootRarity,
       spec?.wealth,
+      spec?.cols,
+      spec?.rows,
       spec?.trapCount,
       spec?.trapLethality,
     ],
@@ -76,8 +78,8 @@ export default function ProceduralBattlemapExtraPortal({ session }) {
           title={`${extra.kind} ${extra.marker}`}
           style={{
             position: "absolute",
-            left: `${((Number(extra.x || 0) + 0.5) / GRID) * 100}%`,
-            top: `${((Number(extra.y || 0) + 0.5) / GRID) * 100}%`,
+            left: `${((Number(extra.x || 0) + 0.5) / cols) * 100}%`,
+            top: `${((Number(extra.y || 0) + 0.5) / rows) * 100}%`,
             width: 30,
             height: 30,
             transform: "translate(-50%, -50%)",
