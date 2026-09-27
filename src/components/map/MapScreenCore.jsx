@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { createRandomMap } from "../../data/map/bostonMap.js";
+import { createRandomMap, KM_PER_BLOCK } from "../../data/map/bostonMap.js";
 import { MAP_REGIONS, getMapRegion, getRegionName } from "../../data/map/mapRegions.js";
 import { maybeRollTravelEncounter } from "../../utils/encounterEngine.js";
 import {
@@ -47,6 +47,7 @@ import {
   getDirectionArrow,
   getLocationById,
 } from "../../utils/worldMap.js";
+import { consumeVehicleFuel, vehicleFuelMilesPerPoint, beginVehicleTurn } from "../../data/vehicles.js";
 
 const MAP_ROWS = 8;
 const MAP_COLS = 8;
@@ -326,6 +327,8 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
   const [selectedSettlement,setSelectedSettlement]=useState(null);
   const [travelResolver,setTravelResolver]=useState(null);
   const [reputationRows,setReputationRows]=useState(()=>readReputationRows());
+  const vehicles=Array.isArray(character?.vehicles)?character.vehicles:[];
+  const activeVehicle=vehicles.find(vehicle=>vehicle.id===character?.activeVehicleId)||null;
 
   const safeMapState = useMemo(
     () => ({ ...buildDefaultMapState(), ...(mapState || {}) }),
@@ -513,6 +516,52 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     [randomPoiCells, viewStartX, viewStartY]
   );
 
+  const milesPerBlock=Math.max(0.01,Number(KM_PER_BLOCK||1)*0.621371);
+  const routeMilesLocal=(route)=>{
+    if(!route?.cells?.length)return 0;
+    let miles=0;
+    let previous={x:playerPosition.x,y:playerPosition.y};
+    for(const cell of route.cells){
+      const dx=Number(cell.x)-Number(previous.x);
+      const dy=Number(cell.y)-Number(previous.y);
+      miles+=Math.sqrt(dx*dx+dy*dy)*milesPerBlock;
+      previous={x:cell.x,y:cell.y};
+    }
+    return miles;
+  };
+  const routeMilesWorld=(route)=>{
+    if(!route?.steps?.length)return 0;
+    let miles=0;
+    let previous={x:playerWorldX,y:playerWorldY};
+    for(const step of route.steps){
+      const dx=Number(step.worldX)-Number(previous.x);
+      const dy=Number(step.worldY)-Number(previous.y);
+      miles+=Math.sqrt(dx*dx+dy*dy)*milesPerBlock;
+      previous={x:step.worldX,y:step.worldY};
+    }
+    return miles;
+  };
+  const availableVehicleMiles=()=>{
+    if(!activeVehicle)return Infinity;
+    const info=vehicleFuelMilesPerPoint(activeVehicle);
+    return Math.max(0,Number(activeVehicle.fuelCurrent??activeVehicle.fuelMax??0))*Math.max(1,Number(info.miles||1));
+  };
+  const canVehicleTravel=(miles)=>{
+    if(!activeVehicle)return true;
+    return Number(activeVehicle.fuelCurrent??activeVehicle.fuelMax??0)>0 && availableVehicleMiles()+0.001>=Math.max(0,Number(miles)||0);
+  };
+  const spendVehicleFuel=(miles)=>{
+    if(!activeVehicle||typeof setCharacter!=="function")return;
+    setCharacter(prev=>({
+      ...prev,
+      vehicles:(prev.vehicles||[]).map(vehicle=>{
+        if(vehicle.id!==activeVehicle.id)return vehicle;
+        const started=beginVehicleTurn(vehicle);
+        return consumeVehicleFuel(started,miles,{difficultTerrain:false});
+      }),
+    }));
+  };
+
   function renderHazardBadges(hazards) {
     if (!hazards.length) return <span className="pip-map-hazard-empty">{t("mapPanel.none")}</span>;
     return (
@@ -530,7 +579,12 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     if(!target)return;
     const route=findTravelRoute(mapData,playerPosition,target);
     if(!route?.cells?.length)return;
-    setTravelResolver({kind:"local",target,baseHours:Math.max(1,Number(route.cost||route.cells.length||1))});
+    const vehicleMiles=routeMilesLocal(route);
+    if(!canVehicleTravel(vehicleMiles)){
+      window.alert(`Not enough fuel: need about ${Math.ceil(vehicleMiles)} miles of range.`);
+      return;
+    }
+    setTravelResolver({kind:"local",target,baseHours:Math.max(1,Number(route.cost||route.cells.length||1)),vehicleMiles});
   }
 
   function requestWorldTravel(target=selectedWorldTarget||trackedLocation){
@@ -538,7 +592,12 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     const workingCache={...sectorCache,[sectorKey]:mapData};
     const route=findWorldTravelRoute({x:playerWorldX,y:playerWorldY},{x:Number(target.worldX),y:Number(target.worldY)},workingCache,mapData.cols,mapData.rows);
     if(!route?.steps?.length)return;
-    setTravelResolver({kind:"world",target,baseHours:Math.max(1,Number(route.cost||route.steps.length||1))});
+    const vehicleMiles=routeMilesWorld(route);
+    if(!canVehicleTravel(vehicleMiles)){
+      window.alert(`Not enough fuel: need about ${Math.ceil(vehicleMiles)} miles of range.`);
+      return;
+    }
+    setTravelResolver({kind:"world",target,baseHours:Math.max(1,Number(route.cost||route.steps.length||1)),vehicleMiles});
   }
 
   function resolveTravelPlan(plan){
@@ -564,10 +623,18 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     let luckyBreakUsed = false;
     const detailLog = [];
     const exposureHoursByHazard = {};
+    let vehicleMilesTravelled=0;
+    let previousVehiclePosition={...playerPosition};
 
     for (const step of travelRoute.cells) {
       const stepCost = getCellMoveCost(step) ?? 1;
       totalCost += stepCost;
+      if(activeVehicle){
+        const dx=Number(step.x)-Number(previousVehiclePosition.x);
+        const dy=Number(step.y)-Number(previousVehiclePosition.y);
+        vehicleMilesTravelled+=Math.sqrt(dx*dx+dy*dy)*milesPerBlock;
+        previousVehiclePosition={x:step.x,y:step.y};
+      }
       addHazardExposureHours(exposureHoursByHazard, step, stepCost);
       finalPosition = { x: step.x, y: step.y };
       nextDiscoveredKeys = revealAround(mapData, finalPosition, 1, nextDiscoveredKeys);
@@ -687,6 +754,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       }));
     }
     dispatchEnvironmentEffects(environmentExposure.effects);
+    if(activeVehicle&&vehicleMilesTravelled>0)spendVehicleFuel(vehicleMilesTravelled);
     if (reachedDestination && !stoppedEncounter) setSelectedCell(null);
   }
 
@@ -723,10 +791,18 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
     let previousSectorKey = sectorKey;
     const detailLog = [tx("worldRouteStart", { name: targetName, blocks: route.steps.length })];
     const exposureHoursByHazard = {};
+    let vehicleMilesTravelled=0;
+    let previousVehiclePosition={x:playerWorldX,y:playerWorldY};
 
     for (const step of route.steps) {
       const stepCost = getCellMoveCost(step.cell) ?? 1;
       totalCost += stepCost;
+      if(activeVehicle){
+        const dx=Number(step.worldX)-Number(previousVehiclePosition.x);
+        const dy=Number(step.worldY)-Number(previousVehiclePosition.y);
+        vehicleMilesTravelled+=Math.sqrt(dx*dx+dy*dy)*milesPerBlock;
+        previousVehiclePosition={x:step.worldX,y:step.worldY};
+      }
       addHazardExposureHours(exposureHoursByHazard, step.cell, stepCost);
       finalStep = step;
 
@@ -859,6 +935,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       }));
     }
     dispatchEnvironmentEffects(environmentExposure.effects);
+    if(activeVehicle&&vehicleMilesTravelled>0)spendVehicleFuel(vehicleMilesTravelled);
     setSelectedCell(null);
     setSelectedWorldTarget(null);
   }
