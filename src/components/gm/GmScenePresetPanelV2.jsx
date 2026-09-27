@@ -144,9 +144,6 @@ export default function GmScenePresetPanelV2({ session }) {
   const changeTrapCount = async (value) => { const next = normalizeTrapCount(value); setTrapCount(next); await persistSetting({ trapCount: next }); };
   const changeTrapLethality = async (value) => { const next = normalizeTrapLethality(value); setTrapLethality(next); await persistSetting({ trapLethality: next }); };
 
-  const ranks = encounter?.rankCounts || { minion: 0, standard: 0, special: 0, legendary: 0 };
-  const generatedEnemyCount = encounter?.enemyCount ?? (ranks.minion + ranks.standard + ranks.special + ranks.legendary);
-
   return (
     <div className="gm-scene-preset-v2">
       <section className="gm-encounter-difficulty pip-panel">
