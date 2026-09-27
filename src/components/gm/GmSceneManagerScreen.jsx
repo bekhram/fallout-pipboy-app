@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { lazy, Suspense, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import GmScenePresetPanelV2 from "./GmScenePresetPanelV2.jsx";
-import GmProceduralExplorationPanel from "./GmProceduralExplorationPanel.jsx";
 import "./gmSceneManagerScreen.css";
+
+const LazyScenePresetPanel = lazy(() => import("./GmScenePresetPanelV2.jsx"));
+const LazyProceduralExplorationPanel = lazy(() => import("./GmProceduralExplorationPanel.jsx"));
 
 const COPY={
   en:{title:"SCENE MANAGEMENT",subtitle:"Create, prepare and publish tactical scenes",newScene:"NEW SCENE",name:"Scene name",grid:"Grid",create:"CREATE",selected:"SELECTED",live:"LIVE",offline:"OFFLINE",edit:"EDIT",rename:"RENAME",makeLive:"MAKE LIVE",stopLive:"STOP LIVE",delete:"DELETE",tokens:"tokens",cannotDelete:"Keep at least one scene",confirmDelete:"Delete this scene?",empty:"No scenes",encounter:"ENCOUNTER GENERATOR"},
@@ -20,6 +21,8 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
   const [grid,setGrid]=useState("24x24");
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
+  const [showEncounterGenerator,setShowEncounterGenerator]=useState(true);
+  const [showExplorationDetails,setShowExplorationDetails]=useState(false);
   const selectedId=String(session?.selectedSceneId||session?.tacticalScene?.sceneId||"");
   const liveId=String(session?.liveSceneId||"");
 
@@ -97,9 +100,27 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
     </div>
     {selected?<small className="gm-scene-manager__selected">{text.selected}: {selected.name}</small>:null}
     <section className="gm-scene-manager__encounter">
-      <div className="pip-panel-title">{text.encounter}</div>
-      <GmScenePresetPanelV2 session={session}/>
-      <GmProceduralExplorationPanel session={session}/>
+      <div className="gm-scene-manager__encounter-head">
+        <div className="pip-panel-title">{text.encounter}</div>
+        <button type="button" className="pip-btn" onClick={()=>setShowEncounterGenerator((value)=>!value)}>
+          {showEncounterGenerator ? "−" : "+"}
+        </button>
+      </div>
+      {showEncounterGenerator ? (
+        <Suspense fallback={<div className="pip-logbox">…</div>}>
+          <LazyScenePresetPanel session={session}/>
+        </Suspense>
+      ) : null}
+      <div className="gm-scene-manager__exploration-toggle">
+        <button type="button" className="pip-btn" onClick={()=>setShowExplorationDetails((value)=>!value)}>
+          {showExplorationDetails ? "− DETAILS" : "+ DETAILS"}
+        </button>
+      </div>
+      {showExplorationDetails ? (
+        <Suspense fallback={<div className="pip-logbox">…</div>}>
+          <LazyProceduralExplorationPanel session={session}/>
+        </Suspense>
+      ) : null}
     </section>
   </section>;
 }
