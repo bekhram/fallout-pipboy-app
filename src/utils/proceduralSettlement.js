@@ -9,7 +9,7 @@ import ruinedHouse from "../assets/wasteland/houses/house-ruined.png";
 import raiderHouse from "../assets/wasteland/houses/house-raider.png";
 
 const CELL = 100;
-const GRID = 24;
+const BASE_GRID = 24;
 const MIN_HOUSES = 2;
 const MAX_HOUSES = 4;
 const HOUSE_CELLS = 10;
@@ -167,11 +167,14 @@ export function normalizeSettlementSpec(spec = {}) {
   const seed = canonicalProceduralSeed(spec.seed);
   const terrainSeed = proceduralTerrainSeed(seed, terrain);
 
+  const cols = Math.max(BASE_GRID, Math.floor(Number(spec.cols || spec.rows || BASE_GRID)));
+  const rows = Math.max(BASE_GRID, Math.floor(Number(spec.rows || spec.cols || cols)));
+
   return {
     ...spec,
     type: "settlement",
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
     terrain,
     seed,
     renderSeed: seed,
@@ -190,15 +193,22 @@ function renderedRouteKind(spec) {
 }
 
 function railReservation(spec) {
+  const cols = Math.max(BASE_GRID, Number(spec.cols || BASE_GRID));
+  const rows = Math.max(BASE_GRID, Number(spec.rows || cols));
   const renderSeed = String(spec.renderSeed || spec.seed || "1");
   const terrain = String(spec.terrain || spec.terrainType || "wasteland");
-  const seed = hashSeed(`rail:${renderSeed}:${terrain}`);
+  const seed = hashSeed(`rail:${renderSeed}:${terrain}:${cols}x${rows}`);
   const axis = (seed & 1) === 0 ? "h" : "v";
-  const fixed = clamp(6 + ((seed >>> 3) % 13), 6, 18);
+  const axisSize = axis === "h" ? rows : cols;
+  const fixed = clamp(
+    Math.round(axisSize * (0.25 + ((seed >>> 3) % 50) / 100)),
+    3,
+    Math.max(3, axisSize - 3),
+  );
 
   return axis === "h"
-    ? { x: 0, y: fixed - RAIL_WIDTH / 2, w: GRID, h: RAIL_WIDTH }
-    : { x: fixed - RAIL_WIDTH / 2, y: 0, w: RAIL_WIDTH, h: GRID };
+    ? { x: 0, y: fixed - RAIL_WIDTH / 2, w: cols, h: RAIL_WIDTH }
+    : { x: fixed - RAIL_WIDTH / 2, y: 0, w: RAIL_WIDTH, h: rows };
 }
 
 function routePlan(spec) {
@@ -219,8 +229,8 @@ function routePlan(spec) {
     ...spec,
     type: "wasteland",
     seed: renderSeed,
-    cols: GRID,
-    rows: GRID,
+    cols: Number(spec.cols || BASE_GRID),
+    rows: Number(spec.rows || spec.cols || BASE_GRID),
     reservedRects: [],
   });
   const roads = [...(wastelandSite.roads || [])];
@@ -233,13 +243,18 @@ function routePlan(spec) {
   };
 }
 
-function houseCandidates(blocked, border = HOUSE_BORDER) {
-  const safeBorder = clamp(Math.floor(border), 0, Math.floor((GRID - HOUSE_CELLS) / 2));
+function houseCandidates(blocked, border = HOUSE_BORDER, cols = BASE_GRID, rows = cols) {
+  const safeBorder = clamp(
+    Math.floor(border),
+    0,
+    Math.floor((Math.min(cols, rows) - HOUSE_CELLS) / 2),
+  );
   const out = [];
-  const max = GRID - HOUSE_CELLS - safeBorder;
+  const maxX = cols - HOUSE_CELLS - safeBorder;
+  const maxY = rows - HOUSE_CELLS - safeBorder;
 
-  for (let y = safeBorder; y <= max; y += 1) {
-    for (let x = safeBorder; x <= max; x += 1) {
+  for (let y = safeBorder; y <= maxY; y += 1) {
+    for (let x = safeBorder; x <= maxX; x += 1) {
       const candidate = { x, y, w: HOUSE_CELLS, h: HOUSE_CELLS };
       if (blocked.some((rect) => overlaps(candidate, rect))) continue;
       out.push(candidate);
@@ -249,8 +264,8 @@ function houseCandidates(blocked, border = HOUSE_BORDER) {
   return out;
 }
 
-function findHouseSet(rng, blocked, count, border = HOUSE_BORDER) {
-  const candidates = shuffled(rng, houseCandidates(blocked, border));
+function findHouseSet(rng, blocked, count, border = HOUSE_BORDER, cols = BASE_GRID, rows = cols) {
+  const candidates = shuffled(rng, houseCandidates(blocked, border, cols, rows));
   const chosen = [];
   let guard = 0;
 
@@ -274,19 +289,19 @@ function findHouseSet(rng, blocked, count, border = HOUSE_BORDER) {
   return search(0) ? [...chosen] : null;
 }
 
-function findRelaxedHouseSet(terrainSeed, route, requestedHouseCount) {
-  const fallbackRng = mulberry32(hashSeed(`${terrainSeed}:settlement-house-fallback-v1`));
+function findRelaxedHouseSet(terrainSeed, route, requestedHouseCount, cols, rows) {
+  const fallbackRng = mulberry32(hashSeed(`${terrainSeed}:${cols}x${rows}:settlement-house-fallback-v2`));
   const routeFootprints = route.footprints || [];
 
   for (let count = requestedHouseCount; count >= MIN_HOUSES; count -= 1) {
-    const result = findHouseSet(fallbackRng, routeFootprints, count, 0);
+    const result = findHouseSet(fallbackRng, routeFootprints, count, 0, cols, rows);
     if (result?.length >= MIN_HOUSES) return result;
   }
 
   // Final deterministic scan. This keeps the hard guarantee of at least two
   // houses while still forbidding intersections with the actual road/rail.
   const placements = [];
-  for (const candidate of houseCandidates(routeFootprints, 0)) {
+  for (const candidate of houseCandidates(routeFootprints, 0, cols, rows)) {
     if (placements.every((house) => !overlaps(candidate, house, HOUSE_GAP))) {
       placements.push(candidate);
       if (placements.length >= MIN_HOUSES) break;
@@ -296,24 +311,28 @@ function findRelaxedHouseSet(terrainSeed, route, requestedHouseCount) {
 }
 
 function createSettlementSite(normalized) {
+  const cols = Math.max(BASE_GRID, Number(normalized.cols || BASE_GRID));
+  const rows = Math.max(BASE_GRID, Number(normalized.rows || cols));
   const terrainSeed = normalized.terrainSeed || proceduralTerrainSeed(normalized.seed, normalized.terrain);
-  const rng = mulberry32(hashSeed(`${terrainSeed}:settlement-houses-v4`));
+  const rng = mulberry32(hashSeed(`${terrainSeed}:${cols}x${rows}:settlement-houses-v5`));
   const route = routePlan(normalized);
-  const requestedHouseCount = randint(rng, MIN_HOUSES, MAX_HOUSES);
+  const areaScale = Math.max(1, Math.min(2, (cols * rows) / (BASE_GRID * BASE_GRID)));
+  const maxHouses = Math.max(MAX_HOUSES, Math.round(MAX_HOUSES * areaScale));
+  const requestedHouseCount = randint(rng, MIN_HOUSES, maxHouses);
 
   let placements = null;
   for (let count = requestedHouseCount; count >= MIN_HOUSES; count -= 1) {
-    placements = findHouseSet(rng, route.reserved, count);
+    placements = findHouseSet(rng, route.reserved, count, HOUSE_BORDER, cols, rows);
     if (placements) break;
   }
 
   if (!placements || placements.length < MIN_HOUSES) {
-    placements = findRelaxedHouseSet(terrainSeed, route, requestedHouseCount);
+    placements = findRelaxedHouseSet(terrainSeed, route, requestedHouseCount, cols, rows);
   }
 
   const orderedPlacements = sortPlacementsReadingOrder(placements || []);
   const typeOffset = hashSeed(`${terrainSeed}:settlement-house-types`) % HOUSE_TYPES.length;
-  const houses = orderedPlacements.slice(0, MAX_HOUSES).map((placed, index) => {
+  const houses = orderedPlacements.slice(0, maxHouses).map((placed, index) => {
     const houseType = HOUSE_TYPES[(index + typeOffset) % HOUSE_TYPES.length];
     const rule = SETTLEMENT_HOUSE_RULES[houseType];
 
@@ -336,8 +355,8 @@ function createSettlementSite(normalized) {
   });
 
   return {
-    cols: GRID,
-    rows: GRID,
+    cols,
+    rows,
     renderSeed: normalized.renderSeed,
     routeKind: route.kind,
     roads: route.roads,
@@ -412,8 +431,8 @@ export function buildSettlementHouseBlueprints(spec = {}) {
 
 export function generateSettlementMapSvg(input = {}) {
   const site = buildSettlementLayout(input);
-  const width = GRID * CELL;
-  const height = GRID * CELL;
+  const width = site.cols * CELL;
+  const height = site.rows * CELL;
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">`,
     `<rect x="0" y="0" width="${width}" height="${height}" fill="transparent"/>`,
