@@ -4,6 +4,9 @@ export const VEHICLE_QUALITIES = [
   "Enclosed",
   "Exposed",
   "High-Performance",
+  "High-Quality Engine",
+  "Nuclear Powered",
+  "All-Terrain",
   "Rugged",
   "Single-Seater",
   "Flying",
@@ -66,6 +69,86 @@ export const STOCK_VEHICLES = [
   },
 ];
 
+export const VEHICLE_CREW_ROLES = [
+  { id:"pilot", label:"Pilot", skill:"Pilot", description:"Controls vehicle movement. Most vehicles require one Pilot." },
+  { id:"gunner", label:"Gunner", skill:"Mounted weapon", description:"Operates a mounted weapon. A gunner normally fires only one mounted weapon per turn." },
+  { id:"additional", label:"Additional Role", skill:"Varies", description:"Operates non-movement/non-attack equipment such as radio, bombardier station, or other systems." },
+];
+
+export const VEHICLE_MOVEMENT_ACTIONS = {
+  maneuver:{id:"maneuver",label:"Maneuver",action:"minor",zones:"close",description:"Move to anywhere within Close range."},
+  careful:{id:"careful",label:"Careful Piloting",action:"major",description:"Move zones equal to half Speed, rounded up. Terrain test difficulty −1."},
+  hasty:{id:"hasty",label:"Hasty Piloting",action:"major",description:"Move zones equal to Speed. Crew/passenger skill tests are +1 difficulty until the start of the Pilot's next turn."},
+  defensive:{id:"defensive",label:"Defensive Piloting",action:"major",description:"Move Speed −1 zones, then AGI + Pilot test with difficulty equal to Scale; success grants +1 Defense."},
+  focused:{id:"focused",label:"Focused Driving",action:"major",description:"AGI + Pilot D1. Move Speed zones plus +1 zone per AP spent. Crew/passenger skill tests are +1 difficulty until the Pilot's next turn."},
+};
+
+export const VEHICLE_OUT_OF_CONTROL = [
+  {id:"jarring_stop",label:"Jarring Stop",effect:"Vehicle stops immediately. Each character aboard suffers 3 CD Stun Physical damage."},
+  {id:"skid",label:"Skid",effect:"Move one zone in a random direction; if colliding, inflict 1 CD Piercing 1 Physical damage to the vehicle plus +1 CD per zone moved."},
+  {id:"spin",label:"Spin",effect:"Lose remaining movement and turn to face a different direction. Next movement action difficulty +1, or rest if stationary."},
+  {id:"stuck",label:"Stuck",effect:"Lose remaining movement. Vehicle cannot move until obstruction is removed or Pilot succeeds on difficulty 2 AGL + Pilot."},
+  {id:"plummet",label:"Plummet",effect:"Flying only: descend uncontrolled by one zone forward and three zones down. Crash for 4 CD Piercing 2 Physical damage, +2 CD per extra zone before impact."},
+];
+
+export const VEHICLE_FUEL_USAGE = {
+  0:{standard:40,highQuality:48},
+  1:{standard:35,highQuality:42},
+  2:{standard:30,highQuality:36},
+  3:{standard:25,highQuality:30},
+  4:{standard:20,highQuality:24},
+  5:{standard:15,highQuality:18},
+};
+
+export const VEHICLE_INJURIES = [
+  {id:"chassis",label:"Chassis Injury",effect:"Attacks against the vehicle deal +2 CD additional damage."},
+  {id:"engine",label:"Engine Injury",effect:"At start of each turn reduce Fuel Track by 1. If vehicle reaches 0 HP with an Engine Injury, it may explode."},
+  {id:"weapon",label:"Weapon Injury",effect:"The associated weapon system is disabled until repaired."},
+  {id:"mobility",label:"Wheel / Wing / Rudder Injury",effect:"Pilot tests +1 difficulty and Speed is reduced by 1 until repaired."},
+];
+
+export function vehicleFuelMilesPerPoint(vehicle = {}) {
+  const scale=Math.max(0,Math.min(5,Math.floor(Number(vehicle?.scale)||0)));
+  const highQuality=(vehicle?.qualities||[]).includes("High-Quality Engine");
+  const base=VEHICLE_FUEL_USAGE[scale]||VEHICLE_FUEL_USAGE[5];
+  const allTerrain=(vehicle?.qualities||[]).includes("All-Terrain");
+  return {miles:highQuality?base.highQuality:base.standard,allTerrain,scale};
+}
+
+export function consumeVehicleFuel(vehicle = {}, miles = 0, { difficultTerrain=false } = {}) {
+  const info=vehicleFuelMilesPerPoint(vehicle);
+  const effectiveMiles=Math.max(0,Number(miles)||0)*(difficultTerrain&&!info.allTerrain?1.25:1);
+  const points=effectiveMiles<=0?0:Math.ceil(effectiveMiles/Math.max(1,info.miles));
+  const current=Math.max(0,Number(vehicle?.fuelCurrent??vehicle?.fuelMax??0));
+  const next=Math.max(0,current-points);
+  return {...vehicle,fuelCurrent:next,speedZones:next<=0?0:Number(vehicle?.speedZones||0),lastFuelUse:{miles:effectiveMiles,points}};
+}
+
+export function vehicleMovementPlan(vehicle = {}, actionId = "maneuver", apSpent = 0) {
+  const speed=Math.max(0,Number(vehicle?.speedZones||0));
+  const scale=Math.max(0,Number(vehicle?.scale||0));
+  const action=VEHICLE_MOVEMENT_ACTIONS[actionId]||VEHICLE_MOVEMENT_ACTIONS.maneuver;
+  if(actionId==="maneuver") return {action,zones:1,test:null,crewDifficultyModifier:0,defenseBonus:0};
+  if(actionId==="careful") return {action,zones:Math.ceil(speed/2),test:{attribute:"AGI",skill:"Pilot",difficultyModifier:-1},crewDifficultyModifier:0,defenseBonus:0};
+  if(actionId==="hasty") return {action,zones:speed,test:null,crewDifficultyModifier:1,defenseBonus:0};
+  if(actionId==="defensive") return {action,zones:Math.max(0,speed-1),test:{attribute:"AGI",skill:"Pilot",difficulty:scale},crewDifficultyModifier:0,defenseBonus:1};
+  return {action,zones:speed+Math.max(0,Math.floor(Number(apSpent)||0)),test:{attribute:"AGI",skill:"Pilot",difficulty:1},crewDifficultyModifier:1,defenseBonus:0};
+}
+
+export function vehicleRamDamage(vehicle = {}) {
+  return Math.max(0,Number(vehicle?.impact||0));
+}
+
+export function vehicleCriticalThreshold(vehicle = {}) {
+  return Math.max(1,5+Math.max(0,Number(vehicle?.scale||0)));
+}
+
+export function applyVehicleInjury(vehicle = {}, injuryId = "chassis") {
+  const injury=VEHICLE_INJURIES.find(item=>item.id===injuryId)||VEHICLE_INJURIES[0];
+  const injuries=Array.isArray(vehicle?.injuries)?vehicle.injuries:[];
+  return {...vehicle,injuries:[...injuries,{...injury,at:Date.now()}]};
+}
+
 export function cloneVehicle(template, overrides = {}) {
   const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return {
@@ -74,6 +157,10 @@ export function cloneVehicle(template, overrides = {}) {
     id: overrides.id || `vehicle-${stamp}`,
     sourceId: template?.id || "custom",
     currentHp: Number(overrides.currentHp ?? template?.maxHp ?? 1),
+    fuelMax: Math.max(0, Number(overrides.fuelMax ?? template?.fuelMax ?? 3)),
+    fuelCurrent: Math.max(0, Number(overrides.fuelCurrent ?? overrides.fuelMax ?? template?.fuelCurrent ?? template?.fuelMax ?? 3)),
+    crewRoles: { ...(overrides.crewRoles ?? template?.crewRoles ?? { pilot:"", gunners:[], additional:[] }) },
+    injuries: (overrides.injuries ?? template?.injuries ?? []).map((entry)=>({ ...entry })),
     maxHp: Number(overrides.maxHp ?? template?.maxHp ?? 1),
     qualities: [...(overrides.qualities ?? template?.qualities ?? [])],
     locations: (overrides.locations ?? template?.locations ?? []).map((entry) => ({ ...entry })),
