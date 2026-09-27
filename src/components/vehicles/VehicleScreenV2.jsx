@@ -282,12 +282,35 @@ export default function VehicleScreenV2({character=null,setCharacter=null,onRoll
 
     <section className="vehicle-v2-damage pip-panel">
       <div className="vehicle-v2-section-head"><h3>{labels.damage}</h3><button className="pip-btn" onClick={()=>repair(active)} disabled={!repairPlan||repairPlan.restore<=0||!canPay(inventory,repairPlan.cost)}>{labels.repair}</button></div>
-      <div className="vehicle-v2-damage-row"><span>Chassis</span><Bar value={active.currentHp??active.maxHp} max={active.maxHp}/><b>{active.currentHp??active.maxHp}/{active.maxHp}</b></div>
-      {(active.injuries||[]).map((injury,index)=><div className="vehicle-v2-injury" key={injury.id+"-"+index}><b>{injury.label}</b><small>{injury.effect}</small></div>)}
-      <div className="vehicle-v2-inline"><select value={injuryType} onChange={e=>setInjuryType(e.target.value)}>{VEHICLE_INJURIES.map(i=><option key={i.id} value={i.id}>{i.label}</option>)}</select><button className="pip-btn" onClick={()=>patchVehicle(active.id,v=>applyVehicleInjury(v,injuryType))}>{labels.addInjury}</button></div>
-      <div className="vehicle-v2-inline"><select value={repairLocation} onChange={e=>setRepairLocation(e.target.value)}><option>Chassis</option>{(active.locations||[]).map((l,i)=><option key={l.name+"-"+i}>{l.name}</option>)}</select><button className="pip-btn" onClick={()=>setHp(active.id,-5)}>{labels.damageButton}</button></div>
+      <div className="vehicle-v2-hp-editor">
+        <span>{damageLabels.hp}</span>
+        <div className="vehicle-v2-hp-controls">
+          <button type="button" className="pip-btn" onClick={()=>setHp(active.id,-5)}>−5</button>
+          <button type="button" className="pip-btn" onClick={()=>setHp(active.id,-1)}>−1</button>
+          <input type="number" min="0" max={active.maxHp} value={active.currentHp??active.maxHp} onChange={e=>setVehicleHp(e.target.value)}/>
+          <span>/ {active.maxHp}</span>
+          <button type="button" className="pip-btn" onClick={()=>setHp(active.id,1)}>+1</button>
+          <button type="button" className="pip-btn" onClick={()=>setHp(active.id,5)}>+5</button>
+        </div>
+        <Bar value={active.currentHp??active.maxHp} max={active.maxHp}/>
+      </div>
+      <div className="vehicle-v2-crit-help"><strong>{damageLabels.threshold}: {criticalThreshold}</strong><small>{damageLabels.help}</small></div>
+      <div className="vehicle-v2-damage-form">
+        <label><span>{damageLabels.incoming}</span><input type="number" min="0" value={incomingDamage} onChange={e=>setIncomingDamage(Number(e.target.value)||0)}/></label>
+        <label><span>{damageLabels.type}</span><select value={damageType} onChange={e=>setDamageType(e.target.value)}><option>Physical</option><option>Energy</option></select></label>
+        <label><span>{damageLabels.location}</span><select value={damageLocation} onChange={e=>setDamageLocation(e.target.value)}>{vehicleLocations.map((location,index)=><option key={location.name+"-"+index} value={location.name}>{location.roll} · {location.name}</option>)}</select></label>
+        <div className="vehicle-v2-damage-preview"><span>DR <b>{damageDr}</b></span><span>{damageLabels.after} <b>{postDrDamage}</b></span><span>{damageLabels.threshold} <b>{criticalThreshold}</b></span></div>
+        <button type="button" className="pip-btn is-primary" onClick={applyIncomingDamage}>{damageLabels.apply}</button>
+      </div>
+      {criticalPending?<div className="vehicle-v2-critical-ready"><strong>⚠ {damageLabels.triggered}</strong><span>{criticalPending.damage} ≥ {criticalThreshold}</span><button type="button" className="pip-btn is-primary" onClick={rollCriticalLocation}>{damageLabels.roll}</button></div>:null}
+      <div className="vehicle-v2-injuries">
+        {(active.injuries||[]).length?(active.injuries||[]).map((injury,index)=><div className="vehicle-v2-injury" key={injury.id+"-"+index}>
+          <div><b>{injury.label}</b>{injury.location?<span>{injury.location}{injury.roll?" · d20 "+injury.roll:""}</span>:null}<small>{injury.effect}</small></div>
+          <div className="vehicle-v2-injury-actions"><button type="button" className="pip-btn" onClick={()=>repairCriticalInjury(injury)}>{damageLabels.repair}</button><button type="button" className="pip-btn" onClick={()=>patchVehicle(active.id,v=>removeVehicleInjury(v,injury.id))}>{damageLabels.remove}</button></div>
+        </div>):<small>{labels.none}</small>}
+      </div>
+      <details className="vehicle-v2-manual-injury"><summary>{labels.addInjury}</summary><div className="vehicle-v2-inline"><select value={injuryType} onChange={e=>setInjuryType(e.target.value)}>{VEHICLE_INJURIES.map(i=><option key={i.id} value={i.id}>{i.label}</option>)}</select><button className="pip-btn" onClick={()=>patchVehicle(active.id,v=>applyVehicleInjury(v,injuryType))}>{labels.addInjury}</button></div></details>
     </section>
-
     <section className="vehicle-v2-fuel pip-panel">
       <div className="vehicle-v2-section-head"><h3>{labels.fuel}</h3><button className="pip-btn" onClick={()=>patchVehicle(active.id,v=>({...v,fuelCurrent:Math.min(Number(v.fuelMax||0),Number(v.fuelCurrent||0)+1)}))}>{labels.refuel}</button></div>
       <div className="vehicle-v2-fuel-main"><strong>{active.fuelCurrent??active.fuelMax??0}/{active.fuelMax??0}</strong><Bar value={active.fuelCurrent??active.fuelMax??0} max={Math.max(1,active.fuelMax||5)}/></div>
