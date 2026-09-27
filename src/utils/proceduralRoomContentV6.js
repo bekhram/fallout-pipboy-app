@@ -3,6 +3,7 @@ import { balanceEncounterEnemies, summarizeEncounter } from "./proceduralEncount
 import {
   generateProceduralWastelandPoiData,
   generateLocalizedProceduralWastelandPois,
+  localizeProceduralWastelandPois,
 } from "./proceduralWastelandPoi.js";
 
 function isWasteland(spec = {}) {
@@ -113,6 +114,20 @@ export function generateLocalizedProceduralRooms(spec = {}, lang = "en") {
   return isSuperDuperMart(spec)
     ? localizeProceduralRoomData(data, lang)
     : V5.localizeProceduralRoomData(data, lang);
+}
+
+export function generateProceduralRoomBundle(spec = {}, lang = "en") {
+  const data = generateProceduralRoomData(spec);
+  const localized = isWasteland(spec)
+    ? localizeProceduralWastelandPois(data, lang)
+    : isSuperDuperMart(spec)
+      ? localizeProceduralRoomData(data, lang)
+      : V5.localizeProceduralRoomData(data, lang);
+  return {
+    data,
+    localized,
+    encounter: summarizeEncounter(spec, data),
+  };
 }
 
 export const LOOT_RARITIES = V5.LOOT_RARITIES;
