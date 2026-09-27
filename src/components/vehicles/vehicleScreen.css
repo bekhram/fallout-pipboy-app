@@ -1,1 +1,39 @@
 .vehicle-screen{display:grid;gap:12px;padding-bottom:86px}.vehicle-header h2,.vehicle-card h3,.vehicle-builder h3{margin:0}.vehicle-header{display:grid;gap:8px}.vehicle-modes,.vehicle-actions{display:flex;gap:8px;flex-wrap:wrap}.vehicle-card{display:grid;gap:10px;margin-bottom:10px}.vehicle-card.is-active{outline:1px solid currentColor}.vehicle-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.vehicle-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:6px}.vehicle-stats span{border:1px solid currentColor;padding:6px;min-width:0}.vehicle-stats b{display:block;font-size:.72em;opacity:.76}.vehicle-qualities{margin:0}.vehicle-table-wrap{overflow-x:auto}.vehicle-table{width:100%;border-collapse:collapse;min-width:420px}.vehicle-table th,.vehicle-table td{border-bottom:1px solid currentColor;padding:5px;text-align:left;font-size:.86em}.vehicle-weapon{padding:6px 0;border-bottom:1px dashed currentColor}.vehicle-cost{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.82em}.vehicle-cost span{border:1px solid currentColor;padding:3px 6px}.vehicle-cost .is-missing{opacity:.45;text-decoration:line-through}.vehicle-detail,.vehicle-repair{display:grid;gap:8px}.vehicle-repair label{display:grid;gap:4px}.vehicle-repair select,.vehicle-form input{width:100%;box-sizing:border-box;background:transparent;color:inherit;border:1px solid currentColor;padding:7px}.vehicle-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}.vehicle-form label{display:grid;gap:4px}.vehicle-quality-picker{display:flex;flex-wrap:wrap;gap:8px}.vehicle-quality-picker label{border:1px solid currentColor;padding:5px 7px}.vehicle-builder{display:grid;gap:12px}.vehicle-catalog{display:grid;gap:10px}@media(max-width:620px){.vehicle-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.vehicle-actions .pip-btn{flex:1 1 42%}.vehicle-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vehicle-rf-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin:12px 0;
+}
+.vehicle-rf-block{
+  display:grid;
+  gap:8px;
+  padding:10px;
+  border:1px solid rgba(126,255,166,.18);
+  border-radius:10px;
+  background:rgba(6,25,17,.72);
+}
+.vehicle-rf-block h4{margin:0}
+.vehicle-rf-block label{display:grid;gap:4px}
+.vehicle-rf-block input,.vehicle-rf-block select{min-width:0}
+.vehicle-fuel-track,.vehicle-inline-controls,.vehicle-ram-result{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.vehicle-fuel-track strong{min-width:56px;text-align:center}
+.vehicle-inline-controls input{width:90px}
+.vehicle-movement-result{
+  display:grid;
+  gap:4px;
+  padding:8px;
+  border:1px solid rgba(126,255,166,.14);
+  border-radius:8px;
+}
+.vehicle-injury-list{display:grid;gap:6px}
+.vehicle-injury-list>div{display:grid;gap:2px;padding:6px;border-left:2px solid rgba(255,190,90,.7)}
+.vehicle-out-control{display:grid;gap:5px}
+.vehicle-out-control details{border:1px solid rgba(126,255,166,.12);padding:6px;border-radius:7px}
+@media(max-width:760px){
+  .vehicle-rf-grid{grid-template-columns:1fr}
+}
