@@ -614,7 +614,7 @@ function EnemyHpEditor({ token, hp, maxHp, onCommit }) {
 
 export default function GmSessionMapV2({ session: sessionProp = null }) {
   const { i18n } = useTranslation();
-  const bridgedSession = useLiveSessionBridge();
+  const bridgedSession = useLiveSessionBridge(!sessionProp);
   const session = sessionProp || bridgedSession;
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
   const text = COPY[language];
