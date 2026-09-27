@@ -340,3 +340,23 @@
     grid-template-columns:1fr;
   }
 }
+
+.vehicle-v2-move-status,
+.vehicle-v2-control-warning{
+  display:grid;
+  gap:4px;
+  padding:8px;
+  border-radius:7px;
+}
+.vehicle-v2-move-status{
+  border:1px solid rgba(126,255,166,.18);
+  background:rgba(7,31,20,.7);
+}
+.vehicle-v2-control-warning{
+  border:1px solid rgba(255,190,90,.45);
+  background:rgba(73,40,7,.34);
+}
+.vehicle-v2-chassis-bonus{
+  grid-column:1/-1;
+  border-color:rgba(255,190,90,.5)!important;
+}
