@@ -17,7 +17,7 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
   const text=COPY[lang(i18n.resolvedLanguage||i18n.language)];
   const scenes=Array.isArray(session?.tacticalScenes)?session.tacticalScenes:[];
   const [name,setName]=useState("");
-  const [grid,setGrid]=useState("12x12");
+  const [grid,setGrid]=useState("24x24");
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
   const selectedId=String(session?.selectedSceneId||session?.tacticalScene?.sceneId||"");
@@ -78,7 +78,7 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
     <section className="pip-panel gm-scene-manager__create">
       <div className="pip-panel-title">{text.newScene}</div>
       <label><span>{text.name}</span><input className="pip-input" value={name} onChange={e=>setName(e.target.value)} placeholder="Scene 2"/></label>
-      <label><span>{text.grid}</span><select className="pip-input" value={grid} onChange={e=>setGrid(e.target.value)}><option>8x8</option><option>10x10</option><option>12x12</option><option>16x16</option><option>20x20</option><option>24x24</option><option>30x30</option></select></label>
+      <label><span>{text.grid}</span><select className="pip-input" value={grid} onChange={e=>setGrid(e.target.value)}><option>24x24</option><option>36x36</option><option>48x48</option></select></label>
       <button type="button" className="pip-btn is-primary" disabled={Boolean(busy)} onClick={createScene}>{text.create}</button>
     </section>
     <div className="gm-scene-manager__grid">
