@@ -607,3 +607,37 @@
   top:calc(100% + 2px);
   max-width:96px;
 }
+
+.gm-map-creatures__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.gm-lazy-creature-adder{
+  position:relative;
+}
+.gm-lazy-creature-adder__panel{
+  margin-top:6px;
+  display:grid;
+  grid-template-columns:minmax(140px,1.4fr) minmax(150px,1.6fr) minmax(120px,1fr) auto auto;
+  gap:6px;
+  align-items:center;
+}
+.gm-map-lazy-panel,
+.gm-map-rooms{
+  content-visibility:auto;
+  contain-intrinsic-size:48px;
+}
+@media(max-width:780px){
+  .gm-lazy-creature-adder{
+    width:100%;
+  }
+  .gm-lazy-creature-adder__panel{
+    grid-template-columns:1fr 1fr;
+  }
+  .gm-lazy-creature-adder__panel .pip-btn{
+    min-height:30px;
+  }
+}
