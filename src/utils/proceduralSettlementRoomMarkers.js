@@ -6,8 +6,6 @@ import { getProceduralRoomBounds } from "./proceduralRoomLayout.js";
 import { buildRedRocketRoomLayout } from "./proceduralRedRocket.js";
 import { buildSuperDuperMartRoomLayout } from "./proceduralSuperDuperMartAssets.js";
 
-const GRID = 24;
-
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, Number(value) || 0));
 }
@@ -31,33 +29,33 @@ function markerSymbol(room = {}) {
   return "?";
 }
 
-function roomAnchor(bounds = {}) {
+function roomAnchor(bounds = {}, cols = 24, rows = cols) {
   const explicitX = Number(bounds.markerX);
   const explicitY = Number(bounds.markerY);
 
   if (Number.isFinite(explicitX) && Number.isFinite(explicitY)) {
     return {
-      x: clamp(Math.floor(explicitX), 0, GRID - 1),
-      y: clamp(Math.floor(explicitY), 0, GRID - 1),
+      x: clamp(explicitX, 0, Math.max(0, cols - 1)),
+      y: clamp(explicitY, 0, Math.max(0, rows - 1)),
     };
   }
 
   return {
     x: clamp(
-      Math.floor(Number(bounds.x || 0) + Math.max(1, Number(bounds.w || 1)) / 2),
+      Number(bounds.x || 0) + Math.max(1, Number(bounds.w || 1)) / 2,
       0,
-      GRID - 1,
+      Math.max(0, cols - 1),
     ),
     y: clamp(
-      Math.floor(Number(bounds.y || 0) + Math.max(1, Number(bounds.h || 1)) / 2),
+      Number(bounds.y || 0) + Math.max(1, Number(bounds.h || 1)) / 2,
       0,
-      GRID - 1,
+      Math.max(0, rows - 1),
     ),
   };
 }
 
-function numberedMarker(room = {}, bounds = {}, index, idPrefix) {
-  const anchor = roomAnchor(bounds);
+function numberedMarker(room = {}, bounds = {}, index, idPrefix, cols = 24, rows = cols) {
+  const anchor = roomAnchor(bounds, cols, rows);
 
   return {
     id: `${idPrefix}:${room.id || bounds.id}`,
@@ -95,7 +93,7 @@ function generateNumberedRoomMarkers(spec = {}, expectedType, idPrefix) {
   return rooms.flatMap((room, index) => {
     const bounds = boundsByRoom[room.id];
     if (!bounds) return [];
-    return [numberedMarker(room, bounds, index, idPrefix)];
+    return [numberedMarker(room, bounds, index, idPrefix, Number(spec?.cols || 24), Number(spec?.rows || spec?.cols || 24))];
   });
 }
 
@@ -119,7 +117,7 @@ function generateFixedLayoutRoomMarkers(spec = {}, expectedType, idPrefix, layou
       baseRoomId: content.baseRoomId || bounds.baseRoomId || bounds.id,
       roomInstance: content.roomInstance || bounds.instance || 1,
     };
-    return numberedMarker(room, bounds, index, idPrefix);
+    return numberedMarker(room, bounds, index, idPrefix, Number(spec?.cols || 24), Number(spec?.rows || spec?.cols || 24));
   });
 }
 
