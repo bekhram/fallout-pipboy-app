@@ -2,10 +2,16 @@ import normalAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-n
 import raiderAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-raider.png";
 import swampAsset from "../assets/wasteland/super-duper-mart/super-duper-mart-swamp.png";
 
-const GRID = 24;
-const FOOTPRINT = 30;
-const TOP_ENVIRONMENT_ROWS = 5;
-const EDGE_ROAD = { x: 0, y: GRID - 2, w: GRID, h: 2 };
+const BASE_GRID = 24;
+const BASE_FOOTPRINT = 30;
+const BASE_TOP_ENVIRONMENT_ROWS = 5;
+
+function gridSize(spec = {}) {
+  return Math.max(24, Number(spec.cols || spec.rows || BASE_GRID));
+}
+function scaleCell(value, grid) {
+  return (Number(value) / BASE_GRID) * grid;
+}
 
 function hashSeed(value) {
   const text = String(value ?? "0");
@@ -46,7 +52,8 @@ export function superDuperMartAssetPool(spec = {}) {
  * battlemap grid cells (24x24), not pixels, so the markers stay aligned while
  * the oversized image itself keeps its current 30-cell visual footprint.
  */
-export function buildSuperDuperMartRoomLayout() {
+export function buildSuperDuperMartRoomLayout(spec = {}) {
+  const grid = gridSize(spec);
   return [
     { id: "sales-floor", name: "Sales Floor", x: 5, y: 7, w: 11, h: 8, markerX: 10, markerY: 10 },
     { id: "checkout", name: "Checkout", x: 7, y: 14, w: 8, h: 4, markerX: 11, markerY: 16 },
@@ -55,37 +62,46 @@ export function buildSuperDuperMartRoomLayout() {
     { id: "cold-room", name: "Cold Room", x: 13, y: 3, w: 5, h: 4, markerX: 15, markerY: 4 },
     { id: "warehouse", name: "Warehouse", x: 16, y: 7, w: 6, h: 8, markerX: 19, markerY: 10 },
     { id: "loading-bay", name: "Loading Bay", x: 17, y: 14, w: 6, h: 5, markerX: 20, markerY: 16 },
-  ];
+  ].map((room) => ({
+    ...room,
+    x: scaleCell(room.x, grid),
+    y: scaleCell(room.y, grid),
+    w: scaleCell(room.w, grid),
+    h: scaleCell(room.h, grid),
+    markerX: scaleCell(room.markerX, grid),
+    markerY: scaleCell(room.markerY, grid),
+  }));
 }
 
 export function buildSuperDuperMartAssetLayout(spec = {}) {
   const terrain = normalizeTerrain(spec);
+  const grid = gridSize(spec);
   const pool = superDuperMartAssetPool(spec);
   const assetIndex = pool.length === 1
     ? 0
-    : hashSeed(`${spec.seed || "1"}:${terrain}:super-duper-mart`) % pool.length;
+    : hashSeed(`${spec.seed || "1"}:${terrain}:${grid}x${grid}:super-duper-mart`) % pool.length;
   const chosen = pool[assetIndex];
+  const scale = grid / BASE_GRID;
+  const footprint = BASE_FOOTPRINT * scale;
+  const topEnvironmentRows = BASE_TOP_ENVIRONMENT_ROWS * scale;
   const building = {
     id: "super-duper-mart",
     x: 0,
-    y: -1,
-    w: FOOTPRINT,
-    h: FOOTPRINT,
+    y: -1 * scale,
+    w: footprint,
+    h: footprint,
     assetSrc: chosen.src,
     assetIndex,
     assetVariant: chosen.variant,
   };
 
   return {
-    grid: GRID,
+    grid,
     terrain,
     buildings: [building],
-    // The market image has transparent/open space across the top of the map.
-    // Reserve only the occupied lower area so wasteland props can generate in
-    // those top rows without spawning over the building or the bottom road.
     environmentReservedRects: [
-      { x: 0, y: TOP_ENVIRONMENT_ROWS, w: GRID, h: GRID - TOP_ENVIRONMENT_ROWS - 2 },
+      { x: 0, y: topEnvironmentRows, w: grid, h: Math.max(0, grid - topEnvironmentRows - 2 * scale) },
     ],
-    roadRect: EDGE_ROAD,
+    roadRect: { x: 0, y: grid - 2 * scale, w: grid, h: 2 * scale },
   };
 }
