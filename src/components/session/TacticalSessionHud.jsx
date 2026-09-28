@@ -164,7 +164,7 @@ export default function TacticalSessionHud({ session }) {
     </div>
   );
 
-  const initiativeRail = scene ? <aside className={`tactical-initiative-rail${collapsed ? " is-collapsed" : ""}`} aria-label="Initiative order">
+  const initiativeRail = scene && orderIds.length ? <aside className={`tactical-initiative-rail${collapsed ? " is-collapsed" : ""}`} aria-label="Initiative order">
         <button
           type="button"
           className="tactical-initiative-rail__toggle"
@@ -204,7 +204,9 @@ export default function TacticalSessionHud({ session }) {
   return (
     <>
       {roundBadge}
-      {initiativeTarget ? createPortal(initiativeRail, initiativeTarget) : initiativeRail}
+      {session?.mode === "host"
+        ? (initiativeTarget && initiativeRail ? createPortal(initiativeRail, initiativeTarget) : null)
+        : initiativeRail}
 
       {session?.mode === "player" && playerDockTarget
         ? createPortal(playerDock, playerDockTarget)
