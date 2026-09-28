@@ -1,7 +1,42 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDefaultForm } from '../src/constants.js';
-import { createCharacterPrintModel } from '../src/utils/characterPrint.js';
+import { fileURLToPath } from 'node:url';
+import { createServer } from 'vite';
+
+// The adapter shares the app's weapon helpers, which import browser i18n and
+// JSON dictionaries. Exercise that real module graph through the same Vite
+// transforms as the app instead of relying on Node's incompatible JSON loader.
+// Node runs test files in separate processes; restore storage after this file.
+const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+const stored = new Map();
+Object.defineProperty(globalThis, 'localStorage', {
+  configurable:true,
+  value:{
+    getItem:key => stored.get(String(key)) ?? null,
+    setItem:(key,value) => stored.set(String(key),String(value)),
+    removeItem:key => stored.delete(String(key)),
+    clear:() => stored.clear(),
+  },
+});
+const restoreStorage = () => {
+  if (storageDescriptor) Object.defineProperty(globalThis, 'localStorage', storageDescriptor);
+  else delete globalThis.localStorage;
+};
+after(restoreStorage);
+let buildDefaultForm, createCharacterPrintModel;
+const vite = await createServer({
+  root:fileURLToPath(new URL('../',import.meta.url)),
+  configFile:false,
+  logLevel:'error',
+  appType:'custom',
+  server:{ middlewareMode:true, hmr:false },
+});
+try {
+  ({ buildDefaultForm } = await vite.ssrLoadModule('/src/constants.js'));
+  ({ createCharacterPrintModel } = await vite.ssrLoadModule('/src/utils/characterPrint.js'));
+} finally {
+  await vite.close();
+}
 
 test('print snapshot preserves zero HP/luck and derived overrides without mutations', () => {
   const form = { ...buildDefaultForm(), characterName:'Їжак / Łucja', currentHp:'0', currentLuckPoints:'0', maxHpOverride:'20', radiationHp:'3', defenseOverride:'4', initiativeOverride:'15', mdOverride:'2', carryWeightOverride:'190', caps:'0' };
