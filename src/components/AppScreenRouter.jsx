@@ -1,7 +1,7 @@
 import React from "react";
 import MenuScreen from "./menu/MenuScreen.jsx";
 import SessionScreen from "./session/SessionScreen.jsx";
-import StatusScreen from "./status/StatusScreen.jsx";
+import StatusScreen from "./status/PrintableStatusScreen.jsx";
 import SpecialScreen from "./special/SpecialScreen.jsx";
 import WeaponsScreen from "./weapons/WeaponsScreen.jsx";
 import InventoryScreen from "./inventory/InventoryScreen.jsx";
@@ -171,6 +171,7 @@ export default function AppScreenRouter({
       return (
         <StatusScreen
           form={form}
+          globalWeapons={globalWeapons}
           armor={form.armor}
           currentLuckPoints={currentLuckPoints}
           onSpendLuck={onSpendLuck}
