@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import "./gmBattlemapTools.css";
+import EncounterDeckDrawer from "./EncounterDeckDrawer.jsx";
 
 const STORAGE_KEY = "pip2d20_gm_tools_open_v1";
 const PLAYER_STORAGE_KEY = "pip2d20_player_tools_open_v2";
@@ -273,5 +274,5 @@ export default function GmBattlemapTools({ session, role = "gm" }) {
     grid
   );
 
-  return <>{panel}{overlay}</>;
+  return <>{panel}{role === "gm" ? <EncounterDeckDrawer session={session} container={container} /> : null}{overlay}</>;
 }
