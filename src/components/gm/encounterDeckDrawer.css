@@ -473,3 +473,40 @@ body > .encounter-deck-drawer--modal .encounter-deck-card__art img{
     padding:8px!important;
   }
 }
+
+
+/* Final artwork containment fix: preserve the entire token image inside the card. */
+body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+  width:100%!important;
+  max-width:440px!important;
+  height:240px!important;
+  min-height:240px!important;
+  max-height:240px!important;
+  aspect-ratio:auto!important;
+  margin:0 auto!important;
+  padding:8px!important;
+  box-sizing:border-box!important;
+  border-radius:12px!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:rgba(0,0,0,.08)!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__art img{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+  object-position:center center!important;
+  display:block!important;
+  border-radius:0!important;
+}
+@media(max-width:780px){
+  body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+    height:200px!important;
+    min-height:200px!important;
+    max-height:200px!important;
+  }
+}
