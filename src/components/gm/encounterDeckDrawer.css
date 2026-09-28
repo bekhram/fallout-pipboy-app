@@ -510,3 +510,16 @@ body > .encounter-deck-drawer--modal .encounter-deck-card__art img{
     max-height:200px!important;
   }
 }
+
+.encounter-deck-card__rank-plan{
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  padding:3px 6px;
+  border:1px solid #485348;
+  border-radius:5px;
+  font-size:.48rem;
+  font-weight:900;
+  letter-spacing:.04em;
+  line-height:1.2;
+}
