@@ -15,10 +15,10 @@
   padding:10px;border:1px solid color-mix(in srgb,currentColor 40%,transparent);border-radius:10px;
   background:color-mix(in srgb,var(--pip-bg,#071008) 96%,transparent);
   box-shadow:0 10px 34px #000b;backdrop-filter:blur(10px);
-  transform:translateX(calc(-100% - 18px));opacity:0;pointer-events:none;
-  transition:transform .2s ease,opacity .2s ease;
+  transform:translateX(calc(-100% - 18px));opacity:0;visibility:hidden;pointer-events:none;
+  transition:transform .2s ease,opacity .2s ease,visibility 0s linear .2s;
 }
-.encounter-deck-drawer.is-open{transform:none;opacity:1;pointer-events:auto}
+.encounter-deck-drawer.is-open{transform:none;opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s}
 .encounter-deck-drawer__head{display:flex;align-items:center;justify-content:space-between;gap:10px}.encounter-deck-drawer__head>div{display:grid;gap:2px}.encounter-deck-drawer__head small{opacity:.58;font-size:.48rem}.encounter-deck-drawer__head strong{font-size:.86rem;letter-spacing:.05em}.encounter-deck-drawer__head>button{width:30px;height:30px;border:1px solid color-mix(in srgb,currentColor 35%,transparent);background:transparent;color:inherit;border-radius:7px;font:inherit;font-size:18px}
 .encounter-deck-setup{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end}.encounter-deck-setup label{display:grid;gap:3px;font-size:.5rem}.encounter-deck-setup select{min-width:0;width:100%;padding:7px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);border-radius:7px;background:var(--pip-bg,#071008);color:inherit}.encounter-deck-count{display:flex;gap:3px}.encounter-deck-count button{width:30px;height:31px;border:1px solid color-mix(in srgb,currentColor 28%,transparent);background:transparent;color:inherit;border-radius:6px;font:inherit}.encounter-deck-count button.is-active{border-color:currentColor;background:color-mix(in srgb,currentColor 15%,transparent)}.encounter-deck-setup>.pip-btn{grid-column:1/-1}
 .encounter-deck-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 7px;border:1px solid color-mix(in srgb,currentColor 15%,transparent);border-radius:7px;font-size:.5rem}.encounter-deck-status button{margin-left:auto;border:0;background:transparent;color:inherit;font:inherit;font-size:.48rem;text-decoration:underline}
@@ -180,5 +180,21 @@ body > .encounter-deck-drawer{
   }
   .encounter-deck-card__art{
     min-height:210px!important;
+  }
+}
+
+
+/* Fully hide the fixed GM encounter drawer when closed.
+   The desktop workspace offset can otherwise leave part of the translated
+   drawer visible over the left navigation. */
+.session-gm-workspace-wrap--single > .encounter-deck-drawer:not(.is-open){
+  transform:translateX(calc(-100% - 240px))!important;
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+@media(max-width:980px){
+  .session-gm-workspace-wrap--single > .encounter-deck-drawer:not(.is-open){
+    transform:translateX(calc(-100% - 18px))!important;
   }
 }
