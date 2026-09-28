@@ -271,3 +271,64 @@ body > .encounter-deck-drawer .encounter-deck-cards{
     bottom:max(8px,env(safe-area-inset-bottom))!important;
   }
 }
+
+
+/* Encounter deck modal: opened from the session chat/tools menu. */
+body > .encounter-deck-rail,
+.session-gm-workspace-wrap--single > .encounter-deck-rail{
+  display:none!important;
+}
+
+.encounter-deck-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:2147483198;
+  border:0;
+  margin:0;
+  padding:0;
+  background:rgba(0,0,0,.64);
+  backdrop-filter:blur(3px);
+  cursor:default;
+}
+
+body > .encounter-deck-drawer--modal{
+  position:fixed!important;
+  left:50%!important;
+  top:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  width:min(720px,calc(100vw - 96px))!important;
+  max-width:720px!important;
+  height:min(84dvh,920px)!important;
+  max-height:84dvh!important;
+  margin:0!important;
+  z-index:2147483199!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+  overflow:hidden!important;
+  grid-template-rows:auto auto auto minmax(0,1fr) auto auto auto!important;
+}
+
+body > .encounter-deck-drawer--modal .encounter-deck-cards{
+  min-height:0!important;
+  overflow:auto!important;
+}
+
+@media(max-width:780px){
+  body > .encounter-deck-drawer--modal{
+    width:calc(100vw - 20px)!important;
+    height:calc(100dvh - 84px)!important;
+    max-height:calc(100dvh - 84px)!important;
+    top:calc(50% + 4px)!important;
+  }
+}
+@media(max-width:430px){
+  body > .encounter-deck-drawer--modal{
+    width:calc(100vw - 12px)!important;
+    height:calc(100dvh - 70px)!important;
+    max-height:calc(100dvh - 70px)!important;
+    padding:8px!important;
+  }
+}
