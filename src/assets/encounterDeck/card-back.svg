@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="336" viewBox="0 0 240 336">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#203b2a"/><stop offset="1" stop-color="#07150e"/></linearGradient><pattern id="p" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M0 8h16M8 0v16" stroke="#7cff9f" stroke-opacity=".08" stroke-width="1"/></pattern></defs>
+<rect x="4" y="4" width="232" height="328" rx="14" fill="url(#g)" stroke="#78ff98" stroke-width="3"/>
+<rect x="14" y="14" width="212" height="308" rx="10" fill="url(#p)" stroke="#78ff98" stroke-opacity=".35"/>
+<circle cx="120" cy="168" r="58" fill="none" stroke="#78ff98" stroke-width="5"/>
+<path d="M120 116v104M68 168h104" stroke="#78ff98" stroke-width="5"/>
+<circle cx="120" cy="168" r="14" fill="#78ff98"/>
+<text x="120" y="48" text-anchor="middle" font-family="monospace" font-size="18" font-weight="700" fill="#78ff98">PIP / 2D20</text>
+<text x="120" y="292" text-anchor="middle" font-family="monospace" font-size="16" font-weight="700" fill="#78ff98">ENCOUNTER</text>
+<text x="120" y="314" text-anchor="middle" font-family="monospace" font-size="16" font-weight="700" fill="#78ff98">DECK</text>
+</svg>
