@@ -447,3 +447,23 @@ body:has(.session-gm-host--organic)::after { display: none; }
 .gm-organic-workspace .gm-tactical-environment-edit[hidden]{
   display:none!important;
 }
+
+
+/* GM sidebar isolation hotfix.
+   Prevent legacy/floating tactical layers from painting over the left navigation. */
+.gm-organic-workspace .gm-organic-nav{
+  position:sticky!important;
+  z-index:250!important;
+  overflow:hidden!important;
+  background:var(--gm-bg,#071411)!important;
+  isolation:isolate!important;
+}
+.gm-organic-workspace .gm-organic-nav > *{
+  position:relative;
+  z-index:2;
+}
+.gm-organic-workspace .gm-organic-content{
+  position:relative;
+  z-index:1;
+  min-width:0;
+}
