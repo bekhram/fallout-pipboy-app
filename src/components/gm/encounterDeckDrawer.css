@@ -437,3 +437,39 @@ body > .encounter-deck-drawer--modal .encounter-deck-card__art img{
     width:min(220px,68vw)!important;
   }
 }
+
+
+/* Encounter deck artwork: show the complete source token without circular clipping. */
+body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+  width:100%!important;
+  max-width:460px!important;
+  height:220px!important;
+  aspect-ratio:auto!important;
+  min-height:220px!important;
+  max-height:220px!important;
+  margin:0 auto!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+  border-radius:12px!important;
+  overflow:visible!important;
+  background:rgba(0,0,0,.10)!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__art img{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  display:block!important;
+  border-radius:8px!important;
+}
+@media(max-width:780px){
+  body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+    max-width:100%!important;
+    height:180px!important;
+    min-height:180px!important;
+    max-height:180px!important;
+    padding:8px!important;
+  }
+}
