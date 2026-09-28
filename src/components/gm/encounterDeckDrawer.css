@@ -332,3 +332,44 @@ body > .encounter-deck-drawer--modal .encounter-deck-cards{
     padding:8px!important;
   }
 }
+
+
+/* Encounter deck modal sizing: keep cards readable without dominating the screen. */
+body > .encounter-deck-drawer--modal .encounter-deck-cards{
+  justify-items:center!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card{
+  width:min(520px,100%)!important;
+  grid-template-rows:auto 190px auto auto auto!important;
+  padding:9px!important;
+  gap:7px!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+  min-height:190px!important;
+  max-height:190px!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card header b{
+  font-size:1.2rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card header span{
+  font-size:.76rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card p{
+  font-size:.62rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card small{
+  font-size:.56rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__groups span{
+  font-size:.54rem!important;
+}
+@media(max-width:780px){
+  body > .encounter-deck-drawer--modal .encounter-deck-card{
+    width:100%!important;
+    grid-template-rows:auto 160px auto auto auto!important;
+  }
+  body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+    min-height:160px!important;
+    max-height:160px!important;
+  }
+}
