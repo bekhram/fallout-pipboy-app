@@ -4,6 +4,7 @@ import {createPortal} from "react-dom";
 import {buildEncounterDeck,ENCOUNTER_SUIT_META,encounterCardLabel,encounterSummary,rollEncounterCount} from "../../data/encounterDeckRoyalFlush.js";
 import cardBack from "../../assets/encounterDeck/card-back.svg";
 import {getBestiaryTokenUrl} from "../../utils/bestiaryTokens.js";
+import {applyNpcRank} from "../../utils/npcCombat.js";
 import "./encounterDeckDrawer.css";
 
 const COPY={
@@ -15,7 +16,30 @@ const COPY={
 function langCode(){const code=String(document?.documentElement?.lang||"en").toLowerCase().split("-")[0];return COPY[code]?code:"en";}
 function shuffle(list){const copy=[...list];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]];}return copy;}
 function normalizeName(v){return String(v||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
-function bestiaryStats(e){return{hp:Number(e?.hp||e?.maxHp||1),maxHp:Number(e?.hp||e?.maxHp||1),defense:Number(e?.defense||1),initiative:Number(e?.initiative||0),level:Number(e?.level||0),xp:Number(e?.xp||0),attacks:String(e?.attacks||""),drBlock:String(e?.drBlock||e?.dr||""),creatureType:e?.creatureType||"",body:e?.body??"",mind:e?.mind??"",melee:e?.melee??"",guns:e?.guns??"",other:e?.other??"",skills:e?.skills??[],special:e?.special??null,abilities:e?.abilities||"",tactics:e?.tactics||"",loot:e?.loot||"",summary:e?.summary||"",source:e?.source||""};}
+function bestiaryStats(e){const hp=Number(e?.hp||e?.maxHp||1),defense=Number(e?.defense||1),xp=Number(e?.xp||0);return{hp,maxHp:hp,baseMaxHp:hp,defense,baseDefense:defense,initiative:Number(e?.initiative||0),level:Number(e?.level||0),xp,baseXp:xp,attacks:String(e?.attacks||""),drBlock:String(e?.drBlock||e?.dr||""),creatureType:e?.creatureType||"",body:e?.body??"",mind:e?.mind??"",melee:e?.melee??"",guns:e?.guns??"",other:e?.other??"",skills:e?.skills??[],special:e?.special??null,abilities:e?.abilities||"",tactics:e?.tactics||"",loot:e?.loot||"",summary:e?.summary||"",source:e?.source||""};}
+function encounterRankForSpawn(card,index){
+  const rank=String(card?.rank||"").toUpperCase();
+  if(rank==="Q"||rank==="K"){
+    if(index===0)return"legendary";
+    if(index===1)return"special";
+    return index%4===0?"minion":"standard";
+  }
+  if(rank==="10"||rank==="J"||rank==="8"||rank==="9"){
+    if(index===0)return"special";
+    return index%3===0?"minion":"standard";
+  }
+  if(["5","6","7"].includes(rank))return index%4===3?"minion":"standard";
+  if(["2","3","4"].includes(rank))return index===0?"standard":"minion";
+  return"standard";
+}
+function encounterRankPlan(card){
+  const rank=String(card?.rank||"").toUpperCase();
+  if(rank==="Q"||rank==="K")return"LEGENDARY · SPECIAL · STANDARD/MINION";
+  if(["8","9","10","J"].includes(rank))return"SPECIAL · STANDARD/MINION";
+  if(["5","6","7"].includes(rank))return"STANDARD · MINION";
+  if(["2","3","4"].includes(rank))return"STANDARD · MINION";
+  return"STANDARD";
+}
 
 function EncounterCard({card,onReroll}){
   const meta=ENCOUNTER_SUIT_META[card.suit]||{};
@@ -27,7 +51,7 @@ function EncounterCard({card,onReroll}){
     <header><b>{card.rank}{meta.symbol}</b><span>{card.title}</span><button type="button" onClick={onReroll}>↻</button></header>
     <div className="encounter-deck-card__art">{tokenUrl?<img src={tokenUrl} alt="" draggable={false}/>:<span className="encounter-deck-card__glyph">{meta.symbol}</span>}</div>
     <p>{card.description}</p>{card.effect?<small>{card.effect}</small>:null}
-    {(card.groups||[]).length?<div className="encounter-deck-card__groups">{card.groups.map((g,i)=><span key={i}>{String(g.count)} × {g.name}</span>)}</div>:null}
+    {(card.groups||[]).length?<><div className="encounter-deck-card__rank-plan">{encounterRankPlan(card)}</div><div className="encounter-deck-card__groups">{card.groups.map((g,i)=><span key={i}>{String(g.count)} × {g.name}</span>)}</div></>:null}
   </article>;
 }
 
@@ -65,8 +89,8 @@ export default function EncounterDeckDrawer({session,container}){
   const rerollCard=async index=>{if(busy||!drawn[index])return;setBusy(true);try{let source=[...deck];if(!source.length)source=shuffle([...discard]);if(!source.length)return;const nextDrawn=[...drawn],old=nextDrawn[index];nextDrawn[index]=source.shift();await persist({deck:source,drawn:nextDrawn,discard:[old,...discard],history:[{id:"reroll-"+Date.now(),cards:[encounterCardLabel(old)+" → "+encounterCardLabel(nextDrawn[index])],at:Date.now()},...history].slice(0,20)});}finally{setBusy(false);}};
   const discardDrawn=()=>persist({deck,drawn:[],discard:[...drawn,...discard],history:[{id:"discard-"+Date.now(),cards:drawn.map(encounterCardLabel),at:Date.now()},...history].slice(0,20)});
   const resetDeck=()=>persist({deck:shuffle(buildEncounterDeck()),drawn:[],discard:[],history:[]});
-  const addToMap=async()=>{if(!drawn.length||busy)return;setBusy(true);setMessage("");try{const mod=await import("../../data/bestiary.js");let added=0;for(const card of drawn){if(card.suit==="spades"||card.wild)continue;for(const group of card.groups||[]){const names=[group.name,...(group.alternatives||[])];const entry=mod.BESTIARY_ENTRIES.find(e=>names.some(name=>normalizeName(e.name)===normalizeName(name)));if(!entry)continue;const count=Math.min(12,Math.max(0,rollEncounterCount(group.count)));for(let i=0;i<count;i++){const response=await session.createNpcToken?.({name:entry.name,size:Number(entry?.size||entry?.footprint||1),npcId:entry.id,stats:bestiaryStats(entry)});const tokenId=response?.token?.id;if(tokenId&&session.moveToken){const cols=Math.max(1,Number(scene?.environment?.proceduralMapSpec?.cols||scene?.cols||24));const rows=Math.max(1,Number(scene?.environment?.proceduralMapSpec?.rows||scene?.rows||24));const x=Math.max(0,Math.min(cols-1,Math.floor(cols*(0.55+Math.random()*0.35))));const y=Math.max(0,Math.min(rows-1,Math.floor(rows*(0.12+Math.random()*0.72))));try{await session.moveToken(tokenId,x,y);}catch{}}added++;}}}
-      const hazardCards=drawn.filter(card=>card.suit==="spades");const environment={...(scene.environment||{}),encounterDeckHazards:hazardCards.map(card=>({id:card.id,title:card.title,effect:card.effect,description:card.description}))};await session.updateTacticalScene?.({environment,encounterDeck:{deck,drawn,discard,history,region,stage,lastAppliedAt:Date.now()}});setMessage(added?("+"+added+" tokens"):(hazardCards.length?("+"+hazardCards.length+" hazards"):"Applied"));}catch(error){setMessage(error?.message||"ADD_TO_MAP_FAILED");}finally{setBusy(false);}};
+  const addToMap=async()=>{if(!drawn.length||busy)return;setBusy(true);setMessage("");try{const mod=await import("../../data/bestiary.js");let added=0;const rankCounts={minion:0,standard:0,special:0,legendary:0};for(const card of drawn){if(card.suit==="spades"||card.wild)continue;let cardSpawnIndex=0;for(const group of card.groups||[]){const names=[group.name,...(group.alternatives||[])];const entry=mod.BESTIARY_ENTRIES.find(e=>names.some(name=>normalizeName(e.name)===normalizeName(name)));if(!entry)continue;const count=Math.min(12,Math.max(0,rollEncounterCount(group.count)));for(let i=0;i<count;i++){const rank=encounterRankForSpawn(card,cardSpawnIndex++);const rankedStats=applyNpcRank(bestiaryStats(entry),{rank});rankCounts[rank]=(rankCounts[rank]||0)+1;const response=await session.createNpcToken?.({name:entry.name,size:Number(rankedStats?.footprint||entry?.size||entry?.footprint||1),npcId:entry.id,stats:rankedStats});const tokenId=response?.token?.id;if(tokenId&&session.moveToken){const cols=Math.max(1,Number(scene?.environment?.proceduralMapSpec?.cols||scene?.cols||24));const rows=Math.max(1,Number(scene?.environment?.proceduralMapSpec?.rows||scene?.rows||24));const x=Math.max(0,Math.min(cols-1,Math.floor(cols*(0.55+Math.random()*0.35))));const y=Math.max(0,Math.min(rows-1,Math.floor(rows*(0.12+Math.random()*0.72))));try{await session.moveToken(tokenId,x,y);}catch{}}added++;}}}
+      const hazardCards=drawn.filter(card=>card.suit==="spades");const environment={...(scene.environment||{}),encounterDeckHazards:hazardCards.map(card=>({id:card.id,title:card.title,effect:card.effect,description:card.description}))};await session.updateTacticalScene?.({environment,encounterDeck:{deck,drawn,discard,history,region,stage,lastAppliedAt:Date.now()}});setMessage(added?("+"+added+" tokens · "+["legendary","special","standard","minion"].filter(key=>rankCounts[key]).map(key=>key.toUpperCase()+" "+rankCounts[key]).join(" · ")):(hazardCards.length?("+"+hazardCards.length+" hazards"):"Applied"));}catch(error){setMessage(error?.message||"ADD_TO_MAP_FAILED");}finally{setBusy(false);}};
   if(!container||!scene)return null;
   const portalTarget=typeof document!=="undefined" ? document.body : container;
   return createPortal(<>
