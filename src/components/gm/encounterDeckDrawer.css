@@ -411,3 +411,29 @@ body > .encounter-deck-drawer--modal .encounter-deck-card__groups span{
     max-height:120px!important;
   }
 }
+
+
+/* Show encounter artwork in full: no cropping. */
+body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+  width:min(260px,72vw)!important;
+  height:auto!important;
+  aspect-ratio:1 / 1!important;
+  min-height:0!important;
+  max-height:none!important;
+  margin:0 auto!important;
+  border-radius:50%!important;
+  overflow:hidden!important;
+  background:rgba(0,0,0,.12)!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__art img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  display:block!important;
+}
+@media(max-width:780px){
+  body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+    width:min(220px,68vw)!important;
+  }
+}
