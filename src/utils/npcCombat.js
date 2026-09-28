@@ -84,6 +84,9 @@ export function parseAttackText(value = "") {
     .filter(Boolean);
 
   return lines.map((line, index) => {
+    const looksLikeAttack = Boolean(tnMatch || cdMatch || profileMatch);
+    if (!looksLikeAttack) return null;
+
     const colonNameMatch = line.match(/^([^:]+):/);
     const dashNameMatch = line.match(/^(.+?)\s+[—–-]\s+(?=(?:BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\b)/i);
     const nameMatch = colonNameMatch || dashNameMatch;
@@ -115,7 +118,7 @@ export function parseAttackText(value = "") {
       qualities: qualities.join(", "),
       source: "bestiary",
     }, index);
-  });
+  }).filter(Boolean);
 }
 
 
