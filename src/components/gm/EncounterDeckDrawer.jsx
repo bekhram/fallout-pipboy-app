@@ -46,6 +46,19 @@ export default function EncounterDeckDrawer({session,container}){
   const [discard,setDiscard]=useState(()=>persisted.discard||[]);
   const [history,setHistory]=useState(()=>persisted.history||[]);
   useEffect(()=>{if(!scene?.sceneId)return;const state=scene.encounterDeck||{};setDeck(state.deck?.length?state.deck:shuffle(buildEncounterDeck()));setDrawn(state.drawn||[]);setDiscard(state.discard||[]);setHistory(state.history||[]);setMessage("");},[scene?.sceneId]);
+  useEffect(()=>{
+    const openDeck=()=>setOpen(true);
+    const closeDeck=()=>setOpen(false);
+    const onKey=(event)=>{if(event.key==="Escape")setOpen(false);};
+    window.addEventListener("pip:open-encounter-deck",openDeck);
+    window.addEventListener("pip:close-encounter-deck",closeDeck);
+    window.addEventListener("keydown",onKey);
+    return()=>{
+      window.removeEventListener("pip:open-encounter-deck",openDeck);
+      window.removeEventListener("pip:close-encounter-deck",closeDeck);
+      window.removeEventListener("keydown",onKey);
+    };
+  },[]);
   const summary=useMemo(()=>encounterSummary(drawn),[drawn]);
   const persist=async next=>{setDeck(next.deck);setDrawn(next.drawn);setDiscard(next.discard);setHistory(next.history);await session.updateTacticalScene?.({encounterDeck:{...next,region,stage,updatedAt:Date.now()}});};
   const drawCards=async(count=drawCount)=>{if(busy||drawn.length>=5)return;setBusy(true);try{let source=[...deck],nextDrawn=[...drawn],nextDiscard=[...discard];const needed=Math.min(count,5-nextDrawn.length);if(source.length<needed){source=shuffle([...source,...nextDiscard]);nextDiscard=[];}for(let i=0;i<needed&&source.length;i++)nextDrawn.push(source.shift());await persist({deck:source,drawn:nextDrawn,discard:nextDiscard,history:[{id:"draw-"+Date.now(),cards:nextDrawn.slice(-needed).map(encounterCardLabel),at:Date.now()},...history].slice(0,20)});}finally{setBusy(false);}};
@@ -57,8 +70,7 @@ export default function EncounterDeckDrawer({session,container}){
   if(!container||!scene)return null;
   const portalTarget=typeof document!=="undefined" ? document.body : container;
   return createPortal(<>
-    <button type="button" className={"encounter-deck-rail"+(open?" is-open":"")} onClick={()=>setOpen(v=>!v)} aria-label={text.title} title={text.title}><span>🂠</span><b>{text.cards}</b>{drawn.length?<i>{drawn.length}</i>:null}</button>
-    {open?<aside className="encounter-deck-drawer is-open">
+    {open?<><button type="button" className="encounter-deck-backdrop" aria-label={text.title} onClick={()=>setOpen(false)}/><aside className="encounter-deck-drawer encounter-deck-drawer--modal is-open">
       <header className="encounter-deck-drawer__head"><div><small>GM / BATTLEMAP</small><strong>{text.title}</strong></div><button type="button" onClick={()=>setOpen(false)}>×</button></header>
       <div className="encounter-deck-setup">
         <label><span>{text.region}</span><select value={region} onChange={e=>setRegion(e.target.value)}><option>Mojave</option><option>Sierra</option><option>Custom</option></select></label>
@@ -72,6 +84,6 @@ export default function EncounterDeckDrawer({session,container}){
       {message?<div className="encounter-deck-message">{message}</div>:null}
       <div className="encounter-deck-actions"><button type="button" className="pip-btn" onClick={()=>drawCards(1)} disabled={busy||drawn.length>=5}>＋ {text.add}</button><button type="button" className="pip-btn" onClick={discardDrawn} disabled={!drawn.length||busy}>{text.discard}</button><button type="button" className="pip-btn is-primary" onClick={addToMap} disabled={!drawn.length||busy}>{text.apply}</button></div>
       <details className="encounter-deck-history"><summary>{text.history} ({history.length})</summary>{history.map(item=><div key={item.id}><time>{new Date(item.at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</time><span>{item.cards.join(" · ")}</span></div>)}</details>
-    </aside>:null}
+    </aside></>:null}
   </>,portalTarget);
 }
