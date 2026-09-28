@@ -373,3 +373,41 @@ body > .encounter-deck-drawer--modal .encounter-deck-card__groups span{
     max-height:160px!important;
   }
 }
+
+
+/* Encounter deck compact pass: reduce card footprint inside modal. */
+body > .encounter-deck-drawer--modal .encounter-deck-card{
+  width:min(420px,100%)!important;
+  grid-template-rows:auto 140px auto auto auto!important;
+  padding:8px!important;
+  gap:6px!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+  min-height:140px!important;
+  max-height:140px!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card header b{
+  font-size:1.05rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card header span{
+  font-size:.68rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card p{
+  font-size:.56rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card small{
+  font-size:.5rem!important;
+}
+body > .encounter-deck-drawer--modal .encounter-deck-card__groups span{
+  font-size:.48rem!important;
+}
+@media(max-width:780px){
+  body > .encounter-deck-drawer--modal .encounter-deck-card{
+    width:100%!important;
+    grid-template-rows:auto 120px auto auto auto!important;
+  }
+  body > .encounter-deck-drawer--modal .encounter-deck-card__art{
+    min-height:120px!important;
+    max-height:120px!important;
+  }
+}
