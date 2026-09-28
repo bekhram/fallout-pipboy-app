@@ -55,12 +55,10 @@ export default function EncounterDeckDrawer({session,container}){
   const addToMap=async()=>{if(!drawn.length||busy)return;setBusy(true);setMessage("");try{const mod=await import("../../data/bestiary.js");let added=0;for(const card of drawn){if(card.suit==="spades"||card.wild)continue;for(const group of card.groups||[]){const names=[group.name,...(group.alternatives||[])];const entry=mod.BESTIARY_ENTRIES.find(e=>names.some(name=>normalizeName(e.name)===normalizeName(name)));if(!entry)continue;const count=Math.min(12,Math.max(0,rollEncounterCount(group.count)));for(let i=0;i<count;i++){const response=await session.createNpcToken?.({name:entry.name,size:Number(entry?.size||entry?.footprint||1),npcId:entry.id,stats:bestiaryStats(entry)});const tokenId=response?.token?.id;if(tokenId&&session.moveToken){const cols=Math.max(1,Number(scene?.environment?.proceduralMapSpec?.cols||scene?.cols||24));const rows=Math.max(1,Number(scene?.environment?.proceduralMapSpec?.rows||scene?.rows||24));const x=Math.max(0,Math.min(cols-1,Math.floor(cols*(0.55+Math.random()*0.35))));const y=Math.max(0,Math.min(rows-1,Math.floor(rows*(0.12+Math.random()*0.72))));try{await session.moveToken(tokenId,x,y);}catch{}}added++;}}}
       const hazardCards=drawn.filter(card=>card.suit==="spades");const environment={...(scene.environment||{}),encounterDeckHazards:hazardCards.map(card=>({id:card.id,title:card.title,effect:card.effect,description:card.description}))};await session.updateTacticalScene?.({environment,encounterDeck:{deck,drawn,discard,history,region,stage,lastAppliedAt:Date.now()}});setMessage(added?("+"+added+" tokens"):(hazardCards.length?("+"+hazardCards.length+" hazards"):"Applied"));}catch(error){setMessage(error?.message||"ADD_TO_MAP_FAILED");}finally{setBusy(false);}};
   if(!container||!scene)return null;
-  const portalTarget=typeof document!=="undefined"
-    ? (document.querySelector(".session-gm-workspace-wrap--single") || document.querySelector(".gm-workspace") || document.body)
-    : container;
+  const portalTarget=typeof document!=="undefined" ? document.body : container;
   return createPortal(<>
     <button type="button" className={"encounter-deck-rail"+(open?" is-open":"")} onClick={()=>setOpen(v=>!v)} aria-label={text.title} title={text.title}><span>🂠</span><b>{text.cards}</b>{drawn.length?<i>{drawn.length}</i>:null}</button>
-    <aside className={"encounter-deck-drawer"+(open?" is-open":"")}>
+    {open?<aside className="encounter-deck-drawer is-open">
       <header className="encounter-deck-drawer__head"><div><small>GM / BATTLEMAP</small><strong>{text.title}</strong></div><button type="button" onClick={()=>setOpen(false)}>×</button></header>
       <div className="encounter-deck-setup">
         <label><span>{text.region}</span><select value={region} onChange={e=>setRegion(e.target.value)}><option>Mojave</option><option>Sierra</option><option>Custom</option></select></label>
@@ -74,6 +72,6 @@ export default function EncounterDeckDrawer({session,container}){
       {message?<div className="encounter-deck-message">{message}</div>:null}
       <div className="encounter-deck-actions"><button type="button" className="pip-btn" onClick={()=>drawCards(1)} disabled={busy||drawn.length>=5}>＋ {text.add}</button><button type="button" className="pip-btn" onClick={discardDrawn} disabled={!drawn.length||busy}>{text.discard}</button><button type="button" className="pip-btn is-primary" onClick={addToMap} disabled={!drawn.length||busy}>{text.apply}</button></div>
       <details className="encounter-deck-history"><summary>{text.history} ({history.length})</summary>{history.map(item=><div key={item.id}><time>{new Date(item.at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}</time><span>{item.cards.join(" · ")}</span></div>)}</details>
-    </aside>
+    </aside>:null}
   </>,portalTarget);
 }
