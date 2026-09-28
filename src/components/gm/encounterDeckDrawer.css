@@ -39,3 +39,41 @@
   .encounter-deck-drawer{width:calc(100vw - 46px);padding:8px}
   .encounter-deck-setup{grid-template-columns:1fr 1fr}.encounter-deck-count{grid-column:1/-1}.encounter-deck-count button{flex:1}
 }
+
+/* Screen-level Encounter Deck: detach from Phaser/map geometry. */
+body > .encounter-deck-rail{
+  position:fixed!important;
+  left:max(8px,env(safe-area-inset-left))!important;
+  top:max(96px,calc(env(safe-area-inset-top) + 82px))!important;
+  z-index:2147483200!important;
+}
+body > .encounter-deck-rail.is-open{
+  left:390px!important;
+}
+body > .encounter-deck-drawer{
+  position:fixed!important;
+  left:max(8px,env(safe-area-inset-left))!important;
+  top:max(90px,calc(env(safe-area-inset-top) + 76px))!important;
+  bottom:max(10px,env(safe-area-inset-bottom))!important;
+  width:min(372px,calc(100vw - 28px))!important;
+  max-height:calc(100vh - max(100px,calc(env(safe-area-inset-top) + 86px)) - max(10px,env(safe-area-inset-bottom)))!important;
+  z-index:2147483199!important;
+}
+@media(max-width:780px){
+  body > .encounter-deck-rail{
+    top:max(76px,calc(env(safe-area-inset-top) + 64px))!important;
+    left:max(6px,env(safe-area-inset-left))!important;
+  }
+  body > .encounter-deck-rail.is-open{
+    left:auto!important;
+    right:max(6px,env(safe-area-inset-right))!important;
+  }
+  body > .encounter-deck-drawer{
+    top:max(70px,calc(env(safe-area-inset-top) + 60px))!important;
+    left:max(6px,env(safe-area-inset-left))!important;
+    right:46px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:auto!important;
+    max-height:none!important;
+  }
+}
