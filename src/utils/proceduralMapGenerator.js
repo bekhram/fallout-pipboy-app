@@ -56,16 +56,20 @@ function visualMapInput(value = {}) {
   };
 }
 
-export const MAP_TYPES = V11.MAP_TYPES;
+export const MAP_TYPES = [...new Set([...(V11.MAP_TYPES || []), "vault_tunnels"])];
 export const makeProceduralSeed = V11.makeProceduralSeed;
-export const proceduralLocationType = V11.proceduralLocationType;
+export function proceduralLocationType(type) {
+  return String(type || "") === "vault_tunnels" ? "vault_tunnels" : V11.proceduralLocationType(type);
+}
 
 export function normalizeProceduralMapSpec(value = {}) {
   const rarity = normalizeRarity(value.lootRarity);
   const terrain = normalizeTerrain(value.terrain);
-  const base = V11.normalizeProceduralMapSpec(legacyInput(value));
+  const isVault = String(value?.type || "") === "vault_tunnels";
+  const base = V11.normalizeProceduralMapSpec(legacyInput(isVault ? { ...value, type: "wasteland" } : value));
   return {
     ...base,
+    type: isVault ? "vault_tunnels" : base.type,
     seed: canonicalProceduralSeed(value.seed ?? base.seed),
     cols: normalizeMapSize(value.cols ?? value.rows ?? base.cols),
     rows: normalizeMapSize(value.rows ?? value.cols ?? base.rows),
