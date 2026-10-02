@@ -526,7 +526,7 @@ export function normalizeVaultGeneratorSpec(value = {}) {
   );
   const targetCorridors = clamp(
     value.targetCorridors ?? int(rng, preset.minCorridors, preset.maxCorridors),
-    3,
+    1,
     Math.max(1, (size / VAULT_MODULE_SIZE) ** 2 - targetRooms),
   );
 
