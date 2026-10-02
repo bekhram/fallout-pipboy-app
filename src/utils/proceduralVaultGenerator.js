@@ -195,34 +195,115 @@ function corridorVisualFor(activeDoors) {
   return { tileId: "corridor_cross", rotation: 0 };
 }
 
-function roomPoolEntry(rng, base, ruinedChance) {
-  const ruined = rng() < ruinedChance;
-  if (!ruined) return base;
-  return VAULT_RUINED_ROOM_TILES.find((item) => item.ruinedOf === base.id) || base;
+const VAULT_SECTOR_POOLS = {
+  entrance: ["security_checkpoint", "entrance_airlock", "command_room", "armory"],
+  administration: ["command_room", "security_checkpoint", "medbay", "armory", "storage"],
+  residential: ["living_quarters", "cafeteria", "medbay", "hydroponics", "storage"],
+  engineering: ["workshop", "power_reactor", "water_treatment", "storage", "hydroponics"],
+  damaged: ["storage", "workshop", "living_quarters", "medbay", "water_treatment", "hydroponics"],
+};
+
+function roomById(id) {
+  return VAULT_ROOM_TILES.find((tile) => tile.id === id) || null;
 }
 
-function assignRoomTiles(rng, roomCells, start, ruinedChance) {
-  const startKey = key(start.x, start.y);
-  const nonStart = roomCells
-    .filter((cell) => key(cell.x, cell.y) !== startKey)
-    .sort((a, b) => {
-      const da = Math.abs(a.x - start.x) + Math.abs(a.y - start.y);
-      const db = Math.abs(b.x - start.x) + Math.abs(b.y - start.y);
-      return da - db;
-    });
+function ruinedRoomFor(base) {
+  return VAULT_RUINED_ROOM_TILES.find((item) => item.ruinedOf === base?.id) || base;
+}
 
-  const uniquePool = shuffled(rng, VAULT_ROOM_TILES);
-  const securityIndex = uniquePool.findIndex((item) => item.id === "security_checkpoint");
-  if (securityIndex > 0) {
-    const [security] = uniquePool.splice(securityIndex, 1);
-    uniquePool.unshift(security);
+function sectorAnchors(moduleCount, seed) {
+  const damagedLeft = (hashSeed(`vault-damaged-side:${seed}`) & 1) === 0;
+  return {
+    damagedLeft,
+    damagedX: damagedLeft ? 0 : moduleCount - 1,
+    engineeringX: damagedLeft ? moduleCount - 1 : 0,
+  };
+}
+
+function sectorForCell(cell, start, moduleCount, seed) {
+  const anchors = sectorAnchors(moduleCount, seed);
+  const x = Number(cell.x);
+  const y = Number(cell.y);
+  const distance = Math.abs(x - start.x) + Math.abs(y - start.y);
+
+  if (distance <= 1 || y <= 1) return "entrance";
+  if (moduleCount <= 4) {
+    if (y >= moduleCount - 1 && Math.abs(x - anchors.damagedX) <= 1) return "damaged";
+    return x <= start.x ? "residential" : "engineering";
   }
 
-  const assigned = new Map([[startKey, VAULT_START_TILE]]);
-  nonStart.forEach((cell, index) => {
-    const base = uniquePool[index] || VAULT_ROOM_TILES[int(rng, 0, VAULT_ROOM_TILES.length - 1)];
-    assigned.set(key(cell.x, cell.y), roomPoolEntry(rng, base, ruinedChance));
+  if (y >= Math.ceil(moduleCount * 0.58) && Math.abs(x - anchors.damagedX) <= Math.ceil(moduleCount * 0.34)) {
+    return "damaged";
+  }
+  if (y >= Math.floor(moduleCount * 0.48) && Math.abs(x - anchors.engineeringX) <= Math.ceil(moduleCount * 0.42)) {
+    return "engineering";
+  }
+  if (x < start.x && y >= 2) return anchors.damagedLeft ? "administration" : "residential";
+  if (x > start.x && y >= 2) return anchors.damagedLeft ? "residential" : "administration";
+  return y <= Math.floor(moduleCount * 0.45) ? "administration" : "residential";
+}
+
+function sectorRuinChance(sector, baseChance, moduleCount) {
+  if (sector === "damaged") return clamp(Math.max(0.72, baseChance + 0.5), 0, 0.95);
+  if (sector === "engineering") return clamp(baseChance * 0.85, 0, 0.55);
+  if (sector === "entrance") return clamp(baseChance * 0.18, 0, 0.18);
+  if (moduleCount <= 4) return clamp(baseChance * 0.65, 0, 0.45);
+  return clamp(baseChance * 0.45, 0, 0.38);
+}
+
+function chooseSectorRoom(rng, sector, usedUnique) {
+  const preferred = VAULT_SECTOR_POOLS[sector] || VAULT_SECTOR_POOLS.administration;
+  const availablePreferred = preferred
+    .map(roomById)
+    .filter(Boolean)
+    .filter((tile) => !tile.unique || !usedUnique.has(tile.id));
+  const availableAny = VAULT_ROOM_TILES.filter((tile) => !tile.unique || !usedUnique.has(tile.id));
+  const pool = availablePreferred.length ? availablePreferred : availableAny.length ? availableAny : VAULT_ROOM_TILES;
+  return chooseWeighted(rng, pool, (tile) => {
+    const preferredIndex = preferred.indexOf(tile.id);
+    const sectorWeight = preferredIndex >= 0 ? Math.max(1.2, 4.6 - preferredIndex * 0.55) : 0.65;
+    return sectorWeight * Math.max(0.2, Number(tile.weight || 1));
   });
+}
+
+function assignRoomTiles(rng, roomCells, start, ruinedChance, moduleCount, seed) {
+  const startKey = key(start.x, start.y);
+  const assigned = new Map([[startKey, { tile: VAULT_START_TILE, sector: "entrance" }]]);
+  const usedUnique = new Set();
+
+  const nonStart = roomCells
+    .filter((cell) => key(cell.x, cell.y) !== startKey)
+    .map((cell) => ({
+      ...cell,
+      sector: sectorForCell(cell, start, moduleCount, seed),
+      distance: Math.abs(cell.x - start.x) + Math.abs(cell.y - start.y),
+    }))
+    .sort((a, b) => {
+      if (a.sector === "entrance" && b.sector !== "entrance") return -1;
+      if (b.sector === "entrance" && a.sector !== "entrance") return 1;
+      return a.distance - b.distance || a.y - b.y || a.x - b.x;
+    });
+
+  // The first room beyond the atrium should read as controlled entry/security.
+  const firstEntry = nonStart.find((cell) => cell.sector === "entrance");
+  if (firstEntry) {
+    const security = roomById("security_checkpoint");
+    assigned.set(key(firstEntry.x, firstEntry.y), { tile: security, sector: "entrance" });
+    if (security?.unique) usedUnique.add(security.id);
+  }
+
+  nonStart.forEach((cell) => {
+    const cellKey = key(cell.x, cell.y);
+    if (assigned.has(cellKey)) return;
+    const base = chooseSectorRoom(rng, cell.sector, usedUnique) || VAULT_ROOM_TILES[0];
+    if (base.unique) usedUnique.add(base.id);
+    const ruined = rng() < sectorRuinChance(cell.sector, ruinedChance, moduleCount);
+    assigned.set(cellKey, {
+      tile: ruined ? ruinedRoomFor(base) : base,
+      sector: cell.sector,
+    });
+  });
+
   return assigned;
 }
 
@@ -281,7 +362,7 @@ export function generateVaultLayout(input = {}) {
   const actualRooms = Math.min(spec.targetRooms, occupied.size);
   const roomKeys = selectRoomCells(rng, occupied, moduleCount, start, actualRooms);
   const roomCells = [...occupied.values()].filter((cell) => roomKeys.has(key(cell.x, cell.y)));
-  const roomAssignments = assignRoomTiles(rng, roomCells, start, spec.ruinedChance);
+  const roomAssignments = assignRoomTiles(rng, roomCells, start, spec.ruinedChance, moduleCount, spec.seed);
 
   const tiles = [...occupied.values()].map((cell) => {
     const cellKey = key(cell.x, cell.y);
@@ -299,7 +380,8 @@ export function generateVaultLayout(input = {}) {
     };
 
     if (isRoom) {
-      const tile = roomAssignments.get(cellKey) || VAULT_ROOM_TILES[0];
+      const assignment = roomAssignments.get(cellKey) || { tile: VAULT_ROOM_TILES[0], sector: sectorForCell(cell, start, moduleCount, spec.seed) };
+      const tile = assignment.tile;
       const allowedDoors = { ...tile.doors };
       const effectiveDoors = Object.fromEntries(
         SIDES.map((side) => [side, Boolean(activeDoors[side] && allowedDoors[side])]),
@@ -318,6 +400,7 @@ export function generateVaultLayout(input = {}) {
         activeDoors: effectiveDoors,
         sealedDoors,
         tags: tile.tags || [],
+        sector: assignment.sector,
       };
     }
 
@@ -332,6 +415,7 @@ export function generateVaultLayout(input = {}) {
       rotation: visual.rotation,
       sealedDoors: { n: false, e: false, s: false, w: false },
       tags: ["corridor"],
+      sector: sectorForCell(cell, start, moduleCount, spec.seed),
     };
   });
 
@@ -374,6 +458,11 @@ export function generateVaultLayout(input = {}) {
       occupiedModules: tiles.length,
       totalModules: maxTiles,
       ruinedRooms: rooms.filter((tile) => tile.kind === "ruined_room").length,
+      sectors: rooms.reduce((acc, tile) => {
+        const sector = tile.sector || "unknown";
+        acc[sector] = (acc[sector] || 0) + 1;
+        return acc;
+      }, {}),
     },
   };
 }
