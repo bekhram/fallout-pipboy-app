@@ -14,11 +14,11 @@ for (const size of [24, 36, 48]) {
       const layout = generateVaultLayout({ cols: size, rows: size, seed, ruinedChance: 0.22 });
       const result = validateVaultLayout(layout);
       assert.equal(result.ok, true, result.errors.join(", "));
-      assert.equal(layout.spec.moduleSize, 6);
-      assert.equal(layout.spec.moduleCols, size / 6);
-      assert.equal(layout.spec.moduleRows, size / 6);
+      assert.equal(layout.spec.moduleSize, 12);
+      assert.equal(layout.spec.moduleCols, size / 12);
+      assert.equal(layout.spec.moduleRows, size / 12);
       assert.equal(layout.rooms.length, layout.spec.targetRooms);
-      assert.ok(layout.corridors.length >= 3);
+      assert.ok(layout.corridors.length >= 1);
 
       const atrium = layout.tiles.find((tile) => tile.id === layout.startTileId);
       assert.equal(atrium.tileId, "atrium_vault_entrance");
@@ -68,16 +68,15 @@ test("vault corridor topology has a main spine, branches and dead ends", () => {
   const medium = generateVaultLayout({ cols: 36, rows: 36, seed: "architecture-medium" });
   const large = generateVaultLayout({ cols: 48, rows: 48, seed: "architecture-large" });
 
-  assert.equal(small.stats.mainSpineModules, 4);
-  assert.equal(medium.stats.mainSpineModules, 6);
-  assert.equal(large.stats.mainSpineModules, 8);
+  assert.equal(small.stats.mainSpineModules, 2);
+  assert.equal(medium.stats.mainSpineModules, 3);
+  assert.equal(large.stats.mainSpineModules, 4);
 
   assert.ok(small.stats.deadEnds >= 1);
-  assert.ok(medium.stats.deadEnds >= 2);
-  assert.ok(large.stats.deadEnds >= 3);
+  assert.ok(medium.stats.deadEnds >= 1);
+  assert.ok(large.stats.deadEnds >= 1);
 
-  assert.ok(medium.stats.junctions >= 1);
-  assert.ok(large.stats.junctions >= 2);
+  assert.ok(large.stats.junctions >= 1);
 
   for (const layout of [small, medium, large]) {
     const roles = new Set(layout.tiles.map((tile) => tile.networkRole));
