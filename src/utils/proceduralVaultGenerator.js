@@ -82,44 +82,189 @@ function chooseWeighted(rng, values, weightFor) {
   return weighted[weighted.length - 1]?.value ?? null;
 }
 
-function growConnectedCells(rng, moduleCount, desiredCount, start) {
-  const occupied = new Map([[key(start.x, start.y), { ...start, parent: null }]]);
+function edgeKey(a, b) {
+  const ka = typeof a === "string" ? a : key(a.x, a.y);
+  const kb = typeof b === "string" ? b : key(b.x, b.y);
+  return ka < kb ? `${ka}>${kb}` : `${kb}>${ka}`;
+}
 
-  while (occupied.size < desiredCount) {
+function connectCells(occupied, a, b) {
+  if (!occupied.connections) occupied.connections = new Set();
+  occupied.connections.add(edgeKey(a, b));
+}
+
+function addNetworkCell(occupied, cell, parent = null, networkRole = "branch") {
+  const cellKey = key(cell.x, cell.y);
+  if (!occupied.has(cellKey)) {
+    occupied.set(cellKey, {
+      x: cell.x,
+      y: cell.y,
+      parent: parent ? key(parent.x, parent.y) : null,
+      networkRole,
+    });
+  }
+  if (parent) connectCells(occupied, parent, cell);
+  return occupied.get(cellKey);
+}
+
+function areConnected(occupied, a, b) {
+  if (!occupied?.connections) return false;
+  return occupied.connections.has(edgeKey(a, b));
+}
+
+function addArchitecturalLoops(rng, occupied, moduleCount) {
+  const loopBudget = moduleCount <= 4 ? 0 : moduleCount <= 6 ? 1 : 3;
+  if (!loopBudget) return;
+  const candidates = [];
+  occupied.forEach((cell) => {
+    neighborsOf(cell.x, cell.y, moduleCount).forEach((neighbor) => {
+      const other = occupied.get(key(neighbor.x, neighbor.y));
+      if (!other || areConnected(occupied, cell, other)) return;
+      if (key(cell.x, cell.y) > key(other.x, other.y)) return;
+      candidates.push({ a: cell, b: other, roll: rng() });
+    });
+  });
+  candidates
+    .sort((a, b) => a.roll - b.roll)
+    .slice(0, loopBudget)
+    .forEach(({ a, b }) => connectCells(occupied, a, b));
+}
+
+function buildArchitecturalNetwork(rng, moduleCount, desiredCount, start, seed) {
+  const occupied = new Map();
+  occupied.connections = new Set();
+  addNetworkCell(occupied, start, null, "atrium");
+
+  // Primary circulation spine: every vault begins with a direct route away
+  // from the entrance hatch and continues toward the deepest row.
+  let previous = start;
+  for (let y = start.y + 1; y < moduleCount && occupied.size < desiredCount; y += 1) {
+    const next = { x: start.x, y };
+    addNetworkCell(occupied, next, previous, y === 1 ? "entry-spine" : "main-spine");
+    previous = next;
+  }
+
+  const mirrored = (hashSeed(`vault-wing-mirror:${seed}`) & 1) === 1;
+  const left = mirrored ? "e" : "w";
+  const right = mirrored ? "w" : "e";
+  const branchPlans = moduleCount <= 4
+    ? [
+        { row: 1, side: left, length: 1 },
+        { row: 2, side: right, length: 2 },
+        { row: 3, side: left, length: 1 },
+      ]
+    : moduleCount <= 6
+      ? [
+          { row: 1, side: left, length: 2 },
+          { row: 2, side: right, length: 2 },
+          { row: 3, side: left, length: 3 },
+          { row: 4, side: right, length: 3 },
+          { row: 5, side: left, length: 2 },
+        ]
+      : [
+          { row: 1, side: left, length: 3 },
+          { row: 2, side: right, length: 3 },
+          { row: 3, side: left, length: 4 },
+          { row: 4, side: right, length: 4 },
+          { row: 5, side: left, length: 4 },
+          { row: 6, side: right, length: 4 },
+          { row: 7, side: left, length: 3 },
+        ];
+
+  const branchEnds = [];
+  for (const plan of branchPlans) {
+    if (occupied.size >= desiredCount) break;
+    const row = clamp(plan.row, 0, moduleCount - 1);
+    let cursor = occupied.get(key(start.x, row));
+    if (!cursor) continue;
+    const delta = DELTAS[plan.side];
+    for (let step = 0; step < plan.length && occupied.size < desiredCount; step += 1) {
+      const next = { x: cursor.x + delta.x, y: cursor.y + delta.y };
+      if (!inBounds(next.x, next.y, moduleCount)) break;
+      const existing = occupied.get(key(next.x, next.y));
+      if (existing) {
+        if (!areConnected(occupied, cursor, existing)) connectCells(occupied, cursor, existing);
+        cursor = existing;
+        continue;
+      }
+      cursor = addNetworkCell(
+        occupied,
+        next,
+        cursor,
+        step === 0 ? "junction-wing" : "branch-corridor",
+      );
+    }
+    if (cursor) branchEnds.push(cursor);
+  }
+
+  // Add short perpendicular spurs from wing ends. These create believable
+  // room pockets and dead ends instead of filling rectangular blocks.
+  const spurDirections = mirrored ? ["s", "n"] : ["n", "s"];
+  for (let index = 0; index < branchEnds.length && occupied.size < desiredCount; index += 1) {
+    let cursor = branchEnds[index];
+    const preferred = spurDirections[index % spurDirections.length];
+    const alternatives = [preferred, preferred === "n" ? "s" : "n"];
+    const side = alternatives.find((candidate) => {
+      const d = DELTAS[candidate];
+      return inBounds(cursor.x + d.x, cursor.y + d.y, moduleCount)
+        && !occupied.has(key(cursor.x + d.x, cursor.y + d.y));
+    });
+    if (!side) continue;
+    const d = DELTAS[side];
+    const spurLength = moduleCount <= 4 ? 1 : moduleCount <= 6 ? 1 + (index % 2) : 1 + (index % 3 === 0 ? 1 : 0);
+    for (let step = 0; step < spurLength && occupied.size < desiredCount; step += 1) {
+      const next = { x: cursor.x + d.x, y: cursor.y + d.y };
+      if (!inBounds(next.x, next.y, moduleCount) || occupied.has(key(next.x, next.y))) break;
+      cursor = addNetworkCell(occupied, next, cursor, step === spurLength - 1 ? "dead-end" : "branch-corridor");
+    }
+  }
+
+  // If a large map still has free budget, grow from existing endpoints while
+  // strongly preferring low-degree cells. This keeps branches narrow.
+  let guard = 0;
+  while (occupied.size < desiredCount && guard < desiredCount * 40) {
+    guard += 1;
     const frontier = [];
     occupied.forEach((cell) => {
+      const currentDegree = neighborsOf(cell.x, cell.y, moduleCount)
+        .filter((n) => occupied.has(key(n.x, n.y)) && areConnected(occupied, cell, occupied.get(key(n.x, n.y))))
+        .length;
+      if (currentDegree >= 3) return;
       neighborsOf(cell.x, cell.y, moduleCount).forEach((candidate) => {
-        const candidateKey = key(candidate.x, candidate.y);
-        if (occupied.has(candidateKey)) return;
-        frontier.push({ ...candidate, parent: key(cell.x, cell.y) });
+        if (occupied.has(key(candidate.x, candidate.y))) return;
+        const adjacentCount = neighborsOf(candidate.x, candidate.y, moduleCount)
+          .filter((n) => occupied.has(key(n.x, n.y))).length;
+        if (adjacentCount > 2) return;
+        frontier.push({
+          ...candidate,
+          parentCell: cell,
+          currentDegree,
+          adjacentCount,
+          roll: rng(),
+        });
       });
     });
-
     if (!frontier.length) break;
 
     const deduped = [...new Map(frontier.map((item) => [key(item.x, item.y), item])).values()];
-    const picked = chooseWeighted(rng, deduped, (candidate) => {
-      const downwardBias = candidate.y >= start.y ? 1.5 : 0.65;
-      const edgePenalty = candidate.x === 0 || candidate.x === moduleCount - 1 ? 0.85 : 1;
-      const depthBonus = 1 + (candidate.y / Math.max(1, moduleCount - 1)) * 0.45;
-      return downwardBias * edgePenalty * depthBonus;
+    deduped.sort((a, b) => {
+      if (a.currentDegree !== b.currentDegree) return a.currentDegree - b.currentDegree;
+      if (a.adjacentCount !== b.adjacentCount) return a.adjacentCount - b.adjacentCount;
+      return a.roll - b.roll;
     });
-
-    if (!picked) break;
-    occupied.set(key(picked.x, picked.y), {
-      x: picked.x,
-      y: picked.y,
-      parent: picked.parent,
-    });
+    const picked = deduped[0];
+    addNetworkCell(occupied, picked, picked.parentCell, "secondary-branch");
   }
 
+  addArchitecturalLoops(rng, occupied, moduleCount);
   return occupied;
 }
 
 function connectionSides(cell, occupied, moduleCount) {
   const doors = { n: false, e: false, s: false, w: false };
   neighborsOf(cell.x, cell.y, moduleCount).forEach((neighbor) => {
-    if (occupied.has(key(neighbor.x, neighbor.y))) doors[neighbor.side] = true;
+    const other = occupied.get(key(neighbor.x, neighbor.y));
+    if (other && areConnected(occupied, cell, other)) doors[neighbor.side] = true;
   });
   return doors;
 }
@@ -358,7 +503,7 @@ export function generateVaultLayout(input = {}) {
   const start = { x: Math.floor((moduleCount - 1) / 2), y: 0 };
   const maxTiles = moduleCount * moduleCount;
   const desiredOccupied = Math.min(maxTiles, spec.targetRooms + spec.targetCorridors);
-  const occupied = growConnectedCells(rng, moduleCount, desiredOccupied, start);
+  const occupied = buildArchitecturalNetwork(rng, moduleCount, desiredOccupied, start, spec.seed);
   const actualRooms = Math.min(spec.targetRooms, occupied.size);
   const roomKeys = selectRoomCells(rng, occupied, moduleCount, start, actualRooms);
   const roomCells = [...occupied.values()].filter((cell) => roomKeys.has(key(cell.x, cell.y)));
@@ -377,6 +522,7 @@ export function generateVaultLayout(input = {}) {
       w: VAULT_MODULE_SIZE,
       h: VAULT_MODULE_SIZE,
       activeDoors,
+      networkRole: cell.networkRole || "branch",
     };
 
     if (isRoom) {
@@ -463,6 +609,9 @@ export function generateVaultLayout(input = {}) {
         acc[sector] = (acc[sector] || 0) + 1;
         return acc;
       }, {}),
+      junctions: tiles.filter((tile) => Object.values(tile.activeDoors || {}).filter(Boolean).length >= 3).length,
+      deadEnds: tiles.filter((tile) => Object.values(tile.activeDoors || {}).filter(Boolean).length === 1).length,
+      mainSpineModules: tiles.filter((tile) => ["atrium", "entry-spine", "main-spine"].includes(tile.networkRole)).length,
     },
   };
 }
