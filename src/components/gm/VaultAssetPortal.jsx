@@ -4,6 +4,147 @@ import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
 const CELL = 64;
+const NORMALIZED_VAULT_ASSET_CACHE = new Map();
+
+function colorDistance(a, b) {
+  const dr = a[0] - b[0];
+  const dg = a[1] - b[1];
+  const db = a[2] - b[2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+function averageCornerColor(data, width, height) {
+  const samples = [];
+  const patch = Math.max(4, Math.min(16, Math.floor(Math.min(width, height) * 0.035)));
+  const corners = [
+    [0, 0],
+    [Math.max(0, width - patch), 0],
+    [0, Math.max(0, height - patch)],
+    [Math.max(0, width - patch), Math.max(0, height - patch)],
+  ];
+  corners.forEach(([sx, sy]) => {
+    for (let y = sy; y < Math.min(height, sy + patch); y += 2) {
+      for (let x = sx; x < Math.min(width, sx + patch); x += 2) {
+        const i = (y * width + x) * 4;
+        samples.push([data[i], data[i + 1], data[i + 2]]);
+      }
+    }
+  });
+  if (!samples.length) return [20, 20, 20];
+  return [0, 1, 2].map((channel) =>
+    Math.round(samples.reduce((sum, value) => sum + value[channel], 0) / samples.length)
+  );
+}
+
+function detectContentBounds(ctx, width, height) {
+  const image = ctx.getImageData(0, 0, width, height);
+  const data = image.data;
+  const bg = averageCornerColor(data, width, height);
+  const step = Math.max(1, Math.floor(Math.min(width, height) / 256));
+  const threshold = 34;
+  let minX = width, minY = height, maxX = -1, maxY = -1;
+
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const i = (y * width + x) * 4;
+      if (data[i + 3] < 24) continue;
+      const pixel = [data[i], data[i + 1], data[i + 2]];
+      if (colorDistance(pixel, bg) < threshold) continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return { x: 0, y: 0, w: width, h: height };
+
+  const pad = Math.max(2, Math.round(Math.min(width, height) * 0.012));
+  minX = Math.max(0, minX - pad);
+  minY = Math.max(0, minY - pad);
+  maxX = Math.min(width - 1, maxX + pad);
+  maxY = Math.min(height - 1, maxY + pad);
+
+  const contentW = maxX - minX + 1;
+  const contentH = maxY - minY + 1;
+  const side = Math.min(Math.max(contentW, contentH), Math.min(width, height));
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+  let x = Math.round(centerX - side / 2);
+  let y = Math.round(centerY - side / 2);
+  x = Math.max(0, Math.min(width - side, x));
+  y = Math.max(0, Math.min(height - side, y));
+  return { x, y, w: side, h: side };
+}
+
+function normalizeVaultAsset(src) {
+  if (!src || typeof window === "undefined") return Promise.resolve(src);
+  if (NORMALIZED_VAULT_ASSET_CACHE.has(src)) return NORMALIZED_VAULT_ASSET_CACHE.get(src);
+
+  const promise = new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => {
+      try {
+        const source = document.createElement("canvas");
+        source.width = image.naturalWidth || image.width;
+        source.height = image.naturalHeight || image.height;
+        const sourceCtx = source.getContext("2d", { willReadFrequently: true });
+        if (!sourceCtx) return resolve(src);
+        sourceCtx.drawImage(image, 0, 0);
+        const bounds = detectContentBounds(sourceCtx, source.width, source.height);
+
+        const output = document.createElement("canvas");
+        output.width = 512;
+        output.height = 512;
+        const outCtx = output.getContext("2d");
+        if (!outCtx) return resolve(src);
+        outCtx.imageSmoothingEnabled = true;
+        outCtx.imageSmoothingQuality = "high";
+        outCtx.drawImage(
+          source,
+          bounds.x, bounds.y, bounds.w, bounds.h,
+          0, 0, output.width, output.height,
+        );
+        resolve(output.toDataURL("image/webp", 0.92));
+      } catch {
+        resolve(src);
+      }
+    };
+    image.onerror = () => resolve(src);
+    image.src = src;
+  });
+
+  NORMALIZED_VAULT_ASSET_CACHE.set(src, promise);
+  return promise;
+}
+
+function VaultTileAsset({ tile, style, preview }) {
+  const [src, setSrc] = useState(tile.assetPath);
+
+  useEffect(() => {
+    let cancelled = false;
+    setSrc(tile.assetPath);
+    normalizeVaultAsset(tile.assetPath).then((normalized) => {
+      if (!cancelled) setSrc(normalized || tile.assetPath);
+    });
+    return () => { cancelled = true; };
+  }, [tile.assetPath]);
+
+  if (preview) {
+    return <img src={src} alt="" draggable={false} style={style} />;
+  }
+
+  return (
+    <PhaserAsset
+      src={src}
+      style={style}
+      data-vault-tile={tile.tileId}
+      data-vault-module={`${tile.moduleX}:${tile.moduleY}`}
+    />
+  );
+}
+
 
 function esc(value) {
   return String(value || "").replace(/[&<>"']/g, (ch) => ({
@@ -88,18 +229,7 @@ export function VaultAssetLayer({ spec, layout: suppliedLayout, preview = false 
     <>
       {(layout?.tiles || []).map((tile) => {
         const style = tileStyle(tile, preview, cols, rows);
-        if (preview) {
-          return <img key={tile.id} src={tile.assetPath} alt="" draggable={false} style={style} />;
-        }
-        return (
-          <PhaserAsset
-            key={tile.id}
-            src={tile.assetPath}
-            style={style}
-            data-vault-tile={tile.tileId}
-            data-vault-module={`${tile.moduleX}:${tile.moduleY}`}
-          />
-        );
+        return <VaultTileAsset key={tile.id} tile={tile} style={style} preview={preview} />;
       })}
     </>
   );
