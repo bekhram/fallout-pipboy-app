@@ -61,3 +61,53 @@ test("active vault connections leave only the centered two-cell wall opening", (
   const ownWalls = map.walls.filter((wall) => String(wall.id).startsWith(`${tile.id}-${side}`));
   assert.equal(ownWalls.length, 2);
 });
+
+
+test("vault corridor topology has a main spine, branches and dead ends", () => {
+  const small = generateVaultLayout({ cols: 24, rows: 24, seed: "architecture-small" });
+  const medium = generateVaultLayout({ cols: 36, rows: 36, seed: "architecture-medium" });
+  const large = generateVaultLayout({ cols: 48, rows: 48, seed: "architecture-large" });
+
+  assert.equal(small.stats.mainSpineModules, 4);
+  assert.equal(medium.stats.mainSpineModules, 6);
+  assert.equal(large.stats.mainSpineModules, 8);
+
+  assert.ok(small.stats.deadEnds >= 1);
+  assert.ok(medium.stats.deadEnds >= 2);
+  assert.ok(large.stats.deadEnds >= 3);
+
+  assert.ok(medium.stats.junctions >= 1);
+  assert.ok(large.stats.junctions >= 2);
+
+  for (const layout of [small, medium, large]) {
+    const roles = new Set(layout.tiles.map((tile) => tile.networkRole));
+    assert.ok(roles.has("atrium"));
+    assert.ok(roles.has("main-spine") || roles.has("entry-spine"));
+    assert.ok(
+      roles.has("branch-corridor") ||
+      roles.has("junction-wing") ||
+      roles.has("secondary-branch"),
+    );
+  }
+});
+
+test("adjacent modules are not automatically connected unless the corridor graph links them", () => {
+  const layout = generateVaultLayout({ cols: 48, rows: 48, seed: "explicit-edge-check" });
+  const byPosition = new Map(layout.tiles.map((tile) => [`${tile.moduleX}:${tile.moduleY}`, tile]));
+  let foundUnlinkedAdjacency = false;
+
+  for (const tile of layout.tiles) {
+    const east = byPosition.get(`${tile.moduleX + 1}:${tile.moduleY}`);
+    if (east && !tile.activeDoors.e && !east.activeDoors.w) {
+      foundUnlinkedAdjacency = true;
+      break;
+    }
+    const south = byPosition.get(`${tile.moduleX}:${tile.moduleY + 1}`);
+    if (south && !tile.activeDoors.s && !south.activeDoors.n) {
+      foundUnlinkedAdjacency = true;
+      break;
+    }
+  }
+
+  assert.equal(foundUnlinkedAdjacency, true);
+});
