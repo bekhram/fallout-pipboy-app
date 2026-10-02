@@ -378,6 +378,78 @@ export function generateVaultLayout(input = {}) {
   };
 }
 
+function wallSegment(id, x1, y1, x2, y2) {
+  return { id, x1, y1, x2, y2 };
+}
+
+export function vaultLayoutStartZone(layout) {
+  const start = (layout?.tiles || []).find((tile) => tile.id === layout?.startTileId);
+  if (!start) return [];
+  const x0 = start.cellX + 2;
+  const y0 = start.cellY + 2;
+  return [
+    { x: x0, y: y0 },
+    { x: x0 + 1, y: y0 },
+    { x: x0, y: y0 + 1 },
+    { x: x0 + 1, y: y0 + 1 },
+  ];
+}
+
+export function vaultLayoutToProceduralMap(layout) {
+  const tiles = Array.isArray(layout?.tiles) ? layout.tiles : [];
+  const walls = [];
+  const rooms = [];
+  const seenWalls = new Set();
+
+  const pushWall = (id, x1, y1, x2, y2) => {
+    const canonical = x1 < x2 || (x1 === x2 && y1 <= y2)
+      ? `${x1}:${y1}:${x2}:${y2}`
+      : `${x2}:${y2}:${x1}:${y1}`;
+    if (seenWalls.has(canonical)) return;
+    seenWalls.add(canonical);
+    walls.push(wallSegment(id, x1, y1, x2, y2));
+  };
+
+  tiles.forEach((tile) => {
+    const x = Number(tile.cellX || 0);
+    const y = Number(tile.cellY || 0);
+    const w = Number(tile.w || VAULT_MODULE_SIZE);
+    const h = Number(tile.h || VAULT_MODULE_SIZE);
+    rooms.push({
+      id: tile.id,
+      label: tile.label || tile.tileId,
+      x, y, w, h,
+      tags: [tile.kind, ...(tile.tags || [])],
+      baseRoomId: tile.tileId,
+      markerX: x + w / 2,
+      markerY: y + h / 2,
+    });
+    if (!tile.activeDoors?.n) pushWall(`${tile.id}-n`, x, y, x + w, y);
+    if (!tile.activeDoors?.e) pushWall(`${tile.id}-e`, x + w, y, x + w, y + h);
+    if (!tile.activeDoors?.s) pushWall(`${tile.id}-s`, x, y + h, x + w, y + h);
+    if (!tile.activeDoors?.w) pushWall(`${tile.id}-w`, x, y, x, y + h);
+  });
+
+  return {
+    version: 2,
+    spec: layout?.spec || {},
+    rooms,
+    walls,
+    doors: [],
+    covers: [],
+    obstacles: [],
+    points: [
+      ...(layout?.startTileId ? [{ id: "vault-hatch", type: "vault_hatch", roomId: layout.startTileId }] : []),
+    ],
+    spawnZones: [{
+      id: "party",
+      type: "party",
+      cells: vaultLayoutStartZone(layout),
+    }],
+    vaultLayout: layout,
+  };
+}
+
 export function validateVaultLayout(layout) {
   const errors = [];
   if (!layout?.spec || layout.spec.type !== "vault_tunnels") errors.push("INVALID_SPEC");
