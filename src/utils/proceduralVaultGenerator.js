@@ -513,10 +513,27 @@ export function vaultLayoutToProceduralMap(layout) {
       markerX: x + w / 2,
       markerY: y + h / 2,
     });
-    if (!tile.activeDoors?.n) pushWall(`${tile.id}-n`, x, y, x + w, y);
-    if (!tile.activeDoors?.e) pushWall(`${tile.id}-e`, x + w, y, x + w, y + h);
-    if (!tile.activeDoors?.s) pushWall(`${tile.id}-s`, x, y + h, x + w, y + h);
-    if (!tile.activeDoors?.w) pushWall(`${tile.id}-w`, x, y, x, y + h);
+    const openingStart = 2;
+    const openingEnd = 4;
+    if (tile.activeDoors?.n) {
+      pushWall(`${tile.id}-n-a`, x, y, x + openingStart, y);
+      pushWall(`${tile.id}-n-b`, x + openingEnd, y, x + w, y);
+    } else pushWall(`${tile.id}-n`, x, y, x + w, y);
+
+    if (tile.activeDoors?.e) {
+      pushWall(`${tile.id}-e-a`, x + w, y, x + w, y + openingStart);
+      pushWall(`${tile.id}-e-b`, x + w, y + openingEnd, x + w, y + h);
+    } else pushWall(`${tile.id}-e`, x + w, y, x + w, y + h);
+
+    if (tile.activeDoors?.s) {
+      pushWall(`${tile.id}-s-a`, x, y + h, x + openingStart, y + h);
+      pushWall(`${tile.id}-s-b`, x + openingEnd, y + h, x + w, y + h);
+    } else pushWall(`${tile.id}-s`, x, y + h, x + w, y + h);
+
+    if (tile.activeDoors?.w) {
+      pushWall(`${tile.id}-w-a`, x, y, x, y + openingStart);
+      pushWall(`${tile.id}-w-b`, x, y + openingEnd, x, y + h);
+    } else pushWall(`${tile.id}-w`, x, y, x, y + h);
   });
 
   return {
