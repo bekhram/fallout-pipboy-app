@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import SessionTacticalMapV3 from "./SessionTacticalMapV3.jsx";
 import BattlemapSharedLayer from "../gm/BattlemapSharedLayer.jsx";
+import VaultAssetPortal from "../gm/VaultAssetPortal.jsx";
 import PlayerBattlemapControls from "./PlayerBattlemapControls.jsx";
 import wastelandBg from "../../assets/wasteland/backgrounds/wasteland-bg-1.png";
 import swampBg from "../../assets/wasteland/backgrounds/wasteland-swamp-bg-1.png";
@@ -94,6 +95,7 @@ export default function SessionTacticalMapV4(props) {
   return <>
     <SessionTacticalMapV3 {...props} />
     <BattlemapSharedLayer scene={scene} role="player" />
+    <VaultAssetPortal session={props?.session} targetSelector=".session-tactical-player .gm-session-map__grid" />
     <PlayerBattlemapControls session={props?.session} />
   </>;
 }
