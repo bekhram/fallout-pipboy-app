@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
@@ -60,9 +61,32 @@ export function VaultAssetLayer({ spec, layout: suppliedLayout, preview = false 
   );
 }
 
-export default function VaultAssetPortal({ session }) {
-  const spec = session?.tacticalScene?.environment?.proceduralMapSpec;
-  if (String(spec?.type || "") !== "vault_tunnels") return null;
-  const layout = session?.tacticalScene?.environment?.vaultLayout || null;
-  return <VaultAssetLayer spec={spec} layout={layout} />;
+export default function VaultAssetPortal({ session, targetSelector = ".gm-tactical-map-core .gm-session-map__grid" }) {
+  const scene = session?.tacticalScene || null;
+  const spec = scene?.environment?.proceduralMapSpec || null;
+  const [target, setTarget] = useState(null);
+
+  useEffect(() => {
+    if (typeof document === "undefined" || String(spec?.type || "") !== "vault_tunnels") {
+      setTarget(null);
+      return undefined;
+    }
+    let cancelled = false;
+    const find = () => {
+      if (cancelled) return;
+      setTarget(document.querySelector(targetSelector));
+    };
+    find();
+    const observer = new MutationObserver(find);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+      setTarget(null);
+    };
+  }, [scene?.sceneId, scene?.active, spec?.type, spec?.seed, spec?.cols, spec?.rows, targetSelector]);
+
+  if (!target || String(spec?.type || "") !== "vault_tunnels") return null;
+  const layout = scene?.environment?.vaultLayout || null;
+  return createPortal(<VaultAssetLayer spec={spec} layout={layout} />, target);
 }
