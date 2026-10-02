@@ -1,18 +1,18 @@
-export const VAULT_MODULE_SIZE = 6;
+export const VAULT_MODULE_SIZE = 12;
 export const VAULT_DOOR_WIDTH = 2;
 export const VAULT_SUPPORTED_GRID_SIZES = [24, 36, 48];
 
 export const VAULT_GRID_PRESETS = {
-  24: { modules: 4, targetRooms: 6, roomVariance: 1, minCorridors: 4, maxCorridors: 7 },
-  36: { modules: 6, targetRooms: 11, roomVariance: 2, minCorridors: 10, maxCorridors: 16 },
-  48: { modules: 8, targetRooms: 19, roomVariance: 3, minCorridors: 18, maxCorridors: 28 },
+  24: { modules: 2, targetRooms: 2, roomVariance: 0, minCorridors: 1, maxCorridors: 2 },
+  36: { modules: 3, targetRooms: 4, roomVariance: 1, minCorridors: 2, maxCorridors: 4 },
+  48: { modules: 4, targetRooms: 7, roomVariance: 1, minCorridors: 5, maxCorridors: 8 },
 };
 
 export const VAULT_DOOR_CELLS = Object.freeze({
-  n: [{ x: 2, y: 0 }, { x: 3, y: 0 }],
-  e: [{ x: 5, y: 2 }, { x: 5, y: 3 }],
-  s: [{ x: 2, y: 5 }, { x: 3, y: 5 }],
-  w: [{ x: 0, y: 2 }, { x: 0, y: 3 }],
+  n: [{ x: 5, y: 0 }, { x: 6, y: 0 }],
+  e: [{ x: 11, y: 5 }, { x: 11, y: 6 }],
+  s: [{ x: 5, y: 11 }, { x: 6, y: 11 }],
+  w: [{ x: 0, y: 5 }, { x: 0, y: 6 }],
 });
 
 const FOUR_WAY = Object.freeze({ n: true, e: true, s: true, w: true });
