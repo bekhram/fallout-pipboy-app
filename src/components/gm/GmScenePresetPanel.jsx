@@ -14,22 +14,24 @@ import {
   generateProceduralEncounterSummary,
   normalizeLootRarity,
 } from "../../utils/proceduralRoomContent.js";
+import { generateVaultLayout, vaultLayoutStartZone, vaultLayoutToProceduralMap } from "../../utils/proceduralVaultGenerator.js";
 import "./gmScenePresetPanel.css";
 
 const LazyWastelandPreview = lazy(() => import("./WastelandAssetPortal.jsx").then((m) => ({ default: m.WastelandAssetLayer })));
 const LazySettlementPreview = lazy(() => import("./SettlementAssetPortal.jsx").then((m) => ({ default: m.SettlementAssetLayer })));
 const LazyRedRocketPreview = lazy(() => import("./RedRocketAssetPortal.jsx").then((m) => ({ default: m.RedRocketAssetLayer })));
 const LazySuperDuperPreview = lazy(() => import("./SuperDuperMartAssetPortal.jsx").then((m) => ({ default: m.SuperDuperMartAssetLayer })));
+const LazyVaultPreview = lazy(() => import("./VaultAssetPortal.jsx").then((m) => ({ default: m.VaultAssetLayer })));
 
-const MAP_TYPES = ["wasteland", "settlement", "red_rocket", "super_duper_mart"];
+const MAP_TYPES = ["wasteland", "settlement", "red_rocket", "super_duper_mart", "vault_tunnels"];
 const LOOT_RARITIES = ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7"];
 const WEALTH_LEVELS = ["poor", "standard", "rich", "wealthy"];
 
 const LABELS = {
-  en: { wasteland: "Wasteland", settlement: "Settlement", residential_house: "Residential House", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", raider_camp: "Raider Camp", military_bunker: "Military Bunker" },
-  ru: { wasteland: "Пустошь", settlement: "Поселение", residential_house: "Жилой дом", red_rocket: "Красная Ракета", super_duper_mart: "Супердупермарт", raider_camp: "Лагерь рейдеров", military_bunker: "Военный бункер" },
-  uk: { wasteland: "Пустка", settlement: "Поселення", residential_house: "Житловий будинок", red_rocket: "Червона Ракета", super_duper_mart: "Супер-Дупер Март", raider_camp: "Табір рейдерів", military_bunker: "Військовий бункер" },
-  pl: { wasteland: "Pustkowie", settlement: "Osada", residential_house: "Dom mieszkalny", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", raider_camp: "Obóz raiderów", military_bunker: "Bunkier wojskowy" },
+  en: { wasteland: "Wasteland", settlement: "Settlement", residential_house: "Residential House", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", vault_tunnels: "Vault Tunnels", raider_camp: "Raider Camp", military_bunker: "Military Bunker" },
+  ru: { wasteland: "Пустошь", settlement: "Поселение", residential_house: "Жилой дом", red_rocket: "Красная Ракета", super_duper_mart: "Супердупермарт", vault_tunnels: "Туннели / Убежище", raider_camp: "Лагерь рейдеров", military_bunker: "Военный бункер" },
+  uk: { wasteland: "Пустка", settlement: "Поселення", residential_house: "Житловий будинок", red_rocket: "Червона Ракета", super_duper_mart: "Супер-Дупер Март", vault_tunnels: "Тунелі / Сховище", raider_camp: "Табір рейдерів", military_bunker: "Військовий бункер" },
+  pl: { wasteland: "Pustkowie", settlement: "Osada", residential_house: "Dom mieszkalny", red_rocket: "Red Rocket", super_duper_mart: "Super-Duper Mart", vault_tunnels: "Tunele / Schron", raider_camp: "Obóz raiderów", military_bunker: "Bunkier wojskowy" },
 };
 
 const COPY = {
@@ -137,7 +139,7 @@ export default function GmScenePresetPanel({ session }) {
   }), [type, terrain, seed, gridSize, density, lootRarity, wealth, avgPartyLevel, partySize]);
 
   const previewUrl = useMemo(
-    () => (previewOpen ? generateProceduralMapDataUrl(generationSpec) : ""),
+    () => (previewOpen && type !== "vault_tunnels" ? generateProceduralMapDataUrl(generationSpec) : ""),
     [previewOpen, generationSpec],
   );
   const encounter = useMemo(() => generateProceduralEncounterSummary(generationSpec), [generationSpec]);
@@ -148,20 +150,27 @@ export default function GmScenePresetPanel({ session }) {
     const nextSeed = newSeed ? makeProceduralSeed() : (seed || makeProceduralSeed());
     if (nextSeed !== seed) setSeed(nextSeed);
     const nextSpec = { ...generationSpec, seed: nextSeed };
+    const isVault = type === "vault_tunnels";
+    const vaultLayout = isVault ? generateVaultLayout(nextSpec) : null;
     await session.updateTacticalScene?.({
       cols: gridSize,
       rows: gridSize,
-      startZone: makeStartZone(gridSize),
+      startZone: isVault ? vaultLayoutStartZone(vaultLayout) : makeStartZone(gridSize),
       backgroundUrl: "",
-      backgroundName: `PROC // ${LABELS.en[type]} // ${labelFor("terrain", terrain, "en")} // ${nextSeed}`,
+      backgroundName: isVault
+        ? `PROC // VAULT TUNNELS // ${gridSize}x${gridSize} // ${nextSeed}`
+        : `PROC // ${LABELS.en[type]} // ${labelFor("terrain", terrain, "en")} // ${nextSeed}`,
       environment: {
         ...(scene.environment || {}),
-        locationType: proceduralLocationType(type),
+        locationType: isVault ? "vault_tunnels" : proceduralLocationType(type),
         terrain,
-        mapAssetId: `procedural:${type}:${terrain}:${gridSize}x${gridSize}-v3`,
+        mapAssetId: isVault
+          ? `procedural:vault_tunnels:${gridSize}x${gridSize}-v1`
+          : `procedural:${type}:${terrain}:${gridSize}x${gridSize}-v3`,
         mapVariantSeed: nextSeed,
         proceduralMapSpec: nextSpec,
-        proceduralMap: null,
+        proceduralMap: isVault ? vaultLayoutToProceduralMap(vaultLayout) : null,
+        vaultLayout,
         proceduralDoorStates: {},
       },
     });
@@ -192,6 +201,7 @@ export default function GmScenePresetPanel({ session }) {
             {type === "settlement" ? <LazySettlementPreview spec={generationSpec} preview /> : null}
             {type === "red_rocket" ? <LazyRedRocketPreview spec={generationSpec} preview /> : null}
             {type === "super_duper_mart" ? <LazySuperDuperPreview spec={generationSpec} preview /> : null}
+            {type === "vault_tunnels" ? <LazyVaultPreview spec={generationSpec} preview /> : null}
           </Suspense>
           <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
         </div>
