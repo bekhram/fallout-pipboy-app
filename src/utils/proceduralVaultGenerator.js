@@ -397,16 +397,11 @@ function sectorRuinChance(sector, baseChance, moduleCount) {
 }
 
 const VAULT_REQUIRED_ROOMS = {
-  24: ["security_checkpoint", "living_quarters", "medbay", "storage", "power_reactor"],
-  36: [
-    "security_checkpoint", "command_room", "living_quarters", "cafeteria",
-    "medbay", "armory", "workshop", "power_reactor",
-    "water_treatment", "storage", "hydroponics",
-  ],
+  24: ["security_checkpoint"],
+  36: ["security_checkpoint", "living_quarters", "medbay"],
   48: [
-    "security_checkpoint", "command_room", "living_quarters", "cafeteria",
-    "medbay", "armory", "workshop", "power_reactor",
-    "water_treatment", "storage", "hydroponics",
+    "security_checkpoint", "command_room", "living_quarters",
+    "medbay", "workshop", "power_reactor",
   ],
 };
 
@@ -506,11 +501,14 @@ function assignRoomTiles(rng, roomCells, start, ruinedChance, moduleCount, seed,
 function globalDoorCells(tile) {
   const ox = tile.cellX;
   const oy = tile.cellY;
+  const centerA = Math.floor(VAULT_MODULE_SIZE / 2) - 1;
+  const centerB = centerA + 1;
+  const edge = VAULT_MODULE_SIZE - 1;
   const bySide = {
-    n: [{ x: ox + 2, y: oy }, { x: ox + 3, y: oy }],
-    e: [{ x: ox + 5, y: oy + 2 }, { x: ox + 5, y: oy + 3 }],
-    s: [{ x: ox + 2, y: oy + 5 }, { x: ox + 3, y: oy + 5 }],
-    w: [{ x: ox, y: oy + 2 }, { x: ox, y: oy + 3 }],
+    n: [{ x: ox + centerA, y: oy }, { x: ox + centerB, y: oy }],
+    e: [{ x: ox + edge, y: oy + centerA }, { x: ox + edge, y: oy + centerB }],
+    s: [{ x: ox + centerA, y: oy + edge }, { x: ox + centerB, y: oy + edge }],
+    w: [{ x: ox, y: oy + centerA }, { x: ox, y: oy + centerB }],
   };
   return Object.fromEntries(SIDES.map((side) => [side, bySide[side]]));
 }
@@ -523,13 +521,13 @@ export function normalizeVaultGeneratorSpec(value = {}) {
   const roomVariance = int(rng, -preset.roomVariance, preset.roomVariance);
   const targetRooms = clamp(
     value.targetRooms ?? preset.targetRooms + roomVariance,
-    4,
-    size === 24 ? 7 : size === 36 ? 14 : 26,
+    2,
+    size === 24 ? 3 : size === 36 ? 5 : 8,
   );
   const targetCorridors = clamp(
     value.targetCorridors ?? int(rng, preset.minCorridors, preset.maxCorridors),
     3,
-    Math.max(3, (size / VAULT_MODULE_SIZE) ** 2 - targetRooms),
+    Math.max(1, (size / VAULT_MODULE_SIZE) ** 2 - targetRooms),
   );
 
   return {
@@ -674,8 +672,8 @@ function wallSegment(id, x1, y1, x2, y2) {
 export function vaultLayoutStartZone(layout) {
   const start = (layout?.tiles || []).find((tile) => tile.id === layout?.startTileId);
   if (!start) return [];
-  const x0 = start.cellX + 2;
-  const y0 = start.cellY + 2;
+  const x0 = start.cellX + Math.floor(VAULT_MODULE_SIZE / 2) - 1;
+  const y0 = start.cellY + Math.floor(VAULT_MODULE_SIZE / 2) - 1;
   return [
     { x: x0, y: y0 },
     { x: x0 + 1, y: y0 },
@@ -713,8 +711,8 @@ export function vaultLayoutToProceduralMap(layout) {
       markerX: x + w / 2,
       markerY: y + h / 2,
     });
-    const openingStart = 2;
-    const openingEnd = 4;
+    const openingStart = Math.floor(VAULT_MODULE_SIZE / 2) - 1;
+    const openingEnd = openingStart + 2;
     if (tile.activeDoors?.n) {
       pushWall(`${tile.id}-n-a`, x, y, x + openingStart, y);
       pushWall(`${tile.id}-n-b`, x + openingEnd, y, x + w, y);
