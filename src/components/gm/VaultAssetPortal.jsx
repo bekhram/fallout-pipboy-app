@@ -89,12 +89,12 @@ export function VaultAssetLayer({ spec, layout: suppliedLayout, preview = false 
       {(layout?.tiles || []).map((tile) => {
         const style = tileStyle(tile, preview, cols, rows);
         if (preview) {
-          return <img key={tile.id} src={vaultFallbackDataUrl(tile)} alt="" draggable={false} style={style} />;
+          return <img key={tile.id} src={tile.assetPath} alt="" draggable={false} style={style} />;
         }
         return (
           <PhaserAsset
             key={tile.id}
-            src={vaultFallbackDataUrl(tile)}
+            src={tile.assetPath}
             style={style}
             data-vault-tile={tile.tileId}
             data-vault-module={`${tile.moduleX}:${tile.moduleY}`}
