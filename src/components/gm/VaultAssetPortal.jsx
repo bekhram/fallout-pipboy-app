@@ -3,7 +3,13 @@ import { createPortal } from "react-dom";
 import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
-const CELL = 64;\nconst VAULT_ASSET_VERSION = "edge4";\n\nfunction vaultAssetSrc(path) {\n  if (!path) return path;\n  return `${path}${String(path).includes("?") ? "&" : "?"}v=${VAULT_ASSET_VERSION}`;\n}
+const CELL = 64;
+const VAULT_ASSET_VERSION = "edge4";
+
+function vaultAssetSrc(path) {
+  if (!path) return path;
+  return `${path}${String(path).includes("?") ? "&" : "?"}v=${VAULT_ASSET_VERSION}`;
+}
 
 function tileStyle(tile, preview, cols, rows) {
   if (preview) {
@@ -36,13 +42,15 @@ function tileStyle(tile, preview, cols, rows) {
 }
 
 function VaultTileAsset({ tile, style, preview }) {
+  const src = vaultAssetSrc(tile.assetPath);
+
   if (preview) {
-    return <img src={vaultAssetSrc(tile.assetPath)} alt="" draggable={false} style={style} />;
+    return <img src={src} alt="" draggable={false} style={style} />;
   }
 
   return (
     <PhaserAsset
-      src={tile.assetPath}
+      src={src}
       style={style}
       data-vault-tile={tile.tileId}
       data-vault-sector={tile.sector || ""}
