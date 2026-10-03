@@ -4,7 +4,7 @@ import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
 const CELL = 64;
-const VAULT_ASSET_VERSION = "edge4";
+const VAULT_ASSET_VERSION = "edge5";
 
 function vaultAssetSrc(path) {
   if (!path) return path;
