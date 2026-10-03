@@ -310,34 +310,36 @@ function sameDoors(a, b) {
 }
 
 function corridorVisualFor(activeDoors) {
-  const degree = SIDES.filter((side) => activeDoors[side]).length;
-  let baseId = "corridor_cross";
-  let baseDoors = { n: true, e: true, s: true, w: true };
+  const d = activeDoors || {};
+  const degree = SIDES.filter((side) => d[side]).length;
 
   if (degree <= 1) {
-    baseId = "corridor_dead_end";
-    baseDoors = { n: true, e: false, s: false, w: false };
-  } else if (degree === 2) {
-    const opposite = (activeDoors.n && activeDoors.s) || (activeDoors.e && activeDoors.w);
-    if (opposite) {
-      baseId = "corridor_straight";
-      baseDoors = { n: true, e: false, s: true, w: false };
-    } else {
-      baseId = "corridor_corner";
-      baseDoors = { n: true, e: true, s: false, w: false };
-    }
-  } else if (degree === 3) {
-    baseId = "corridor_t";
-    baseDoors = { n: true, e: true, s: true, w: false };
+    const side = SIDES.find((value) => d[value]) || "n";
+    const rotationBySide = { n: 0, e: 90, s: 180, w: 270 };
+    return {
+      tileId: "corridor_dead_end",
+      assetFile: "corridor_dead_end.png",
+      rotation: rotationBySide[side] || 0,
+    };
   }
 
-  for (let turns = 0; turns < 4; turns += 1) {
-    if (sameDoors(rotateDoors(baseDoors, turns), activeDoors)) {
-      return { tileId: baseId, rotation: turns * 90 };
-    }
+  if (degree === 2) {
+    if (d.n && d.s) return { tileId: "corridor_straight", assetFile: "corridor_straight_vertical.png", rotation: 0 };
+    if (d.e && d.w) return { tileId: "corridor_straight", assetFile: "corridor_straight_horizontal.png", rotation: 0 };
+    if (d.n && d.e) return { tileId: "corridor_corner", assetFile: "corridor_corner_ne.png", rotation: 0 };
+    if (d.e && d.s) return { tileId: "corridor_corner", assetFile: "corridor_corner_es.png", rotation: 0 };
+    if (d.s && d.w) return { tileId: "corridor_corner", assetFile: "corridor_corner_sw.png", rotation: 0 };
+    if (d.w && d.n) return { tileId: "corridor_corner", assetFile: "corridor_corner_wn.png", rotation: 0 };
   }
 
-  return { tileId: "corridor_cross", rotation: 0 };
+  if (degree === 3) {
+    if (!d.s) return { tileId: "corridor_t", assetFile: "corridor_t_north.png", rotation: 0 };
+    if (!d.w) return { tileId: "corridor_t", assetFile: "corridor_t_east.png", rotation: 0 };
+    if (!d.n) return { tileId: "corridor_t", assetFile: "corridor_t_south.png", rotation: 0 };
+    if (!d.e) return { tileId: "corridor_t", assetFile: "corridor_t_west.png", rotation: 0 };
+  }
+
+  return { tileId: "corridor_cross", assetFile: "corridor_cross.png", rotation: 0 };
 }
 
 const VAULT_SECTOR_POOLS = {
@@ -606,7 +608,7 @@ export function generateVaultLayout(input = {}) {
       tileId: visual.tileId,
       label: visual.tileId,
       assetKey: `vault_${visual.tileId}`,
-      assetPath: `/assets/battlemap/vault/corridors/${visual.tileId}.webp`,
+      assetPath: `/assets/battlemap/vault/corridors/${visual.assetFile}`,
       rotation: visual.rotation,
       sealedDoors: { n: false, e: false, s: false, w: false },
       tags: ["corridor"],
