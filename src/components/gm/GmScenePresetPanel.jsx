@@ -220,7 +220,16 @@ export default function GmScenePresetPanel({ session }) {
         <label className="gm-proc-map__seed"><span>{text.seed}</span><div><input className="pip-input" value={seed} maxLength={40} onChange={(e) => setSeed(e.target.value)} /><button type="button" className="pip-btn" onClick={() => setSeed(makeProceduralSeed())}>{text.newSeed}</button></div></label>
         <label className="gm-proc-map__density"><span>{text.density}: {density}%</span><input type="range" min="10" max="100" step="5" value={density} onChange={(e) => setDensity(Number(e.target.value))} /></label>
       </div>
-      <div className="gm-proc-map__balance"><strong>ENCOUNTER</strong><div><span>Enemies</span><b>{encounter.totalEnemies}</b></div><div><span>Target XP</span><b>{encounter.targetXp}</b></div><div><span>XP / player</span><b>{encounter.xpPerPlayer}</b></div></div>
+      {type === "vault_tunnels" ? (
+        <div className="gm-proc-map__balance">
+          <strong>ENCOUNTER</strong>
+          <div><span>Vault enemies</span><b>—</b></div>
+          <div><span>Room markers</span><b>—</b></div>
+          <div><span>Status</span><b>COMING NEXT</b></div>
+        </div>
+      ) : (
+        <div className="gm-proc-map__balance"><strong>ENCOUNTER</strong><div><span>Enemies</span><b>{encounter?.totalEnemies ?? 0}</b></div><div><span>Target XP</span><b>{encounter?.targetXp ?? 0}</b></div><div><span>XP / player</span><b>{encounter?.xpPerPlayer ?? 0}</b></div></div>
+      )}
       <div className="gm-proc-map__actions"><button type="button" className="pip-btn is-primary" onClick={() => generate()}>{text.generate}</button><button type="button" className="pip-btn" onClick={() => generate({ newSeed: true })}>{text.regenerate}</button><button type="button" className="pip-btn" onClick={() => document.querySelector(".gm-tactical-map-core .tactical-background-input")?.click()}>{text.upload}</button></div>
       <div className="gm-scene-presets__grid-control"><span>{text.gridVisibility}</span><div className="gm-scene-presets__grid-buttons">{["weak", "normal", "strong"].map((value) => <button key={value} type="button" className={`pip-btn${contrast === value ? " is-primary" : ""}`} onClick={() => changeContrast(value)}>{text[value]}</button>)}</div></div>
       {message ? <div className="gm-scene-presets__message">{message}</div> : null}
