@@ -3,15 +3,16 @@ import { useTranslation } from "react-i18next";
 import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStats.js";
 import {
   generateVaultEncounterPlan,
+  vaultRoomMarkers,
   vaultSpawnCells,
 } from "../../utils/proceduralVaultEncounter.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
 
 const COPY = {
-  en: { title:"VAULT ENCOUNTER", place:"PLACE VAULT ENEMIES", placing:"PLACING...", group:"Group", total:"Enemies", live:"Start this scene as LIVE first.", already:"Enemies for this Vault seed are already placed.", done:(n)=>`Placed ${n} Vault enemy token${n===1?"":"s"}.`, failed:"Some Vault enemies could not be placed." },
-  ru: { title:"ЭНКАУНТЕР УБЕЖИЩА", place:"РАССТАВИТЬ ВРАГОВ", placing:"РАССТАНОВКА...", group:"Группа", total:"Врагов", live:"Сначала запустите эту сцену как LIVE.", already:"Враги для этого Vault seed уже расставлены.", done:(n)=>`Расставлено токенов врагов: ${n}.`, failed:"Часть врагов не удалось разместить." },
-  uk: { title:"ЕНКАУНТЕР СХОВИЩА", place:"РОЗСТАВИТИ ВОРОГІВ", placing:"РОЗСТАНОВКА...", group:"Група", total:"Ворогів", live:"Спочатку запустіть цю сцену як LIVE.", already:"Ворогів для цього Vault seed уже розставлено.", done:(n)=>`Розставлено токенів ворогів: ${n}.`, failed:"Частину ворогів не вдалося розмістити." },
-  pl: { title:"SPOTKANIE W SCHRONIE", place:"ROZMIEŚĆ WROGÓW", placing:"ROZMIESZCZANIE...", group:"Grupa", total:"Wrogowie", live:"Najpierw uruchom tę scenę jako LIVE.", already:"Wrogowie dla tego Vault seed są już rozmieszczeni.", done:(n)=>`Rozmieszczono tokenów: ${n}.`, failed:"Nie udało się rozmieścić części wrogów." },
+  en: { title:"VAULT ENCOUNTER", rooms:"ROOMS", focus:"FOCUS ROOM", roomEnemies:"Enemies", place:"PLACE VAULT ENEMIES", placing:"PLACING...", group:"Group", total:"Enemies", live:"Start this scene as LIVE first.", already:"Enemies for this Vault seed are already placed.", done:(n)=>`Placed ${n} Vault enemy token${n===1?"":"s"}.`, failed:"Some Vault enemies could not be placed." },
+  ru: { title:"ЭНКАУНТЕР УБЕЖИЩА", rooms:"КОМНАТЫ", focus:"ПОКАЗАТЬ КОМНАТУ", roomEnemies:"Врагов", place:"РАССТАВИТЬ ВРАГОВ", placing:"РАССТАНОВКА...", group:"Группа", total:"Врагов", live:"Сначала запустите эту сцену как LIVE.", already:"Враги для этого Vault seed уже расставлены.", done:(n)=>`Расставлено токенов врагов: ${n}.`, failed:"Часть врагов не удалось разместить." },
+  uk: { title:"ЕНКАУНТЕР СХОВИЩА", rooms:"КІМНАТИ", focus:"ПОКАЗАТИ КІМНАТУ", roomEnemies:"Ворогів", place:"РОЗСТАВИТИ ВОРОГІВ", placing:"РОЗСТАНОВКА...", group:"Група", total:"Ворогів", live:"Спочатку запустіть цю сцену як LIVE.", already:"Ворогів для цього Vault seed уже розставлено.", done:(n)=>`Розставлено токенів ворогів: ${n}.`, failed:"Частину ворогів не вдалося розмістити." },
+  pl: { title:"SPOTKANIE W SCHRONIE", rooms:"POMIESZCZENIA", focus:"POKAŻ POMIESZCZENIE", roomEnemies:"Wrogowie", place:"ROZMIEŚĆ WROGÓW", placing:"ROZMIESZCZANIE...", group:"Grupa", total:"Wrogowie", live:"Najpierw uruchom tę scenę jako LIVE.", already:"Wrogowie dla tego Vault seed są już rozmieszczeni.", done:(n)=>`Rozmieszczono tokenów: ${n}.`, failed:"Nie udało się rozmieścić części wrogów." },
 };
 
 function langCode(value) {
@@ -65,6 +66,16 @@ export default function GmVaultEncounterPanel({ session }) {
     () => (String(spec?.type || "") === "vault_tunnels" && layout ? generateVaultEncounterPlan(spec, layout) : null),
     [key, layout],
   );
+  const markers = useMemo(() => (layout ? vaultRoomMarkers(layout) : []), [layout]);
+  const enemiesByRoom = useMemo(
+    () => Object.fromEntries((plan?.rooms || []).map((bucket) => [bucket.room.id, bucket.enemies.length])),
+    [plan],
+  );
+
+  const focusRoom = (roomId) => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("pip2d20:vault-focus-room", { detail: { roomId } }));
+  };
 
   if (session?.mode !== "host" || !plan) return null;
 
@@ -148,6 +159,28 @@ export default function GmVaultEncounterPanel({ session }) {
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10}}>
         <span>{text.group}<b style={{display:"block"}}>{enemyGroupLabel(plan.group, lang)}</b></span>
         <span>{text.total}<b style={{display:"block"}}>{plan.total}</b></span>
+      </div>
+      <div style={{marginTop:12}}>
+        <strong>[ {text.rooms} ]</strong>
+        <div style={{display:"grid",gap:8,marginTop:8}}>
+          {markers.map((marker) => (
+            <button
+              key={marker.id}
+              type="button"
+              className="pip-btn"
+              onClick={() => focusRoom(marker.roomId)}
+              title={text.focus}
+              style={{display:"grid",gridTemplateColumns:"34px minmax(0,1fr) auto",alignItems:"center",gap:8,textAlign:"left",width:"100%"}}
+            >
+              <b style={{display:"grid",placeItems:"center",width:28,height:28,border:"1px solid currentColor",borderRadius:"50%"}}>{marker.marker}</b>
+              <span style={{minWidth:0}}>
+                <strong style={{display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{marker.label}</strong>
+                <small>{marker.sector}{marker.ruined ? " · RUINED" : ""}</small>
+              </span>
+              <span>{text.roomEnemies}: <b>{enemiesByRoom[marker.roomId] || 0}</b></span>
+            </button>
+          ))}
+        </div>
       </div>
       <button type="button" className="pip-btn is-primary" disabled={placing || !plan.total} onClick={place} style={{marginTop:10,width:"100%"}}>
         {placing ? text.placing : `${text.place} (${plan.total})`}
