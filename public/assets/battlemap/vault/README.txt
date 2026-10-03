@@ -1,2 +1,4 @@
-Vault Tunnels edge-tight v6
-Captions stripped by bottom-band crop; zero module padding.
+Vault Tunnels edge v7
+Corridor baked captions removed by hard bottom-band crop.
+Rooms/ruined unchanged from v6.
+PNG RGBA 1024x1024.
