@@ -1,0 +1,47 @@
+name: Replace Vault Tunnels Edge Tight V5 Assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/replace-vault-edge-v5-assets.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  replace-assets:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace Vault Tunnels with edge-tight v5 assets
+        run: |
+          set -euo pipefail
+          rm -rf public/assets/battlemap/vault
+          mkdir -p /tmp/vault-edge-v5
+          curl -L --fail --retry 3             "https://cdn.creativeclaw.co/u/e2d59740/zips/8a71532f-b01a-4ae6-977a-5227f849546b.zip"             -o /tmp/vault_assets_edge_v5.zip
+          unzip -q -o /tmp/vault_assets_edge_v5.zip -d /tmp/vault-edge-v5
+          mkdir -p public/assets/battlemap/vault
+          cp -R /tmp/vault-edge-v5/rooms public/assets/battlemap/vault/
+          cp -R /tmp/vault-edge-v5/ruined public/assets/battlemap/vault/
+          cp -R /tmp/vault-edge-v5/corridors public/assets/battlemap/vault/
+          cp /tmp/vault-edge-v5/README.txt public/assets/battlemap/vault/README.txt || true
+          test -f public/assets/battlemap/vault/rooms/atrium_vault_entrance.png
+          test -f public/assets/battlemap/vault/rooms/security_checkpoint.png
+          test -f public/assets/battlemap/vault/ruined/ruined_medbay.png
+          test -f public/assets/battlemap/vault/corridors/corridor_straight_horizontal.png
+
+      - name: Commit edge-tight v5 assets
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/battlemap/vault
+          git rm .github/workflows/replace-vault-edge-v5-assets.yml
+          git commit -m "assets: remove Vault captions and outer padding"
+          git push origin HEAD:main
