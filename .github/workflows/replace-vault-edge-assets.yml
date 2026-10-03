@@ -1,0 +1,47 @@
+name: Replace Vault Tunnels Edge Tight Assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/replace-vault-edge-assets.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  replace-assets:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace Vault Tunnels with edge-tight assets
+        run: |
+          set -euo pipefail
+          rm -rf public/assets/battlemap/vault
+          mkdir -p /tmp/vault-edge
+          curl -L --fail --retry 3             "https://cdn.creativeclaw.co/u/e2d59740/zips/4edcdb0b-95ef-45a3-8bc0-f73ef59385bb.zip"             -o /tmp/vault_assets_edge_v4.zip
+          unzip -q -o /tmp/vault_assets_edge_v4.zip -d /tmp/vault-edge
+          mkdir -p public/assets/battlemap/vault
+          cp -R /tmp/vault-edge/rooms public/assets/battlemap/vault/
+          cp -R /tmp/vault-edge/ruined public/assets/battlemap/vault/
+          cp -R /tmp/vault-edge/corridors public/assets/battlemap/vault/
+          cp /tmp/vault-edge/README.txt public/assets/battlemap/vault/README.txt || true
+          test -f public/assets/battlemap/vault/rooms/atrium_vault_entrance.png
+          test -f public/assets/battlemap/vault/rooms/security_checkpoint.png
+          test -f public/assets/battlemap/vault/ruined/ruined_medbay.png
+          test -f public/assets/battlemap/vault/corridors/corridor_straight_horizontal.png
+
+      - name: Commit edge-tight production assets
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/battlemap/vault
+          git rm .github/workflows/replace-vault-edge-assets.yml
+          git commit -m "assets: tighten Vault tiles to module edges"
+          git push origin HEAD:main
