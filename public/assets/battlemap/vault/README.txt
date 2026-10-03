@@ -1,3 +1,3 @@
-Vault Tunnels edge-tight assets v4
+Vault Tunnels edge-tight v5
 PNG RGBA 1024x1024
-Visible alpha content expanded to full module canvas; no transparent outer padding.
+Detached captions removed. Largest tile component fills full module canvas. Zero outer padding.
