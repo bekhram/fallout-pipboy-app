@@ -142,7 +142,10 @@ export default function GmScenePresetPanel({ session }) {
     () => (previewOpen && type !== "vault_tunnels" ? generateProceduralMapDataUrl(generationSpec) : ""),
     [previewOpen, generationSpec],
   );
-  const encounter = useMemo(() => generateProceduralEncounterSummary(generationSpec), [generationSpec]);
+  const encounter = useMemo(
+    () => (type === "vault_tunnels" ? null : generateProceduralEncounterSummary(generationSpec)),
+    [type, generationSpec],
+  );
 
   if (!scene || session?.mode !== "host") return null;
 
