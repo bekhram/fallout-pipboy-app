@@ -29,7 +29,7 @@ function room(id, label, tags = [], options = {}) {
     weight: Number(options.weight ?? 1),
     ruinedOf: options.ruinedOf || null,
     assetKey: options.assetKey || `vault_${id}`,
-    assetPath: options.assetPath || `/assets/battlemap/vault/${options.kind === "ruined_room" ? "ruined" : "rooms"}/${id}.webp`,
+    assetPath: options.assetPath || `/assets/battlemap/vault/${options.kind === "ruined_room" ? "ruined" : "rooms"}/${id}.png`,
   };
 }
 
@@ -45,7 +45,7 @@ function corridor(id, label, doors, options = {}) {
     weight: Number(options.weight ?? 1),
     rotatable: options.rotatable ?? true,
     assetKey: options.assetKey || `vault_${id}`,
-    assetPath: options.assetPath || `/assets/battlemap/vault/corridors/${id}.webp`,
+    assetPath: options.assetPath || `/assets/battlemap/vault/corridors/${id}.png`,
   };
 }
 
@@ -56,7 +56,7 @@ export const VAULT_START_TILE = room(
   {
     kind: "start",
     doors: { n: false, e: true, s: true, w: true },
-    assetPath: "/assets/battlemap/vault/rooms/atrium_vault_entrance.webp",
+    assetPath: "/assets/battlemap/vault/rooms/atrium_vault_entrance.png",
   },
 );
 
