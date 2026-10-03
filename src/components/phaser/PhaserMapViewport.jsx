@@ -33,6 +33,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           scene = this;
           this.mapAlive = true;
           this.cameras.main.setOrigin(0, 0);
+          this.backgroundInk = this.add.graphics().setDepth(0);
           this.ink = this.add.graphics().setDepth(50);
           this.labels = [];
           this.textureUrls = new Map();
@@ -45,6 +46,7 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
             try { this.load?.reset?.(); } catch {}
             try { this.worldMask?.destroy?.(); } catch {}
             try { this.worldClip?.destroy?.(); } catch {}
+            try { this.backgroundInk?.destroy?.(); } catch {}
             const grid = host.current?.querySelector?.('[data-phaser-grid]') || host.current;
             if (grid?.phaserMap === this) {
               try { delete grid.phaserMap; } catch { grid.phaserMap = null; }
@@ -289,14 +291,19 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
         }
         refresh() {
           const d = latest.current, w = d.cols * CELL, h = d.rows * CELL;
-          const g = this.ink; g.clear(); this.labels.forEach(o => o.destroy()); this.labels = [];
-          g.fillStyle(0x09170f).fillRect(0, 0, w, h);
+          const bg = this.backgroundInk;
+          const g = this.ink;
+          bg?.clear();
+          g.clear();
+          this.labels.forEach(o => o.destroy());
+          this.labels = [];
+          bg?.fillStyle(0x09170f).fillRect(0, 0, w, h);
           if (this.bg) { this.bg.destroy(); this.bg = null; }
           if (d.background) {
             const key = this.textureUrls.get(d.background);
             if (key && this.textures?.exists?.(key)) {
-              this.bg = this.add.image(0, 0, key).setOrigin(0).setDisplaySize(w, h).setDepth(0);
-              g.clear();
+              this.bg = this.add.image(0, 0, key).setOrigin(0).setDisplaySize(w, h).setDepth(1);
+              bg?.clear();
             } else if (!key && !this.failedUrls.has(d.background) && this.mapAlive !== false && this.load?.list != null && this.load?.inflight != null) {
               const url = d.background;
               const nextKey = `map-bg-${this.textureUrls.size}`;
