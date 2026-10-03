@@ -1,0 +1,45 @@
+name: Replace Vault Tunnels Edge V6 Assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/replace-vault-edge-v6.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  replace-assets:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace Vault Tunnels with caption-free v6 assets
+        run: |
+          set -euo pipefail
+          rm -rf public/assets/battlemap/vault
+          mkdir -p /tmp/vault-edge-v6
+          curl -L --fail --retry 3             "https://cdn.creativeclaw.co/u/e2d59740/zips/77f241ad-fa7b-4dfa-a0de-f337a117da25.zip"             -o /tmp/vault_assets_edge_v6.zip
+          unzip -q -o /tmp/vault_assets_edge_v6.zip -d /tmp/vault-edge-v6
+          mkdir -p public/assets/battlemap/vault
+          cp -R /tmp/vault-edge-v6/rooms public/assets/battlemap/vault/
+          cp -R /tmp/vault-edge-v6/ruined public/assets/battlemap/vault/
+          cp -R /tmp/vault-edge-v6/corridors public/assets/battlemap/vault/
+          cp /tmp/vault-edge-v6/README.txt public/assets/battlemap/vault/README.txt || true
+          test -f public/assets/battlemap/vault/rooms/security_checkpoint.png
+          test -f public/assets/battlemap/vault/corridors/corridor_straight_vertical.png
+
+      - name: Commit v6 production assets
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/battlemap/vault
+          git rm .github/workflows/replace-vault-edge-v6.yml
+          git commit -m "assets: strip baked Vault captions and tighten vertical crop"
+          git push origin HEAD:main
