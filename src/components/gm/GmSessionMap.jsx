@@ -6,6 +6,8 @@ import SettlementAssetPortal from "./SettlementAssetPortal.jsx";
 import RedRocketAssetPortal from "./RedRocketAssetPortal.jsx";
 import SuperDuperMartAssetPortal from "./SuperDuperMartAssetPortal.jsx";
 import VaultAssetPortal from "./VaultAssetPortal.jsx";
+import VaultRoomMarkerPortal from "./VaultRoomMarkerPortal.jsx";
+import GmVaultEncounterPanel from "./GmVaultEncounterPanel.jsx";
 import FortifiedCampAssetPortal from "./FortifiedCampAssetPortal.jsx";
 import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
@@ -157,6 +159,7 @@ export default function GmSessionMap(props) {
         <RedRocketAssetPortal session={session} />
         <SuperDuperMartAssetPortal session={session} />
         <VaultAssetPortal session={session} />
+        <VaultRoomMarkerPortal session={session} />
         <FortifiedCampAssetPortal session={session} />
         <WastelandPoiPortal session={session} />
         <SettlementRoomMarkerPortal session={session} />
@@ -169,6 +172,7 @@ export default function GmSessionMap(props) {
         <GmTokenColorAndFocusEnhancer session={session} />
         <GmTokenStatusLayer session={session} />
         <GmTokenPointerGuard />
+        {activeTab === "battle" ? <GmVaultEncounterPanel session={session} /> : null}
         <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV10 session={session} /></div>
       </div>
       </div>
