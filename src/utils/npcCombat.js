@@ -84,15 +84,14 @@ export function parseAttackText(value = "") {
     .filter(Boolean);
 
   return lines.map((line, index) => {
-    const looksLikeAttack = Boolean(tnMatch || cdMatch || profileMatch);
-    if (!looksLikeAttack) return null;
-
     const colonNameMatch = line.match(/^([^:]+):/);
     const dashNameMatch = line.match(/^(.+?)\s+[—–-]\s+(?=(?:BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\b)/i);
     const nameMatch = colonNameMatch || dashNameMatch;
     const tnMatch = line.match(/\bTN\s*(\d+)/i);
     const cdMatch = line.match(/(\d+)\s*(?:CD|КУ|DC)\b/i);
     const profileMatch = line.match(/\b(BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\s*\+\s*([A-Za-z][A-Za-z ]*)\s*\(/i);
+    const looksLikeAttack = Boolean(tnMatch || cdMatch || profileMatch);
+    if (!looksLikeAttack) return null;
     const typeMatch = line.match(/\b(Physical|Energy|Radiation|Poison)(?:\s+damage)?/i);
     const rangeMatch = line.match(/\bRange\s+([CMLE])\b/i);
     const rateMatch = line.match(/\bFR\s*(\d+)\b/i);
