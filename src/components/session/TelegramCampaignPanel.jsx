@@ -184,6 +184,9 @@ export default function TelegramCampaignPanel({ session }) {
       if (result.connected) {
         setCode("");
         setExpiresAt(0);
+        try {
+          localStorage.setItem(PAIRED_CAMPAIGN_KEY, campaignId);
+        } catch { /* best effort */ }
       }
     } catch {
       // Keep panel usable if status is temporarily unavailable.
@@ -212,7 +215,10 @@ export default function TelegramCampaignPanel({ session }) {
       setExpiresAt(Number(result.expiresAt || 0));
       setBotUsername(result.botUsername || "");
       if (result.manageToken) {
-        try { localStorage.setItem(tokenKey(campaignId), result.manageToken); } catch { /* best effort */ }
+        try {
+          localStorage.setItem(tokenKey(campaignId), result.manageToken);
+          localStorage.setItem(PAIRED_CAMPAIGN_KEY, campaignId);
+        } catch { /* best effort */ }
       }
       setState((prev) => ({ ...prev, connected: Boolean(result.connected), chatTitle: result.chatTitle || prev.chatTitle }));
     } catch (error) {
