@@ -40,6 +40,16 @@ function allowedOrigin(origin) {
   return defaults.has(normalized);
 }
 
+function applyCors(req, res) {
+  const origin = text(req.headers?.origin).replace(/\/$/, "");
+  if (allowedOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
 function formatDice(payload = {}) {
   const result = payload.result && typeof payload.result === "object" ? payload.result : {};
   const character = text(payload.character, "Unknown character");
@@ -133,6 +143,9 @@ export function formatTelegramEvent(payload = {}) {
 }
 
 export default async function handler(req, res) {
+  applyCors(req, res);
+  if (req.method === "OPTIONS") return res.status(204).end();
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ ok: false, error: "method_not_allowed" });
