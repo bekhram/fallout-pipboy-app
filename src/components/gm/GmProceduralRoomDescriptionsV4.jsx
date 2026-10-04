@@ -9,6 +9,8 @@ import { cellsInsideRoom, getProceduralRoomBounds } from "../../utils/procedural
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
 import { generateRedRocketRoomMarkers } from "../../utils/proceduralSettlementRoomMarkers.js";
 import { cellsAroundWastelandPoi } from "../../utils/proceduralWastelandPoi.js";
+import { localizedVaultRoomData } from "../../utils/proceduralVaultEncounter.js";
+import { generateVaultLayout, vaultSpecFromScene } from "../../utils/proceduralVaultGenerator.js";
 import "./gmProceduralRoomDescriptions.css";
 import "./gmProceduralRoomMarkers.css";
 
@@ -112,7 +114,9 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
   const lang = langCode(i18n.resolvedLanguage || i18n.language);
   const text = COPY[lang];
   const scene = session?.tacticalScene || null;
-  const spec = specFromScene(scene);
+  const recoveredVaultSpec = vaultSpecFromScene(scene);
+  const isVault = Boolean(recoveredVaultSpec);
+  const spec = recoveredVaultSpec || specFromScene(scene);
   const [placing, setPlacing] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -129,13 +133,29 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
     spec.encounterDifficulty,
     spec.enemyFaction || "auto",
   ].join("|") : "";
-  const bundle = useMemo(
-    () => (spec ? generateProceduralRoomBundle(spec, lang) : { data: [], localized: [], encounter: null }),
-    [specKey, lang],
+  const vaultLayout = useMemo(
+    () => (isVault && spec ? generateVaultLayout(spec) : null),
+    [isVault, specKey],
   );
-  const rawRooms = bundle.data;
-  const rooms = bundle.localized;
-  const encounter = bundle.encounter;
+  const bundle = useMemo(
+    () => (spec && !isVault ? generateProceduralRoomBundle(spec, lang) : { data: [], localized: [], encounter: null }),
+    [specKey, lang, isVault],
+  );
+  const vaultRooms = useMemo(
+    () => (vaultLayout ? localizedVaultRoomData(vaultLayout, lang).map((room) => ({
+      ...room,
+      lines: [
+        room.description,
+        room.sector ? `${room.sector}${room.ruined ? " · RUINED" : ""}` : (room.ruined ? "RUINED" : ""),
+      ].filter(Boolean),
+      markers: [],
+      enemies: [],
+    })) : []),
+    [vaultLayout, lang],
+  );
+  const rawRooms = isVault ? [] : bundle.data;
+  const rooms = isVault ? vaultRooms : bundle.localized;
+  const encounter = isVault ? null : bundle.encounter;
   const numberedMarkers = useMemo(
     () => (String(spec?.type || "") === "red_rocket" ? generateRedRocketRoomMarkers(spec) : []),
     [specKey],
@@ -151,7 +171,7 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
   if (session?.mode !== "host") return null;
 
   const placeEnemies = async () => {
-    if (!spec || placing) return { ok: false, error: "NOT_READY", message: "" };
+    if (!spec || placing || isVault) return { ok: false, error: "NOT_READY", message: "" };
     if (!spawnTotal) { setMessage(text.noEnemies); return { ok: false, error: "NO_ENEMIES", message: text.noEnemies }; }
     if (!session?.liveSceneId || session.liveSceneId !== scene?.sceneId) {
       setMessage(text.startLive);
@@ -240,7 +260,7 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
 
   useImperativeHandle(ref,()=>({
     placeEnemies,
-    canPlace:Boolean(spec && spawnTotal && !placing),
+    canPlace:Boolean(spec && !isVault && spawnTotal && !placing),
     spawnTotal:Number(spawnTotal||0),
   }),[spec,spawnTotal,placing,scene?.sceneId,scene?.active]);
 
@@ -270,9 +290,11 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
 
       {rooms.length ? <div className="gm-room-descriptions__list">{rooms.map((room, roomIndex) => {
         const numberedMarker = numberedMarkerByRoom[room.id];
-        const locationNumber = String(spec?.type || "") === "wasteland"
-          ? roomIndex + 1
-          : numberedMarker?.marker || null;
+        const locationNumber = isVault
+          ? room.roomNumber
+          : String(spec?.type || "") === "wasteland"
+            ? roomIndex + 1
+            : numberedMarker?.marker || null;
         return (
         <article key={room.id} className="gm-room-card" data-location-number={locationNumber || undefined}>
           <div className="gm-room-card__head">
@@ -290,7 +312,7 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
         );
       })}</div> : null}
 
-      {spec ? <div className="gm-room-descriptions__actions"><button type="button" className="pip-btn is-primary" disabled={placing || !spawnTotal} onClick={placeEnemies}>{placing ? text.spawning : `${text.spawn}${spawnTotal ? ` (${spawnTotal})` : ""}`}</button>{message ? <div className="gm-room-descriptions__message">{message}</div> : null}</div> : null}
+      {spec && !isVault ? <div className="gm-room-descriptions__actions"><button type="button" className="pip-btn is-primary" disabled={placing || !spawnTotal} onClick={placeEnemies}>{placing ? text.spawning : `${text.spawn}${spawnTotal ? ` (${spawnTotal})` : ""}`}</button>{message ? <div className="gm-room-descriptions__message">{message}</div> : null}</div> : null}
     </section>
   );
 });
