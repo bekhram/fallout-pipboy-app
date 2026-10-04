@@ -98,6 +98,27 @@ export function getCloudAuthSession() {
   return readStoredSession();
 }
 
+export function importCloudAuthSession(session) {
+  if (!session?.google?.accessToken || !session?.user?.email) {
+    throw new Error("INVALID_CLOUD_SESSION");
+  }
+  writeStoredSession(session);
+  window.dispatchEvent(new CustomEvent("pip2d20:cloud-auth-changed", { detail: session }));
+  return session;
+}
+
+export function isNativeAppRuntime() {
+  try {
+    return Boolean(
+      window.Capacitor?.isNativePlatform?.()
+      || window.location.protocol === "capacitor:"
+      || window.location.protocol === "ionic:"
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function isCloudSignedIn() {
   const session = readStoredSession();
   return Boolean(session?.google?.accessToken && session?.user?.email);
