@@ -237,3 +237,15 @@
     right:5px!important;
   }
 }
+
+
+/* Closed Phaser tools must not reserve invisible width. */
+.phaser-map.phaser-map--tactical > .battlemap-tools-drawer:not(.is-open) .battlemap-tools-panel,
+.phaser-map.phaser-map--tactical > .battlemap-tools-drawer:not(.is-open) .battlemap-mobile-camera{
+  display:none!important;
+}
+.phaser-map.phaser-map--tactical > .battlemap-tools-drawer:not(.is-open){
+  width:auto!important;
+  max-width:max-content!important;
+  padding:3px!important;
+}
