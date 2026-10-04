@@ -51,6 +51,7 @@ export default async function handler(req, res) {
 
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
+
     const campaignId = text(body.campaignId);
     if (!validCampaignId(campaignId)) return res.status(400).json({ ok: false, error: "INVALID_CAMPAIGN" });
 
