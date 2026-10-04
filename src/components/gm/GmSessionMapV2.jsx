@@ -1501,23 +1501,38 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         }}
       >
         {vaultSpecFromScene(scene) ? (
-          <div
-            data-vault-direct-layer="true"
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              zIndex: 1,
-              pointerEvents: "none",
-              overflow: "hidden",
-            }}
-          >
-            <VaultAssetLayer
-              spec={vaultSpecFromScene(scene)}
-              layout={scene.environment.vaultLayout || null}
+          <>
+            <div
+              data-vault-direct-layer="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                zIndex: 1,
+                pointerEvents: "none",
+                overflow: "hidden",
+              }}
+            >
+              <VaultAssetLayer
+                spec={vaultSpecFromScene(scene)}
+                layout={scene.environment?.vaultLayout || null}
+              />
+            </div>
+            <div
+              aria-hidden="true"
+              data-vault-grid-overlay="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 6,
+                pointerEvents: "none",
+                backgroundImage:
+                  "linear-gradient(to right, rgba(145,207,155,.22) 1px, transparent 1px), linear-gradient(to bottom, rgba(145,207,155,.22) 1px, transparent 1px)",
+                backgroundSize: `calc(100% / ${cols}) 100%, 100% calc(100% / ${rows})`,
+              }}
             />
-          </div>
+          </>
         ) : null}
         {cells}
       </div>
