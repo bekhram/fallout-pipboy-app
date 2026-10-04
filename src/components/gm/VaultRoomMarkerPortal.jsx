@@ -1,11 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { vaultRoomMarkers } from "../../utils/proceduralVaultEncounter.js";
+import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
 export default function VaultRoomMarkerPortal({ session }) {
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
-  const layout = scene?.environment?.vaultLayout || null;
+  const persistedLayout = scene?.environment?.vaultLayout || null;
+  const layout = useMemo(
+    () => (Array.isArray(persistedLayout?.tiles) && persistedLayout.tiles.length
+      ? persistedLayout
+      : (String(spec?.type || "") === "vault_tunnels" ? generateVaultLayout(spec || {}) : null)),
+    [persistedLayout, spec?.type, spec?.seed, spec?.cols, spec?.rows],
+  );
   const isGmHost = Boolean(session?.isActive && session?.mode === "host");
   const [target, setTarget] = useState(null);
   const [focusedRoomId, setFocusedRoomId] = useState("");
