@@ -413,6 +413,10 @@
     "poisoned": {
       "name": "Zatrucie",
       "description": "Postać jest zatruta, dopóki efekt nie zostanie wyleczony lub usunięty."
+    },
+    "famishedFever": {
+      "name": "Gorączka Głodu",
+      "description": "Testy PER, CHA i INT mają +1 do trudności. Nieleczona choroba z czasem się nasila."
     }
   },
   "main": {

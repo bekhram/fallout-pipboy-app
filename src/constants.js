@@ -939,8 +939,11 @@ export const WEAPON_AMMO_OPTIONS = [
   "5mm", "5.56mm", "12.7mm", "2mm EC", "Arrow", "Crossbow Bolt", "Flare",
   "Shotgun Shell", "Flamer Fuel", "Fusion Cell", "Fusion Core", "Gamma Round",
   "Railway Spike", "Syringer Ammo", "Plasma Cartridge", "Plasma Core", "Missile",
-  "25mm Grenade", "40mm Grenade Round", "Mini-Nuke", "Alien Power Cells", "Alien Power Module",
-  "Cryo Cell", "Grapple Rounds", "Tear Gas Canister"
+  "25mm Grenade", "40mm Grenade Round", "Mini-Nuke",
+  "Alien Power Cells", "Alien Power Module", "Alien Blaster Round",
+  "Acid Concentrate", "Cannonball", "Cryo Cell", "Gas Grenade", "Harpoon",
+  "Grapple Rounds", "Tear Gas Canister", "Custom Shells", "Tranquilizer Darts",
+  "Tranq Ammunition"
 ];
 
 export function createEmptyWeapon() {
