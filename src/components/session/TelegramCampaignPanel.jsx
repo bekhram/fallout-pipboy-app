@@ -17,6 +17,9 @@ const COPY = {
     failed: "Telegram operation failed.",
     testSent: "Test message sent.",
     disconnected: "Telegram group disconnected.",
+    restoring: "Restoring campaign connection…",
+    noCampaign: "Open or resume a GM session once to connect Telegram.",
+    connectedElsewhere: "This group is already connected to the campaign. The connection is shared across browser and app.",
   },
   ru: {
     title: "TELEGRAM",
@@ -32,6 +35,9 @@ const COPY = {
     failed: "Ошибка Telegram.",
     testSent: "Тестовое сообщение отправлено.",
     disconnected: "Telegram-группа отключена.",
+    restoring: "Восстанавливаю кампанию…",
+    noCampaign: "Откройте или возобновите GM-сессию один раз, чтобы подключить Telegram.",
+    connectedElsewhere: "Эта группа уже подключена к кампании. Подключение общее для браузера и приложения.",
   },
   uk: {
     title: "TELEGRAM",
@@ -47,6 +53,9 @@ const COPY = {
     failed: "Помилка Telegram.",
     testSent: "Тестове повідомлення надіслано.",
     disconnected: "Telegram-групу відключено.",
+    restoring: "Відновлюю кампанію…",
+    noCampaign: "Відкрийте або відновіть GM-сесію один раз, щоб підключити Telegram.",
+    connectedElsewhere: "Ця група вже підключена до кампанії. Підключення спільне для браузера та застосунку.",
   },
   pl: {
     title: "TELEGRAM",
@@ -62,6 +71,9 @@ const COPY = {
     failed: "Błąd Telegram.",
     testSent: "Wiadomość testowa wysłana.",
     disconnected: "Grupa Telegram rozłączona.",
+    restoring: "Przywracanie kampanii…",
+    noCampaign: "Otwórz lub wznów sesję MG jeden raz, aby połączyć Telegram.",
+    connectedElsewhere: "Ta grupa jest już połączona z kampanią. Połączenie jest wspólne dla przeglądarki i aplikacji.",
   },
 };
 
@@ -91,13 +103,19 @@ export default function TelegramCampaignPanel({ session }) {
   const hostCampaignId = session?.lastSession?.role === "host"
     ? session?.lastSession?.campaignId
     : "";
-  const campaignId = String(session?.campaignId || hostCampaignId || "");
+  const campaignId = String(
+    session?.campaignId
+    || session?.roomState?.campaignId
+    || hostCampaignId
+    || ""
+  );
   const [state, setState] = useState({ connected: false, chatTitle: "" });
   const [code, setCode] = useState("");
   const [expiresAt, setExpiresAt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [botUsername, setBotUsername] = useState("");
+  const [restoringCampaign, setRestoringCampaign] = useState(false);
 
   const manageToken = useMemo(() => {
     if (!campaignId) return "";
@@ -121,6 +139,30 @@ export default function TelegramCampaignPanel({ session }) {
   useEffect(() => {
     void refresh();
   }, [campaignId]);
+
+  useEffect(() => {
+    if (campaignId || restoringCampaign) return;
+    if (session?.lastSession?.role !== "host" || !session?.lastSession?.code) return;
+    if (typeof session?.resumeLastSession !== "function") return;
+
+    let cancelled = false;
+    setRestoringCampaign(true);
+    Promise.resolve(session.resumeLastSession())
+      .catch(() => false)
+      .finally(() => {
+        if (!cancelled) setRestoringCampaign(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    campaignId,
+    restoringCampaign,
+    session?.lastSession?.role,
+    session?.lastSession?.code,
+    session?.resumeLastSession,
+  ]);
 
   useEffect(() => {
     if (!code || !campaignId) return undefined;
@@ -182,7 +224,20 @@ export default function TelegramCampaignPanel({ session }) {
   };
 
   const canManage = session?.mode === "host" || session?.lastSession?.role === "host";
-  if (!canManage || !campaignId) return null;
+
+  if (!campaignId) {
+    return (
+      <section className="pip-panel telegram-campaign-panel">
+        <div className="telegram-campaign-panel__head">
+          <strong>[ {copy.title} ]</strong>
+          <span>○ {copy.notConnected}</span>
+        </div>
+        <div className="telegram-campaign-panel__message">
+          {restoringCampaign ? copy.restoring : copy.noCampaign}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="pip-panel telegram-campaign-panel">
@@ -210,14 +265,21 @@ export default function TelegramCampaignPanel({ session }) {
 
       {message ? <div className="telegram-campaign-panel__message">{message}</div> : null}
 
+      {state.connected && !manageToken ? (
+        <div className="telegram-campaign-panel__message">{copy.connectedElsewhere}</div>
+      ) : null}
+
       <div className="telegram-campaign-panel__actions">
-        <button type="button" className="pip-btn is-primary" disabled={busy} onClick={connect}>
-          {state.connected ? copy.reconnect : copy.connect}
-        </button>
-        {state.connected ? (
+        {!state.connected && canManage ? (
+          <button type="button" className="pip-btn is-primary" disabled={busy} onClick={connect}>
+            {copy.connect}
+          </button>
+        ) : null}
+        {state.connected && manageToken && canManage ? (
           <>
-            <button type="button" className="pip-btn" disabled={busy || !manageToken} onClick={test}>{copy.test}</button>
-            <button type="button" className="pip-btn" disabled={busy || !manageToken} onClick={disconnect}>{copy.disconnect}</button>
+            <button type="button" className="pip-btn is-primary" disabled={busy} onClick={connect}>{copy.reconnect}</button>
+            <button type="button" className="pip-btn" disabled={busy} onClick={test}>{copy.test}</button>
+            <button type="button" className="pip-btn" disabled={busy} onClick={disconnect}>{copy.disconnect}</button>
           </>
         ) : null}
       </div>
