@@ -146,6 +146,19 @@ function languageCode(value) {
   return COPY[code] ? code : "en";
 }
 
+function cloudApiUrl(path) {
+  try {
+    const native = Boolean(
+      window.Capacitor?.isNativePlatform?.()
+      || window.location.protocol === "capacitor:"
+      || window.location.protocol === "ionic:"
+    );
+    return native ? `https://www.pip-2d20.fun${path}` : path;
+  } catch {
+    return path;
+  }
+}
+
 function safeCharacterFileId(value) {
   return String(value || "active").replace(/[^a-zA-Z0-9_-]+/g, "-");
 }
@@ -184,7 +197,7 @@ export default function CloudAccountPanel({ language = "en" }) {
   };
 
   const cloudLinkRequest = async (payload) => {
-    const response = await fetch("/api/cloud-device-link", {
+    const response = await fetch(cloudApiUrl("/api/cloud-device-link"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
