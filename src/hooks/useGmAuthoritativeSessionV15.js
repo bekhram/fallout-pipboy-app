@@ -8,6 +8,10 @@ import {
   generateProceduralMapDataUrl,
   normalizeProceduralMapSpec,
 } from "../utils/proceduralMapGenerator.js";
+import {
+  generateVaultLayout,
+  vaultLayoutStartZone,
+} from "../utils/proceduralVaultGenerator.js";
 
 export { GAME_SERVER_URL, SESSION_CODE_LENGTH, normalizeSessionCode };
 
@@ -30,13 +34,16 @@ function decorateScene(scene) {
   const spec = proceduralSpecFromEnvironment(scene.environment);
   if (!spec) return scene;
   const isVault = String(spec?.type || "") === "vault_tunnels";
+  const vaultLayout = isVault ? generateVaultLayout(spec) : null;
   return {
     ...scene,
     backgroundUrl: isVault ? "" : generateProceduralMapDataUrl(spec),
+    startZone: isVault ? vaultLayoutStartZone(vaultLayout) : scene.startZone,
     environment: {
       ...(scene.environment || {}),
       locationType: isVault ? "vault_tunnels" : scene.environment?.locationType,
       proceduralMapSpec: spec,
+      ...(isVault ? { vaultLayout } : {}),
     },
   };
 }
