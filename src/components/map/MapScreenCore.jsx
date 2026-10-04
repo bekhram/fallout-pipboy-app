@@ -58,8 +58,34 @@ const HOURS_IN_DAY = 24;
 const DAYS_IN_MONTH = 30;
 const MONTHS_IN_YEAR = 12;
 const WORLD_ROUTE_MARGIN = 6;
-const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
-const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
+function applyTravelVitals(setCharacter, hours) {
+  if (typeof setCharacter !== "function") return;
+  const safeHours = Math.max(0, Number(hours || 0));
+  if (safeHours <= 0) return;
+  setCharacter((prev) => {
+    const previousRemainder = Math.max(0, Number(prev.survivalTravelHoursRemainder || 0));
+    const accumulatedHours = previousRemainder + safeHours;
+    const drainSteps = Math.floor(accumulatedHours / 4);
+    const remainder = accumulatedHours - drainSteps * 4;
+    return {
+      ...prev,
+      satiety: String(Math.max(0, Math.min(5, Number(prev.satiety || 0)) - drainSteps)),
+      thirst: String(Math.max(0, Math.min(5, Number(prev.thirst || 0)) - drainSteps)),
+      vigor: String(Math.max(0, Math.min(5, Number(prev.vigor || 0)) - drainSteps)),
+      survivalTravelHoursRemainder: String(Number(remainder.toFixed(2))),
+    };
+  });
+}
+
+function applyCampRestVitals(setCharacter) {
+  if (typeof setCharacter !== "function") return;
+  setCharacter((prev) => ({
+    ...prev,
+    vigor: "5",
+    satiety: String(Math.max(0, Math.min(5, Number(prev.satiety || 0)) - 2)),
+    thirst: String(Math.max(0, Math.min(5, Number(prev.thirst || 0)) - 2)),
+  }));
+}
 const REPUTATION_STORAGE_KEY = "pip2d20_settlement_reputations_v2";
 const REPUTATION_LABELS = ["Hostile","Cautious","Neutral","Friendly","Trusting","Allied"];
 const HISTORY_COPY = {
@@ -738,11 +764,9 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       };
     });
 
-    if (typeof window !== "undefined" && travelHours > 0) {
-      window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
-        detail: { hours: travelHours },
-      }));
-      if (winterResolution) {
+    if (travelHours > 0) {
+      applyTravelVitals(setCharacter, travelHours);
+      if (typeof window !== "undefined" && winterResolution) {
         window.dispatchEvent(new CustomEvent(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, {
           detail: { resolution: winterResolution },
         }));
@@ -919,11 +943,9 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
       };
     });
 
-    if (typeof window !== "undefined" && travelHours > 0) {
-      window.dispatchEvent(new CustomEvent(PIPBOY_SURVIVAL_TRAVEL_EVENT, {
-        detail: { hours: travelHours },
-      }));
-      if (winterResolution) {
+    if (travelHours > 0) {
+      applyTravelVitals(setCharacter, travelHours);
+      if (typeof window !== "undefined" && winterResolution) {
         window.dispatchEvent(new CustomEvent(PIPBOY_WINTER_TRAVEL_EFFECT_EVENT, {
           detail: { resolution: winterResolution },
         }));
@@ -964,9 +986,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
         sectorCache: { ...(base.sectorCache || {}), [sectorKey]: nextMap },
       };
     });
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent(PIPBOY_CAMP_REST_EVENT));
-    }
+    applyCampRestVitals(setCharacter);
     dispatchEnvironmentEffects(environmentExposure.effects);
     setSelectedCell(null);
   }
@@ -1275,7 +1295,7 @@ export default function MapScreen({ mapState, onMapChange, character, setCharact
         onCancel={()=>setTravelResolver(null)}
         onResolve={resolveTravelPlan}
       />
-      <CampsiteWorldPanel buildDifficultyReduction={Number(safeMapState.nextCampsiteDifficultyReduction||0)} open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} regionId={activeRegion.id} currentPosition={{worldX:playerWorldX,worldY:playerWorldY}} onApplied={(result)=>onMapChange(base=>({...base,nextCampsiteDifficultyReduction:0,activityLog:appendActivity(base,{type:"camp",worldHours:base.worldTotalHours,text:`${historyText.campApplied}: T${result.tier}${result.penalty?` · Survival -${result.penalty}`:""}${result.risks?.length?` · ${historyText.risk}: ${result.risks.join("/")}`:""}`})}))} />
+      <CampsiteWorldPanel buildDifficultyReduction={Number(safeMapState.nextCampsiteDifficultyReduction||0)} open={campOpen} onClose={()=>setCampOpen(false)} character={character} setCharacter={setCharacter} language={language} winterMode={winterModeEnabled} onRoll={onRoll} regionId={activeRegion.id} currentPosition={{worldX:playerWorldX,worldY:playerWorldY}} onApplied={(result)=>{applyCampRestVitals(setCharacter);onMapChange(base=>({...base,nextCampsiteDifficultyReduction:0,activityLog:appendActivity(base,{type:"camp",worldHours:base.worldTotalHours,text:`${historyText.campApplied}: T${result.tier}${result.penalty?` · Survival -${result.penalty}`:""}${result.risks?.length?` · ${historyText.risk}: ${result.risks.join("/")}`:""}`})}));}} />
     </div>
   );
 }
