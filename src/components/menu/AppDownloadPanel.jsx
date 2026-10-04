@@ -1,9 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 
-const ANDROID_VERSION = "1.1.2";
+const ANDROID_VERSION = "1.1.3";
 const ANDROID_APK_URL =
-  "https://github.com/bekhram/fallout-pipboy-app/releases/download/android-v1.1.2/pip2d20-android.apk";
+  "https://github.com/bekhram/fallout-pipboy-app/releases/download/android-v1.1.3/pip2d20-android.apk";
 
 const COPY = {
   en: {
