@@ -786,3 +786,34 @@ export function validateVaultLayout(layout) {
 
   return { ok: errors.length === 0, errors };
 }
+
+
+export function vaultSpecFromScene(scene = {}) {
+  const environment = scene?.environment && typeof scene.environment === "object" ? scene.environment : {};
+  const rawSpec = environment.proceduralMapSpec && typeof environment.proceduralMapSpec === "object"
+    ? environment.proceduralMapSpec
+    : {};
+  const backgroundName = String(scene?.backgroundName || "");
+  const mapAssetId = String(environment?.mapAssetId || "");
+  const locationType = String(environment?.locationType || rawSpec?.type || "");
+  const isVault = locationType === "vault_tunnels"
+    || String(rawSpec?.type || "") === "vault_tunnels"
+    || mapAssetId.startsWith("procedural:vault_tunnels:")
+    || backgroundName.includes("VAULT TUNNELS");
+
+  if (!isVault) return null;
+
+  let seed = rawSpec?.seed || environment?.mapVariantSeed || "";
+  if (!seed && backgroundName.includes("VAULT TUNNELS")) {
+    const parts = backgroundName.split("//").map((part) => part.trim()).filter(Boolean);
+    seed = parts[parts.length - 1] || "";
+  }
+
+  return normalizeVaultGeneratorSpec({
+    ...rawSpec,
+    type: "vault_tunnels",
+    seed: seed || "1",
+    cols: rawSpec?.cols || scene?.cols || 24,
+    rows: rawSpec?.rows || scene?.rows || 24,
+  });
+}
