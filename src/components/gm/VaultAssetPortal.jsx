@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import PhaserAsset from "../phaser/PhaserAsset.jsx";
 import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
 const CELL = 64;
@@ -41,20 +40,19 @@ function tileStyle(tile, preview, cols, rows) {
   };
 }
 
-function VaultTileAsset({ tile, style, preview }) {
+function VaultTileAsset({ tile, style }) {
   const src = vaultAssetSrc(tile.assetPath);
-
-  if (preview) {
-    return <img src={src} alt="" draggable={false} style={style} />;
-  }
-
   return (
-    <PhaserAsset
+    <img
       src={src}
-      style={style}
+      alt=""
+      draggable={false}
+      loading="eager"
+      decoding="async"
       data-vault-tile={tile.tileId}
       data-vault-sector={tile.sector || ""}
       data-vault-module={`${tile.moduleX}:${tile.moduleY}`}
+      style={{ ...style, zIndex: 2 }}
     />
   );
 }
@@ -83,7 +81,6 @@ export function VaultAssetLayer({ spec, layout: suppliedLayout, preview = false 
           key={tile.id}
           tile={tile}
           style={tileStyle(tile, preview, cols, rows)}
-          preview={preview}
         />
       ))}
     </>
