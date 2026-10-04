@@ -52,6 +52,15 @@ export default async function handler(req, res) {
   try {
     const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
 
+    if (body.type === "pair-consume") {
+      const result = await consumeTelegramDeviceCode(text(body.code));
+      if (!result.ok) {
+        const status = result.reason === "CODE_NOT_FOUND" || result.reason === "CODE_EXPIRED" ? 404 : 400;
+        return res.status(status).json({ ok: false, error: result.reason });
+      }
+      return res.json(result);
+    }
+
     const campaignId = text(body.campaignId);
     if (!validCampaignId(campaignId)) return res.status(400).json({ ok: false, error: "INVALID_CAMPAIGN" });
 
@@ -90,15 +99,6 @@ export default async function handler(req, res) {
     if (body.type === "pair-create") {
       const result = await createTelegramDeviceCode(campaignId, text(body.manageToken));
       if (!result.ok) return res.status(403).json({ ok: false, error: result.reason });
-      return res.json(result);
-    }
-
-    if (body.type === "pair-consume") {
-      const result = await consumeTelegramDeviceCode(text(body.code));
-      if (!result.ok) {
-        const status = result.reason === "CODE_NOT_FOUND" || result.reason === "CODE_EXPIRED" ? 404 : 400;
-        return res.status(status).json({ ok: false, error: result.reason });
-      }
       return res.json(result);
     }
 
