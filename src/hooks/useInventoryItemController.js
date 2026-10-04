@@ -349,12 +349,16 @@ export function useInventoryItemController({ form, setForm, i18n, t }) {
         }
 
         const nextRadiation = Math.max(0, Number(prev.radiationHp || 0) - Number(plan.healingRadiation || 0));
+        const category = String(item?.category || "").trim().toLowerCase();
+        const hungerRestore = Number(plan.hungerRestore || 0) || (category === "food" ? 1 : 0);
+        const thirstRestore = Number(plan.thirstRestore || 0) || (category === "beverages" ? 1 : 0);
         const preview = {
           ...prev,
           statuses,
           activeConsumableEffects,
           radiationHp: String(nextRadiation),
-          satiety: String(Math.min(5, Math.max(0, Number(prev.satiety || 0) + Number(plan.hungerRestore || 0)))),
+          satiety: String(Math.min(5, Math.max(0, Number(prev.satiety || 0) + hungerRestore))),
+          thirst: String(Math.min(5, Math.max(0, Number(prev.thirst || 0) + thirstRestore))),
         };
         const maxHp = Math.max(0, Number(getDerivedStats(preview).effectiveMaxHp || 0));
         const famishedDuration = Math.max(0, Number(prev.famishedFeverDuration || 0));
