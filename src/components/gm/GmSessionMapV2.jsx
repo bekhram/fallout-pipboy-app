@@ -9,6 +9,7 @@ import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
 import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import SuperDuperMartRoomMarkerPortal from "./SuperDuperMartRoomMarkerPortal.jsx";
+import { VaultAssetLayer } from "./VaultAssetPortal.jsx";
 import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
@@ -1498,6 +1499,25 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           "--battlemap-world-height": `${rows * 64}px`,
         }}
       >
+        {String(scene?.environment?.proceduralMapSpec?.type || "") === "vault_tunnels" ? (
+          <div
+            data-vault-direct-layer="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              zIndex: 1,
+              pointerEvents: "none",
+              overflow: "hidden",
+            }}
+          >
+            <VaultAssetLayer
+              spec={scene.environment.proceduralMapSpec}
+              layout={scene.environment.vaultLayout || null}
+            />
+          </div>
+        ) : null}
         {cells}
       </div>
       </PhaserMapViewport>
