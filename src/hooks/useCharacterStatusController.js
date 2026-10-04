@@ -1,4 +1,5 @@
 import { getPowerArmorPartCondition } from "../data/powerArmor.js";
+import { getDerivedStats } from "../utils/characterMath.js";
 
 export function useCharacterStatusController({ form, setForm, derived }) {
   const baseMaxHp = Math.max(1, Number(derived.maxHp || 1));
@@ -12,47 +13,74 @@ export function useCharacterStatusController({ form, setForm, derived }) {
     Math.min(Number(form.currentHp || 0), effectiveMaxHp)
   );
 
-  const setHpValues = (nextCurrent, nextRadiation = radiationHp) => {
-    const safeRadiation = Math.max(
-      0,
-      Math.min(Number(nextRadiation || 0), baseMaxHp)
-    );
-    const safeEffective = Math.max(0, baseMaxHp - safeRadiation);
-    const safeCurrent = Math.max(
-      0,
-      Math.min(Number(nextCurrent || 0), safeEffective)
-    );
+  const updateHealthState = (updater) => {
+    setForm((prev) => {
+      const prevBaseMaxHp = Math.max(1, Number(getDerivedStats(prev).maxHp || 1));
+      const prevRadiation = Math.max(
+        0,
+        Math.min(Number(prev.radiationHp || 0), prevBaseMaxHp)
+      );
+      const prevEffectiveMax = Math.max(0, prevBaseMaxHp - prevRadiation);
+      const prevCurrentHp = Math.max(
+        0,
+        Math.min(Number(prev.currentHp || 0), prevEffectiveMax)
+      );
 
-    setForm((prev) => ({
-      ...prev,
-      currentHp: String(safeCurrent),
-      radiationHp: String(safeRadiation),
-    }));
+      const requested = updater({
+        currentHp: prevCurrentHp,
+        radiationHp: prevRadiation,
+        baseMaxHp: prevBaseMaxHp,
+        effectiveMaxHp: prevEffectiveMax,
+      }) || {};
+
+      const nextRadiation = Math.max(
+        0,
+        Math.min(
+          requested.radiationHp === undefined ? prevRadiation : Number(requested.radiationHp || 0),
+          prevBaseMaxHp
+        )
+      );
+      const nextEffectiveMax = Math.max(0, prevBaseMaxHp - nextRadiation);
+      const nextCurrentHp = Math.max(
+        0,
+        Math.min(
+          requested.currentHp === undefined ? prevCurrentHp : Number(requested.currentHp || 0),
+          nextEffectiveMax
+        )
+      );
+
+      return {
+        ...prev,
+        currentHp: String(nextCurrentHp),
+        radiationHp: String(nextRadiation),
+      };
+    });
   };
 
   const handleHpSliderChange = (nextHp) => {
-    const safeHp = Math.max(0, Math.min(Number(nextHp || 0), baseMaxHp));
-    const maxAllowedRadiation = Math.max(0, baseMaxHp - safeHp);
-    const nextRadiation = Math.min(radiationHp, maxAllowedRadiation);
-    setHpValues(safeHp, nextRadiation);
+    updateHealthState(({ radiationHp: prevRadiation, baseMaxHp: maxHp }) => {
+      const safeHp = Math.max(0, Math.min(Number(nextHp || 0), maxHp));
+      const maxAllowedRadiation = Math.max(0, maxHp - safeHp);
+      return {
+        currentHp: safeHp,
+        radiationHp: Math.min(prevRadiation, maxAllowedRadiation),
+      };
+    });
   };
 
   const handleRadiationSliderChange = (nextRadiation) => {
-    const safeRadiation = Math.max(
-      0,
-      Math.min(Number(nextRadiation || 0), baseMaxHp)
-    );
-    const nextEffective = Math.max(0, baseMaxHp - safeRadiation);
-    const nextCurrent = Math.min(currentHpValue, nextEffective);
-    setHpValues(nextCurrent, safeRadiation);
+    updateHealthState(({ currentHp, baseMaxHp: maxHp }) => ({
+      radiationHp: Math.max(0, Math.min(Number(nextRadiation || 0), maxHp)),
+      currentHp,
+    }));
   };
 
   const handleHpDecrease = () => {
-    handleHpSliderChange(currentHpValue - 1);
+    updateHealthState(({ currentHp }) => ({ currentHp: currentHp - 1 }));
   };
 
   const handleHpIncrease = () => {
-    handleHpSliderChange(currentHpValue + 1);
+    updateHealthState(({ currentHp }) => ({ currentHp: currentHp + 1 }));
   };
 
   const updateInjury = (partKey, requestedState) =>
