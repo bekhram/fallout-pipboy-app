@@ -116,6 +116,19 @@ function languageOf(i18n) {
 
 const PAIRED_CAMPAIGN_KEY = "pip2d20:telegram-paired-campaign";
 
+function apiUrl(path) {
+  try {
+    const native = Boolean(
+      window.Capacitor?.isNativePlatform?.()
+      || window.location.protocol === "capacitor:"
+      || window.location.protocol === "ionic:"
+    );
+    return native ? `https://www.pip-2d20.fun${path}` : path;
+  } catch {
+    return path;
+  }
+}
+
 function tokenKey(campaignId) {
   return `pip2d20:telegram-manage:${campaignId}`;
 }
@@ -125,7 +138,7 @@ function readPairedCampaignId() {
 }
 
 async function request(payload) {
-  const response = await fetch("/api/telegram-connect", {
+  const response = await fetch(apiUrl("/api/telegram-connect"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
