@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { vaultRoomMarkers } from "../../utils/proceduralVaultEncounter.js";
-import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
+import { generateVaultLayout, vaultSpecFromScene } from "../../utils/proceduralVaultGenerator.js";
 
 export default function VaultRoomMarkerPortal({ session }) {
   const scene = session?.tacticalScene || null;
-  const spec = scene?.environment?.proceduralMapSpec || null;
+  const spec = vaultSpecFromScene(scene);
   const persistedLayout = scene?.environment?.vaultLayout || null;
   const layout = useMemo(
     () => (Array.isArray(persistedLayout?.tiles) && persistedLayout.tiles.length
       ? persistedLayout
-      : (String(spec?.type || "") === "vault_tunnels" ? generateVaultLayout(spec || {}) : null)),
+      : (spec ? generateVaultLayout(spec) : null)),
     [persistedLayout, spec?.type, spec?.seed, spec?.cols, spec?.rows],
   );
   const isGmHost = Boolean(session?.isActive && session?.mode === "host");
@@ -20,7 +20,7 @@ export default function VaultRoomMarkerPortal({ session }) {
   const rows = Math.max(1, Number(spec?.rows || scene?.rows || cols));
 
   const markers = useMemo(
-    () => (isGmHost && String(spec?.type || "") === "vault_tunnels" && layout ? vaultRoomMarkers(layout) : []),
+    () => (isGmHost && spec && layout ? vaultRoomMarkers(layout) : []),
     [isGmHost, spec?.type, spec?.seed, spec?.cols, spec?.rows, layout],
   );
 
@@ -40,7 +40,7 @@ export default function VaultRoomMarkerPortal({ session }) {
   }, []);
 
   useEffect(() => {
-    if (!isGmHost || String(spec?.type || "") !== "vault_tunnels") {
+    if (!isGmHost || !spec) {
       setTarget(null);
       return undefined;
     }
