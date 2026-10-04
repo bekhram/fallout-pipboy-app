@@ -147,3 +147,109 @@ export function vaultSpawnCells(tile) {
   }
   return cells.sort((a, b) => a.score - b.score || a.y - b.y || a.x - b.x);
 }
+
+
+export const VAULT_ROOM_DESCRIPTIONS = {
+  entrance_airlock: {
+    en: "Entry decontamination and pressure-control chamber. Good place for alarms, sealed doors and first-contact threats.",
+    ru: "Входной шлюз с деконтаминацией и контролем давления. Подходит для тревоги, гермодверей и первой встречи с угрозой.",
+    uk: "Вхідний шлюз із деконтамінацією та контролем тиску. Підходить для тривоги, гермодверей і першої зустрічі із загрозою.",
+    pl: "Śluza wejściowa z dekontaminacją i kontrolą ciśnienia. Dobre miejsce na alarm, grodzie i pierwsze zagrożenie.",
+  },
+  security_checkpoint: {
+    en: "Security screening point with consoles and controlled access. Expect cameras, turrets, guards or locked storage.",
+    ru: "Пост охраны с терминалами и контролем доступа. Здесь логичны камеры, турели, охрана и запертые шкафы.",
+    uk: "Пост охорони з терміналами та контролем доступу. Тут доречні камери, турелі, охорона й замкнені шафи.",
+    pl: "Punkt ochrony z terminalami i kontrolą dostępu. Pasują tu kamery, wieżyczki, strażnicy i zamknięte schowki.",
+  },
+  command_room: {
+    en: "Vault operations center with monitoring, communications and administrative terminals.",
+    ru: "Центр управления убежищем: мониторинг, связь и административные терминалы.",
+    uk: "Центр керування сховищем: моніторинг, зв'язок та адміністративні термінали.",
+    pl: "Centrum operacyjne schronu: monitoring, łączność i terminale administracyjne.",
+  },
+  living_quarters: {
+    en: "Residential section with bunks, lockers and personal belongings. Often contains survivors, clues or small loot.",
+    ru: "Жилой сектор с койками, шкафчиками и личными вещами. Здесь часто встречаются выжившие, улики и мелкий лут.",
+    uk: "Житловий сектор із ліжками, шафками та особистими речами. Тут часто трапляються вцілілі, зачіпки й дрібний лут.",
+    pl: "Sekcja mieszkalna z łóżkami, szafkami i rzeczami osobistymi. Częste miejsce ocalałych, wskazówek i drobnego łupu.",
+  },
+  cafeteria: {
+    en: "Communal dining and food-service area. Useful for supplies, ambushes and environmental storytelling.",
+    ru: "Общая столовая и зона раздачи пищи. Подходит для припасов, засад и следов прошлой жизни.",
+    uk: "Спільна їдальня та зона видачі їжі. Підходить для припасів, засідок і слідів минулого життя.",
+    pl: "Stołówka i zaplecze żywnościowe. Dobre miejsce na zapasy, zasadzki i ślady dawnego życia.",
+  },
+  medbay: {
+    en: "Medical ward with treatment beds, diagnostic equipment and medicine storage.",
+    ru: "Медицинский блок с койками, диагностикой и запасами медикаментов.",
+    uk: "Медичний блок із ліжками, діагностикою та запасами медикаментів.",
+    pl: "Blok medyczny z łóżkami, diagnostyką i zapasem leków.",
+  },
+  armory: {
+    en: "Restricted weapons storage with racks, ammunition and reinforced access.",
+    ru: "Закрытый оружейный склад со стойками, боеприпасами и усиленным доступом.",
+    uk: "Закритий збройовий склад зі стійками, боєприпасами та посиленим доступом.",
+    pl: "Zamknięty magazyn broni ze stojakami, amunicją i wzmocnionym dostępem.",
+  },
+  workshop: {
+    en: "Maintenance workshop with tools, parts and machinery. Suitable for crafting resources and robots.",
+    ru: "Ремонтная мастерская с инструментами, деталями и оборудованием. Здесь логичны ресурсы для крафта и роботы.",
+    uk: "Ремонтна майстерня з інструментами, деталями та обладнанням. Тут доречні ресурси для крафту й роботи.",
+    pl: "Warsztat naprawczy z narzędziami, częściami i maszynami. Dobre miejsce na zasoby rzemieślnicze i roboty.",
+  },
+  power_reactor: {
+    en: "Primary power section. High-value infrastructure with radiation, heat and machinery hazards.",
+    ru: "Энергетический отсек убежища. Важная инфраструктура с риском радиации, жара и аварий оборудования.",
+    uk: "Енергетичний відсік сховища. Важлива інфраструктура з ризиком радіації, спеки й аварій обладнання.",
+    pl: "Sekcja energetyczna schronu. Kluczowa infrastruktura z ryzykiem promieniowania, ciepła i awarii maszyn.",
+  },
+  water_treatment: {
+    en: "Water purification and pumping systems. Pipes, tanks and maintenance access create tight combat lanes.",
+    ru: "Система очистки и подачи воды. Трубы, резервуары и техпроходы создают тесные линии боя.",
+    uk: "Система очищення та подачі води. Труби, резервуари й техпроходи створюють тісні лінії бою.",
+    pl: "System uzdatniania i pompowania wody. Rury, zbiorniki i przejścia techniczne tworzą ciasne linie walki.",
+  },
+  storage: {
+    en: "General storage with crates and supplies. Strong candidate for salvage, food, ammunition or mission items.",
+    ru: "Общий склад с ящиками и припасами. Хорошее место для хлама, еды, боеприпасов и предметов задания.",
+    uk: "Загальний склад із ящиками та припасами. Гарне місце для брухту, їжі, боєприпасів і предметів завдання.",
+    pl: "Magazyn ogólny ze skrzyniami i zapasami. Dobre miejsce na złom, żywność, amunicję i przedmioty misji.",
+  },
+  hydroponics: {
+    en: "Vault food-production section with planters, irrigation and environmental controls.",
+    ru: "Секция производства пищи с гидропоникой, поливом и климатическим контролем.",
+    uk: "Секція виробництва їжі з гідропонікою, поливом і кліматичним контролем.",
+    pl: "Sekcja produkcji żywności z hydroponiką, nawadnianiem i kontrolą klimatu.",
+  },
+};
+
+export function localizedVaultRoomDescription(tileId, lang = "en", ruined = false) {
+  const code = ["en", "ru", "uk", "pl"].includes(String(lang || "en").toLowerCase().split("-")[0])
+    ? String(lang || "en").toLowerCase().split("-")[0]
+    : "en";
+  const baseId = String(tileId || "").replace(/^ruined_/, "");
+  const item = VAULT_ROOM_DESCRIPTIONS[baseId];
+  const base = item?.[code] || item?.en || "";
+  if (!base) return "";
+  if (!ruined) return base;
+  const prefix = {
+    en: "Ruined: ",
+    ru: "Разрушено: ",
+    uk: "Зруйновано: ",
+    pl: "Zrujnowane: ",
+  }[code];
+  return prefix + base;
+}
+
+export function localizedVaultRoomData(layout, lang = "en") {
+  return vaultRoomMarkers(layout).map((marker) => ({
+    id: marker.roomId,
+    name: marker.label,
+    roomNumber: marker.marker,
+    sector: marker.sector,
+    ruined: marker.ruined,
+    tileId: marker.tileId,
+    description: localizedVaultRoomDescription(marker.tileId, lang, marker.ruined),
+  }));
+}
