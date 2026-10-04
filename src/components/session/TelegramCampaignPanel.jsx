@@ -20,6 +20,14 @@ const COPY = {
     restoring: "Restoring campaign connection…",
     noCampaign: "Open or resume a GM session once to connect Telegram.",
     connectedElsewhere: "This group is already connected to the campaign. The connection is shared across browser and app.",
+    pairTitle: "LINK ANOTHER DEVICE",
+    pairGenerate: "CREATE LINK CODE",
+    pairApply: "LINK THIS DEVICE",
+    pairPlaceholder: "APP-XXXXXX",
+    pairHelp: "Create a code on the device where Telegram already works, then enter it on the other device.",
+    pairCreated: "Enter this code on the other device. It expires in 10 minutes.",
+    pairSuccess: "Telegram connection transferred to this device.",
+    pairFailed: "Could not link this device.",
   },
   ru: {
     title: "TELEGRAM",
@@ -38,6 +46,14 @@ const COPY = {
     restoring: "Восстанавливаю кампанию…",
     noCampaign: "Откройте или возобновите GM-сессию один раз, чтобы подключить Telegram.",
     connectedElsewhere: "Эта группа уже подключена к кампании. Подключение общее для браузера и приложения.",
+    pairTitle: "СВЯЗАТЬ ДРУГОЕ УСТРОЙСТВО",
+    pairGenerate: "СОЗДАТЬ КОД ПЕРЕНОСА",
+    pairApply: "ПОДКЛЮЧИТЬ ЭТО УСТРОЙСТВО",
+    pairPlaceholder: "APP-XXXXXX",
+    pairHelp: "Создайте код там, где Telegram уже работает, и введите его на другом устройстве.",
+    pairCreated: "Введите этот код на другом устройстве. Он действует 10 минут.",
+    pairSuccess: "Telegram-подключение перенесено на это устройство.",
+    pairFailed: "Не удалось связать устройство.",
   },
   uk: {
     title: "TELEGRAM",
@@ -56,6 +72,14 @@ const COPY = {
     restoring: "Відновлюю кампанію…",
     noCampaign: "Відкрийте або відновіть GM-сесію один раз, щоб підключити Telegram.",
     connectedElsewhere: "Ця група вже підключена до кампанії. Підключення спільне для браузера та застосунку.",
+    pairTitle: "ПРИВ'ЯЗАТИ ІНШИЙ ПРИСТРІЙ",
+    pairGenerate: "СТВОРИТИ КОД ПЕРЕНЕСЕННЯ",
+    pairApply: "ПІДКЛЮЧИТИ ЦЕЙ ПРИСТРІЙ",
+    pairPlaceholder: "APP-XXXXXX",
+    pairHelp: "Створіть код там, де Telegram уже працює, і введіть його на іншому пристрої.",
+    pairCreated: "Введіть цей код на іншому пристрої. Він діє 10 хвилин.",
+    pairSuccess: "Telegram-підключення перенесено на цей пристрій.",
+    pairFailed: "Не вдалося прив'язати пристрій.",
   },
   pl: {
     title: "TELEGRAM",
@@ -74,6 +98,14 @@ const COPY = {
     restoring: "Przywracanie kampanii…",
     noCampaign: "Otwórz lub wznów sesję MG jeden raz, aby połączyć Telegram.",
     connectedElsewhere: "Ta grupa jest już połączona z kampanią. Połączenie jest wspólne dla przeglądarki i aplikacji.",
+    pairTitle: "POŁĄCZ INNE URZĄDZENIE",
+    pairGenerate: "UTWÓRZ KOD ŁĄCZENIA",
+    pairApply: "POŁĄCZ TO URZĄDZENIE",
+    pairPlaceholder: "APP-XXXXXX",
+    pairHelp: "Utwórz kod na urządzeniu, na którym Telegram już działa, i wpisz go na drugim urządzeniu.",
+    pairCreated: "Wpisz ten kod na drugim urządzeniu. Wygasa po 10 minutach.",
+    pairSuccess: "Połączenie Telegram zostało przeniesione na to urządzenie.",
+    pairFailed: "Nie udało się połączyć urządzenia.",
   },
 };
 
@@ -82,8 +114,14 @@ function languageOf(i18n) {
   return COPY[value] ? value : "en";
 }
 
+const PAIRED_CAMPAIGN_KEY = "pip2d20:telegram-paired-campaign";
+
 function tokenKey(campaignId) {
   return `pip2d20:telegram-manage:${campaignId}`;
+}
+
+function readPairedCampaignId() {
+  try { return localStorage.getItem(PAIRED_CAMPAIGN_KEY) || ""; } catch { return ""; }
 }
 
 async function request(payload) {
@@ -103,10 +141,12 @@ export default function TelegramCampaignPanel({ session }) {
   const hostCampaignId = session?.lastSession?.role === "host"
     ? session?.lastSession?.campaignId
     : "";
+  const [pairedCampaignId, setPairedCampaignId] = useState(() => readPairedCampaignId());
   const campaignId = String(
     session?.campaignId
     || session?.roomState?.campaignId
     || hostCampaignId
+    || pairedCampaignId
     || ""
   );
   const [state, setState] = useState({ connected: false, chatTitle: "" });
@@ -115,7 +155,8 @@ export default function TelegramCampaignPanel({ session }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [botUsername, setBotUsername] = useState("");
-  const [restoringCampaign, setRestoringCampaign] = useState(false);
+  const [pairCode, setPairCode] = useState("");
+  const [pairInput, setPairInput] = useState("");
 
   const manageToken = useMemo(() => {
     if (!campaignId) return "";
@@ -139,30 +180,6 @@ export default function TelegramCampaignPanel({ session }) {
   useEffect(() => {
     void refresh();
   }, [campaignId]);
-
-  useEffect(() => {
-    if (campaignId || restoringCampaign) return;
-    if (session?.lastSession?.role !== "host" || !session?.lastSession?.code) return;
-    if (typeof session?.resumeLastSession !== "function") return;
-
-    let cancelled = false;
-    setRestoringCampaign(true);
-    Promise.resolve(session.resumeLastSession())
-      .catch(() => false)
-      .finally(() => {
-        if (!cancelled) setRestoringCampaign(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    campaignId,
-    restoringCampaign,
-    session?.lastSession?.role,
-    session?.lastSession?.code,
-    session?.resumeLastSession,
-  ]);
 
   useEffect(() => {
     if (!code || !campaignId) return undefined;
@@ -223,21 +240,51 @@ export default function TelegramCampaignPanel({ session }) {
     }
   };
 
-  const canManage = session?.mode === "host" || session?.lastSession?.role === "host";
+  const canManage = session?.mode === "host" || session?.lastSession?.role === "host" || Boolean(manageToken);
 
-  if (!campaignId) {
-    return (
-      <section className="pip-panel telegram-campaign-panel">
-        <div className="telegram-campaign-panel__head">
-          <strong>[ {copy.title} ]</strong>
-          <span>○ {copy.notConnected}</span>
-        </div>
-        <div className="telegram-campaign-panel__message">
-          {restoringCampaign ? copy.restoring : copy.noCampaign}
-        </div>
-      </section>
-    );
-  }
+  const createPairCode = async () => {
+    if (!campaignId || !manageToken) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await request({ type: "pair-create", campaignId, manageToken });
+      setPairCode(result.code || "");
+      setMessage(copy.pairCreated);
+    } catch (error) {
+      setMessage(error?.message || copy.pairFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const consumePairCode = async () => {
+    const codeValue = String(pairInput || "").trim().toUpperCase();
+    if (!codeValue) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const result = await request({ type: "pair-consume", code: codeValue });
+      const nextCampaignId = String(result.campaignId || "");
+      if (!nextCampaignId || !result.manageToken) throw new Error("PAIR_FAILED");
+      try {
+        localStorage.setItem(PAIRED_CAMPAIGN_KEY, nextCampaignId);
+        localStorage.setItem(tokenKey(nextCampaignId), result.manageToken);
+      } catch { /* best effort */ }
+      setPairedCampaignId(nextCampaignId);
+      setPairInput("");
+      setPairCode("");
+      setState({
+        connected: Boolean(result.connected),
+        chatTitle: result.chatTitle || "",
+        chatType: result.chatType || "",
+      });
+      setMessage(copy.pairSuccess);
+    } catch (error) {
+      setMessage(error?.message || copy.pairFailed);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <section className="pip-panel telegram-campaign-panel">
@@ -264,6 +311,36 @@ export default function TelegramCampaignPanel({ session }) {
       ) : null}
 
       {message ? <div className="telegram-campaign-panel__message">{message}</div> : null}
+
+      <div className="telegram-campaign-panel__connect">
+        <strong>{copy.pairTitle}</strong>
+        <p>{copy.pairHelp}</p>
+        {pairCode ? (
+          <button
+            type="button"
+            className="telegram-campaign-panel__code"
+            onClick={() => navigator.clipboard?.writeText(pairCode)}
+          >
+            {pairCode}
+          </button>
+        ) : null}
+        {state.connected && manageToken ? (
+          <button type="button" className="pip-btn" disabled={busy} onClick={createPairCode}>
+            {copy.pairGenerate}
+          </button>
+        ) : null}
+        <div className="telegram-campaign-panel__actions">
+          <input
+            className="pip-inline-input"
+            value={pairInput}
+            placeholder={copy.pairPlaceholder}
+            onChange={(event) => setPairInput(event.target.value.toUpperCase())}
+          />
+          <button type="button" className="pip-btn is-primary" disabled={busy || !pairInput.trim()} onClick={consumePairCode}>
+            {copy.pairApply}
+          </button>
+        </div>
+      </div>
 
       {state.connected && !manageToken ? (
         <div className="telegram-campaign-panel__message">{copy.connectedElsewhere}</div>
