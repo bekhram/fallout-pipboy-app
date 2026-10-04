@@ -10,6 +10,7 @@ import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx
 import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
 import SuperDuperMartRoomMarkerPortal from "./SuperDuperMartRoomMarkerPortal.jsx";
 import { VaultAssetLayer } from "./VaultAssetPortal.jsx";
+import { vaultSpecFromScene } from "../../utils/proceduralVaultGenerator.js";
 import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
@@ -1499,7 +1500,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           "--battlemap-world-height": `${rows * 64}px`,
         }}
       >
-        {String(scene?.environment?.proceduralMapSpec?.type || "") === "vault_tunnels" ? (
+        {vaultSpecFromScene(scene) ? (
           <div
             data-vault-direct-layer="true"
             style={{
@@ -1513,7 +1514,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
             }}
           >
             <VaultAssetLayer
-              spec={scene.environment.proceduralMapSpec}
+              spec={vaultSpecFromScene(scene)}
               layout={scene.environment.vaultLayout || null}
             />
           </div>
