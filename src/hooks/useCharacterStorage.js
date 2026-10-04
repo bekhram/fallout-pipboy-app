@@ -972,7 +972,6 @@ export function useCharacterStorage(initialForm) {
       });
     };
 
-    window.addEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
     window.addEventListener(
       PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
       handleEndConsumableEffect
@@ -985,7 +984,6 @@ export function useCharacterStorage(initialForm) {
     window.addEventListener(PIPBOY_COMBAT_XP_REWARD_EVENT, handleCombatXpReward);
 
     return () => {
-      window.removeEventListener(PIPBOY_USE_ITEM_EVENT, handleUseItem);
       window.removeEventListener(
         PIPBOY_END_CONSUMABLE_EFFECT_EVENT,
         handleEndConsumableEffect
