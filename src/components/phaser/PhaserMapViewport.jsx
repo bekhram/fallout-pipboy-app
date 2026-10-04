@@ -260,7 +260,9 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
           let hash = 0; for (const ch of String(token.stats?.hordeGroupId || token.id || token.name)) hash = ((hash << 5) - hash + ch.charCodeAt(0)) | 0;
           const color = token.kind === 'player' ? 0x62d9ff : palette[Math.abs(Number.isFinite(Number(token.stats?.tokenColorIndex)) ? Math.floor(Number(token.stats.tokenColorIndex)) : hash) % palette.length];
           const shape = this.add.graphics().setDepth(100);
-          shape.fillStyle(0x06120d).fillCircle(x, y, radius).lineStyle(selected ? 4 : 2, selected ? 0xffd166 : color).strokeCircle(x, y, radius);
+          shape.fillStyle(0x010503, 1).fillCircle(x, y, radius);
+          shape.fillStyle(0x07140d, 1).fillCircle(x, y, Math.max(1, radius - 3));
+          shape.lineStyle(selected ? 4 : 2, selected ? 0xffd166 : color, 1).strokeCircle(x, y, radius);
           const dead = token.kind !== 'player' && Number(token.stats?.hp ?? token.stats?.currentHp ?? 1) <= 0;
           const letter = this.add.text(x, y, String(token.name || 'T').slice(0, 1).toUpperCase(), { fontFamily: 'monospace', fontSize: `${Math.round(radius)}px`, color: '#c5eebe' }).setOrigin(.5).setDepth(102);
           const deathMark = dead ? this.add.graphics().setDepth(104) : null;
@@ -276,9 +278,9 @@ export default function PhaserMapViewport({ cols, rows, sceneKey, background = "
             if (!url || disposed) return;
             stop = this.texture(url, key => {
               if (disposed) return;
-              portrait = this.add.image(x, y, key).setDepth(101);
+              portrait = this.add.image(x, y, key).setDepth(101).setAlpha(1);
               portrait.setScale(Math.max(radius * 2 / portrait.width, radius * 2 / portrait.height));
-              geometry = this.make.graphics({ x: 0, y: 0 }, false).fillStyle(0xffffff).fillCircle(x, y, radius - 3);
+              geometry = this.make.graphics({ x: 0, y: 0 }, false).fillStyle(0xffffff, 1).fillCircle(x, y, radius - 3);
               mask = geometry.createGeometryMask(); portrait.setMask(mask); letter.setVisible(false);
             });
           };
