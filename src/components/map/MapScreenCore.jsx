@@ -58,9 +58,6 @@ const HOURS_IN_DAY = 24;
 const DAYS_IN_MONTH = 30;
 const MONTHS_IN_YEAR = 12;
 const WORLD_ROUTE_MARGIN = 6;
-const PIPBOY_SURVIVAL_TRAVEL_EVENT = "pipboy:survival-travel-hours";
-const PIPBOY_CAMP_REST_EVENT = "pipboy:survival-camp-rest";
-
 function applyTravelVitals(setCharacter, hours) {
   if (typeof setCharacter !== "function") return;
   const safeHours = Math.max(0, Number(hours || 0));
