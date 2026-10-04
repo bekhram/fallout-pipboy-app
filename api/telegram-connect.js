@@ -1,10 +1,13 @@
 import {
+  consumeTelegramDeviceCode,
+  createTelegramDeviceCode,
   disconnectTelegramLink,
   getTelegramLink,
   hashToken,
   makeConnectCode,
   makeManageToken,
   saveConnectCode,
+  telegramTokenMatches,
   validCampaignId,
   webhookSecret,
 } from "../server/telegramCampaignStore.js";
@@ -64,7 +67,7 @@ export default async function handler(req, res) {
 
     if (body.type === "create") {
       const current = await getTelegramLink(campaignId);
-      if (current?.chatId && hashToken(text(body.manageToken)) !== current.manageTokenHash) {
+      if (current?.chatId && !telegramTokenMatches(current, text(body.manageToken))) {
         return res.status(403).json({ ok: false, error: "FORBIDDEN" });
       }
       const bot = await ensureWebhook();
@@ -83,6 +86,21 @@ export default async function handler(req, res) {
       });
     }
 
+    if (body.type === "pair-create") {
+      const result = await createTelegramDeviceCode(campaignId, text(body.manageToken));
+      if (!result.ok) return res.status(403).json({ ok: false, error: result.reason });
+      return res.json(result);
+    }
+
+    if (body.type === "pair-consume") {
+      const result = await consumeTelegramDeviceCode(text(body.code));
+      if (!result.ok) {
+        const status = result.reason === "CODE_NOT_FOUND" || result.reason === "CODE_EXPIRED" ? 404 : 400;
+        return res.status(status).json({ ok: false, error: result.reason });
+      }
+      return res.json(result);
+    }
+
     if (body.type === "disconnect") {
       const result = await disconnectTelegramLink(campaignId, text(body.manageToken));
       if (!result.ok) return res.status(403).json({ ok: false, error: result.reason });
@@ -93,8 +111,7 @@ export default async function handler(req, res) {
       const link = await getTelegramLink(campaignId);
       if (!link?.chatId) return res.status(404).json({ ok: false, error: "NOT_CONNECTED" });
       if (!body.manageToken) return res.status(403).json({ ok: false, error: "FORBIDDEN" });
-      // Validate token without mutating by comparing through disconnect helper semantics is avoided here.
-      if (hashToken(body.manageToken) !== link.manageTokenHash) return res.status(403).json({ ok: false, error: "FORBIDDEN" });
+      if (!telegramTokenMatches(link, body.manageToken)) return res.status(403).json({ ok: false, error: "FORBIDDEN" });
       await telegramCall("sendMessage", {
         chat_id: link.chatId,
         text: "✅ Pip2D20 connected. Dice rolls, GM loot and merchant offers can now appear here.",
