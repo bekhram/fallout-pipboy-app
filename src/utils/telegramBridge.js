@@ -17,7 +17,22 @@ function telegramEndpoint() {
 
 function pairedCampaignId() {
   try {
-    return localStorage.getItem(TELEGRAM_PAIRED_CAMPAIGN_KEY) || "";
+    const explicit = localStorage.getItem(TELEGRAM_PAIRED_CAMPAIGN_KEY) || "";
+    if (explicit) return explicit;
+
+    const prefix = "pip2d20:telegram-manage:";
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index) || "";
+      if (!key.startsWith(prefix)) continue;
+      const token = localStorage.getItem(key);
+      if (!token) continue;
+      const campaignId = key.slice(prefix.length);
+      if (campaignId) {
+        try { localStorage.setItem(TELEGRAM_PAIRED_CAMPAIGN_KEY, campaignId); } catch { /* noop */ }
+        return campaignId;
+      }
+    }
+    return "";
   } catch {
     return "";
   }
