@@ -3,6 +3,25 @@ import {
   saveCloudDeviceCode,
 } from "../server/cloudDeviceLinkStore.js";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://pip-2d20.fun",
+  "https://www.pip-2d20.fun",
+  "capacitor://localhost",
+  "ionic://localhost",
+  "http://localhost",
+  "https://localhost",
+]);
+
+function applyCors(req, res) {
+  const origin = String(req.headers?.origin || "");
+  if (ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
 function text(value) {
   return String(value ?? "").trim();
 }
@@ -37,7 +56,9 @@ function safeSession(value) {
 }
 
 export default async function handler(req, res) {
+  applyCors(req, res);
   res.setHeader("Cache-Control", "no-store");
+  if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") {
     return res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
   }
