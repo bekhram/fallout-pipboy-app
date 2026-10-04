@@ -7,6 +7,7 @@ import {
   vaultSpawnCells,
 } from "../../utils/proceduralVaultEncounter.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
+import { generateVaultLayout } from "../../utils/proceduralVaultGenerator.js";
 
 const COPY = {
   en: { title:"VAULT ENCOUNTER", rooms:"ROOMS", focus:"FOCUS ROOM", roomEnemies:"Enemies", place:"PLACE VAULT ENEMIES", placing:"PLACING...", group:"Group", total:"Enemies", live:"Start this scene as LIVE first.", already:"Enemies for this Vault seed are already placed.", done:(n)=>`Placed ${n} Vault enemy token${n===1?"":"s"}.`, failed:"Some Vault enemies could not be placed." },
@@ -53,7 +54,13 @@ export default function GmVaultEncounterPanel({ session }) {
   const text = COPY[lang];
   const scene = session?.tacticalScene || null;
   const spec = scene?.environment?.proceduralMapSpec || null;
-  const layout = scene?.environment?.vaultLayout || null;
+  const persistedLayout = scene?.environment?.vaultLayout || null;
+  const layout = useMemo(
+    () => (Array.isArray(persistedLayout?.tiles) && persistedLayout.tiles.length
+      ? persistedLayout
+      : (String(spec?.type || "") === "vault_tunnels" ? generateVaultLayout(spec || {}) : null)),
+    [persistedLayout, spec?.type, spec?.seed, spec?.cols, spec?.rows],
+  );
   const [placing, setPlacing] = useState(false);
   const [message, setMessage] = useState("");
 
