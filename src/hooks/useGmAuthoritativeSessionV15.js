@@ -29,10 +29,15 @@ function decorateScene(scene) {
   if (!scene) return scene;
   const spec = proceduralSpecFromEnvironment(scene.environment);
   if (!spec) return scene;
+  const isVault = String(spec?.type || "") === "vault_tunnels";
   return {
     ...scene,
-    backgroundUrl: generateProceduralMapDataUrl(spec),
-    environment: { ...(scene.environment || {}), proceduralMapSpec: spec },
+    backgroundUrl: isVault ? "" : generateProceduralMapDataUrl(spec),
+    environment: {
+      ...(scene.environment || {}),
+      locationType: isVault ? "vault_tunnels" : scene.environment?.locationType,
+      proceduralMapSpec: spec,
+    },
   };
 }
 
