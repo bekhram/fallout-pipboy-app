@@ -85,7 +85,7 @@ Energy Weapon,Arc Welder,1,15,370,,3,Stun,Energy,4,C,"Surge, Two-Handed",4,3,Fus
 Energy Weapon,Microwave Emitter,1,8,500,,6,"Persistent, Piercing 3",Energy,1,M,Two-Handed,5,6,
 Energy Weapon,Tesla Rifle,1,8,180,,4,Arc,Energy,2,M,Two-Handed,4,4,Fusion Cell
 Big Guns,.50 Cal Machine Gun,1,31,350,,7,Burst,Physical,3,M,"Two-Handed, Recoil (9)",3,7,.50
-Big Guns,Auto Grenade Launcher,1,30,450,,6,Breaking,Physical,2,L,"Bombard, Inaccurate",4,6,40mm Grenade
+Big Guns,Auto Grenade Launcher,1,30,450,,6,Breaking,Physical,2,L,"Bombard, Inaccurate",4,6,40mm Grenade Round
 Big Guns,Drone Cannon,1,18,600,,8,Breaking,Energy,0,M,"Ammo-Hungry (20), Blast, Inaccurate, Slow Load",5,8,Alien Power Module
 Big Guns,Gatling Gun,1,20,350,,3,"Burst, Spread",Physical,3,M,"Gatling, Inaccurate, Recoil (6), Two-Handed",1,3,5mm
 Big Guns,Gatling Plasma,1,24,1000,,4,Burst,Physical/Energy,4,M,"Gatling, Inaccurate, Two-Handed",4,4,Plasma Cartridge or Plasma Core
@@ -137,7 +137,7 @@ Small Guns,Grappling Gun,1,9,55,,5,"Piercing 1, Special",Physical,0,M,"Inaccurat
 Big Guns,Tear Gas Launcher,1,18,254,,4,"Persistent, Stun, Spread",Poison,0,M,"Blast, Two-Handed, Inaccurate",3,4,Tear Gas Canister
 Explosive,Flashbang Grenade,1,1,50,,3,"Persistent, Stun",Poison,0,M,"Blast, Thrown",2,3,
 Small Guns,The Magnumnomicon,1,6,,,8,Vicious,Special,1,C,Close Quarters,Unique,8,.44 Magnum
-Small Guns,Tranquilizer Pistol,1,5,333,,5,"Tranquilize 3, Persistent",Poison,0,C,"Close Quarters, Reliable",5,5,Tranquilizer Dart
+Small Guns,Tranquilizer Pistol,1,5,333,,5,"Tranquilize 3, Persistent",Poison,0,C,"Close Quarters, Reliable",5,5,Tranquilizer Darts
 Big Guns,Tranquilizer Sten Gun,1,9,445,,4,"Tranquilize 3, Burst, Persistent",Poison,3,M,"Two-Handed, Inaccurate",5,4,9mm
 Small Guns,Sten Gun,1,9,133,,4,Burst,Physical,3,M,"Two-Handed, Inaccurate",5,4,9mm
 Melee Weapon,Shovel,1,2,10,,3,,Physical,0,C,Two-Handed,1,3,
