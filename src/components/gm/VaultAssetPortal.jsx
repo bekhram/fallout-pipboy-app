@@ -59,7 +59,9 @@ function VaultTileAsset({ tile, style }) {
 
 export function VaultAssetLayer({ spec, layout: suppliedLayout, preview = false }) {
   const layout = useMemo(
-    () => suppliedLayout || generateVaultLayout(spec || {}),
+    () => (Array.isArray(suppliedLayout?.tiles) && suppliedLayout.tiles.length
+      ? suppliedLayout
+      : generateVaultLayout(spec || {})),
     [
       suppliedLayout,
       spec?.seed,
