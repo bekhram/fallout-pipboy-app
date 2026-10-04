@@ -121,17 +121,17 @@ body:has(.phaser-map.is-expanded) { overflow: hidden; }
   background: #020704;
 }
 .phaser-map .is-vault-grid .gm-session-token.is-phaser-token > .phaser-token-fallback img {
-  display: block;
-  width: 112%;
-  height: 112%;
-  max-width: none !important;
-  max-height: none !important;
-  object-fit: cover;
-  object-position: center center;
-  opacity: 1 !important;
-  filter: none !important;
-  transform: scale(1.08);
-  transform-origin: 50% 50%;
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:cover;
+  object-position:center 34%;
+  opacity:1!important;
+  filter:none!important;
+  transform:scale(2.05);
+  transform-origin:50% 38%;
 }
 .phaser-map .is-vault-grid .gm-session-token.is-phaser-token > .phaser-token-fallback b {
   display: grid;
