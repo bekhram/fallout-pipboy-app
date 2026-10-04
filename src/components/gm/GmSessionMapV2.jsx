@@ -1489,7 +1489,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         data-phaser-grid="true"
         ref={gridRef}
         onClick={handleLightweightGridClick}
-        className={`gm-session-map__grid tactical-grid${lightweightGrid ? " is-lightweight-grid" : ""}${
+        className={`gm-session-map__grid tactical-grid${vaultSpecFromScene(scene) ? " is-vault-grid" : ""}${lightweightGrid ? " is-lightweight-grid" : ""}${
           scene.backgroundUrl ? " has-background" : ""
         }${dragState?.moved ? " is-drag-active" : ""}`}
         style={{
