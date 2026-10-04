@@ -413,6 +413,10 @@
     "poisoned": {
       "name": "Poisoned",
       "description": "The character is suffering from poisoning until the effect is treated or removed."
+    },
+    "famishedFever": {
+      "name": "Famished Fever",
+      "description": "PER, CHA, and INT tests are +1 difficulty while infected. The disease worsens over time if not treated."
     }
   },
   "main": {
