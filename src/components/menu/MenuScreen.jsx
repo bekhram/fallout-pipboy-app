@@ -102,8 +102,7 @@ export default function MenuScreen({
           {section==='install' && <section id="home-install"><AppDownloadPanel/><PwaInstallButton/></section>}
           <footer className="home-footer">ROBCO INDUSTRIES (TM) · PIP 2D20</footer>
         </div>
-        <nav className="home-bottom">{nav('home','home',c.home)}{nav('characters','person',c.characters)}{nav('sessions','calendar',c.sessions)}{nav('telegram','chat',c.telegram)}{nav('settings','more',c.more)}</nav>
-        {section==='settings' && <button className="home-mobile-install pip-btn" type="button" onClick={()=>go('install')}>{c.install}</button>}
+        <nav className="home-bottom">{nav('home','home',c.home)}{nav('characters','person',c.characters)}{nav('sessions','calendar',c.sessions)}{nav('telegram','chat',c.telegram)}{nav('install','download',c.install)}{nav('settings','more',c.more)}</nav>
       </div>
 
       {showCreationMode && (
