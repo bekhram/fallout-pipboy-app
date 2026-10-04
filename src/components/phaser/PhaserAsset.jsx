@@ -1,4 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
 
 function stableAssetSignature(props = {}) {
   const style = props.style || {};
@@ -97,6 +98,24 @@ export default memo(
 
 export const PhaserToken = memo(function PhaserToken({ token, selected }) {
   const ref = useRef(null);
+  const [resolvedAvatar, setResolvedAvatar] = useState(() => String(token?.avatar || ""));
+
+  useEffect(() => {
+    let cancelled = false;
+    const direct = String(token?.avatar || "");
+    if (direct) {
+      setResolvedAvatar(direct);
+      return () => { cancelled = true; };
+    }
+    if (!token?.npcId) {
+      setResolvedAvatar("");
+      return () => { cancelled = true; };
+    }
+    getBestiaryTokenUrl(token.npcId)
+      .then((url) => { if (!cancelled) setResolvedAvatar(String(url || "")); })
+      .catch(() => { if (!cancelled) setResolvedAvatar(""); });
+    return () => { cancelled = true; };
+  }, [token?.avatar, token?.npcId]);
 
   useEffect(() => {
     const node = ref.current;
@@ -142,8 +161,8 @@ export const PhaserToken = memo(function PhaserToken({ token, selected }) {
 
   return (
     <span ref={ref} className="phaser-token-fallback">
-      {token.avatar
-        ? <img src={token.avatar} alt="" draggable={false} loading="lazy" decoding="async" />
+      {resolvedAvatar
+        ? <img src={resolvedAvatar} alt="" draggable={false} loading="eager" decoding="async" />
         : <b>{String(token.name || "T").slice(0, 1).toUpperCase()}</b>}
     </span>
   );
