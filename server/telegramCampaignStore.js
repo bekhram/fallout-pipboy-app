@@ -4,6 +4,7 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const LINK_COLLECTION = "telegramCampaignLinks";
 const CODE_COLLECTION = "telegramConnectCodes";
+const DEVICE_CODE_COLLECTION = "telegramDeviceCodes";
 const LINK_CACHE_TTL = 5 * 60 * 1000;
 const linkCache = new Map();
 
@@ -41,6 +42,23 @@ export function makeManageToken() {
   return randomBytes(24).toString("hex");
 }
 
+export function telegramTokenMatches(link, manageToken) {
+  const hashed = hashToken(manageToken);
+  const hashes = Array.isArray(link?.manageTokenHashes) ? link.manageTokenHashes : [];
+  return Boolean(
+    manageToken
+    && (hashed === link?.manageTokenHash || hashes.includes(hashed))
+  );
+}
+
+export function makeDeviceCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(8);
+  let value = "APP-";
+  for (let index = 0; index < 6; index += 1) value += alphabet[bytes[index] % alphabet.length];
+  return value;
+}
+
 export function webhookSecret(botToken) {
   return createHash("sha256").update(`pip2d20:${String(botToken || "")}`).digest("hex").slice(0, 48);
 }
@@ -74,6 +92,7 @@ export async function consumeConnectCode({ code, chat }) {
       chatTitle: String(chat.title || chat.username || "Telegram group").slice(0, 160),
       chatType: String(chat.type || "group").slice(0, 40),
       manageTokenHash: data.manageTokenHash,
+      manageTokenHashes: [data.manageTokenHash],
       connectedAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -96,10 +115,63 @@ export async function getTelegramLink(campaignId) {
   return value;
 }
 
+export async function createTelegramDeviceCode(campaignId, manageToken) {
+  const link = await getTelegramLink(campaignId);
+  if (!link?.chatId || !telegramTokenMatches(link, manageToken)) {
+    return { ok: false, reason: "FORBIDDEN" };
+  }
+  const code = makeDeviceCode();
+  const expiresAt = Date.now() + 10 * 60 * 1000;
+  await telegramDb().collection(DEVICE_CODE_COLLECTION).doc(hashToken(code)).set({
+    campaignId,
+    expiresAt,
+    createdAt: Date.now(),
+  });
+  return { ok: true, code, expiresAt };
+}
+
+export async function consumeTelegramDeviceCode(code) {
+  const db = telegramDb();
+  const ref = db.collection(DEVICE_CODE_COLLECTION).doc(hashToken(String(code || "").toUpperCase()));
+  const newToken = makeManageToken();
+  return db.runTransaction(async (tx) => {
+    const codeDoc = await tx.get(ref);
+    if (!codeDoc.exists) return { ok: false, reason: "CODE_NOT_FOUND" };
+    const data = codeDoc.data();
+    if (!validCampaignId(data?.campaignId) || Number(data?.expiresAt || 0) < Date.now()) {
+      tx.delete(ref);
+      return { ok: false, reason: "CODE_EXPIRED" };
+    }
+    const linkRef = db.collection(LINK_COLLECTION).doc(data.campaignId);
+    const linkDoc = await tx.get(linkRef);
+    if (!linkDoc.exists) {
+      tx.delete(ref);
+      return { ok: false, reason: "NOT_CONNECTED" };
+    }
+    const link = linkDoc.data();
+    const existing = Array.isArray(link?.manageTokenHashes)
+      ? link.manageTokenHashes
+      : (link?.manageTokenHash ? [link.manageTokenHash] : []);
+    const nextHashes = [...new Set([...existing, hashToken(newToken)])].slice(-8);
+    tx.update(linkRef, { manageTokenHashes: nextHashes, updatedAt: Date.now() });
+    tx.delete(ref);
+    const nextLink = { ...link, manageTokenHashes: nextHashes, updatedAt: Date.now() };
+    linkCache.set(data.campaignId, { value: nextLink, expiresAt: Date.now() + LINK_CACHE_TTL });
+    return {
+      ok: true,
+      campaignId: data.campaignId,
+      manageToken: newToken,
+      connected: true,
+      chatTitle: link?.chatTitle || "",
+      chatType: link?.chatType || "",
+    };
+  });
+}
+
 export async function disconnectTelegramLink(campaignId, manageToken) {
   const link = await getTelegramLink(campaignId);
   if (!link) return { ok: true, disconnected: false };
-  if (!manageToken || hashToken(manageToken) !== link.manageTokenHash) {
+  if (!telegramTokenMatches(link, manageToken)) {
     return { ok: false, reason: "FORBIDDEN" };
   }
   await telegramDb().collection(LINK_COLLECTION).doc(campaignId).delete();
