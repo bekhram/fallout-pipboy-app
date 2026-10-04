@@ -81,7 +81,7 @@ export default function MenuScreen({
     <>
       <div className="home-terminal">
         <header className="home-topbar"><strong>PIP 2D20 <span>MK IV</span></strong><small>ROBCO INDUSTRIES (TM) TERMINAL LINK<br/>{t("menuScreen.subtitle")}</small><span className="home-local"><SheetIcon name="save"/>{c.local}</span><button type="button" className="home-icon" aria-label={c.account} onClick={()=>go('settings')}><SheetIcon name="person"/></button></header>
-        <aside className="home-sidebar"><nav>{nav('home','home',c.home)}{nav('characters','person',c.characters)}{nav('sessions','calendar',c.sessions)}{nav('settings','settings',c.settings)}</nav><div className="home-install">{nav('install','download',c.install)}</div></aside>
+        <aside className="home-sidebar"><nav>{nav('home','home',c.home)}{nav('characters','person',c.characters)}{nav('sessions','calendar',c.sessions)}{nav('telegram','chat',c.telegram)}{nav('settings','settings',c.settings)}</nav><div className="home-install">{nav('install','download',c.install)}</div></aside>
         <div className="home-content">
           <div id="home-home" className="home-welcome"><h1>{c.welcome}</h1><p>{c.intro}</p></div>
           <section className="home-continue">
@@ -97,11 +97,12 @@ export default function MenuScreen({
               <div className="home-session-actions"><TrackedButton className="pip-btn" id="btn_gm_session" onClick={()=>onOpenSession('host')}><SheetIcon name="person"/>{c.host}</TrackedButton><button type="button" className="pip-btn" onClick={()=>onOpenSession('join')}><SheetIcon name="plus"/>{c.join}</button></div>
             </section>
           </div>
-          {section==='settings' && <section id="home-settings" className="home-settings pip-panel"><h2>{c.settings}</h2><div className="home-languages">{['en','ru','uk','pl'].map(language=><button type="button" className="pip-btn" aria-pressed={i18n.resolvedLanguage?.startsWith(language)} key={language} onClick={()=>i18n.changeLanguage(language)}>{language.toUpperCase()}</button>)}</div><CloudAccountPanel language={i18n.resolvedLanguage || i18n.language}/><TelegramCampaignPanel session={session}/></section>}
+          {section==='telegram' && <section id="home-telegram" className="home-settings pip-panel"><h2>{c.telegram}</h2><TelegramCampaignPanel session={session}/></section>}
+          {section==='settings' && <section id="home-settings" className="home-settings pip-panel"><h2>{c.settings}</h2><div className="home-languages">{['en','ru','uk','pl'].map(language=><button type="button" className="pip-btn" aria-pressed={i18n.resolvedLanguage?.startsWith(language)} key={language} onClick={()=>i18n.changeLanguage(language)}>{language.toUpperCase()}</button>)}</div><CloudAccountPanel language={i18n.resolvedLanguage || i18n.language}/></section>}
           {section==='install' && <section id="home-install"><AppDownloadPanel/><PwaInstallButton/></section>}
           <footer className="home-footer">ROBCO INDUSTRIES (TM) · PIP 2D20</footer>
         </div>
-        <nav className="home-bottom">{nav('home','home',c.home)}{nav('characters','person',c.characters)}{nav('sessions','calendar',c.sessions)}{nav('settings','more',c.more)}</nav>
+        <nav className="home-bottom">{nav('home','home',c.home)}{nav('characters','person',c.characters)}{nav('sessions','calendar',c.sessions)}{nav('telegram','chat',c.telegram)}{nav('settings','more',c.more)}</nav>
         {section==='settings' && <button className="home-mobile-install pip-btn" type="button" onClick={()=>go('install')}>{c.install}</button>}
       </div>
 
