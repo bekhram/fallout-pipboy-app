@@ -232,15 +232,27 @@ export function getAmmosmithRank(character) {
   return getCharacterPerkRank(character, { id: "ammosmith", label: "Ammosmith" });
 }
 
+export function getAmmoBatchProfile(recipe) {
+  const base = Math.max(1, Number(recipe?.ammoQuantityBase) || 1);
+  const dice = Math.max(0, Number(recipe?.ammoQuantityDice) || 0);
+  const multiplier = Math.max(1, Number(recipe?.ammoQuantityMultiplier) || 1);
+  const expression = dice ? `${base} + ${dice} CD` : String(base);
+  return {
+    base, dice, multiplier,
+    formula: multiplier > 1 ? `(${expression}) × ${multiplier}` : expression,
+    // Old/looted stock has no recorded crafting yield. Its standard batch is
+    // the fixed part of Quantity Found, explicitly displayed in the UI.
+    looseBatchSize: base * multiplier,
+  };
+}
+
 function resolveAmmosmithQuantity(character, recipe) {
   const perkRank = getAmmosmithRank(character);
   const rarity = Math.max(0, Number(recipe?.ammoRarity ?? recipe?.rarity ?? 0));
 
   // The ammunition table's Quantity Found expression is also the base craft output
   // for this app: static amount + the total from the listed Combat Dice.
-  const quantityBase = Math.max(1, Number(recipe?.ammoQuantityBase ?? 1));
-  const quantityDice = Math.max(0, Number(recipe?.ammoQuantityDice ?? 0));
-  const quantityMultiplier = Math.max(1, Number(recipe?.ammoQuantityMultiplier ?? 1));
+  const { base: quantityBase, dice: quantityDice, multiplier: quantityMultiplier } = getAmmoBatchProfile(recipe);
   const quantityRoll = quantityDice > 0
     ? rollFalloutD6({ diceCount: quantityDice, effects: [] })
     : null;
@@ -293,25 +305,57 @@ function resolveAmmosmithQuantity(character, recipe) {
 export function getAmmosmithDismantleMaterials(recipe) {
   const materials = getRecipeMaterials(recipe);
   return Object.fromEntries(
-    Object.entries(materials).map(([name, amount]) => [
+    Object.entries(materials).filter(([, amount]) => Number.isFinite(Number(amount)) && Number(amount) > 0).map(([name, amount]) => [
       name,
       Math.max(1, Math.floor(Number(amount || 0) / 2)),
     ])
   );
 }
 
-function consumeOneAmmunition(inventory = [], ammoName) {
-  const wanted = normalize(ammoName);
-  let consumed = false;
-  return inventory.map((item) => {
-    if (consumed) return item;
-    const isAmmo = normalize(item?.category) === "ammo";
-    const matches = itemNames(item).includes(wanted);
-    const quantity = Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
-    if (!isAmmo || !matches || quantity < 1) return item;
-    consumed = true;
-    return { ...item, quantity: String(quantity - 1) };
-  }).filter((item) => Number(item?.quantity ?? item?.qty ?? 0) > 0);
+function wholeInventoryQuantity(item) {
+  const quantity = Number(item?.quantity ?? item?.qty ?? 0);
+  return Number.isFinite(quantity) ? Math.max(0, Math.floor(quantity)) : 0;
+}
+
+function ammoSalvageUnitsPerRound(item, recipe) {
+  const saved = item?.ammoSalvage;
+  const units = Number(saved?.unitsPerRound);
+  if (saved?.recipeId === recipe?.id && Number.isFinite(units) && units > 0) return units;
+  return 1 / getAmmoBatchProfile(recipe).looseBatchSize;
+}
+
+// A complete crafted output is worth ONE recipe refund, including random and
+// Ammosmith 3 bonus rounds. Merged stacks carry a weighted value per round;
+// firing/removing rounds decreases their total refundable value naturally.
+export function getAmmoDismantleState(character, recipe) {
+  const ammoName = recipe?.outputName || recipe?.name;
+  const { looseBatchSize } = getAmmoBatchProfile(recipe);
+  let remainingUnits = 1;
+  let available = 0;
+  let consumedQuantity = 0;
+  const consumption = [];
+  const epsilon = 1e-9;
+  for (const [index, item] of (character?.inventoryItems || []).entries()) {
+    if (normalize(item?.category) !== "ammo" || !itemNames(item).includes(normalize(ammoName))) continue;
+    const quantity = wholeInventoryQuantity(item);
+    available += quantity;
+    if (!quantity || remainingUnits <= epsilon) continue;
+    const unitsPerRound = ammoSalvageUnitsPerRound(item, recipe);
+    const needed = Math.max(1, Math.ceil(remainingUnits / unitsPerRound - epsilon));
+    const take = Math.min(quantity, needed);
+    consumption.push({ index, quantity: take });
+    consumedQuantity += take;
+    remainingUnits -= take * unitsPerRound;
+  }
+  const hasBatch = remainingUnits <= epsilon;
+  return {
+    ammoName, available, hasBatch, consumption, consumedQuantity,
+    roundingCredit: hasBatch ? Math.max(0, -remainingUnits) : 0,
+    requiredQuantity: consumedQuantity + (hasBatch ? 0 : Math.ceil(remainingUnits * looseBatchSize - epsilon)),
+    returnedMaterials: getAmmosmithDismantleMaterials(recipe),
+    hasPerk: getAmmosmithRank(character) >= 2,
+    looseBatchSize,
+  };
 }
 
 function addCraftingMaterial(inventory = [], materialName, amount) {
@@ -344,19 +388,31 @@ function addCraftingMaterial(inventory = [], materialName, amount) {
 
 export function dismantleAmmunition(character, recipe) {
   if (!isAmmoCraftingRecipe(recipe)) return { error: "not_ammo" };
-  const perkRank = getAmmosmithRank(character);
-  if (perkRank < 2) return { error: "ammosmith_rank" };
+  const state = getAmmoDismantleState(character, recipe);
+  if (!state.hasPerk) return { error: "ammosmith_rank", state };
+  if (!state.hasBatch) return { error: "ammo_batch_missing", state };
 
-  const ammoName = recipe?.outputName || recipe?.name;
-  const available = (character?.inventoryItems || []).reduce((sum, item) => {
-    if (normalize(item?.category) !== "ammo") return sum;
-    if (!itemNames(item).includes(normalize(ammoName))) return sum;
-    return sum + Math.max(0, Number(item?.quantity ?? item?.qty ?? 0));
-  }, 0);
-  if (available < 1) return { error: "ammo_missing" };
-
-  const returnedMaterials = getAmmosmithDismantleMaterials(recipe);
-  let inventory = consumeOneAmmunition(character?.inventoryItems || [], ammoName);
+  const { ammoName, returnedMaterials, consumedQuantity } = state;
+  const consumption = new Map(state.consumption.map((entry) => [entry.index, entry.quantity]));
+  let inventory = (character?.inventoryItems || []).flatMap((item, index) => {
+    if (!consumption.has(index)) return [item];
+    const quantity = wholeInventoryQuantity(item) - consumption.get(index);
+    return quantity > 0 ? [{ ...item, quantity: String(quantity) }] : [];
+  });
+  // Whole rounds can overshoot a single refund fraction. Retain that fraction
+  // in the remaining stock so merging, e.g. 9- and 10-round batches does not
+  // lose the second batch's refund to integer rounding.
+  if (state.roundingCredit > 1e-9) {
+    const index = inventory.findIndex((item) => normalize(item?.category) === "ammo"
+      && itemNames(item).includes(normalize(ammoName)) && wholeInventoryQuantity(item) > 0);
+    if (index >= 0) {
+      const item = inventory[index];
+      inventory[index] = { ...item, ammoSalvage: {
+        recipeId: recipe.id,
+        unitsPerRound: ammoSalvageUnitsPerRound(item, recipe) + state.roundingCredit / wholeInventoryQuantity(item),
+      } };
+    }
+  }
   for (const [name, amount] of Object.entries(returnedMaterials)) {
     inventory = addCraftingMaterial(inventory, name, amount);
   }
@@ -365,7 +421,7 @@ export function dismantleAmmunition(character, recipe) {
     success: true,
     action: "dismantle",
     ammoName,
-    consumedQuantity: 1,
+    consumedQuantity,
     returnedMaterials,
     inventory,
   };
@@ -429,7 +485,8 @@ export function createCraftedInventoryItem(recipe) {
       craftingRecipeId: recipe.id,
     };
   }
-  const modLike = ["weapons", "armor", "power_armor", "robot"].includes(recipe?.workbench);
+  const modLike = recipe?.outputCategory !== "ammo"
+    && ["weapons", "armor", "power_armor", "robot"].includes(recipe?.workbench);
   const name = modLike ? `${recipe.name} — ${recipe.group}` : (recipe?.outputName || recipe?.name || "Crafted item");
   return {
     name,
@@ -445,24 +502,32 @@ export function createCraftedInventoryItem(recipe) {
   };
 }
 
-export function addCraftedInventoryItem(inventory = [], craftedItem) {
+export function addCraftedInventoryItem(inventory = [], craftedItem, recipe = null) {
   const key = normalize(craftedItem?.canonicalName || craftedItem?.name);
   const craftedCategory = normalize(craftedItem?.category);
   const mergeByName = craftedCategory === "ammo";
   const index = inventory.findIndex((item) =>
-    normalize(item?.canonicalName || item?.name) === key
+    itemNames(item).includes(key)
     && normalize(item?.category) === craftedCategory
     && (mergeByName || normalize(item?.craftingRecipeId) === normalize(craftedItem?.craftingRecipeId))
   );
   if (index < 0) return [...inventory, craftedItem];
   const next = [...inventory];
   const current = next[index];
+  const currentQuantity = wholeInventoryQuantity(current);
+  const addedQuantity = Math.max(1, wholeInventoryQuantity(craftedItem));
+  const quantity = currentQuantity + addedQuantity;
+  const ammoSalvage = recipe && isAmmoCraftingRecipe(recipe) ? {
+    recipeId: recipe.id,
+    unitsPerRound: (
+      currentQuantity * ammoSalvageUnitsPerRound(current, recipe)
+      + addedQuantity * ammoSalvageUnitsPerRound(craftedItem, recipe)
+    ) / quantity,
+  } : null;
   next[index] = {
     ...current,
-    quantity: String(
-      Math.max(0, Number(current?.quantity || 0))
-      + Math.max(1, Number(craftedItem?.quantity || 1))
-    ),
+    ...(ammoSalvage ? { ammoSalvage } : {}),
+    quantity: String(quantity),
   };
   return next;
 }
@@ -500,9 +565,13 @@ export function resolveCraftingAttempt(character, recipe) {
     output = createCraftedInventoryItem(recipe);
     if (isAmmoCraftingRecipe(recipe)) {
       ammoResult = resolveAmmosmithQuantity(character, recipe);
-      output = { ...output, quantity: String(ammoResult.quantity) };
+      output = {
+        ...output,
+        quantity: String(ammoResult.quantity),
+        ammoSalvage: { recipeId: recipe.id, unitsPerRound: 1 / ammoResult.quantity },
+      };
     }
-    inventory = addCraftedInventoryItem(inventory, output);
+    inventory = addCraftedInventoryItem(inventory, output, recipe);
   }
 
   return {

@@ -1,18 +1,24 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CRAFTING_RECIPES } from "../../data/craftingRecipes.js";
+import ammoCsv from "../../../public/Ammo.csv?raw";
+import { buildAmmoCraftingCatalog, getCraftingRecipeCategory } from "../../data/ammoCraftingRecipes.js";
 import { buildBaseArmorRecipes, buildBaseWeaponRecipes } from "../../data/baseCraftingRecipes.js";
 import { parseCSV } from "../../utils/csvParser.js";
 import { parseArmorDatabase } from "../../utils/armorDatabase.js";
 import {
   dismantleAmmunition,
   getAmmosmithRank,
+  getAmmoBatchProfile,
+  getAmmoDismantleState,
   getCraftingRecipeState,
-  getInventoryQuantity,
   resolveCraftingAttempt,
 } from "../../utils/craftingEngine.js";
 import { personalConstructionCopy } from "../campaign/personalConstructionCopy.js";
 import "./crafting.css";
+
+const AMMO_CATALOG = buildAmmoCraftingCatalog(parseCSV(ammoCsv), CRAFTING_RECIPES);
+const ALL_RECIPES = [...CRAFTING_RECIPES, ...AMMO_CATALOG.recipes];
 
 const TEXT = {
   en: {
@@ -27,7 +33,7 @@ const TEXT = {
     needBench: "Mark the required workbench as available.", roll: "ROLL", target: "TN", known: "KNOWN", recipeCount: "recipes", all: "ALL",
     common: "Common", uncommon: "Uncommon", rare: "Rare", output: "OUTPUT", noRecipes: "No matching recipes.", ready: "READY", locked: "LOCKED",
     noBaseWeapons: "Base weapon and armor recipes are app-generated from the item archive; official modification recipes remain under MODS.",
-    dismantle: "DISMANTLE 1", dismantled: "DISMANTLED", returned: "RETURNED", ammoOwned: "OWNED", needAmmo: "No ammunition to dismantle", needAmmosmith2: "Ammosmith rank 2 required",
+    dismantled: "DISMANTLED", returned: "RETURNED", ammoOwned: "OWNED", needAmmo: "No ammunition to dismantle", needAmmosmith2: "Ammosmith rank 2 required",
   },
   ru: {
     title: "КРАФТ", subtitle: "ВЕРСТАК // РЕЦЕПТЫ",
@@ -41,7 +47,7 @@ const TEXT = {
     needBench: "Отметьте доступ к нужному верстаку.", roll: "БРОСОК", target: "TN", known: "ИЗУЧЕН", recipeCount: "рецептов", all: "ВСЕ",
     common: "Обычный", uncommon: "Необычный", rare: "Редкий", output: "РЕЗУЛЬТАТ", noRecipes: "Подходящих рецептов нет.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
     noBaseWeapons: "Базовые рецепты оружия и брони генерируются приложением из архива предметов; официальные модификации остаются в разделе МОДЫ.",
-    dismantle: "РАЗОБРАТЬ 1", dismantled: "РАЗОБРАНО", returned: "ВОЗВРАЩЕНО", ammoOwned: "В НАЛИЧИИ", needAmmo: "Нет патронов для разбора", needAmmosmith2: "Требуется Ammosmith 2",
+    dismantled: "РАЗОБРАНО", returned: "ВОЗВРАЩЕНО", ammoOwned: "В НАЛИЧИИ", needAmmo: "Нет патронов для разбора", needAmmosmith2: "Требуется Ammosmith 2",
   },
   uk: {
     title: "КРАФТ", subtitle: "ВЕРСТАТ // РЕЦЕПТИ",
@@ -55,7 +61,7 @@ const TEXT = {
     needBench: "Позначте доступ до потрібного верстата.", roll: "КИДОК", target: "TN", known: "ВИВЧЕНО", recipeCount: "рецептів", all: "УСІ",
     common: "Звичайний", uncommon: "Незвичайний", rare: "Рідкісний", output: "РЕЗУЛЬТАТ", noRecipes: "Відповідних рецептів немає.", ready: "ГОТОВО", locked: "НЕДОСТУПНО",
     noBaseWeapons: "Базові рецепти зброї та броні генеруються застосунком з архіву предметів; офіційні модифікації залишаються у розділі МОДИ.",
-    dismantle: "РОЗІБРАТИ 1", dismantled: "РОЗІБРАНО", returned: "ПОВЕРНЕНО", ammoOwned: "В НАЯВНОСТІ", needAmmo: "Немає патронів для розбирання", needAmmosmith2: "Потрібен Ammosmith 2",
+    dismantled: "РОЗІБРАНО", returned: "ПОВЕРНЕНО", ammoOwned: "В НАЯВНОСТІ", needAmmo: "Немає патронів для розбирання", needAmmosmith2: "Потрібен Ammosmith 2",
   },
   pl: {
     title: "RZEMIOSŁO", subtitle: "WARSZTAT // RECEPTURY",
@@ -69,7 +75,50 @@ const TEXT = {
     needBench: "Zaznacz dostęp do wymaganego warsztatu.", roll: "RZUT", target: "TN", known: "ZNANA", recipeCount: "receptur", all: "WSZYSTKIE",
     common: "Pospolita", uncommon: "Niepospolita", rare: "Rzadka", output: "WYNIK", noRecipes: "Brak pasujących receptur.", ready: "GOTOWE", locked: "NIEDOSTĘPNE",
     noBaseWeapons: "Bazowe receptury broni i pancerza są generowane przez aplikację z archiwum przedmiotów; oficjalne modyfikacje pozostają w sekcji MODY.",
-    dismantle: "ROZŁÓŻ 1", dismantled: "ROZŁOŻONO", returned: "ODZYSKANO", ammoOwned: "POSIADASZ", needAmmo: "Brak amunicji do rozłożenia", needAmmosmith2: "Wymagany Ammosmith 2",
+    dismantled: "ROZŁOŻONO", returned: "ODZYSKANO", ammoOwned: "POSIADASZ", needAmmo: "Brak amunicji do rozłożenia", needAmmosmith2: "Wymagany Ammosmith 2",
+  },
+};
+
+const AMMO_COPY = {
+  en: {
+    batchOutput: "OUTPUT PER BATCH", perBatch: "Materials are spent once for the whole batch.",
+    batchRule: "App batch rule: dismantling the complete crafted output returns half its recipe materials, rounded down (minimum 1 per material).",
+    bonus: "Ammosmith 3 also adds bonus rounds; those rounds are part of the same batch.",
+    dismantle: "DISMANTLE", rounds: "rounds", needAmmoBatch: "Not enough ammunition for one dismantling batch.",
+    salvagePerks: "Dismantling requires Ammosmith 2. Scrapper does not increase this return.",
+    looseBatch: "Standard batch for found ammunition and old stock", returnPreview: "MATERIALS RETURNED",
+    unavailable: "AMMUNITION WITH CRAFTING RESTRICTIONS", rarityLimit: "Ammosmith only crafts rarity 0–5.",
+    missingData: "The archive lacks rarity or batch data; a recipe cannot be calculated.",
+  },
+  ru: {
+    batchOutput: "ВЫХОД ЗА ПАРТИЮ", perBatch: "Материалы расходуются один раз на всю партию.",
+    batchRule: "Правило пачек приложения: разбор всего результата крафта возвращает половину материалов рецепта, с округлением вниз (минимум 1 каждого материала).",
+    bonus: "Ammosmith 3 дополнительно увеличивает выход; бонусные патроны входят в ту же партию.",
+    dismantle: "РАЗОБРАТЬ", rounds: "патронов", needAmmoBatch: "Не хватает патронов на одну партию для разбора.",
+    salvagePerks: "Для разбора нужен Ammosmith 2. Scrapper не увеличивает этот возврат.",
+    looseBatch: "Стандартная партия для найденных патронов и старых запасов", returnPreview: "ВОЗВРАТ МАТЕРИАЛОВ",
+    unavailable: "ПАТРОНЫ С ОГРАНИЧЕНИЯМИ КРАФТА", rarityLimit: "Ammosmith позволяет создавать патроны редкости 0–5.",
+    missingData: "В каталоге нет редкости или размера партии; рецепт нельзя рассчитать.",
+  },
+  uk: {
+    batchOutput: "ВИХІД ЗА ПАРТІЮ", perBatch: "Матеріали витрачаються один раз на всю партію.",
+    batchRule: "Правило пачок застосунку: розбирання всього результату крафту повертає половину матеріалів рецепта, з округленням униз (мінімум 1 кожного матеріалу).",
+    bonus: "Ammosmith 3 додатково збільшує вихід; бонусні патрони входять до тієї самої партії.",
+    dismantle: "РОЗІБРАТИ", rounds: "патронів", needAmmoBatch: "Не вистачає патронів на одну партію для розбирання.",
+    salvagePerks: "Для розбирання потрібен Ammosmith 2. Scrapper не збільшує це повернення.",
+    looseBatch: "Стандартна партія для знайдених патронів і старих запасів", returnPreview: "ПОВЕРНЕННЯ МАТЕРІАЛІВ",
+    unavailable: "ПАТРОНИ З ОБМЕЖЕННЯМИ КРАФТУ", rarityLimit: "Ammosmith дозволяє створювати патрони рідкості 0–5.",
+    missingData: "У каталозі немає рідкості або розміру партії; рецепт неможливо розрахувати.",
+  },
+  pl: {
+    batchOutput: "WYNIK JEDNEJ PARTII", perBatch: "Materiały są zużywane raz na całą partię.",
+    batchRule: "Zasada partii w aplikacji: rozłożenie całej wytworzonej partii zwraca połowę materiałów receptury, zaokrągloną w dół (minimum 1 każdego materiału).",
+    bonus: "Ammosmith 3 dodatkowo zwiększa wynik; dodatkowe naboje należą do tej samej partii.",
+    dismantle: "ROZŁÓŻ", rounds: "nabojów", needAmmoBatch: "Za mało amunicji na jedną partię do rozłożenia.",
+    salvagePerks: "Rozkładanie wymaga Ammosmith 2. Scrapper nie zwiększa tego zwrotu.",
+    looseBatch: "Standardowa partia dla znalezionej amunicji i starych zapasów", returnPreview: "ZWROT MATERIAŁÓW",
+    unavailable: "AMUNICJA Z OGRANICZENIAMI WYTWARZANIA", rarityLimit: "Ammosmith pozwala wytwarzać amunicję o rzadkości 0–5.",
+    missingData: "W katalogu brakuje rzadkości lub wielkości partii; nie można obliczyć receptury.",
   },
 };
 
@@ -77,7 +126,7 @@ const CATEGORIES = ["weapons", "ammo", "armor", "mods", "explosives", "items"];
 
 const WORKBENCHES = {
   weapons: ["weapons"],
-  ammo: ["weapons"],
+  ammo: ["weapons", "chemistry"],
   armor: ["armor", "power_armor", "robot"],
   mods: ["weapons", "armor", "power_armor", "robot"],
   explosives: ["chemistry"],
@@ -125,33 +174,10 @@ function recipeModType(recipe) {
   return null;
 }
 
-function recipeCategory(recipe) {
-  const group = String(recipe?.group || "").toUpperCase();
-
-  if (group === "EXPLOSIVES") return "explosives";
-  if (group === "AMMUNITION") return "ammo";
-
-  if (
-    group.includes(" MOD")
-    || group.endsWith("MODS")
-    || group.includes("UPGRADE")
-    || group.includes("PLATING")
-    || group.includes("SYSTEM")
-    || group.includes("MATERIAL")
-    || group.includes("LINING")
-    || group === "BALLISTIC WEAVE"
-    || group === "ROBOT ARMOR"
-  ) return "mods";
-
-  if (recipe?.category === "weapons") return "weapons";
-  if (recipe?.category === "armor") return "armor";
-  return "items";
-}
-
 export default function CraftingScreen({ character = null, setCharacter = null }) {
   const { i18n } = useTranslation();
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
-  const copy = TEXT[language];
+  const copy = { ...TEXT[language], ...AMMO_COPY[language] };
   const [category, setCategory] = useState("mods");
   const [modFilter, setModFilter] = useState("all");
   const [workbench, setWorkbench] = useState("all");
@@ -197,8 +223,8 @@ export default function CraftingScreen({ character = null, setCharacter = null }
 
   const visibleRecipes = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return [...baseRecipes, ...CRAFTING_RECIPES].filter((recipe) => {
-      if (recipeCategory(recipe) !== category) return false;
+    return [...baseRecipes, ...ALL_RECIPES].filter((recipe) => {
+      if (getCraftingRecipeCategory(recipe) !== category) return false;
       if (category === "mods" && modFilter !== "all" && recipeModType(recipe) !== modFilter) return false;
       if (workbench !== "all" && recipe.workbench !== workbench) return false;
       if (!query) return true;
@@ -278,6 +304,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               rolls: recipe.ammoCrafting ? [] : (result.roll?.rolls || []).map((die) => die.value),
               complications: result.complications,
               durationMinutes: result.durationMinutes,
+              outputQuantity: Number(result.output?.quantity || 0),
               timestamp: new Date().toISOString(),
             },
           ].slice(-50),
@@ -314,6 +341,7 @@ export default function CraftingScreen({ character = null, setCharacter = null }
             recipeId: recipe.id,
             name: recipe.name,
             action: "dismantle",
+            consumedQuantity: result.consumedQuantity,
             returnedMaterials: result.returnedMaterials,
             timestamp: new Date().toISOString(),
           },
@@ -334,14 +362,14 @@ export default function CraftingScreen({ character = null, setCharacter = null }
         : lastResult.error === "materials" ? copy.missingMaterials
           : lastResult.error === "perks" ? copy.missingPerks
             : lastResult.error === "ammosmith_rank" ? copy.needAmmosmith2
-              : lastResult.error === "ammo_missing" ? copy.needAmmo
+              : lastResult.error === "ammo_batch_missing" ? copy.needAmmoBatch
                 : copy.unknownRare;
       return <div className="craft-result is-failure">[ {message} ]</div>;
     }
     if (lastResult.action === "dismantle") {
       return (
         <div className="craft-result is-success">
-          <strong>[ {copy.dismantled}: {recipe.name} ×1 ]</strong>
+          <strong>[ {copy.dismantled}: {recipe.name} ×{lastResult.consumedQuantity} ]</strong>
           <div>{copy.returned}: {Object.entries(lastResult.returnedMaterials || {}).map(([name, amount]) => `${name} ×${amount}`).join(" // ")}</div>
         </div>
       );
@@ -469,6 +497,18 @@ export default function CraftingScreen({ character = null, setCharacter = null }
 
         <div className="crafting-screen__count">{visibleRecipes.length} {copy.recipeCount}</div>
 
+        {category === "ammo" && AMMO_CATALOG.unavailable.length > 0 ? (
+          <details className="craft-section">
+            <summary>{copy.unavailable}</summary>
+            {AMMO_CATALOG.unavailable.map((item) => (
+              <p key={item.name} className="craft-note">
+                <strong>{item.name}{item.rarity != null ? ` (R${item.rarity})` : ""}</strong>
+                {": "}{item.reason === "rarity" ? copy.rarityLimit : copy.missingData}
+              </p>
+            ))}
+          </details>
+        ) : null}
+
         {visibleRecipes.length ? (
           <div className="crafting-screen__recipes">
             {visibleRecipes.map((recipe) => {
@@ -476,9 +516,10 @@ export default function CraftingScreen({ character = null, setCharacter = null }
               const needsWorkbench = !(recipe.workbench === "cooking" && recipe.name === "Cooking Station");
               const benchReady = !needsWorkbench || Boolean(benchAccess[recipe.workbench]);
               const canCraft = Boolean(setCharacter && benchReady && state.hasMaterials && state.hasPerks && state.knownRare);
-              const ammoOwned = recipe.ammoCrafting ? getInventoryQuantity(character?.inventoryItems || [], recipe.name) : 0;
+              const dismantleState = recipe.ammoCrafting ? getAmmoDismantleState(character, recipe) : null;
+              const batch = recipe.ammoCrafting ? getAmmoBatchProfile(recipe) : null;
               const ammosmithRank = recipe.ammoCrafting ? getAmmosmithRank(character) : 0;
-              const canDismantle = Boolean(setCharacter && recipe.ammoCrafting && benchReady && ammosmithRank >= 2 && ammoOwned > 0);
+              const canDismantle = Boolean(setCharacter && recipe.ammoCrafting && benchReady && dismantleState?.hasPerk && dismantleState?.hasBatch);
               const expanded = expandedRecipeId === recipe.id;
               return (
                 <article key={recipe.id} className={`pip-panel crafting-recipe-card ${expanded ? "is-expanded" : ""}`}>
@@ -519,8 +560,16 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                         <div><span>{copy.target}</span><strong>{state.skill.targetNumber}</strong></div>
                         <div><span>{copy.complexity}</span><strong>{recipe.complexity}</strong></div>
                         <div><span>{copy.difficulty}</span><strong>D{state.difficulty}</strong></div>
-                        <div><span>{copy.source}</span><strong>{copy.page}{recipe.sourcePage}</strong></div>
+                        <div><span>{copy.source}</span><strong>{recipe.sourceBook ? `${recipe.sourceBook}, ` : ""}{copy.page}{recipe.sourcePage}</strong></div>
                       </div>
+
+                      {batch ? (
+                        <div className="craft-section">
+                          <strong>[ {copy.batchOutput}: {batch.formula} ]</strong>
+                          <div className="craft-note">{copy.perBatch}</div>
+                          {ammosmithRank >= 3 ? <div className="craft-note">{copy.bonus}</div> : null}
+                        </div>
+                      ) : null}
 
                       <div className="craft-section">
                         <strong>[ {copy.materials} ]</strong>
@@ -564,21 +613,34 @@ export default function CraftingScreen({ character = null, setCharacter = null }
                         disabled={!canCraft || saveBusy}
                       >
                         {recipe.ammoCrafting
-                          ? `${copy.craft} // R${recipe.ammoRarity}`
+                          ? `${copy.craft} // ${batch.formula}`
                           : `${copy.craft} // ${copy.target} ${state.skill.targetNumber} // D${state.difficulty}`}
                       </button>
 
                       {recipe.ammoCrafting ? (
                         <>
-                          <div className="craft-note">{copy.ammoOwned}: {ammoOwned}</div>
+                          <div className="craft-note">{copy.ammoOwned}: {dismantleState.available}</div>
+                          <div className="craft-section">
+                            <strong>[ {copy.returnPreview} ]</strong>
+                            <div className="craft-material-list">
+                              {Object.entries(dismantleState.returnedMaterials).map(([name, amount]) => (
+                                <span key={name}>{name} ×{amount}</span>
+                              ))}
+                            </div>
+                            <div className="craft-note">{copy.salvagePerks}</div>
+                            <div className="craft-note">{copy.batchRule}</div>
+                            <div className="craft-note">{copy.looseBatch}: {batch.looseBatchSize}.</div>
+                          </div>
                           <button
                             type="button"
                             className="pip-btn crafting-recipe-card__craft"
                             onClick={() => handleDismantle(recipe)}
                             disabled={!canDismantle || saveBusy}
                           >
-                            {copy.dismantle}
+                            {copy.dismantle} {dismantleState.requiredQuantity} {copy.rounds}
                           </button>
+                          {!dismantleState.hasPerk ? <div className="craft-warning">{copy.needAmmosmith2}</div> : null}
+                          {!dismantleState.hasBatch ? <div className="craft-warning">{copy.needAmmoBatch}</div> : null}
                         </>
                       ) : null}
 
