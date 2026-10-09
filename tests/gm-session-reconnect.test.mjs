@@ -45,6 +45,36 @@ test('simultaneous automatic and manual reconnect share one recovery', async () 
   await Promise.all([first, second]);
   assert.equal(f.calls.filter(c => c.event === 'room:create').length, 1);
 });
+test('GM finishes a failed initial connection when transport returns, retaining offline scenes', async () => {
+  const f = fixture();
+  f.context.codeRef.current = '';
+  f.context.gmSecretRef.current = '';
+  f.state.scenes.push({ sceneId: 'created-while-offline' });
+  assert.equal(await f.resume(), true);
+  assert.deepEqual(f.calls.filter(c => c.event).map(c => c.event), ['room:create']);
+  assert.equal(f.context.gmStateRef.current, f.state);
+  assert.equal(f.saved[0].code, 'NEW123');
+  assert.equal(f.saved[0].campaignId, 'campaign-original');
+});
+test('simultaneous initial connection recovery creates only one room', async () => {
+  const f = fixture();
+  f.context.codeRef.current = '';
+  await Promise.all([f.resume(), f.resume()]);
+  assert.equal(f.calls.filter(c => c.event === 'room:create').length, 1);
+});
+test('GM does not create a room before the local campaign is loaded', async () => {
+  const f = fixture();
+  f.context.codeRef.current = '';
+  f.context.gmStateRef.current = null;
+  assert.equal(await f.resume(), false);
+  assert.equal(f.calls.length, 0);
+});
+test('player without a room code cannot create a room', async () => {
+  const f = fixture({role: 'player'});
+  f.context.codeRef.current = '';
+  assert.equal(await f.resume(), false);
+  assert.equal(f.calls.length, 0);
+});
 for (const error of ['INVALID_GM_SECRET', 'FORBIDDEN', 'NETWORK_ERROR', 'ACK_TIMEOUT']) {
   test(`GM recovery does not replace a room on ${error}`, async () => {
     const f = fixture({error});
