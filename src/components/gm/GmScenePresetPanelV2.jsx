@@ -92,6 +92,10 @@ export default function GmScenePresetPanelV2({ session }) {
     setTrapLethality(normalizeTrapLethality(spec?.trapLethality));
   }, [scene?.sceneId, savedSpec?.encounterDifficulty, savedSpec?.enemyFaction, savedSpec?.enemyCountOverride, savedSpec?.trapCount, savedSpec?.trapLethality]);
 
+  const encounterSettings = useMemo(() => ({
+    encounterDifficulty: difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality,
+  }), [difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality]);
+
   const sessionWithEncounterSettings = useMemo(() => {
     if (!session) return session;
     return {
@@ -156,7 +160,7 @@ export default function GmScenePresetPanelV2({ session }) {
         </div>
         <small>{text.note}</small>
       </section>
-      <GmScenePresetPanel session={sessionWithEncounterSettings} />
+      <GmScenePresetPanel session={sessionWithEncounterSettings} encounterSettings={encounterSettings} />
     </div>
   );
 }
