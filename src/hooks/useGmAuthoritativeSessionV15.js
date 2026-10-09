@@ -25,7 +25,9 @@ function proceduralSpecFromEnvironment(environment) {
 function compactEnvironment(environment, clearProcedural = false) {
   const source = environment && typeof environment === "object" ? environment : {};
   const spec = clearProcedural ? null : proceduralSpecFromEnvironment(source);
-  const { proceduralMap: _map, proceduralDoorStates: _doors, ...rest } = source;
+  // Layouts are rebuilt by decorateScene; sending them would exceed the
+  // environment message limit and truncate the saved encounter settings.
+  const { proceduralMap: _map, proceduralDoorStates: _doors, vaultLayout: _vault, ...rest } = source;
   return { ...rest, proceduralMapSpec: spec };
 }
 
