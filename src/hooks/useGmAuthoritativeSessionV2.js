@@ -881,16 +881,21 @@ export default function useGmAuthoritativeSessionV2(form) {
     if (!socketRef.current?.connected || leavingRef.current) return false;
     const currentMode = modeRef.current;
     const code = codeRef.current;
-    if (!code || !["host", "player"].includes(currentMode)) return false;
+    if (!["host", "player"].includes(currentMode)) return false;
+    // A failed first connection has no room code yet. Once transport recovers,
+    // finish the GM's pending start using the locally loaded campaign.
+    const canCreateHostRoom = currentMode === "host" && campaignIdRef.current && gmStateRef.current;
+    if (!code && !canCreateHostRoom) return false;
     setStatus("connecting");
-    let response = currentMode === "host"
-      ? await emitAck("room:resume-gm", { roomCode: code, clientId: clientIdRef.current, gmName: nameRef.current || "GM", gmSecret: gmSecretRef.current })
-      : await emitAck("room:join", { roomCode: code, clientId: clientIdRef.current, playerName: nameRef.current || getCharacterName(formRef.current) || "Player", avatar: "" });
+    let response = code
+      ? (currentMode === "host"
+        ? await emitAck("room:resume-gm", { roomCode: code, clientId: clientIdRef.current, gmName: nameRef.current || "GM", gmSecret: gmSecretRef.current })
+        : await emitAck("room:join", { roomCode: code, clientId: clientIdRef.current, playerName: nameRef.current || getCharacterName(formRef.current) || "Player", avatar: "" }))
+      : null;
     if (epoch !== sessionEpochRef.current || leavingRef.current) return false;
     // Relay rooms are temporary; the GM's campaign remains in the local cache.
     // Only recreate a missing room, never bypass an invalid GM secret.
-    if (currentMode === "host" && response?.error === "ROOM_NOT_FOUND"
-      && campaignIdRef.current && gmStateRef.current && !leavingRef.current) {
+    if (canCreateHostRoom && (!code || response?.error === "ROOM_NOT_FOUND") && !leavingRef.current) {
       response = await emitAck("room:create", {
         gmName: nameRef.current || "GM", clientId: clientIdRef.current,
         protocol: 3, campaignId: campaignIdRef.current,
@@ -950,6 +955,8 @@ export default function useGmAuthoritativeSessionV2(form) {
     const socket = io(GAME_SERVER_URL, {
       autoConnect: false,
       transports: ["websocket", "polling"],
+      // Mobile networks may reject WebSocket while HTTP polling still works.
+      tryAllTransports: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 700,
@@ -996,9 +1003,11 @@ export default function useGmAuthoritativeSessionV2(form) {
     const socket = ensureSocket();
     if (socket.connected) return resolve(true);
     let settled = false;
+    let timer;
     const finish = (value) => {
       if (settled) return;
       settled = true;
+      window.clearTimeout(timer);
       socket.off("connect", onConnect);
       socket.off("connect_error", onError);
       resolve(value);
@@ -1007,8 +1016,8 @@ export default function useGmAuthoritativeSessionV2(form) {
     const onError = () => finish(false);
     socket.once("connect", onConnect);
     socket.once("connect_error", onError);
+    timer = window.setTimeout(() => finish(socket.connected), 14000);
     socket.connect();
-    window.setTimeout(() => finish(socket.connected), 14000);
   });
 
   const rememberSession = (value) => {
@@ -1026,10 +1035,12 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const startHost = async () => {
     const epoch = ++sessionEpochRef.current;
+    resumeInFlightRef.current = null;
     leavingRef.current = false;
     // Do not auto-resume a previous room when this new connection opens.
     codeRef.current = "";
     gmSecretRef.current = "";
+    gmStateRef.current = null;
     setSessionCode("");
     setMode("host");
     modeRef.current = "host";
@@ -1046,6 +1057,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     setMirroredState(initial);
     await putCampaign({ campaignId: id, role: "gm", revision: initial.revision, state: initial }).catch(() => null);
     if (epoch !== sessionEpochRef.current) return false;
+    setSyncState({ phase: "gm-authority", cached: 0, requested: 0 });
     const connected = await waitForConnection();
     if (epoch !== sessionEpochRef.current) return false;
     if (!connected) {
@@ -1053,25 +1065,8 @@ export default function useGmAuthoritativeSessionV2(form) {
       setError(socketError("NETWORK_ERROR"));
       return false;
     }
-    const response = await emitAck("room:create", { gmName: "GM", clientId: clientIdRef.current, protocol: 3, campaignId: id });
-    if (epoch !== sessionEpochRef.current) return false;
-    if (!response?.ok) {
-      setMode("lobby");
-      modeRef.current = "lobby";
-      setStatus("waiting");
-      setError(socketError(response?.error, "roomUnavailable"));
-      return false;
-    }
-    gmSecretRef.current = String(response.gmSecret || "");
-    const code = normalizeSessionCode(response.roomCode || response.state?.code || "");
-    codeRef.current = code;
-    setSessionCode(code);
-    if (response.state) applyPresence(response.state);
-    setStatus("online");
-    setSyncState({ phase: "gm-authority", cached: 0, requested: 0 });
-    rememberSession({ role: "host", code, name: "GM", gmSecret: gmSecretRef.current, campaignId: id });
-    await publishManifest();
-    return true;
+    // The socket's connect event and this explicit start share one creation.
+    return resumeCurrentRole();
   };
 
   const joinSession = async ({ code, name } = {}) => {
