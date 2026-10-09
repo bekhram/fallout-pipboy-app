@@ -809,11 +809,12 @@ export function vaultSpecFromScene(scene = {}) {
     seed = parts[parts.length - 1] || "";
   }
 
-  return normalizeVaultGeneratorSpec({
+  // Keep encounter settings alongside the normalized layout fields.
+  return { ...rawSpec, ...normalizeVaultGeneratorSpec({
     ...rawSpec,
     type: "vault_tunnels",
     seed: seed || "1",
     cols: rawSpec?.cols || scene?.cols || 24,
     rows: rawSpec?.rows || scene?.rows || 24,
-  });
+  }) };
 }

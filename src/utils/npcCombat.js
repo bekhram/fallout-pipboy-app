@@ -100,9 +100,11 @@ export function parseAttackText(value = "") {
       if (line.toLowerCase().includes(quality.toLowerCase())) qualities.push(quality);
     });
     const effects = [];
-    ["Vicious", "Piercing 1", "Piercing 2", "Breaking", "Stun", "Spread", "Burst", "Persistent", "Radioactive"].forEach((effect) => {
+    ["Vicious", "Breaking", "Stun", "Spread", "Burst", "Persistent", "Radioactive"].forEach((effect) => {
       if (line.toLowerCase().includes(effect.toLowerCase())) effects.push(effect);
     });
+    const piercing = [...line.matchAll(/\bPiercing\s+(\d+)\b/gi)].map(match => Number(match[1]));
+    if (piercing.length) effects.push(`Piercing ${Math.max(...piercing)}`);
     return normalizeStructuredAttack({
       id: `parsed-${index}-${nameMatch?.[1] || "attack"}`,
       name: nameMatch?.[1]?.trim() || `Attack ${index + 1}`,

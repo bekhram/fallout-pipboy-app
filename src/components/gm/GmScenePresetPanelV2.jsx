@@ -16,6 +16,7 @@ import {
   normalizeTrapLethality,
 } from "../../utils/proceduralBattlemapExtras.js";
 import "./gmScenePresetPanelV2.css";
+import { ENCOUNTER_ENEMY_POWER_TIERS, normalizeEncounterEnemyPowerTier, encounterEnemyPowerCopy, encounterEnemyPowerDescription } from "../../utils/encounterEnemyPower.js";
 
 const DIFFICULTIES = ["easy", "standard", "hard", "deadly"];
 const TRAP_LETHALITIES = ["low", "standard", "high", "deadly"];
@@ -72,14 +73,16 @@ function stripLegacyEncounterOptions(spec = {}) {
 }
 
 export default function GmScenePresetPanelV2({ session }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const lang = languageCode(i18n.resolvedLanguage || i18n.language);
   const text = COPY[lang];
+  const powerText = encounterEnemyPowerCopy(lang);
   const scene = session?.tacticalScene || null;
   const savedSpec = specFromScene(scene);
   const [difficulty, setDifficulty] = useState(() => normalizeEncounterDifficulty(savedSpec?.encounterDifficulty));
   const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
   const [enemyCountOverride, setEnemyCountOverride] = useState(() => normalizeEnemyCountOverride(savedSpec?.enemyCountOverride));
+  const [enemyPowerTier, setEnemyPowerTier] = useState(() => normalizeEncounterEnemyPowerTier(savedSpec?.enemyPowerTier));
   const [trapCount, setTrapCount] = useState(() => normalizeTrapCount(savedSpec?.trapCount));
   const [trapLethality, setTrapLethality] = useState(() => normalizeTrapLethality(savedSpec?.trapLethality));
 
@@ -88,13 +91,14 @@ export default function GmScenePresetPanelV2({ session }) {
     setDifficulty(normalizeEncounterDifficulty(spec?.encounterDifficulty));
     setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
     setEnemyCountOverride(normalizeEnemyCountOverride(spec?.enemyCountOverride));
+    setEnemyPowerTier(normalizeEncounterEnemyPowerTier(spec?.enemyPowerTier));
     setTrapCount(normalizeTrapCount(spec?.trapCount));
     setTrapLethality(normalizeTrapLethality(spec?.trapLethality));
-  }, [scene?.sceneId, savedSpec?.encounterDifficulty, savedSpec?.enemyFaction, savedSpec?.enemyCountOverride, savedSpec?.trapCount, savedSpec?.trapLethality]);
+  }, [scene?.sceneId, savedSpec?.encounterDifficulty, savedSpec?.enemyFaction, savedSpec?.enemyCountOverride, savedSpec?.enemyPowerTier, savedSpec?.trapCount, savedSpec?.trapLethality]);
 
   const encounterSettings = useMemo(() => ({
-    encounterDifficulty: difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality,
-  }), [difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality]);
+    encounterDifficulty: difficulty, enemyFaction, enemyCountOverride, enemyPowerTier, trapCount, trapLethality,
+  }), [difficulty, enemyFaction, enemyCountOverride, enemyPowerTier, trapCount, trapLethality]);
 
   const sessionWithEncounterSettings = useMemo(() => {
     if (!session) return session;
@@ -113,6 +117,7 @@ export default function GmScenePresetPanelV2({ session }) {
               encounterDifficulty: difficulty,
               enemyFaction,
               enemyCountOverride,
+              enemyPowerTier,
               trapCount,
               trapLethality,
             },
@@ -120,7 +125,7 @@ export default function GmScenePresetPanelV2({ session }) {
         });
       },
     };
-  }, [session, difficulty, enemyFaction, enemyCountOverride, trapCount, trapLethality]);
+  }, [session, difficulty, enemyFaction, enemyCountOverride, enemyPowerTier, trapCount, trapLethality]);
 
 
   const persistSetting = async (patch) => {
@@ -134,6 +139,7 @@ export default function GmScenePresetPanelV2({ session }) {
           encounterDifficulty: difficulty,
           enemyFaction,
           enemyCountOverride,
+          enemyPowerTier,
           trapCount,
           trapLethality,
           ...patch,
@@ -145,6 +151,7 @@ export default function GmScenePresetPanelV2({ session }) {
   const changeDifficulty = async (value) => { const next = normalizeEncounterDifficulty(value); setDifficulty(next); await persistSetting({ encounterDifficulty: next }); };
   const changeEnemyFaction = async (value) => { const next = normalizeEnemyGroup(value); setEnemyFaction(next); await persistSetting({ enemyFaction: next }); };
   const changeEnemyCount = async (value) => { const next = normalizeEnemyCountOverride(value); setEnemyCountOverride(next); await persistSetting({ enemyCountOverride: next }); };
+  const changeEnemyPower = async (value) => { const next = normalizeEncounterEnemyPowerTier(value); setEnemyPowerTier(next); await persistSetting({ enemyPowerTier: next }); };
   const changeTrapCount = async (value) => { const next = normalizeTrapCount(value); setTrapCount(next); await persistSetting({ trapCount: next }); };
   const changeTrapLethality = async (value) => { const next = normalizeTrapLethality(value); setTrapLethality(next); await persistSetting({ trapLethality: next }); };
 
@@ -153,12 +160,17 @@ export default function GmScenePresetPanelV2({ session }) {
       <section className="gm-encounter-difficulty pip-panel">
         <div className="gm-encounter-difficulty__controls">
           <label><span>{text.title}</span><select className="pip-input" value={difficulty} onChange={(e) => changeDifficulty(e.target.value)}>{DIFFICULTIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
+          <label><span>{powerText.title}</span><select className="pip-input" value={enemyPowerTier} onChange={(e) => changeEnemyPower(e.target.value)}>{ENCOUNTER_ENEMY_POWER_TIERS.map((value) => <option key={value} value={value}>{powerText[value]}</option>)}</select></label>
           <label><span>{text.faction}</span><select className="pip-input" value={enemyFaction} onChange={(e) => changeEnemyFaction(e.target.value)}>{ENEMY_GROUP_OPTIONS.map((value) => <option key={value} value={value}>{enemyGroupLabel(value, lang)}</option>)}</select></label>
           <label><span>{text.enemyCount}</span><input className="pip-input" type="number" min="0" max={MAX_MANUAL_ENEMY_COUNT} value={enemyCountOverride} onChange={(e) => changeEnemyCount(e.target.value)} /></label>
           <label><span>{text.trapCount}</span><input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(e) => changeTrapCount(e.target.value)} /></label>
           <label><span>{text.trapLethality}</span><select className="pip-input" value={trapLethality} onChange={(e) => changeTrapLethality(e.target.value)}>{TRAP_LETHALITIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
         </div>
         <small>{text.note}</small>
+        <div className="gm-encounter-difficulty__power" aria-live="polite">
+          <strong>{encounterEnemyPowerDescription(enemyPowerTier, lang, t)}</strong>
+          <small>{powerText.note}</small>
+        </div>
       </section>
       <GmScenePresetPanel session={sessionWithEncounterSettings} encounterSettings={encounterSettings} />
     </div>

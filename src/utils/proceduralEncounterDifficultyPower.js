@@ -1,3 +1,5 @@
+import { encounterEnemyPowerProfile, normalizeEncounterEnemyPowerTier } from "./encounterEnemyPower.js";
+
 const POWER_PROFILES = Object.freeze({
   easy: Object.freeze({ damageMultiplier: 1, resistanceMultiplier: 1 }),
   standard: Object.freeze({ damageMultiplier: 1, resistanceMultiplier: 1 }),
@@ -19,26 +21,54 @@ export function encounterDifficultyPowerProfile(value) {
   return POWER_PROFILES[normalizeEncounterPowerDifficulty(value)] || POWER_PROFILES.standard;
 }
 
-function scaleDamageDice(value, multiplier) {
-  return Math.max(0, Math.round(num(value, 0) * multiplier));
+function scaleDamageDice(value, multiplier, bonus = 0) {
+  const base = num(value, 0);
+  return base > 0 ? Math.min(50, Math.round(base * multiplier) + bonus) : 0;
 }
 
-function scaleAttack(attack = {}, multiplier) {
+function addAttackEffects(value, effects) {
+  let result = String(value || "");
+  for (const effect of effects) {
+    const piercing = effect.match(/^Piercing (\d+)$/);
+    if (piercing) {
+      const existing = [...result.matchAll(/\bPiercing\s+(\d+)\b/gi)];
+      if (existing.length) {
+        const rating = Math.max(Number(piercing[1]), ...existing.map(match => Number(match[1])));
+        result = result.replace(/\bPiercing\s+\d+\b/gi, `Piercing ${rating}`);
+        continue;
+      }
+    } else if (new RegExp(`\\b${effect}\\b`, "i").test(result)) continue;
+    result = [result, effect].filter(Boolean).join(", ");
+  }
+  return result;
+}
+
+function scaleAttack(attack = {}, multiplier, power) {
   const current = attack.damageDice ?? attack.damage ?? attack.cd;
   if (current == null || current === "") return { ...attack };
-  const scaled = scaleDamageDice(current, multiplier);
+  const scaled = scaleDamageDice(current, multiplier, power.damageBonus);
   const next = { ...attack, damageDice: scaled };
+  if (scaled > 0 && power.effects.length) {
+    next.effects = addAttackEffects(attack.effects ?? attack.effect, power.effects);
+    next.effect = next.effects;
+  }
   if (Object.prototype.hasOwnProperty.call(attack, "damage")) next.damage = scaled;
   if (Object.prototype.hasOwnProperty.call(attack, "cd")) next.cd = scaled;
   return next;
 }
 
-function scaleAttackText(value, multiplier) {
+function scaleAttackText(value, multiplier, power) {
   return String(value || "")
     .split(/\n/)
-    .map((line) => line.replace(/(\d+(?:\.\d+)?)\s*(CD|КУ|DC)\b/gi, (_, amount, unit) => {
-      return `${scaleDamageDice(amount, multiplier)} ${unit}`;
-    }))
+    .map((line) => {
+      let damaging = false;
+      const scaled = line.replace(/(\d+(?:\.\d+)?)\s*(CD|КУ|DC)\b/gi, (_, amount, unit) => {
+        const dice = scaleDamageDice(amount, multiplier, power.damageBonus);
+        damaging ||= dice > 0;
+        return `${dice} ${unit}`;
+      });
+      return damaging ? addAttackEffects(scaled, power.effects) : scaled;
+    })
     .join("\n");
 }
 
@@ -50,18 +80,35 @@ function scaleResistanceMap(value, multiplier) {
   ]));
 }
 
-function scaleDrBlock(value, multiplier) {
-  if (!value) return value;
-  return String(value).replace(/\b\d+(?:\.\d+)?\b/g, (amount) => {
-    return String(Math.max(0, Math.round(num(amount, 0) * multiplier)));
-  });
+function scaleDrBlock(value, multiplier, bonus) {
+  if (!value && !bonus) return value;
+  // Only DR values are scaled; numbers in hit-location labels remain intact.
+  const scaled = amount => Math.max(0, Math.round(Number(amount) * multiplier) + bonus);
+  // Bestiary blocks use both bullets and semicolons between damage types,
+  // and may contain a separate level-progression note on the following line.
+  let result = String(value || "")
+    .replace(/(\b(?:Physical(?:\s*\/\s*Energy)?|Energy(?:\s*\/\s*Physical)?|Radiation|Poison)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
+      (_, prefix, amount) => `${prefix}${scaled(amount)}`)
+    .replace(/(;\s*)(\d+(?:\.\d+)?)/g,
+      (_, prefix, amount) => `${prefix}${scaled(amount)}`)
+    .replace(/(Level scaling:\s*\+)(\d+)(\s+Physical DR)/gi,
+      (_, prefix, amount, suffix) => `${prefix}${Math.round(Number(amount) * multiplier)}${suffix}`);
+  if (bonus) {
+    for (const type of ["Physical", "Energy", "Radiation", "Poison"]) {
+      if (!new RegExp(`\\b${type}\\b`, "i").test(result)) result = [result, `${type} ${bonus}`].filter(Boolean).join(" • ");
+    }
+  }
+  return result;
 }
 
-export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "standard") {
+export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "standard", enemyPowerTier = "none") {
   const difficulty = normalizeEncounterPowerDifficulty(difficultyValue);
   const profile = encounterDifficultyPowerProfile(difficulty);
+  const tier = normalizeEncounterEnemyPowerTier(enemyPowerTier);
+  const power = encounterEnemyPowerProfile(tier);
 
   const baseAttacks = stats.encounterBaseAttacks ?? stats.attacks ?? "";
+  const baseAbilities = stats.encounterBaseAbilities ?? stats.abilities ?? "";
   const baseCustomAttacks = Array.isArray(stats.encounterBaseCustomAttacks)
     ? stats.encounterBaseCustomAttacks
     : Array.isArray(stats.customAttacks) ? stats.customAttacks : [];
@@ -95,10 +142,11 @@ export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "sta
 
   return {
     ...stats,
-    attacks: scaleAttackText(baseAttacks, profile.damageMultiplier),
-    customAttacks: baseCustomAttacks.map((attack) => scaleAttack(attack, profile.damageMultiplier)),
-    weapons: baseWeapons.map((weapon) => scaleAttack(weapon, profile.damageMultiplier)),
-    drBlock: scaleDrBlock(baseDrBlock, profile.resistanceMultiplier),
+    attacks: scaleAttackText(baseAttacks, profile.damageMultiplier, power),
+    abilities: scaleAttackText(baseAbilities, profile.damageMultiplier, power),
+    customAttacks: baseCustomAttacks.map((attack) => scaleAttack(attack, profile.damageMultiplier, power)),
+    weapons: baseWeapons.map((weapon) => scaleAttack(weapon, profile.damageMultiplier, power)),
+    drBlock: scaleDrBlock(baseDrBlock, profile.resistanceMultiplier, power.resistanceBonus),
     resistanceBonus: Math.max(0, Math.round(baseResistanceBonus * profile.resistanceMultiplier)),
     combatBuffResistance: scaleResistanceMap(baseBuffResistance, profile.resistanceMultiplier),
     ...(nextSummary ? { combatBuffSummary: nextSummary } : {}),
@@ -107,7 +155,12 @@ export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "sta
     encounterDamageMultiplier: profile.damageMultiplier,
     encounterResistanceMultiplier: profile.resistanceMultiplier,
     encounterPowerRule: powerRule,
+    enemyPowerTier: tier,
+    encounterDamageBonus: power.damageBonus,
+    encounterResistanceBonus: power.resistanceBonus,
+    encounterAttackEffects: [...power.effects],
     encounterBaseAttacks: baseAttacks,
+    encounterBaseAbilities: baseAbilities,
     encounterBaseCustomAttacks: baseCustomAttacks.map((attack) => ({ ...attack })),
     encounterBaseWeapons: baseWeapons.map((weapon) => ({ ...weapon })),
     encounterBaseDrBlock: baseDrBlock,
@@ -115,4 +168,11 @@ export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "sta
     encounterBaseCombatBuffResistance: { ...baseBuffResistance },
     encounterBaseCombatBuffSummaryResistance: { ...baseSummaryResistance },
   };
+}
+
+
+export function applyGeneratedEncounterPower(stats = {}, spec = {}) {
+  const disposition = String(stats.generatedDisposition || "hostile").toLowerCase();
+  if (disposition !== "hostile") return stats;
+  return applyEncounterDifficultyPower(stats, spec.encounterDifficulty ?? spec.difficulty, spec.enemyPowerTier);
 }
