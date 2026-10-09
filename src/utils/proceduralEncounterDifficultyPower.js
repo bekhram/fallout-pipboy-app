@@ -83,11 +83,16 @@ function scaleResistanceMap(value, multiplier) {
 function scaleDrBlock(value, multiplier, bonus) {
   if (!value && !bonus) return value;
   // Only DR values are scaled; numbers in hit-location labels remain intact.
-  let result = String(value || "").split("•").map(segment => segment.replace(
-    /^(\s*(?:Physical(?:\s*\/\s*Energy)?|Energy(?:\s*\/\s*Physical)?|Radiation|Poison)\s*:?\s*)(.*)$/i,
-    (_, prefix, tail) => prefix + tail.replace(/(^|;)(\s*)(\d+(?:\.\d+)?)/g,
-      (_match, delimiter, space, amount) => `${delimiter}${space}${Math.max(0, Math.round(Number(amount) * multiplier) + bonus)}`),
-  )).join("•");
+  const scaled = amount => Math.max(0, Math.round(Number(amount) * multiplier) + bonus);
+  // Bestiary blocks use both bullets and semicolons between damage types,
+  // and may contain a separate level-progression note on the following line.
+  let result = String(value || "")
+    .replace(/(\b(?:Physical(?:\s*\/\s*Energy)?|Energy(?:\s*\/\s*Physical)?|Radiation|Poison)\s*:?\s*)(\d+(?:\.\d+)?)/gi,
+      (_, prefix, amount) => `${prefix}${scaled(amount)}`)
+    .replace(/(;\s*)(\d+(?:\.\d+)?)/g,
+      (_, prefix, amount) => `${prefix}${scaled(amount)}`)
+    .replace(/(Level scaling:\s*\+)(\d+)(\s+Physical DR)/gi,
+      (_, prefix, amount, suffix) => `${prefix}${Math.round(Number(amount) * multiplier)}${suffix}`);
   if (bonus) {
     for (const type of ["Physical", "Energy", "Radiation", "Poison"]) {
       if (!new RegExp(`\\b${type}\\b`, "i").test(result)) result = [result, `${type} ${bonus}`].filter(Boolean).join(" • ");

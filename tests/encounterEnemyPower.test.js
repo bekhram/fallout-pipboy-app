@@ -41,6 +41,13 @@ test("reapplying, changing and disabling power never compounds bonuses or edits 
   assert.deepEqual(base, original);
 });
 
+test("semicolon-separated bestiary DR and level notes retain every resistance bonus", () => {
+  const stats = applyEncounterDifficultyPower({ drBlock: "Physical 0; Energy 1; Radiation Immune; Poison 0\nLevel scaling: +2 Physical DR (all locations)" }, "hard", "strong");
+  assert.equal(stats.drBlock, "Physical 3; Energy 5; Radiation Immune; Poison 3\nLevel scaling: +4 Physical DR (all locations)");
+  const combined = applyEncounterDifficultyPower({ drBlock: "Physical/Energy 2 (All); Radiation Immune; Poison Immune" }, "standard", "medium");
+  assert.equal(combined.drBlock, "Physical/Energy 4 (All); Radiation Immune; Poison Immune");
+});
+
 test("attack effects reach the actual dice result and preserve stronger original effects", () => {
   const stats = applyEncounterDifficultyPower(base, "standard", "strong");
   const attack = parseAttackText(stats.attacks)[0];
