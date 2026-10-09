@@ -28,6 +28,7 @@ import {
 import { loadNpcWeaponDatabase } from "../../utils/npcWeaponDatabase.js";
 import { findFreePlacement } from "../../utils/gmSessionModel.js";
 import { gmMenuText, interpolateGmText } from "./gmMenuI18n.js";
+import { encounterEnemyPowerCopy, encounterEnemyPowerDescription } from "../../utils/encounterEnemyPower.js";
 import "./gmUnifiedTokenManager.css";
 import "./gmNpcCombat.css";
 import "./gmNpcCombatV4.css";
@@ -293,7 +294,7 @@ function AttackButtons({ attacks, stats, actorName, onRoll }) {
 }
 
 export default function GmUnifiedTokenManagerV4({ session }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const text = gmMenuText(i18n.resolvedLanguage || i18n.language);
   const scene = session?.tacticalScene || null;
   const players = useMemo(
@@ -1998,6 +1999,10 @@ export default function GmUnifiedTokenManagerV4({ session }) {
                               : ""
                           }`}
                         />
+                        {stats.enemyPowerTier && stats.enemyPowerTier !== "none" ? <DetailLine
+                          label={encounterEnemyPowerCopy(i18n.resolvedLanguage || i18n.language).title}
+                          value={encounterEnemyPowerDescription(stats.enemyPowerTier, i18n.resolvedLanguage || i18n.language, t)}
+                        /> : null}
                         <DetailLine
                           label={text.tactics}
                           value={stats.tactics || linked?.tactics}

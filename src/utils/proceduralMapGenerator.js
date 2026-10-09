@@ -2,6 +2,7 @@ import * as V11 from "./proceduralMapGeneratorV11.js";
 import { normalizeEnemyGroup } from "./proceduralEnemyGroups.js";
 import { normalizeEnemyCountOverride } from "./proceduralEncounterBalance.js";
 import { normalizeTrapCount, normalizeTrapLethality } from "./proceduralBattlemapExtras.js";
+import { normalizeEncounterEnemyPowerTier } from "./encounterEnemyPower.js";
 import {
   canonicalProceduralSeed,
   proceduralTerrainSeed,
@@ -80,6 +81,7 @@ export function normalizeProceduralMapSpec(value = {}) {
     encounterDifficulty: normalizeDifficulty(value.encounterDifficulty ?? value.difficulty),
     enemyFaction: normalizeEnemyGroup(value.enemyFaction ?? value.enemyGroup ?? "auto"),
     enemyCountOverride: normalizeEnemyCountOverride(value.enemyCountOverride),
+    enemyPowerTier: normalizeEncounterEnemyPowerTier(value.enemyPowerTier),
     trapCount: normalizeTrapCount(value.trapCount),
     trapLethality: normalizeTrapLethality(value.trapLethality),
     version: Math.max(16, Number(base.version || 0)),

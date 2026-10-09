@@ -4,7 +4,7 @@ import GmSettlementRoomPanel from "./GmSettlementRoomPanel.jsx";
 import GmWastelandPoiPanel from "./GmWastelandPoiPanel.jsx";
 import GmBattlemapExtrasPanel from "./GmBattlemapExtrasPanel.jsx";
 import { applyRandomEncounterEnemyBuff } from "../../utils/proceduralEnemyBuffs.js";
-import { applyEncounterDifficultyPower } from "../../utils/proceduralEncounterDifficultyPower.js";
+import { applyGeneratedEncounterPower } from "../../utils/proceduralEncounterDifficultyPower.js";
 import { buildProceduralEncounterContext } from "../../utils/proceduralEncounterContextV2.js";
 
 function buffSeed(payload = {}, stats = {}) {
@@ -174,10 +174,7 @@ export default function GmProceduralExplorationPanel({ session }) {
         }
 
         if (hostile) {
-          nextStats = applyEncounterDifficultyPower(
-            nextStats,
-            spec.encounterDifficulty ?? spec.difficulty ?? "standard",
-          );
+          nextStats = applyGeneratedEncounterPower(nextStats, spec);
         }
 
         const finalPayload = { ...payload, stats: nextStats };
@@ -197,6 +194,7 @@ export default function GmProceduralExplorationPanel({ session }) {
     spec?.enemyBuffsEnabled,
     spec?.enemyBuffTier,
     spec?.encounterDifficulty,
+    spec?.enemyPowerTier,
     spec?.difficulty,
     spec?.questType,
     spec?.seed,

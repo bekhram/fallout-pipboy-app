@@ -8,7 +8,8 @@ const bundle = await build({
   stdin: {
     contents: `export { normalizeProceduralMapSpec } from "./src/utils/proceduralMapGenerator.js";
       export { generateProceduralEncounterSummary } from "./src/utils/proceduralRoomContent.js";
-      export { generateVaultEncounterPlan } from "./src/utils/proceduralVaultEncounter.js";`,
+      export { generateVaultEncounterPlan } from "./src/utils/proceduralVaultEncounter.js";
+      export { vaultSpecFromScene } from "./src/utils/proceduralVaultGenerator.js";`,
     resolveDir: fileURLToPath(new URL("../", import.meta.url)),
   },
   bundle: true, write: false, format: "esm", platform: "node",
@@ -22,17 +23,18 @@ const bundle = await build({
     }));
   } }],
 });
-const { normalizeProceduralMapSpec, generateProceduralEncounterSummary, generateVaultEncounterPlan } =
+const { normalizeProceduralMapSpec, generateProceduralEncounterSummary, generateVaultEncounterPlan, vaultSpecFromScene } =
   await import(`data:text/javascript;base64,${Buffer.from(bundle.outputFiles[0].text).toString("base64")}`)
     .catch(error => { throw new Error(error.message); });
 
 test("saved scene retains party and encounter settings through reload and repeated normalization", () => {
   for (const type of ["wasteland", "settlement", "red_rocket", "super_duper_mart", "vault_tunnels"]) {
     const draft = { type, seed: "1508851474", cols: 24, rows: 24, partySize: 5, avgPartyLevel: 12,
-      enemyCountOverride: 7, encounterDifficulty: "hard", enemyFaction: "raider", trapCount: 5, trapLethality: "high" };
+      enemyCountOverride: 7, enemyPowerTier: "strong", encounterDifficulty: "hard", enemyFaction: "raider", trapCount: 5, trapLethality: "high" };
     const restored = normalizeProceduralMapSpec(JSON.parse(JSON.stringify(normalizeProceduralMapSpec(draft))));
-    for (const key of ["partySize", "avgPartyLevel", "enemyCountOverride", "encounterDifficulty", "enemyFaction", "trapCount", "trapLethality"]) {
+    for (const key of ["partySize", "avgPartyLevel", "enemyCountOverride", "enemyPowerTier", "encounterDifficulty", "enemyFaction", "trapCount", "trapLethality"]) {
       assert.equal(restored[key], draft[key], `${type}: ${key}`);
+      if (type === "vault_tunnels") assert.equal(vaultSpecFromScene({ environment: { proceduralMapSpec: restored } })[key], draft[key], `Vault placement: ${key}`);
     }
     const enemyCount = spec => type === "vault_tunnels"
       ? generateVaultEncounterPlan(spec).total
@@ -50,4 +52,6 @@ test("invalid encounter settings use the generator's existing limits", () => {
   const auto = normalizeProceduralMapSpec({ enemyCountOverride: -1 });
   assert.equal(auto.enemyCountOverride, 0);
   assert.equal(normalizeProceduralMapSpec({}).enemyCountOverride, 0);
+  assert.equal(normalizeProceduralMapSpec({}).enemyPowerTier, "none");
+  assert.equal(normalizeProceduralMapSpec({ enemyPowerTier: "invalid" }).enemyPowerTier, "none");
 });

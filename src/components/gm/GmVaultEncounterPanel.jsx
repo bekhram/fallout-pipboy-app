@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { buildProceduralNpcTokenStats } from "../../utils/proceduralNpcTokenStats.js";
+import { applyGeneratedEncounterPower } from "../../utils/proceduralEncounterDifficultyPower.js";
 import {
   generateVaultEncounterPlan,
   vaultRoomMarkers,
@@ -215,7 +216,7 @@ export default function GmVaultEncounterPanel({ session }) {
             size: 1,
             npcId: String(enemy.entry?.id || ""),
             avatar: String(enemy.entry?.avatar || ""),
-            stats,
+            stats: applyGeneratedEncounterPower(stats, spec),
             x: cell.x,
             y: cell.y,
           });
