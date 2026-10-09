@@ -15,6 +15,7 @@ import {
   normalizeLootRarity,
 } from "../../utils/proceduralRoomContent.js";
 import { generateVaultLayout, vaultLayoutStartZone, vaultLayoutToProceduralMap } from "../../utils/proceduralVaultGenerator.js";
+import { generateVaultEncounterPlan } from "../../utils/proceduralVaultEncounter.js";
 import "./gmScenePresetPanel.css";
 
 const LazyWastelandPreview = lazy(() => import("./WastelandAssetPortal.jsx").then((m) => ({ default: m.WastelandAssetLayer })));
@@ -46,6 +47,13 @@ const WEALTH_LABELS = {
   ru: { poor: "Бедная", standard: "Средняя", rich: "Богатая", wealthy: "Очень богатая" },
   uk: { poor: "Бідна", standard: "Середня", rich: "Багата", wealthy: "Дуже багата" },
   pl: { poor: "Biedna", standard: "Standardowa", rich: "Bogata", wealthy: "Bardzo bogata" },
+};
+
+const ENCOUNTER_COPY = {
+  en: { title: "ENCOUNTER", enemies: "Enemies", target: "Target XP", reward: "XP / player" },
+  ru: { title: "ЭНКАУНТЕР", enemies: "Враги", target: "Целевой XP", reward: "XP / игрока" },
+  uk: { title: "ЕНКАУНТЕР", enemies: "Вороги", target: "Цільовий XP", reward: "XP / гравця" },
+  pl: { title: "SPOTKANIE", enemies: "Wrogowie", target: "Docelowe XP", reward: "XP / gracza" },
 };
 
 function langCode(value) {
@@ -82,10 +90,11 @@ function applyContrastClass(value) {
   });
 }
 
-export default function GmScenePresetPanel({ session }) {
+export default function GmScenePresetPanel({ session, encounterSettings }) {
   const { i18n } = useTranslation();
   const lang = langCode(i18n.resolvedLanguage || i18n.language);
   const text = COPY[lang];
+  const encounterText = ENCOUNTER_COPY[lang];
   const scene = session?.tacticalScene || null;
   const saved = scene?.environment?.proceduralMapSpec || {};
   const detectedPlayers = Math.max(0, (scene?.tokens || []).filter((token) => token?.kind === "player").length);
@@ -97,8 +106,9 @@ export default function GmScenePresetPanel({ session }) {
   const [density, setDensity] = useState(Math.round(Number(saved.density ?? 0.55) * 100));
   const [lootRarity, setLootRarity] = useState(normalizeLootRarity(saved.lootRarity));
   const [wealth, setWealth] = useState(saved.wealth || "standard");
-  const [avgPartyLevel, setAvgPartyLevel] = useState(clampInteger(saved.avgPartyLevel, 1, 50, 1));
-  const [partySize, setPartySize] = useState(clampInteger(saved.partySize, 1, 8, detectedPlayers || 4));
+  // Keep drafts as text so Backspace can clear the field on mobile keyboards.
+  const [avgPartyLevel, setAvgPartyLevel] = useState(String(clampInteger(saved.avgPartyLevel, 1, 50, 1)));
+  const [partySize, setPartySize] = useState(String(clampInteger(saved.partySize, 1, 8, detectedPlayers || 4)));
   const [contrast, setContrast] = useState(() => readContrast(scene?.sceneId));
   const [message, setMessage] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -113,8 +123,8 @@ export default function GmScenePresetPanel({ session }) {
       setDensity(Math.round(Number(spec.density ?? 0.55) * 100));
       setLootRarity(normalizeLootRarity(spec.lootRarity));
       setWealth(spec.wealth || "standard");
-      setAvgPartyLevel(clampInteger(spec.avgPartyLevel, 1, 50, 1));
-      setPartySize(clampInteger(spec.partySize, 1, 8, detectedPlayers || 4));
+      setAvgPartyLevel(String(clampInteger(spec.avgPartyLevel, 1, 50, 1)));
+      setPartySize(String(clampInteger(spec.partySize, 1, 8, detectedPlayers || 4)));
     } else {
       setGridSize(normalizeGridSize(scene?.cols || scene?.rows || 24));
       setTerrain(scene?.environment?.terrain || "wasteland");
@@ -134,22 +144,27 @@ export default function GmScenePresetPanel({ session }) {
     density: density / 100,
     lootRarity,
     wealth,
-    avgPartyLevel,
-    partySize,
-  }), [type, terrain, seed, gridSize, density, lootRarity, wealth, avgPartyLevel, partySize]);
+    avgPartyLevel: clampInteger(avgPartyLevel, 1, 50, 1),
+    partySize: clampInteger(partySize, 1, 8, 1),
+    ...encounterSettings,
+  }), [type, terrain, seed, gridSize, density, lootRarity, wealth, avgPartyLevel, partySize, encounterSettings]);
 
   const previewUrl = useMemo(
     () => (previewOpen && type !== "vault_tunnels" ? generateProceduralMapDataUrl(generationSpec) : ""),
     [previewOpen, generationSpec],
   );
   const encounter = useMemo(
-    () => (type === "vault_tunnels" ? null : generateProceduralEncounterSummary(generationSpec)),
+    () => (type === "vault_tunnels"
+      ? { totalEnemies: generateVaultEncounterPlan(generationSpec).total }
+      : generateProceduralEncounterSummary(generationSpec)),
     [type, generationSpec],
   );
 
   if (!scene || session?.mode !== "host") return null;
 
   const generate = async ({ newSeed = false } = {}) => {
+    setAvgPartyLevel(String(generationSpec.avgPartyLevel));
+    setPartySize(String(generationSpec.partySize));
     const nextSeed = newSeed ? makeProceduralSeed() : (seed || makeProceduralSeed());
     if (nextSeed !== seed) setSeed(nextSeed);
     const nextSpec = { ...generationSpec, seed: nextSeed };
@@ -215,21 +230,19 @@ export default function GmScenePresetPanel({ session }) {
         <label><span>{text.grid}</span><select className="pip-input" value={gridSize} onChange={(e) => setGridSize(normalizeGridSize(e.target.value))}>{PROCEDURAL_MAP_SIZES.map((size) => <option key={size} value={size}>{size}×{size}</option>)}</select></label>
         <label><span>{text.loot}</span><select className="pip-input" value={lootRarity} onChange={(e) => setLootRarity(e.target.value)}>{LOOT_RARITIES.map((value) => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
         <label><span>{text.wealth}</span><select className="pip-input" value={wealth} onChange={(e) => setWealth(e.target.value)}>{WEALTH_LEVELS.map((value) => <option key={value} value={value}>{WEALTH_LABELS[lang][value]}</option>)}</select></label>
-        <label><span>{text.level}</span><input className="pip-input" type="number" min="1" max="50" value={avgPartyLevel} onChange={(e) => setAvgPartyLevel(clampInteger(e.target.value, 1, 50, 1))} /></label>
-        <label><span>{text.party}</span><input className="pip-input" type="number" min="1" max="8" value={partySize} onChange={(e) => setPartySize(clampInteger(e.target.value, 1, 8, 4))} /></label>
+        <label><span>{text.level}</span><input className="pip-input" type="number" inputMode="numeric" min="1" max="50" step="1" value={avgPartyLevel} onChange={(e) => setAvgPartyLevel(e.target.value)} onBlur={() => setAvgPartyLevel(String(clampInteger(avgPartyLevel, 1, 50, 1)))} /></label>
+        <label><span>{text.party}</span><input className="pip-input" type="number" inputMode="numeric" min="1" max="8" step="1" value={partySize} onChange={(e) => setPartySize(e.target.value)} onBlur={() => setPartySize(String(clampInteger(partySize, 1, 8, 1)))} /></label>
         <label className="gm-proc-map__seed"><span>{text.seed}</span><div><input className="pip-input" value={seed} maxLength={40} onChange={(e) => setSeed(e.target.value)} /><button type="button" className="pip-btn" onClick={() => setSeed(makeProceduralSeed())}>{text.newSeed}</button></div></label>
         <label className="gm-proc-map__density"><span>{text.density}: {density}%</span><input type="range" min="10" max="100" step="5" value={density} onChange={(e) => setDensity(Number(e.target.value))} /></label>
       </div>
-      {type === "vault_tunnels" ? (
-        <div className="gm-proc-map__balance">
-          <strong>ENCOUNTER</strong>
-          <div><span>Vault enemies</span><b>—</b></div>
-          <div><span>Room markers</span><b>—</b></div>
-          <div><span>Status</span><b>COMING NEXT</b></div>
-        </div>
-      ) : (
-        <div className="gm-proc-map__balance"><strong>ENCOUNTER</strong><div><span>Enemies</span><b>{encounter?.totalEnemies ?? 0}</b></div><div><span>Target XP</span><b>{encounter?.targetXp ?? 0}</b></div><div><span>XP / player</span><b>{encounter?.xpPerPlayer ?? 0}</b></div></div>
-      )}
+      <div className="gm-proc-map__balance" aria-live="polite">
+        <strong>{encounterText.title}</strong>
+        <div><span>{encounterText.enemies}</span><b>{encounter?.totalEnemies ?? 0}</b></div>
+        {type !== "vault_tunnels" ? <>
+          <div><span>{encounterText.target}</span><b>{encounter?.targetXp ?? 0}</b></div>
+          <div><span>{encounterText.reward}</span><b>{encounter?.xpPerPlayer ?? 0}</b></div>
+        </> : null}
+      </div>
       <div className="gm-proc-map__actions"><button type="button" className="pip-btn is-primary" onClick={() => generate()}>{text.generate}</button><button type="button" className="pip-btn" onClick={() => generate({ newSeed: true })}>{text.regenerate}</button><button type="button" className="pip-btn" onClick={() => document.querySelector(".gm-tactical-map-core .tactical-background-input")?.click()}>{text.upload}</button></div>
       <div className="gm-scene-presets__grid-control"><span>{text.gridVisibility}</span><div className="gm-scene-presets__grid-buttons">{["weak", "normal", "strong"].map((value) => <button key={value} type="button" className={`pip-btn${contrast === value ? " is-primary" : ""}`} onClick={() => changeContrast(value)}>{text[value]}</button>)}</div></div>
       {message ? <div className="gm-scene-presets__message">{message}</div> : null}
