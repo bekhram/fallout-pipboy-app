@@ -303,62 +303,6 @@ const COOKING_RECIPES = [
   ]),
 ];
 
-const AMMO_CRAFTING_ROWS = [
-  // name, rarity, cost, weight, static quantity, quantity CD, multiplier
-  [".38", 0, 1, 0, 10, 5, 1],
-  ["10mm", 0, 2, 0, 8, 4, 1],
-  [".308", 1, 3, 0, 6, 3, 1],
-  ["Flare", 1, 1, 0, 2, 1, 1],
-  ["Shotgun Shell", 1, 3, 0, 6, 3, 1],
-  [".45", 2, 3, 0, 8, 4, 1],
-  ["Flamer Fuel", 2, 1, 0, 12, 6, 1],
-  ["Fusion Cell", 2, 3, 0, 14, 7, 1],
-  ["Gamma Round", 2, 10, 0, 4, 2, 1],
-  ["Railway Spike", 2, 1, 0, 6, 3, 1],
-  ["Syringer Ammo", 2, 1, 0, 4, 2, 1],
-  [".44 Magnum", 3, 3, 0, 4, 2, 1],
-  [".50", 3, 4, 0, 4, 2, 1],
-  ["5.56mm", 3, 2, 0, 8, 4, 1],
-  ["5mm", 3, 1, 0, 12, 6, 10],
-  ["Fusion Core", 3, 200, 4, 1, 0, 1],
-  ["Missile", 3, 25, 7, 2, 1, 1],
-  ["Plasma Cartridge", 4, 5, 0, 10, 5, 1],
-  ["2mm EC", 5, 10, 0, 6, 3, 1],
-  ["Mini-Nuke", 6, 100, 12, 1, 1, 1],
-];
-
-const ammosmithRankForRarity = (rarity) => {
-  const value = Number(rarity || 0);
-  if (value <= 1) return 1;
-  if (value <= 3) return 2;
-  return 3;
-};
-
-const AMMO_RECIPES = AMMO_CRAFTING_ROWS
-  .filter(([, rarity]) => Number(rarity) <= 5)
-  .map(([name, rarity, cost, weight, quantityBase, quantityDice, quantityMultiplier]) => ({
-  id: slug(`weapons-ammunition-${name}`),
-  category: "ammo",
-  workbench: "weapons",
-  group: "AMMUNITION",
-  name,
-  complexity: rarity,
-  perks: `Ammosmith ${ammosmithRankForRarity(rarity)}`,
-  skill: "Repair",
-  rarity,
-  materials: null,
-  outputCategory: "ammo",
-  outputName: name,
-  sourcePage: 211,
-  ammoCrafting: true,
-  ammoRarity: rarity,
-  ammoCost: cost,
-  ammoWeight: weight,
-  ammoQuantityBase: quantityBase,
-  ammoQuantityDice: quantityDice,
-  ammoQuantityMultiplier: quantityMultiplier,
-}));
-
 const UTILITY_RECIPES = [
   {
     id: "chemistry-repair-kits-robot-repair-kit",
@@ -498,7 +442,6 @@ WEAPON_RECIPES.push(
 export const CRAFTING_RECIPES = [
   ...ROYAL_FLUSH_RECIPES,
   ...HOLLYWOOD_HEROES_CHEMISTRY_RECIPES,
-  ...AMMO_RECIPES,
   ...WEAPON_RECIPES,
   ...ARMOR_RECIPES,
   ...ROBOT_RECIPES,
