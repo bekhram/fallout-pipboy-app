@@ -874,7 +874,14 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const resumeCurrentRole = () => {
     if (resumeInFlightRef.current) return resumeInFlightRef.current;
-    const attempt = performRoleResume();
+    const connectionEpoch = connectionEpochRef.current;
+    const attempt = performRoleResume().catch((resumeError) => {
+      if (connectionEpoch === connectionEpochRef.current && !leavingRef.current && !roomJoinedRef.current) {
+        setStatus("disconnected");
+        setError(socketError(resumeError?.message || "NETWORK_ERROR"));
+      }
+      return false;
+    });
     resumeInFlightRef.current = attempt;
     attempt.finally(() => {
       if (resumeInFlightRef.current === attempt) resumeInFlightRef.current = null;
@@ -976,7 +983,9 @@ export default function useGmAuthoritativeSessionV2(form) {
   // resume can fail while the socket itself stays connected (e.g. ACK_TIMEOUT).
   // Retry that failed membership without discarding the GM's locally cached map.
   const recoverConnection = () => {
-    if (leavingRef.current || !["host", "player"].includes(modeRef.current)
+    // Player retry is already handled by useSharedSession; this watchdog
+    // specifically heals a GM whose transport is up but whose room is not.
+    if (leavingRef.current || modeRef.current !== "host"
       || roomJoinedRef.current || retryBlockedRef.current) return false;
     const socket = socketRef.current;
     if (!socket) return false;
