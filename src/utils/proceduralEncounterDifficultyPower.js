@@ -1,4 +1,5 @@
 import { encounterEnemyPowerProfile, normalizeEncounterEnemyPowerTier } from "./encounterEnemyPower.js";
+import { parseCombatDiceValue, rewriteAttackDamageDice } from "./attackDamageNotation.js";
 
 const POWER_PROFILES = Object.freeze({
   easy: Object.freeze({ damageMultiplier: 1, resistanceMultiplier: 1 }),
@@ -22,7 +23,7 @@ export function encounterDifficultyPowerProfile(value) {
 }
 
 function scaleDamageDice(value, multiplier, bonus = 0) {
-  const base = num(value, 0);
+  const base = parseCombatDiceValue(value, 0);
   return base > 0 ? Math.min(50, Math.round(base * multiplier) + bonus) : 0;
 }
 
@@ -62,12 +63,13 @@ function scaleAttackText(value, multiplier, power) {
     .split(/\n/)
     .map((line) => {
       let damaging = false;
-      const scaled = line.replace(/(\d+(?:\.\d+)?)\s*(CD|КУ|DC)\b/gi, (_, amount, unit) => {
-        const dice = scaleDamageDice(amount, multiplier, power.damageBonus);
+      const scaled = rewriteAttackDamageDice(line, (base) => {
+        const dice = scaleDamageDice(base, multiplier, power.damageBonus);
         damaging ||= dice > 0;
-        return `${dice} ${unit}`;
+        return dice;
       });
-      return damaging ? addAttackEffects(scaled, power.effects) : scaled;
+      // Preserve effect-only/non-combat lines and explicit 0 CD attacks.
+      return damaging ? addAttackEffects(scaled.text, power.effects) : scaled.text;
     })
     .join("\n");
 }
