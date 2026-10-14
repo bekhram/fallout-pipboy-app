@@ -53,3 +53,33 @@ export function initialWeaponD6Count(weapon, fallback = 4) {
   const amount = parseCombatDiceValue(weapon?.damage, 0);
   return amount > 0 ? Math.max(1, Math.min(50, Math.floor(amount))) : fallback;
 }
+
+function attackNameKey(line) {
+  const text = String(line || "").replace(/^\s*[•\-–—]\s*/, "").trim();
+  const colon = text.match(/^([^:]+):/);
+  const dash = text.match(/^(.+?)\s+[—–-]\s+(?=(?:BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\b)/i);
+  const name = colon?.[1] || dash?.[1] || "";
+  return name.toLowerCase().replace(/[^a-z0-9а-яёіїєґ]+/gi, "").trim();
+}
+
+/**
+ * Older saved procedural enemies may contain "0 CD" where the original
+ * bestiary used abbreviated damage ("5 Physical" without the CD suffix).
+ * Repair only these provable 0-dice mistakes using the NPC's persisted
+ * originalAttacks. Legitimate 0-CD abilities and upgraded weapons stay intact.
+ */
+export function restoreLegacyAttackDamageDice(baseText = "", originalText = "") {
+  if (!originalText || !baseText) return String(baseText || "");
+  const originals = new Map();
+  for (const line of String(originalText).split(/\n+/)) {
+    const key = attackNameKey(line);
+    const dice = extractAttackDamageDice(line);
+    if (key && dice > 0) originals.set(key, dice);
+  }
+  return String(baseText).split(/\n/).map(line => {
+    if (extractAttackDamageDice(line) !== 0) return line;
+    const source = originals.get(attackNameKey(line));
+    if (!source) return line;
+    return rewriteAttackDamageDice(line, () => source).text;
+  }).join("\n");
+}
