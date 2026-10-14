@@ -372,6 +372,7 @@ export default function useGmAuthoritativeSessionV2(form) {
   const [mirroredState, setMirroredState] = useState(null);
   const [campaignId, setCampaignId] = useState("");
   const [lastSession, setLastSession] = useState(() => readLastSession());
+  const [lastDisconnectReason, setLastDisconnectReason] = useState("");
   const [syncState, setSyncState] = useState({ phase: "idle", cached: 0, requested: 0 });
   const [playerTokenProfile, setPlayerTokenProfile] = useState({ name: "Player", size: 1, avatar: "", avatarAssetId: "", avatarHash: "" });
   const [combat] = useState({ ...EMPTY_COMBAT });
@@ -389,6 +390,11 @@ export default function useGmAuthoritativeSessionV2(form) {
   const leavingRef = useRef(false);
   const resumeInFlightRef = useRef(null);
   const sessionEpochRef = useRef(0);
+  // Distinguish transport recovery from application room membership. A socket
+  // can be connected even when a room join/resume ACK has failed.
+  const connectionEpochRef = useRef(0);
+  const roomJoinedRef = useRef(false);
+  const retryBlockedRef = useRef(false);
   const knownPresenceRef = useRef(new Set());
   const hashCacheRef = useRef(new Map());
   const bundleRef = useRef(null);
@@ -878,7 +884,16 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const performRoleResume = async () => {
     const epoch = sessionEpochRef.current;
-    if (!socketRef.current?.connected || leavingRef.current) return false;
+    const socket = socketRef.current;
+    const connectionEpoch = connectionEpochRef.current;
+    const stillConnected = () => (
+      epoch === sessionEpochRef.current
+      && connectionEpoch === connectionEpochRef.current
+      && socketRef.current === socket
+      && Boolean(socket?.connected)
+      && !leavingRef.current
+    );
+    if (!stillConnected()) return false;
     const currentMode = modeRef.current;
     const code = codeRef.current;
     if (!["host", "player"].includes(currentMode)) return false;
@@ -886,13 +901,14 @@ export default function useGmAuthoritativeSessionV2(form) {
     // finish the GM's pending start using the locally loaded campaign.
     const canCreateHostRoom = currentMode === "host" && campaignIdRef.current && gmStateRef.current;
     if (!code && !canCreateHostRoom) return false;
+    roomJoinedRef.current = false;
     setStatus("connecting");
     let response = code
       ? (currentMode === "host"
         ? await emitAck("room:resume-gm", { roomCode: code, clientId: clientIdRef.current, gmName: nameRef.current || "GM", gmSecret: gmSecretRef.current })
         : await emitAck("room:join", { roomCode: code, clientId: clientIdRef.current, playerName: nameRef.current || getCharacterName(formRef.current) || "Player", avatar: "" }))
       : null;
-    if (epoch !== sessionEpochRef.current || leavingRef.current) return false;
+    if (!stillConnected()) return false;
     // Relay rooms are temporary; the GM's campaign remains in the local cache.
     // Only recreate a missing room, never bypass an invalid GM secret.
     if (canCreateHostRoom && (!code || response?.error === "ROOM_NOT_FOUND") && !leavingRef.current) {
@@ -900,7 +916,7 @@ export default function useGmAuthoritativeSessionV2(form) {
         gmName: nameRef.current || "GM", clientId: clientIdRef.current,
         protocol: 3, campaignId: campaignIdRef.current,
       });
-      if (epoch !== sessionEpochRef.current || leavingRef.current) return false;
+      if (!stillConnected()) return false;
       if (response?.ok) {
         gmSecretRef.current = String(response.gmSecret || "");
         codeRef.current = normalizeSessionCode(response.roomCode || response.state?.code || "");
@@ -909,6 +925,9 @@ export default function useGmAuthoritativeSessionV2(form) {
       }
     }
     if (!response?.ok) {
+      roomJoinedRef.current = false;
+      // Never bypass an invalid GM secret by repeatedly creating new rooms.
+      retryBlockedRef.current = ["INVALID_GM_SECRET", "FORBIDDEN"].includes(String(response?.error || ""));
       setStatus("disconnected");
       setError(socketError(response?.error));
       return false;
@@ -933,12 +952,15 @@ export default function useGmAuthoritativeSessionV2(form) {
       }
     }
     if (response.state) applyPresence(response.state);
+    if (!stillConnected()) return false;
+    roomJoinedRef.current = true;
+    retryBlockedRef.current = false;
     setStatus("online");
     setError(null);
     if (currentMode === "player") {
       const fallbackName = nameRef.current || getCharacterName(formRef.current) || "Player";
       const profile = await loadPlayerTokenProfile(clientIdRef.current, fallbackName).catch(() => playerProfileRef.current);
-      if (epoch !== sessionEpochRef.current) return false;
+      if (!stillConnected()) return false;
       playerProfileRef.current = profile;
       setPlayerTokenProfile(profile);
       await relayToGm("sync:hello", { roomCode: code });
@@ -947,7 +969,28 @@ export default function useGmAuthoritativeSessionV2(form) {
     } else {
       await publishManifest();
     }
-    return true;
+    return stillConnected();
+  };
+
+  // Socket.IO transport reconnects on its own, but an application-level room
+  // resume can fail while the socket itself stays connected (e.g. ACK_TIMEOUT).
+  // Retry that failed membership without discarding the GM's locally cached map.
+  const recoverConnection = () => {
+    if (leavingRef.current || !["host", "player"].includes(modeRef.current)
+      || roomJoinedRef.current || retryBlockedRef.current) return false;
+    const socket = socketRef.current;
+    if (!socket) return false;
+    if (socket.connected) {
+      void resumeCurrentRole();
+      return true;
+    }
+    // A server disconnect can disable automatic reconnection.
+    // Do not interfere with the manager's normal reconnect attempt.
+    if (socket.active === false) {
+      socket.connect();
+      return true;
+    }
+    return false;
   };
 
   const ensureSocket = () => {
@@ -964,8 +1007,22 @@ export default function useGmAuthoritativeSessionV2(form) {
       timeout: 12000,
     });
     socketRef.current = socket;
-    socket.on("connect", () => { if (["host", "player"].includes(modeRef.current)) resumeCurrentRole(); });
-    socket.on("disconnect", () => { if (!leavingRef.current && ["host", "player"].includes(modeRef.current)) setStatus("disconnected"); });
+    socket.on("connect", () => {
+      // A pending ACK belongs to an obsolete transport connection.
+      connectionEpochRef.current += 1;
+      resumeInFlightRef.current = null;
+      roomJoinedRef.current = false;
+      if (!retryBlockedRef.current && ["host", "player"].includes(modeRef.current)) void resumeCurrentRole();
+    });
+    socket.on("disconnect", (reason) => {
+      connectionEpochRef.current += 1;
+      resumeInFlightRef.current = null;
+      roomJoinedRef.current = false;
+      if (!leavingRef.current && ["host", "player"].includes(modeRef.current)) {
+        setLastDisconnectReason(String(reason || "unknown"));
+        setStatus("disconnected");
+      }
+    });
     socket.on("connect_error", (connectionError) => {
       if (["host", "player"].includes(modeRef.current)) {
         setStatus("disconnected");
@@ -1020,6 +1077,24 @@ export default function useGmAuthoritativeSessionV2(form) {
     socket.connect();
   });
 
+  useEffect(() => {
+    const onForeground = () => {
+      if (document.visibilityState !== "hidden") recoverConnection();
+    };
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") recoverConnection();
+    }, 6500);
+    document.addEventListener("visibilitychange", onForeground);
+    window.addEventListener("pageshow", onForeground);
+    window.addEventListener("online", onForeground);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onForeground);
+      window.removeEventListener("pageshow", onForeground);
+      window.removeEventListener("online", onForeground);
+    };
+  }, []);
+
   const rememberSession = (value) => {
     const saved = writeLastSession(value);
     if (saved) setLastSession(saved);
@@ -1037,6 +1112,8 @@ export default function useGmAuthoritativeSessionV2(form) {
     const epoch = ++sessionEpochRef.current;
     resumeInFlightRef.current = null;
     leavingRef.current = false;
+    roomJoinedRef.current = false;
+    retryBlockedRef.current = false;
     // Do not auto-resume a previous room when this new connection opens.
     codeRef.current = "";
     gmSecretRef.current = "";
@@ -1071,7 +1148,10 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const joinSession = async ({ code, name } = {}) => {
     const epoch = ++sessionEpochRef.current;
+    resumeInFlightRef.current = null;
     leavingRef.current = false;
+    roomJoinedRef.current = false;
+    retryBlockedRef.current = false;
     const safeCode = normalizeSessionCode(code);
     const safeName = String(name || "Player").trim().slice(0, 40) || "Player";
     codeRef.current = safeCode;
@@ -1102,6 +1182,7 @@ export default function useGmAuthoritativeSessionV2(form) {
       setCampaignId(joinedCampaignId);
     }
     if (response.state) applyPresence(response.state);
+    roomJoinedRef.current = true;
     setStatus("online");
     rememberSession({ role: "player", code: safeCode, name: safeName, campaignId: joinedCampaignId });
     const profile = await loadPlayerTokenProfile(clientIdRef.current, safeName).catch(() => playerProfileRef.current);
@@ -1120,7 +1201,10 @@ export default function useGmAuthoritativeSessionV2(form) {
 
     if (automatic && saved.autoResume === false) return false;
     const epoch = ++sessionEpochRef.current;
+    resumeInFlightRef.current = null;
     leavingRef.current = false;
+    roomJoinedRef.current = false;
+    retryBlockedRef.current = false;
     setError(null);
     setStatus("connecting");
 
@@ -1167,8 +1251,11 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const exitSession = () => {
     ++sessionEpochRef.current;
+    ++connectionEpochRef.current;
     resumeInFlightRef.current = null;
     leavingRef.current = true;
+    roomJoinedRef.current = false;
+    retryBlockedRef.current = false;
     const saved = readLastSession() || lastSession;
     if (saved) rememberSession({ ...saved, autoResume: false });
     if (socketRef.current?.connected) socketRef.current.emit("room:leave", {});
@@ -1205,6 +1292,8 @@ export default function useGmAuthoritativeSessionV2(form) {
 
   const reconnectNow = async () => {
     if (leavingRef.current || modeRef.current === "lobby") return false;
+    // Explicit user retry may recover after a fatal server rejection was fixed.
+    retryBlockedRef.current = false;
     const epoch = sessionEpochRef.current;
     setError(null);
     setStatus("connecting");
@@ -1532,7 +1621,8 @@ export default function useGmAuthoritativeSessionV2(form) {
     clientId,
     campaignId,
     syncState,
-  }), [clientId, campaignId, syncState]);
+    lastDisconnectReason,
+  }), [clientId, campaignId, syncState, lastDisconnectReason]);
   const unsupportedCombatAction = () => false;
 
   return {
