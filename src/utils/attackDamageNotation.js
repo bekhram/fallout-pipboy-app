@@ -47,3 +47,9 @@ export function rewriteAttackDamageDice(line, transform) {
   });
   return { text: next, found };
 }
+
+/** Preselect the actual weapon damage dice when the user opens the D6 tab. */
+export function initialWeaponD6Count(weapon, fallback = 4) {
+  const amount = parseCombatDiceValue(weapon?.damage, 0);
+  return amount > 0 ? Math.max(1, Math.min(50, Math.floor(amount))) : fallback;
+}
