@@ -115,18 +115,11 @@ export default function GmScenePresetPanelV2({ session }) {
         const environment = patch?.environment;
         const proceduralMapSpec = environment?.proceduralMapSpec;
         if (!proceduralMapSpec) return session.updateTacticalScene?.(patch);
+        const { encounterDraftSettings: _oldDraft, ...baseEnvironment } = environment;
         return session.updateTacticalScene?.({
           ...patch,
           environment: {
-            ...environment,
-            encounterDraftSettings: {
-              encounterDifficulty: difficulty,
-              enemyFaction,
-              enemyCountOverride,
-              enemyPowerTier,
-              trapCount,
-              trapLethality,
-            },
+            ...baseEnvironment,
             proceduralMapSpec: {
               ...stripLegacyEncounterOptions(proceduralMapSpec),
               encounterDifficulty: difficulty,
@@ -154,18 +147,14 @@ export default function GmScenePresetPanelV2({ session }) {
       trapLethality,
       ...patch,
     };
-    // Enemy strength also applies to manually created GM scenes. Store a small
-    // draft even before a procedural map has been generated, without creating
-    // a fake procedural map that would overwrite the active battlemap.
+    // Store only one copy of encounter settings: inside the generated map
+    // spec, or as a small draft on a manual scene. Extra duplicate fields risk
+    // hitting the environment chat payload limit and losing the GM settings.
+    const { encounterDraftSettings: _oldDraft, ...baseEnvironment } = scene?.environment || {};
     return session.updateTacticalScene?.({
-      environment: {
-        ...(scene?.environment || {}),
-        encounterDraftSettings: settings,
-        ...(spec ? { proceduralMapSpec: {
-          ...stripLegacyEncounterOptions(spec),
-          ...settings,
-        } } : {}),
-      },
+      environment: spec
+        ? { ...baseEnvironment, proceduralMapSpec: { ...stripLegacyEncounterOptions(spec), ...settings } }
+        : { ...baseEnvironment, encounterDraftSettings: settings },
     });
   };
 
