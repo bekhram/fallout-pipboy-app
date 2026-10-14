@@ -9,7 +9,8 @@ function fixture({role = 'host', error = 'ROOM_NOT_FOUND'} = {}) {
   const calls = [], saved = [], state = { scenes: [{ sceneId: 'existing-map' }] };
   const context = {
     socketRef: {current: {connected: true}}, leavingRef: {current: false},
-    sessionEpochRef: {current: 0},
+    sessionEpochRef: {current: 0}, connectionEpochRef: {current: 0},
+    roomJoinedRef: {current: false}, retryBlockedRef: {current: false},
     resumeInFlightRef: {current: null}, modeRef: {current: role},
     codeRef: {current: 'OLD123'}, clientIdRef: {current: 'client'},
     nameRef: {current: 'GM'}, gmSecretRef: {current: 'old-secret'},
@@ -25,8 +26,8 @@ function fixture({role = 'host', error = 'ROOM_NOT_FOUND'} = {}) {
         : {ok: false, error};
     },
   };
-  const resume = vm.runInNewContext(`${resumeCode}\nresumeCurrentRole;`, context);
-  return {context, calls, saved, resume, state};
+  const {resume, recover} = vm.runInNewContext(`${resumeCode}\n({resume: resumeCurrentRole, recover: recoverConnection});`, context);
+  return {context, calls, saved, resume, recover, state};
 }
 test('GM recreates expired relay room while retaining campaign and new resume credentials', async () => {
   const f = fixture();
@@ -83,6 +84,72 @@ for (const error of ['INVALID_GM_SECRET', 'FORBIDDEN', 'NETWORK_ERROR', 'ACK_TIM
     assert.equal(f.saved.length, 0);
   });
 }
+test('GM retries a timed-out room ACK while Socket.IO is still connected', async () => {
+  const f = fixture({error: 'ACK_TIMEOUT'});
+  let attempts = 0;
+  f.context.emitAck = async () => (++attempts === 1
+    ? {ok: false, error: 'ACK_TIMEOUT'}
+    : {ok: true, state: {code: 'OLD123'}});
+  assert.equal(await f.resume(), false);
+  assert.equal(f.context.roomJoinedRef.current, false);
+  assert.equal(f.context.retryBlockedRef.current, false);
+  assert.equal(f.recover(), true);
+  // The watchdog shares the same in-flight recovery with reconnect-now.
+  await f.resume();
+  assert.equal(attempts, 2);
+  assert.equal(f.context.roomJoinedRef.current, true);
+});
+
+test('a late ACK from an old socket cannot mark the GM online', async () => {
+  const f = fixture();
+  let completeFirst;
+  f.context.emitAck = () => new Promise(resolve => { completeFirst = resolve; });
+  const stale = f.resume();
+  f.context.connectionEpochRef.current += 1;
+  f.context.socketRef.current.connected = false;
+  completeFirst({ok: true, state: {code: 'OLD123'}});
+  assert.equal(await stale, false);
+  assert.equal(f.context.roomJoinedRef.current, false);
+  assert.equal(f.saved.length, 0);
+});
+
+test('a new connection can rejoin while the old socket ACK is pending', async () => {
+  const f = fixture();
+  let completeFirst;
+  f.context.emitAck = () => new Promise(resolve => { completeFirst = resolve; });
+  const stale = f.resume();
+  f.context.connectionEpochRef.current += 1;
+  f.context.resumeInFlightRef.current = null;
+  f.context.emitAck = async () => ({ok: true, state: {code: 'OLD123'}});
+  const current = f.resume();
+  completeFirst({ok: false, error: 'ACK_TIMEOUT'});
+  assert.equal(await stale, false);
+  assert.equal(await current, true);
+  assert.equal(f.context.roomJoinedRef.current, true);
+});
+
+test('an explicit exit or invalid host secret prevents watchdog reconnect', async () => {
+  const f = fixture({error: 'INVALID_GM_SECRET'});
+  assert.equal(await f.resume(), false);
+  assert.equal(f.context.retryBlockedRef.current, true);
+  assert.equal(f.recover(), false);
+  assert.equal(f.calls.length, 1);
+  f.context.retryBlockedRef.current = false;
+  f.context.leavingRef.current = true;
+  assert.equal(f.recover(), false);
+});
+
+test('watchdog only reconnects a socket when its manager is inactive', () => {
+  const f = fixture();
+  let reconnects = 0;
+  f.context.socketRef.current = {connected: false, active: false, connect() {reconnects++;}};
+  assert.equal(f.recover(), true);
+  assert.equal(reconnects, 1);
+  f.context.socketRef.current.active = true;
+  assert.equal(f.recover(), false);
+  assert.equal(reconnects, 1);
+});
+
 test('player cannot recreate a missing GM room', async () => {
   const f = fixture({role: 'player'});
   assert.equal(await f.resume(), false);
@@ -111,7 +178,8 @@ test('explicit exit persists opt-out, blocks automatic restore, and allows manua
     normalizeSessionCode: value => String(value || '').toUpperCase(),
     localStorage: {getItem: key => memory.get(key), setItem: (key,value) => memory.set(key,value)},
     lastSession: {code:'ABC123',role:'player',name:'Player'},
-    sessionEpochRef:{current:0},resumeInFlightRef:{current:null},leavingRef:{current:false},
+    sessionEpochRef:{current:0},connectionEpochRef:{current:0},roomJoinedRef:{current:false},
+    retryBlockedRef:{current:false},resumeInFlightRef:{current:null},leavingRef:{current:false},
     socketRef:{current:{connected:true,emit(){},disconnect(){disconnected=true;}}},
     modeRef:{current:'player'},codeRef:{current:'ABC123'},gmSecretRef:{current:''},
     campaignIdRef:{current:'campaign-original'},gmStateRef:{current:{}},knownPresenceRef:{current:new Set()},nameRef:{current:''},
