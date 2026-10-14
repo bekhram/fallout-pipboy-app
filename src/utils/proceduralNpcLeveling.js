@@ -1,4 +1,5 @@
 import { parseAttackText } from "./npcCombat.js";
+import { extractAttackDamageDice, rewriteAttackDamageDice } from "./attackDamageNotation.js";
 
 const SPECIAL_KEYS = ["STR", "PER", "END", "CHA", "INT", "AGI", "LCK"];
 const CREATURE_KEYS = ["BODY", "MIND"];
@@ -143,8 +144,7 @@ function strongestAttackIndex(lines = []) {
   let selected = -1;
   let bestDamage = -1;
   lines.forEach((line, index) => {
-    const match = String(line || "").match(/\b(\d+)\s*(?:CD|DC|КУ)\b/i);
-    const damage = match ? Number(match[1]) : -1;
+    const damage = extractAttackDamageDice(line) ?? -1;
     if (damage > bestDamage) {
       bestDamage = damage;
       selected = index;
@@ -174,7 +174,7 @@ function scaleAttackLines(entry, kind, attributeBoosts, skillBoosts, creatureDam
     if (kind === "creature" && index === creatureDamageLine) damageBonus += creatureDamageBonus;
     if (kind === "character" && meleeDerivedBonus > 0 && ["melee weapons", "unarmed"].includes(skill)) damageBonus += meleeDerivedBonus;
     if (damageBonus) {
-      next = next.replace(/\b(\d+)\s*(CD|DC|КУ)\b/i, (_, raw, unit) => `${Number(raw) + damageBonus} ${unit}`);
+      next = rewriteAttackDamageDice(next, (baseDice) => baseDice > 0 ? baseDice + damageBonus : 0).text;
     }
     return next;
   }).join("\n");
