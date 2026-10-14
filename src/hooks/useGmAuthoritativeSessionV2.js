@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { io } from "socket.io-client";
+import { applyEncounterPowerToSceneTokens } from "../utils/proceduralEncounterDifficultyPower.js";
 import { getDerivedStats } from "../utils/characterMath.js";
 import {
   getCampaign,
@@ -1469,6 +1470,31 @@ export default function useGmAuthoritativeSessionV2(form) {
     });
   };
 
+  // Recalculate enemies already placed on the map in a single IndexedDB
+  // commit/broadcast, rather than asking the GM to delete and spawn them again.
+  const reapplyEncounterEnemyPower = ({ enemyPowerTier = "none", encounterDifficulty = "standard" } = {}) => {
+    if (modeRef.current !== "host") return Promise.resolve({ ok: false, error: "GM_ONLY" });
+    const scene = sceneById(gmStateRef.current, gmStateRef.current?.selectedSceneId);
+    if (!scene) return Promise.resolve({ ok: false, error: "SCENE_NOT_FOUND" });
+    if (!(scene.tokens || []).some((token) => (
+      token?.kind === "npc" && token.stats
+      && String(token.stats.generatedDisposition || "hostile").toLowerCase() === "hostile"
+    ))) return Promise.resolve({ ok: true, updated: 0 });
+
+    return mutateGmState((next) => {
+      const selected = sceneById(next, next.selectedSceneId);
+      if (!selected) return { ok: false, error: "SCENE_NOT_FOUND" };
+      const result = applyEncounterPowerToSceneTokens(selected.tokens, {
+        enemyPowerTier,
+        encounterDifficulty,
+      });
+      selected.tokens = result.tokens;
+      selected.revision = Number(selected.revision || 0) + 1;
+      next.scene = safeClone(selected);
+      return { updated: result.updated };
+    });
+  };
+
   const updateSharedMapMarkup = (payload = {}) => {
     if (modeRef.current === "player") return sendPlayerAction("map:markup", payload);
     if (modeRef.current !== "host") return Promise.resolve({ ok: false, error: "NOT_IN_SESSION" });
@@ -1674,6 +1700,7 @@ export default function useGmAuthoritativeSessionV2(form) {
     enableTacticalScene,
     disableTacticalScene,
     updateTacticalScene,
+    reapplyEncounterEnemyPower,
     updateSharedMapMarkup,
     updatePlayerTokenProfile,
     createPlayerToken,
