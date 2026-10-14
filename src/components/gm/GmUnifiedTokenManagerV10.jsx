@@ -45,36 +45,45 @@ function attackSignature(attack = {}) {
   ].join("|");
 }
 
-function uniqueBySignature(items, normalizer, seen) {
-  const result = [];
-  (Array.isArray(items) ? items : []).forEach((item, index) => {
-    const normalized = normalizer(item, index);
-    const key = attackSignature(normalized);
-    if (seen.has(key)) return;
-    seen.add(key);
-    result.push(item);
-  });
-  return result;
-}
-
 function dedupeAttackSources(stats = {}) {
-  const seen = new Set();
-  const weapons = uniqueBySignature(stats.weapons, normalizeWeaponAttack, seen);
-  const customAttacks = uniqueBySignature(stats.customAttacks, normalizeStructuredAttack, seen);
-  const lines = String(stats.attacks || "")
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const attacks = lines.filter((line) => {
-    const parsed = parseAttackText(line)[0];
-    if (!parsed) return true;
-    const key = attackSignature(parsed);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  }).join("\n");
+  // Generated enemies can store the same attack in their text, custom attack
+  // and equipped-weapon fields. Keep whichever source has the highest *real*
+  // combat-dice count; otherwise an unscaled copy can shadow the boosted one.
+  const winners = [];
+  const byKey = new Map();
+  const select = (kind, raw, normalized) => {
+    if (!normalized) {
+      if (kind === "attacks") winners.push({ kind, raw });
+      return;
+    }
+    const key = attackSignature(normalized);
+    const dice = num(normalized.damageDice);
+    const currentIndex = byKey.get(key);
+    if (currentIndex !== undefined) {
+      if (dice > winners[currentIndex].dice) {
+        winners[currentIndex] = { kind, raw, dice };
+      }
+      return;
+    }
+    byKey.set(key, winners.length);
+    winners.push({ kind, raw, dice });
+  };
 
-  return { ...stats, attacks, customAttacks, weapons };
+  (Array.isArray(stats.weapons) ? stats.weapons : []).forEach((item, index) => {
+    select("weapons", item, normalizeWeaponAttack(item, index));
+  });
+  (Array.isArray(stats.customAttacks) ? stats.customAttacks : []).forEach((item, index) => {
+    select("customAttacks", item, normalizeStructuredAttack(item, index));
+  });
+  String(stats.attacks || "").split(/\\n+/).map(line => line.trim()).filter(Boolean)
+    .forEach(line => select("attacks", line, parseAttackText(line)[0]));
+
+  return {
+    ...stats,
+    weapons: winners.filter(entry => entry.kind === "weapons").map(entry => entry.raw),
+    customAttacks: winners.filter(entry => entry.kind === "customAttacks").map(entry => entry.raw),
+    attacks: winners.filter(entry => entry.kind === "attacks").map(entry => entry.raw).join("\\n"),
+  };
 }
 
 function buffSummaryFor(stats = {}) {
