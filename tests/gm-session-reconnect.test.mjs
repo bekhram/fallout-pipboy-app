@@ -139,6 +139,23 @@ test('an explicit exit or invalid host secret prevents watchdog reconnect', asyn
   assert.equal(f.recover(), false);
 });
 
+test('unexpected resume rejection stays retryable instead of crashing reconnect', async () => {
+  const f = fixture();
+  f.context.emitAck = async () => { throw new Error('transport interrupted'); };
+  assert.equal(await f.resume(), false);
+  assert.equal(f.context.roomJoinedRef.current, false);
+  assert.equal(f.context.retryBlockedRef.current, false);
+  f.context.emitAck = async () => ({ok: true, state: {code: 'OLD123'}});
+  assert.equal(f.recover(), true);
+  assert.equal(await f.resume(), true);
+});
+
+test('player connection retry belongs to shared session, not GM watchdog', () => {
+  const f = fixture({role: 'player'});
+  assert.equal(f.recover(), false);
+  assert.equal(f.calls.length, 0);
+});
+
 test('watchdog only reconnects a socket when its manager is inactive', () => {
   const f = fixture();
   let reconnects = 0;
