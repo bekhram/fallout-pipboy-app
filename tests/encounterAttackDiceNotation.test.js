@@ -97,7 +97,7 @@ test("collapsed GM card selects the stronger scaled attack instead of a stale du
   const end = source.indexOf("function buffSummaryFor(", begin);
   assert.ok(begin >= 0 && end > begin);
   const dedupe = vm.runInNewContext(
-    source.slice(begin, end) + "\\ndedupeAttackSources;",
+    source.slice(begin, end) + "\ndedupeAttackSources;",
     { normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText },
   );
 
@@ -127,7 +127,7 @@ test("collapsed GM card selects the stronger scaled attack instead of a stale du
   assert.equal(customWins.attacks, "");
 
   const multiple = dedupe({
-    attacks: originalText + "\\nBITE: BODY + Melee (TN 9), 2 CD Physical damage",
+    attacks: originalText + "\nBITE: BODY + Melee (TN 9), 2 CD Physical damage",
   });
   assert.deepEqual(parseAttackText(multiple.attacks).map(a => a.damageDice), [4, 2]);
 });
