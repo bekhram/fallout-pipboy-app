@@ -188,7 +188,9 @@ function bestiaryEntryFor(token) {
 }
 
 function attacksFor(stats, linkedEntry) {
-  const parsed = parseAttackText(stats.attacks || linkedEntry?.attacks || "");
+  // An explicitly emptied stats.attacks means the higher-priority structured
+  // attack survived deduplication. Never resurrect the unmodified bestiary text.
+  const parsed = parseAttackText(stats.attacks ?? linkedEntry?.attacks ?? "");
   const custom = (
     Array.isArray(stats.customAttacks) ? stats.customAttacks : []
   ).map(normalizeStructuredAttack);
@@ -196,7 +198,9 @@ function attacksFor(stats, linkedEntry) {
     normalizeWeaponAttack
   );
   const seen = new Set();
-  return [...parsed, ...custom, ...weapons].filter((attack) => {
+  // The equipped/custom profile is authoritative when it shares a name with
+  // the original text; it contains the current generated damage and effects.
+  return [...weapons, ...custom, ...parsed].filter((attack) => {
     const normalizedName = String(attack?.name || "")
       .toLowerCase()
       .replace(/[’'`]/g, "")
