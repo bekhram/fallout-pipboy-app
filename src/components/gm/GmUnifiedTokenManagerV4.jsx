@@ -28,7 +28,8 @@ import {
 import { loadNpcWeaponDatabase } from "../../utils/npcWeaponDatabase.js";
 import { findFreePlacement } from "../../utils/gmSessionModel.js";
 import { gmMenuText, interpolateGmText } from "./gmMenuI18n.js";
-import { encounterEnemyPowerCopy, encounterEnemyPowerDescription } from "../../utils/encounterEnemyPower.js";
+import { encounterEnemyPowerCopy, encounterEnemyPowerDescription, encounterEnemyPowerProfile, normalizeEncounterEnemyPowerTier } from "../../utils/encounterEnemyPower.js";
+import { applyGeneratedEncounterPower } from "../../utils/proceduralEncounterDifficultyPower.js";
 import "./gmUnifiedTokenManager.css";
 import "./gmNpcCombat.css";
 import "./gmNpcCombatV4.css";
@@ -266,6 +267,26 @@ function ModifierSummary({ stats }) {
   );
 }
 
+function EnemyPowerBadge({ stats, language }) {
+  const tier = normalizeEncounterEnemyPowerTier(stats?.enemyPowerTier);
+  if (tier === "none") return null;
+  const profile = encounterEnemyPowerProfile(tier);
+  const labels = encounterEnemyPowerCopy(language);
+  const damage = num(stats?.encounterDamageBonus, profile.damageBonus);
+  const resistance = num(stats?.encounterResistanceBonus, profile.resistanceBonus);
+  const effects = Array.isArray(stats?.encounterAttackEffects)
+    ? stats.encounterAttackEffects
+    : profile.effects;
+  return (
+    <div className="gm-npc-v4-enemy-power" data-enemy-power-tier={tier}
+      title={encounterEnemyPowerDescription(tier, language)}>
+      <strong>⚡ {labels[tier]}</strong>
+      <span>+{damage} CD · DR +{resistance}</span>
+      {effects.length ? <small>{effects.join(" · ")}</small> : null}
+    </div>
+  );
+}
+
 function AttackButtons({ attacks, stats, actorName, onRoll }) {
   if (!attacks.length) return null;
   return (
@@ -285,7 +306,7 @@ function AttackButtons({ attacks, stats, actorName, onRoll }) {
               profile.d20Count
             }d20 · ${profile.damageDice} CD`}
           >
-            {attack.name}
+            {attack.name}<small>{profile.damageDice} CD</small>
           </button>
         );
       })}
@@ -692,7 +713,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
     ? customBase(selectedCustom)
     : null;
   const selectedPreview = selectedPreviewBase
-    ? buildSpawnStats(
+    ? applyGeneratedEncounterPower(buildSpawnStats(
         selectedPreviewBase,
         selectedBestiary
           ? {
@@ -705,7 +726,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
               legendaryReward: spawnReward,
             }
           : selectedPreviewBase
-      )
+      ), scene?.environment?.proceduralMapSpec || {})
     : null;
 
   return (
@@ -1019,6 +1040,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
                 </span>
               </div>
               <ModifierSummary stats={selectedPreview} />
+              <EnemyPowerBadge stats={selectedPreview} language={i18n.resolvedLanguage || i18n.language} />
             </div>
           ) : null}
         </section>
@@ -1756,6 +1778,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
                             · {visible ? text.visible : text.hidden}
                           </small>
                         </div>
+                        <EnemyPowerBadge stats={stats} language={i18n.resolvedLanguage || i18n.language} />
                         <div className="gm-npc-token-row__stats">
                           <span>
                             HP {hp}/{maxHp}
