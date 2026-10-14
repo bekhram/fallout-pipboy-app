@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import winterOfAtom from "../src/data/bestiary/winterOfAtom01.js";
-import { extractAttackDamageDice, parseCombatDiceValue, rewriteAttackDamageDice } from "../src/utils/attackDamageNotation.js";
+import { extractAttackDamageDice, parseCombatDiceValue, rewriteAttackDamageDice, initialWeaponD6Count } from "../src/utils/attackDamageNotation.js";
 import { applyEncounterDifficultyPower } from "../src/utils/proceduralEncounterDifficultyPower.js";
 import { parseAttackText, buildNpcAttackRollConfig, normalizeStructuredAttack, normalizeWeaponAttack } from "../src/utils/npcCombat.js";
 
@@ -136,4 +136,17 @@ test("GM card no longer revives old bestiary attacks after deduplication", () =>
   const card = readFileSync(new URL("../src/components/gm/GmUnifiedTokenManagerV4.jsx", import.meta.url), "utf8");
   assert.match(card, /parseAttackText\(stats\.attacks \?\? linkedEntry\?\.attacks \?\? ""\)/);
   assert.match(card, /\.\.\.weapons, \.\.\.custom, \.\.\.parsed/);
+});
+
+test("D6 tab uses the selected attack's boosted damage instead of generic four dice", () => {
+  const source = byId("woa-child-of-atom-fanatic-shotgun").attacks;
+  const buffed = applyEncounterDifficultyPower({attacks: source}, "standard", "strong");
+  const attacks = parseAttackText(buffed.attacks);
+  assert.equal(initialWeaponD6Count(buildNpcAttackRollConfig(attacks[0], buffed).weapon), 8);
+  assert.equal(initialWeaponD6Count(buildNpcAttackRollConfig(attacks[1], buffed).weapon), 11);
+  assert.equal(initialWeaponD6Count({damage:"5 CD"}), 5);
+  assert.equal(initialWeaponD6Count(null), 4);
+  const roller = readFileSync(new URL("../src/components/dice/FalloutD6Roller.jsx", import.meta.url), "utf8");
+  assert.match(roller, /useState\(\(\) => initialWeaponD6Count\(weapon\)\)/);
+  assert.match(roller, /if \(weapon\) setDiceCount\(initialWeaponD6Count\(weapon\)\)/);
 });
