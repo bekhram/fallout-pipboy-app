@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { playSound } from "../../utils/soundManager";
 import { rollFalloutD6, rerollOneFalloutD6 } from "../../utils/dice";
 import { getPerkRank } from "../../utils/perkEffects.js";
+import { initialWeaponD6Count } from "../../utils/attackDamageNotation.js";
 
 const MAX_HISTORY = 5;
 const MOBILE_VISIBLE_LIMIT = 25;
@@ -65,12 +66,19 @@ export default function FalloutD6Roller({
   const [isRolling, setIsRolling] = useState(false);
   const [rerollingDieIndex, setRerollingDieIndex] = useState(null);
   const [animatedValue, setAnimatedValue] = useState(1);
-  const [diceCount, setDiceCount] = useState(4);
+  const [diceCount, setDiceCount] = useState(() => initialWeaponD6Count(weapon));
   const [isMobile, setIsMobile] = useState(false);
   const [targetDr, setTargetDr] = useState({ physical: "", energy: "", radiation: "", poison: "" });
   const [targetHp, setTargetHp] = useState("");
   const [targetIsRobot, setTargetIsRobot] = useState(false);
   const [targetRaised, setTargetRaised] = useState(false);
+
+  // D6 opened manually from a creature attack used to start at the generic
+  // four dice, ignoring the enhanced weapon.damage (e.g. 5 -> 8 CD).
+  // Initialize and refresh it from the currently selected attack instead.
+  useEffect(() => {
+    if (weapon) setDiceCount(initialWeaponD6Count(weapon));
+  }, [weapon?.name, weapon?.damage]);
 
   useEffect(() => {
     const updateIsMobile = () => {
