@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
 import winterOfAtom from "../src/data/bestiary/winterOfAtom01.js";
 import { extractAttackDamageDice, parseCombatDiceValue, rewriteAttackDamageDice } from "../src/utils/attackDamageNotation.js";
 import { applyEncounterDifficultyPower } from "../src/utils/proceduralEncounterDifficultyPower.js";
@@ -87,4 +89,51 @@ test("combat effect ratings, target numbers, FR and other incidental numbers are
   const noDamage = applyEncounterDifficultyPower({ attacks: "ATTACK — BODY + Melee (TN 7), 0 CD Physical" }, "standard", "strong");
   assert.equal(parseAttackText(noDamage.attacks)[0].damageDice, 0);
   assert.equal(parseAttackText(noDamage.attacks)[0].effects, "");
+});
+
+test("collapsed GM card selects the stronger scaled attack instead of a stale duplicate", () => {
+  const source = readFileSync(new URL("../src/components/gm/GmUnifiedTokenManagerV10.jsx", import.meta.url), "utf8");
+  const begin = source.indexOf("function num(");
+  const end = source.indexOf("function buffSummaryFor(", begin);
+  assert.ok(begin >= 0 && end > begin);
+  const dedupe = vm.runInNewContext(
+    source.slice(begin, end) + "\\ndedupeAttackSources;",
+    { normalizeStructuredAttack, normalizeWeaponAttack, parseAttackText },
+  );
+
+  const originalText = "LASER: BODY + Guns (TN 12), 4 CD Energy damage";
+  const boostedText = "LASER: BODY + Guns (TN 12), 8 CD Energy damage, Piercing 2, Vicious";
+  const staleWeapon = { name: "LASER", damageDice: 4, effects: "" };
+  const boostedWeapon = { name: "LASER", damageDice: 8, effects: "Piercing 2, Vicious" };
+
+  const fromText = dedupe({ weapons: [staleWeapon], attacks: boostedText });
+  assert.equal(fromText.weapons.length, 0);
+  assert.equal(parseAttackText(fromText.attacks)[0].damageDice, 8);
+  assert.equal(buildNpcAttackRollConfig(parseAttackText(fromText.attacks)[0]).weapon.damage, "8 CD");
+
+  const fromWeapon = dedupe({ weapons: [boostedWeapon], attacks: originalText });
+  assert.equal(fromWeapon.attacks, "");
+  assert.equal(fromWeapon.weapons.length, 1);
+  assert.equal(buildNpcAttackRollConfig(normalizeWeaponAttack(fromWeapon.weapons[0])).weapon.damage, "8 CD");
+  assert.match(fromWeapon.weapons[0].effects, /Piercing 2/);
+
+  const customWins = dedupe({
+    customAttacks: [{ name: "LASER", damageDice: 7 }],
+    weapons: [staleWeapon],
+    attacks: originalText,
+  });
+  assert.equal(customWins.customAttacks.length, 1);
+  assert.equal(customWins.weapons.length, 0);
+  assert.equal(customWins.attacks, "");
+
+  const multiple = dedupe({
+    attacks: originalText + "\\nBITE: BODY + Melee (TN 9), 2 CD Physical damage",
+  });
+  assert.deepEqual(parseAttackText(multiple.attacks).map(a => a.damageDice), [4, 2]);
+});
+
+test("GM card no longer revives old bestiary attacks after deduplication", () => {
+  const card = readFileSync(new URL("../src/components/gm/GmUnifiedTokenManagerV4.jsx", import.meta.url), "utf8");
+  assert.match(card, /parseAttackText\(stats\.attacks \?\? linkedEntry\?\.attacks \?\? ""\)/);
+  assert.match(card, /\.\.\.weapons, \.\.\.custom, \.\.\.parsed/);
 });
