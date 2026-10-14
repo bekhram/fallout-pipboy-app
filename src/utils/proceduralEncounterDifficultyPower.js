@@ -59,6 +59,9 @@ function scaleAttack(attack = {}, multiplier, power) {
 }
 
 function scaleAttackText(value, multiplier, power) {
+  // Disabling GM modifiers must restore the exact source attack notation,
+  // including published bestiary entries that omit the CD suffix.
+  if (multiplier === 1 && !power.damageBonus && !power.effects?.length) return String(value || "");
   return String(value || "")
     .split(/\n/)
     .map((line) => {
