@@ -1,4 +1,5 @@
 import { buildFalloutD20Result, rollFalloutD6, rollSingleDie } from "./dice.js";
+import { parseCombatDiceValue, extractAttackDamageDice } from "./attackDamageNotation.js";
 
 export const NPC_RANKS = ["minion", "standard", "special", "legendary"];
 
@@ -37,7 +38,7 @@ export function normalizeStructuredAttack(value = {}, index = 0) {
     targetNumber: Math.max(0, Math.min(20, number(value.targetNumber ?? value.tn, 0))),
     skill: String(value.skill || "Combat").trim().slice(0, 60) || "Combat",
     attribute: String(value.attribute || "BODY").trim().slice(0, 20) || "BODY",
-    damageDice: Math.max(0, Math.min(50, number(value.damageDice ?? value.damage ?? value.cd, 0))),
+    damageDice: Math.max(0, Math.min(50, parseCombatDiceValue(value.damageDice ?? value.damage ?? value.cd, 0))),
     damageType: String(value.damageType || "Physical").trim().slice(0, 60) || "Physical",
     effects: String(value.effects ?? value.effect ?? "").trim().slice(0, 500),
     range: String(value.range || "").trim().slice(0, 20),
@@ -88,9 +89,9 @@ export function parseAttackText(value = "") {
     const dashNameMatch = line.match(/^(.+?)\s+[—–-]\s+(?=(?:BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\b)/i);
     const nameMatch = colonNameMatch || dashNameMatch;
     const tnMatch = line.match(/\bTN\s*(\d+)/i);
-    const cdMatch = line.match(/(\d+)\s*(?:CD|КУ|DC)\b/i);
+    const attackDamageDice = extractAttackDamageDice(line);
     const profileMatch = line.match(/\b(BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\s*\+\s*([A-Za-z][A-Za-z ]*)\s*\(/i);
-    const looksLikeAttack = Boolean(tnMatch || cdMatch || profileMatch);
+    const looksLikeAttack = Boolean(tnMatch || attackDamageDice != null || profileMatch);
     if (!looksLikeAttack) return null;
     const typeMatch = line.match(/\b(Physical|Energy|Radiation|Poison)(?:\s+damage)?/i);
     const rangeMatch = line.match(/\bRange\s+([CMLE])\b/i);
@@ -111,7 +112,7 @@ export function parseAttackText(value = "") {
       targetNumber: number(tnMatch?.[1], 0),
       attribute: profileMatch?.[1]?.toUpperCase() || "BODY",
       skill: profileMatch?.[2]?.trim() || "Combat",
-      damageDice: number(cdMatch?.[1], 0),
+      damageDice: attackDamageDice ?? 0,
       damageType: typeMatch?.[1] || "Physical",
       effects: effects.join(", "),
       range: rangeMatch?.[1]?.toUpperCase() || "",
