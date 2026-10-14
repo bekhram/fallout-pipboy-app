@@ -75,14 +75,14 @@ function dedupeAttackSources(stats = {}) {
   (Array.isArray(stats.customAttacks) ? stats.customAttacks : []).forEach((item, index) => {
     select("customAttacks", item, normalizeStructuredAttack(item, index));
   });
-  String(stats.attacks || "").split(/\\n+/).map(line => line.trim()).filter(Boolean)
+  String(stats.attacks || "").split(/\n+/).map(line => line.trim()).filter(Boolean)
     .forEach(line => select("attacks", line, parseAttackText(line)[0]));
 
   return {
     ...stats,
     weapons: winners.filter(entry => entry.kind === "weapons").map(entry => entry.raw),
     customAttacks: winners.filter(entry => entry.kind === "customAttacks").map(entry => entry.raw),
-    attacks: winners.filter(entry => entry.kind === "attacks").map(entry => entry.raw).join("\\n"),
+    attacks: winners.filter(entry => entry.kind === "attacks").map(entry => entry.raw).join("\n"),
   };
 }
 
