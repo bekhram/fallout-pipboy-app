@@ -83,6 +83,8 @@ export default function GmScenePresetPanelV2({ session }) {
   const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
   const [enemyCountOverride, setEnemyCountOverride] = useState(() => normalizeEnemyCountOverride(savedSpec?.enemyCountOverride));
   const [enemyPowerTier, setEnemyPowerTier] = useState(() => normalizeEncounterEnemyPowerTier(savedSpec?.enemyPowerTier));
+  const [powerNotice, setPowerNotice] = useState("");
+  const [updatingPower, setUpdatingPower] = useState(false);
   const [trapCount, setTrapCount] = useState(() => normalizeTrapCount(savedSpec?.trapCount));
   const [trapLethality, setTrapLethality] = useState(() => normalizeTrapLethality(savedSpec?.trapLethality));
 
@@ -92,6 +94,7 @@ export default function GmScenePresetPanelV2({ session }) {
     setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
     setEnemyCountOverride(normalizeEnemyCountOverride(spec?.enemyCountOverride));
     setEnemyPowerTier(normalizeEncounterEnemyPowerTier(spec?.enemyPowerTier));
+    setPowerNotice("");
     setTrapCount(normalizeTrapCount(spec?.trapCount));
     setTrapLethality(normalizeTrapLethality(spec?.trapLethality));
   }, [scene?.sceneId, savedSpec?.encounterDifficulty, savedSpec?.enemyFaction, savedSpec?.enemyCountOverride, savedSpec?.enemyPowerTier, savedSpec?.trapCount, savedSpec?.trapLethality]);
@@ -148,10 +151,39 @@ export default function GmScenePresetPanelV2({ session }) {
     });
   };
 
-  const changeDifficulty = async (value) => { const next = normalizeEncounterDifficulty(value); setDifficulty(next); await persistSetting({ encounterDifficulty: next }); };
+  // Previously placed enemies are recalculated in one campaign write so the
+  // visible GM cards and the actual dice rolls always match the chosen tier.
+  const updatePlacedEnemies = async (settings) => {
+    if (typeof session?.reapplyEncounterEnemyPower !== "function") return;
+    setUpdatingPower(true);
+    setPowerNotice("");
+    try {
+      const result = await session.reapplyEncounterEnemyPower({
+        encounterDifficulty: settings.encounterDifficulty ?? difficulty,
+        enemyPowerTier: settings.enemyPowerTier ?? enemyPowerTier,
+      });
+      if (result?.ok === false) setPowerNotice(powerText.updateError);
+      else if (Number(result?.updated) > 0) setPowerNotice(`${powerText.updated}: ${result.updated}`);
+    } catch {
+      setPowerNotice(powerText.updateError);
+    } finally {
+      setUpdatingPower(false);
+    }
+  };
+  const changeDifficulty = async (value) => {
+    const next = normalizeEncounterDifficulty(value);
+    setDifficulty(next);
+    await persistSetting({ encounterDifficulty: next });
+    await updatePlacedEnemies({ encounterDifficulty: next });
+  };
   const changeEnemyFaction = async (value) => { const next = normalizeEnemyGroup(value); setEnemyFaction(next); await persistSetting({ enemyFaction: next }); };
   const changeEnemyCount = async (value) => { const next = normalizeEnemyCountOverride(value); setEnemyCountOverride(next); await persistSetting({ enemyCountOverride: next }); };
-  const changeEnemyPower = async (value) => { const next = normalizeEncounterEnemyPowerTier(value); setEnemyPowerTier(next); await persistSetting({ enemyPowerTier: next }); };
+  const changeEnemyPower = async (value) => {
+    const next = normalizeEncounterEnemyPowerTier(value);
+    setEnemyPowerTier(next);
+    await persistSetting({ enemyPowerTier: next });
+    await updatePlacedEnemies({ enemyPowerTier: next });
+  };
   const changeTrapCount = async (value) => { const next = normalizeTrapCount(value); setTrapCount(next); await persistSetting({ trapCount: next }); };
   const changeTrapLethality = async (value) => { const next = normalizeTrapLethality(value); setTrapLethality(next); await persistSetting({ trapLethality: next }); };
 
@@ -159,8 +191,8 @@ export default function GmScenePresetPanelV2({ session }) {
     <div className="gm-scene-preset-v2">
       <section className="gm-encounter-difficulty pip-panel">
         <div className="gm-encounter-difficulty__controls">
-          <label><span>{text.title}</span><select className="pip-input" value={difficulty} onChange={(e) => changeDifficulty(e.target.value)}>{DIFFICULTIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
-          <label><span>{powerText.title}</span><select className="pip-input" value={enemyPowerTier} onChange={(e) => changeEnemyPower(e.target.value)}>{ENCOUNTER_ENEMY_POWER_TIERS.map((value) => <option key={value} value={value}>{powerText[value]}</option>)}</select></label>
+          <label><span>{text.title}</span><select className="pip-input" value={difficulty} disabled={updatingPower} onChange={(e) => changeDifficulty(e.target.value)}>{DIFFICULTIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
+          <label><span>{powerText.title}</span><select className="pip-input" value={enemyPowerTier} disabled={updatingPower} onChange={(e) => changeEnemyPower(e.target.value)}>{ENCOUNTER_ENEMY_POWER_TIERS.map((value) => <option key={value} value={value}>{powerText[value]}</option>)}</select></label>
           <label><span>{text.faction}</span><select className="pip-input" value={enemyFaction} onChange={(e) => changeEnemyFaction(e.target.value)}>{ENEMY_GROUP_OPTIONS.map((value) => <option key={value} value={value}>{enemyGroupLabel(value, lang)}</option>)}</select></label>
           <label><span>{text.enemyCount}</span><input className="pip-input" type="number" min="0" max={MAX_MANUAL_ENEMY_COUNT} value={enemyCountOverride} onChange={(e) => changeEnemyCount(e.target.value)} /></label>
           <label><span>{text.trapCount}</span><input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(e) => changeTrapCount(e.target.value)} /></label>
@@ -170,6 +202,7 @@ export default function GmScenePresetPanelV2({ session }) {
         <div className="gm-encounter-difficulty__power" aria-live="polite">
           <strong>{encounterEnemyPowerDescription(enemyPowerTier, lang, t)}</strong>
           <small>{powerText.note}</small>
+          {powerNotice ? <small className="gm-encounter-power-notice" role="status">{powerNotice}</small> : null}
         </div>
       </section>
       <GmScenePresetPanel session={sessionWithEncounterSettings} encounterSettings={encounterSettings} />
