@@ -7,6 +7,7 @@ import {
   generateProceduralRoomData,
 } from "../../utils/proceduralRoomContent.js";
 import { applyNpcRank } from "../../utils/npcCombat.js";
+import { rewriteAttackDamageDice } from "../../utils/attackDamageNotation.js";
 import { cellsInsideRoom, getProceduralRoomBounds } from "../../utils/proceduralRoomLayout.js";
 import { enemyGroupLabel } from "../../utils/proceduralEnemyGroups.js";
 import { generateSettlementRoomMarkers } from "../../utils/proceduralSettlementRoomMarkers.js";
@@ -192,7 +193,7 @@ function scaleAttackText(value, attackBonus = 0, damageBonus = 0) {
   return String(value || "").split(/\n/).map((line) => {
     let next = line;
     if (attack) next = next.replace(/\bTN\s*(\d+)\b/gi, (_, raw) => `TN ${Math.min(15, Number(raw) + attack)}`);
-    if (damage) next = next.replace(/\b(\d+)\s*(CD|DC|КУ)\b/gi, (_, raw, unit) => `${Number(raw) + damage} ${unit}`);
+    if (damage) next = rewriteAttackDamageDice(next, (baseDice) => baseDice > 0 ? baseDice + damage : 0).text;
     return next;
   }).join("\n");
 }
