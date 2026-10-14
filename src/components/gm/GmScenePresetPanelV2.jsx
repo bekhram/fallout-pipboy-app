@@ -62,6 +62,10 @@ function specFromScene(scene) {
   return spec && typeof spec === "object" ? spec : null;
 }
 
+function settingsFromScene(scene) {
+  return specFromScene(scene) || scene?.environment?.encounterDraftSettings || {};
+}
+
 function stripLegacyEncounterOptions(spec = {}) {
   const {
     questType: _questType,
@@ -78,7 +82,7 @@ export default function GmScenePresetPanelV2({ session }) {
   const text = COPY[lang];
   const powerText = encounterEnemyPowerCopy(lang);
   const scene = session?.tacticalScene || null;
-  const savedSpec = specFromScene(scene);
+  const savedSpec = settingsFromScene(scene);
   const [difficulty, setDifficulty] = useState(() => normalizeEncounterDifficulty(savedSpec?.encounterDifficulty));
   const [enemyFaction, setEnemyFaction] = useState(() => normalizeEnemyGroup(savedSpec?.enemyFaction));
   const [enemyCountOverride, setEnemyCountOverride] = useState(() => normalizeEnemyCountOverride(savedSpec?.enemyCountOverride));
@@ -89,7 +93,7 @@ export default function GmScenePresetPanelV2({ session }) {
   const [trapLethality, setTrapLethality] = useState(() => normalizeTrapLethality(savedSpec?.trapLethality));
 
   useEffect(() => {
-    const spec = specFromScene(scene);
+    const spec = settingsFromScene(scene);
     setDifficulty(normalizeEncounterDifficulty(spec?.encounterDifficulty));
     setEnemyFaction(normalizeEnemyGroup(spec?.enemyFaction));
     setEnemyCountOverride(normalizeEnemyCountOverride(spec?.enemyCountOverride));
@@ -115,6 +119,14 @@ export default function GmScenePresetPanelV2({ session }) {
           ...patch,
           environment: {
             ...environment,
+            encounterDraftSettings: {
+              encounterDifficulty: difficulty,
+              enemyFaction,
+              enemyCountOverride,
+              enemyPowerTier,
+              trapCount,
+              trapLethality,
+            },
             proceduralMapSpec: {
               ...stripLegacyEncounterOptions(proceduralMapSpec),
               encounterDifficulty: difficulty,
@@ -133,20 +145,26 @@ export default function GmScenePresetPanelV2({ session }) {
 
   const persistSetting = async (patch) => {
     const spec = specFromScene(scene);
-    if (!spec) return;
-    await session.updateTacticalScene?.({
+    const settings = {
+      encounterDifficulty: difficulty,
+      enemyFaction,
+      enemyCountOverride,
+      enemyPowerTier,
+      trapCount,
+      trapLethality,
+      ...patch,
+    };
+    // Enemy strength also applies to manually created GM scenes. Store a small
+    // draft even before a procedural map has been generated, without creating
+    // a fake procedural map that would overwrite the active battlemap.
+    return session.updateTacticalScene?.({
       environment: {
         ...(scene?.environment || {}),
-        proceduralMapSpec: {
+        encounterDraftSettings: settings,
+        ...(spec ? { proceduralMapSpec: {
           ...stripLegacyEncounterOptions(spec),
-          encounterDifficulty: difficulty,
-          enemyFaction,
-          enemyCountOverride,
-          enemyPowerTier,
-          trapCount,
-          trapLethality,
-          ...patch,
-        },
+          ...settings,
+        } } : {}),
       },
     });
   };
