@@ -131,7 +131,7 @@ export default function GmUnifiedTokenManagerV10({ session }) {
       const stats = token?.stats && typeof token.stats === "object" ? token.stats : {};
       return { ...token, stats: dedupeAttackSources(stats) };
     });
-    const spec = session.tacticalScene.environment?.proceduralMapSpec;
+    const spec = session.tacticalScene.environment?.proceduralMapSpec || session.tacticalScene.environment?.encounterDraftSettings;
     return {
       ...session,
       tacticalScene: { ...session.tacticalScene, tokens },
