@@ -55,9 +55,9 @@ export function initialWeaponD6Count(weapon, fallback = 4) {
 }
 
 function attackNameKey(line) {
-  const text = String(line || "").replace(/^\\s*[•\\-–—]\\s*/, "").trim();
+  const text = String(line || "").replace(/^\s*[•\-–—]\s*/, "").trim();
   const colon = text.match(/^([^:]+):/);
-  const dash = text.match(/^(.+?)\\s+[—–-]\\s+(?=(?:BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\\b)/i);
+  const dash = text.match(/^(.+?)\s+[—–-]\s+(?=(?:BODY|MIND|STR|PER|END|CHA|INT|AGI|LCK)\b)/i);
   const name = colon?.[1] || dash?.[1] || "";
   return name.toLowerCase().replace(/[^a-z0-9а-яёіїєґ]+/gi, "").trim();
 }
@@ -71,15 +71,15 @@ function attackNameKey(line) {
 export function restoreLegacyAttackDamageDice(baseText = "", originalText = "") {
   if (!originalText || !baseText) return String(baseText || "");
   const originals = new Map();
-  for (const line of String(originalText).split(/\\n+/)) {
+  for (const line of String(originalText).split(/\n+/)) {
     const key = attackNameKey(line);
     const dice = extractAttackDamageDice(line);
     if (key && dice > 0) originals.set(key, dice);
   }
-  return String(baseText).split(/\\n/).map(line => {
+  return String(baseText).split(/\n/).map(line => {
     if (extractAttackDamageDice(line) !== 0) return line;
     const source = originals.get(attackNameKey(line));
     if (!source) return line;
     return rewriteAttackDamageDice(line, () => source).text;
-  }).join("\\n");
+  }).join("\n");
 }
