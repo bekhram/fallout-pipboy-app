@@ -86,6 +86,21 @@
   background: color-mix(in srgb, currentColor 15%, transparent);
 }
 
+.session-gm-reconnect {
+  padding: 5px 9px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.session-gm-reconnect:hover,
+.session-gm-reconnect:focus-visible {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
 .session-gm-nav {
   position: sticky;
   top: 62px;
