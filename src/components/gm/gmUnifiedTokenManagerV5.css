@@ -22,3 +22,18 @@
   .gm-token-v5-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .gm-token-v5-stats span{min-width:0}
 }
+
+.gm-token-v5-enemy-power {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem .65rem;
+  padding: 6px 9px;
+  margin: 6px 0;
+  border: 1px solid color-mix(in srgb, currentColor 60%, transparent);
+  border-left: 3px solid currentColor;
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  font-size: .69rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.gm-token-v5-enemy-power small { font-size: .67rem; opacity: .85; }
