@@ -176,3 +176,21 @@ export function applyGeneratedEncounterPower(stats = {}, spec = {}) {
   if (disposition !== "hostile") return stats;
   return applyEncounterDifficultyPower(stats, spec.encounterDifficulty ?? spec.difficulty, spec.enemyPowerTier);
 }
+
+/**
+ * Update the effective combat numbers of GM enemy cards in one campaign commit.
+ * This is safe to repeat: applyGeneratedEncounterPower always reads its saved
+ * encounterBase* fields, so switching tiers does not stack modifiers.
+ * Players, friendly/neutral NPCs and non-combat scenery are left unchanged.
+ */
+export function applyEncounterPowerToSceneTokens(tokens = [], spec = {}) {
+  let updated = 0;
+  const nextTokens = (Array.isArray(tokens) ? tokens : []).map((token) => {
+    if (token?.kind !== "npc" || !token.stats || typeof token.stats !== "object") return token;
+    const disposition = String(token.stats.generatedDisposition || "hostile").toLowerCase();
+    if (disposition !== "hostile") return token;
+    updated += 1;
+    return { ...token, stats: applyGeneratedEncounterPower(token.stats, spec) };
+  });
+  return { tokens: nextTokens, updated };
+}

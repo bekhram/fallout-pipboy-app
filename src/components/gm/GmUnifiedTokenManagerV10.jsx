@@ -7,6 +7,7 @@ import {
   normalizeWeaponAttack,
   parseAttackText,
 } from "../../utils/npcCombat.js";
+import { applyGeneratedEncounterPower } from "../../utils/proceduralEncounterDifficultyPower.js";
 import GmUnifiedTokenManagerV9 from "./GmUnifiedTokenManagerV9.jsx";
 import "./gmUnifiedTokenManagerV10.css";
 
@@ -130,9 +131,20 @@ export default function GmUnifiedTokenManagerV10({ session }) {
       const stats = token?.stats && typeof token.stats === "object" ? token.stats : {};
       return { ...token, stats: dedupeAttackSources(stats) };
     });
+    const spec = session.tacticalScene.environment?.proceduralMapSpec || session.tacticalScene.environment?.encounterDraftSettings;
     return {
       ...session,
       tacticalScene: { ...session.tacticalScene, tokens },
+      // Manual bestiary/NPC spawns must respect the same selected GM strength
+      // as procedural spawns. Generated enemies are already scaled on their
+      // separate placement route; the saved encounterBase* makes this safe.
+      createNpcToken: (payload = {}) => {
+        if (!spec || !payload?.stats) return session.createNpcToken?.(payload);
+        return session.createNpcToken?.({
+          ...payload,
+          stats: applyGeneratedEncounterPower(payload.stats, spec),
+        });
+      },
     };
   }, [session]);
 

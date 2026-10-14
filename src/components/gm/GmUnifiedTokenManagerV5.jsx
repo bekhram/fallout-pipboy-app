@@ -20,6 +20,8 @@ import {
 } from "../../utils/npcFeaturePresets.js";
 import { findFreePlacement } from "../../utils/gmSessionModel.js";
 import { getBestiaryTokenUrl } from "../../utils/bestiaryTokens.js";
+import { applyGeneratedEncounterPower } from "../../utils/proceduralEncounterDifficultyPower.js";
+import { encounterEnemyPowerCopy, encounterEnemyPowerProfile, normalizeEncounterEnemyPowerTier } from "../../utils/encounterEnemyPower.js";
 import GmUnifiedTokenManagerV4 from "./GmUnifiedTokenManagerV4.jsx";
 import "./gmUnifiedTokenManagerV5.css";
 
@@ -260,8 +262,9 @@ export default function GmUnifiedTokenManagerV5({ session }) {
     return counts;
   }, [customEntries]);
 
-  const quickStats = useMemo(
-    () => buildQuickStats(selectedEntry, {
+  const encounterSpec = session?.tacticalScene?.environment?.proceduralMapSpec || session?.tacticalScene?.environment?.encounterDraftSettings;
+  const quickStats = useMemo(() => {
+    const stats = buildQuickStats(selectedEntry, {
       rank: quickRank,
       horde: quickHorde,
       hordeSize: quickHordeSize,
@@ -269,9 +272,10 @@ export default function GmUnifiedTokenManagerV5({ session }) {
       legendaryAbilityId,
       rewardType,
       reward,
-    }),
-    [selectedEntry, quickRank, quickHorde, quickHordeSize, specialFeatureId, legendaryAbilityId, rewardType, reward]
-  );
+    });
+    return stats && encounterSpec ? applyGeneratedEncounterPower(stats, encounterSpec) : stats;
+  }, [selectedEntry, quickRank, quickHorde, quickHordeSize, specialFeatureId, legendaryAbilityId, rewardType, reward,
+      encounterSpec?.encounterDifficulty, encounterSpec?.enemyPowerTier]);
   const quickAttacks = useMemo(() => attackNames(selectedEntry), [selectedEntry]);
   const legendaryOptions = useMemo(
     () => legendaryAbilitiesFor(String(selectedEntry?.cardKind || "creature").toLowerCase() === "npc" ? "npc" : "creature"),
@@ -525,6 +529,13 @@ export default function GmUnifiedTokenManagerV5({ session }) {
             <span className="gm-token-v5-size">{quickStats.footprint}×{quickStats.footprint}</span>
           </div>
 
+          {normalizeEncounterEnemyPowerTier(quickStats.enemyPowerTier) !== "none" ? (
+            <div className="gm-token-v5-enemy-power" data-enemy-power-tier={quickStats.enemyPowerTier}>
+              <strong>⚡ {encounterEnemyPowerCopy(language)[quickStats.enemyPowerTier]}</strong>
+              <span>+{quickStats.encounterDamageBonus ?? encounterEnemyPowerProfile(quickStats.enemyPowerTier).damageBonus} CD · DR +{quickStats.encounterResistanceBonus ?? encounterEnemyPowerProfile(quickStats.enemyPowerTier).resistanceBonus}</span>
+              <small>{(quickStats.encounterAttackEffects || []).join(" · ")}</small>
+            </div>
+          ) : null}
           <div className="gm-token-v5-stats">
             <span>HP <b>{quickStats.hp}/{quickStats.maxHp}</b></span>
             <span>DEF <b>{quickStats.defense}</b></span>
