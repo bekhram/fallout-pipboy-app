@@ -262,7 +262,7 @@ export default function GmUnifiedTokenManagerV5({ session }) {
     return counts;
   }, [customEntries]);
 
-  const encounterSpec = session?.tacticalScene?.environment?.proceduralMapSpec;
+  const encounterSpec = session?.tacticalScene?.environment?.proceduralMapSpec || session?.tacticalScene?.environment?.encounterDraftSettings;
   const quickStats = useMemo(() => {
     const stats = buildQuickStats(selectedEntry, {
       rank: quickRank,
