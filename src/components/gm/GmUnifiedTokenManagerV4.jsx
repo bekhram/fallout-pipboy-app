@@ -726,7 +726,7 @@ export default function GmUnifiedTokenManagerV4({ session }) {
               legendaryReward: spawnReward,
             }
           : selectedPreviewBase
-      ), scene?.environment?.proceduralMapSpec || {})
+      ), scene?.environment?.proceduralMapSpec || scene?.environment?.encounterDraftSettings || {})
     : null;
 
   return (
