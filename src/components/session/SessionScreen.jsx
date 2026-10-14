@@ -38,6 +38,7 @@ const BASE = {
     connecting: "Connecting",
     waiting: "Waiting",
     disconnected: "Disconnected",
+    reconnect: "RECONNECT",
     error: "Connection error",
     copy: "COPY CODE",
     copied: "COPIED",
@@ -80,6 +81,7 @@ const BASE = {
     connecting: "Подключение",
     waiting: "Ожидание",
     disconnected: "Отключено",
+    reconnect: "ПЕРЕПОДКЛЮЧИТЬ",
     error: "Ошибка соединения",
     copy: "КОПИРОВАТЬ КОД",
     copied: "СКОПИРОВАНО",
@@ -122,6 +124,7 @@ const BASE = {
     connecting: "Підключення",
     waiting: "Очікування",
     disconnected: "Відключено",
+    reconnect: "ПЕРЕПІДКЛЮЧИТИ",
     error: "Помилка з'єднання",
     copy: "КОПІЮВАТИ КОД",
     copied: "СКОПІЙОВАНО",
@@ -164,6 +167,7 @@ const BASE = {
     connecting: "Łączenie",
     waiting: "Oczekiwanie",
     disconnected: "Rozłączono",
+    reconnect: "POŁĄCZ PONOWNIE",
     error: "Błąd połączenia",
     copy: "KOPIUJ KOD",
     copied: "SKOPIOWANO",
@@ -340,7 +344,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
             <strong>{copy.workspace}</strong>
           </div>
           <div className="session-gm-hostbar__session">
-            <span className={`session-status-dot is-${status}`} role="img" aria-label={copy[status] || status} title={copy[status] || status} />
+            <span className={`session-status-dot is-${status}`} role="img" aria-label={copy[status] || status} title={session?.connectionMeta?.lastDisconnectReason || copy[status] || status} />
             <span className="gm-organic-connection"><strong>{copy[status] || status}</strong></span>
             <button
               type="button"
@@ -352,6 +356,11 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
             >
               {copyState ? "✓" : (sessionCode || "—")}
             </button>
+            {status === "disconnected" ? (
+              <button type="button" className="session-gm-reconnect" onClick={() => void session?.reconnectNow?.()}>
+                ↻ {copy.reconnect}
+              </button>
+            ) : null}
             <span className="gm-organic-player-count" title={copy.players}>♙ <strong>{players.length}</strong></span>
           </div>
           <SessionActionsMenu mode={mode} session={session} onBack={onShowLobby || onBack} onOpenSheet={onOpenSheet} labels={{...copy, back: lobbyLabel}} />
