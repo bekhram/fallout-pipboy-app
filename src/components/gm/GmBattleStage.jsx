@@ -24,12 +24,12 @@ const LazyVaultEncounterPanel = lazy(() => import("./GmVaultEncounterPanel.jsx")
 // Only mount the Phaser map, scene portals and interactive tools while the
 // battlemap tab is visible. The scene generator must never run alongside a
 // hidden Phaser canvas or its token/DOM observers.
-export default function GmBattleStage({ session, toolsSession, ...mapProps }) {
+export default function GmBattleStage({ session, toolsSession, effectsLabel, ...mapProps }) {
   const isVault = session?.tacticalScene?.environment?.proceduralMapSpec?.type === "vault_tunnels";
   return (
     <>
       <details className="gm-tactical-battle-effects">
-        <summary>Effects</summary>
+        <summary>{effectsLabel}</summary>
         <TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly />
       </details>
       <div className="gm-organic-initiative" />
