@@ -27,6 +27,7 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap,openGenera
     if (openGeneratorRequest > 0) {
       setShowEncounterGenerator(true);
       setShowExplorationDetails(false);
+      onGeneratorRequestHandled?.();
     }
   }, [openGeneratorRequest]);
   const selectedId=String(session?.selectedSceneId||session?.tacticalScene?.sceneId||"");
