@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import useGmGenerationPreview from "../../hooks/useGmGenerationPreview.js";
 import { useTranslation } from "react-i18next";
 import {
@@ -11,6 +11,7 @@ import {
   labelFor,
 } from "../../utils/tacticalEnvironment.js";
 import { normalizeLootRarity } from "../../utils/proceduralRoomContent.js";
+import { compressGmBackground } from "../../utils/gmBackgroundImage.js";
 import { generateVaultLayout, vaultLayoutStartZone, vaultLayoutToProceduralMap } from "../../utils/proceduralVaultGenerator.js";
 import "./gmScenePresetPanel.css";
 
@@ -32,10 +33,10 @@ const LABELS = {
 };
 
 const COPY = {
-  en: { title: "[ FALLOUT MAP GENERATOR ]", type: "LOCATION", terrain: "TERRAIN", grid: "MAP SIZE", seed: "SEED", newSeed: "NEW SEED", density: "DETAIL DENSITY", loot: "MAX LOOT RARITY", wealth: "LOCATION WEALTH", level: "AVG. PARTY LEVEL", party: "PARTY SIZE", generate: "GENERATE / APPLY", regenerate: "NEW VARIANT", upload: "UPLOAD CUSTOM BACKGROUND", applied: "Generated background applied to scene", fixed: "Procedural map size: 24×24 / 36×36 / 48×48", weak: "WEAK", normal: "NORMAL", strong: "STRONG", gridVisibility: "GRID VISIBILITY" },
-  ru: { title: "[ ГЕНЕРАТОР КАРТ FALLOUT ]", type: "ЛОКАЦИЯ", terrain: "ЛАНДШАФТ", grid: "РАЗМЕР КАРТЫ", seed: "SEED", newSeed: "НОВЫЙ SEED", density: "ПЛОТНОСТЬ ДЕТАЛЕЙ", loot: "МАКС. РЕДКОСТЬ ЛУТА", wealth: "БОГАТСТВО ЛОКАЦИИ", level: "СР. УРОВЕНЬ ГРУППЫ", party: "РАЗМЕР ГРУППЫ", generate: "СГЕНЕРИРОВАТЬ / ПРИМЕНИТЬ", regenerate: "НОВЫЙ ВАРИАНТ", upload: "ЗАГРУЗИТЬ СВОЙ ФОН", applied: "Сгенерированный фон применён к сцене", fixed: "Размер процедурной карты: 24×24 / 36×36 / 48×48", weak: "СЛАБЫЙ", normal: "ОБЫЧНЫЙ", strong: "КОНТРАСТНЫЙ", gridVisibility: "ВИДИМОСТЬ ГРИДА" },
-  uk: { title: "[ ГЕНЕРАТОР МАП FALLOUT ]", type: "ЛОКАЦІЯ", terrain: "ЛАНДШАФТ", grid: "РОЗМІР МАПИ", seed: "SEED", newSeed: "НОВИЙ SEED", density: "ЩІЛЬНІСТЬ ДЕТАЛЕЙ", loot: "МАКС. РІДКІСТЬ ЛУТУ", wealth: "БАГАТСТВО ЛОКАЦІЇ", level: "СЕР. РІВЕНЬ ГРУПИ", party: "РОЗМІР ГРУПИ", generate: "ЗГЕНЕРУВАТИ / ЗАСТОСУВАТИ", regenerate: "НОВИЙ ВАРІАНТ", upload: "ЗАВАНТАЖИТИ ВЛАСНИЙ ФОН", applied: "Згенерований фон застосовано до сцени", fixed: "Процедурні мапи використовують фіксовану сітку 24×24", weak: "СЛАБКА", normal: "ЗВИЧАЙНА", strong: "КОНТРАСТНА", gridVisibility: "ВИДИМІСТЬ СІТКИ" },
-  pl: { title: "[ GENERATOR MAP FALLOUT ]", type: "LOKACJA", terrain: "TEREN", grid: "ROZMIAR MAPY", seed: "SEED", newSeed: "NOWY SEED", density: "GĘSTOŚĆ SZCZEGÓŁÓW", loot: "MAKS. RZADKOŚĆ ŁUPU", wealth: "BOGACTWO LOKACJI", level: "ŚR. POZIOM DRUŻYNY", party: "ROZMIAR DRUŻYNY", generate: "GENERUJ / ZASTOSUJ", regenerate: "NOWY WARIANT", upload: "WGRAJ WŁASNE TŁO", applied: "Wygenerowane tło zastosowano do sceny", fixed: "Rozmiar mapy proceduralnej: 24×24 / 36×36 / 48×48", weak: "SŁABA", normal: "NORMALNA", strong: "KONTRASTOWA", gridVisibility: "WIDOCZNOŚĆ SIATKI" },
+  en: { title: "MAP CONFIGURATION", type: "LOCATION", terrain: "TERRAIN", grid: "MAP SIZE", seed: "SEED", newSeed: "NEW SEED", density: "DETAIL DENSITY", loot: "MAX LOOT RARITY", wealth: "LOCATION WEALTH", level: "AVG. PARTY LEVEL", party: "PARTY SIZE", generate: "GENERATE / APPLY", regenerate: "NEW VARIANT", upload: "UPLOAD CUSTOM BACKGROUND", applied: "Generated background applied to scene", fixed: "Procedural map size: 24×24 / 36×36 / 48×48", weak: "WEAK", normal: "NORMAL", strong: "STRONG", gridVisibility: "GRID VISIBILITY", advanced: "Advanced settings", preview: "Preview", imageTooLarge: "Image is too large", imageError: "Could not upload image", uploadSuccess: "Custom background saved", uploading: "Uploading…" },
+  ru: { title: "НАСТРОЙКА КАРТЫ", type: "ЛОКАЦИЯ", terrain: "ЛАНДШАФТ", grid: "РАЗМЕР КАРТЫ", seed: "SEED", newSeed: "НОВЫЙ SEED", density: "ПЛОТНОСТЬ ДЕТАЛЕЙ", loot: "МАКС. РЕДКОСТЬ ЛУТА", wealth: "БОГАТСТВО ЛОКАЦИИ", level: "СР. УРОВЕНЬ ГРУППЫ", party: "РАЗМЕР ГРУППЫ", generate: "СГЕНЕРИРОВАТЬ / ПРИМЕНИТЬ", regenerate: "НОВЫЙ ВАРИАНТ", upload: "ЗАГРУЗИТЬ СВОЙ ФОН", applied: "Сгенерированный фон применён к сцене", fixed: "Размер процедурной карты: 24×24 / 36×36 / 48×48", weak: "СЛАБЫЙ", normal: "ОБЫЧНЫЙ", strong: "КОНТРАСТНЫЙ", gridVisibility: "ВИДИМОСТЬ ГРИДА", advanced: "Дополнительные настройки", preview: "Предпросмотр", imageTooLarge: "Изображение слишком большое", imageError: "Не удалось загрузить изображение", uploadSuccess: "Свой фон сохранён", uploading: "Загрузка…" },
+  uk: { title: "НАЛАШТУВАННЯ МАПИ", type: "ЛОКАЦІЯ", terrain: "ЛАНДШАФТ", grid: "РОЗМІР МАПИ", seed: "SEED", newSeed: "НОВИЙ SEED", density: "ЩІЛЬНІСТЬ ДЕТАЛЕЙ", loot: "МАКС. РІДКІСТЬ ЛУТУ", wealth: "БАГАТСТВО ЛОКАЦІЇ", level: "СЕР. РІВЕНЬ ГРУПИ", party: "РОЗМІР ГРУПИ", generate: "ЗГЕНЕРУВАТИ / ЗАСТОСУВАТИ", regenerate: "НОВИЙ ВАРІАНТ", upload: "ЗАВАНТАЖИТИ ВЛАСНИЙ ФОН", applied: "Згенерований фон застосовано до сцени", fixed: "Розмір процедурної мапи: 24×24 / 36×36 / 48×48", weak: "СЛАБКА", normal: "ЗВИЧАЙНА", strong: "КОНТРАСТНА", gridVisibility: "ВИДИМІСТЬ СІТКИ", advanced: "Додаткові налаштування", preview: "Попередній перегляд", imageTooLarge: "Зображення завелике", imageError: "Не вдалося завантажити зображення", uploadSuccess: "Власне тло збережено", uploading: "Завантаження…" },
+  pl: { title: "USTAWIENIA MAPY", type: "LOKACJA", terrain: "TEREN", grid: "ROZMIAR MAPY", seed: "SEED", newSeed: "NOWY SEED", density: "GĘSTOŚĆ SZCZEGÓŁÓW", loot: "MAKS. RZADKOŚĆ ŁUPU", wealth: "BOGACTWO LOKACJI", level: "ŚR. POZIOM DRUŻYNY", party: "ROZMIAR DRUŻYNY", generate: "GENERUJ / ZASTOSUJ", regenerate: "NOWY WARIANT", upload: "WGRAJ WŁASNE TŁO", applied: "Wygenerowane tło zastosowano do sceny", fixed: "Rozmiar mapy proceduralnej: 24×24 / 36×36 / 48×48", weak: "SŁABA", normal: "NORMALNA", strong: "KONTRASTOWA", gridVisibility: "WIDOCZNOŚĆ SIATKI", advanced: "Ustawienia zaawansowane", preview: "Podgląd", imageTooLarge: "Obraz jest za duży", imageError: "Nie udało się wgrać obrazu", uploadSuccess: "Własne tło zapisane", uploading: "Wgrywanie…" },
 };
 
 const WEALTH_LABELS = {
@@ -108,6 +109,9 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
   const [contrast, setContrast] = useState(() => readContrast(scene?.sceneId));
   const [message, setMessage] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const uploadInputRef = useRef(null);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     const spec = scene?.environment?.proceduralMapSpec;
@@ -187,6 +191,24 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
     window.setTimeout(() => setMessage(""), 1800);
   };
 
+  // The battlemap is deliberately unmounted on this screen. Give the
+  // generator its own file input instead of clicking a hidden battlemap input.
+  const uploadCustomBackground = async (file) => {
+    if (!file || uploadBusy) return;
+    setUploadError("");
+    setUploadBusy(true);
+    try {
+      const backgroundUrl = await compressGmBackground(file);
+      const response = await session.updateTacticalScene?.({ backgroundUrl, backgroundName: file.name });
+      if (response?.ok === false) throw new Error("save");
+      setMessage(text.uploadSuccess);
+    } catch (error) {
+      setUploadError(error?.message === "too-large" ? text.imageTooLarge : text.imageError);
+    } finally {
+      setUploadBusy(false);
+    }
+  };
+
   const changeContrast = (value) => {
     setContrast(value);
     try { localStorage.setItem(contrastKey(scene.sceneId), value); } catch { /* best effort */ }
@@ -198,9 +220,25 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
       <header className="gm-scene-presets__head"><div><strong>{text.title}</strong><small>{text.fixed}</small></div></header>
+      <div className="gm-proc-map__controls gm-proc-map__controls--primary">
+        <label><span>{text.type}</span><select className="pip-input" value={type} onChange={(e) => setType(e.target.value)}>{MAP_TYPES.map((value) => <option key={value} value={value}>{LABELS[lang]?.[value] || LABELS.en[value]}</option>)}</select></label>
+        <label><span>{text.terrain}</span><select className="pip-input" value={terrain} onChange={(e) => setTerrain(e.target.value)}>{TERRAIN_TYPES.map((value) => <option key={value} value={value}>{labelFor("terrain", value, lang)}</option>)}</select></label>
+        <label><span>{text.grid}</span><select className="pip-input" value={gridSize} onChange={(e) => setGridSize(normalizeGridSize(e.target.value))}>{PROCEDURAL_MAP_SIZES.map((size) => <option key={size} value={size}>{size}×{size}</option>)}</select></label>
+        <label><span>{text.level}</span><input className="pip-input" type="number" inputMode="numeric" min="1" max="50" step="1" value={avgPartyLevel} onChange={(e) => setAvgPartyLevel(e.target.value)} onBlur={() => setAvgPartyLevel(String(clampInteger(avgPartyLevel, 1, 50, 1)))} /></label>
+        <label><span>{text.party}</span><input className="pip-input" type="number" inputMode="numeric" min="1" max="8" step="1" value={partySize} onChange={(e) => setPartySize(e.target.value)} onBlur={() => setPartySize(String(clampInteger(partySize, 1, 8, 1)))} /></label>
+      </div>
+      <details className="gm-generator-advanced">
+        <summary>{text.advanced}<span aria-hidden="true">⌄</span></summary>
+        <div className="gm-proc-map__controls gm-proc-map__controls--advanced">
+          <label><span>{text.loot}</span><select className="pip-input" value={lootRarity} onChange={(e) => setLootRarity(e.target.value)}>{LOOT_RARITIES.map((value) => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
+          <label><span>{text.wealth}</span><select className="pip-input" value={wealth} onChange={(e) => setWealth(e.target.value)}>{WEALTH_LEVELS.map((value) => <option key={value} value={value}>{WEALTH_LABELS[lang][value]}</option>)}</select></label>
+          <label className="gm-proc-map__seed"><span>{text.seed}</span><div><input className="pip-input" value={seed} maxLength={40} onChange={(e) => setSeed(e.target.value)} /><button type="button" className="pip-btn" onClick={() => setSeed(makeProceduralSeed())}>{text.newSeed}</button></div></label>
+          <label className="gm-proc-map__density"><span>{text.density}: {density}%</span><input type="range" min="10" max="100" step="5" value={density} onChange={(e) => setDensity(Number(e.target.value))} /></label>
+        </div>
+      </details>
       <div className="gm-proc-map__preview-toggle">
-        <button type="button" className="pip-btn" onClick={() => setPreviewOpen((value) => !value)}>
-          {previewOpen ? "− PREVIEW" : "+ PREVIEW"}
+        <button type="button" className="pip-btn" aria-expanded={previewOpen} onClick={() => setPreviewOpen((value) => !value)}>
+          {previewOpen ? "−" : "＋"} {text.preview}
         </button>
       </div>
       {previewOpen ? (
@@ -217,17 +255,6 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
           <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
         </div>
       ) : null}
-      <div className="gm-proc-map__controls">
-        <label><span>{text.type}</span><select className="pip-input" value={type} onChange={(e) => setType(e.target.value)}>{MAP_TYPES.map((value) => <option key={value} value={value}>{LABELS[lang]?.[value] || LABELS.en[value]}</option>)}</select></label>
-        <label><span>{text.terrain}</span><select className="pip-input" value={terrain} onChange={(e) => setTerrain(e.target.value)}>{TERRAIN_TYPES.map((value) => <option key={value} value={value}>{labelFor("terrain", value, lang)}</option>)}</select></label>
-        <label><span>{text.grid}</span><select className="pip-input" value={gridSize} onChange={(e) => setGridSize(normalizeGridSize(e.target.value))}>{PROCEDURAL_MAP_SIZES.map((size) => <option key={size} value={size}>{size}×{size}</option>)}</select></label>
-        <label><span>{text.loot}</span><select className="pip-input" value={lootRarity} onChange={(e) => setLootRarity(e.target.value)}>{LOOT_RARITIES.map((value) => <option key={value} value={value}>{value.toUpperCase()}</option>)}</select></label>
-        <label><span>{text.wealth}</span><select className="pip-input" value={wealth} onChange={(e) => setWealth(e.target.value)}>{WEALTH_LEVELS.map((value) => <option key={value} value={value}>{WEALTH_LABELS[lang][value]}</option>)}</select></label>
-        <label><span>{text.level}</span><input className="pip-input" type="number" inputMode="numeric" min="1" max="50" step="1" value={avgPartyLevel} onChange={(e) => setAvgPartyLevel(e.target.value)} onBlur={() => setAvgPartyLevel(String(clampInteger(avgPartyLevel, 1, 50, 1)))} /></label>
-        <label><span>{text.party}</span><input className="pip-input" type="number" inputMode="numeric" min="1" max="8" step="1" value={partySize} onChange={(e) => setPartySize(e.target.value)} onBlur={() => setPartySize(String(clampInteger(partySize, 1, 8, 1)))} /></label>
-        <label className="gm-proc-map__seed"><span>{text.seed}</span><div><input className="pip-input" value={seed} maxLength={40} onChange={(e) => setSeed(e.target.value)} /><button type="button" className="pip-btn" onClick={() => setSeed(makeProceduralSeed())}>{text.newSeed}</button></div></label>
-        <label className="gm-proc-map__density"><span>{text.density}: {density}%</span><input type="range" min="10" max="100" step="5" value={density} onChange={(e) => setDensity(Number(e.target.value))} /></label>
-      </div>
       <div className="gm-proc-map__balance" aria-live="polite" aria-busy={pending}>
         <strong>{encounterText.title}</strong>
         <div><span>{encounterText.enemies}</span><b>{pending ? "…" : error ? "—" : (encounter?.totalEnemies ?? 0)}</b></div>
@@ -236,7 +263,13 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
           <div><span>{encounterText.reward}</span><b>{pending ? "…" : error ? "—" : (encounter?.xpPerPlayer ?? 0)}</b></div>
         </> : null}
       </div>
-      <div className="gm-proc-map__actions"><button type="button" className="pip-btn is-primary" onClick={() => generate()}>{text.generate}</button><button type="button" className="pip-btn" onClick={() => generate({ newSeed: true })}>{text.regenerate}</button><button type="button" className="pip-btn" onClick={() => document.querySelector(".gm-tactical-map-core .tactical-background-input")?.click()}>{text.upload}</button></div>
+      <div className="gm-proc-map__actions">
+        <button type="button" className="pip-btn is-primary" onClick={() => generate()}>{text.generate}</button>
+        <button type="button" className="pip-btn" onClick={() => generate({ newSeed: true })}>{text.regenerate}</button>
+        <button type="button" className="pip-btn" disabled={uploadBusy} onClick={() => uploadInputRef.current?.click()}>{uploadBusy ? text.uploading : text.upload}</button>
+        <input ref={uploadInputRef} hidden type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => { uploadCustomBackground(event.target.files?.[0]); event.target.value = ""; }} />
+      </div>
+      {uploadError ? <div className="session-error" role="alert">{uploadError}</div> : null}
       <div className="gm-scene-presets__grid-control"><span>{text.gridVisibility}</span><div className="gm-scene-presets__grid-buttons">{["weak", "normal", "strong"].map((value) => <button key={value} type="button" className={`pip-btn${contrast === value ? " is-primary" : ""}`} onClick={() => changeContrast(value)}>{text[value]}</button>)}</div></div>
       {message ? <div className="gm-scene-presets__message">{message}</div> : null}
     </section>
