@@ -13,7 +13,7 @@ const COPY={
 };
 function lang(value){const code=String(value||"en").toLowerCase().split("-")[0];return COPY[code]?code:"en";}
 
-export default function GmSceneManagerScreen({session,onOpenBattlemap,openGeneratorRequest=0}){
+export default function GmSceneManagerScreen({session,onOpenBattlemap,openGeneratorRequest=0,onGeneratorRequestHandled}){
   const {i18n}=useTranslation();
   const text=COPY[lang(i18n.resolvedLanguage||i18n.language)];
   const scenes=Array.isArray(session?.tacticalScenes)?session.tacticalScenes:[];
