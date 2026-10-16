@@ -94,6 +94,24 @@
 .gm-organic-workspace .gm-narrative-editor__error { padding: 9px; border: 1px solid #915653; border-radius: 8px; color: #ffc7c0; font: 12px/1.4 system-ui; }
 .gm-organic-workspace .gm-room-card .gm-narrative-toggle { margin-top: 4px; }
 .gm-organic-workspace .gm-map-creature__editor { grid-column: 1/-1; min-width: 0; }
+.gm-organic-workspace .gm-map-creature__title-row {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.gm-organic-workspace .gm-map-creature__title-row > strong {
+  flex: 1 1 95px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  min-width: 0;
+}
+.gm-organic-workspace .gm-map-creature__title-row .gm-narrative-toggle {
+  margin-left: auto;
+  min-height: 32px;
+  max-width: 100%;
+  font-size: 10px;
+  padding: 6px 8px;
+}
+.gm-organic-workspace .gm-map-creature__title-row .gm-map-creature__expand { margin-left: 0; }
 .gm-organic-workspace .gm-map-creature__number {
   display: inline-grid;
   place-items: center;
