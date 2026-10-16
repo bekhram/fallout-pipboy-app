@@ -168,7 +168,7 @@ export default function GmSessionMap(props) {
       ) : null}
       {activeTab === "scenes" ? (
         <Suspense fallback={<div className="pip-logbox">…</div>}>
-          <LazySceneManagerScreen session={session} onOpenBattlemap={() => selectTab("battle")} openGeneratorRequest={generatorRequest} />
+          <LazySceneManagerScreen session={session} onOpenBattlemap={() => selectTab("battle")} openGeneratorRequest={generatorRequest} onGeneratorRequestHandled={() => setGeneratorRequest(0)} />
         </Suspense>
       ) : null}
       {activeTab === "scene" ? (
