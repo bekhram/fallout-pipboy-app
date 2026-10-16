@@ -1,7 +1,7 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import useGmGenerationPreview from "../../hooks/useGmGenerationPreview.js";
 import { useTranslation } from "react-i18next";
 import {
-  generateProceduralMapDataUrl,
   makeProceduralSeed,
   proceduralLocationType,
   PROCEDURAL_MAP_SIZES,
@@ -10,12 +10,8 @@ import {
   TERRAIN_TYPES,
   labelFor,
 } from "../../utils/tacticalEnvironment.js";
-import {
-  generateProceduralEncounterSummary,
-  normalizeLootRarity,
-} from "../../utils/proceduralRoomContent.js";
+import { normalizeLootRarity } from "../../utils/proceduralRoomContent.js";
 import { generateVaultLayout, vaultLayoutStartZone, vaultLayoutToProceduralMap } from "../../utils/proceduralVaultGenerator.js";
-import { generateVaultEncounterPlan } from "../../utils/proceduralVaultEncounter.js";
 import "./gmScenePresetPanel.css";
 
 const LazyWastelandPreview = lazy(() => import("./WastelandAssetPortal.jsx").then((m) => ({ default: m.WastelandAssetLayer })));
@@ -149,16 +145,11 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
     ...encounterSettings,
   }), [type, terrain, seed, gridSize, density, lootRarity, wealth, avgPartyLevel, partySize, encounterSettings]);
 
-  const previewUrl = useMemo(
-    () => (previewOpen && type !== "vault_tunnels" ? generateProceduralMapDataUrl(generationSpec) : ""),
-    [previewOpen, generationSpec],
-  );
-  const encounter = useMemo(
-    () => (type === "vault_tunnels"
-      ? { totalEnemies: generateVaultEncounterPlan(generationSpec).total }
-      : generateProceduralEncounterSummary(generationSpec)),
-    [type, generationSpec],
-  );
+  // Large SVG maps and bestiary-based encounters are calculated off-thread.
+  // Debouncing also prevents a new computation for every slider/keyboard event.
+  const { encounter, previewUrl, previewSpec, pending, error } =
+    useGmGenerationPreview(generationSpec, previewOpen);
+  const previewReady = Boolean(previewOpen && !pending && !error && previewSpec);
 
   if (!scene || session?.mode !== "host") return null;
 
@@ -202,7 +193,7 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
     applyContrastClass(value);
   };
 
-  const previewBackground = previewOpen && previewUrl ? `url(${JSON.stringify(previewUrl)})` : "";
+  const previewBackground = previewReady && previewUrl ? `url(${JSON.stringify(previewUrl)})` : "";
 
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
@@ -214,13 +205,15 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
       </div>
       {previewOpen ? (
         <div className="gm-proc-map__preview" style={{ position: "relative", backgroundImage: previewBackground, backgroundSize: "100% 100%", backgroundPosition: "0 0", backgroundRepeat: "no-repeat" }}>
-          <Suspense fallback={<small>…</small>}>
-            {type === "wasteland" ? <LazyWastelandPreview spec={generationSpec} preview /> : null}
-            {type === "settlement" ? <LazySettlementPreview spec={generationSpec} preview /> : null}
-            {type === "red_rocket" ? <LazyRedRocketPreview spec={generationSpec} preview /> : null}
-            {type === "super_duper_mart" ? <LazySuperDuperPreview spec={generationSpec} preview /> : null}
-            {type === "vault_tunnels" ? <LazyVaultPreview spec={generationSpec} preview /> : null}
-          </Suspense>
+          {previewReady ? (
+            <Suspense fallback={<small>…</small>}>
+              {type === "wasteland" ? <LazyWastelandPreview spec={previewSpec} preview /> : null}
+              {type === "settlement" ? <LazySettlementPreview spec={previewSpec} preview /> : null}
+              {type === "red_rocket" ? <LazyRedRocketPreview spec={previewSpec} preview /> : null}
+              {type === "super_duper_mart" ? <LazySuperDuperPreview spec={previewSpec} preview /> : null}
+              {type === "vault_tunnels" ? <LazyVaultPreview spec={previewSpec} preview /> : null}
+            </Suspense>
+          ) : <span className="gm-proc-map__preview-loading" role="status">{error || "…"}</span>}
           <span>{LABELS[lang]?.[type] || LABELS.en[type]} · {labelFor("terrain", terrain, lang)}</span><small>{gridSize}×{gridSize} · seed {seed}</small>
         </div>
       ) : null}
@@ -235,12 +228,12 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
         <label className="gm-proc-map__seed"><span>{text.seed}</span><div><input className="pip-input" value={seed} maxLength={40} onChange={(e) => setSeed(e.target.value)} /><button type="button" className="pip-btn" onClick={() => setSeed(makeProceduralSeed())}>{text.newSeed}</button></div></label>
         <label className="gm-proc-map__density"><span>{text.density}: {density}%</span><input type="range" min="10" max="100" step="5" value={density} onChange={(e) => setDensity(Number(e.target.value))} /></label>
       </div>
-      <div className="gm-proc-map__balance" aria-live="polite">
+      <div className="gm-proc-map__balance" aria-live="polite" aria-busy={pending}>
         <strong>{encounterText.title}</strong>
-        <div><span>{encounterText.enemies}</span><b>{encounter?.totalEnemies ?? 0}</b></div>
+        <div><span>{encounterText.enemies}</span><b>{pending ? "…" : error ? "—" : (encounter?.totalEnemies ?? 0)}</b></div>
         {type !== "vault_tunnels" ? <>
-          <div><span>{encounterText.target}</span><b>{encounter?.targetXp ?? 0}</b></div>
-          <div><span>{encounterText.reward}</span><b>{encounter?.xpPerPlayer ?? 0}</b></div>
+          <div><span>{encounterText.target}</span><b>{pending ? "…" : error ? "—" : (encounter?.targetXp ?? 0)}</b></div>
+          <div><span>{encounterText.reward}</span><b>{pending ? "…" : error ? "—" : (encounter?.xpPerPlayer ?? 0)}</b></div>
         </> : null}
       </div>
       <div className="gm-proc-map__actions"><button type="button" className="pip-btn is-primary" onClick={() => generate()}>{text.generate}</button><button type="button" className="pip-btn" onClick={() => generate({ newSeed: true })}>{text.regenerate}</button><button type="button" className="pip-btn" onClick={() => document.querySelector(".gm-tactical-map-core .tactical-background-input")?.click()}>{text.upload}</button></div>

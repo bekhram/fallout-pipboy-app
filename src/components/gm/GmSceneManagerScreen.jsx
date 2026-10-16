@@ -21,7 +21,7 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
   const [grid,setGrid]=useState("24x24");
   const [busy,setBusy]=useState("");
   const [error,setError]=useState("");
-  const [showEncounterGenerator,setShowEncounterGenerator]=useState(true);
+  const [showEncounterGenerator,setShowEncounterGenerator]=useState(false);
   const [showExplorationDetails,setShowExplorationDetails]=useState(false);
   const selectedId=String(session?.selectedSceneId||session?.tacticalScene?.sceneId||"");
   const liveId=String(session?.liveSceneId||"");
@@ -102,7 +102,7 @@ export default function GmSceneManagerScreen({session,onOpenBattlemap}){
     <section className="gm-scene-manager__encounter">
       <div className="gm-scene-manager__encounter-head">
         <div className="pip-panel-title">{text.encounter}</div>
-        <button type="button" className="pip-btn" onClick={()=>setShowEncounterGenerator((value)=>!value)}>
+        <button type="button" className="pip-btn" aria-expanded={showEncounterGenerator} aria-label={text.encounter} onClick={()=>setShowEncounterGenerator((value)=>!value)}>
           {showEncounterGenerator ? "−" : "+"}
         </button>
       </div>
