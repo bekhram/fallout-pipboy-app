@@ -21,6 +21,15 @@ import { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
 
 const LazyVaultEncounterPanel = lazy(() => import("./GmVaultEncounterPanel.jsx"));
 
+function savedGridContrast(sceneId) {
+  try {
+    const value = window.localStorage.getItem(`pip2d20_gm_grid_contrast_v1:${sceneId || "default"}`);
+    return ["weak", "normal", "strong"].includes(value) ? value : "strong";
+  } catch {
+    return "strong";
+  }
+}
+
 // Only mount the Phaser map, scene portals and interactive tools while the
 // battlemap tab is visible. The scene generator must never run alongside a
 // hidden Phaser canvas or its token/DOM observers.
@@ -33,7 +42,7 @@ export default function GmBattleStage({ session, toolsSession, effectsLabel, ...
         <TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly />
       </details>
       <div className="gm-organic-initiative" />
-      <div className="gm-tactical-map-core">
+      <div className={`gm-tactical-map-core gm-grid-contrast-${savedGridContrast(session?.tacticalScene?.sceneId)}`}>
         <GmSessionMapV2 {...mapProps} session={session} />
       </div>
       <WastelandAssetPortal session={session} />
