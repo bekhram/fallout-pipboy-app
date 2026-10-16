@@ -27,28 +27,28 @@ const COPY = {
     easy: "EASY", standard: "STANDARD", hard: "HARD", deadly: "DEADLY", target: "Target XP", actual: "Generated XP", reward: "XP / player",
     minion: "Minions", normal: "Standard", special: "Special", legendary: "Legendary",
     note: "Enemies are grouped by faction/type. Set enemy count to 0 for automatic difficulty-based generation, or choose an exact total manually.",
-    trapCount: "TRAP COUNT", trapLethality: "TRAP LETHALITY", low: "LOW", high: "HIGH",
+    trapCount: "TRAP COUNT", trapLethality: "TRAP LETHALITY", low: "LOW", high: "HIGH", trapSettings: "Traps and hazards",
   },
   ru: {
     title: "СЛОЖНОСТЬ ЭНКАУНТЕРА", faction: "ФРАКЦИЯ / ТИП ВРАГОВ", enemyCount: "КОЛИЧЕСТВО ВРАГОВ (0 = АВТО)", enemies: "Врагов",
     easy: "ЛЁГКАЯ", standard: "ОБЫЧНАЯ", hard: "СЛОЖНАЯ", deadly: "СМЕРТЕЛЬНАЯ", target: "Целевой XP", actual: "XP врагов", reward: "XP / игрока",
     minion: "Миньоны", normal: "Стандартные", special: "Особые", legendary: "Легендарные",
     note: "При значении 0 количество врагов рассчитывается автоматически по сложности. Любое другое число задаёт точное общее количество врагов.",
-    trapCount: "КОЛИЧЕСТВО ЛОВУШЕК", trapLethality: "СМЕРТЕЛЬНОСТЬ ЛОВУШЕК", low: "НИЗКАЯ", high: "ВЫСОКАЯ",
+    trapCount: "КОЛИЧЕСТВО ЛОВУШЕК", trapLethality: "СМЕРТЕЛЬНОСТЬ ЛОВУШЕК", low: "НИЗКАЯ", high: "ВЫСОКАЯ", trapSettings: "Ловушки и опасности",
   },
   uk: {
     title: "СКЛАДНІСТЬ ЕНКАУНТЕРА", faction: "ФРАКЦІЯ / ТИП ВОРОГІВ", enemyCount: "КІЛЬКІСТЬ ВОРОГІВ (0 = АВТО)", enemies: "Ворогів",
     easy: "ЛЕГКА", standard: "ЗВИЧАЙНА", hard: "СКЛАДНА", deadly: "СМЕРТЕЛЬНА", target: "Цільовий XP", actual: "XP ворогів", reward: "XP / гравця",
     minion: "Міньйони", normal: "Звичайні", special: "Особливі", legendary: "Легендарні",
     note: "За значення 0 кількість ворогів розраховується автоматично за складністю. Інше число задає точну загальну кількість ворогів.",
-    trapCount: "КІЛЬКІСТЬ ПАСТОК", trapLethality: "СМЕРТЕЛЬНІСТЬ ПАСТОК", low: "НИЗЬКА", high: "ВИСОКА",
+    trapCount: "КІЛЬКІСТЬ ПАСТОК", trapLethality: "СМЕРТЕЛЬНІСТЬ ПАСТОК", low: "НИЗЬКА", high: "ВИСОКА", trapSettings: "Пастки й небезпеки",
   },
   pl: {
     title: "TRUDNOŚĆ SPOTKANIA", faction: "FRAKCJA / TYP WROGÓW", enemyCount: "LICZBA WROGÓW (0 = AUTO)", enemies: "Wrogowie",
     easy: "ŁATWA", standard: "STANDARDOWA", hard: "TRUDNA", deadly: "ŚMIERTELNA", target: "Docelowe XP", actual: "XP wrogów", reward: "XP / gracza",
     minion: "Sługi", normal: "Zwykli", special: "Specjalni", legendary: "Legendarni",
     note: "Wartość 0 oblicza liczbę wrogów automatycznie z poziomu trudności. Inna liczba ustawia dokładną liczbę wrogów.",
-    trapCount: "LICZBA PUŁAPEK", trapLethality: "ŚMIERTELNOŚĆ PUŁAPEK", low: "NISKA", high: "WYSOKA",
+    trapCount: "LICZBA PUŁAPEK", trapLethality: "ŚMIERTELNOŚĆ PUŁAPEK", low: "NISKA", high: "WYSOKA", trapSettings: "Pułapki i zagrożenia",
   },
 };
 
@@ -197,20 +197,28 @@ export default function GmScenePresetPanelV2({ session }) {
   return (
     <div className="gm-scene-preset-v2">
       <section className="gm-encounter-difficulty pip-panel">
+        <header className="gm-encounter-difficulty__head">
+          <span className="gm-generator-step" aria-hidden="true">01</span>
+          <div><strong>{text.title}</strong><small>{text.note}</small></div>
+        </header>
         <div className="gm-encounter-difficulty__controls">
           <label><span>{text.title}</span><select className="pip-input" value={difficulty} disabled={updatingPower} onChange={(e) => changeDifficulty(e.target.value)}>{DIFFICULTIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
           <label><span>{powerText.title}</span><select className="pip-input" value={enemyPowerTier} disabled={updatingPower} onChange={(e) => changeEnemyPower(e.target.value)}>{ENCOUNTER_ENEMY_POWER_TIERS.map((value) => <option key={value} value={value}>{powerText[value]}</option>)}</select></label>
           <label><span>{text.faction}</span><select className="pip-input" value={enemyFaction} onChange={(e) => changeEnemyFaction(e.target.value)}>{ENEMY_GROUP_OPTIONS.map((value) => <option key={value} value={value}>{enemyGroupLabel(value, lang)}</option>)}</select></label>
           <label><span>{text.enemyCount}</span><input className="pip-input" type="number" min="0" max={MAX_MANUAL_ENEMY_COUNT} value={enemyCountOverride} onChange={(e) => changeEnemyCount(e.target.value)} /></label>
-          <label><span>{text.trapCount}</span><input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(e) => changeTrapCount(e.target.value)} /></label>
-          <label><span>{text.trapLethality}</span><select className="pip-input" value={trapLethality} onChange={(e) => changeTrapLethality(e.target.value)}>{TRAP_LETHALITIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
         </div>
-        <small>{text.note}</small>
         <div className="gm-encounter-difficulty__power" aria-live="polite">
           <strong>{encounterEnemyPowerDescription(enemyPowerTier, lang, t)}</strong>
           <small>{powerText.note}</small>
           {powerNotice ? <small className="gm-encounter-power-notice" role="status">{powerNotice}</small> : null}
         </div>
+        <details className="gm-generator-advanced">
+          <summary>{text.trapSettings}<span aria-hidden="true">⌄</span></summary>
+          <div className="gm-encounter-difficulty__controls">
+            <label><span>{text.trapCount}</span><input className="pip-input" type="number" min="0" max="8" value={trapCount} onChange={(e) => changeTrapCount(e.target.value)} /></label>
+            <label><span>{text.trapLethality}</span><select className="pip-input" value={trapLethality} onChange={(e) => changeTrapLethality(e.target.value)}>{TRAP_LETHALITIES.map((value) => <option key={value} value={value}>{text[value]}</option>)}</select></label>
+          </div>
+        </details>
       </section>
       <GmScenePresetPanel session={sessionWithEncounterSettings} encounterSettings={encounterSettings} />
     </div>

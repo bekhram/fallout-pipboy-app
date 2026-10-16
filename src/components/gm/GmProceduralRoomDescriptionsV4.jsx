@@ -1,4 +1,4 @@
-import React, { useImperativeHandle, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BESTIARY_ENTRIES } from "../../data/bestiary.js";
 import {
@@ -14,28 +14,30 @@ import { generateVaultLayout, vaultSpecFromScene } from "../../utils/proceduralV
 import "./gmProceduralRoomDescriptions.css";
 import "./gmProceduralRoomMarkers.css";
 
+const LazyGmNarrativeEditor = lazy(() => import("./GmNarrativeEditor.jsx"));
+
 const COPY = {
   en: {
     title: "[ ROOM DESCRIPTIONS ]", subtitle: "Generated from the same seed as the map", noMap: "Apply a generated map to see its room contents.", spawn: "PLACE ENEMY TOKENS", spawning: "PLACING...", noEnemies: "This variant has no generated enemies.", startLive: "Start this scene as LIVE before placing enemy tokens.", already: "Enemies for this seed and party settings are already on the map.", spawned: (count) => `Placed ${count} enemy token${count === 1 ? "" : "s"}.`, failed: "Some enemy tokens could not be placed.",
-    balance: "ENCOUNTER", party: "Party", enemies: "Enemies", targetXp: "Target XP", actualXp: "Enemy XP", perPlayer: "XP / player", difficulty: "Difficulty", group: "Group", scaled: "Scaled",
+    describe: "DESCRIBE", hideDescription: "CLOSE DESCRIPTION", balance: "ENCOUNTER", party: "Party", enemies: "Enemies", targetXp: "Target XP", actualXp: "Enemy XP", perPlayer: "XP / player", difficulty: "Difficulty", group: "Group", scaled: "Scaled",
     minion: "Minion", standard: "Standard", special: "Special", legendary: "Legendary",
     difficulties: { easy: "Easy", standard: "Standard", hard: "Hard", deadly: "Deadly" },
   },
   ru: {
     title: "[ ОПИСАНИЕ КОМНАТ ]", subtitle: "Генерируется из того же seed, что и карта", noMap: "Примените сгенерированную карту, чтобы увидеть содержимое комнат.", spawn: "РАССТАВИТЬ ВРАГОВ", spawning: "РАССТАНОВКА...", noEnemies: "В этом варианте враги не сгенерированы.", startLive: "Сначала запустите именно эту сцену как LIVE.", already: "Враги для этого seed и параметров группы уже расставлены.", spawned: (count) => `Расставлено токенов врагов: ${count}.`, failed: "Часть токенов врагов не удалось разместить.",
-    balance: "ЭНКАУНТЕР", party: "Группа", enemies: "Врагов", targetXp: "Целевой XP", actualXp: "XP врагов", perPlayer: "XP / игрока", difficulty: "Сложность", group: "Группа врагов", scaled: "Подтянуто",
+    describe: "ОПИСАТЬ", hideDescription: "ЗАКРЫТЬ ОПИСАНИЕ", balance: "ЭНКАУНТЕР", party: "Группа", enemies: "Врагов", targetXp: "Целевой XP", actualXp: "XP врагов", perPlayer: "XP / игрока", difficulty: "Сложность", group: "Группа врагов", scaled: "Подтянуто",
     minion: "Миньон", standard: "Стандартный", special: "Особый", legendary: "Легендарный",
     difficulties: { easy: "Лёгкая", standard: "Обычная", hard: "Сложная", deadly: "Смертельно опасная" },
   },
   uk: {
     title: "[ ОПИС КІМНАТ ]", subtitle: "Генерується з того самого seed, що й мапа", noMap: "Застосуйте згенеровану мапу, щоб побачити вміст кімнат.", spawn: "РОЗСТАВИТИ ВОРОГІВ", spawning: "РОЗСТАНОВКА...", noEnemies: "У цьому варіанті вороги не сгенерированы.", startLive: "Спочатку запустіть саме цю сцену як LIVE.", already: "Ворогів для цього seed і параметрів групи вже розставлено.", spawned: (count) => `Розставлено токенів ворогів: ${count}.`, failed: "Частину токенів ворогів не вдалося розмістити.",
-    balance: "ЕНКАУНТЕР", party: "Група", enemies: "Ворогів", targetXp: "Цільовий XP", actualXp: "XP ворогів", perPlayer: "XP / гравця", difficulty: "Складність", group: "Група ворогів", scaled: "Підтягнуто",
+    describe: "ОПИСАТИ", hideDescription: "ЗАКРИТИ ОПИС", balance: "ЕНКАУНТЕР", party: "Група", enemies: "Ворогів", targetXp: "Цільовий XP", actualXp: "XP ворогів", perPlayer: "XP / гравця", difficulty: "Складність", group: "Група ворогів", scaled: "Підтягнуто",
     minion: "Міньйон", standard: "Звичайний", special: "Особливий", legendary: "Легендарний",
     difficulties: { easy: "Легка", standard: "Звичайна", hard: "Складна", deadly: "Смертельно небезпечна" },
   },
   pl: {
     title: "[ OPIS POMIESZCZEŃ ]", subtitle: "Generowany z tego samego seed co mapa", noMap: "Zastosuj wygenerowaną mapę, aby zobaczyć zawartość pomieszczeń.", spawn: "ROZMIEŚĆ WROGÓW", spawning: "ROZMIESZCZANIE...", noEnemies: "Ten wariant nie ma wygenerowanych wrogów.", startLive: "Najpierw uruchom tę scenę jako LIVE.", already: "Wrogowie dla tego seed i ustawień drużyny są już na mapie.", spawned: (count) => `Rozmieszczono tokenów wrogów: ${count}.`, failed: "Nie udało się rozmieścić części tokenów.",
-    balance: "SPOTKANIE", party: "Drużyna", enemies: "Wrogowie", targetXp: "Docelowe XP", actualXp: "XP wrogów", perPlayer: "XP / gracza", difficulty: "Trudność", group: "Grupa wrogów", scaled: "Podniesiono",
+    describe: "OPISZ", hideDescription: "ZAMKNIJ OPIS", balance: "SPOTKANIE", party: "Drużyna", enemies: "Wrogowie", targetXp: "Docelowe XP", actualXp: "XP wrogów", perPlayer: "XP / gracza", difficulty: "Trudność", group: "Grupa wrogów", scaled: "Podniesiono",
     minion: "Sługa", standard: "Zwykły", special: "Specjalny", legendary: "Legendarny",
     difficulties: { easy: "Łatwa", standard: "Standardowa", hard: "Trudna", deadly: "Śmiertelna" },
   },
@@ -119,6 +121,7 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
   const spec = recoveredVaultSpec || specFromScene(scene);
   const [placing, setPlacing] = useState(false);
   const [message, setMessage] = useState("");
+  const [openNarrativeRoomId, setOpenNarrativeRoomId] = useState("");
 
   const specKey = spec ? [
     spec.type,
@@ -164,6 +167,10 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
     () => Object.fromEntries(numberedMarkers.map((marker) => [marker.roomId, marker])),
     [numberedMarkers],
   );
+  useEffect(() => {
+    setOpenNarrativeRoomId("");
+  }, [scene?.sceneId, specKey]);
+
   const enemyTotal = encounter?.totalEnemies || 0;
   const residentTotal = rawRooms.reduce((sum, room) => sum + (room.residents || []).reduce((count, resident) => count + Number(resident.count || 0), 0), 0);
   const spawnTotal = enemyTotal + residentTotal;
@@ -294,7 +301,7 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
           ? room.roomNumber
           : String(spec?.type || "") === "wasteland"
             ? roomIndex + 1
-            : numberedMarker?.marker || null;
+            : numberedMarker?.marker || roomIndex + 1;
         return (
         <article key={room.id} className="gm-room-card" data-location-number={locationNumber || undefined}>
           <div className="gm-room-card__head">
@@ -308,6 +315,24 @@ const GmProceduralRoomDescriptionsV4 = React.forwardRef(function GmProceduralRoo
             <div className="gm-room-card__markers" aria-label="room markers">{(room.markers || []).slice(0, 5).map((marker, index) => <span key={`${marker}-${index}`} title={marker}>{SYMBOLS[marker] || "•"}</span>)}</div>
           </div>
           <div className="gm-room-card__lines">{room.lines.map((line, index) => <div key={`${room.id}-${index}`}>{line}</div>)}</div>
+          <button type="button" className="pip-btn gm-narrative-toggle"
+            aria-expanded={openNarrativeRoomId === String(room.id)}
+            onClick={() => setOpenNarrativeRoomId((current) => current === String(room.id) ? "" : String(room.id))}>
+            {openNarrativeRoomId === String(room.id) ? text.hideDescription : text.describe} · #{locationNumber}
+          </button>
+          {openNarrativeRoomId === String(room.id) ? (
+            <Suspense fallback={<small>…</small>}>
+              <LazyGmNarrativeEditor session={session} target={{
+                kind: "room", id: String(room.id), number: locationNumber, name: room.name,
+                source: [
+                  ...(Array.isArray(room.lines) ? room.lines : []),
+                  room.enemyGroup ? `Enemy group: ${room.enemyGroup}` : "",
+                  ...(Array.isArray(room.enemies) ? room.enemies.map((enemy) =>
+                    `Enemy: ${enemy?.type || enemy?.npcId || "unknown"} x${enemy?.count || 1} · ${enemy?.rank || "standard"}`) : []),
+                ].filter(Boolean).join("\n"),
+              }} />
+            </Suspense>
+          ) : null}
         </article>
         );
       })}</div> : null}

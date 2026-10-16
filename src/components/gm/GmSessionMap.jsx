@@ -9,6 +9,7 @@ import "./gmTacticalTabs.css";
 import "./gmDesktopLayoutV2.css";
 import GmWorkspaceNavigation, { WORKSPACE_GROUPS, workspaceGroup, workspaceCopy } from "./GmWorkspaceNavigation.jsx";
 import "./gmOrganicWorkspace.css";
+import "./gmUsability.css";
 import { worldCopy } from "../campaign/worldCopy.js";
 
 const LazyBattleStage = lazy(() => import("./GmBattleStage.jsx"));
@@ -25,10 +26,10 @@ const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
 const TABS = ["world", "battle", "scenes", "autogm", "loot", "merchants", "custom", "scene", "reference", "tokens", "roster", "participants"];
 const SHARED_RULER_HOLD_MS = 6500;
 const COPY = {
-  en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu", ap:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP" },
-  ru: { battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC", scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ", waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ", ap:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа" },
-  uk: { battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC", scene: "ЗУСТРІЧ / СЦЕНА", tokens: "ТОКЕНИ", waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ" },
-  pl: { battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC", scene: "SPOTKANIE / SCENA", tokens: "TOKENY", waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG", ap:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG" },
+  en: { battle: "BATTLEMAP", autogm: "AUTO GM", loot: "LOOT", merchants: "MERCHANTS", custom: "CREATE NPC", scene: "ENCOUNTER / SCENE", tokens: "TOKENS", waiting: "TACTICAL MAP // WAITING FOR GM ROOM...", menu: "GM tactical menu", ap:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", live:"LIVE", prepared:"PREPARED", players:"Players", enemies:"Enemies", quickActions:"Quick actions", generate:"Generator", shortMap:"Map", shortScenes:"Scenes" },
+  ru: { battle: "БОЕВАЯ КАРТА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦЫ", custom: "СОЗДАТЬ NPC", scene: "ВСТРЕЧА / СЦЕНА", tokens: "ТОКЕНЫ", waiting: "ТАКТИЧЕСКАЯ КАРТА // ОЖИДАНИЕ КОМНАТЫ ГМ...", menu: "Тактическое меню ГМ", ap:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", live:"В ЭФИРЕ", prepared:"ПОДГОТОВКА", players:"Игроки", enemies:"Враги", quickActions:"Быстрые действия", generate:"Генератор", shortMap:"Карта", shortScenes:"Сцены" },
+  uk: { battle: "БОЙОВА МАПА", autogm: "АВТО ГМ", loot: "ЛУТ", merchants: "ТОРГОВЦІ", custom: "СТВОРИТИ NPC", scene: "ЗУСТРІЧ / СЦЕНА", tokens: "ТОКЕНИ", waiting: "ТАКТИЧНА МАПА // ОЧІКУВАННЯ КІМНАТИ ГМ...", menu: "Тактичне меню ГМ", ap:"ОЧКИ ДІЇ", playersAp:"AP гравців", gmAp:"AP ГМ", live:"АКТИВНА", prepared:"ПІДГОТОВКА", players:"Гравці", enemies:"Вороги", quickActions:"Швидкі дії", generate:"Генератор", shortMap:"Мапа", shortScenes:"Сцени" },
+  pl: { battle: "MAPA BITWY", autogm: "AUTO MG", loot: "ŁUP", merchants: "HANDLARZE", custom: "UTWÓRZ NPC", scene: "SPOTKANIE / SCENA", tokens: "TOKENY", waiting: "MAPA TAKTYCZNA // OCZEKIWANIE NA POKÓJ MG...", menu: "Menu taktyczne MG", ap:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", live:"NA ŻYWO", prepared:"PRZYGOTOWANIE", players:"Gracze", enemies:"Wrogowie", quickActions:"Szybkie działania", generate:"Generator", shortMap:"Mapa", shortScenes:"Sceny" },
 };
 
 function languageCode(language) {
@@ -65,6 +66,7 @@ export default function GmSessionMap(props) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [visitedTabs, setVisitedTabs] = useState(() => new Set([initialTab()]));
   const [moreOpen, setMoreOpen] = useState(false);
+  const [generatorRequest, setGeneratorRequest] = useState(0);
   const ui = workspaceCopy(i18n.resolvedLanguage || i18n.language);
   const group = workspaceGroup(activeTab);
   const worldLabels = worldCopy(i18n.resolvedLanguage || i18n.language);
@@ -74,8 +76,17 @@ export default function GmSessionMap(props) {
     setVisitedTabs((previous) => previous.has(nextTab) ? previous : new Set([...previous, nextTab]));
     setMoreOpen(false);
   };
+  const openGenerator = () => {
+    selectTab("scenes");
+    setGeneratorRequest((value) => value + 1);
+  };
   const rulerClearTimerRef = useRef(null);
   const labels = COPY[languageCode(i18n.resolvedLanguage || i18n.language)] || COPY.en;
+  const scene = session?.tacticalScene || null;
+  const sceneTokens = Array.isArray(scene?.tokens) ? scene.tokens : [];
+  const playerCount = sceneTokens.filter((token) => token.kind === "player").length;
+  const enemyCount = sceneTokens.filter((token) => token.kind !== "player").length;
+  const sceneIsLive = Boolean(session?.liveSceneId && session.liveSceneId === scene?.sceneId && scene?.active !== false);
 
   const toolsSession = useMemo(() => {
     if (!session) return session;
@@ -124,9 +135,31 @@ export default function GmSessionMap(props) {
     <section className={`gm-tactical-tabs-shell gm-organic-workspace gm-organic-group--${group}`}>
       <GmWorkspaceNavigation activeTab={activeTab} onSelect={selectTab} labels={ui} moreOpen={moreOpen} onMore={setMoreOpen} />
       <div className="gm-organic-content">
-        <header className="gm-organic-pagehead"><div><span>{ui.subtitle}</span><h1>{ui[group]}</h1></div><div className="gm-organic-pagehead__tools"><ActionPointCounter session={session} labels={labels}/><span className="gm-organic-scene-name">{session.tacticalScene.name || session.tacticalScene.title || ""}</span></div></header>
+        <header className="gm-organic-pagehead gm-operator-header">
+          <div className="gm-operator-header__identity">
+            <span className="gm-operator-header__eyebrow">PIP / 2D20 · GM</span>
+            <h1>{ui[group]}</h1>
+            <div className="gm-operator-header__meta">
+              <span className={`gm-operator-state${sceneIsLive ? " is-live" : ""}`}>
+                <span className="gm-operator-state__dot" aria-hidden="true" />
+                {sceneIsLive ? labels.live : labels.prepared}
+              </span>
+              <strong className="gm-operator-scene" title={scene?.name || scene?.title || ""}>{scene?.name || scene?.title || ui.scenes}</strong>
+              <span className="gm-operator-count">{labels.players}: <b>{playerCount}</b></span>
+              <span className="gm-operator-count">{labels.enemies}: <b>{enemyCount}</b></span>
+            </div>
+          </div>
+          <div className="gm-organic-pagehead__tools"><ActionPointCounter session={session} labels={labels} /></div>
+        </header>
+        <nav className="gm-operator-shortcuts" aria-label={labels.quickActions}>
+          <button type="button" aria-current={activeTab === "battle" ? "page" : undefined} onClick={() => selectTab("battle")}>{labels.shortMap}</button>
+          <button type="button" aria-current={activeTab === "scenes" ? "page" : undefined} onClick={() => selectTab("scenes")}>{labels.shortScenes}</button>
+          <button type="button" className="is-featured" onClick={openGenerator}>＋ {labels.generate}</button>
+          <button type="button" aria-current={activeTab === "tokens" ? "page" : undefined} onClick={() => selectTab("tokens")}>{ui.tokens}</button>
+          <button type="button" aria-current={activeTab === "autogm" ? "page" : undefined} onClick={() => selectTab("autogm")}>{ui.autogm}</button>
+        </nav>
         <nav className="gm-organic-subtabs" aria-label={ui[group]}>
-          {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
+          {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-current={activeTab === tab ? "page" : undefined} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
       {activeTab === "world" ? (
         <Suspense fallback={<div className="pip-logbox">…</div>}>
@@ -135,7 +168,7 @@ export default function GmSessionMap(props) {
       ) : null}
       {activeTab === "scenes" ? (
         <Suspense fallback={<div className="pip-logbox">…</div>}>
-          <LazySceneManagerScreen session={session} onOpenBattlemap={() => selectTab("battle")} />
+          <LazySceneManagerScreen session={session} onOpenBattlemap={() => selectTab("battle")} openGeneratorRequest={generatorRequest} onGeneratorRequestHandled={() => setGeneratorRequest(0)} />
         </Suspense>
       ) : null}
       {activeTab === "scene" ? (

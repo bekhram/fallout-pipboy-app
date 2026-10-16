@@ -14,17 +14,18 @@ import { vaultSpecFromScene } from "../../utils/proceduralVaultGenerator.js";
 import { GM_AP_ACTIONS, GM_COMPLICATIONS } from "./GmReferenceScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import { gridDropCell } from "../../utils/battlemapCoordinates.js";
+import { compressGmBackground as compressBackground } from "../../utils/gmBackgroundImage.js";
 import GmLazyCreatureAdder from "./GmLazyCreatureAdder.jsx";
 import "./gmSessionMap.css";
 import "./sceneLibrary.css";
 
 const LazyRoomDescriptions = lazy(() => import("./GmProceduralRoomDescriptionsV4.jsx"));
 const LazyBattlemapExtrasPanel = lazy(() => import("./GmBattlemapExtrasPanel.jsx"));
+const LazyAutoGmPanel = lazy(() => import("./GmAutoGmPanel.jsx"));
+const LazyGmNarrativeEditor = lazy(() => import("./GmNarrativeEditor.jsx"));
 
 const DEFAULT_COLS = 12;
 const DEFAULT_ROWS = 12;
-const MAX_SOURCE_BYTES = 12 * 1024 * 1024;
-const MAX_BACKGROUND_LENGTH = 790000;
 
 const CREATURE_FEATURE_COPY = {
   en: {
@@ -196,7 +197,7 @@ const COPY = {
     saveName: "SAVE NAME",
     sceneName: "SCENE NAME",
     live: "LIVE",
-    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", initiativeOrder:"INITIATIVE", previousTurn:"PREV", nextTurn:"NEXT", round:"ROUND", dead:"DEAD", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
+    authority: "PIP 2D20 // GM DEVICE AUTHORITY", sceneActions:"SCENE ACTIONS", actionPoints:"ACTION POINTS", playersAp:"Players AP", gmAp:"GM AP", placeEnemies:"PLACE ENEMIES", removeEnemies:"REMOVE ENEMIES", activateScene:"ACTIVATE SCENE", deactivateScene:"DEACTIVATE SCENE", creatures:"CREATURES ON MAP", focus:"FOCUS", expand:"EXPAND", collapse:"COLLAPSE", attacks:"ATTACKS", noAttacks:"No attacks available.", show:"SHOW", hide:"HIDE", remove:"REMOVE", hp:"HP", initiative:"INIT", initiativeOrder:"INITIATIVE", previousTurn:"PREV", nextTurn:"NEXT", round:"ROUND", dead:"DEAD", emptyCreatures:"No creatures on this scene.", rooms:"ROOM DESCRIPTIONS", autogm:"AUTO GM ON BATTLEMAP", describe:"DESCRIPTION", closeDescription:"CLOSE DESCRIPTION", randomComplication:"RANDOM COMPLICATION · 2 AP", randomApSpend:"RANDOM AP ACTION", notEnoughAp:"Not enough GM AP",
     stat:{type:"TYPE",body:"BODY",mind:"MIND",melee:"MELEE",guns:"GUNS",other:"OTHER",skills:"SKILLS",special:"SPECIAL",specialFeature:"SPECIAL FEATURE",legendaryAbility:"LEGENDARY ABILITY",abilities:"ABILITIES",legendaryPerks:"LEGENDARY PERKS",perkDr:"PERK DR",resistance:"RESISTANCE",tactics:"TACTICS",loot:"LOOT",summary:"SUMMARY",notes:"NOTES",source:"SOURCE",rank:"RANK",size:"SIZE"},
   },
   ru: {
@@ -230,7 +231,7 @@ const COPY = {
     saveName: "СОХРАНИТЬ ИМЯ",
     sceneName: "ИМЯ СЦЕНЫ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", initiativeOrder:"ИНИЦИАТИВА", previousTurn:"ПРЕД. ХОД", nextTurn:"СЛЕД. ХОД", round:"РАУНД", dead:"МЕРТВ", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
+    authority: "PIP 2D20 // УСТРОЙСТВО ГМ", sceneActions:"ДЕЙСТВИЯ СЦЕНЫ", actionPoints:"ЭКШЕН ПОИНТЫ", playersAp:"AP игроков", gmAp:"AP ГМа", placeEnemies:"РАССТАВИТЬ ВРАГОВ", removeEnemies:"УБРАТЬ ВРАГОВ", activateScene:"АКТИВИРОВАТЬ СЦЕНУ", deactivateScene:"ДЕАКТИВИРОВАТЬ", creatures:"СУЩЕСТВА НА КАРТЕ", focus:"ФОКУС", expand:"РАЗВЕРНУТЬ", collapse:"СВЕРНУТЬ", attacks:"АТАКИ", noAttacks:"Нет доступных атак.", show:"ПОКАЗАТЬ", hide:"СКРЫТЬ", remove:"УДАЛИТЬ", hp:"HP", initiative:"ИНИЦ.", initiativeOrder:"ИНИЦИАТИВА", previousTurn:"ПРЕД. ХОД", nextTurn:"СЛЕД. ХОД", round:"РАУНД", dead:"МЕРТВ", emptyCreatures:"На сцене нет существ.", rooms:"ОПИСАНИЕ КОМНАТ", autogm:"АВТОГМ НА БОЕВОЙ КАРТЕ", describe:"ОПИСАТЬ", closeDescription:"ЗАКРЫТЬ ОПИСАНИЕ", randomComplication:"СЛУЧАЙНОЕ ОСЛОЖНЕНИЕ · 2 AP", randomApSpend:"СЛУЧАЙНАЯ ТРАТА AP", notEnoughAp:"Недостаточно AP ГМа",
     stat:{type:"ТИП",body:"ТЕЛО",mind:"РАЗУМ",melee:"БЛИЖНИЙ БОЙ",guns:"СТРЕЛЬБА",other:"ДРУГОЕ",skills:"НАВЫКИ",special:"SPECIAL",specialFeature:"ОСОБОЕ СВОЙСТВО",legendaryAbility:"ЛЕГЕНДАРНАЯ СПОСОБНОСТЬ",abilities:"СПОСОБНОСТИ",legendaryPerks:"ЛЕГЕНДАРНЫЕ ПЕРКИ",perkDr:"СОПРОТИВЛЕНИЯ ОТ ПЕРКОВ",resistance:"СОПРОТИВЛЕНИЯ",tactics:"ТАКТИКА",loot:"ДОБЫЧА",summary:"ОПИСАНИЕ",notes:"ЗАМЕТКИ",source:"ИСТОЧНИК",rank:"РАНГ",size:"РАЗМЕР"},
   },
   uk: {
@@ -265,7 +266,7 @@ const COPY = {
     saveName: "ЗБЕРЕГТИ ІМ'Я",
     sceneName: "НАЗВА СЦЕНИ",
     live: "АКТИВНА",
-    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", initiativeOrder:"ІНІЦІАТИВА", previousTurn:"ПОПЕР. ХІД", nextTurn:"НАСТ. ХІД", round:"РАУНД", dead:"МЕРТВИЙ", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
+    authority: "PIP 2D20 // ПРИСТРІЙ ГМ", sceneActions:"ДІЇ СЦЕНИ", actionPoints:"ЕКШЕН ПОІНТИ", playersAp:"AP гравців", gmAp:"AP ГМа", placeEnemies:"РОЗСТАВИТИ ВОРОГІВ", removeEnemies:"ПРИБРАТИ ВОРОГІВ", activateScene:"АКТИВУВАТИ СЦЕНУ", deactivateScene:"ДЕАКТИВУВАТИ", creatures:"ІСТОТИ НА МАПІ", focus:"ФОКУС", expand:"РОЗГОРНУТИ", collapse:"ЗГОРНУТИ", attacks:"АТАКИ", noAttacks:"Немає доступних атак.", show:"ПОКАЗАТИ", hide:"СХОВАТИ", remove:"ВИДАЛИТИ", hp:"HP", initiative:"ІНІЦ.", initiativeOrder:"ІНІЦІАТИВА", previousTurn:"ПОПЕР. ХІД", nextTurn:"НАСТ. ХІД", round:"РАУНД", dead:"МЕРТВИЙ", emptyCreatures:"На сцені немає істот.", rooms:"ОПИС КІМНАТ", autogm:"АВТОГМ НА БОЙОВІЙ МАПІ", describe:"ОПИСАТИ", closeDescription:"ЗАКРИТИ ОПИС", randomComplication:"ВИПАДКОВЕ УСКЛАДНЕННЯ · 2 AP", randomApSpend:"ВИПАДКОВА ВИТРАТА AP", notEnoughAp:"Недостатньо AP ГМа",
     stat:{type:"ТИП",body:"ТІЛО",mind:"РОЗУМ",melee:"БЛИЖНІЙ БІЙ",guns:"СТРІЛЬБА",other:"ІНШЕ",skills:"НАВИЧКИ",special:"SPECIAL",specialFeature:"ОСОБЛИВА ВЛАСТИВІСТЬ",legendaryAbility:"ЛЕГЕНДАРНА ЗДІБНІСТЬ",abilities:"ЗДІБНОСТІ",legendaryPerks:"ЛЕГЕНДАРНІ ПЕРКИ",perkDr:"ОПІР ВІД ПЕРКІВ",resistance:"ОПІР",tactics:"ТАКТИКА",loot:"ЗДОБИЧ",summary:"ОПИС",notes:"НОТАТКИ",source:"ДЖЕРЕЛО",rank:"РАНГ",size:"РОЗМІР"},
   },
   pl: {
@@ -299,7 +300,7 @@ const COPY = {
     saveName: "ZAPISZ NAZWĘ",
     sceneName: "NAZWA SCENY",
     live: "AKTYWNA",
-    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", initiativeOrder:"INICJATYWA", previousTurn:"POPRZ. TURA", nextTurn:"NAST. TURA", round:"RUNDA", dead:"MARTWY", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
+    authority: "PIP 2D20 // URZĄDZENIE MG", sceneActions:"AKCJE SCENY", actionPoints:"PUNKTY AKCJI", playersAp:"AP graczy", gmAp:"AP MG", placeEnemies:"ROZMIEŚĆ WROGÓW", removeEnemies:"USUŃ WROGÓW", activateScene:"AKTYWUJ SCENĘ", deactivateScene:"DEZAKTYWUJ", creatures:"ISTOTY NA MAPIE", focus:"FOKUS", expand:"ROZWIŃ", collapse:"ZWIŃ", attacks:"ATAKI", noAttacks:"Brak dostępnych ataków.", show:"POKAŻ", hide:"UKRYJ", remove:"USUŃ", hp:"HP", initiative:"INIT", initiativeOrder:"INICJATYWA", previousTurn:"POPRZ. TURA", nextTurn:"NAST. TURA", round:"RUNDA", dead:"MARTWY", emptyCreatures:"Brak istot na scenie.", rooms:"OPISY POMIESZCZEŃ", autogm:"AUTO MG NA MAPIE", describe:"OPISZ", closeDescription:"ZAMKNIJ OPIS", randomComplication:"LOSOWA KOMPLIKACJA · 2 AP", randomApSpend:"LOSOWY WYDATEK AP", notEnoughAp:"Za mało AP MG",
     stat:{type:"TYP",body:"CIAŁO",mind:"UMYSŁ",melee:"WALKA WRĘCZ",guns:"STRZELECTWO",other:"INNE",skills:"UMIEJĘTNOŚCI",special:"SPECIAL",specialFeature:"CECHA SPECJALNA",legendaryAbility:"ZDOLNOŚĆ LEGENDARNA",abilities:"ZDOLNOŚCI",legendaryPerks:"LEGENDARNE PERKI",perkDr:"ODPORNOŚCI Z PERKÓW",resistance:"ODPORNOŚCI",tactics:"TAKTYKA",loot:"ŁUP",summary:"OPIS",notes:"NOTATKI",source:"ŹRÓDŁO",rank:"RANGA",size:"ROZMIAR"},
   },
 };
@@ -391,52 +392,6 @@ function autoScrollNearEdge(grid, clientX, clientY) {
       ? speed
       : 0;
   if (dx || dy) grid.scrollBy({ left: dx, top: dy, behavior: "auto" });
-}
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = url;
-  });
-}
-
-function renderImage(image, maxDimension, quality) {
-  const width = image.naturalWidth || image.width;
-  const height = image.naturalHeight || image.height;
-  const scale = Math.min(1, maxDimension / Math.max(width, height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(width * scale));
-  canvas.height = Math.max(1, Math.round(height * scale));
-  const context = canvas.getContext("2d", { alpha: false });
-  if (!context) throw new Error("canvas");
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL("image/webp", quality);
-}
-
-async function compressBackground(file) {
-  if (!file?.type?.startsWith("image/")) throw new Error("image");
-  if (file.size > MAX_SOURCE_BYTES) throw new Error("too-large");
-  const url = URL.createObjectURL(file);
-  try {
-    const image = await loadImage(url);
-    for (const [dimension, quality] of [
-      [1500, 0.72],
-      [1250, 0.68],
-      [1050, 0.62],
-      [900, 0.58],
-      [760, 0.54],
-    ]) {
-      const result = renderImage(image, dimension, quality);
-      if (result.length <= MAX_BACKGROUND_LENGTH) return result;
-    }
-    throw new Error("too-large");
-  } finally {
-    URL.revokeObjectURL(url);
-  }
 }
 
 function npcStats(entry) {
@@ -634,6 +589,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const [mapRollConfig,setMapRollConfig]=useState(null);
   const [mapPendingAutoD6,setMapPendingAutoD6]=useState(null);
   const [showExtras,setShowExtras]=useState(false);
+  const [showBattleAutoGm,setShowBattleAutoGm]=useState(false);
+  const [openNarrativeEnemyId,setOpenNarrativeEnemyId]=useState("");
   const [showRooms,setShowRooms]=useState(false);
   const [pendingPlaceEnemies,setPendingPlaceEnemies]=useState(false);
 
@@ -645,6 +602,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
     dragRef.current = null;
     setDragState(null);
     setShowExtras(false);
+    setShowBattleAutoGm(false);
+    setOpenNarrativeEnemyId("");
     setShowRooms(false);
     setPendingPlaceEnemies(false);
   }, [scene?.sceneId]);
@@ -662,6 +621,8 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
   const tokens = Array.isArray(scene.tokens) ? scene.tokens : [];
   const playerTokens = tokens.filter((token) => token.kind === "player");
   const enemyTokens = tokens.filter((token) => token.kind !== "player");
+  // Match numbers on enemy cards to the small GM-only marker on map tokens.
+  const enemyNumberById = new Map(enemyTokens.map((token, index) => [String(token.id), index + 1]));
   const initiativeTokens = [...tokens].sort((a,b) =>
     Number(b?.stats?.initiative || 0) - Number(a?.stats?.initiative || 0)
     || String(a?.name || "").localeCompare(String(b?.name || ""))
@@ -1157,6 +1118,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
                       onPointerCancel={cancelDrag}
                     >
                       <PhaserToken token={token} selected={selectedTokenId === token.id} />
+                      {token.kind !== "player" ? <span className="gm-session-token__ordinal" aria-hidden="true">{enemyNumberById.get(String(token.id))}</span> : null}
                       <small>{token.name}</small>
                     </span>
                   );
@@ -1211,6 +1173,7 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
               onPointerCancel={cancelDrag}
             >
               <PhaserToken token={token} selected={selectedTokenId === token.id} />
+              {token.kind !== "player" ? <span className="gm-session-token__ordinal" aria-hidden="true">{enemyNumberById.get(String(token.id))}</span> : null}
               <small>{token.name}</small>
             </span>
           );
@@ -1454,6 +1417,18 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
         </div>:null}
       </section>
 
+      <section className="gm-map-autogm pip-panel">
+        <button type="button" className="pip-btn" aria-expanded={showBattleAutoGm}
+          onClick={() => setShowBattleAutoGm((current) => !current)}>
+          {showBattleAutoGm ? "−" : "+"} {text.autogm}
+        </button>
+        {showBattleAutoGm ? <div className="gm-map-autogm__content">
+          <Suspense fallback={<small>…</small>}>
+            <LazyAutoGmPanel session={session} />
+          </Suspense>
+        </div> : null}
+      </section>
+
       <section className="gm-mobile-initiative" aria-label={text.initiativeOrder}>
         <div className="gm-mobile-initiative__head">
           <button type="button" className="pip-btn" disabled={!aliveInitiativeTokenIds.length} onClick={()=>session.advanceTurn?.(aliveInitiativeTokenIds,-1)}>{text.previousTurn}</button>
@@ -1543,13 +1518,6 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       <SettlementRoomMarkerPortal session={session} />
       <SuperDuperMartRoomMarkerPortal session={session} />
 
-      <section className="gm-map-lazy-panel pip-panel">
-        <button type="button" className="pip-btn" onClick={()=>setShowExtras((value)=>!value)}>
-          {showExtras ? "− " : "+ "}{text.events || "EVENTS"}
-        </button>
-        {showExtras ? <Suspense fallback={<small>…</small>}><LazyBattlemapExtrasPanel session={session} /></Suspense> : null}
-      </section>
-
       <section className="gm-map-creatures pip-panel">
         <div className="gm-map-creatures__header">
           <div className="pip-panel-title">{text.creatures}</div>
@@ -1572,7 +1540,13 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
             <MapCreatureAvatar token={token} />
             <div className="gm-map-creature__main">
               <div className="gm-map-creature__title-row">
+                {token.kind !== "player" ? <span className="gm-map-creature__number">#{enemyNumberById.get(String(token.id))}</span> : null}
                 <strong>{token.name||"Token"}</strong>
+                {token.kind !== "player" ? <button type="button" className="pip-btn gm-narrative-toggle"
+                  aria-expanded={openNarrativeEnemyId === String(token.id)}
+                  onClick={() => setOpenNarrativeEnemyId((current) => current === String(token.id) ? "" : String(token.id))}>
+                  {openNarrativeEnemyId === String(token.id) ? text.closeDescription : text.describe}
+                </button> : null}
                 {token.kind!=="player"?<button type="button" className="gm-map-creature__expand" aria-label={expanded?text.collapse:text.expand} aria-expanded={expanded} onClick={()=>toggleMapCreatureCard(token.id)}>{expanded?"⌃":"⌄"}</button>:null}
               </div>
               <small>{token.kind==="player"?"PLAYER":"NPC"} · [{Number(token.x)||0},{Number(token.y)||0}] · {text.hp} {hp}{maxHp?"/"+maxHp:""} · {text.initiative} {init}</small>
@@ -1585,6 +1559,27 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>toggleTokenVisibility(token)}>{visible?text.hide:text.show}</button>:null}
               {token.kind!=="player"?<button type="button" className="pip-btn" onClick={()=>session.deleteToken?.(token.id)}>{text.remove}</button>:null}
             </div>
+            {openNarrativeEnemyId === String(token.id) && token.kind !== "player" ? (
+              <div className="gm-map-creature__editor">
+                <Suspense fallback={<small>…</small>}>
+                  <LazyGmNarrativeEditor session={session} target={{
+                    kind: "enemy", id: String(token.id),
+                    number: enemyNumberById.get(String(token.id)), name: token.name || "Enemy",
+                    hidden: stats.visibleToPlayers === false,
+                    source: [
+                      `Creature: ${stats.creatureType || token.name || "Enemy"}`,
+                      `Rank: ${stats.rank || "standard"} · Level: ${stats.level || "?"}`,
+                      `HP: ${hp}/${maxHp || "?"} · Defense: ${stats.defense ?? "?"}`,
+                      `Map position: ${token.x}:${token.y}`,
+                      `Resistances: ${String(stats.drBlock || "").slice(0, 350)}`,
+                      `Attacks: ${typeof stats.attacks === "string" ? stats.attacks : JSON.stringify(stats.attacks || "")}`,
+                      `Abilities: ${String(stats.abilities || "").slice(0, 650)}`,
+                      `Special: ${String(stats.specialFeature || stats.legendaryAbility || "").slice(0, 350)}`,
+                    ].join("\n").slice(0, 3500),
+                  }} />
+                </Suspense>
+              </div>
+            ) : null}
             {token.kind!=="player"&&hp<=0?<div className="gm-map-creature__dead-label">[ {text.dead} ]</div>:null}
             {expanded&&token.kind!=="player"?<div className="gm-map-creature__details">
               <div className="gm-map-creature__stats">
@@ -1649,6 +1644,13 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           </Suspense>
         ) : null}
       </section>
+      <section className="gm-map-lazy-panel pip-panel">
+        <button type="button" className="pip-btn" onClick={()=>setShowExtras((value)=>!value)}>
+          {showExtras ? "− " : "+ "}{text.events || "EVENTS"}
+        </button>
+        {showExtras ? <Suspense fallback={<small>…</small>}><LazyBattlemapExtrasPanel session={session} /></Suspense> : null}
+      </section>
+
       <DiceRollModal
         isOpen={mapDiceOpen}
         onClose={()=>setMapDiceOpen(false)}
