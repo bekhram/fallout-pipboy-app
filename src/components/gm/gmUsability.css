@@ -435,6 +435,32 @@
 .gm-organic-workspace .gm-proc-map__preview-loading { bottom: 50% !important; left: 50% !important; transform: translate(-50%,50%); }
 .gm-organic-workspace .gm-scene-manager__generator-panel .gm-scene-preset-v2 { gap: 13px; }
 
+/* One AP control in the operator header. Keep encounter actions near the map,
+   but avoid a second row of AP steppers and five vertically stacked buttons. */
+.gm-organic-workspace .gm-tactical-view--battle .gm-map-actions {
+  gap: 9px;
+  margin: 8px 0;
+  padding: 11px 12px;
+  border-radius: 12px;
+}
+.gm-organic-workspace .gm-tactical-view--battle .gm-map-actions__head { gap: 0; }
+.gm-organic-workspace .gm-tactical-view--battle .gm-map-actions__head .gm-map-ap { display: none !important; }
+.gm-organic-workspace .gm-tactical-view--battle .gm-map-actions__buttons {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 7px;
+}
+.gm-organic-workspace .gm-tactical-view--battle .gm-map-actions__buttons .pip-btn {
+  min-height: 40px;
+  min-width: 0;
+  font-size: 12px;
+  padding: 8px;
+}
+@media (max-width: 899px) {
+  .gm-organic-workspace .gm-tactical-view--battle .gm-map-actions__buttons { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .gm-organic-workspace .gm-tactical-view--battle .gm-map-actions__buttons .pip-btn { min-height: 43px; }
+}
+
 /* Grid contrast is stored on the scene generator, reapplied when Phaser mounts. */
 .gm-organic-workspace .gm-tactical-map-core.gm-grid-contrast-weak .tactical-grid .gm-session-map__cell { border-color: rgba(156, 231, 175, .17) !important; box-shadow: none !important; }
 .gm-organic-workspace .gm-tactical-map-core.gm-grid-contrast-normal .tactical-grid .gm-session-map__cell { border-color: rgba(156, 231, 175, .42) !important; }
