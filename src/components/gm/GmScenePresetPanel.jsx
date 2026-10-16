@@ -219,7 +219,7 @@ export default function GmScenePresetPanel({ session, encounterSettings }) {
 
   return (
     <section className="gm-scene-presets gm-proc-map pip-panel">
-      <header className="gm-scene-presets__head"><div><strong>{text.title}</strong><small>{text.fixed}</small></div></header>
+      <header className="gm-scene-presets__head"><span className="gm-generator-step" aria-hidden="true">02</span><div><strong>{text.title}</strong><small>{text.fixed}</small></div></header>
       <div className="gm-proc-map__controls gm-proc-map__controls--primary">
         <label><span>{text.type}</span><select className="pip-input" value={type} onChange={(e) => setType(e.target.value)}>{MAP_TYPES.map((value) => <option key={value} value={value}>{LABELS[lang]?.[value] || LABELS.en[value]}</option>)}</select></label>
         <label><span>{text.terrain}</span><select className="pip-input" value={terrain} onChange={(e) => setTerrain(e.target.value)}>{TERRAIN_TYPES.map((value) => <option key={value} value={value}>{labelFor("terrain", value, lang)}</option>)}</select></label>
