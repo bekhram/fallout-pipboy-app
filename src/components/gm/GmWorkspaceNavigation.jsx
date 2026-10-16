@@ -47,11 +47,12 @@ export default function GmWorkspaceNavigation({ activeTab, onSelect, labels, mor
       </div>
     </nav>
     <nav className="gm-organic-bottom-nav" aria-label={labels.menu}>
-      <button type="button" aria-pressed={group === "battle"} onClick={() => onSelect("battle")}><WorkspaceIcon name="battle"/><span>{labels.battle}</span></button>
+      <button type="button" aria-current={activeTab === "battle" ? "page" : undefined} aria-pressed={group === "battle"} onClick={() => onSelect("battle")}><WorkspaceIcon name="battle"/><span>{labels.battle}</span></button>
+      <button type="button" aria-current={group === "screens" ? "page" : undefined} aria-pressed={group === "screens"} onClick={() => onSelect("scenes")}><WorkspaceIcon name="screens"/><span>{labels.screens}</span></button>
+      <button type="button" aria-current={group === "creatures" ? "page" : undefined} aria-pressed={group === "creatures"} onClick={() => onSelect("tokens")}><WorkspaceIcon name="creatures"/><span>{labels.creatures}</span></button>
       <button type="button" onClick={() => openWorkspaceUtility("chat")}><WorkspaceIcon name="chat"/><span>{labels.chat}</span></button>
-      <button type="button" aria-pressed={group === "screens"} onClick={() => onSelect("scenes")}><WorkspaceIcon name="screens"/><span>{labels.screens}</span></button>
       <button type="button" onClick={() => openWorkspaceUtility("dice")}><WorkspaceIcon name="dice"/><span>{labels.dice}</span></button>
-      <button type="button" aria-expanded={moreOpen} aria-controls="gm-workspace-more" aria-pressed={group === "creatures" || group === "supplies"} onClick={() => onMore(!moreOpen)}><WorkspaceIcon name="more"/><span>{labels.more}</span></button>
+      <button type="button" aria-expanded={moreOpen} aria-controls="gm-workspace-more" aria-pressed={group === "supplies" || moreOpen} onClick={() => onMore(!moreOpen)}><WorkspaceIcon name="more"/><span>{labels.more}</span></button>
     </nav>
     {moreOpen && <div className="gm-organic-more" id="gm-workspace-more">
       <div><strong>{labels.menu}</strong><button type="button" onClick={() => onMore(false)} aria-label={labels.close}>×</button></div>
