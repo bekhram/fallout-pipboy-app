@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   deliverPlayerNarration,
@@ -101,14 +101,23 @@ export default function GmNarrativeEditor({ session, target }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [storageError, setStorageError] = useState(false);
+  const requestControllerRef = useRef(null);
 
   useEffect(() => {
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
+    setLoading(false);
     setDraft(readGmNarrative(key, gmDefaultText(target)));
     setSent(false);
     setError("");
     setGenerated(false);
     setStorageError(false);
   }, [key]);
+
+  useEffect(() => () => {
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = null;
+  }, []);
 
   const live = session?.mode === "host" &&
     session?.status === "online" &&
@@ -132,8 +141,9 @@ export default function GmNarrativeEditor({ session, target }) {
     setLoading(true);
     setError("");
     setSent(false);
+    requestControllerRef.current?.abort();
     const controller = new AbortController();
-    // Abort on component cleanup is intentionally handled by the effect below.
+    requestControllerRef.current = controller;
     try {
       const context = {
         scene: {
@@ -195,7 +205,10 @@ export default function GmNarrativeEditor({ session, target }) {
     } catch (err) {
       if (err?.name !== "AbortError") setError(err?.message || labels.error);
     } finally {
-      setLoading(false);
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
