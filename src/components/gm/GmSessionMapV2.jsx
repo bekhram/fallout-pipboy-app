@@ -1496,13 +1496,6 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
       <SettlementRoomMarkerPortal session={session} />
       <SuperDuperMartRoomMarkerPortal session={session} />
 
-      <section className="gm-map-lazy-panel pip-panel">
-        <button type="button" className="pip-btn" onClick={()=>setShowExtras((value)=>!value)}>
-          {showExtras ? "− " : "+ "}{text.events || "EVENTS"}
-        </button>
-        {showExtras ? <Suspense fallback={<small>…</small>}><LazyBattlemapExtrasPanel session={session} /></Suspense> : null}
-      </section>
-
       <section className="gm-map-creatures pip-panel">
         <div className="gm-map-creatures__header">
           <div className="pip-panel-title">{text.creatures}</div>
@@ -1602,6 +1595,13 @@ export default function GmSessionMapV2({ session: sessionProp = null }) {
           </Suspense>
         ) : null}
       </section>
+      <section className="gm-map-lazy-panel pip-panel">
+        <button type="button" className="pip-btn" onClick={()=>setShowExtras((value)=>!value)}>
+          {showExtras ? "− " : "+ "}{text.events || "EVENTS"}
+        </button>
+        {showExtras ? <Suspense fallback={<small>…</small>}><LazyBattlemapExtrasPanel session={session} /></Suspense> : null}
+      </section>
+
       <DiceRollModal
         isOpen={mapDiceOpen}
         onClose={()=>setMapDiceOpen(false)}
