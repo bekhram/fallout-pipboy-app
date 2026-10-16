@@ -1,32 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import GmSessionMapV2 from "./GmSessionMapV2.jsx";
-import WastelandAssetPortal from "./WastelandAssetPortal.jsx";
-import SettlementAssetPortal from "./SettlementAssetPortal.jsx";
-import RedRocketAssetPortal from "./RedRocketAssetPortal.jsx";
-import SuperDuperMartAssetPortal from "./SuperDuperMartAssetPortal.jsx";
-import VaultRoomMarkerPortal from "./VaultRoomMarkerPortal.jsx";
-import GmVaultEncounterPanel from "./GmVaultEncounterPanel.jsx";
-import FortifiedCampAssetPortal from "./FortifiedCampAssetPortal.jsx";
-import WastelandPoiPortal from "./WastelandPoiPortal.jsx";
-import SettlementRoomMarkerPortal from "./SettlementRoomMarkerPortal.jsx";
-import ProceduralBattlemapExtraPortal from "./ProceduralBattlemapExtraPortal.jsx";
-import QuestTokenPortal from "./QuestTokenPortal.jsx";
-import GmUnifiedTokenManagerV10 from "./GmUnifiedTokenManagerV10.jsx";
-import GmTokenStatusLayer from "./GmTokenStatusLayer.jsx";
-import GmTokenPointerGuard from "./GmTokenPointerGuard.jsx";
-import GmTokenColorAndFocusEnhancer from "./GmTokenColorAndFocusEnhancer.jsx";
-import BattlemapViewportControls from "./BattlemapViewportControls.jsx";
-import BattlemapSharedLayer from "./BattlemapSharedLayer.jsx";
-import GmBattlemapTools from "./GmBattlemapTools.jsx";
-import GmZoomDrawerToggle from "./GmZoomDrawerToggle.jsx";
-import GmAutoGmPanel from "./GmAutoGmPanel.jsx";
-import GmLootGenerator from "./GmLootGenerator.jsx";
-import GmMerchantGenerator from "./GmMerchantGenerator.jsx";
-import TacticalEnvironmentPanel, { TacticalEnvironmentSummary } from "./TacticalEnvironmentPanel.jsx";
-import GmReferenceScreen from "./GmReferenceScreen.jsx";
-import GmEnvironmentEncounterScreen from "./GmEnvironmentEncounterScreen.jsx";
-import GmSceneManagerScreen from "./GmSceneManagerScreen.jsx";
 import { useLiveSessionBridge } from "../../utils/liveSessionBridge.js";
 import "./tacticalInteractionFixes.css";
 import "./tacticalFootprint3.css";
@@ -36,9 +9,17 @@ import "./gmTacticalTabs.css";
 import "./gmDesktopLayoutV2.css";
 import GmWorkspaceNavigation, { WORKSPACE_GROUPS, workspaceGroup, workspaceCopy } from "./GmWorkspaceNavigation.jsx";
 import "./gmOrganicWorkspace.css";
-
-import LiveSessionWorldMap from "../session/LiveSessionWorldMap.jsx";
 import { worldCopy } from "../campaign/worldCopy.js";
+
+const LazyBattleStage = lazy(() => import("./GmBattleStage.jsx"));
+const LazyLiveSessionWorldMap = lazy(() => import("../session/LiveSessionWorldMap.jsx"));
+const LazySceneManagerScreen = lazy(() => import("./GmSceneManagerScreen.jsx"));
+const LazyEnvironmentEncounterScreen = lazy(() => import("./GmEnvironmentEncounterScreen.jsx"));
+const LazyReferenceScreen = lazy(() => import("./GmReferenceScreen.jsx"));
+const LazyAutoGmPanel = lazy(() => import("./GmAutoGmPanel.jsx"));
+const LazyLootGenerator = lazy(() => import("./GmLootGenerator.jsx"));
+const LazyMerchantGenerator = lazy(() => import("./GmMerchantGenerator.jsx"));
+const LazyTokenManager = lazy(() => import("./GmUnifiedTokenManagerV10.jsx"));
 
 const TAB_STORAGE_KEY = "pip2d20_gm_tactical_tab_v1";
 const TABS = ["world", "battle", "scenes", "autogm", "loot", "merchants", "custom", "scene", "reference", "tokens", "roster", "participants"];
@@ -79,14 +60,20 @@ function initialTab() {
 
 export default function GmSessionMap(props) {
   const { i18n } = useTranslation();
-  const bridgedSession = useLiveSessionBridge();
+  const bridgedSession = useLiveSessionBridge(!props.session);
   const session = props.session || bridgedSession;
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([initialTab()]));
   const [moreOpen, setMoreOpen] = useState(false);
   const ui = workspaceCopy(i18n.resolvedLanguage || i18n.language);
   const group = workspaceGroup(activeTab);
   const worldLabels = worldCopy(i18n.resolvedLanguage || i18n.language);
-  const selectTab = (tab) => { setActiveTab(normalizeTab(tab)); setMoreOpen(false); };
+  const selectTab = (tab) => {
+    const nextTab = normalizeTab(tab);
+    setActiveTab(nextTab);
+    setVisitedTabs((previous) => previous.has(nextTab) ? previous : new Set([...previous, nextTab]));
+    setMoreOpen(false);
+  };
   const rulerClearTimerRef = useRef(null);
   const labels = COPY[languageCode(i18n.resolvedLanguage || i18n.language)] || COPY.en;
 
@@ -141,37 +128,55 @@ export default function GmSessionMap(props) {
         <nav className="gm-organic-subtabs" aria-label={ui[group]}>
           {WORKSPACE_GROUPS[group].map((tab) => <button type="button" key={tab} aria-pressed={activeTab === tab} onClick={() => selectTab(tab)}>{tab === "world" ? worldLabels.world : tab === "battle" ? worldLabels.tactical : ui[tab]}</button>)}
         </nav>
-      {activeTab === "world" && <LiveSessionWorldMap session={session} />}
-      {activeTab === "scenes" && <GmSceneManagerScreen session={session} onOpenBattlemap={()=>selectTab("battle")}/>} 
-      {activeTab === "scene" && <GmEnvironmentEncounterScreen session={session}/>}
-      {activeTab === "reference" && <GmReferenceScreen session={session}/>} 
-      <div hidden={activeTab === "world" || activeTab === "reference" || activeTab === "scenes" || activeTab === "scene"} className={`gm-tactical-shell gm-tactical-view--${activeTab}`}>
-        <details className="gm-tactical-battle-effects"><summary>{ui.effects}</summary><TacticalEnvironmentSummary scene={session.tacticalScene} effectsOnly /></details>
-        <div className="gm-tactical-auto-gm"><GmAutoGmPanel session={session} /></div>
-        <div className="gm-tactical-loot"><GmLootGenerator session={session} /></div>
-        <div className="gm-tactical-merchants"><GmMerchantGenerator session={session} /></div>
-        <div className="gm-tactical-environment-edit" hidden={activeTab === "scene"}><TacticalEnvironmentPanel scene={session.tacticalScene} session={session} /></div>
-        <div className="gm-organic-initiative" hidden={activeTab !== "battle"} />
-        <div className="gm-tactical-map-core"><GmSessionMapV2 {...props} session={session} /></div>
-        <WastelandAssetPortal session={session} />
-        <SettlementAssetPortal session={session} />
-        <RedRocketAssetPortal session={session} />
-        <SuperDuperMartAssetPortal session={session} />
-        <VaultRoomMarkerPortal session={session} />
-        <FortifiedCampAssetPortal session={session} />
-        <WastelandPoiPortal session={session} />
-        <SettlementRoomMarkerPortal session={session} />
-        <ProceduralBattlemapExtraPortal session={session} />
-        <QuestTokenPortal session={session} />
-        <BattlemapSharedLayer scene={session.tacticalScene} role="gm" />
-        <BattlemapViewportControls session={session} role="gm" activeTab={activeTab} />
-        <GmZoomDrawerToggle />
-        {activeTab === "battle" ? <GmBattlemapTools session={toolsSession} /> : null}
-        <GmTokenColorAndFocusEnhancer session={session} />
-        <GmTokenStatusLayer session={session} />
-        <GmTokenPointerGuard />
-        {activeTab === "battle" ? <GmVaultEncounterPanel session={session} /> : null}
-        <div className="gm-tactical-token-manager"><GmUnifiedTokenManagerV10 session={session} /></div>
+      {activeTab === "world" ? (
+        <Suspense fallback={<div className="pip-logbox">…</div>}>
+          <LazyLiveSessionWorldMap session={session} />
+        </Suspense>
+      ) : null}
+      {activeTab === "scenes" ? (
+        <Suspense fallback={<div className="pip-logbox">…</div>}>
+          <LazySceneManagerScreen session={session} onOpenBattlemap={() => selectTab("battle")} />
+        </Suspense>
+      ) : null}
+      {activeTab === "scene" ? (
+        <Suspense fallback={<div className="pip-logbox">…</div>}>
+          <LazyEnvironmentEncounterScreen session={session} />
+        </Suspense>
+      ) : null}
+      {activeTab === "reference" ? (
+        <Suspense fallback={<div className="pip-logbox">…</div>}>
+          <LazyReferenceScreen session={session} />
+        </Suspense>
+      ) : null}
+      <div
+        hidden={["world", "reference", "scenes", "scene"].includes(activeTab)}
+        className={`gm-tactical-shell gm-tactical-view--${activeTab}`}
+      >
+        {activeTab === "battle" ? (
+          <Suspense fallback={<div className="pip-logbox">…</div>}>
+            <LazyBattleStage {...props} session={session} toolsSession={toolsSession} effectsLabel={ui.effects} />
+          </Suspense>
+        ) : null}
+        {visitedTabs.has("autogm") ? (
+          <div className="gm-tactical-auto-gm">
+            <Suspense fallback={<div className="pip-logbox">…</div>}><LazyAutoGmPanel session={session} /></Suspense>
+          </div>
+        ) : null}
+        {visitedTabs.has("loot") ? (
+          <div className="gm-tactical-loot">
+            <Suspense fallback={<div className="pip-logbox">…</div>}><LazyLootGenerator session={session} /></Suspense>
+          </div>
+        ) : null}
+        {visitedTabs.has("merchants") ? (
+          <div className="gm-tactical-merchants">
+            <Suspense fallback={<div className="pip-logbox">…</div>}><LazyMerchantGenerator session={session} /></Suspense>
+          </div>
+        ) : null}
+        {["battle", "tokens", "custom", "roster", "participants"].includes(activeTab) ? (
+          <div className="gm-tactical-token-manager">
+            <Suspense fallback={<div className="pip-logbox">…</div>}><LazyTokenManager session={session} /></Suspense>
+          </div>
+        ) : null}
       </div>
       </div>
       <div className="gm-organic-chat-dock" ref={props.onChatDockReady} />
