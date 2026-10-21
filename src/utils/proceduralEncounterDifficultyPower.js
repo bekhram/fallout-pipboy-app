@@ -1,5 +1,5 @@
 import { encounterEnemyPowerProfile, normalizeEncounterEnemyPowerTier } from "./encounterEnemyPower.js";
-import { parseCombatDiceValue, rewriteAttackDamageDice } from "./attackDamageNotation.js";
+import { parseCombatDiceValue, rewriteAttackDamageDice, restoreLegacyAttackDamageDice } from "./attackDamageNotation.js";
 
 const POWER_PROFILES = Object.freeze({
   easy: Object.freeze({ damageMultiplier: 1, resistanceMultiplier: 1 }),
@@ -112,7 +112,10 @@ export function applyEncounterDifficultyPower(stats = {}, difficultyValue = "sta
   const tier = normalizeEncounterEnemyPowerTier(enemyPowerTier);
   const power = encounterEnemyPowerProfile(tier);
 
-  const baseAttacks = stats.encounterBaseAttacks ?? stats.attacks ?? "";
+  const baseAttacks = restoreLegacyAttackDamageDice(
+    stats.encounterBaseAttacks ?? stats.attacks ?? "",
+    stats.originalAttacks ?? "",
+  );
   const baseAbilities = stats.encounterBaseAbilities ?? stats.abilities ?? "";
   const baseCustomAttacks = Array.isArray(stats.encounterBaseCustomAttacks)
     ? stats.encounterBaseCustomAttacks

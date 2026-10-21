@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import winterOfAtom from "../src/data/bestiary/winterOfAtom01.js";
-import { extractAttackDamageDice, parseCombatDiceValue, rewriteAttackDamageDice, initialWeaponD6Count } from "../src/utils/attackDamageNotation.js";
+import { extractAttackDamageDice, parseCombatDiceValue, rewriteAttackDamageDice, initialWeaponD6Count, restoreLegacyAttackDamageDice } from "../src/utils/attackDamageNotation.js";
 import { applyEncounterDifficultyPower } from "../src/utils/proceduralEncounterDifficultyPower.js";
 import { parseAttackText, buildNpcAttackRollConfig, normalizeStructuredAttack, normalizeWeaponAttack } from "../src/utils/npcCombat.js";
 
@@ -149,4 +149,37 @@ test("D6 tab uses the selected attack's boosted damage instead of generic four d
   const roller = readFileSync(new URL("../src/components/dice/FalloutD6Roller.jsx", import.meta.url), "utf8");
   assert.match(roller, /useState\(\(\) => initialWeaponD6Count\(weapon\)\)/);
   assert.match(roller, /if \(weapon\) setDiceCount\(initialWeaponD6Count\(weapon\)\)/);
+});
+
+test("previously placed GM enemies with legacy 0-CD attacks recover from original bestiary text", () => {
+  const entry = byId("woa-child-of-atom-fanatic-shotgun");
+  const damaged = [
+    "COMBAT SHOTGUN — AGI + Small Guns (TN 11), 0 CD Physical, Spread 1, Range C",
+    "HEATED SUPER SLEDGE — STR + Energy Weapons (TN 11), 0 CD Breaking Energy, Two-Handed",
+  ].join("\n");
+  const saved = {
+    attacks: damaged, encounterBaseAttacks: damaged, originalAttacks: entry.attacks,
+    customAttacks: [{ name: "COMBAT SHOTGUN", damageDice: 0 }],
+  };
+  const strong = applyEncounterDifficultyPower(saved, "standard", "strong");
+  const attacks = parseAttackText(strong.attacks);
+  assert.deepEqual(attacks.map(a => a.damageDice), [8, 11]);
+  assert.match(strong.encounterBaseAttacks, /5 CD Physical/);
+  assert.match(strong.encounterBaseAttacks, /8 CD Breaking/);
+  assert.match(attacks[0].effects, /Piercing 2/);
+  assert.equal(buildNpcAttackRollConfig(attacks[0], strong).weapon.damage, "8 CD");
+
+  // A stored repaired base is reused instead of stacking the same tier again.
+  assert.equal(applyEncounterDifficultyPower(strong, "standard", "strong").attacks, strong.attacks);
+  const clear = applyEncounterDifficultyPower(strong, "standard", "none");
+  assert.deepEqual(parseAttackText(clear.attacks).map(a => a.damageDice), [5, 8]);
+});
+
+test("repair leaves legitimate zero-damage attacks and unrelated NPCs untouched", () => {
+  const current = "STUN: BODY + Melee (TN 10), 0 CD Physical damage";
+  const original = "STUN: BODY + Melee (TN 10), 0 CD Physical damage";
+  assert.equal(restoreLegacyAttackDamageDice(current, original), current);
+  assert.equal(restoreLegacyAttackDamageDice(current, ""), current);
+  const source = byId("woa-child-of-atom-fanatic-shotgun").attacks;
+  assert.equal(restoreLegacyAttackDamageDice("UNRELATED: BODY + Melee (TN 8), 0 CD Physical", source).includes("0 CD"), true);
 });
