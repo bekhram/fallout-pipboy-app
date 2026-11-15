@@ -53,6 +53,7 @@ export function buildAmmoCraftingCatalog(rows = [], existingRecipes = []) {
 
 export function getCraftingRecipeCategory(recipe) {
   if (recipe?.outputCategory === "ammo" || recipe?.ammoCrafting) return "ammo";
+  if (recipe?.category === "mods") return "mods";
   const group = String(recipe?.group || "").toUpperCase();
   if (group === "EXPLOSIVES") return "explosives";
   if (group.includes(" MOD") || group.endsWith("MODS") || group.includes("UPGRADE")

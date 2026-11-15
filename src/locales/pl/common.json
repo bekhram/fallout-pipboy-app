@@ -23,6 +23,7 @@
     "return": "POWRÓT DO MENU"
   },
   "common": {
+    "loadingScreen": "Wczytywanie…",
     "edit": "✎",
     "copy": "⧉",
     "save": "✓",
@@ -484,6 +485,30 @@
     "test": "Test"
   },
   "inventory": {
+    "sellBonus": "Premia przy sprzedaży, %",
+    "legendaryFilter": "Filtr przedmiotów legendarnych",
+    "craftMode": "Tryb rzemiosła",
+    "fields": {
+      "rarity": "Rzadkość",
+      "damage": "Obrażenia",
+      "rate": "Szybkostrzelność",
+      "range": "Zasięg",
+      "damageType": "Typ obrażeń",
+      "weaponType": "Typ broni",
+      "ammo": "Amunicja",
+      "physicalDr": "Odporność fizyczna",
+      "energyDr": "Odporność energetyczna",
+      "radiationDr": "Odporność na promieniowanie",
+      "locations": "Strefy",
+      "healing": "Odzyskane PW",
+      "radiation": "Promieniowanie",
+      "duration": "Czas trwania",
+      "addiction": "Uzależnia?",
+      "series": "Seria czasopisma",
+      "effect": "Efekt / cechy"
+    },
+    "terminalArchive": "Archiwum terminala",
+    "rarePerkUnlock": "Czytaj przez 1 godzinę, aby odblokować atut „{{perk}}”. Od tej chwili możesz wybrać go przy awansie.",
     "title": "EKWIPUNEK",
     "caps": "KAPSY",
     "currentWeight": "Aktualna waga",
@@ -523,6 +548,17 @@
     "hp": "HP"
   },
   "perksPanel": {
+    "selectArchive": "Wybierz z archiwum",
+    "choosePerk": "Wybierz atut",
+    "requirementsWarning": "Niespełnione wymagania",
+    "requiredLevel": "Wymagany poziom {{required}}+ (aktualny poziom {{current}})",
+    "requiredStat": "Wymagane {{attribute}} {{required}} (aktualna wartość {{current}})",
+    "notGhoulOrRobot": "Niedostępne dla ghuli i robotów",
+    "notRobot": "Niedostępne dla robotów",
+    "notRadiationImmune": "Wymaga postaci podatnej na promieniowanie",
+    "rankRange": "Ranga musi mieścić się w zakresie od 1 do {{max}}.",
+    "training": "Trening S.P.E.C.I.A.L.",
+    "empty": "Postać nie ma jeszcze atutów ani cech.",
     "title": "PERKI / CECHY",
     "originTraits": "CECHY POCHODZENIA",
     "perks": "PERKI",

@@ -1,3 +1,5 @@
+import { POWER_ARMOR_PLATING, POWER_ARMOR_SYSTEMS, POWER_ARMOR_UPGRADES } from "./powerArmor.js";
+
 const slug = (value) => String(value || "")
   .toLowerCase()
   .replace(/[^a-z0-9]+/g, "-")
@@ -38,6 +40,15 @@ export function getComplexityMaterials(complexity) {
   return { ...COMPLEXITY_MATERIALS[key] };
 }
 
+function powerArmorRecipes(kind, label, skill, page, rows) {
+  const options = { upgrade: POWER_ARMOR_UPGRADES, system: POWER_ARMOR_SYSTEMS, plating: POWER_ARMOR_PLATING }[kind];
+  return group({ workbench: "power_armor", category: "mods", group: label, skill, page }, rows).map((recipe) => {
+    const name = recipe.name.replace(/ \([^()]*\)$/, "");
+    const mods = options.filter((mod) => (mod.model || mod.name) === name);
+    return { ...recipe, powerArmor: { kind, mods } };
+  });
+}
+
 const ARMOR_RECIPES = [
   ...group({ workbench: "armor", category: "armor", group: "BALLISTIC WEAVE", skill: "Repair", page: 211 }, [
     ["Ballistic Weave", 3, "", "Rare"],
@@ -74,17 +85,20 @@ const ARMOR_RECIPES = [
     ["Brawling (Arms Only)", 3, "Armorer 1", "Uncommon"], ["Braced (Arms Only)", 3, "Armorer 1", "Uncommon"], ["Stabilized (Arms Only)", 4, "Armorer 2", "Uncommon"], ["Aerodynamic (Arms Only)", 5, "Armorer 3", "Uncommon"], ["Weighted (Arms Only)", 6, "Armorer 4", "Uncommon"],
     ["Cushioned (Legs Only)", 3, "Armorer 1", "Uncommon"], ["Muffled (Legs Only)", 4, "Armorer 2", "Uncommon"],
   ]),
-  ...group({ workbench: "power_armor", category: "armor", group: "POWER ARMOR UPGRADES", skill: "Repair", page: 219 }, [
+];
+
+const POWER_ARMOR_RECIPES = [
+  ...powerArmorRecipes("upgrade", "POWER ARMOR UPGRADES", "Repair", 219, [
     ["Raider II", 3, "Armorer 1", "Uncommon"], ["T-45b", 3, "Armorer 1", "Uncommon"], ["T-45c", 4, "Armorer 2", "Uncommon"], ["T-45d", 5, "Armorer 2, Science! 1", "Uncommon"], ["T-45e", 6, "Armorer 3, Science! 1", "Uncommon"], ["T-45f", 7, "Armorer 3, Science! 2", "Uncommon"],
     ["T-51b", 3, "Armorer 1", "Uncommon"], ["T-51c", 4, "Armorer 2", "Uncommon"], ["T-51d", 5, "Armorer 2, Science! 1", "Uncommon"], ["T-51e", 6, "Armorer 3, Science! 1", "Uncommon"], ["T-51f", 7, "Armorer 3, Science! 2", "Uncommon"],
     ["T-60b", 3], ["T-60c", 4, "Armorer 1, Science! 1", "Uncommon"], ["T-60d", 5, "Armorer 2, Science! 2", "Uncommon"], ["T-60e", 6, "Armorer 3, Science! 1", "Uncommon"], ["T-60f", 7, "Armorer 3, Science! 2", "Uncommon"],
     ["X-01 Mk II", 3], ["X-01 Mk III", 4, "Armorer 1, Science! 1", "Uncommon"], ["X-01 Mk IV", 5, "Armorer 2, Science! 2", "Uncommon"], ["X-01 Mk V", 6, "Armorer 3, Science! 1", "Uncommon"], ["X-01 Mk VI", 7, "Armorer 3, Science! 2", "Uncommon"],
   ]),
-  ...group({ workbench: "power_armor", category: "armor", group: "POWER ARMOR SYSTEMS", skill: "Science", page: 220 }, [
+  ...powerArmorRecipes("system", "POWER ARMOR SYSTEMS", "Science", 220, [
     ["Rad Scrubber", 4, "Science! 2", "Uncommon"], ["Sensor Array", 5, "Science! 3", "Uncommon"], ["Targeting HUD", 5, "Science! 3", "Uncommon"], ["Internal Database", 4, "Science! 2", "Uncommon"],
     ["Welded Rebar (Raider only)", 2, "Armorer 1", "Uncommon", "Repair"], ["Core Assembly", 5, "Science! 3", "Uncommon"], ["Blood Cleanser", 4, "Science! 1", "Uncommon"], ["Emergency Protocols", 6, "Science! 4", "Uncommon"], ["Motion-Assist Servos", 5, "Science! 3", "Uncommon"], ["Kinetic Dynamo", 6, "Science! 4", "Uncommon"], ["Medic Pump", 6, "Science! 4", "Uncommon"], ["Reactive Plates", 5, "Armorer 4", "Uncommon", "Repair"], ["Tesla Coils", 5, "Science! 3", "Uncommon"], ["Stealth Boy", 6, "Science! 4", "Uncommon"], ["Jetpack", 7, "Armorer 4, Science! 4", "Uncommon", "Repair"], ["Rusty Knuckles", 2, "Blacksmith 1", "Uncommon", "Repair"], ["Hydraulic Bracers", 4, "Blacksmith 3", "Uncommon", "Repair"], ["Optimized Bracers", 2, "Blacksmith 1", "Uncommon", "Repair"], ["Tesla Bracers", 6, "Blacksmith 3, Science! 1", "Uncommon", "Repair"], ["Calibrated Shocks", 4, "Science! 2", "Uncommon"], ["Explosive Vent", 5, "Science! 3", "Uncommon"], ["Overdrive Servos", 5, "Science! 3", "Uncommon"],
   ]),
-  ...group({ workbench: "power_armor", category: "armor", group: "POWER ARMOR PLATING", skill: "Repair", page: 220 }, [
+  ...powerArmorRecipes("plating", "POWER ARMOR PLATING", "Repair", 220, [
     ["Titanium Plating", 4, "Armorer 3", "Uncommon"], ["Lead Plating", 3, "Armorer 1", "Uncommon"], ["Photovoltaic Plating", 5, "Science! 3", "Uncommon", "Science"], ["Winterized Coating (not on X-01)", 3, "Armorer 1", "Uncommon"], ["Prism Shielding", 4, "Science! 2", "Uncommon", "Science"], ["Explosive Shielding", 3, "Science! 1", "Uncommon", "Science"], ["EMP Shielding (X-01 only)", 3, "Armorer 1", "Uncommon"],
   ]),
 ];
@@ -444,6 +458,7 @@ export const CRAFTING_RECIPES = [
   ...HOLLYWOOD_HEROES_CHEMISTRY_RECIPES,
   ...WEAPON_RECIPES,
   ...ARMOR_RECIPES,
+  ...POWER_ARMOR_RECIPES,
   ...ROBOT_RECIPES,
   ...CHEMISTRY_RECIPES,
   ...COOKING_RECIPES,

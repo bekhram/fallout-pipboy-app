@@ -23,6 +23,7 @@
     "return": "ПОВЕРНУТИСЯ В МЕНЮ"
   },
   "common": {
+    "loadingScreen": "Завантаження…",
     "cancel": "Скасувати",
     "confirm": "Підтвердити",
     "edit": "✎",
@@ -484,6 +485,30 @@
     "test": "Тест"
   },
   "inventory": {
+    "sellBonus": "Бонус до продажу, %",
+    "legendaryFilter": "Фільтр легендарних предметів",
+    "craftMode": "Режим крафту",
+    "fields": {
+      "rarity": "Рідкість",
+      "damage": "Ушкодження",
+      "rate": "Скорострільність",
+      "range": "Дистанція",
+      "damageType": "Тип ушкоджень",
+      "weaponType": "Тип зброї",
+      "ammo": "Боєприпаси",
+      "physicalDr": "Фіз. опір",
+      "energyDr": "Енерг. опір",
+      "radiationDr": "Рад. опір",
+      "locations": "Зони",
+      "healing": "Відновлення HP",
+      "radiation": "Радіація",
+      "duration": "Тривалість",
+      "addiction": "Викликає залежність?",
+      "series": "Серія журналу",
+      "effect": "Ефект / властивості"
+    },
+    "terminalArchive": "Архів термінала",
+    "rarePerkUnlock": "Витратьте 1 годину на читання, щоб відкрити перк «{{perk}}». Після цього його можна вибрати під час підвищення рівня.",
     "title": "ІНВЕНТАР",
     "caps": "КРИШКИ",
     "currentWeight": "Поточна вага",
@@ -523,6 +548,17 @@
     "hp": "ОЗ"
   },
   "perksPanel": {
+    "selectArchive": "Вибрати з архіву",
+    "choosePerk": "Виберіть перк",
+    "requirementsWarning": "Вимоги не виконано",
+    "requiredLevel": "Потрібен рівень {{required}}+ (поточний рівень {{current}})",
+    "requiredStat": "Потрібно {{attribute}} {{required}} (поточне значення {{current}})",
+    "notGhoulOrRobot": "Недоступно гулям і роботам",
+    "notRobot": "Недоступно роботам",
+    "notRadiationImmune": "Персонаж має бути вразливим до радіації",
+    "rankRange": "Допустимий ранг від 1 до {{max}}.",
+    "training": "Тренування S.P.E.C.I.A.L.",
+    "empty": "У персонажа поки немає перків і рис.",
     "title": "ПЕРКИ / РИСИ",
     "originTraits": "РИСИ ПОХОДЖЕННЯ",
     "perks": "ПЕРКИ",

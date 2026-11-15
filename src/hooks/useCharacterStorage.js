@@ -1187,6 +1187,7 @@ export function useCharacterStorage(initialForm) {
         const dictKey = TRAITS_DICTIONARY[traitKey];
         if (dictKey && t) {
           newOriginTraits.push({
+            id: dictKey,
             name: t(`traitsInfo.${dictKey}.name`),
             rank: "1",
             description: t(`traitsInfo.${dictKey}.desc`),

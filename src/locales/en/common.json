@@ -23,6 +23,7 @@
     "return": "RETURN TO MENU"
   },
   "common": {
+    "loadingScreen": "Loading…",
     "edit": "✎",
     "copy": "⧉",
     "save": "✓",
@@ -484,6 +485,30 @@
     "test": "Test"
   },
   "inventory": {
+    "sellBonus": "Selling bonus, %",
+    "legendaryFilter": "Legendary filter",
+    "craftMode": "Crafting mode",
+    "fields": {
+      "rarity": "Rarity",
+      "damage": "Damage",
+      "rate": "Rate of fire",
+      "range": "Range",
+      "damageType": "Damage type",
+      "weaponType": "Weapon type",
+      "ammo": "Ammo",
+      "physicalDr": "Physical DR",
+      "energyDr": "Energy DR",
+      "radiationDr": "Radiation DR",
+      "locations": "Locations",
+      "healing": "HP healed",
+      "radiation": "Radiation",
+      "duration": "Duration",
+      "addiction": "Addictive?",
+      "series": "Magazine series",
+      "effect": "Effect / qualities"
+    },
+    "terminalArchive": "Terminal archive",
+    "rarePerkUnlock": "Read for 1 hour to unlock {{perk}}. You can then choose it when leveling up.",
     "title": "INVENTORY",
     "caps": "CAPS",
     "currentWeight": "Current Weight",
@@ -523,6 +548,17 @@
     "hp": "HP"
   },
   "perksPanel": {
+    "selectArchive": "Select from archive",
+    "choosePerk": "Choose a perk",
+    "requirementsWarning": "Requirements not met",
+    "requiredLevel": "Requires level {{required}}+ (current level {{current}})",
+    "requiredStat": "Requires {{attribute}} {{required}} (current value {{current}})",
+    "notGhoulOrRobot": "Unavailable to ghouls or robots",
+    "notRobot": "Unavailable to robots",
+    "notRadiationImmune": "Requires a character that can take radiation damage",
+    "rankRange": "Rank must be between 1 and {{max}}.",
+    "training": "S.P.E.C.I.A.L. training",
+    "empty": "No perks or traits found.",
     "title": "PERKS / TRAITS",
     "originTraits": "ORIGIN TRAITS",
     "perks": "PERKS",

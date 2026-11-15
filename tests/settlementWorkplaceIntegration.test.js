@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import * as settlementDevelopment from '../src/utils/settlementDevelopment.js';
+import * as settlementAttackEngine from '../src/utils/settlementAttackEngine.js';
 
 // Actual changed modules; unchanged catalog, construction, attack and Phaser
 // services are small test doubles. Not a live campaign / full application test.
@@ -24,8 +26,8 @@ async function load(relative, extra={}) {
   'src/data/settlement/rulebookCatalog.js':{getRulebookBuilding:id=>rules[id] || null},
   'src/data/settlement/rulebook.js':{ROOMS:{},SETTLEMENT_RULEBOOK:{stockpile:{baseCapacityLbs:300}},SETTLEMENT_ACTIONS:{}},
   'src/data/settlement/buildings.js':{SETTLEMENT_GRID_SIZE:24,SETTLEMENT_BUILDINGS:Object.fromEntries(Object.keys(rules).map(id=>[id,{id,footprint:{width:2,height:2},name:{en:id}}])),settlementBuildingName:def=>def?.name.en || ''},
-  'src/utils/settlementDevelopment.js':{advanceConstruction:(s,now)=>({...s,constructionUpdatedAt:now}),cost:()=>({}),canSpend:(_s,actor)=>Boolean(actor?.allowed)},
-  'src/utils/settlementAttackEngine.js':{resolveSettlementAttack:s=>s},
+  'src/utils/settlementDevelopment.js':{...settlementDevelopment,advanceConstruction:(s,now)=>({...s,constructionUpdatedAt:now}),cost:()=>({}),canSpend:(_s,actor)=>Boolean(actor?.allowed)},
+  'src/utils/settlementAttackEngine.js':{...settlementAttackEngine,resolveSettlementAttack:s=>s},
   'src/utils/settlementProvisions.js':{provisions:()=>({food:0,water:0}),collectDailySurplus:s=>s,reserveProvisions:s=>s},
   'src/utils/settlementPower.js':{resolveSettlementPower:s=>{
    const active=s.buildings.filter(b=>b.state==='active' && b.condition>0 && !b.autoDisabled);let produced=active.reduce((n,b)=>n+(rules[b.type]?.effects.power || 0),0),remaining=produced,required=0;
@@ -65,7 +67,7 @@ test('real adapter and resource helper agree on explicit crop output',{skip},asy
 test('daily production uses selected store and records its id',{skip},async()=>{
  const m=await load('src/utils/settlementDayEngine.js'),s=settlement([b('one','trading_post'),b('two','trading_emporium')],[w('a','business','two'),w('b'),w('c'),w('d'),w('e')]);
  const next=m.advanceSettlementDay(s,1000);assert.equal(next.attributes.income,3);assert.equal(next.resources.income,3);
- const event=next.events.find(e=>e.type==='business');assert.equal(event.storeIds[0],'two');assert.equal(event.stores,1);assert.equal(next.resources.caps,100);
+ const event=next.events.find(e=>e.type==='business');assert.equal(event.storeIds[0],'two');assert.equal(event.stores,1);assert.equal(event.caps,30);assert.equal(next.lastOperatingCost.paid,12);assert.equal(next.resources.caps,s.resources.caps+event.caps-next.lastOperatingCost.paid);
 });
 test('daily crop event matches the building forecast rather than pooled unused fields',{skip},async()=>{
  const m=await load('src/utils/settlementDayEngine.js'),s=settlement([b('one','crop_field'),b('two','crop_field')],[w('a','tend_crops','two')]);
@@ -87,8 +89,8 @@ test('elapsed-day processing does not apply the same daily yield twice on reopen
 
 function sceneDouble(){
  const objects=[];let shutdown;const scene={objects,cameras:{main:{zoom:.5,scrollX:0}},scale:{width:390},events:{once:(_e,fn)=>{shutdown=fn;}}};
- const create=(kind,...args)=>{const item={kind,x:args[0],y:args[1],visible:true,text:kind==='text'?args[2]:'',handlers:{},children:[],setDepth(n){this.depth=n;return this;},setFillStyle(){return this;},setStrokeStyle(){return this;},setOrigin(){return this;},setVisible(v){this.visible=v;return this;},setScale(v){this.scale=v;return this;},setPosition(x,y){this.x=x;this.y=y;return this;},setText(t){this.text=t;return this;},setInteractive(){return this;},on(e,fn){this.handlers[e]=fn;return this;},add(children){this.children.push(...children);return this;},destroy(){this.destroyed=true;this.children.forEach(c=>c.destroy());}};objects.push(item);return item;};
- scene.add=Object.fromEntries(['container','circle','text','rectangle','ellipse'].map(kind=>[kind,(...args)=>create(kind,...args)]));scene.shutdown=()=>shutdown?.();return scene;
+ const create=(kind,...args)=>{const item={kind,x:args[0],y:args[1],visible:true,text:kind==='text'?args[2]:'',handlers:{},children:[],setDepth(n){this.depth=n;return this;},setFillStyle(){return this;},setStrokeStyle(){return this;},setOrigin(){return this;},setVisible(v){this.visible=v;return this;},setScale(v){this.scale=v;return this;},setFrame(v){this.frame=v;return this;},setFlipX(v){this.flipX=v;return this;},setPosition(x,y){this.x=x;this.y=y;return this;},setText(t){this.text=t;return this;},setInteractive(){return this;},on(e,fn){this.handlers[e]=fn;return this;},add(children){this.children.push(...children);return this;},destroy(){this.destroyed=true;this.children.forEach(c=>c.destroy());}};objects.push(item);return item;};
+ scene.add=Object.fromEntries(['container','circle','text','rectangle','ellipse','sprite'].map(kind=>[kind,(...args)=>create(kind,...args)]));scene.shutdown=()=>shutdown?.();return scene;
 }
 test('building badges preserve resource type and add construction / unavailable status',{skip},async()=>{
  const {SettlementBuildingBadges}=await load('src/components/settlement/SettlementBuildingBadges.js'),scene=sceneDouble(),badges=new SettlementBuildingBadges(scene,()=>{}),s=settlement([b('f','crop_field',{state:'construction'})]);

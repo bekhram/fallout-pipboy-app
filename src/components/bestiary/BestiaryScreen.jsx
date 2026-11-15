@@ -311,7 +311,7 @@ export default function BestiaryScreen() {
           ) : (
             <article className="bestiary-card">
               <div className="bestiary-detail-head">
-                {tokenUrl ? <img className="bestiary-token-art" src={tokenUrl} alt="" aria-hidden="true" /> : null}
+                {tokenUrl ? <img className="bestiary-token-art" src={tokenUrl} alt="" aria-hidden="true" decoding="async" /> : null}
                 <div className="bestiary-title-block"><div className="pip-tagrow is-wrap"><span className="pip-tag is-selected">{copy[shown.category] || shown.category}</span><span className="pip-tag">{shown.custom ? copy.custom : copy.reference}</span></div><h3>{shown.name}</h3>{shown.creatureType ? <span>{shown.creatureType}</span> : null}</div>
                 {shown.custom ? <button type="button" className="pip-btn" onClick={() => setEditing(true)}>{copy.edit}</button> : language !== "en" ? <span className={`bestiary-translation-state is-${translationState}`}>{translationState === "loading" ? copy.translating : translationState === "ready" ? copy.translationReady : copy.translationFallback}</span> : null}
               </div>

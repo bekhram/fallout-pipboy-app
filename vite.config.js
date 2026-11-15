@@ -5,6 +5,7 @@ import { pip2d20CharacterProfilesPlugin } from "./vite-character-profiles.js";
 
 export default defineConfig({
   base: "/",
+  worker: { format: "es" },
   server: {
     host: true,
     port: 5173,

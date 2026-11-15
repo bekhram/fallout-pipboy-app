@@ -1,9 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { SPECIAL_KEYS } from "../../constants.js";
 import { PERKS_LIST } from "../data/perks";
-import { getAddedPerkTranslation } from "../data/perkTranslations";
-import { getSupplementalPerkTranslation } from "../data/supplementalPerks.js";
+import { getPerkCatalogText, getPerkDisplayText, PERK_LANGUAGES } from "../data/perkLocalization.js";
 import PERK_ASSETS from "../../perkAssets.js";
 
 const normalizePerkAssetKey = (value) =>
@@ -27,7 +26,7 @@ const SPECIAL_NAMES = {
   pl: { S: "Siła", P: "Percepcja", E: "Wytrzymałość", C: "Charyzma", I: "Inteligencja", A: "Zręczność", L: "Szczęście" },
 };
 
-function getRequirementsWarnings(reqString, form, perk = null, rank = 1) {
+function getRequirementsWarnings(reqString, form, perk, rank, t, specialNames) {
   if (!reqString || reqString === "None") return [];
   const warnings = [];
   const parts = reqString.split(",").map((value) => value.trim());
@@ -49,13 +48,14 @@ function getRequirementsWarnings(reqString, form, perk = null, rank = 1) {
       origin.includes(String(value).toLowerCase())
     );
 
+  const statKeys = { STR: "S", PER: "P", END: "E", CHA: "C", INT: "I", AGI: "A", LCK: "L" };
   parts.forEach((part) => {
     const lower = part.toLowerCase();
     const levelMatch = part.match(/Level\s*(\d+)\+/i);
     if (levelMatch) {
       const reqLevel = parseInt(levelMatch[1], 10);
       if (level < reqLevel && !ignoreFirstRankLevel) {
-        warnings.push(`Requires Level ${reqLevel}+ (Current: ${level})`);
+        warnings.push(t("perksPanel.requiredLevel", { required: reqLevel, current: level }));
       }
       return;
     }
@@ -65,21 +65,21 @@ function getRequirementsWarnings(reqString, form, perk = null, rank = 1) {
       const statName = statMatch[1].toUpperCase();
       const reqVal = parseInt(statMatch[2], 10);
       if (stats[statName] < reqVal) {
-        warnings.push(`Requires ${statName} ${reqVal} (Current: ${stats[statName]})`);
+        warnings.push(t("perksPanel.requiredStat", { attribute: specialNames[statKeys[statName]], required: reqVal, current: stats[statName] }));
       }
       return;
     }
 
     if (lower === "not a ghoul or robot" && (isGhoul || isRobot)) {
-      warnings.push("Cannot be a ghoul or robot");
+      warnings.push(t("perksPanel.notGhoulOrRobot"));
       return;
     }
     if (lower === "not a robot" && isRobot) {
-      warnings.push("Cannot be a robot");
+      warnings.push(t("perksPanel.notRobot"));
       return;
     }
     if (lower === "not immune to radiation" && isGhoul) {
-      warnings.push("Requires a character that is not immune to radiation");
+      warnings.push(t("perksPanel.notRadiationImmune"));
     }
   });
 
@@ -109,17 +109,13 @@ export default function PerksScreen({
   onCancelEdit,
   form,
 }) {
-  const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation(undefined, { bindI18n: "languageChanged loaded" });
+  useEffect(() => {
+    void i18n.loadLanguages(PERK_LANGUAGES);
+  }, [i18n]);
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const specialNames = SPECIAL_NAMES[language] || SPECIAL_NAMES.en;
-  const localizedPerk = (perk) => {
-    const supplemental = getSupplementalPerkTranslation(perk.id, language);
-    const added = getAddedPerkTranslation(perk.id, language);
-    return {
-      name: supplemental?.name || added?.name || t(`perksInfo.${perk.id}.name`, { defaultValue: perk.name || perk.id }),
-      description: supplemental?.description || added?.description || t(`perksInfo.${perk.id}.desc`, { defaultValue: perk.description || "" }),
-    };
-  };
+  const localizedPerk = (perk) => getPerkCatalogText(perk, language, t);
   const safeList = Array.isArray(perks) ? perks : [];
   const isEditing = editingIndex !== null;
   const hasOriginTraits = safeList.some((item) => item.isOriginTrait);
@@ -163,7 +159,7 @@ export default function PerksScreen({
           ...prev,
           id: perkData.id,
           name: localizedPerk(perkData).name,
-          description: localizedPerk(perkData).description + `\n[Req: ${perkData.requirements} | Max Rank: ${perkData.maxRanks}]`,
+          description: localizedPerk(perkData).description,
         };
         if (perkData.id === "intense_training") {
           const rank = getSafeRank(perkData, prev.rank);
@@ -183,12 +179,14 @@ export default function PerksScreen({
     (p) => p.id === perkDraft?.id || localizedPerk(p).name === perkDraft?.name
   );
 
+  const draftDisplay = getPerkDisplayText(perkDraft, matchedPerk?.id, i18n) || {};
+
   const getPerkId = (item) =>
     item?.id || PERKS_LIST.find((perk) => localizedPerk(perk).name === item?.name)?.id;
 
   const activeRequirements = getPerkRequirementsForRank(matchedPerk, perkDraft?.rank);
   const warnings = matchedPerk
-    ? getRequirementsWarnings(activeRequirements, form, matchedPerk, perkDraft?.rank)
+    ? getRequirementsWarnings(activeRequirements, form, matchedPerk, perkDraft?.rank, t, specialNames)
     : [];
   const rankValue = Number(perkDraft?.rank || 1);
   const rankInvalid = Boolean(matchedPerk) && (
@@ -198,7 +196,7 @@ export default function PerksScreen({
   );
   const allWarnings = [
     ...warnings,
-    ...(rankInvalid ? [`Rank must be between 1 and ${matchedPerk?.maxRanks || 1}`] : []),
+    ...(rankInvalid ? [t("perksPanel.rankRange", { max: matchedPerk?.maxRanks || 1 })] : []),
   ];
   const intenseTrainingRank = matchedPerk?.id === "intense_training"
     ? getSafeRank(matchedPerk, perkDraft?.rank)
@@ -226,6 +224,7 @@ export default function PerksScreen({
             const currentlyEditing = editingIndex === index;
             const perkId = getPerkId(item);
             const perkImage = PERK_IMAGES[perkId];
+            const display = getPerkDisplayText(item, perkId, i18n);
             const trainingChoices = perkId === "intense_training" && Array.isArray(item.specialChoices)
               ? item.specialChoices.filter(Boolean)
               : [];
@@ -256,7 +255,7 @@ export default function PerksScreen({
                 <div className="pip-perk-content">
                   <div className="pip-perk-header" style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "4px" }}>
                     <strong style={{ fontSize: "1.1em" }}>
-                      {item.name || t("perksPanel.unnamedPerk")}
+                      {display.name || t("perksPanel.unnamedPerk")}
                     </strong>
                     {item.rank && (
                       <span className="pip-perk-rank" style={{ opacity: 0.7, fontSize: "0.9em" }}>
@@ -265,7 +264,7 @@ export default function PerksScreen({
                     )}
                   </div>
                   <div className="pip-perk-desc">
-                    {item.description || t("perksPanel.noDescription")}
+                    {display.description || t("perksPanel.noDescription")}
                   </div>
                   {trainingChoices.length ? (
                     <div style={{ marginTop: "6px", fontSize: "0.78em", opacity: 0.82 }}>
@@ -304,7 +303,7 @@ export default function PerksScreen({
             );
           })}
           {safeList.length === 0 && (
-            <div className="pip-empty-state">No perks or traits found.</div>
+            <div className="pip-empty-state">{t("perksPanel.empty")}</div>
           )}
         </div>
 
@@ -323,9 +322,9 @@ export default function PerksScreen({
               )}
 
               <div style={{ gridColumn: "1 / -1" }}>
-                <label>Select from Database</label>
-                <select className="pip-input" onChange={handleSelectPerk} defaultValue="">
-                  <option value="" disabled>-- Choose a Perk --</option>
+                <label htmlFor="perk-archive">{t("perksPanel.selectArchive")}</label>
+                <select id="perk-archive" className="pip-input" onChange={handleSelectPerk} value={matchedPerk?.id || ""}>
+                  <option value="" disabled>{t("perksPanel.choosePerk")}</option>
                   {PERKS_LIST.map((perk) => (
                     <option key={perk.id} value={perk.id}>
                       {localizedPerk(perk).name}
@@ -342,7 +341,7 @@ export default function PerksScreen({
                   color: "var(--pip-color-alert, #ffcc00)",
                   backgroundColor: "rgba(255, 204, 0, 0.05)",
                 }}>
-                  <strong style={{ display: "block", marginBottom: "5px" }}>[ WARNING: REQUIREMENTS NOT MET ]</strong>
+                  <strong style={{ display: "block", marginBottom: "5px" }}>[ {t("perksPanel.requirementsWarning")} ]</strong>
                   <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.9em" }}>
                     {allWarnings.map((warning, index) => <li key={index}>{warning}</li>)}
                   </ul>
@@ -353,7 +352,7 @@ export default function PerksScreen({
                 <label>{t("perksPanel.perkName")}</label>
                 <input
                   className="pip-input"
-                  value={perkDraft.name || ""}
+                  value={draftDisplay.name || ""}
                   onChange={(e) => handleChange("name", e.target.value)}
                 />
               </div>
@@ -370,7 +369,7 @@ export default function PerksScreen({
 
               {matchedPerk?.id === "intense_training" ? (
                 <div style={{ gridColumn: "1 / -1", display: "grid", gap: "7px" }}>
-                  <label>[ S.P.E.C.I.A.L. TRAINING ]</label>
+                  <label>[ {t("perksPanel.training")} ]</label>
                   {Array.from({ length: intenseTrainingRank }, (_, index) => (
                     <label
                       key={index}
@@ -404,7 +403,7 @@ export default function PerksScreen({
                 <textarea
                   className="pip-input"
                   rows={6}
-                  value={perkDraft.description || ""}
+                  value={draftDisplay.description || ""}
                   onChange={(e) => handleChange("description", e.target.value)}
                 />
               </div>

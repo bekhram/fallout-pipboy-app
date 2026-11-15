@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { localizeCraftingMaterial, localizeCraftingPerk, localizeCraftingSkill } from "../../data/craftingLocalization.js";
 import { ARMOR_PARTS } from "../../constants.js";
 import { buildBaseArmorRecipes } from "../../data/baseCraftingRecipes.js";
 import {
@@ -182,6 +184,7 @@ function repairArmorState(armor, target) {
 }
 
 export default function ArmorRepairPanel({ character = null, setCharacter = null, language = "en" }) {
+  const { t } = useTranslation();
   const lang = languageCode(language);
   const copy = TEXT[lang];
   const partLabels = PART_LABELS[lang] || PART_LABELS.en;
@@ -374,7 +377,7 @@ export default function ArmorRepairPanel({ character = null, setCharacter = null
                 </div>
 
                 <div className="armor-repair-card__meta">
-                  <span>Repair {state.skill.effectiveRank}</span>
+                  <span>{localizeCraftingSkill("Repair", t)} {state.skill.effectiveRank}</span>
                   <span>TN {state.skill.targetNumber}</span>
                   <span>D{state.difficulty}</span>
                   <span>C{target.recipe.complexity}</span>
@@ -383,7 +386,7 @@ export default function ArmorRepairPanel({ character = null, setCharacter = null
                 <div className="armor-repair-card__materials">
                   {state.materialState.map((entry) => (
                     <span key={entry.name} className={entry.enough ? "is-ok" : "is-missing"}>
-                      {entry.name}: {entry.available}/{entry.required}
+                      {localizeCraftingMaterial(entry.name, language)}: {entry.available}/{entry.required}
                     </span>
                   ))}
                 </div>
@@ -392,7 +395,7 @@ export default function ArmorRepairPanel({ character = null, setCharacter = null
                   <div className="armor-repair-card__perks">
                     {state.perkState.map((perk) => (
                       <span key={`${perk.id}-${perk.rank}`} className={perk.met ? "is-ok" : "is-missing"}>
-                        {perk.label} {perk.rank}: {perk.currentRank}/{perk.rank}
+                        {localizeCraftingPerk(perk, language, t)} {perk.rank}: {perk.currentRank}/{perk.rank}
                       </span>
                     ))}
                   </div>

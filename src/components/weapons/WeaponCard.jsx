@@ -10,7 +10,8 @@ import {
 import { getWeaponMetadata } from "../../utils/weaponDatabase.js";
 import { applyWeaponMods, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModName } from "../../utils/weaponModLocalization.js";
-import { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
+import { localizeInventoryWeaponName } from "../../data/inventoryLocalizationExtended.js";
+import { localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
 import { getPerkRank } from "../../utils/perkEffects.js";
 import { applyLegendaryWeaponEffects } from "../../utils/legendaryEffects.js";
 import {
@@ -434,7 +435,7 @@ export default function WeaponCard({
     <article className="pip-panel pip-item-card pip-weapon-card">
       <div className="pip-weapon-header">
         <div className="pip-weapon-header-left">
-          <h3>{localizeSupplementalWeaponName(weapon.name, language) || weapon.name || t("weapons.unnamedWeapon")}</h3>
+          <h3>{localizeInventoryWeaponName(weapon.name, language) || weapon.name || t("weapons.unnamedWeapon")}</h3>
           <span>{skillLabel}</span>
         </div>
 
@@ -449,7 +450,7 @@ export default function WeaponCard({
         <div className="pip-weapon-visual">
           <img
             src={weaponImageSrc}
-            alt={weapon.name || t("weapons.unnamedWeapon")}
+            alt={localizeInventoryWeaponName(weapon.name, language) || t("weapons.unnamedWeapon")}
             loading="lazy"
             onError={() => setImageAvailable(false)}
           />

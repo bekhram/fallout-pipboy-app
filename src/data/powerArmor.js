@@ -92,20 +92,25 @@ export const POWER_ARMOR_SETS = [
   },
 ];
 
-const upgrade = (setId, tier, type, physical, energy, hp, weight, cost, requirement) => ({
-  id: `${setId}-${tier}-${type}`,
-  setId,
-  tier,
-  type,
-  name: `${setId === "x01" ? "X-01 Mk " + tier : setId === "raider" ? "Raider II" : setId.toUpperCase().replace("T", "T-") + tier} ${type === "head" ? "Helm" : type === "torso" ? "Chest Piece" : type === "arm" ? "Arm" : "Leg"}`,
-  physical,
-  energy,
-  radiation: 0,
-  hp,
-  weight,
-  cost,
-  requirement,
-});
+const upgrade = (setId, tier, type, physical, energy, hp, weight, cost, requirement) => {
+  const model = setId === "x01" ? `X-01 Mk ${tier}` : setId === "raider" ? "Raider II" : `T-${setId.slice(1)}${tier}`;
+  const part = { head: "Helm", torso: "Chest Piece", arm: "Arm", leg: "Leg" }[type];
+  return {
+    id: `${setId}-${tier}-${type}`,
+    setId,
+    tier,
+    type,
+    model,
+    name: `${model} ${part}`,
+    physical,
+    energy,
+    radiation: 0,
+    hp,
+    weight,
+    cost,
+    requirement,
+  };
+};
 
 export const POWER_ARMOR_UPGRADES = [
   upgrade("raider", "II", "head", 1, 0, 3, 1, 5, "Armorer 1"),

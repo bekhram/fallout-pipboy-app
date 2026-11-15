@@ -73,6 +73,8 @@ const EMPTY_DETAIL_FIELDS = {
 };
 
 const EMPTY_ARCHIVE_FIELDS = {
+  customDisplayName: null,
+  customDisplayEffect: null,
   ...EMPTY_DETAIL_FIELDS,
   cost: "",
   weight: "",
@@ -159,6 +161,7 @@ export default function InventoryEditor({
   const [armorArchive, setArmorArchive] = useState([]);
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const archiveLabels = ARCHIVE_LABELS[language] || ARCHIVE_LABELS.en;
+  const displayDraft = getLocalizedInventoryItem(draft, language, t);
 
   useEffect(() => {
     let active = true;
@@ -222,9 +225,9 @@ export default function InventoryEditor({
   const archiveEntries = useMemo(
     () => archiveItems.map((item) => ({
       item,
-      localized: getLocalizedInventoryItem(item, language),
+      localized: getLocalizedInventoryItem(item, language, t),
     })),
-    [archiveItems, language]
+    [archiveItems, language, t]
   );
 
   const filteredArchiveEntries = useMemo(() => {
@@ -323,7 +326,7 @@ export default function InventoryEditor({
       {hasArchive && (
         <div style={{ margin: "15px 0", padding: "0 10px" }}>
           <label style={{ opacity: 0.8, display: "block", marginBottom: "5px" }}>
-            [ TERMINAL ARCHIVE: {categoryLabel(draft.category, t, i18n.resolvedLanguage).toUpperCase()} ]
+            [ {t("inventory.terminalArchive")}: {categoryLabel(draft.category, t, i18n.resolvedLanguage).toUpperCase()} ]
           </label>
 
           <input
@@ -368,8 +371,8 @@ export default function InventoryEditor({
         <input
           className="pip-input"
           placeholder={t("inventory.itemName")}
-          value={draft.name}
-          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+          value={displayDraft.displayName || ""}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value, customDisplayName: e.target.value })}
         />
 
         <input
@@ -389,7 +392,7 @@ export default function InventoryEditor({
         {showRarity && (
           <input
             className="pip-input"
-            placeholder="Rarity"
+            placeholder={t("inventory.fields.rarity")}
             value={draft.rarity || ""}
             onChange={(e) => setDraft({ ...draft, rarity: e.target.value })}
           />
@@ -399,37 +402,37 @@ export default function InventoryEditor({
           <>
             <input
               className="pip-input"
-              placeholder="Damage"
+              placeholder={t("inventory.fields.damage")}
               value={draft.damage || ""}
               onChange={(e) => setDraft({ ...draft, damage: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Rate of Fire"
+              placeholder={t("inventory.fields.rate")}
               value={draft.rate || ""}
               onChange={(e) => setDraft({ ...draft, rate: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Range"
+              placeholder={t("inventory.fields.range")}
               value={draft.range || ""}
               onChange={(e) => setDraft({ ...draft, range: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Damage type"
+              placeholder={t("inventory.fields.damageType")}
               value={draft.damageType || ""}
               onChange={(e) => setDraft({ ...draft, damageType: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Weapon type"
+              placeholder={t("inventory.fields.weaponType")}
               value={draft.weaponType || ""}
               onChange={(e) => setDraft({ ...draft, weaponType: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Ammo"
+              placeholder={t("inventory.fields.ammo")}
               value={draft.ammo || ""}
               onChange={(e) => setDraft({ ...draft, ammo: e.target.value })}
             />
@@ -440,25 +443,25 @@ export default function InventoryEditor({
           <>
             <input
               className="pip-input"
-              placeholder="Physical DR"
+              placeholder={t("inventory.fields.physicalDr")}
               value={draft.armorPhysical || ""}
               onChange={(e) => setDraft({ ...draft, armorPhysical: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Energy DR"
+              placeholder={t("inventory.fields.energyDr")}
               value={draft.armorEnergy || ""}
               onChange={(e) => setDraft({ ...draft, armorEnergy: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Radiation DR"
+              placeholder={t("inventory.fields.radiationDr")}
               value={draft.armorRadiation || ""}
               onChange={(e) => setDraft({ ...draft, armorRadiation: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Locations"
+              placeholder={t("inventory.fields.locations")}
               value={draft.armorLocations || ""}
               onChange={(e) => setDraft({ ...draft, armorLocations: e.target.value })}
             />
@@ -469,13 +472,13 @@ export default function InventoryEditor({
           <>
             <input
               className="pip-input"
-              placeholder="HP healed"
+              placeholder={t("inventory.fields.healing")}
               value={draft.healing || ""}
               onChange={(e) => setDraft({ ...draft, healing: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Radiation"
+              placeholder={t("inventory.fields.radiation")}
               value={draft.radiation || ""}
               onChange={(e) => setDraft({ ...draft, radiation: e.target.value })}
             />
@@ -486,13 +489,13 @@ export default function InventoryEditor({
           <>
             <input
               className="pip-input"
-              placeholder="Duration"
+              placeholder={t("inventory.fields.duration")}
               value={draft.duration || ""}
               onChange={(e) => setDraft({ ...draft, duration: e.target.value })}
             />
             <input
               className="pip-input"
-              placeholder="Addictive?"
+              placeholder={t("inventory.fields.addiction")}
               value={draft.addiction || ""}
               onChange={(e) => setDraft({ ...draft, addiction: e.target.value })}
             />
@@ -502,7 +505,7 @@ export default function InventoryEditor({
         {showMagazineFields && (
           <input
             className="pip-input"
-            placeholder="Magazine series"
+            placeholder={t("inventory.fields.series")}
             value={draft.series || ""}
             onChange={(e) => setDraft({ ...draft, series: e.target.value })}
           />
@@ -513,9 +516,9 @@ export default function InventoryEditor({
         <textarea
           className="pip-input"
           style={{ width: "100%", minHeight: "96px", marginTop: "12px", resize: "vertical" }}
-          placeholder="Effect / qualities"
-          value={draft.effect || ""}
-          onChange={(e) => setDraft({ ...draft, effect: e.target.value })}
+          placeholder={t("inventory.fields.effect")}
+          value={displayDraft.displayEffect || ""}
+          onChange={(e) => setDraft({ ...draft, effect: e.target.value, customDisplayEffect: e.target.value })}
         />
       )}
 

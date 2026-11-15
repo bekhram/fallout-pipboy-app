@@ -12,7 +12,8 @@ import {
 } from "../../constants.js";
 import { getWeaponModGroups, MOD_SLOT_LABELS } from "../../data/weaponMods.js";
 import { localizeWeaponModEffect, localizeWeaponModName, localizeWeaponModRequirement } from "../../utils/weaponModLocalization.js";
-import { localizeSupplementalWeaponName, localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
+import { localizeInventoryWeaponName } from "../../data/inventoryLocalizationExtended.js";
+import { localizeSupplementalModName } from "../../data/equipmentLocalizationSupplemental.js";
 import LegendaryPropertyEditor from "../shared/LegendaryPropertyEditor.jsx";
 
 export default function WeaponEditor({ draft, setDraft, onSave, onCancel, globalWeapons }) {
@@ -114,17 +115,17 @@ export default function WeaponEditor({ draft, setDraft, onSave, onCancel, global
       {globalWeapons && globalWeapons.length > 0 && (
         <div style={{ marginBottom: "15px", padding: "0 10px" }}>
           <label style={{ opacity: 0.8, display: "block", marginBottom: "5px" }}>
-             [ TERMINAL ARCHIVE: WEAPONS ]
+             [ {t("inventory.terminalArchive")}: {t("tabs.weapons")} ]
           </label>
           <select
             className="pip-input"
             onChange={(e) => handleLoadFromDb(e.target.value)}
             defaultValue=""
           >
-            <option value="" disabled>-- Select to autoload --</option>
+            <option value="" disabled>{t("perksPanel.selectArchive")}</option>
             {globalWeapons.map((gw, idx) => (
               <option key={idx} value={idx}>
-                {localizeSupplementalWeaponName(gw.name, i18n.resolvedLanguage)} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})
+                {localizeInventoryWeaponName(gw.name, i18n.resolvedLanguage)} (DMG: {gw['Damage Rating']} CD, FR: {gw['Rate of Fire']})
               </option>
             ))}
           </select>
