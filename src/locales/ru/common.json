@@ -23,6 +23,7 @@
     "return": "ВЕРНУТЬСЯ В МЕНЮ"
   },
   "common": {
+    "loadingScreen": "Загрузка…",
     "cancel": "Отмена",
     "confirm": "Подтвердить",
     "edit": "✎",
@@ -484,6 +485,30 @@
     "test": "Тест"
   },
   "inventory": {
+    "sellBonus": "Бонус к продаже, %",
+    "legendaryFilter": "Фильтр легендарных предметов",
+    "craftMode": "Режим крафта",
+    "fields": {
+      "rarity": "Редкость",
+      "damage": "Урон",
+      "rate": "Скорострельность",
+      "range": "Дистанция",
+      "damageType": "Тип урона",
+      "weaponType": "Тип оружия",
+      "ammo": "Боеприпасы",
+      "physicalDr": "Физ. сопротивление",
+      "energyDr": "Энерг. сопротивление",
+      "radiationDr": "Рад. сопротивление",
+      "locations": "Зоны",
+      "healing": "Восстановление HP",
+      "radiation": "Радиация",
+      "duration": "Длительность",
+      "addiction": "Вызывает зависимость?",
+      "series": "Серия журнала",
+      "effect": "Эффект / свойства"
+    },
+    "terminalArchive": "Архив терминала",
+    "rarePerkUnlock": "Потратьте 1 час на чтение, чтобы открыть перк «{{perk}}». После этого его можно выбрать при повышении уровня.",
     "title": "ИНВЕНТАРЬ",
     "caps": "КРЫШКИ",
     "currentWeight": "Текущий вес",
@@ -523,6 +548,17 @@
     "hp": "ОЗ"
   },
   "perksPanel": {
+    "selectArchive": "Выбрать из архива",
+    "choosePerk": "Выберите перк",
+    "requirementsWarning": "Требования не выполнены",
+    "requiredLevel": "Нужен уровень {{required}}+ (текущий уровень {{current}})",
+    "requiredStat": "Требуется {{attribute}} {{required}} (текущее значение {{current}})",
+    "notGhoulOrRobot": "Недоступно гулям и роботам",
+    "notRobot": "Недоступно роботам",
+    "notRadiationImmune": "Персонаж должен быть уязвим к радиации",
+    "rankRange": "Допустимый ранг от 1 до {{max}}.",
+    "training": "Тренировка S.P.E.C.I.A.L.",
+    "empty": "У персонажа пока нет перков и черт.",
     "title": "ПЕРКИ / ЧЕРТЫ",
     "originTraits": "ЧЕРТЫ ПРОИСХОЖДЕНИЯ",
     "perks": "ПЕРКИ",

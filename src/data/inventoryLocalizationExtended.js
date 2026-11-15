@@ -1,3 +1,4 @@
+import { localizeCatalogName } from "./itemCatalogStrings.js";
 import { WEAPON_NAMES, WEAPON_TERMS } from "./inventoryLocalization/weapons.js";
 import { localizeSupplementalWeaponName, localizeSupplementalArmorName } from "./equipmentLocalizationSupplemental.js";
 import { TOOL_TRANSLATIONS } from "./inventoryLocalization/tools.js";
@@ -89,18 +90,27 @@ function pick6(value, lang) {
   };
 }
 
+const weaponTokens = Object.entries(WEAPON_TERMS)
+  .sort(([left], [right]) => right.length - left.length)
+  .map(([source, terms]) => {
+    const escaped = source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return [new RegExp(`\\b${escaped}\\b`, "gi"), terms];
+  });
+
+export function localizeInventoryWeaponName(name, language) {
+  const lang = normalizeLanguage(language);
+  const localized = localizeCatalogName(name, lang);
+  if (localized !== name) return localized;
+  return pick3(WEAPON_NAMES[name], lang) || localizeSupplementalWeaponName(name, lang);
+}
+
 function translateWeaponTokens(text, lang) {
   if (!text || lang === "en") return text || "";
   let result = String(text);
 
-  Object.entries(WEAPON_TERMS)
-    .sort(([a], [b]) => b.length - a.length)
-    .forEach(([english, values]) => {
-      const localized = pick3(values, lang);
-      if (!localized) return;
-      const escaped = english.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      result = result.replace(new RegExp(escaped, "gi"), localized);
-    });
+  for (const [pattern, terms] of weaponTokens) {
+    result = result.replace(pattern, pick3(terms, lang));
+  }
 
   result = result.replace(/Пробивание\s+(\d+)/gi, "Пробивание $1");
   result = result.replace(/Пробивання\s+(\d+)/gi, "Пробивання $1");
@@ -158,7 +168,7 @@ export function getExtendedInventoryLocalization(item, language = "en") {
   if (item?.category === "weapons") {
     return {
       ...base,
-      displayName: pick3(WEAPON_NAMES[originalName], lang) || localizeSupplementalWeaponName(originalName, lang) || originalName,
+      displayName: localizeInventoryWeaponName(originalName, lang),
       displayEffect: translateWeaponTokens(originalEffect, lang),
       displayWeaponType: translateWeaponTokens(item?.weaponType, lang),
       displayDamageType: translateWeaponTokens(item?.damageType, lang),

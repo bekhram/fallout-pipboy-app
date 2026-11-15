@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import PipboyShell from "./components/layout/PipboyShell.jsx";
 import AppScreenRouter from "./components/AppScreenRouter.jsx";
-import SessionChatDrawer from "./components/session/SessionChatDrawer.jsx";
+import ScreenLoading from "./components/layout/ScreenLoading.jsx";
 import useSharedSession from "./hooks/useSharedSession.js";
 import SideMenu from "./components/shared/SideMenu.jsx";
 import UnsavedChangesModal from "./components/shared/UnsavedChangesModal.jsx";
@@ -29,6 +29,8 @@ import { useDiceController } from "./hooks/useDiceController.js";
 import { getDerivedStats } from "./utils/characterMath.js";
 import StatusBadgeList from "./components/status/StatusBadgeList.jsx";
 import { useTranslation } from "react-i18next";
+
+const SessionChatDrawer = lazy(() => import("./components/session/SessionChatDrawer.jsx"));
 
 export default function App() {
   const { t, i18n } = useTranslation();
@@ -696,8 +698,7 @@ const SkillsEditorModal = () => {
           <div className="pip-vignette" />
           <div className="pip-container">
             <main className="pip-main">
-              {content}
-
+              <Suspense fallback={<ScreenLoading />}>{content}</Suspense>
             </main>
           </div>
         </div>
@@ -759,7 +760,9 @@ const SkillsEditorModal = () => {
 
 
       {screen === "sheet" && sharedSession.isActive && sharedSession.mode === "player" && (
-        <SessionChatDrawer session={sharedSession} />
+        <Suspense fallback={null}>
+          <SessionChatDrawer session={sharedSession} />
+        </Suspense>
       )}
 
       <DiceRollModal

@@ -1,16 +1,17 @@
-import React from "react";
+import React, { lazy, useState } from "react";
 import MenuScreen from "./menu/MenuScreen.jsx";
-import SessionScreen from "./session/SessionScreen.jsx";
 import StatusScreen from "./status/StatusScreen.jsx";
 import SpecialScreen from "./special/SpecialScreen.jsx";
-import WeaponsScreen from "./weapons/WeaponsScreen.jsx";
-import InventoryScreen from "./inventory/InventoryScreen.jsx";
-import ArmorScreen from "./armor/ArmorScreen.jsx";
-import PerksScreen from "./perks/PerksScreen.jsx";
-import MapScreen from "./map/MapScreen.jsx";
-import NotesScreen from "./notes/NotesScreen.jsx";
-import GamesScreen from "./minigames/GamesScreen.jsx";
 import DataScreen from "./data/DataScreen.jsx";
+
+const SessionScreen = lazy(() => import("./session/SessionScreen.jsx"));
+const WeaponsScreen = lazy(() => import("./weapons/WeaponsScreen.jsx"));
+const InventoryScreen = lazy(() => import("./inventory/InventoryScreen.jsx"));
+const ArmorScreen = lazy(() => import("./armor/ArmorScreen.jsx"));
+const PerksScreen = lazy(() => import("./perks/PerksScreen.jsx"));
+const MapScreen = lazy(() => import("./map/MapScreen.jsx"));
+const NotesScreen = lazy(() => import("./notes/NotesScreen.jsx"));
+const GamesScreen = lazy(() => import("./minigames/GamesScreen.jsx"));
 
 export default function AppScreenRouter({
   screen,
@@ -105,6 +106,8 @@ export default function AppScreenRouter({
   exportJson,
   importInputRef,
 }) {
+  const [sessionIntent, setSessionIntent] = useState(null);
+
   if (screen === "menu") {
     return (
       <MenuScreen
@@ -117,19 +120,12 @@ export default function AppScreenRouter({
         onOpenSession={(intent) => {
           setSessionLobbyOpen(true);
           setScreen("session");
-          if (typeof intent === "string") requestAnimationFrame(() => {
-            const card = document.querySelector(
-              intent === "host"
-                ? ".session-role-card--gm"
-                : ".session-role-card:not(.session-role-card--gm)"
-            );
-            card?.scrollIntoView({ block: "center" });
-            card?.querySelector("input, button")?.focus({ preventScroll: true });
-          });
+          setSessionIntent(intent || null);
         }}
         lastSession={sharedSession.lastSession}
         session={sharedSession}
         onResumeSession={() => {
+          setSessionIntent(null);
           setSessionLobbyOpen(false);
           setScreen("session");
           if (sharedSession.isActive) {
@@ -146,6 +142,7 @@ export default function AppScreenRouter({
     return (
       <SessionScreen
         showLobby={sessionLobbyOpen}
+        lobbyIntent={sessionIntent}
         onShowLobby={() => setSessionLobbyOpen(true)}
         onEnterSession={() => setSessionLobbyOpen(false)}
         form={form}

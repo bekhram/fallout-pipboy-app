@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { getExtraCategoryLabel } from "../../data/inventoryDatabase.js";
+import { localizeCatalogName, localizeInventoryMetadata } from "../../data/itemCatalogStrings.js";
 import { getLocalizedInventoryItem } from "../../data/inventoryLocalizationAll.js";
 import {
   isConsumableItem,
@@ -53,7 +54,7 @@ export default function InventoryCard({
   const { t, i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const labels = META_LABELS[language] || META_LABELS.en;
-  const localized = getLocalizedInventoryItem(item, language);
+  const localized = getLocalizedInventoryItem(item, language, t);
   const categoryLabel = CATEGORY_LABEL_KEYS[item.category]
     ? t(CATEGORY_LABEL_KEYS[item.category])
     : getExtraCategoryLabel(item.category, i18n.resolvedLanguage);
@@ -75,7 +76,7 @@ export default function InventoryCard({
     isVisibleValue(item.range) && `${labels.range}: ${item.range}`,
     isVisibleValue(displayDamageType) && `${labels.type}: ${displayDamageType}`,
     isVisibleValue(displayWeaponType) && displayWeaponType,
-    isVisibleValue(item.ammo) && `${labels.ammo}: ${item.ammo}`,
+    isVisibleValue(item.ammo) && `${labels.ammo}: ${localizeCatalogName(item.ammo, language)}`,
     isVisibleValue(displayQualities) && displayQualities,
     isVisibleValue(item.armorPhysical) && `P DR ${item.armorPhysical}`,
     isVisibleValue(item.armorEnergy) && `E DR ${item.armorEnergy}`,
@@ -83,9 +84,9 @@ export default function InventoryCard({
     isVisibleValue(displayArmorLocations) && `${labels.locations}: ${displayArmorLocations}`,
     isVisibleValue(item.healing) && `HP +${item.healing}`,
     isVisibleValue(item.radiation) && `RAD ${item.radiation}`,
-    isVisibleValue(item.duration) && `${labels.duration}: ${item.duration}`,
-    isVisibleValue(item.addiction) && `${labels.addictive}: ${item.addiction}`,
-    isVisibleValue(item.rarity) && `${labels.rarity}: ${item.rarity}`,
+    isVisibleValue(item.duration) && `${labels.duration}: ${localizeInventoryMetadata(item.duration, language)}`,
+    isVisibleValue(item.addiction) && `${labels.addictive}: ${localizeInventoryMetadata(item.addiction, language)}`,
+    isVisibleValue(item.rarity) && `${labels.rarity}: ${localizeInventoryMetadata(item.rarity, language)}`,
     isVisibleValue(displaySeries) && `${labels.series}: ${displaySeries}`,
   ].filter(Boolean);
 

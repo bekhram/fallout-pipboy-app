@@ -1,15 +1,17 @@
-import React, { useEffect, useLayoutEffect, useRef } from "react";
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef } from "react";
 import "./sheetRedesign.css";
 import SideMenu from "../shared/SideMenu.jsx";
 import TopNav, { PIPBOY_TABS } from "./TopNav.jsx";
-import CompanionPresetHub from "../companion/CompanionPresetHub.jsx";
-import BestiaryScreen from "../bestiary/BestiaryScreen.jsx";
-import CraftingHub from "../crafting/CraftingHub.jsx";
-import VehicleScreen from "../vehicles/VehicleScreen.jsx";
+import ScreenLoading from "./ScreenLoading.jsx";
 import { installCompanionGmBridge } from "../../utils/companionGmBridge.js";
 import { installLocationLoreGmBridge } from "../../utils/locationLoreGmBridge.js";
 import { installBestiaryCombatGmBridge } from "../../utils/bestiaryCombatGmBridge.js";
 import { clearCharacterStateBridge, setCharacterStateBridge } from "../../utils/characterStateBridge.js";
+
+const CompanionPresetHub = lazy(() => import("../companion/CompanionPresetHub.jsx"));
+const BestiaryScreen = lazy(() => import("../bestiary/BestiaryScreen.jsx"));
+const CraftingHub = lazy(() => import("../crafting/CraftingHub.jsx"));
+const VehicleScreen = lazy(() => import("../vehicles/VehicleScreen.jsx"));
 
 const SWIPE_THRESHOLD = 60;
 const INTERACTIVE_SELECTOR = [
@@ -164,7 +166,7 @@ export default function PipboyShell({
           onTouchEnd={handleTouchEnd}
         >
           <div key={activeTab} className={`pip-screen-slide${slideDirection}`}>
-            {screenContent}
+            <Suspense fallback={<ScreenLoading />}>{screenContent}</Suspense>
           </div>
         </main>
       </div>

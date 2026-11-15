@@ -73,6 +73,9 @@ export const WEAPON_NAMES = {
 };
 
 export const WEAPON_TERMS = {
+  "Arc": ["Электрическая дуга", "Електрична дуга", "Łuk elektryczny"],
+  "Freeze": ["Заморозка", "Заморожування", "Zamrożenie"],
+  "Special": ["Особый эффект", "Особливий ефект", "Efekt specjalny"],
   "Small Guns": ["Лёгкое оружие", "Легка зброя", "Broń lekka"],
   "Energy Weapon": ["Энергетическое оружие", "Енергетична зброя", "Broń energetyczna"],
   "Big Guns": ["Тяжёлое оружие", "Важка зброя", "Broń ciężka"],

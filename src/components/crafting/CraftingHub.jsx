@@ -37,7 +37,7 @@ function withRepairPerkBypass(character) {
 }
 
 export default function CraftingHub({ character = null, setCharacter = null }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const language = languageCode(i18n.resolvedLanguage || i18n.language);
   const labels = LABELS[language];
   const [mode, setMode] = useState("craft");
@@ -48,7 +48,7 @@ export default function CraftingHub({ character = null, setCharacter = null }) {
 
   return (
     <div className="crafting-hub">
-      <section className="pip-panel crafting-hub__modebar" aria-label="Crafting mode">
+      <section className="pip-panel crafting-hub__modebar" aria-label={t("inventory.craftMode")}>
         <button
           type="button"
           className={`pip-btn ${mode === "craft" ? "is-primary" : ""}`}

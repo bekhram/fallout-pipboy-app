@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import SheetIcon from '../layout/SheetIcon.jsx';
 import { menuCopy } from '../menu/menuCopy.js';
 import '../menu/menuRedesign.css';
@@ -10,9 +10,16 @@ const translations = {
   uk: ['Ігрова сесія','Створіть пригоду або приєднайтеся до друзів.','На головну','Майстер гри','Створіть нову сесію або відновіть кампанію з хмари.','Створити сесію','Відновити з хмари','Гравець','Введіть код, який вам дав майстер.','Код сесії',"Ім’я гравця",'Приєднатися','Посилання на сесію','Поділитися','Копіювати посилання','Посилання скопійовано'],
   pl: ['Sesja gry','Stwórz przygodę lub dołącz do znajomych.','Strona główna','Mistrz gry','Utwórz nową sesję lub przywróć kampanię z chmury.','Utwórz sesję','Przywróć z chmury','Gracz','Wpisz kod otrzymany od mistrza gry.','Kod sesji','Nazwa gracza','Dołącz','Link do sesji','Udostępnij','Kopiuj link','Link skopiowany'],
 };
-export default function SessionLobby({ session, form, onEnterSession, language, copy, onNavigate, onBack, onHost, onRestore, onJoin, joinCode, onCode, playerName, onName, busy, error, errorTarget, shareCode, onShare, onCopy, linkCopied }) {
+export default function SessionLobby({ intent, session, form, onEnterSession, language, copy, onNavigate, onBack, onHost, onRestore, onJoin, joinCode, onCode, playerName, onName, busy, error, errorTarget, shareCode, onShare, onCopy, linkCopied }) {
   const c = translations[String(language).slice(0,2)] || translations.en;
   const m = menuCopy(language);
+  const hostCard = useRef(null);
+  const playerCard = useRef(null);
+  useEffect(() => {
+    const card = intent === 'host' ? hostCard.current : intent === 'join' ? playerCard.current : null;
+    card?.scrollIntoView({ block: 'center' });
+    card?.querySelector('input, button')?.focus({ preventScroll: true });
+  }, [intent]);
   const nav = (key, icon, label) => <button type="button" className={key === 'sessions' ? 'is-active' : ''} aria-current={key === 'sessions' ? 'page' : undefined} onClick={()=>key === 'sessions' ? window.scrollTo({top:0,behavior:'smooth'}) : onNavigate(key)}><SheetIcon name={icon}/><span>{label}</span></button>;
   return <div className="home-terminal session-lobby">
     <header className="home-topbar"><strong>PIP 2D20 <span>MK IV</span></strong><small>ROBCO INDUSTRIES (TM)<br/>TERMINAL LINK</small><button type="button" className="home-icon session-account" aria-label={m.account} onClick={()=>onNavigate('settings')}><SheetIcon name="person"/></button></header>
@@ -20,14 +27,14 @@ export default function SessionLobby({ session, form, onEnterSession, language, 
     <div className="home-content">
       <div className="session-lobby-heading"><button type="button" className="session-back" onClick={onBack}>← {c[2]}</button><h1>{c[0]}</h1><p>{c[1]}</p></div>
       <div className="session-role-grid">
-        <section className="pip-panel session-role-card session-role-card--gm" aria-labelledby="session-host-title">
+        <section ref={hostCard} className="pip-panel session-role-card session-role-card--gm" aria-labelledby="session-host-title">
           <span className="session-role-badge" aria-hidden="true">GM</span><div className="session-art session-art--gm" aria-hidden="true"/>
           <h2 id="session-host-title">{c[3]}</h2><p>{c[4]}</p>
           <div className="session-host-actions"><button type="button" className="pip-btn is-primary" onClick={onHost} disabled={busy}>{c[5]}</button></div>
           {shareCode && <div className="session-lobby-share"><strong>{c[12]} · {shareCode}</strong><div><button type="button" className="pip-btn" onClick={onShare}>{c[13]}</button><button type="button" className="pip-btn" onClick={onCopy}>{linkCopied ? c[15] : c[14]}</button></div></div>}
           {error && errorTarget === 'host' && <div className="session-error" role="alert">{error}</div>}
         </section>
-        <form className="pip-panel session-role-card session-role-card--player" onSubmit={event=>{event.preventDefault();onJoin();}} aria-labelledby="session-player-title">
+        <form ref={playerCard} className="pip-panel session-role-card session-role-card--player" onSubmit={event=>{event.preventDefault();onJoin();}} aria-labelledby="session-player-title">
           <span className="session-role-badge" aria-hidden="true">P</span><div className="session-art session-art--player" aria-hidden="true"/>
           <h2 id="session-player-title">{c[7]}</h2><p>{c[8]}</p>
           <label className="session-field"><span>{c[9]}</span><input className="pip-input session-code-input" value={joinCode} maxLength={6} autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="ABC234" onChange={event=>onCode(event.target.value)}/></label>

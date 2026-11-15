@@ -7,7 +7,7 @@ import { initFullscreenEditorUx } from "./utils/fullscreenEditorUx.js";
 import { initCloudCharacterSync } from "./cloud/cloudCharacterSync.js";
 
 import "./styles/pipboy.css";
-import "./i18n";
+import { i18nReady } from "./i18n.js";
 import "./styles/dice.css";
 
 // Initialize dataLayer
@@ -36,29 +36,22 @@ initFullscreenEditorUx();
 initCloudCharacterSync();
 
 if ("serviceWorker" in navigator) {
-  let reloadingForUpdate = false;
-
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloadingForUpdate) return;
-    reloadingForUpdate = true;
-    window.location.reload();
-  });
-
-  const updateSW = registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      void updateSW(true);
-    },
+  registerSW({
     onRegisteredSW(_swUrl, registration) {
       if (!registration) return;
-      void registration.update();
-      window.setInterval(() => void registration.update(), 60 * 1000);
+      window.setInterval(() => {
+        if (document.visibilityState === "visible" && navigator.onLine) {
+          void registration.update().catch(() => {});
+        }
+      }, 60 * 1000);
     },
   });
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+void i18nReady.then(() => {
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+});

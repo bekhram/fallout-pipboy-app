@@ -10,6 +10,7 @@ import {
   calculatePowerPart,
 } from "../../data/powerArmor.js";
 import { getLegendaryArmorProperties, getLegendaryPropertyById } from "../../data/legendaryProperties.js";
+import { localizePowerArmorName, localizePowerArmorEffect, POWER_PART_NAMES } from "../../data/powerArmorLocalization.js";
 import { createWeaponRoll } from "../../utils/dice.js";
 
 const SLOT_DEFS = [
@@ -26,19 +27,6 @@ const UI = {
   ru: { title: "СИЛОВАЯ БРОНЯ", frame: "Каркас брони", preset: "Готовый комплект", part: "Деталь", upgrade: "Улучшение", plating: "Покрытие", system: "Система", none: "Не надета", frameOnly: "Только каркас", custom: "Смешанный комплект", empty: "Нет детали", dr: "СОПР.", hp: "HP", weight: "Вес", cost: "Стоимость", rarity: "Редкость", total: "ИТОГО", currentHp: "Состояние", repair: "Ремонт", intact: "Исправна", damaged: "Повреждена", broken: "Сломана", legendary: "Легендарное свойство", legendaryNone: "Не легендарная", legendaryBonus: "+1 физ. сопротивление · +1 энерго. сопротивление" },
   uk: { title: "СИЛОВА БРОНЯ", frame: "Каркас броні", preset: "Готовий комплект", part: "Деталь", upgrade: "Покращення", plating: "Покриття", system: "Система", none: "Не вдягнена", frameOnly: "Лише каркас", custom: "Змішаний комплект", empty: "Немає деталі", dr: "ОПІР", hp: "HP", weight: "Вага", cost: "Вартість", rarity: "Рідкість", total: "РАЗОМ", currentHp: "Стан", repair: "Ремонт", intact: "Справна", damaged: "Пошкоджена", broken: "Зламана", legendary: "Легендарна властивість", legendaryNone: "Не легендарна", legendaryBonus: "+1 фіз. опір · +1 енерг. опір" },
   pl: { title: "PANCERZ WSPOMAGANY", frame: "Rama pancerza", preset: "Pełny zestaw", part: "Część", upgrade: "Ulepszenie", plating: "Pokrycie", system: "System", none: "Niezałożony", frameOnly: "Tylko rama", custom: "Zestaw mieszany", empty: "Brak części", dr: "ODP.", hp: "HP", weight: "Waga", cost: "Koszt", rarity: "Rzadkość", total: "SUMA", currentHp: "Stan", repair: "Napraw", intact: "Sprawna", damaged: "Uszkodzona", broken: "Zniszczona", legendary: "Właściwość legendarna", legendaryNone: "Nielegendarny", legendaryBonus: "+1 odporności fizycznej · +1 energetycznej" },
-};
-
-const POWER_NAMES = {
-  ru: { excavator: "Силовая броня Экскаватор", hellcat: "Силовая броня Hellcat", t65: "Силовая броня T-65", raider: "Рейдерская силовая броня", t45: "Силовая броня T-45", t51: "Силовая броня T-51", t60: "Силовая броня T-60", x01: "Силовая броня X-01", titanium: "Титановое покрытие", lead: "Свинцовое покрытие", photovoltaic: "Фотовольтаическое покрытие", winterized: "Зимнее покрытие", prism: "Призматическая защита", explosive: "Взрывозащитное покрытие", emp: "ЭМИ-защита", "rad-scrubber": "Очиститель радиации", "sensor-array": "Сенсорный комплекс", "targeting-hud": "Система наведения", "internal-database": "Внутренняя база данных", "welded-rebar": "Приваренная арматура", "core-assembly": "Узел ядра", "blood-cleanser": "Очиститель крови", "emergency-protocols": "Аварийные протоколы", "motion-assist": "Сервоприводы движения", "kinetic-dynamo": "Кинетическая динамо-машина", "medic-pump": "Медицинский насос", "reactive-plates": "Реактивные пластины", "tesla-coils": "Катушки Тесла", "stealth-boy": "Стелс-бой", jetpack: "Реактивный ранец", "rusty-knuckles": "Ржавые кастеты", "hydraulic-bracers": "Гидравлические наручи", "optimized-bracers": "Оптимизированные наручи", "tesla-bracers": "Наручи Тесла", "calibrated-shocks": "Калиброванные амортизаторы", "explosive-vent": "Взрывной клапан", "overdrive-servos": "Форсированные сервоприводы" },
-  uk: { excavator: "Силова броня Екскаватор", hellcat: "Силова броня Hellcat", t65: "Силова броня T-65", raider: "Рейдерська силова броня", t45: "Силова броня T-45", t51: "Силова броня T-51", t60: "Силова броня T-60", x01: "Силова броня X-01", titanium: "Титанове покриття", lead: "Свинцеве покриття", photovoltaic: "Фотоелектричне покриття", winterized: "Зимове покриття", prism: "Призматичний захист", explosive: "Вибухозахисне покриття", emp: "ЕМІ-захист", "rad-scrubber": "Очищувач радіації", "sensor-array": "Сенсорний комплекс", "targeting-hud": "Система наведення", "internal-database": "Внутрішня база даних", "welded-rebar": "Приварена арматура", "core-assembly": "Вузол ядра", "blood-cleanser": "Очищувач крові", "emergency-protocols": "Аварійні протоколи", "motion-assist": "Сервоприводи руху", "kinetic-dynamo": "Кінетична динамо-машина", "medic-pump": "Медичний насос", "reactive-plates": "Реактивні пластини", "tesla-coils": "Котушки Тесли", "stealth-boy": "Стелс-бой", jetpack: "Реактивний ранець", "rusty-knuckles": "Іржаві кастети", "hydraulic-bracers": "Гідравлічні наручі", "optimized-bracers": "Оптимізовані наручі", "tesla-bracers": "Наручі Тесли", "calibrated-shocks": "Калібровані амортизатори", "explosive-vent": "Вибуховий клапан", "overdrive-servos": "Форсовані сервоприводи" },
-  pl: { excavator: "Pancerz wspomagany Excavator", hellcat: "Pancerz wspomagany Hellcat", t65: "Pancerz wspomagany T-65", raider: "Pancerz wspomagany bandytów", t45: "Pancerz wspomagany T-45", t51: "Pancerz wspomagany T-51", t60: "Pancerz wspomagany T-60", x01: "Pancerz wspomagany X-01", titanium: "Powłoka tytanowa", lead: "Powłoka ołowiana", photovoltaic: "Powłoka fotowoltaiczna", winterized: "Powłoka zimowa", prism: "Osłona pryzmatyczna", explosive: "Osłona przeciwwybuchowa", emp: "Osłona EMP", "rad-scrubber": "Oczyszczacz radiacyjny", "sensor-array": "Zespół czujników", "targeting-hud": "System celowniczy HUD", "internal-database": "Wewnętrzna baza danych", "welded-rebar": "Spawane pręty", "core-assembly": "Zespół rdzenia", "blood-cleanser": "Oczyszczacz krwi", "emergency-protocols": "Protokoły awaryjne", "motion-assist": "Serwomechanizmy ruchu", "kinetic-dynamo": "Dynamo kinetyczne", "medic-pump": "Pompa medyczna", "reactive-plates": "Płyty reaktywne", "tesla-coils": "Cewki Tesli", "stealth-boy": "Stealth Boy", jetpack: "Plecak odrzutowy", "rusty-knuckles": "Rdzawe kastety", "hydraulic-bracers": "Hydrauliczne karwasze", "optimized-bracers": "Zoptymalizowane karwasze", "tesla-bracers": "Karwasze Tesli", "calibrated-shocks": "Kalibrowane amortyzatory", "explosive-vent": "Zawór wybuchowy", "overdrive-servos": "Serwomechanizmy nadbiegu" },
-};
-
-const POWER_PART_NAMES = {
-  en: { head: "Helmet", torso: "Chest piece", arm: "Arm", leg: "Leg" },
-  ru: { head: "Шлем", torso: "Нагрудник", arm: "Рука", leg: "Нога" },
-  uk: { head: "Шолом", torso: "Нагрудник", arm: "Рука", leg: "Нога" },
-  pl: { head: "Hełm", torso: "Napierśnik", arm: "Ramię", leg: "Noga" },
 };
 
 function byId(list, id) {
@@ -67,7 +55,7 @@ export default function PowerArmorPanel({ armor, onArmorChange, form, onRoll }) 
   const { i18n } = useTranslation();
   const language = i18n.resolvedLanguage?.split("-")[0] || "en";
   const labels = UI[language] || UI.en;
-  const localizedName = (entry) => POWER_NAMES[language]?.[entry?.id] || entry?.name || "";
+  const localizedName = (entry) => localizePowerArmorName(entry, language);
   const localizedUpgrade = (entry) => {
     if (!entry || language === "en") return entry?.name || "";
     const set = POWER_ARMOR_SETS.find((item) => item.id === entry.setId);
@@ -158,7 +146,7 @@ export default function PowerArmorPanel({ armor, onArmorChange, form, onRoll }) 
       systemOptions,
       upgradeOptions,
       stats: calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade),
-      effect: [plating?.effect, system?.effect].filter(Boolean).join(" "),
+      effect: [plating, system].map((mod) => localizePowerArmorEffect(mod, language)).filter(Boolean).join(" "),
       currentHp:
         selected.currentHp === null || selected.currentHp === undefined
           ? calculatePowerPart(set.parts[definition.type], plating, system, definition.type, selectedUpgrade).hp

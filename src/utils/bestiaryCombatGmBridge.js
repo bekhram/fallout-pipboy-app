@@ -1,7 +1,7 @@
 import {
   readCombatForSession,
   saveCombatForSession,
-} from "./bestiaryCombatContext.js";
+} from "./bestiaryCombatStorage.js";
 
 function endpointUrl(input) {
   if (typeof input === "string") return input;

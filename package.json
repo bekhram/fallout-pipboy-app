@@ -10,7 +10,7 @@
     "prebuild": "npm run check:i18n && npm run test:all",
     "build": "vite build",
     "preview": "vite preview",
-    "test:all": "node --test tests/*.test.js tests/*.test.mjs",
+    "test:all": "node --experimental-vm-modules --test tests/*.test.js tests/*.test.mjs",
     "verify": "npm run check:i18n && npm run test:all && vite build"
   },
   "dependencies": {

@@ -214,7 +214,7 @@ export function SessionFloatingButton({ session, onOpen }) {
   );
 }
 
-export default function SessionScreen({ form, session, onBack, onOpenSheet, onNavigateMenu, showLobby = false, onShowLobby, onEnterSession }) {
+export default function SessionScreen({ form, session, onBack, onOpenSheet, onNavigateMenu, showLobby = false, lobbyIntent, onShowLobby, onEnterSession }) {
   const { i18n } = useTranslation();
   const copy = BASE[getLanguage(i18n.resolvedLanguage || i18n.language)];
   const lobbyLabel = ({en:"Session menu",ru:"Меню сессии",uk:"Меню сесії",pl:"Menu sesji"})[getLanguage(i18n.resolvedLanguage || i18n.language)];
@@ -324,7 +324,7 @@ export default function SessionScreen({ form, session, onBack, onOpenSheet, onNa
   };
 
   if (showLobby || mode === "lobby") {
-    return <SessionLobby session={session} form={form} onEnterSession={onEnterSession} language={i18n.resolvedLanguage || i18n.language} copy={copy}
+    return <SessionLobby intent={lobbyIntent} session={session} form={form} onEnterSession={onEnterSession} language={i18n.resolvedLanguage || i18n.language} copy={copy}
       onBack={onBack} onNavigate={onNavigateMenu || onBack}
       onHost={()=>{setErrorTarget("host");setLocalError("");onEnterSession?.();session?.startHost?.();}}
       onJoin={handleJoin}

@@ -35,7 +35,11 @@ export function getRecipeMaterials(recipe) {
   if (recipe?.materials && typeof recipe.materials === "object") {
     return { ...recipe.materials };
   }
-  return getComplexityMaterials(recipe?.complexity);
+  const materials = getComplexityMaterials(recipe?.complexity);
+  if (recipe?.powerArmor?.kind === "upgrade" && recipe.powerArmorPart === "torso") {
+    materials["Uncommon Materials"] = (materials["Uncommon Materials"] || 0) + 1;
+  }
+  return materials;
 }
 
 export function parsePerkRequirements(value) {
@@ -217,11 +221,6 @@ export function consumeCraftingMaterials(inventory = [], materials = {}) {
 function findDatabaseOutput(name) {
   const wanted = normalize(name);
   return INVENTORY_DATABASE.find((item) => normalize(item?.name) === wanted) || null;
-}
-
-function isPowerArmorStealthBoyRecipe(recipe) {
-  return normalize(recipe?.workbench) === "power_armor"
-    && normalize(recipe?.name) === "stealth boy";
 }
 
 function isAmmoCraftingRecipe(recipe) {
@@ -459,16 +458,21 @@ export function createCraftedInventoryItem(recipe) {
     };
   }
 
-  if (isPowerArmorStealthBoyRecipe(recipe)) {
-    const name = "Stealth Boy — Power Armor System";
+  if (recipe?.powerArmor) {
+    const { kind, mods } = recipe.powerArmor;
+    const mod = mods.find((entry) => entry.type === recipe.powerArmorPart) || mods[0];
+    const name = kind === "upgrade" ? mod.name : `${mod.name} — ${recipe.group}`;
     return {
       name,
       canonicalName: name,
       category: "misc",
       quantity: "1",
-      cost: "",
-      weight: "0",
-      effect: "Crafted Power Armor system modification",
+      cost: String(mod.cost),
+      weight: String(mod.weight),
+      effect: mod.effect || "",
+      sourceType: "power_armor_mod",
+      sourceId: mod.id,
+      powerArmorModKind: kind,
       crafted: true,
       craftingRecipeId: recipe.id,
       craftingWorkbench: "power_armor",

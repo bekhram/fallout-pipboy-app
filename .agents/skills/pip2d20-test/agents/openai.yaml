@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pip2d20 — полное тестирование"
+  short_description: "Проверка экранов, сценариев и сборки Pip2d20"
+  default_prompt: "Используй $pip2d20-test, чтобы полностью протестировать текущее обновление Pip2d20."

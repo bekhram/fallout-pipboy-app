@@ -79,21 +79,14 @@ export default function InventoryScreen({
       ? t(CATEGORY_LABEL_KEYS[item.value])
       : getExtraCategoryLabel(item.value, i18n.resolvedLanguage);
 
-  const categoryFilteredItems =
-    activeCategory === "all"
-      ? items
-      : items.filter((item) => item.category === activeCategory);
-
-  const filteredItems = categoryFilteredItems.filter((item) => {
-    if (legendaryFilter === "legendary") return Boolean(item?.legendary);
-    if (legendaryFilter === "normal") return !item?.legendary;
-    return true;
-  });
-
-  const filteredItemsWithIndex = filteredItems.map((item) => ({
-    item,
-    originalIndex: items.indexOf(item),
-  }));
+  const filteredItemsWithIndex = useMemo(() => items
+    .map((item, originalIndex) => ({ item, originalIndex }))
+    .filter(({ item }) => {
+      if (activeCategory !== "all" && item.category !== activeCategory) return false;
+      if (legendaryFilter === "legendary") return Boolean(item?.legendary);
+      if (legendaryFilter === "normal") return !item?.legendary;
+      return true;
+    }), [items, activeCategory, legendaryFilter]);
 
   const selectableFilteredItems = filteredItemsWithIndex.filter(
     ({ item }) => !isProtectedInventoryItem(item)
@@ -164,7 +157,7 @@ export default function InventoryScreen({
           <h2>[ {t("inventory.title")} ]</h2>
 
           <label className="pip-top-field" style={{ gap: "2px", alignSelf: "end" }}>
-            <span style={{ fontSize: "9px", lineHeight: 1 }}>Sell Bonus%</span>
+            <span style={{ fontSize: "9px", lineHeight: 1 }}>{t("inventory.sellBonus")}</span>
             <input
               className="pip-inline-input pip-bonus-input"
               style={{
@@ -223,7 +216,7 @@ export default function InventoryScreen({
           ))}
         </div>
 
-        <div className="pip-tagrow is-wrap push-bottom" aria-label="Legendary filter">
+        <div className="pip-tagrow is-wrap push-bottom" aria-label={t("inventory.legendaryFilter")}>
           <button type="button" className={`pip-tag ${legendaryFilter === "all" ? "is-selected" : ""}`} onClick={() => { setLegendaryFilter("all"); clearSelected(); }}>
             {carryLabels.any}
           </button>
